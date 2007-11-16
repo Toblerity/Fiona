@@ -1,0 +1,6 @@
+#!/bin/sh
+cd src
+cython mill/ogrinit.pyx
+cython mill/collection.pyx
+cython mill/workspace.pyx
+cd ..
