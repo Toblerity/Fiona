@@ -5,8 +5,11 @@ from Cython.Distutils import build_ext as build_pyx
 
 libs = ['gdal']
 
+# Get text from README.txt
+readme_text = file('README.txt', 'rb').read()
+
 setup(name          = 'WorldMill',
-      version       = '0.0',
+      version       = '0.1',
       description   = 'Access and transform geospatial feature data',
       license       = 'BSD',
       keywords      = 'gis vector feature data',
@@ -14,7 +17,8 @@ setup(name          = 'WorldMill',
       author_email  = 'sgillies@frii.com',
       maintainer        = 'Sean Gillies',
       maintainer_email  = 'sgillies@frii.com',
-      url           = '',
+      url   = 'http://trac.gispython.org/projects/PCL/wiki/WorldMill',
+      long_description = readme_text,
       package_dir = {'': 'src'},
       packages = ['mill'],
       install_requires  = ['setuptools', 'Cython'],
