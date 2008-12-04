@@ -21,6 +21,7 @@ setup(name          = 'WorldMill',
       package_dir = {'': 'src'},
       packages = ['mill'],
       install_requires  = ['setuptools', 'Cython'],
+      test_suite = 'tests.test_doctests.test_suite',
       ext_modules = [
         Extension('mill.workspace', ['src/mill/workspace.pyx'], libraries=libs),
         Extension(
