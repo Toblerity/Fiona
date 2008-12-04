@@ -1,4 +1,3 @@
-
 from setuptools import setup
 from distutils.core import Extension
 from Cython.Distutils import build_ext as build_pyx
@@ -9,7 +8,7 @@ libs = ['gdal']
 readme_text = file('README.txt', 'rb').read()
 
 setup(name          = 'WorldMill',
-      version       = '0.1',
+      version       = '0.1.1',
       description   = 'Access and transform geospatial feature data',
       license       = 'BSD',
       keywords      = 'gis vector feature data',
@@ -17,7 +16,7 @@ setup(name          = 'WorldMill',
       author_email  = 'sgillies@frii.com',
       maintainer        = 'Sean Gillies',
       maintainer_email  = 'sgillies@frii.com',
-      url   = 'http://trac.gispython.org/projects/PCL/wiki/WorldMill',
+      url   = 'http://github.com/sgillies/worldmill/tree',
       long_description = readme_text,
       package_dir = {'': 'src'},
       packages = ['mill'],
@@ -42,4 +41,3 @@ setup(name          = 'WorldMill',
         'Topic :: Scientific/Engineering :: GIS',
         ],
 )
-

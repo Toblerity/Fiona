@@ -133,13 +133,16 @@ cdef class Iterator:
             else:
                 props[name] = None
 
-        # Marshal the OGR geometry
+        # Marshal the OGR geometry if present
         cogr_geometry = ograpi.OGR_F_GetGeometryRef(cogr_feature)
-        wkbsize = ograpi.OGR_G_WkbSize(cogr_geometry)
-        string = PyString_FromStringAndSize(NULL, wkbsize)
-        buffer = PyString_AsString(string)
-        ograpi.OGR_G_ExportToWkb(cogr_geometry, 1, buffer)
-       
+        if cogr_geometry != NULL:
+            wkbsize = ograpi.OGR_G_WkbSize(cogr_geometry)
+            string = PyString_FromStringAndSize(NULL, wkbsize)
+            buffer = PyString_AsString(string)
+            ograpi.OGR_G_ExportToWkb(cogr_geometry, 1, buffer)
+        else:
+            string = None
+
         # The object hook protocol calls object_hook with three arguments
         # 
         # 1) string id
