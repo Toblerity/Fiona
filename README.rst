@@ -1,3 +1,4 @@
+=====
 Fiona
 =====
 
@@ -10,12 +11,12 @@ what lxml does for libxml2. Fiona integrates readily with other Python GIS
 packages such as pyproj_, Rtree_, and Shapely_.
 
 Dependencies
-------------
+============
 
 Fiona requires libgdal 1.3.2+.
 
-Building
---------
+Building and testing
+====================
 
 From the distribution root::
 
@@ -28,12 +29,12 @@ or if you have nose::
   $ python setup.py develop
   $ nosetests tests
   
-If you have ogr.py installed, you can compare to Fiona::
+If you have ogr.py installed, you can compare performance to Fiona::
 
   $ python benchmark.py
 
 Usage
------
+=====
 
 See `docs/reading-data.txt`_ for examples.
 
@@ -42,3 +43,4 @@ See `docs/reading-data.txt`_ for examples.
 .. _Rtree: http://pypi.python.org/pypi/Rtree/
 .. _Shapely: http://pypi.python.org/pypi/Shapely/
 .. _docs/reading-data.txt: http://trac.gispython.org/projects/PCL/browser/Fiona/trunk/docs/reading-data.txt
+

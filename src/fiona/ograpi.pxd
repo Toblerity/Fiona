@@ -3,7 +3,9 @@
 # See ../LICENSE.txt
 
 cdef extern from "ogr_api.h":
+    char *  OGR_Dr_GetName (void *driver)
     void    OGR_DS_Destroy (void *datasource)
+    void *  OGR_DS_GetDriver (void *layer_defn)
     void *  OGR_DS_GetLayerByName (void *datasource, char *name)
     int     OGR_DS_GetLayerCount (void *datasource)
     void *  OGR_DS_GetLayer (void *datasource, int n)
@@ -33,5 +35,9 @@ cdef extern from "ogr_api.h":
                 )
     void *  OGROpen (char *path, int mode, void *x)
     void *  OGROpenShared (char *path, int mode, void *x)
-    int  OGRReleaseDataSource (void *datasource)
+    int     OGRReleaseDataSource (void *datasource)
+
+cdef extern from "cpl_error.h":
+    void    CPLSetErrorHandler (void *handler)
+    void *  CPLQuietErrorHandler
 
