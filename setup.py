@@ -5,7 +5,7 @@ from Cython.Distutils import build_ext as build_pyx
 libs = ['gdal']
 
 # Get text from README.txt
-readme_text = file('README.txt', 'rb').read()
+readme_text = file('README.rst', 'rb').read()
 
 setup(name          = 'Fiona',
       version       = '0.2',
