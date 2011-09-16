@@ -1,6 +1,6 @@
 #!/bin/sh
 cd src
-cython mill/ogrinit.pyx
-cython mill/collection.pyx
-cython mill/workspace.pyx
+cython fiona/ogrinit.pyx
+cython fiona/collection.pyx
+cython fiona/workspace.pyx
 cd ..

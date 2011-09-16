@@ -7,29 +7,29 @@ libs = ['gdal']
 # Get text from README.txt
 readme_text = file('README.txt', 'rb').read()
 
-setup(name          = 'WorldMill',
-      version       = '0.1.1',
-      description   = 'Access and transform geospatial feature data',
+setup(name          = 'Fiona',
+      version       = '0.2',
+      description   = "Fiona is OGR's neater API",
       license       = 'BSD',
       keywords      = 'gis vector feature data',
       author        = 'Sean Gillies',
       author_email  = 'sgillies@frii.com',
       maintainer        = 'Sean Gillies',
       maintainer_email  = 'sgillies@frii.com',
-      url   = 'http://github.com/sgillies/worldmill/tree',
+      url   = 'http://github.com/sgillies/fiona',
       long_description = readme_text,
       package_dir = {'': 'src'},
-      packages = ['mill'],
+      packages = ['fiona'],
       install_requires  = ['setuptools', 'Cython'],
       test_suite = 'tests.test_doctests.test_suite',
       ext_modules = [
-        Extension('mill.workspace', ['src/mill/workspace.pyx'], libraries=libs),
+        Extension('fiona.workspace', ['src/fiona/workspace.pyx'], libraries=libs),
         Extension(
-            'mill.collection',
-            ['src/mill/collection.pyx'],
+            'fiona.collection',
+            ['src/fiona/collection.pyx'],
             libraries=libs
             ),
-        Extension('mill.ogrinit', ['src/mill/ogrinit.pyx'], libraries=libs),
+        Extension('fiona.ogrinit', ['src/fiona/ogrinit.pyx'], libraries=libs),
         ],
       cmdclass = {'build_ext': build_pyx},
       classifiers   = [

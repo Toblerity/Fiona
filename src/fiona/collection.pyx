@@ -9,8 +9,8 @@ cdef extern from "Python.h":
 
 cimport ograpi
 
-from mill import ogrinit
-from mill.feature import feature
+from fiona import ogrinit
+from fiona.feature import feature
 
 
 cdef class Session:
@@ -18,7 +18,7 @@ cdef class Session:
     cdef void *cogr_ds
     cdef void *cogr_layer
 
-    def __new__(self):
+    def __cinit__(self):
         self.cogr_ds = NULL
         self.cogr_layer = NULL
 

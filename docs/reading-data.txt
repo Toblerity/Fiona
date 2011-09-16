@@ -6,14 +6,14 @@ single data file or a path to a directory of similiar files. A workspace maps
 (in the Python sense) collections (or layers) of feature data, providing access
 to them via items() etc.
 
-    >>> from mill import workspace
+    >>> from fiona import workspace
     >>> w = workspace('docs/data')
     >>> w # doctest: +ELLIPSIS
-    <mill.workspace.Workspace object at ...>
+    <fiona.workspace.Workspace object at ...>
     >>> w.path
     'docs/data'
     >>> w.items() # doctest: +ELLIPSIS
-    [('test_uk', <mill.collection.Collection object at ...>)]
+    [('test_uk', <fiona.collection.Collection object at ...>)]
 
 A collection is a workspace item and can be obtained as with any mapping or
 dict. The name of a collection corresponds to the OGR layer name, meaning that
@@ -24,7 +24,7 @@ in the usual Python way.
 
     >>> c = w['test_uk']
     >>> c # doctest: +ELLIPSIS
-    <mill.collection.Collection object at ...>
+    <fiona.collection.Collection object at ...>
     >>> c.name
     'test_uk'
     >>> c.schema
@@ -41,11 +41,11 @@ Features in a collection can be accessed as if the collection were a dict.
     'United Kingdom'
 
 Users can control the response by binding callables to the collection's object
-hook. The default object hook (used above) is mill.feature.Feature, a class
+hook. The default object hook (used above) is fiona.feature.Feature, a class
 modeled loosely on GeoJSON. Callables must take 3 positional parameters and
 return a Python object, like so:
 
-    >>> from mill.feature import Feature
+    >>> from fiona.feature import Feature
     >>> def testing_feature(id, properties, wkb):
     ...     d = {}
     ...     for key, val in properties.items():
@@ -93,7 +93,7 @@ to be of the same coordinate system as the data.
 
   >>> query = c.filter(bbox=(-1.0, 50.0, -0.5, 50.5))
   >>> query # doctest: +ELLIPSIS
-  <mill.collection.Iterator object at ...>
+  <fiona.collection.Iterator object at ...>
   >>> results = [f for f in query]
   >>> len(results)
   1

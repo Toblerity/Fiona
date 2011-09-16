@@ -4,8 +4,8 @@
 
 cimport ograpi
 
-from mill import ogrinit
-from mill.collection import Collection
+from fiona import ogrinit
+from fiona.collection import Collection
 
 
 cdef class Workspace:

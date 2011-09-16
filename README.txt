@@ -1,15 +1,17 @@
-WorldMill
-=========
+Fiona
+=====
 
-WorldMill provides a smoother and more productive Python interface to the open
+Elegance on the outside, OGR(e) on the inside.
+
+Fiona provides a smoother and more productive Python interface to the open
 source GIS community's most trusted geodata access library; doing for libgdal_
-what lxml does for libxml2. WorldMill integrates readily with other Python GIS
+what lxml does for libxml2. Fiona integrates readily with other Python GIS
 packages such as pyproj_, Rtree_, and Shapely_.
 
 Dependencies
 ------------
 
-WorldMill requires libgdal 1.3.2+.
+Fiona requires libgdal 1.3.2+.
 
 Building
 --------
@@ -25,7 +27,7 @@ or if you have nose::
   $ python setup.py develop
   $ nosetests tests
   
-If you have ogr.py installed, you can compare to WorldMill::
+If you have ogr.py installed, you can compare to Fiona::
 
   $ python benchmark.py
 
@@ -38,4 +40,4 @@ See `docs/reading-data.txt`_ for examples.
 .. _pyproj: http://pypi.python.org/pypi/pyproj/
 .. _Rtree: http://pypi.python.org/pypi/Rtree/
 .. _Shapely: http://pypi.python.org/pypi/Shapely/
-.. _docs/reading-data.txt: http://trac.gispython.org/projects/PCL/browser/WorldMill/trunk/docs/reading-data.txt
+.. _docs/reading-data.txt: http://trac.gispython.org/projects/PCL/browser/Fiona/trunk/docs/reading-data.txt

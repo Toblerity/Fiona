@@ -1,23 +1,23 @@
 
 import timeit
-import mill
+import fiona
 import ogr
 
 PATH = 'docs/data'
 NAME = 'test_uk'
 
-# WorldMill
+# Fiona
 s = """
-w = mill.workspace(PATH)
+w = fiona.workspace(PATH)
 c = w[NAME]
 for f in c:
     id = f.id
 """
 t = timeit.Timer(
     stmt=s,
-    setup='from __main__ import mill, PATH, NAME'
+    setup='from __main__ import fiona, PATH, NAME'
     )
-print "WorldMill (Cython)"
+print "Fiona (Cython)"
 print "%.2f usec/pass" % (1000000 * t.timeit(number=100)/100)
 print
 
