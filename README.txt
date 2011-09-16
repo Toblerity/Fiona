@@ -1,7 +1,8 @@
 Fiona
 =====
 
-Elegance on the outside, OGR(e) on the inside.
+Fiona is OGR's neater API – sleek elegance on the outside, unstoppable OGR(e)
+on the inside.
 
 Fiona provides a smoother and more productive Python interface to the open
 source GIS community's most trusted geodata access library; doing for libgdal_
