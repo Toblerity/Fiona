@@ -42,5 +42,4 @@ See `docs/reading-data.txt`_ for examples.
 .. _pyproj: http://pypi.python.org/pypi/pyproj/
 .. _Rtree: http://pypi.python.org/pypi/Rtree/
 .. _Shapely: http://pypi.python.org/pypi/Shapely/
-.. _docs/reading-data.txt: http://trac.gispython.org/projects/PCL/browser/Fiona/trunk/docs/reading-data.txt
-
+.. _docs/reading-data.txt: https://github.com/sgillies/Fiona/blob/master/docs/reading-data.txt
