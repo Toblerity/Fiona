@@ -21,7 +21,7 @@ setup(name          = 'Fiona',
       package_dir = {'': 'src'},
       packages = ['fiona'],
       install_requires  = ['setuptools', 'Cython'],
-      test_suite = 'tests.test_doctests.test_suite',
+      tests_require = ['nose'],
       ext_modules = [
         Extension('fiona.workspace', ['src/fiona/workspace.pyx'], libraries=libs),
         Extension(

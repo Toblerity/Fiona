@@ -18,20 +18,19 @@ Fiona requires libgdal 1.3.2+.
 Building and testing
 ====================
 
-From the distribution root::
+Tests require Nose. From the distribution root::
 
   $ virtualenv .
-  $ ./cypsrc
-  $ python setup.py test
+  $ source bin/activate
+  (Fiona)$ ./cypsrc
+  (Fiona)$ python setup.py develop
+  (Fiona)$ python setup.py nosetests
 
-or if you have nose::
+If GDAL/OGR headers and libs aren't installed to a well known location, you'll
+need to set environment variables before running the setup script or pass the
+locations in using setup arguments.
 
-  $ virtualenv .
-  $ ./cypsrc
-  $ python setup.py develop
-  $ nosetests tests
-  
-If you have ogr.py installed, you can compare performance to Fiona::
+If you have osgeo.ogr installed, you can compare performance to Fiona::
 
   $ python benchmark.py
 
