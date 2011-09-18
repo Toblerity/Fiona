@@ -21,11 +21,13 @@ Building and testing
 From the distribution root::
 
   $ virtualenv .
+  $ ./cypsrc
   $ python setup.py test
 
 or if you have nose::
 
   $ virtualenv .
+  $ ./cypsrc
   $ python setup.py develop
   $ nosetests tests
   
