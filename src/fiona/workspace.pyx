@@ -7,6 +7,9 @@ cimport ograpi
 from fiona import ogrinit
 from fiona.collection import Collection
 
+# Ensure that errors end up in the python session's stdout
+cdef void * errorHandler(eErrClass, int err_no, char *msg):
+    print msg
 
 cdef class Workspace:
 
@@ -27,6 +30,7 @@ cdef class Workspace:
 
         # start session
         cogr_ds = ograpi.OGROpen(self.path, 0, NULL)
+        ograpi.CPLSetErrorHandler(<void *>errorHandler)
 
         n = ograpi.OGR_DS_GetLayerCount(cogr_ds)
         for i in range(n):
