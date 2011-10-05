@@ -25,11 +25,12 @@ setup(name          = 'Fiona',
       ext_modules = [
         Extension('fiona.workspace', ['src/fiona/workspace.pyx'], libraries=libs),
         Extension(
-            'fiona.collection',
-            ['src/fiona/collection.pyx'],
-            libraries=libs
-            ),
-        Extension('fiona.ogrinit', ['src/fiona/ogrinit.pyx'], libraries=libs),
+           'fiona.collection',
+           ['src/fiona/collection.pyx'],
+           libraries=libs
+           ),
+        Extension('fiona.ogrinit', ['src/fiona/ogrinit.c'], libraries=libs),
+        Extension('fiona.geometry', ['src/fiona/geometry.c'], libraries=libs)
         ],
       cmdclass = {'build_ext': build_pyx},
       classifiers   = [
