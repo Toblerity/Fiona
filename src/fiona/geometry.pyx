@@ -4,6 +4,15 @@ from array import array
 
 cimport ograpi
 
+geometryTypes = [
+    'Unknown', 
+    'Point', 'LineString', 'Polygon', 'MultiPoint', 
+    'MultiLineString', 'MultiPolygon', 'GeometryCollection',
+    'None', 'LinearRing', 
+    'Point25D', 'LineString25D', 'Polygon25D', 'MultiPoint25D', 
+    'MultiLineString25D', 'MultiPolygon25D', 'GeometryCollection25D'
+    ]
+
 class CoordSequence(object):
     """A trio of coordinate arrays"""
     def __init__(self, x=None, y=None, z=None):
@@ -51,6 +60,19 @@ class Geometry(object):
         return {'type': self.type, 'coordinates': self.coordinates}
 
 
+cdef geometry(void *geom):
+    """Factory for Fiona geometries"""
+    code = ograpi.OGR_G_GetGeometryType(geom)
+    assert code == 2 # line only for now
+    dims = ograpi.OGR_G_GetCoordinateDimension(geom)
+    npoints = ograpi.OGR_G_GetPointCount(geom)
+    cs = CoordSequence()
+    cs.x = array('d', [ograpi.OGR_G_GetX(geom, i) for i in range(npoints)])
+    cs.y = array('d', [ograpi.OGR_G_GetY(geom, i) for i in range(npoints)])
+    if dims > 2:
+        cs.z = array('d', [ograpi.OGR_G_GetZ(geom, i) for i in range(npoints)])
+    return Geometry(geometryTypes[code], [cs])
+
 def test_line():
     # Hex-encoded LineString (0 0, 1 1)
     wkb = "01020000000200000000000000000000000000000000000000000000000000f03f000000000000f03f".decode('hex')
@@ -59,11 +81,5 @@ def test_line():
     ograpi.OGR_G_ImportFromWkb(cogr_geometry, buffer, len(wkb))
     result = geometry(cogr_geometry)
     ograpi.OGR_G_DestroyGeometry(cogr_geometry)
-    return result
-
-cdef geometry(void *cogr_geometry):
-    cdef unsigned char *buffer = ograpi.OGR_G_ExportToJson(cogr_geometry)
-    cdef bytes result = buffer
-    ograpi.CPLFree(buffer)
     return result
 
