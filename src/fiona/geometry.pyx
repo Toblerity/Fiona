@@ -74,7 +74,6 @@ cdef class Builder:
     cdef object code
     cdef object typename
     cdef object ndims
-    cdef object nparts
 
     cdef _buildCoords(self, void *geom):
         # Build a coordinate sequence
@@ -114,7 +113,6 @@ cdef class Builder:
         self.code = ograpi.OGR_G_GetGeometryType(geom)
         self.typename = geometryTypes[self.code]
         self.ndims = ograpi.OGR_G_GetCoordinateDimension(geom)
-        self.nparts = ograpi.OGR_G_GetGeometryCount(geom)
         self.geom = geom
         return getattr(self, '_build' + self.typename)()
 
