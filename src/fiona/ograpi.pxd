@@ -2,6 +2,13 @@
 # All rights reserved.
 # See ../LICENSE.txt
 
+cdef extern from "cpl_error.h":
+    void    CPLSetErrorHandler (void *handler)
+    void *  CPLQuietErrorHandler
+
+cdef extern from "cpl_conv.h":
+    void    CPLFree (void *ptr)
+
 cdef extern from "ogr_api.h":
     char *  OGR_Dr_GetName (void *driver)
     void    OGR_DS_Destroy (void *datasource)
@@ -20,8 +27,20 @@ cdef extern from "ogr_api.h":
     char *  OGR_FD_GetName (void *layer_defn)
     char *  OGR_Fld_GetNameRef (void *fielddefn)
     int     OGR_Fld_GetType (void *fielddefn)
-    void    OGR_G_DestroyGeometry (void *geometry) 
+    void *  OGR_G_CreateGeometry (int wkbtypecode)
+    void    OGR_G_DestroyGeometry (void *geometry)
+    unsigned char *  OGR_G_ExportToJson (void *geometry)
     void    OGR_G_ExportToWkb (void *geometry, int endianness, char *buffer)
+    int     OGR_G_GetCoordinateDimension (void *geometry)
+    int     OGR_G_GetGeometryCount (void *geometry)
+    unsigned char *  OGR_G_GetGeometryName (void *geometry)
+    int     OGR_G_GetGeometryType (void *geometry)
+    void *  OGR_G_GetGeometryRef (void *geometry, int n)
+    int     OGR_G_GetPointCount (void *geometry)
+    double  OGR_G_GetX (void *geometry, int n)
+    double  OGR_G_GetY (void *geometry, int n)
+    double  OGR_G_GetZ (void *geometry, int n)
+    void    OGR_G_ImportFromWkb (void *geometry, unsigned char *, int nbytes)
     int     OGR_G_WkbSize (void *geometry)
     void *  OGR_L_GetFeature (void *layer, int n)
     int     OGR_L_GetFeatureCount (void *layer, int m)
@@ -36,8 +55,4 @@ cdef extern from "ogr_api.h":
     void *  OGROpen (char *path, int mode, void *x)
     void *  OGROpenShared (char *path, int mode, void *x)
     int     OGRReleaseDataSource (void *datasource)
-
-cdef extern from "cpl_error.h":
-    void    CPLSetErrorHandler (void *handler)
-    void *  CPLQuietErrorHandler
 
