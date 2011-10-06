@@ -75,7 +75,9 @@ cdef class Builder:
     cdef object typename
     cdef object ndims
     cdef object nparts
+
     cdef _buildCoords(self, void *geom):
+        # Build a coordinate sequence
         cdef int i
         npoints = ograpi.OGR_G_GetPointCount(geom)
         cs = CoordSequence(*[[0.0]*npoints]*self.ndims)
@@ -93,15 +95,20 @@ cdef class Builder:
         cs = self._buildCoords(self.geom)
         return Geometry('LineString', [cs])
     # TODO: polygon
-    cpdef _buildMultiPoint(self):
+    
+    cdef _buildParts(self, void *geom):
+        # Build a list of geometry parts
         cdef int j
         cdef void *part
         parts = []
-        for j in range(self.nparts):
-            part = ograpi.OGR_G_GetGeometryRef(self.geom, j)
+        for j in range(ograpi.OGR_G_GetGeometryCount(geom)):
+            part = ograpi.OGR_G_GetGeometryRef(geom, j)
             parts.append(Builder().build(part))
-        return Geometry('MultiPoint', parts=parts)
+        return parts
+    cpdef _buildMultiPoint(self):
+        return Geometry('MultiPoint', parts=self._buildParts(self.geom))
     # TODO: other multis
+
     cdef build(self, void *geom):
         # The only method anyone needs to call
         self.code = ograpi.OGR_G_GetGeometryType(geom)
