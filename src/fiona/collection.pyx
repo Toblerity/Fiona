@@ -3,6 +3,7 @@
 # See ../LICENSE.txt
 
 cdef extern from "Python.h":
+    object  PyString_FromString (char *s)
     object  PyString_FromStringAndSize (char *s, Py_ssize_t len)
     char *  PyString_AsString (string)
     object  PyInt_FromString (char *str, char **pend, int base)
@@ -135,27 +136,41 @@ cdef class Iterator:
 
         # Marshal the OGR geometry if present
         cogr_geometry = ograpi.OGR_F_GetGeometryRef(cogr_feature)
-        if cogr_geometry != NULL:
-            wkbsize = ograpi.OGR_G_WkbSize(cogr_geometry)
-            string = PyString_FromStringAndSize(NULL, wkbsize)
-            buffer = PyString_AsString(string)
-            ograpi.OGR_G_ExportToWkb(cogr_geometry, 1, buffer)
-        else:
-            string = None
 
         # The object hook protocol calls object_hook with three arguments
         # 
         # 1) string id
         # 2) property dictionary
-        # 3) WKB binary string
+        # 3) OGR geometry reference
 
-        f = self.object_hook(
+        return self.object_hook(
             str(fid),
             props,
-            string
+            cogr_geometry
             )
-        return f
 
+
+cdef wkb_feature(fid, props, void *cogr_geometry):
+    if cogr_geometry != NULL:
+        wkbsize = ograpi.OGR_G_WkbSize(cogr_geometry)
+        string = PyString_FromStringAndSize(NULL, wkbsize)
+        buffer = PyString_AsString(string)
+        ograpi.OGR_G_ExportToWkb(cogr_geometry, 1, buffer)
+    else:
+        string = None
+    return feature(fid, props, string)
+
+
+cdef feature(fid, props, void *cogr_geometry):
+    if cogr_geometry != NULL:
+        wkbsize = ograpi.OGR_G_WkbSize(cogr_geometry)
+        string = PyString_FromStringAndSize(NULL, wkbsize)
+        buffer = PyString_AsString(string)
+        ograpi.OGR_G_ExportToWkb(cogr_geometry, 1, buffer)
+    else:
+        string = None
+    return feature(fid, props, string)
+ 
 
 cdef class Collection:
 
@@ -173,7 +188,7 @@ cdef class Collection:
     cdef public name
     cdef public workspace
 
-    def __init__(self, name, workspace=None):
+    def __init__(self, name, workspace=None, object_hook=None):
         self.name = name
         self.workspace = workspace
         self.object_hook = feature

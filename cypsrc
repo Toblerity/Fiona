@@ -1,6 +1,7 @@
 #!/bin/sh
 cd src
 cython fiona/ogrinit.pyx
-cython fiona/collection.pyx
-cython fiona/workspace.pyx
+cython fiona/geometry/_ogrgeom.pyx
+#cython fiona/collection.pyx
+#cython fiona/workspace.pyx
 cd ..
