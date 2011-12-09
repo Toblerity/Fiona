@@ -32,7 +32,7 @@ need to pass the locations in using setup arguments as shown above.
 Usage
 =====
 
-.. sourcecode:: python
+Collections are used much like files. Features are mappings::
 
   from fiona import collection
   from shapely import asShape, mapping
