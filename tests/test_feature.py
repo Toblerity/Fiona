@@ -1,28 +1,22 @@
 # testing features, to be called by nosetests
 
+import logging
+import sys
 import unittest
 
-from fiona.feature import Feature, Geometry, Part
+from fiona import collection
+from fiona.ogrext import featureRT
 
-class PartTest(unittest.TestCase):
-    def test_empty_part(self):
-        p = Part()
-        self.failUnlessEqual(p.xs, None)
-        self.failUnlessEqual(p.xs, None)
-    def test_part_line(self):
-        p = Part([(0, 0), (1, 1)])
-        self.failUnlessEqual(list(p.xs), [0.0, 1.0])
-        self.failUnlessEqual(list(p.ys), [0.0, 1.0])
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
-class GeometryTest(unittest.TestCase):
-    def test_empty_geometry(self):
-        g = Geometry()
-        self.failUnlessEqual(g.parts, [])
-
-class FeatureTest(unittest.TestCase):
-    def test_feature_init(self):
-        f = Feature('1', {'foo': 'bar'}, [0.0, 0.0])
-        self.failUnlessEqual(f.id, '1')
-        self.failUnlessEqual(f.properties, {'foo': 'bar'})
-        self.failUnlessEqual(f.geometry,  [0.0, 0.0])
+class PointTest(unittest.TestCase):
+    def test_point(self):
+        f = { 'id': '1', 
+              'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
+              'properties': {'title': u'foo'} }
+        schema = {'geometry': 'Point', 'properties': {'title': 'str'}}
+        with collection("/tmp/foo.shp", "w", "ESRI Shapefile", schema) as c:
+            g = featureRT(f, c)
+            self.failUnless(g.has_key('id'))
+            self.failUnlessEqual(g['properties']['title'], 'foo')
 

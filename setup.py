@@ -23,14 +23,17 @@ setup(name          = 'Fiona',
       install_requires  = ['setuptools', 'Cython'],
       tests_require = ['nose'],
       ext_modules = [
-        #Extension('fiona.workspace', ['src/fiona/workspace.pyx'], libraries=libs),
+        #Extension('fiona.workspace', ['src/fiona/workspace.c'], libraries=libs),
         #Extension(
         #   'fiona.collection',
         #   ['src/fiona/collection.pyx'],
         #   libraries=libs
         #   ),
         #Extension('fiona.ogrinit', ['src/fiona/ogrinit.c'], libraries=libs),
-        Extension('fiona.geometry._ogrgeom', ['src/fiona/geometry/_ogrgeom.c'], libraries=libs)
+        Extension(
+            'fiona.ogrext', 
+            ['src/fiona/ogrext.c'], 
+            libraries=libs),
         ],
       cmdclass = {'build_ext': build_pyx},
       classifiers   = [
