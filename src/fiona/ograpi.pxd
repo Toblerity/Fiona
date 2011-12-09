@@ -9,6 +9,8 @@ cdef extern from "cpl_error.h":
 cdef extern from "cpl_conv.h":
     void    CPLFree (void *ptr)
 
+ctypedef int OGRErr
+
 cdef extern from "ogr_api.h":
     char *  OGR_Dr_GetName (void *driver)
     void *  OGR_Dr_CreateDataSource (void *driver, char *path, char **options)
@@ -19,6 +21,7 @@ cdef extern from "ogr_api.h":
     void *  OGR_DS_GetLayerByName (void *datasource, char *name)
     int     OGR_DS_GetLayerCount (void *datasource)
     void *  OGR_DS_GetLayer (void *datasource, int n)
+    int     OGR_DS_SyncToDisk (void *datasource)
     void *  OGR_F_Create (void *featuredefn)
     void    OGR_F_Destroy (void *feature)
     long    OGR_F_GetFID (void *feature)
@@ -59,7 +62,7 @@ cdef extern from "ogr_api.h":
     double  OGR_G_GetZ (void *geometry, int n)
     void    OGR_G_ImportFromWkb (void *geometry, unsigned char *bytes, int nbytes)
     int     OGR_G_WkbSize (void *geometry)
-    int     OGR_L_CreateFeature (void *layer, void *feature)
+    OGRErr  OGR_L_CreateFeature (void *layer, void *feature)
     int     OGR_L_CreateField (void *layer, void *fielddefn, int flexible)
     void *  OGR_L_GetFeature (void *layer, int n)
     int     OGR_L_GetFeatureCount (void *layer, int m)

@@ -48,6 +48,16 @@ fieldTypesMap = {
     'str':      UnicodeType,
     }
 
+OGRERR_NONE = 0
+OGRERR_NOT_ENOUGH_DATA = 1    # not enough data to deserialize */
+OGRERR_NOT_ENOUGH_MEMORY = 2
+OGRERR_UNSUPPORTED_GEOMETRY_TYPE = 3
+OGRERR_UNSUPPORTED_OPERATION = 4
+OGRERR_CORRUPT_DATA = 5
+OGRERR_FAILURE = 6
+OGRERR_UNSUPPORTED_SRS = 7
+OGRERR_INVALID_HANDLE = 8
+
 cdef void * _createOgrGeomFromWKB(object wkb):
     """Make an OGR geometry from a WKB string"""
     geom_type = bytearray(wkb)[1]
@@ -198,12 +208,12 @@ cdef class OGRFeatureBuilder:
         ograpi.OGR_F_SetGeometryDirectly(cogr_feature, cogr_geometry)
         for key, value in feature['properties'].items():
             i = ograpi.OGR_F_GetFieldIndex(cogr_feature, key)
-            ptype = type(value)
+            ptype = type(value) #fieldTypesMap[key]
             if ptype is IntType:
                 ograpi.OGR_F_SetFieldInteger(cogr_feature, i, value)
             elif ptype is FloatType:
                 ograpi.OGR_F_SetFieldDouble(cogr_feature, i, value)
-            if ptype in (UnicodeType, StringType):
+            elif ptype in (UnicodeType, StringType):
                 ograpi.OGR_F_SetFieldString(cogr_feature, i, value)
             else:
                 raise ValueError("Invalid field type %s" % ptype)
@@ -309,9 +319,27 @@ cdef class WriteSession:
             ograpi.OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1)
         log.debug("Created fields")
 
+    def write(self, feature, collection):
+        #cdef ograpi.OGRerrorType OGRERROR
+        log.debug("Creating feature in layer: %s" % feature)
+        try:
+            for key in feature['properties']:
+                assert key in collection.schema['properties']
+            assert feature['geometry']['type'] == collection.schema['geometry']
+        except AssertionError:
+            raise ValueError("Feature data not match collection schema")
+        
+        cdef void *cogr_layer = self.cogr_layer
+        cdef void *cogr_feature = OGRFeatureBuilder().build(feature, collection)
+        result = ograpi.OGR_L_CreateFeature(cogr_layer, cogr_feature)
+        if result != OGRERR_NONE:
+            raise RuntimeError("Failed to add feature: %s" % result)
+        return result
+
     def stop(self):
         self.cogr_layer = NULL
         if self.cogr_ds != NULL:
+            ograpi.OGR_DS_SyncToDisk(self.cogr_ds)
             ograpi.OGR_DS_Destroy(self.cogr_ds)
         self.cogr_ds = NULL
 
@@ -358,34 +386,6 @@ cdef class Iterator:
         feature = FeatureBuilder().build(cogr_feature)
         ograpi.OGR_F_Destroy(cogr_feature)
         return feature
-
-
-cdef class Writer:
-
-    # Reference to its Collection
-    cdef collection
-
-    def __init__(self, collection):
-        if collection.session is None:
-            raise ValueError("I/O operation on closed collection")
-        self.collection = collection
-
-    def write(self, feature):
-        cdef long fid
-        cdef void * cogr_feature
-        cdef WriteSession session
-
-        # Make sure feature matches schema
-        try:
-            for key in feature['properties']:
-                assert key in self.collection.schema['properties']
-        except AssertionError:
-            raise ValueError("Feature's properties do not match collection schema")
-
-        # feature -> JSON -> OGR feature
-        
-        # write OGR feature
-        pass
 
 
 cdef class Collection:
@@ -604,9 +604,9 @@ cdef class WriteCollection:
     # Feature writing
 
     def write(self, feature):
-        if self.mode != "w" or not self.opened:
+        if self.mode not in ("a", "w") or not self.opened:
             raise IOError("Collection not open for writing")
-
+        self.session.write(feature, self)
 
 # Workspace
 

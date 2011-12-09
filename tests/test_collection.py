@@ -6,6 +6,8 @@ import sys
 import types
 import unittest
 
+from shapely.geometry import asShape, mapping
+
 from fiona import collection
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
@@ -74,10 +76,13 @@ class ShapefileCollectionTest(unittest.TestCase):
 class ShapefileWriteCollectionTest(unittest.TestCase):
     def test_write(self):
         with collection("docs/data/test_uk.shp", "r") as input:
+            output_schema = input.schema.copy()
+            output_schema['geometry'] = 'Point'
             with collection(
-                "test_write.shp", "w", "ESRI Shapefile", input.schema
+                "test_write.shp", "w", "ESRI Shapefile", output_schema
                 ) as output:
                     for f in input.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
                         # logging.debug("Feature: %s" % f['properties'])
+                        f['geometry'] = mapping(asShape(f['geometry']).centroid)
                         output.write(f)
 
