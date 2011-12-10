@@ -53,11 +53,6 @@ class ShapefileCollectionTest(unittest.TestCase):
             f = list(c)[0]
             self.failUnlessEqual(f['id'], "0")
             self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
-    def test_iter_all(self):
-        with collection("docs/data/test_uk.shp", "r") as c:
-            f = list(c.all)[0]
-            self.failUnlessEqual(f['id'], "0")
-            self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
     def test_filter_1(self):
         with collection("docs/data/test_uk.shp", "r") as c:
             results = list(c.filter(bbox=(-15.0, 35.0, 15.0, 65.0)))

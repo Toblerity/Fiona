@@ -1,9 +1,6 @@
 # fiona
 
-__version__ = "0.2"
+__version__ = "0.3"
 
-#from fiona import ogrinit
-from fiona.ogrext import collection, workspace
-#from fiona.collection import collection
-#from fiona.feature import feature
+from fiona.collection import collection
 

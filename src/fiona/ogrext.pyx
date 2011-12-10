@@ -200,7 +200,7 @@ cdef class OGRFeatureBuilder:
     #cdef void *cogr_featuredefn
 
     cdef void * build(self, feature, collection):
-        cdef WriteSession session
+        cdef WritingSession session
         session = collection.session
         cdef void *cogr_featuredefn = ograpi.OGR_L_GetLayerDefn(session.cogr_layer)
         cdef void *cogr_geometry = OGRGeomBuilder().build(feature['geometry'])
@@ -245,7 +245,7 @@ cdef class Session:
         self.stop()
 
     def start(self, collection):
-        self.cogr_ds = ograpi.OGROpen(collection.workspace.path, 0, NULL)
+        self.cogr_ds = ograpi.OGROpen(collection.path, 0, NULL)
         self.cogr_layer = ograpi.OGR_DS_GetLayerByName(
             self.cogr_ds, collection.name
             )
@@ -256,29 +256,52 @@ cdef class Session:
             ograpi.OGR_DS_Destroy(self.cogr_ds)
         self.cogr_ds = NULL
 
-    cdef isactive(self):
+    def get_length(self):
+        return ograpi.OGR_L_GetFeatureCount(self.cogr_layer, 0)
+
+    def get_schema(self):
+        cdef int i
+        cdef int n
+        cdef void *cogr_featuredefn
+        cdef void *cogr_fielddefn
+        props = []
+        cogr_featuredefn = ograpi.OGR_L_GetLayerDefn(self.cogr_layer)
+        n = ograpi.OGR_FD_GetFieldCount(cogr_featuredefn)
+        for i from 0 <= i < n:
+            cogr_fielddefn = ograpi.OGR_FD_GetFieldDefn(cogr_featuredefn, i)
+            fieldtypename = fieldTypes[ograpi.OGR_Fld_GetType(cogr_fielddefn)]
+            if not fieldtypename:
+                raise ValueError(
+                    "Invalid field type %s" % ograpi.OGR_Fld_GetType(
+                                                cogr_fielddefn))
+            key = ograpi.OGR_Fld_GetNameRef(cogr_fielddefn)
+            props.append((key, fieldtypename))
+        geom_type = ograpi.OGR_FD_GetGeomType(cogr_featuredefn)
+        return {'properties': dict(props), 'geometry': geometryTypes[geom_type]}
+
+    def isactive(self):
         if self.cogr_layer != NULL and self.cogr_ds != NULL:
             return 1
         else:
             return 0
 
 
-cdef class WriteSession:
+cdef class WritingSession(Session):
     
-    cdef void *cogr_ds
-    cdef void *cogr_layer
-
-    def __cinit__(self):
-        self.cogr_ds = NULL
-        self.cogr_layer = NULL
-
-    def __dealloc__(self):
-        self.stop()
+#    cdef void *cogr_ds
+#    cdef void *cogr_layer
+#
+#    def __cinit__(self):
+#        self.cogr_ds = NULL
+#        self.cogr_layer = NULL
+#
+#    def __dealloc__(self):
+#        self.stop()
 
     def start(self, collection):
         cdef void *cogr_fielddefn
         cdef void *cogr_driver
-        path = collection.workspace.path
+        path = collection.path
         
         # Presume we have a collection schema already (evaluate this)
         if not collection.schema:
@@ -297,9 +320,9 @@ cdef class WriteSession:
             if os.path.exists(path):
                 ograpi.OGR_Dr_DeleteDataSource(cogr_driver, path)
             self.cogr_ds = ograpi.OGR_Dr_CreateDataSource(
-                cogr_driver, collection.workspace.path, NULL)
+                cogr_driver, path, NULL)
         if not self.cogr_ds:
-            raise RuntimeError("Failed to open %s" % collection.workspace.path)
+            raise RuntimeError("Failed to open %s" % path)
         log.debug("Created datasource")
         
         self.cogr_layer = ograpi.OGR_DS_CreateLayer(
@@ -336,18 +359,18 @@ cdef class WriteSession:
             raise RuntimeError("Failed to add feature: %s" % result)
         return result
 
-    def stop(self):
-        self.cogr_layer = NULL
-        if self.cogr_ds != NULL:
-            ograpi.OGR_DS_SyncToDisk(self.cogr_ds)
-            ograpi.OGR_DS_Destroy(self.cogr_ds)
-        self.cogr_ds = NULL
-
-    cdef isactive(self):
-        if self.cogr_layer != NULL and self.cogr_ds != NULL:
-            return 1
-        else:
-            return 0
+#    def stop(self):
+#        self.cogr_layer = NULL
+#        if self.cogr_ds != NULL:
+#            ograpi.OGR_DS_SyncToDisk(self.cogr_ds)
+#            ograpi.OGR_DS_Destroy(self.cogr_ds)
+#        self.cogr_ds = NULL
+#
+#    cdef isactive(self):
+#        if self.cogr_layer != NULL and self.cogr_ds != NULL:
+#            return 1
+#        else:
+#            return 0
 
 
 cdef class Iterator:
@@ -387,309 +410,70 @@ cdef class Iterator:
         ograpi.OGR_F_Destroy(cogr_feature)
         return feature
 
-
-cdef class Collection:
-
-    """A collection of the data records that GIS terms 'features' with
-    hybrid list/iterator behavior.
-    """
-
-    # Cached length or count of features
-    cdef int _len
-    # Feature schema, a list of (name, type) tuples
-    cdef _schema
-
-    cdef public name
-    cdef public workspace
-    cdef public mode
-    cdef public Session session
-
-    def __init__(self, name, mode='r', workspace=None):
-        self.name = name
-        self.workspace = workspace
-        self.mode = mode
-        self.session = None
-        self._len = -1
-        self._schema = None
-
-    # Context management
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        if self.session:
-            self.close()
-        self.workspace = None
-
-    def _read_length(self):
-        len = ograpi.OGR_L_GetFeatureCount(self.session.cogr_layer, 0)
-        return len
-
-    def __len__(self):
-        if self._len < 0:
-            self._len = self._read_length()
-        return self._len
-
-    def _read_schema(self):
-        cdef int i
-        cdef int n
-        cdef void * cogr_featuredefn
-        cdef void * cogr_fielddefn
-        props = []
-        cogr_featuredefn = ograpi.OGR_L_GetLayerDefn(self.session.cogr_layer)
-        n = ograpi.OGR_FD_GetFieldCount(cogr_featuredefn)
-        for i from 0 <= i < n:
-            cogr_fielddefn = ograpi.OGR_FD_GetFieldDefn(cogr_featuredefn, i)
-            fieldtypename = fieldTypes[ograpi.OGR_Fld_GetType(cogr_fielddefn)]
-            if not fieldtypename:
-                raise ValueError(
-                    "Invalid field type %s" % ograpi.OGR_Fld_GetType(
-                                                cogr_fielddefn))
-            key = ograpi.OGR_Fld_GetNameRef(cogr_fielddefn)
-            props.append((key, fieldtypename))
-        geom_type = ograpi.OGR_FD_GetGeomType(cogr_featuredefn)
-        return {'properties': dict(props), 'geometry': geometryTypes[geom_type]}
-
-    def set_schema(self, schema):
-        self._schema = schema
-
-    property schema:
-        # A lazy property
-        def __get__(self):
-            if not self._schema:
-                self._schema = self._read_schema()
-            return self._schema
-
-    def open(self):
-        if self.session is not None:
-            raise IOError("Collection is already open")
-        if self.mode == "r":
-            self.session = Session()
-            self.session.start(self)
-        elif self.mode == "w":
-            self.session = WriteSession()
-            self.session.start(self)
-
-    def close(self):
-        if self.session is None:
-            raise IOError("Collection is not open")
-        self.session.stop()
-        self.session = None
-
-    property opened:
-        def __get__(self):
-            return self.session is not None
-
-    # Feature reading
-
-    def filter(self, bbox=None):
-        return Iterator(self, bbox)
-
-    property all:
-        def __get__(self):
-            return Iterator(self)
-
-    def __iter__(self):
-        return Iterator(self)
-
-    # Feature writing
-
-    def write(self, feature):
-        if self.mode != "w" or not self.opened:
-            raise IOError("Collection not open for writing")
-        
-
-cdef class WriteCollection:
-
-    """A collection of the data records that GIS terms 'features' with
-    hybrid list/iterator behavior.
-    """
-
-    # Cached length or count of features
-    cdef int _len
-    # Feature schema, a list of (name, type) tuples
-    cdef _schema
-
-    cdef public name
-    cdef public workspace
-    cdef public mode
-    cdef public WriteSession session
-    cdef public driver
-
-    def __init__(self, name, mode='a', driver=None, workspace=None):
-        self.name = name
-        self.workspace = workspace
-        self.mode = mode
-        self.session = None
-        self._len = -1
-        self._schema = None
-        self.driver = driver
-
-    # Context management
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        if self.session:
-            self.close()
-        self.workspace = None
-
-    def _read_length(self):
-        len = ograpi.OGR_L_GetFeatureCount(self.session.cogr_layer, 0)
-        return len
-
-    def __len__(self):
-        if self._len < 0:
-            self._len = self._read_length()
-        return self._len
-
-    def _read_schema(self):
-        cdef int i
-        cdef int n
-        cdef void * cogr_featuredefn
-        cdef void * cogr_fielddefn
-        props = []
-        cogr_featuredefn = ograpi.OGR_L_GetLayerDefn(self.session.cogr_layer)
-        n = ograpi.OGR_FD_GetFieldCount(cogr_featuredefn)
-        for i from 0 <= i < n:
-            cogr_fielddefn = ograpi.OGR_FD_GetFieldDefn(cogr_featuredefn, i)
-            fieldtypename = fieldTypes[ograpi.OGR_Fld_GetType(cogr_fielddefn)]
-            if not fieldtypename:
-                raise ValueError(
-                    "Invalid field type %s" % ograpi.OGR_Fld_GetType(
-                                                cogr_fielddefn))
-            key = ograpi.OGR_Fld_GetNameRef(cogr_fielddefn)
-            props.append((key, fieldtypename))
-        geom_type = ograpi.OGR_FD_GetGeomType(cogr_featuredefn)
-        return {'properties': dict(props), 'geometry': geometryTypes[geom_type]}
-
-    def set_schema(self, schema):
-        self._schema = schema
-
-    property schema:
-        # A lazy property
-        def __get__(self):
-            if not self._schema:
-                self._schema = self._read_schema()
-            return self._schema
-
-    def open(self):
-        if self.session is not None:
-            raise IOError("Collection is already open")
-        self.session = WriteSession(self)
-        self.session.start(self)
-
-    def close(self):
-        if self.session is None:
-            raise IOError("Collection is not open")
-        self.session.stop()
-        self.session = None
-
-    property opened:
-        def __get__(self):
-            return self.session is not None
-
-    # Feature reading
-
-    def filter(self, bbox=None):
-        return Iterator(self, bbox)
-
-    property all:
-        def __get__(self):
-            return Iterator(self)
-
-    def __iter__(self):
-        return Iterator(self)
-
-    # Feature writing
-
-    def write(self, feature):
-        if self.mode not in ("a", "w") or not self.opened:
-            raise IOError("Collection not open for writing")
-        self.session.write(feature, self)
-
 # Workspace
 
 # Ensure that errors end up in the python session's stdout
 cdef void * errorHandler(eErrClass, int err_no, char *msg):
     print msg
 
-cdef class Workspace:
-
-    # Path to actual data storage
-    cdef public path
-    cdef public mode
-    # Feature collections
-    cdef _collections
-
-    def __init__(self, path, mode="r"):
-        self.path = path
-        self.mode = mode
-        self._collections = None
-
-    def _read_collections(self):
-        cdef void * cogr_ds
-        cdef void * cogr_layer
-        cdef void * cogr_layerdefn
-        collections = {}
-
-        # start session
-        cogr_ds = ograpi.OGROpen(self.path, int(self.mode=="r+"), NULL)
-        ograpi.CPLSetErrorHandler(<void *>errorHandler)
-
-        n = ograpi.OGR_DS_GetLayerCount(cogr_ds)
-        for i in range(n):
-            cogr_layer = ograpi.OGR_DS_GetLayer(cogr_ds, i)
-            cogr_layerdefn = ograpi.OGR_L_GetLayerDefn(cogr_layer)
-            layer_name = ograpi.OGR_FD_GetName(cogr_layerdefn)
-            collection = Collection(layer_name, self)
-            collections[layer_name] = collection
-        
-        # end session
-        ograpi.OGR_DS_Destroy(cogr_ds)
-        
-        return collections
-
-    property collections:
-        # A lazy property
-        def __get__(self):
-            if not self._collections:
-                self._collections = self._read_collections()
-            return self._collections
-
-    def __getitem__(self, name):
-        return self.collections.__getitem__(name)
-
-    def keys(self):
-        return self.collections.keys()
-   
-    def values(self):
-        return self.collections.values()
-
-    def items(self):
-        return self.collections.items()
-
-
+#cdef class Workspace:
+#
+#    # Path to actual data storage
+#    cdef public path
+#    cdef public mode
+#    # Feature collections
+#    cdef _collections
+#
+#    def __init__(self, path, mode="r"):
+#        self.path = path
+#        self.mode = mode
+#        self._collections = None
+#
+#    def _read_collections(self):
+#        cdef void * cogr_ds
+#        cdef void * cogr_layer
+#        cdef void * cogr_layerdefn
+#        collections = {}
+#
+#        # start session
+#        cogr_ds = ograpi.OGROpen(self.path, int(self.mode=="r+"), NULL)
+#        ograpi.CPLSetErrorHandler(<void *>errorHandler)
+#
+#        n = ograpi.OGR_DS_GetLayerCount(cogr_ds)
+#        for i in range(n):
+#            cogr_layer = ograpi.OGR_DS_GetLayer(cogr_ds, i)
+#            cogr_layerdefn = ograpi.OGR_L_GetLayerDefn(cogr_layer)
+#            layer_name = ograpi.OGR_FD_GetName(cogr_layerdefn)
+#            collection = Collection(layer_name, self)
+#            collections[layer_name] = collection
+#        
+#        # end session
+#        ograpi.OGR_DS_Destroy(cogr_ds)
+#        
+#        return collections
+#
+#    property collections:
+#        # A lazy property
+#        def __get__(self):
+#            if not self._collections:
+#                self._collections = self._read_collections()
+#            return self._collections
+#
+#    def __getitem__(self, name):
+#        return self.collections.__getitem__(name)
+#
+#    def keys(self):
+#        return self.collections.keys()
+#   
+#    def values(self):
+#        return self.collections.values()
+#
+#    def items(self):
+#        return self.collections.items()
+#
+#
 # Factories
-
-def workspace(path):
-    return Workspace(path)
-
-def collection(path, mode='r', driver=None, schema=None, crs=None):
-    """Open file at ``path`` in ``mode`` "r" (read) or "a" (append) and
-    return a ``Collection`` object."""
-    if mode == 'r':
-        c = Collection(None, mode)
-        c.workspace = Workspace(path, mode)
-        c.name = c.workspace.keys()[0]
-    elif mode in ('a', 'w'):
-        c = WriteCollection(None, mode, driver)
-        c.name = os.path.basename(os.path.splitext(path)[0])
-        c.workspace = Workspace(path, mode)
-    else:
-        raise ValueError("Invalid mode: %s" % mode)
-    if schema:
-        c.set_schema(schema)
-    c.open()
-    return c
+#
+#def workspace(path):
+#    return Workspace(path)
 

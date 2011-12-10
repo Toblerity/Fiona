@@ -8,7 +8,7 @@ libs = ['gdal']
 readme_text = file('README.rst', 'rb').read()
 
 setup(name          = 'Fiona',
-      version       = '0.2',
+      version       = '0.3',
       description   = "Fiona is OGR's neater API",
       license       = 'BSD',
       keywords      = 'gis vector feature data',
@@ -23,13 +23,7 @@ setup(name          = 'Fiona',
       install_requires  = ['setuptools', 'Cython'],
       tests_require = ['nose'],
       ext_modules = [
-        #Extension('fiona.workspace', ['src/fiona/workspace.c'], libraries=libs),
-        #Extension(
-        #   'fiona.collection',
-        #   ['src/fiona/collection.pyx'],
-        #   libraries=libs
-        #   ),
-        #Extension('fiona.ogrinit', ['src/fiona/ogrinit.c'], libraries=libs),
+        Extension('fiona.ogrinit', ['src/fiona/ogrinit.c'], libraries=libs),
         Extension(
             'fiona.ogrext', 
             ['src/fiona/ogrext.c'], 

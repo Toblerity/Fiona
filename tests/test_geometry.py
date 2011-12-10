@@ -2,7 +2,10 @@
 
 import unittest
 
-from fiona.geometry import geometry_wkb
+from fiona.ogrext import GeomBuilder
+
+def geometry_wkb(wkb):
+    return GeomBuilder().build_wkb(wkb)
 
 class PointTest(unittest.TestCase):
     def test_point(self):
