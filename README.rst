@@ -31,7 +31,8 @@ need to pass the locations in using setup arguments as shown above.
 Usage
 =====
 
-Collections are used much like files. Features are mappings::
+Collections are much like ``file`` objects. Features are mappings modeled on
+the GeoJSON format::
 
   from fiona import collection
   from shapely import asShape, mapping
@@ -57,8 +58,7 @@ Collections are used much like files. Features are mappings::
               # Stage feature for writing
               sink.write(f)
               
-              # The sink shapefile is written to disk when the surrounding
-              # ``with`` block ends
+      # The sink shapefile is written to disk when its ``with`` block ends
 
 .. _libgdal: http://www.gdal.org
 .. _pyproj: http://pypi.python.org/pypi/pyproj/
