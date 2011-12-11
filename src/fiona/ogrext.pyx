@@ -232,7 +232,8 @@ cdef class FeatureBuilder:
             elif fieldtype is FloatType:
                 props[key] = ograpi.OGR_F_GetFieldAsDouble(feature, i)
             elif fieldtype is UnicodeType:
-                props[key] = unicode(ograpi.OGR_F_GetFieldAsString(feature, i))
+                props[key] = unicode(
+                    ograpi.OGR_F_GetFieldAsString(feature, i), 'utf-8' )
             else:
                 props[key] = None
 

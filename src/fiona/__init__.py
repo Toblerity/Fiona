@@ -16,7 +16,20 @@ from fiona.collection import Collection
 
 def collection(path, mode='r', driver=None, schema=None, crs=None):
     """Open file at ``path`` in ``mode`` "r" (read), "a" (append), or "w"
-    (write) and return a ``Collection`` object."""
+    (write) and return a ``Collection`` object.
+    
+    In append or write mode, a driver name such as "ESRI Shapefile" or
+    "GPX" (see OGR docs or ``ogr2ogr --help`` on the command line) and
+    a schema mapping such as:
+    
+      { 'geometry': 'Point', 
+        'properties': { 'label': 'str', 'class': 'int', 'value': 'float' } }
+        
+    must be provided.
+    
+    The ``crs`` (coordinate reference system) parameter is currently
+    ignored.
+    """
     if mode == 'r':
         c = Collection(path, mode)
     elif mode in ('a', 'w'):
