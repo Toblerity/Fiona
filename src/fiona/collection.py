@@ -5,19 +5,6 @@ import os
 from ogrext import Iterator, Session, WritingSession
 
 
-def collection(path, mode='r', driver=None, schema=None, crs=None):
-    """Open file at ``path`` in ``mode`` "r" (read), "a" (append), or "w" (write)
-    and return a ``Collection`` object."""
-    if mode == 'r':
-        c = Collection(path, mode)
-    elif mode in ('a', 'w'):
-        c = Collection(path, mode, driver, schema)
-    else:
-        raise ValueError("Invalid mode: %s" % mode)
-    c.open()
-    return c
-
-
 class Collection(object):
 
     """A file-like interface to features in the form of GeoJSON-like mappings."""

@@ -5,10 +5,9 @@ Fiona
 Fiona is OGR's neater API – sleek elegance on the outside, unstoppable OGR(e)
 on the inside.
 
-Fiona provides a smoother and more productive Python interface to the open
-source GIS community's most trusted geodata access library; doing for libgdal_
-what lxml does for libxml2. Fiona integrates readily with other Python GIS
-packages such as pyproj_, Rtree_, and Shapely_.
+Fiona provides a minimal Python interface to the open source GIS community's
+most trusted geodata access library and integrates readily with other Python
+GIS packages such as pyproj_, Rtree_, and Shapely_.
 
 Dependencies
 ============
