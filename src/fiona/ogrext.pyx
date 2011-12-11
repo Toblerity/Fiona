@@ -21,11 +21,12 @@ log = logging.getLogger("Fiona")
 geometryTypes = [
     'Unknown', 
     'Point', 'LineString', 'Polygon', 'MultiPoint', 
-    'MultiLineString', 'MultiPolygon', 'GeometryCollection',
-    'None', 'LinearRing', 
-    'Point25D', 'LineString25D', 'Polygon25D', 'MultiPoint25D', 
-    'MultiLineString25D', 'MultiPolygon25D', 'GeometryCollection25D'
-    ]
+    'MultiLineString', 'MultiPolygon', 'GeometryCollection' ]
+#    ,
+#    'None', 'LinearRing', 
+#    'Point25D', 'LineString25D', 'Polygon25D', 'MultiPoint25D', 
+#    'MultiLineString25D', 'MultiPolygon25D', 'GeometryCollection25D'
+#    ]
 
 fieldTypes = [
     'int',          # OFTInteger, Simple 32bit integer
@@ -69,6 +70,7 @@ cdef void * _createOgrGeomFromWKB(object wkb):
 cdef _deleteOgrGeom(void *cogr_geometry):
     """Delete an OGR geometry"""
     ograpi.OGR_G_DestroyGeometry(cogr_geometry)
+
 
 cdef class GeomBuilder:
     """Builds Fiona (GeoJSON) geometries from an OGR geometry handle."""
@@ -147,12 +149,60 @@ cdef class OGRGeomBuilder:
             x, y = self.coordinates
             ograpi.OGR_G_AddPoint_2D(cogr_geometry, x, y)
         return cogr_geometry
+    cdef void * _buildLineString(self):
+        cdef void *cogr_geometry
+        self.ndims = len(self.coordinates[0])
+        cogr_geometry = ograpi.OGR_G_CreateGeometry(2)
+        for values in self.coordinates:
+            log.debug("Adding point %s", values)
+            if len(values) > 2:
+                x, y, z = values
+                ograpi.OGR_G_AddPoint(cogr_geometry, x, y, z)
+            else:
+                x, y = values
+                ograpi.OGR_G_AddPoint_2D(cogr_geometry, x, y)
+        return cogr_geometry
+    cdef void * _buildLinearRing(self):
+        cdef void *cogr_geometry
+        self.ndims = len(self.coordinates[0])
+        cogr_geometry = ograpi.OGR_G_CreateGeometry(101)
+        for values in self.coordinates:
+            log.debug("Adding point %s", values)
+            if len(values) > 2:
+                x, y, z = values
+                ograpi.OGR_G_AddPoint(cogr_geometry, x, y, z)
+            else:
+                x, y = values
+                log.debug("Adding values %f, %f", x, y)
+                ograpi.OGR_G_AddPoint_2D(cogr_geometry, x, y)
+        log.debug("Closing ring")
+        ograpi.OGR_G_CloseRings(cogr_geometry)
+        return cogr_geometry
+    cdef void * _buildPolygon(self):
+        cdef void *cogr_ring
+        cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(3)
+        self.ndims = len(self.coordinates[0][0])
+        for ring in self.coordinates:
+            log.debug("Adding ring %s", ring)
+            cogr_ring = OGRGeomBuilder().build(
+                {'type': 'LinearRing', 'coordinates': ring} )
+            log.debug("Built ring")
+            ograpi.OGR_G_AddGeometryDirectly(cogr_geometry, cogr_ring)
+            log.debug("Added ring %s", ring)
+        return cogr_geometry
     cdef void * build(self, object geometry):
         self.typename = geometry['type']
         self.coordinates = geometry['coordinates']
         if self.typename == 'Point':
             return self._buildPoint()
-
+        elif self.typename == 'LineString':
+            return self._buildLineString()
+        elif self.typename == 'LinearRing':
+            return self._buildLinearRing()
+        elif self.typename == 'Polygon':
+            return self._buildPolygon()
+        else:
+            raise ValueError("Unsupported geometry type %s" % self.typename)
 
 cdef geometry(void *geom):
     """Factory for Fiona geometries"""

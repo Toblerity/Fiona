@@ -69,21 +69,23 @@ class ShapefileCollectionTest(unittest.TestCase):
             self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
 
 class ShapefileWriteCollectionTest(unittest.TestCase):
-    def test_write(self):
-        
+    def test_write_point(self):
         with collection("docs/data/test_uk.shp", "r") as input:
-            
             schema = input.schema.copy()
             schema['geometry'] = 'Point'
-            
             with collection(
-                "test_write.shp", "w", "ESRI Shapefile", schema
+                "test_write_point.shp", "w", "ESRI Shapefile", schema
                 ) as output:
-
                     for f in input.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
-                        
-                        # geoprocessing
                         f['geometry'] = mapping(asShape(f['geometry']).centroid)
-                        
+                        output.write(f)
+    def test_write_polygon(self):
+        with collection("docs/data/test_uk.shp", "r") as input:
+            schema = input.schema.copy()
+            with collection(
+                "test_write_polygon.shp", "w", "ESRI Shapefile", schema
+                ) as output:
+                    for f in input:
+                        f['geometry'] = mapping(asShape(f['geometry']).buffer(1.0))
                         output.write(f)
 
