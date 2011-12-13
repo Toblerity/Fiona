@@ -12,7 +12,7 @@ GIS packages such as pyproj_, Rtree_, and Shapely_.
 Dependencies
 ============
 
-Fiona requires libgdal 1.3.2+.
+Fiona requires Python 2.6+ and libgdal 1.3.2+.
 
 Building and testing
 ====================
