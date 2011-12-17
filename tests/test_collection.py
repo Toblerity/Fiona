@@ -10,7 +10,7 @@ from shapely.geometry import asShape, mapping
 
 from fiona import collection
 
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+# logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 class ShapefileCollectionTest(unittest.TestCase):
     def test_io(self):

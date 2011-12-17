@@ -7,7 +7,7 @@ import unittest
 from fiona import collection
 from fiona.ogrext import featureRT
 
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+#logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 class PointTest(unittest.TestCase):
     def test_point(self):

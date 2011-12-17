@@ -1,34 +1,25 @@
-# Collection extension module
+# These are extension functions and classes using the OGR C API.
 
 import logging
 import os
 import sys
 from types import IntType, FloatType, StringType, UnicodeType
 
-cdef extern from "Python.h":
-    object  PyString_FromString (char *s)
-    object  PyString_FromStringAndSize (char *s, Py_ssize_t len)
-    char *  PyString_AsString (string)
-    object  PyInt_FromString (char *str, char **pend, int base)
-
-cimport ograpi
-import ogrinit
+from fiona cimport ograpi
+from fiona import ogrinit
 
 log = logging.getLogger("Fiona")
 
-# Geometry extension classes and functions
-
-geometryTypes = [
-    'Unknown', 
-    'Point', 'LineString', 'Polygon', 'MultiPoint', 
+# Mapping of OGR integer geometry types to GeoJSON type names.
+GEOMETRY_TYPES = [
+    'Unknown', 'Point', 'LineString', 'Polygon', 'MultiPoint', 
     'MultiLineString', 'MultiPolygon', 'GeometryCollection' ]
-#    ,
-#    'None', 'LinearRing', 
-#    'Point25D', 'LineString25D', 'Polygon25D', 'MultiPoint25D', 
-#    'MultiLineString25D', 'MultiPolygon25D', 'GeometryCollection25D'
-#    ]
 
-fieldTypes = [
+# Mapping of OGR integer field types to Fiona field type names.
+#
+# Only ints, floats, and unicode strings are supported. On the web, dates and
+# times are represented as strings (see RFC 3339). 
+FIELD_TYPES = [
     'int',          # OFTInteger, Simple 32bit integer
     None,           # OFTIntegerList, List of 32bit integers
     'float',       # OFTReal, Double Precision floating point
@@ -43,12 +34,14 @@ fieldTypes = [
     None,           # OFTDateTime, Date and Time
     ]
 
-fieldTypesMap = {
+# Mapping of Fiona field type names to Python types.
+FIELD_TYPES_MAP = {
     'int':      IntType,
     'float':    FloatType,
     'str':      UnicodeType,
     }
 
+# OGR integer error types.
 OGRERR_NONE = 0
 OGRERR_NOT_ENOUGH_DATA = 1    # not enough data to deserialize */
 OGRERR_NOT_ENOUGH_MEMORY = 2
@@ -59,6 +52,9 @@ OGRERR_FAILURE = 6
 OGRERR_UNSUPPORTED_SRS = 7
 OGRERR_INVALID_HANDLE = 8
 
+
+# Geometry related functions and classes follow.
+
 cdef void * _createOgrGeomFromWKB(object wkb):
     """Make an OGR geometry from a WKB string"""
     geom_type = bytearray(wkb)[1]
@@ -67,13 +63,15 @@ cdef void * _createOgrGeomFromWKB(object wkb):
     ograpi.OGR_G_ImportFromWkb(cogr_geometry, buffer, len(wkb))
     return cogr_geometry
 
+
 cdef _deleteOgrGeom(void *cogr_geometry):
     """Delete an OGR geometry"""
     ograpi.OGR_G_DestroyGeometry(cogr_geometry)
 
 
 cdef class GeomBuilder:
-    """Builds Fiona (GeoJSON) geometries from an OGR geometry handle."""
+    """Builds Fiona (GeoJSON) geometries from an OGR geometry handle.
+    """
     cdef void *geom
     cdef object code
     cdef object typename
@@ -90,12 +88,16 @@ cdef class GeomBuilder:
                 values.append(ograpi.OGR_G_GetZ(geom, i))
             coords.append(tuple(values))
         return coords
+    
     cpdef _buildPoint(self):
         return {'type': 'Point', 'coordinates': self._buildCoords(self.geom)[0]}
+    
     cpdef _buildLineString(self):
         return {'type': 'LineString', 'coordinates': self._buildCoords(self.geom)}
+    
     cpdef _buildLinearRing(self):
         return {'type': 'LinearRing', 'coordinates': self._buildCoords(self.geom)}
+    
     cdef _buildParts(self, void *geom):
         cdef int j
         cdef void *part
@@ -104,25 +106,31 @@ cdef class GeomBuilder:
             part = ograpi.OGR_G_GetGeometryRef(geom, j)
             parts.append(GeomBuilder().build(part))
         return parts
+    
     cpdef _buildPolygon(self):
         coordinates = [p['coordinates'] for p in self._buildParts(self.geom)]
         return {'type': 'Polygon', 'coordinates': coordinates}
+    
     cpdef _buildMultiPoint(self):
         coordinates = [p['coordinates'] for p in self._buildParts(self.geom)]
         return {'type': 'MultiPoint', 'coordinates': coordinates}
+    
     cpdef _buildMultiLineString(self):
         coordinates = [p['coordinates'] for p in self._buildParts(self.geom)]
         return {'type': 'MultiLineString', 'coordinates': coordinates}
+    
     cpdef _buildMultiPolygon(self):
         coordinates = [p['coordinates'] for p in self._buildParts(self.geom)]
         return {'type': 'MultiPolygon', 'coordinates': coordinates}
+    
     cdef build(self, void *geom):
         # The only method anyone needs to call
         self.code = ograpi.OGR_G_GetGeometryType(geom)
-        self.typename = geometryTypes[self.code]
+        self.typename = GEOMETRY_TYPES[self.code]
         self.ndims = ograpi.OGR_G_GetCoordinateDimension(geom)
         self.geom = geom
         return getattr(self, '_build' + self.typename)()
+    
     cpdef build_wkb(self, object wkb):
         # The only other method anyone needs to call
         cdef object data = wkb
@@ -133,7 +141,8 @@ cdef class GeomBuilder:
 
 
 cdef class OGRGeomBuilder:
-
+    """Builds OGR geometries from Fiona geometries.
+    """
     cdef object coordinates
     cdef object typename
     cdef object ndims
@@ -149,6 +158,7 @@ cdef class OGRGeomBuilder:
             x, y = self.coordinates
             ograpi.OGR_G_AddPoint_2D(cogr_geometry, x, y)
         return cogr_geometry
+    
     cdef void * _buildLineString(self):
         cdef void *cogr_geometry
         self.ndims = len(self.coordinates[0])
@@ -162,6 +172,7 @@ cdef class OGRGeomBuilder:
                 x, y = values
                 ograpi.OGR_G_AddPoint_2D(cogr_geometry, x, y)
         return cogr_geometry
+    
     cdef void * _buildLinearRing(self):
         cdef void *cogr_geometry
         self.ndims = len(self.coordinates[0])
@@ -178,6 +189,7 @@ cdef class OGRGeomBuilder:
         log.debug("Closing ring")
         ograpi.OGR_G_CloseRings(cogr_geometry)
         return cogr_geometry
+    
     cdef void * _buildPolygon(self):
         cdef void *cogr_ring
         cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(3)
@@ -190,6 +202,24 @@ cdef class OGRGeomBuilder:
             ograpi.OGR_G_AddGeometryDirectly(cogr_geometry, cogr_ring)
             log.debug("Added ring %s", ring)
         return cogr_geometry
+
+    cdef void * _buildMultiPoint(self):
+        cdef void *cogr_part
+        cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(4)
+        self.ndims = len(self.coordinates[0])
+        for values in self.coordinates:
+            log.debug("Adding point %s", values)
+            cogr_part = ograpi.OGR_G_CreateGeometry(1)
+            if len(values) > 2:
+                x, y, z = values
+                ograpi.OGR_G_AddPoint(cogr_part, x, y, z)
+            else:
+                x, y = values
+                ograpi.OGR_G_AddPoint_2D(cogr_part, x, y)
+            ograpi.OGR_G_AddGeometryDirectly(cogr_geometry, cogr_part)
+            log.debug("Added point %s", values)
+        return cogr_geometry
+
     cdef void * build(self, object geometry):
         self.typename = geometry['type']
         self.coordinates = geometry['coordinates']
@@ -201,16 +231,29 @@ cdef class OGRGeomBuilder:
             return self._buildLinearRing()
         elif self.typename == 'Polygon':
             return self._buildPolygon()
+        elif self.typename == 'MultiPoint':
+            return self._buildMultiPoint()
         else:
             raise ValueError("Unsupported geometry type %s" % self.typename)
+
 
 cdef geometry(void *geom):
     """Factory for Fiona geometries"""
     return GeomBuilder().build(geom)
 
-# Feature extension classes and functions
+
+def geometryRT(geometry):
+    # For testing purposes
+    cdef void *cogr_geometry = OGRGeomBuilder().build(geometry)
+    log.debug("Geometry: %s" % ograpi.OGR_G_ExportToJson(cogr_geometry))
+    return GeomBuilder().build(cogr_geometry)
+
+
+# Feature extension classes and functions follow.
 
 cdef class FeatureBuilder:
+    """Build Fiona features from OGR feature pointers.
+    """
 
     cdef build(self, void *feature):
         # The only method anyone ever needs to call
@@ -221,12 +264,12 @@ cdef class FeatureBuilder:
         for i in range(ograpi.OGR_F_GetFieldCount(feature)):
             fdefn = ograpi.OGR_F_GetFieldDefnRef(feature, i)
             key = ograpi.OGR_Fld_GetNameRef(fdefn)
-            fieldtypename = fieldTypes[ograpi.OGR_Fld_GetType(fdefn)]
+            fieldtypename = FIELD_TYPES[ograpi.OGR_Fld_GetType(fdefn)]
             if not fieldtypename:
                 raise ValueError(
                     "Invalid field type %s" % ograpi.OGR_Fld_GetType(fdefn))
             # TODO: other types
-            fieldtype = fieldTypesMap[fieldtypename]
+            fieldtype = FIELD_TYPES_MAP[fieldtypename]
             if fieldtype is IntType:
                 props[key] = ograpi.OGR_F_GetFieldAsInteger(feature, i)
             elif fieldtype is FloatType:
@@ -248,8 +291,6 @@ cdef class FeatureBuilder:
 
 cdef class OGRFeatureBuilder:
     
-    #cdef void *cogr_featuredefn
-
     cdef void * build(self, feature, collection):
         cdef WritingSession session
         session = collection.session
@@ -259,7 +300,7 @@ cdef class OGRFeatureBuilder:
         ograpi.OGR_F_SetGeometryDirectly(cogr_feature, cogr_geometry)
         for key, value in feature['properties'].items():
             i = ograpi.OGR_F_GetFieldIndex(cogr_feature, key)
-            ptype = type(value) #fieldTypesMap[key]
+            ptype = type(value) #FIELD_TYPES_MAP[key]
             if ptype is IntType:
                 ograpi.OGR_F_SetFieldInteger(cogr_feature, i, value)
             elif ptype is FloatType:
@@ -268,10 +309,9 @@ cdef class OGRFeatureBuilder:
                 ograpi.OGR_F_SetFieldString(cogr_feature, i, value)
             else:
                 raise ValueError("Invalid field type %s" % ptype)
-
             log.debug("Set field %s: %s" % (key, value))
-
         return cogr_feature
+
 
 def featureRT(feature, collection):
     # For testing purposes
@@ -320,7 +360,7 @@ cdef class Session:
         n = ograpi.OGR_FD_GetFieldCount(cogr_featuredefn)
         for i from 0 <= i < n:
             cogr_fielddefn = ograpi.OGR_FD_GetFieldDefn(cogr_featuredefn, i)
-            fieldtypename = fieldTypes[ograpi.OGR_Fld_GetType(cogr_fielddefn)]
+            fieldtypename = FIELD_TYPES[ograpi.OGR_Fld_GetType(cogr_fielddefn)]
             if not fieldtypename:
                 raise ValueError(
                     "Invalid field type %s" % ograpi.OGR_Fld_GetType(
@@ -328,7 +368,7 @@ cdef class Session:
             key = ograpi.OGR_Fld_GetNameRef(cogr_fielddefn)
             props.append((key, fieldtypename))
         geom_type = ograpi.OGR_FD_GetGeomType(cogr_featuredefn)
-        return {'properties': dict(props), 'geometry': geometryTypes[geom_type]}
+        return {'properties': dict(props), 'geometry': GEOMETRY_TYPES[geom_type]}
 
     def isactive(self):
         if self.cogr_layer != NULL and self.cogr_ds != NULL:
@@ -339,16 +379,6 @@ cdef class Session:
 
 cdef class WritingSession(Session):
     
-#    cdef void *cogr_ds
-#    cdef void *cogr_layer
-#
-#    def __cinit__(self):
-#        self.cogr_ds = NULL
-#        self.cogr_layer = NULL
-#
-#    def __dealloc__(self):
-#        self.stop()
-
     def start(self, collection):
         cdef void *cogr_fielddefn
         cdef void *cogr_driver
@@ -366,12 +396,14 @@ cdef class WritingSession(Session):
             else:
                 self.cogr_ds = ograpi.OGROpen(path, 1, NULL)
                 cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
+        
         elif collection.mode == 'w':
             cogr_driver = ograpi.OGRGetDriverByName(collection.driver)
             if os.path.exists(path):
                 ograpi.OGR_Dr_DeleteDataSource(cogr_driver, path)
             self.cogr_ds = ograpi.OGR_Dr_CreateDataSource(
                 cogr_driver, path, NULL)
+
         if not self.cogr_ds:
             raise RuntimeError("Failed to open %s" % path)
         log.debug("Created datasource")
@@ -380,7 +412,7 @@ cdef class WritingSession(Session):
             self.cogr_ds, 
             collection.name,
             NULL,
-            geometryTypes.index(collection.schema['geometry']),
+            GEOMETRY_TYPES.index(collection.schema['geometry']),
             NULL
             )
         log.debug("Created layer")
@@ -389,12 +421,11 @@ cdef class WritingSession(Session):
             log.debug("Creating field: %s %s", key, value)
             cogr_fielddefn = ograpi.OGR_Fld_Create(
                 key, 
-                fieldTypes.index(value) )
+                FIELD_TYPES.index(value) )
             ograpi.OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1)
         log.debug("Created fields")
 
     def write(self, feature, collection):
-        #cdef ograpi.OGRerrorType OGRERROR
         log.debug("Creating feature in layer: %s" % feature)
         try:
             for key in feature['properties']:
@@ -409,19 +440,6 @@ cdef class WritingSession(Session):
         if result != OGRERR_NONE:
             raise RuntimeError("Failed to add feature: %s" % result)
         return result
-
-#    def stop(self):
-#        self.cogr_layer = NULL
-#        if self.cogr_ds != NULL:
-#            ograpi.OGR_DS_SyncToDisk(self.cogr_ds)
-#            ograpi.OGR_DS_Destroy(self.cogr_ds)
-#        self.cogr_ds = NULL
-#
-#    cdef isactive(self):
-#        if self.cogr_layer != NULL and self.cogr_ds != NULL:
-#            return 1
-#        else:
-#            return 0
 
 
 cdef class Iterator:
@@ -443,9 +461,6 @@ cdef class Iterator:
             ograpi.OGR_L_SetSpatialFilterRect(
                 cogr_layer, bbox[0], bbox[1], bbox[2], bbox[3])
 
-    def __del__(self):
-        pass #self._session.stop()
-        
     def __iter__(self):
         return self
 
@@ -461,70 +476,7 @@ cdef class Iterator:
         ograpi.OGR_F_Destroy(cogr_feature)
         return feature
 
-# Workspace
-
 # Ensure that errors end up in the python session's stdout
 cdef void * errorHandler(eErrClass, int err_no, char *msg):
     print msg
-
-#cdef class Workspace:
-#
-#    # Path to actual data storage
-#    cdef public path
-#    cdef public mode
-#    # Feature collections
-#    cdef _collections
-#
-#    def __init__(self, path, mode="r"):
-#        self.path = path
-#        self.mode = mode
-#        self._collections = None
-#
-#    def _read_collections(self):
-#        cdef void * cogr_ds
-#        cdef void * cogr_layer
-#        cdef void * cogr_layerdefn
-#        collections = {}
-#
-#        # start session
-#        cogr_ds = ograpi.OGROpen(self.path, int(self.mode=="r+"), NULL)
-#        ograpi.CPLSetErrorHandler(<void *>errorHandler)
-#
-#        n = ograpi.OGR_DS_GetLayerCount(cogr_ds)
-#        for i in range(n):
-#            cogr_layer = ograpi.OGR_DS_GetLayer(cogr_ds, i)
-#            cogr_layerdefn = ograpi.OGR_L_GetLayerDefn(cogr_layer)
-#            layer_name = ograpi.OGR_FD_GetName(cogr_layerdefn)
-#            collection = Collection(layer_name, self)
-#            collections[layer_name] = collection
-#        
-#        # end session
-#        ograpi.OGR_DS_Destroy(cogr_ds)
-#        
-#        return collections
-#
-#    property collections:
-#        # A lazy property
-#        def __get__(self):
-#            if not self._collections:
-#                self._collections = self._read_collections()
-#            return self._collections
-#
-#    def __getitem__(self, name):
-#        return self.collections.__getitem__(name)
-#
-#    def keys(self):
-#        return self.collections.keys()
-#   
-#    def values(self):
-#        return self.collections.values()
-#
-#    def items(self):
-#        return self.collections.items()
-#
-#
-# Factories
-#
-#def workspace(path):
-#    return Workspace(path)
 

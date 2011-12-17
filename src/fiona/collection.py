@@ -2,7 +2,7 @@
 
 import os
 
-from ogrext import Iterator, Session, WritingSession
+from fiona.ogrext import Iterator, Session, WritingSession
 
 
 class Collection(object):
