@@ -69,6 +69,42 @@ cdef _deleteOgrGeom(void *cogr_geometry):
     ograpi.OGR_G_DestroyGeometry(cogr_geometry)
 
 
+class DimensionsHandler(object):
+    """Determines the number of dimensions of a Fiona geometry.
+    """
+
+    coordinates = None
+
+    def getNumDimsPoint(self):
+        return len(self.coordinates)
+    
+    def getNumDimsLineString(self):
+        return len(self.coordinates[0])
+    
+    def getNumDimsLinearRing(self):
+        return len(self.coordinates[0])
+    
+    def getNumDimsPolygon(self):
+        return len(self.coordinates[0][0])
+    
+    def getNumDimsMultiPoint(self):
+        return len(self.coordinates[0])
+    
+    def getNumDimsMultiLineString(self):
+        return len(self.coordinates[0][0])
+    
+    def getNumDimsMultiPolygon(self):
+        return len(self.coordinates[0][0][0])
+    
+    def getNumDimsGeometryCollection(self):
+        first = self.coordinates[0]
+        return self.getNumDims(first['type'], first['coordinates'])
+    
+    def getNumDims(self, geom_type, coordinates):
+        self.coordinates = coordinates
+        return getattr(self, 'getNumDims' + geom_type)()
+
+
 cdef class GeomBuilder:
     """Builds Fiona (GeoJSON) geometries from an OGR geometry handle.
     """
@@ -122,6 +158,10 @@ cdef class GeomBuilder:
     cpdef _buildMultiPolygon(self):
         coordinates = [p['coordinates'] for p in self._buildParts(self.geom)]
         return {'type': 'MultiPolygon', 'coordinates': coordinates}
+
+    cpdef _buildGeometryCollection(self):
+        parts = self._buildParts(self.geom)
+        return {'type': 'GeometryCollection', 'geometries': parts}
     
     cdef build(self, void *geom):
         # The only method anyone needs to call
@@ -149,7 +189,6 @@ cdef class OGRGeomBuilder:
 
     cdef void * _buildPoint(self):
         cdef void *cogr_geometry
-        self.ndims = len(self.coordinates)
         cogr_geometry = ograpi.OGR_G_CreateGeometry(1)
         if self.ndims > 2:
             x, y, z = self.coordinates
@@ -161,7 +200,6 @@ cdef class OGRGeomBuilder:
     
     cdef void * _buildLineString(self):
         cdef void *cogr_geometry
-        self.ndims = len(self.coordinates[0])
         cogr_geometry = ograpi.OGR_G_CreateGeometry(2)
         for values in self.coordinates:
             log.debug("Adding point %s", values)
@@ -175,7 +213,6 @@ cdef class OGRGeomBuilder:
     
     cdef void * _buildLinearRing(self):
         cdef void *cogr_geometry
-        self.ndims = len(self.coordinates[0])
         cogr_geometry = ograpi.OGR_G_CreateGeometry(101)
         for values in self.coordinates:
             log.debug("Adding point %s", values)
@@ -206,7 +243,6 @@ cdef class OGRGeomBuilder:
     cdef void * _buildMultiPoint(self):
         cdef void *cogr_part
         cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(4)
-        self.ndims = len(self.coordinates[0])
         for values in self.coordinates:
             log.debug("Adding point %s", values)
             cogr_part = ograpi.OGR_G_CreateGeometry(1)
@@ -220,9 +256,47 @@ cdef class OGRGeomBuilder:
             log.debug("Added point %s", values)
         return cogr_geometry
 
+    cdef void * _buildMultiLineString(self):
+        cdef void *cogr_part
+        cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(5)
+        for line in self.coordinates:
+            log.debug("Adding line %s", line)
+            cogr_part = OGRGeomBuilder().build(
+                {'type': 'LineString', 'coordinates': line} )
+            log.debug("Built line")
+            ograpi.OGR_G_AddGeometryDirectly(cogr_geometry, cogr_part)
+            log.debug("Added line %s", line)
+        return cogr_geometry
+
+    cdef void * _buildMultiPolygon(self):
+        cdef void *cogr_part
+        cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(6)
+        for part in self.coordinates:
+            log.debug("Adding polygon %s", part)
+            cogr_part = OGRGeomBuilder().build(
+                {'type': 'Polygon', 'coordinates': part} )
+            log.debug("Built polygon")
+            ograpi.OGR_G_AddGeometryDirectly(cogr_geometry, cogr_part)
+            log.debug("Added polygon %s", part)
+        return cogr_geometry
+
+    cdef void * _buildGeometryCollection(self):
+        cdef void *cogr_part
+        cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(7)
+        for part in self.coordinates:
+            log.debug("Adding part %s", part)
+            cogr_part = OGRGeomBuilder().build(part)
+            log.debug("Built part")
+            ograpi.OGR_G_AddGeometryDirectly(cogr_geometry, cogr_part)
+            log.debug("Added part %s", part)
+        return cogr_geometry
+
     cdef void * build(self, object geometry):
+        handler = DimensionsHandler()
         self.typename = geometry['type']
-        self.coordinates = geometry['coordinates']
+        self.coordinates = geometry.get('coordinates')
+        if self.coordinates:
+            self.ndims = handler.getNumDims(self.typename, self.coordinates)
         if self.typename == 'Point':
             return self._buildPoint()
         elif self.typename == 'LineString':
@@ -233,6 +307,14 @@ cdef class OGRGeomBuilder:
             return self._buildPolygon()
         elif self.typename == 'MultiPoint':
             return self._buildMultiPoint()
+        elif self.typename == 'MultiLineString':
+            return self._buildMultiLineString()
+        elif self.typename == 'MultiPolygon':
+            return self._buildMultiPolygon()
+        elif self.typename == 'GeometryCollection':
+            self.coordinates = geometry.get('geometries')
+            self.ndims = handler.getNumDims(self.typename, self.coordinates)
+            return self._buildGeometryCollection()
         else:
             raise ValueError("Unsupported geometry type %s" % self.typename)
 

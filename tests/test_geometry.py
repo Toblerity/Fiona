@@ -7,6 +7,69 @@ from fiona.ogrext import GeomBuilder, geometryRT
 def geometry_wkb(wkb):
     return GeomBuilder().build_wkb(wkb)
 
+
+class PointRoundTripTest(unittest.TestCase):
+    def test(self):
+        geom = {'type': "Point", 'coordinates': (0.0, 0.0)}
+        result = geometryRT(geom)
+        self.failUnlessEqual(result['type'], "Point")
+        self.failUnlessEqual(result['coordinates'], (0.0, 0.0))
+
+class LineStringRoundTripTest(unittest.TestCase):
+    def test(self):
+        geom = {'type': "LineString", 'coordinates': [(0.0, 0.0), (1.0, 1.0)]}
+        result = geometryRT(geom)
+        self.failUnlessEqual(result['type'], "LineString")
+        self.failUnlessEqual(result['coordinates'], [(0.0, 0.0), (1.0, 1.0)])
+
+class PolygonRoundTripTest(unittest.TestCase):
+    def test(self):
+        geom = {'type': "Polygon", 
+                'coordinates': [[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0)]]}
+        result = geometryRT(geom)
+        self.failUnlessEqual(result['type'], "Polygon")
+        self.failUnlessEqual(
+            result['coordinates'], 
+            [[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]] )
+
+class MultiPointRoundTripTest(unittest.TestCase):
+    def test(self):
+        geom = {'type': "MultiPoint", 'coordinates': [(0.0, 0.0), (1.0, 1.0)]}
+        result = geometryRT(geom)
+        self.failUnlessEqual(result['type'], "MultiPoint")
+        self.failUnlessEqual(result['coordinates'], [(0.0, 0.0), (1.0, 1.0)])
+
+class MultiLineStringRoundTripTest(unittest.TestCase):
+    def test(self):
+        geom = {'type': "MultiLineString", 
+                'coordinates': [[(0.0, 0.0), (1.0, 1.0)]]}
+        result = geometryRT(geom)
+        self.failUnlessEqual(result['type'], "MultiLineString")
+        self.failUnlessEqual(result['coordinates'], [[(0.0, 0.0), (1.0, 1.0)]])
+
+class MultiPolygonRoundTripTest(unittest.TestCase):
+    def test(self):
+        geom = {'type': "MultiPolygon", 
+                'coordinates': [[[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0)]]]}
+        result = geometryRT(geom)
+        self.failUnlessEqual(result['type'], "MultiPolygon")
+        self.failUnlessEqual(
+            result['coordinates'], 
+            [[[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]]] )
+
+class GeometryCollectionRoundTripTest(unittest.TestCase):
+    def test(self):
+        geom = {'type': "GeometryCollection",
+                'geometries': [
+                    {'type': "Point", 'coordinates': (0.0, 0.0)},
+                    {'type': "LineString", 'coordinates': [(0.0, 0.0), (1.0, 1.0)]}
+                ]}
+        result = geometryRT(geom)
+        self.failUnlessEqual(len(result['geometries']), 2)
+        self.failUnlessEqual(
+            [g['type'] for g in result['geometries']], ['Point', 'LineString'] )
+
+
 class PointTest(unittest.TestCase):
     def test_point(self):
         # Hex-encoded Point (0 0)
@@ -68,25 +131,4 @@ class MultiPolygonTest(unittest.TestCase):
         self.failUnlessEqual(min(y), 0.0)
         self.failUnlessEqual(max(x), 1.0)
         self.failUnlessEqual(max(y), 1.0)
-
-class PointRoundTripTest(unittest.TestCase):
-    def test(self):
-        geom = {'type': "Point", 'coordinates': (0.0, 0.0)}
-        result = geometryRT(geom)
-        self.failUnlessEqual(result['type'], "Point")
-        self.failUnlessEqual(result['coordinates'], (0.0, 0.0))
-
-class LineStringRoundTripTest(unittest.TestCase):
-    def test(self):
-        geom = {'type': "LineString", 'coordinates': [(0.0, 0.0), (1.0, 1.0)]}
-        result = geometryRT(geom)
-        self.failUnlessEqual(result['type'], "LineString")
-        self.failUnlessEqual(result['coordinates'], [(0.0, 0.0), (1.0, 1.0)])
-
-class MultiPointRoundTripTest(unittest.TestCase):
-    def test(self):
-        geom = {'type': "MultiPoint", 'coordinates': [(0.0, 0.0), (1.0, 1.0)]}
-        result = geometryRT(geom)
-        self.failUnlessEqual(result['type'], "MultiPoint")
-        self.failUnlessEqual(result['coordinates'], [(0.0, 0.0), (1.0, 1.0)])
 
