@@ -66,7 +66,9 @@ cdef void * _createOgrGeomFromWKB(object wkb):
 
 cdef _deleteOgrGeom(void *cogr_geometry):
     """Delete an OGR geometry"""
-    ograpi.OGR_G_DestroyGeometry(cogr_geometry)
+    if cogr_geometry != NULL:
+        ograpi.OGR_G_DestroyGeometry(cogr_geometry)
+    cogr_geometry = NULL
 
 
 class DimensionsHandler(object):
@@ -325,16 +327,21 @@ cdef geometry(void *geom):
 
 
 def geometryRT(geometry):
-    # For testing purposes
+    # For testing purposes only, leaks the JSON data
     cdef void *cogr_geometry = OGRGeomBuilder().build(geometry)
     log.debug("Geometry: %s" % ograpi.OGR_G_ExportToJson(cogr_geometry))
-    return GeomBuilder().build(cogr_geometry)
+    result = GeomBuilder().build(cogr_geometry)
+    _deleteOgrGeom(cogr_geometry)
+    return result
 
 
 # Feature extension classes and functions follow.
 
 cdef class FeatureBuilder:
     """Build Fiona features from OGR feature pointers.
+
+    No OGR objects are allocated by this function and the feature
+    argument is not destroyed.
     """
 
     cdef build(self, void *feature):
@@ -373,6 +380,12 @@ cdef class FeatureBuilder:
 
 cdef class OGRFeatureBuilder:
     
+    """Builds an OGR Feature from a Fiona feature mapping.
+
+    Allocates one OGR Feature which should be destroyed by the caller.
+    Borrows a layer definition from the collection.
+    """
+
     cdef void * build(self, feature, collection):
         cdef WritingSession session
         session = collection.session
@@ -395,12 +408,21 @@ cdef class OGRFeatureBuilder:
         return cogr_feature
 
 
+cdef _deleteOgrFeature(void *cogr_feature):
+    """Delete an OGR feature"""
+    if cogr_feature != NULL:
+        ograpi.OGR_F_Destroy(cogr_feature)
+    cogr_feature = NULL
+
+
 def featureRT(feature, collection):
-    # For testing purposes
+    # For testing purposes only, leaks the JSON data
     cdef void *cogr_feature = OGRFeatureBuilder().build(feature, collection)
     cdef void *cogr_geometry = ograpi.OGR_F_GetGeometryRef(cogr_feature)
     log.debug("Geometry: %s" % ograpi.OGR_G_ExportToJson(cogr_geometry))
-    return FeatureBuilder().build(cogr_feature)
+    result = FeatureBuilder().build(cogr_feature)
+    _deleteOgrFeature(cogr_feature)
+    return result
 
 
 # Collection-related extension classes and functions
@@ -505,6 +527,7 @@ cdef class WritingSession(Session):
                 key, 
                 FIELD_TYPES.index(value) )
             ograpi.OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1)
+            ograpi.OGR_Fld_Destroy(cogr_fielddefn)
         log.debug("Created fields")
 
     def write(self, feature, collection):
@@ -521,6 +544,7 @@ cdef class WritingSession(Session):
         result = ograpi.OGR_L_CreateFeature(cogr_layer, cogr_feature)
         if result != OGRERR_NONE:
             raise RuntimeError("Failed to add feature: %s" % result)
+        _deleteOgrFeature(cogr_feature)
         return result
 
 
@@ -555,7 +579,7 @@ cdef class Iterator:
         if cogr_feature == NULL:
             raise StopIteration
         feature = FeatureBuilder().build(cogr_feature)
-        ograpi.OGR_F_Destroy(cogr_feature)
+        _deleteOgrFeature(cogr_feature)
         return feature
 
 # Ensure that errors end up in the python session's stdout

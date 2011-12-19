@@ -42,6 +42,7 @@ cdef extern from "ogr_api.h":
     int     OGR_FD_GetGeomType (void *featuredefn)
     char *  OGR_FD_GetName (void *layer_defn)
     void *  OGR_Fld_Create (char *name, int fieldtype)
+    void    OGR_Fld_Destroy (void *fielddefn)
     char *  OGR_Fld_GetNameRef (void *fielddefn)
     int     OGR_Fld_GetType (void *fielddefn)
     void    OGR_Fld_Set (void *fielddefn, char *name, int fieldtype, int width, int precision, int justification)
