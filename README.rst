@@ -9,6 +9,11 @@ Fiona provides a minimal Python interface to the open source GIS community's
 most trusted geodata access library and integrates readily with other Python
 GIS packages such as pyproj_, Rtree_, and Shapely_.
 
+How minimal? Fiona can read features as mappings from shapefiles or
+other GIS vector formats and write mappings as features to files using
+the same formats. That's all. There aren't any feature or geometry
+classes. Features and their geometries are just data.
+
 Dependencies
 ============
 
@@ -46,8 +51,8 @@ the GeoJSON format::
       
       # Open a new sink for features
       with collection(
-          "test_write.shp", "w", driver="ESRI Shapefile", schema=schema
-          ) as sink:
+              "test_write.shp", "w", driver="ESRI Shapefile", schema=schema
+              ) as sink:
           
           # Process only the features intersecting a box
           for f in source.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
