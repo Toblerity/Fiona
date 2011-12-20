@@ -19,25 +19,27 @@ Dependencies
 
 Fiona requires Python 2.6+ and libgdal 1.3.2+.
 
-Building and testing
-====================
+Installation
+============
 
-Tests require Nose. From the distribution root::
+Assuming you will install in a virtual environment::
 
   $ virtualenv .
   $ source bin/activate
-  (Fiona)$ ./cypsrc
-  (Fiona)$ python setup.py build_ext -I ${GDAL}/include -L ${GDAL}/lib develop
-  (Fiona)$ python setup.py nosetests
+  (Fiona)$ pip install -d Fiona Fiona-0.5.tar.gz
+  (Fiona)$ export GDAL=${PATH_TO_GDAL}
+  (Fiona)$ cd Fiona
+  (Fiona)$ python setup.py build_ext -I ${GDAL}/include -L ${GDAL}/lib install
 
-If GDAL/OGR headers and libs aren't installed to a well known location, you'll
-need to pass the locations in using setup arguments as shown above.
+If GDAL/OGR headers and libs aren't installed to a well known location, you
+must pass the locations in using setup arguments as shown above.
 
 Usage
 =====
 
 Collections are much like ``file`` objects. Features are mappings modeled on
-the GeoJSON format::
+the GeoJSON format and if you want to do anything fancy with them you will
+probably need Shapely or something like it::
 
   from fiona import collection
   from shapely import asShape, mapping
@@ -64,6 +66,21 @@ the GeoJSON format::
               sink.write(f)
               
       # The sink shapefile is written to disk when its ``with`` block ends
+
+Development and testing
+=======================
+
+Building from the source requires Cython. Tests require Nose. From the
+distribution root::
+
+  $ virtualenv .
+  $ source bin/activate
+  (Fiona)$ ./cypsrc
+  (Fiona)$ export GDAL=${PATH_TO_GDAL}
+  (Fiona)$ python setup.py build_ext -I ${GDAL}/include -L ${GDAL}/lib develop
+  (Fiona)$ python setup.py nosetests
+
+
 
 .. _libgdal: http://www.gdal.org
 .. _pyproj: http://pypi.python.org/pypi/pyproj/

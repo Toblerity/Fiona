@@ -84,9 +84,13 @@ def collection(path, mode='r', driver=None, schema=None, crs=None):
     ignored.
     
     """
-    if mode == 'r':
+    if mode in ('a', 'r'):
         c = Collection(path, mode)
-    elif mode in ('a', 'w'):
+    elif mode == 'w':
+        if not driver:
+            raise ValueError("An OGR driver name must be specified")
+        if not schema:
+            raise ValueError("A collection schema must be specified")
         c = Collection(path, mode, driver, schema)
     else:
         raise ValueError("Invalid mode: %s" % mode)

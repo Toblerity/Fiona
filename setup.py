@@ -1,6 +1,8 @@
-from setuptools import setup
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 from distutils.core import Extension
-from Cython.Distutils import build_ext as build_pyx
 
 libs = ['gdal']
 
@@ -20,7 +22,7 @@ setup(name          = 'Fiona',
       long_description = readme_text,
       package_dir = {'': 'src'},
       packages = ['fiona'],
-      install_requires  = ['setuptools', 'Cython'],
+      install_requires  = [], #'setuptools', 'Cython'],
       tests_require = ['nose'],
       ext_modules = [
         Extension('fiona.ogrinit', ['src/fiona/ogrinit.c'], libraries=libs),
@@ -29,7 +31,6 @@ setup(name          = 'Fiona',
             ['src/fiona/ogrext.c'], 
             libraries=libs),
         ],
-      cmdclass = {'build_ext': build_pyx},
       classifiers   = [
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',

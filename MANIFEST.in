@@ -1,0 +1,5 @@
+exclude *.txt
+recursive-include docs *
+include CHANGES.txt CREDITS.txt LICENSE.txt VERSION.txt README.rst
+recursive-include tests *.py *.txt
+exclude MANIFEST.in

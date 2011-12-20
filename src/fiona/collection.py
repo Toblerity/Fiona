@@ -18,12 +18,12 @@ class Collection(object):
         self._len = -1
         self._schema = None
         self.path = path
+        self.name = os.path.basename(os.path.splitext(path)[0])
         self.mode = mode
         self.driver = driver
         if schema:
             self._schema = schema
         self.workspace = workspace
-        self.name = os.path.basename(os.path.splitext(path)[0])
 
     def __enter__(self):
         return self

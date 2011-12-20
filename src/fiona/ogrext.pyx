@@ -487,48 +487,54 @@ cdef class WritingSession(Session):
         cdef void *cogr_fielddefn
         cdef void *cogr_driver
         path = collection.path
-        
-        # Presume we have a collection schema already (evaluate this)
-        if not collection.schema:
-            raise ValueError("A collection schema has not been defined")
-        
+
         if collection.mode == 'a':
-            if not os.path.exists(path):
-                cogr_driver = ograpi.OGRGetDriverByName(collection.driver)
-                self.cogr_ds = ograpi.OGR_Dr_CreateDataSource(
-                    cogr_driver, path, NULL)
-            else:
-                self.cogr_ds = ograpi.OGROpen(path, 1, NULL)
-                cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
-        
-        elif collection.mode == 'w':
-            cogr_driver = ograpi.OGRGetDriverByName(collection.driver)
             if os.path.exists(path):
-                ograpi.OGR_Dr_DeleteDataSource(cogr_driver, path)
+                self.cogr_ds = ograpi.OGROpen(path, 1, NULL)
+                if self.cogr_ds == NULL:
+                    raise RuntimeError("Failed to open %s" % path)
+                cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
+                self.cogr_layer = ograpi.OGR_DS_GetLayerByName(
+                                        self.cogr_ds, collection.name)
+                if self.cogr_layer == NULL:
+                    raise RuntimeError(
+                        "Failed to get layer %s" % collection.name)
+            else:
+                raise OSError("No such file or directory %s" % path)
+
+        elif collection.mode == 'w':
+            if os.path.exists(path):
+                self.cogr_ds = ograpi.OGROpen(path, 0, NULL)
+                if self.cogr_ds != NULL:
+                    cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
+                    ograpi.OGR_DS_Destroy(self.cogr_ds)
+                    ograpi.OGR_Dr_DeleteDataSource(cogr_driver, path)
+                    log.debug("Deleted pre-existing data at %s", path)
+            cogr_driver = ograpi.OGRGetDriverByName(collection.driver)
             self.cogr_ds = ograpi.OGR_Dr_CreateDataSource(
                 cogr_driver, path, NULL)
+            if self.cogr_ds == NULL:
+                raise RuntimeError("Failed to open %s" % path)
+            
+            self.cogr_layer = ograpi.OGR_DS_CreateLayer(
+                self.cogr_ds, 
+                collection.name,
+                NULL,
+                GEOMETRY_TYPES.index(collection.schema['geometry']),
+                NULL
+                )
+            log.debug("Created layer")
+            
+            for key, value in collection.schema['properties'].items():
+                log.debug("Creating field: %s %s", key, value)
+                cogr_fielddefn = ograpi.OGR_Fld_Create(
+                    key, 
+                    FIELD_TYPES.index(value) )
+                ograpi.OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1)
+                ograpi.OGR_Fld_Destroy(cogr_fielddefn)
+            log.debug("Created fields")
 
-        if not self.cogr_ds:
-            raise RuntimeError("Failed to open %s" % path)
-        log.debug("Created datasource")
-        
-        self.cogr_layer = ograpi.OGR_DS_CreateLayer(
-            self.cogr_ds, 
-            collection.name,
-            NULL,
-            GEOMETRY_TYPES.index(collection.schema['geometry']),
-            NULL
-            )
-        log.debug("Created layer")
-
-        for key, value in collection.schema['properties'].items():
-            log.debug("Creating field: %s %s", key, value)
-            cogr_fielddefn = ograpi.OGR_Fld_Create(
-                key, 
-                FIELD_TYPES.index(value) )
-            ograpi.OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1)
-            ograpi.OGR_Fld_Destroy(cogr_fielddefn)
-        log.debug("Created fields")
+        log.debug("Writing started")
 
     def write(self, feature, collection):
         log.debug("Creating feature in layer: %s" % feature)
