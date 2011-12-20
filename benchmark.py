@@ -1,21 +1,20 @@
 
 import timeit
-import fiona
+from fiona import collection
 import ogr
 
-PATH = 'docs/data'
+PATH = 'docs/data/test_uk.shp'
 NAME = 'test_uk'
 
 # Fiona
 s = """
-w = fiona.workspace(PATH)
-c = w[NAME]
-for f in c:
-    id = f.id
+with collection(PATH, "r") as c:
+    for f in c:
+        id = f["id"]
 """
 t = timeit.Timer(
     stmt=s,
-    setup='from __main__ import fiona, PATH, NAME'
+    setup='from __main__ import collection, PATH, NAME'
     )
 print "Fiona (Cython)"
 print "%.2f usec/pass" % (1000000 * t.timeit(number=100)/100)
