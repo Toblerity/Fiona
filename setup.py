@@ -4,8 +4,6 @@ except ImportError:
     from distutils.core import setup
 from distutils.core import Extension
 
-libs = ['gdal']
-
 # Get text from README.txt
 readme_text = file('README.rst', 'rb').read()
 
@@ -25,11 +23,8 @@ setup(name          = 'Fiona',
       install_requires  = [], #'setuptools', 'Cython'],
       tests_require = ['nose'],
       ext_modules = [
-        Extension('fiona.ogrinit', ['src/fiona/ogrinit.c'], libraries=libs),
-        Extension(
-            'fiona.ogrext', 
-            ['src/fiona/ogrext.c'], 
-            libraries=libs),
+        Extension('fiona.ogrinit', ['src/fiona/ogrinit.c']),
+        Extension('fiona.ogrext', ['src/fiona/ogrext.c']),
         ],
       classifiers   = [
         'Development Status :: 3 - Alpha',
