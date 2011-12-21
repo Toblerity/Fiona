@@ -22,17 +22,21 @@ Fiona requires Python 2.6+ and libgdal 1.3.2+.
 Installation
 ============
 
-Assuming you will install in a virtual environment::
+Assuming you will install in a virtual environment and gdal-config_ is
+properly installed::
 
   $ virtualenv .
   $ source bin/activate
   (Fiona)$ pip install -d Fiona Fiona-0.5.tar.gz
-  (Fiona)$ export GDAL=${PATH_TO_GDAL}
   (Fiona)$ cd Fiona
-  (Fiona)$ python setup.py build_ext -I ${GDAL}/include -L ${GDAL}/lib install
+  (Fiona)$ python setup.py build_ext $(gdal-config --cflags) $(gdal-config --libs) install
 
-If GDAL/OGR headers and libs aren't installed to a well known location, you
-must pass the locations in using setup arguments as shown above.
+If gdal-config is not available or if GDAL/OGR headers and libs aren't
+installed to a well known location, you must pass the build options
+and locations in using setup arguments as shown above::
+
+  (Fiona)$ python setup.py build_ext -I/path/to/include -L/path/to/lib -lgdal install
+
 
 Usage
 =====
@@ -76,9 +80,8 @@ distribution root::
   $ virtualenv .
   $ source bin/activate
   (Fiona)$ ./cypsrc
-  (Fiona)$ export GDAL=${PATH_TO_GDAL}
-  (Fiona)$ python setup.py build_ext -I ${GDAL}/include -L ${GDAL}/lib develop
-  (Fiona)$ python setup.py nosetests
+  (Fiona)$ python setup.py build_ext $(gdal-config --cflags) $(gdal-config --libs) develop
+  (Fiona)$ python setup.py $(gdal-config --cflags) $(gdal-config --libs) nosetests
 
 
 
@@ -86,4 +89,5 @@ distribution root::
 .. _pyproj: http://pypi.python.org/pypi/pyproj/
 .. _Rtree: http://pypi.python.org/pypi/Rtree/
 .. _Shapely: http://pypi.python.org/pypi/Shapely/
+.. _gdal-config: http://www.gdal.org/gdal-config.html
 
