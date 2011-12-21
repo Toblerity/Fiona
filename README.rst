@@ -36,8 +36,6 @@ installed to a well known location, you must pass the build options
 and locations in using setup arguments as shown above::
 
   (Fiona)$ python setup.py build_ext -I/path/to/include -L/path/to/lib -lgdal install
-
-
 Usage
 =====
 

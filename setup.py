@@ -20,7 +20,7 @@ setup(name          = 'Fiona',
       long_description = readme_text,
       package_dir = {'': 'src'},
       packages = ['fiona'],
-      install_requires  = [], #'setuptools', 'Cython'],
+      install_requires  = [],
       tests_require = ['nose'],
       ext_modules = [
         Extension('fiona.ogrinit', ['src/fiona/ogrinit.c']),

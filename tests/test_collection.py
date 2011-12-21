@@ -6,8 +6,6 @@ import shutil
 import sys
 import unittest
 
-from shapely.geometry import asShape, mapping
-
 from fiona import collection
 
 # logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
@@ -95,21 +93,22 @@ class ShapefileWriteCollectionTest(unittest.TestCase):
             schema = input.schema.copy()
             schema['geometry'] = 'Point'
             with collection(
-                "test_write_point.shp", "w", "ESRI Shapefile", schema
-                ) as output:
-                    for f in input.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
-                        f['geometry'] = mapping(asShape(f['geometry']).centroid)
-                        output.write(f)
+                    "test_write_point.shp", "w", "ESRI Shapefile", schema
+                    ) as output:
+                for f in input.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
+                    f['geometry'] = {
+                        'type': 'Point',
+                        'coordinates': f['geometry']['coordinates'][0][0] }
+                    output.write(f)
 
     def test_write_polygon(self):
         with collection("docs/data/test_uk.shp", "r") as input:
             schema = input.schema.copy()
             with collection(
-                "test_write_polygon.shp", "w", "ESRI Shapefile", schema
-                ) as output:
-                    for f in input:
-                        f['geometry'] = mapping(asShape(f['geometry']).buffer(1.0))
-                        output.write(f)
+                    "test_write_polygon.shp", "w", "ESRI Shapefile", schema
+                    ) as output:
+                for f in input:
+                    output.write(f)
 
 class ShapefileAppendTest(unittest.TestCase):
 
@@ -123,7 +122,9 @@ class ShapefileAppendTest(unittest.TestCase):
                     "w", "ESRI Shapefile", schema
                     ) as output:
                 for f in input.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
-                    f['geometry'] = mapping(asShape(f['geometry']).centroid)
+                    f['geometry'] = {
+                        'type': 'Point',
+                        'coordinates': f['geometry']['coordinates'][0][0] }
                     output.write(f)
 
     def tearDown(self):
