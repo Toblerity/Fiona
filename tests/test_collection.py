@@ -4,7 +4,6 @@ import logging
 import os
 import shutil
 import sys
-import types
 import unittest
 
 from shapely.geometry import asShape, mapping

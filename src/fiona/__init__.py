@@ -62,6 +62,8 @@ writing modes) flush contents to disk when their ``with`` blocks end.
 
 __version__ = "0.5"
 
+import os
+
 from fiona.collection import Collection
 
 
@@ -85,6 +87,8 @@ def collection(path, mode='r', driver=None, schema=None, crs=None):
     
     """
     if mode in ('a', 'r'):
+        if not os.path.exists(path):
+            raise OSError("File or directory '%s' not found" % path)
         c = Collection(path, mode)
     elif mode == 'w':
         if not driver:
