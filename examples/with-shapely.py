@@ -23,7 +23,8 @@ with collection("docs/data/test_uk.shp", "r") as input:
                 geom = shape(f['geometry'])
                 if not geom.is_valid:
                     clean = geom.buffer(0.0)
-                    assert geom.is_valid
+                    assert clean.is_valid
+                    assert clean.geom_type == 'Polygon'
                     geom = clean
                 f['geometry'] = mapping(geom)
                 output.write(f)
