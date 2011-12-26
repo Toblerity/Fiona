@@ -1,6 +1,6 @@
-=====
-Fiona
-=====
+======
+README
+======
 
 Fiona is OGR's neater API – sleek and elegant on the outside, indomitable power
 on the inside.
