@@ -1,3 +1,4 @@
+
 ======
 README
 ======
@@ -95,7 +96,7 @@ Fiona is written by:
 
 With contributions by:
 
-* Fr |eacute| d |eacute| ric Junod
+* Frédéric Junod
 * Michael Weisman
 
 Fiona would not be possible without the great work of Frank Warmerdam and other
