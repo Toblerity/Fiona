@@ -17,7 +17,10 @@ geometries are just data.
 Dependencies
 ============
 
-Fiona requires Python 2.6+ and libgdal 1.3.2+.
+Fiona requires Python 2.6+ and libgdal 1.3.2+. To build from a source
+distribution or repository clone you will need a C compiler and GDAL and Python
+development headers and libraries. There are no binary distributions or Windows
+support at this time.
 
 Installation
 ============
@@ -61,8 +64,10 @@ probably need Shapely or something like it::
           # Process only the features intersecting a box
           for f in source.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
           
-              # Get their centroids using Shapely
-              f['geometry'] = mapping(asShape(f['geometry']).centroid)
+              # Get point on the boundary of the feature
+              f['geometry'] = f['geometry'] = {
+                  'type': 'Point',
+                  'coordinates': f['geometry']['coordinates'][0][0] }
               
               # Stage feature for writing
               sink.write(f)
@@ -81,11 +86,28 @@ distribution root::
   (Fiona)$ python setup.py build_ext $(gdal-config --cflags) $(gdal-config --libs) develop
   (Fiona)$ python setup.py $(gdal-config --cflags) $(gdal-config --libs) nosetests
 
+Credits
+=======
 
+Fiona is written by:
+
+* Sean Gillies
+
+With contributions by:
+
+* Fr |eacute| d |eacute| ric Junod
+* Michael Weisman
+
+Fiona would not be possible without the great work of Frank Warmerdam and other
+GDAL/OGR developers.
+
+Some portions of this work were supported by a grant (for Pleiades_) from the
+U.S. National Endowment for the Humanities (http://www.neh.gov).
 
 .. _libgdal: http://www.gdal.org
 .. _pyproj: http://pypi.python.org/pypi/pyproj/
 .. _Rtree: http://pypi.python.org/pypi/Rtree/
 .. _Shapely: http://pypi.python.org/pypi/Shapely/
 .. _gdal-config: http://www.gdal.org/gdal-config.html
+.. _Pleiades: http://pleiades.stoa.org
 
