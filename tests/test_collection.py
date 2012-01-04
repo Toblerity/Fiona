@@ -8,9 +8,10 @@ import unittest
 
 from fiona import collection
 
-# logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 class ShapefileCollectionTest(unittest.TestCase):
+
     def test_io(self):
         c = collection("docs/data/test_uk.shp", "r")
         self.failUnlessEqual(c.name, "test_uk")
@@ -32,6 +33,10 @@ class ShapefileCollectionTest(unittest.TestCase):
         s = c.schema['properties']
         self.failUnlessEqual(s['CAT'], "float")
         self.failUnlessEqual(s['FIPS_CNTRY'], "str")
+
+    def test_crs(self):
+        c = collection("docs/data/test_uk.shp", "r")
+        self.assertEqual(c.crs, "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
 
     def test_context(self):
         with collection("docs/data/test_uk.shp", "r") as c:
@@ -101,11 +106,13 @@ class ShapefileWriteCollectionTest(unittest.TestCase):
                         'coordinates': f['geometry']['coordinates'][0][0] }
                     output.write(f)
 
-    def test_write_polygon(self):
+    def test_write_polygon_with_crs(self):
         with collection("docs/data/test_uk.shp", "r") as input:
             schema = input.schema.copy()
+            crs = input.crs
             with collection(
-                    "test_write_polygon.shp", "w", "ESRI Shapefile", schema
+                    "test_write_polygon.shp", "w", "ESRI Shapefile",
+                    schema, crs
                     ) as output:
                 for f in input:
                     output.write(f)

@@ -2,14 +2,19 @@
 # All rights reserved.
 # See ../LICENSE.txt
 
-cdef extern from "cpl_error.h":
-    void    CPLSetErrorHandler (void *handler)
-    void *  CPLQuietErrorHandler
-
 cdef extern from "cpl_conv.h":
     void    CPLFree (void *ptr)
 
 ctypedef int OGRErr
+
+cdef extern from "ogr_srs_api.h":
+    void    OSRCleanup ()
+    void *  OSRClone (void *srs)
+    void    OSRDestroySpatialReference (void *srs)
+    OGRErr  OSRExportToProj4 (void *srs, char **params)
+    OGRErr  OSRImportFromProj4 (void *srs, char *proj)
+    void *  OSRNewSpatialReference (char *wkt)
+    void    OSRRelease (void *srs)
 
 cdef extern from "ogr_api.h":
     char *  OGR_Dr_GetName (void *driver)
@@ -72,6 +77,7 @@ cdef extern from "ogr_api.h":
     void *  OGR_L_GetLayerDefn (void *layer)
     void *  OGR_L_GetNextFeature (void *layer)
     void *  OGR_L_GetSpatialFilter (void *layer)
+    void *  OGR_L_GetSpatialRef (void *layer)
     void    OGR_L_ResetReading (void *layer)
     void    OGR_L_SetSpatialFilter (void *layer, void *geometry)
     void    OGR_L_SetSpatialFilterRect (
@@ -81,4 +87,5 @@ cdef extern from "ogr_api.h":
     void *  OGROpen (char *path, int mode, void *x)
     void *  OGROpenShared (char *path, int mode, void *x)
     int     OGRReleaseDataSource (void *datasource)
+
 

@@ -46,7 +46,8 @@ feature writing to a "points.shp" file.
   ...     schema = input.schema.copy()
   ...     schema['geometry'] = 'Point'
   ...     with collection(
-  ...             "points.shp", "w", "ESRI Shapefile", schema
+  ...             "points.shp", "w", "ESRI Shapefile",
+  ...             schema=schema, crs=input.crs
   ...             ) as output:
   ...         for f in input.filter(
   ...                 bbox=(-5.0, 55.0, 0.0, 60.0)
@@ -72,20 +73,21 @@ def collection(path, mode='r', driver=None, schema=None, crs=None):
     """Open file at ``path`` in ``mode`` "r" (read), "a" (append), or
     "w" (write) and return a ``Collection`` object.
     
-    In append or write mode, a driver name such as "ESRI Shapefile" or
-    "GPX" (see OGR docs or ``ogr2ogr --help`` on the command line) and
-    a schema mapping such as:
+    In write mode, a driver name such as "ESRI Shapefile" or "GPX" (see
+    OGR docs or ``ogr2ogr --help`` on the command line) and a schema
+    mapping such as:
     
-      {'geometry': 'Point',
-       'properties': {
-         'class': 'int', 'label': 'str', 'value': 'float'}}
+      {'geometry': 'Point', 'properties': { 'class': 'int', 'label':
+      'str', 'value': 'float'}}
     
-    must be provided.
+    must be provided. A coordinate reference system for collections in
+    write mode can be defined by the ``crs`` parameter. It takes Proj4
+    strings such as 
     
-    The ``crs`` (coordinate reference system) parameter is currently
-    ignored.
+      "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
     
     """
+
     if mode in ('a', 'r'):
         if not os.path.exists(path):
             raise OSError("File or directory '%s' not found" % path)
@@ -95,7 +97,7 @@ def collection(path, mode='r', driver=None, schema=None, crs=None):
             raise ValueError("An OGR driver name must be specified")
         if not schema:
             raise ValueError("A collection schema must be specified")
-        c = Collection(path, mode, driver, schema)
+        c = Collection(path, mode, driver, schema, crs)
     else:
         raise ValueError("Invalid mode: %s" % mode)
     c.open()
