@@ -7,22 +7,35 @@ from fiona.ogrext import Iterator, Session, WritingSession
 
 class Collection(object):
 
-    """A file-like interface to features in the form of GeoJSON-like mappings."""
+    """A file-like interface to features in the form of GeoJSON-like
+    mappings."""
 
-    def __init__(self, path, mode='r', driver=None, schema=None, workspace=None):
-        """The required ``path`` is the absolute or relative path to a file, such
-        as '/data/test_uk.shp'. In ``mode`` 'r', data can be read only. In ``mode``
-        'a', data can be appended to a file. In ``mode`` 'w', data overwrites the
-        existing contents of a file."""
+    def __init__(
+            self, path, mode='r', 
+            driver=None, schema=None, crs=None, workspace=None):
+        
+        """The required ``path`` is the absolute or relative path to
+        a file, such as '/data/test_uk.shp'. In ``mode`` 'r', data can
+        be read only. In ``mode`` 'a', data can be appended to a file.
+        In ``mode`` 'w', data overwrites the existing contents of
+        a file.
+        
+        In ``mode`` 'w', an OGR ``driver`` name and a ``schema`` are
+        required. A Proj4 ``crs`` string is recommended.
+        """
+
         self.session = None
         self._len = -1
         self._schema = None
+        self._crs = None
         self.path = path
         self.name = os.path.basename(os.path.splitext(path)[0])
         self.mode = mode
         self.driver = driver
         if schema:
             self._schema = schema
+        if crs:
+            self._crs = crs
         self.workspace = workspace
 
     def __enter__(self):
@@ -64,9 +77,16 @@ class Collection(object):
     @property 
     def schema(self):
         """Returns a mapping describing the data schema"""
-        if not self._schema:
+        if not self._schema and self.mode in ("a", "r"):
             self._schema = self.session.get_schema()
         return self._schema
+
+    @property
+    def crs(self):
+        """Returns a Proj4 string"""
+        if not self._crs and self.mode in ("a", "r"):
+            self._crs = self.session.get_crs()
+        return self._crs
 
     def __iter__(self):
         """Returns an iterator over GeoJSON-like mappings of features"""

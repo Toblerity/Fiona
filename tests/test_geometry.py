@@ -1,12 +1,21 @@
 # testing geometry extension, to be called by nosetests
 
+import logging
+import sys
 import unittest
 
 from fiona.ogrext import GeomBuilder, geometryRT
 
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+
 def geometry_wkb(wkb):
     return GeomBuilder().build_wkb(wkb)
 
+
+class OGRBuilderExceptionsTest(unittest.TestCase):
+    def test(self):
+        geom = {'type': "Bogus", 'coordinates': None}
+        self.assertRaises(ValueError, geometryRT, geom)
 
 class PointRoundTripTest(unittest.TestCase):
     def test(self):

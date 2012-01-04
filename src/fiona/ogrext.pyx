@@ -42,6 +42,7 @@ FIELD_TYPES_MAP = {
     }
 
 # OGR integer error types.
+
 OGRERR_NONE = 0
 OGRERR_NOT_ENOUGH_DATA = 1    # not enough data to deserialize */
 OGRERR_NOT_ENOUGH_MEMORY = 2
@@ -52,21 +53,20 @@ OGRERR_FAILURE = 6
 OGRERR_UNSUPPORTED_SRS = 7
 OGRERR_INVALID_HANDLE = 8
 
-
 # Geometry related functions and classes follow.
 
-cdef void * _createOgrGeomFromWKB(object wkb):
+cdef void * _createOgrGeomFromWKB(object wkb) except NULL:
     """Make an OGR geometry from a WKB string"""
     geom_type = bytearray(wkb)[1]
     cdef unsigned char *buffer = wkb
     cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(geom_type)
+    assert cogr_geometry is not NULL
     ograpi.OGR_G_ImportFromWkb(cogr_geometry, buffer, len(wkb))
     return cogr_geometry
 
-
 cdef _deleteOgrGeom(void *cogr_geometry):
     """Delete an OGR geometry"""
-    if cogr_geometry != NULL:
+    if cogr_geometry is not NULL:
         ograpi.OGR_G_DestroyGeometry(cogr_geometry)
     cogr_geometry = NULL
 
@@ -74,7 +74,6 @@ cdef _deleteOgrGeom(void *cogr_geometry):
 class DimensionsHandler(object):
     """Determines the number of dimensions of a Fiona geometry.
     """
-
     coordinates = None
 
     def getNumDimsPoint(self):
@@ -118,6 +117,7 @@ cdef class GeomBuilder:
     cdef _buildCoords(self, void *geom):
         # Build a coordinate sequence
         cdef int i
+        assert geom is not NULL
         npoints = ograpi.OGR_G_GetPointCount(geom)
         coords = []
         for i in range(npoints):
@@ -139,6 +139,7 @@ cdef class GeomBuilder:
     cdef _buildParts(self, void *geom):
         cdef int j
         cdef void *part
+        assert geom is not NULL
         parts = []
         for j in range(ograpi.OGR_G_GetGeometryCount(geom)):
             part = ograpi.OGR_G_GetGeometryRef(geom, j)
@@ -167,6 +168,7 @@ cdef class GeomBuilder:
     
     cdef build(self, void *geom):
         # The only method anyone needs to call
+        assert geom is not NULL
         self.code = ograpi.OGR_G_GetGeometryType(geom)
         self.typename = GEOMETRY_TYPES[self.code]
         self.ndims = ograpi.OGR_G_GetCoordinateDimension(geom)
@@ -189,9 +191,9 @@ cdef class OGRGeomBuilder:
     cdef object typename
     cdef object ndims
 
-    cdef void * _buildPoint(self):
-        cdef void *cogr_geometry
-        cogr_geometry = ograpi.OGR_G_CreateGeometry(1)
+    cdef void * _buildPoint(self) except NULL:
+        cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(1)
+        assert cogr_geometry is not NULL
         if self.ndims > 2:
             x, y, z = self.coordinates
             ograpi.OGR_G_AddPoint(cogr_geometry, x, y, z)
@@ -200,9 +202,9 @@ cdef class OGRGeomBuilder:
             ograpi.OGR_G_AddPoint_2D(cogr_geometry, x, y)
         return cogr_geometry
     
-    cdef void * _buildLineString(self):
-        cdef void *cogr_geometry
-        cogr_geometry = ograpi.OGR_G_CreateGeometry(2)
+    cdef void * _buildLineString(self) except NULL:
+        cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(2)
+        assert cogr_geometry is not NULL
         for values in self.coordinates:
             log.debug("Adding point %s", values)
             if len(values) > 2:
@@ -213,9 +215,9 @@ cdef class OGRGeomBuilder:
                 ograpi.OGR_G_AddPoint_2D(cogr_geometry, x, y)
         return cogr_geometry
     
-    cdef void * _buildLinearRing(self):
-        cdef void *cogr_geometry
-        cogr_geometry = ograpi.OGR_G_CreateGeometry(101)
+    cdef void * _buildLinearRing(self) except NULL:
+        cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(101)
+        assert cogr_geometry is not NULL
         for values in self.coordinates:
             log.debug("Adding point %s", values)
             if len(values) > 2:
@@ -229,9 +231,10 @@ cdef class OGRGeomBuilder:
         ograpi.OGR_G_CloseRings(cogr_geometry)
         return cogr_geometry
     
-    cdef void * _buildPolygon(self):
+    cdef void * _buildPolygon(self) except NULL:
         cdef void *cogr_ring
         cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(3)
+        assert cogr_geometry is not NULL
         self.ndims = len(self.coordinates[0][0])
         for ring in self.coordinates:
             log.debug("Adding ring %s", ring)
@@ -242,9 +245,10 @@ cdef class OGRGeomBuilder:
             log.debug("Added ring %s", ring)
         return cogr_geometry
 
-    cdef void * _buildMultiPoint(self):
+    cdef void * _buildMultiPoint(self) except NULL:
         cdef void *cogr_part
         cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(4)
+        assert cogr_geometry is not NULL
         for values in self.coordinates:
             log.debug("Adding point %s", values)
             cogr_part = ograpi.OGR_G_CreateGeometry(1)
@@ -258,9 +262,10 @@ cdef class OGRGeomBuilder:
             log.debug("Added point %s", values)
         return cogr_geometry
 
-    cdef void * _buildMultiLineString(self):
+    cdef void * _buildMultiLineString(self) except NULL:
         cdef void *cogr_part
         cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(5)
+        assert cogr_geometry is not NULL
         for line in self.coordinates:
             log.debug("Adding line %s", line)
             cogr_part = OGRGeomBuilder().build(
@@ -270,9 +275,10 @@ cdef class OGRGeomBuilder:
             log.debug("Added line %s", line)
         return cogr_geometry
 
-    cdef void * _buildMultiPolygon(self):
+    cdef void * _buildMultiPolygon(self) except NULL:
         cdef void *cogr_part
         cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(6)
+        assert cogr_geometry is not NULL
         for part in self.coordinates:
             log.debug("Adding polygon %s", part)
             cogr_part = OGRGeomBuilder().build(
@@ -282,9 +288,10 @@ cdef class OGRGeomBuilder:
             log.debug("Added polygon %s", part)
         return cogr_geometry
 
-    cdef void * _buildGeometryCollection(self):
+    cdef void * _buildGeometryCollection(self) except NULL:
         cdef void *cogr_part
         cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(7)
+        assert cogr_geometry is not NULL
         for part in self.coordinates:
             log.debug("Adding part %s", part)
             cogr_part = OGRGeomBuilder().build(part)
@@ -293,7 +300,7 @@ cdef class OGRGeomBuilder:
             log.debug("Added part %s", part)
         return cogr_geometry
 
-    cdef void * build(self, object geometry):
+    cdef void * build(self, object geometry) except NULL:
         handler = DimensionsHandler()
         self.typename = geometry['type']
         self.coordinates = geometry.get('coordinates')
@@ -346,13 +353,15 @@ cdef class FeatureBuilder:
 
     cdef build(self, void *feature):
         # The only method anyone ever needs to call
+        assert feature is not NULL
         cdef void *fdefn
         cdef int i
-        
         props = {}
         for i in range(ograpi.OGR_F_GetFieldCount(feature)):
             fdefn = ograpi.OGR_F_GetFieldDefnRef(feature, i)
+            assert fdefn is not NULL
             key = ograpi.OGR_Fld_GetNameRef(fdefn)
+            assert key is not NULL
             fieldtypename = FIELD_TYPES[ograpi.OGR_Fld_GetType(fdefn)]
             if not fieldtypename:
                 raise ValueError(
@@ -370,6 +379,7 @@ cdef class FeatureBuilder:
                 props[key] = None
 
         cdef void *cogr_geometry = ograpi.OGR_F_GetGeometryRef(feature)
+        assert cogr_geometry is not NULL
         geom = GeomBuilder().build(cogr_geometry)
         
         return {
@@ -385,14 +395,20 @@ cdef class OGRFeatureBuilder:
     Allocates one OGR Feature which should be destroyed by the caller.
     Borrows a layer definition from the collection.
     """
-
-    cdef void * build(self, feature, collection):
+    
+    cdef void * build(self, feature, collection) except NULL:
         cdef WritingSession session
         session = collection.session
-        cdef void *cogr_featuredefn = ograpi.OGR_L_GetLayerDefn(session.cogr_layer)
-        cdef void *cogr_geometry = OGRGeomBuilder().build(feature['geometry'])
+        cdef void *cogr_layer = session.cogr_layer
+        assert cogr_layer is not NULL
+        cdef void *cogr_featuredefn = ograpi.OGR_L_GetLayerDefn(cogr_layer)
+        assert cogr_featuredefn is not NULL
         cdef void *cogr_feature = ograpi.OGR_F_Create(cogr_featuredefn)
+        assert cogr_feature is not NULL
+        
+        cdef void *cogr_geometry = OGRGeomBuilder().build(feature['geometry'])
         ograpi.OGR_F_SetGeometryDirectly(cogr_feature, cogr_geometry)
+        
         for key, value in feature['properties'].items():
             i = ograpi.OGR_F_GetFieldIndex(cogr_feature, key)
             ptype = type(value) #FIELD_TYPES_MAP[key]
@@ -410,7 +426,7 @@ cdef class OGRFeatureBuilder:
 
 cdef _deleteOgrFeature(void *cogr_feature):
     """Delete an OGR feature"""
-    if cogr_feature != NULL:
+    if cogr_feature is not NULL:
         ograpi.OGR_F_Destroy(cogr_feature)
     cogr_feature = NULL
 
@@ -419,6 +435,7 @@ def featureRT(feature, collection):
     # For testing purposes only, leaks the JSON data
     cdef void *cogr_feature = OGRFeatureBuilder().build(feature, collection)
     cdef void *cogr_geometry = ograpi.OGR_F_GetGeometryRef(cogr_feature)
+    assert cogr_geometry is not NULL
     log.debug("Geometry: %s" % ograpi.OGR_G_ExportToJson(cogr_geometry))
     result = FeatureBuilder().build(cogr_feature)
     _deleteOgrFeature(cogr_feature)
@@ -441,17 +458,19 @@ cdef class Session:
 
     def start(self, collection):
         self.cogr_ds = ograpi.OGROpen(collection.path, 0, NULL)
+        assert self.cogr_ds is not NULL
         self.cogr_layer = ograpi.OGR_DS_GetLayerByName(
-            self.cogr_ds, collection.name
-            )
+            self.cogr_ds, collection.name)
+        assert self.cogr_layer is not NULL
 
     def stop(self):
         self.cogr_layer = NULL
-        if self.cogr_ds != NULL:
+        if self.cogr_ds is not NULL:
             ograpi.OGR_DS_Destroy(self.cogr_ds)
         self.cogr_ds = NULL
 
     def get_length(self):
+        assert self.cogr_layer is not NULL
         return ograpi.OGR_L_GetFeatureCount(self.cogr_layer, 0)
 
     def get_schema(self):
@@ -460,19 +479,38 @@ cdef class Session:
         cdef void *cogr_featuredefn
         cdef void *cogr_fielddefn
         props = []
+        assert self.cogr_layer is not NULL
         cogr_featuredefn = ograpi.OGR_L_GetLayerDefn(self.cogr_layer)
+        assert cogr_featuredefn is not NULL
         n = ograpi.OGR_FD_GetFieldCount(cogr_featuredefn)
         for i from 0 <= i < n:
             cogr_fielddefn = ograpi.OGR_FD_GetFieldDefn(cogr_featuredefn, i)
+            assert cogr_fielddefn is not NULL
             fieldtypename = FIELD_TYPES[ograpi.OGR_Fld_GetType(cogr_fielddefn)]
             if not fieldtypename:
                 raise ValueError(
                     "Invalid field type %s" % ograpi.OGR_Fld_GetType(
                                                 cogr_fielddefn))
             key = ograpi.OGR_Fld_GetNameRef(cogr_fielddefn)
+            assert key is not NULL
             props.append((key, fieldtypename))
         geom_type = ograpi.OGR_FD_GetGeomType(cogr_featuredefn)
         return {'properties': dict(props), 'geometry': GEOMETRY_TYPES[geom_type]}
+
+    def get_crs(self):
+        cdef char *params = NULL
+        assert self.cogr_layer is not NULL
+        cdef void *cogr_crs = ograpi.OGR_L_GetSpatialRef(self.cogr_layer)
+        log.debug("Got coordinate system")
+        value = None
+        if cogr_crs is not NULL:
+            ograpi.OSRExportToProj4(cogr_crs, &params)
+            assert params is not NULL
+            log.debug("Params: %s", params)
+            value = params
+            value = value.strip()
+            ograpi.CPLFree(params)
+        return value
 
     def isactive(self):
         if self.cogr_layer != NULL and self.cogr_ds != NULL:
@@ -486,17 +524,19 @@ cdef class WritingSession(Session):
     def start(self, collection):
         cdef void *cogr_fielddefn
         cdef void *cogr_driver
+        cdef void *cogr_srs = NULL
         path = collection.path
 
         if collection.mode == 'a':
             if os.path.exists(path):
                 self.cogr_ds = ograpi.OGROpen(path, 1, NULL)
-                if self.cogr_ds == NULL:
+                if self.cogr_ds is NULL:
                     raise RuntimeError("Failed to open %s" % path)
                 cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
+                assert cogr_driver is not NULL
                 self.cogr_layer = ograpi.OGR_DS_GetLayerByName(
                                         self.cogr_ds, collection.name)
-                if self.cogr_layer == NULL:
+                if self.cogr_layer is NULL:
                     raise RuntimeError(
                         "Failed to get layer %s" % collection.name)
             else:
@@ -505,34 +545,47 @@ cdef class WritingSession(Session):
         elif collection.mode == 'w':
             if os.path.exists(path):
                 self.cogr_ds = ograpi.OGROpen(path, 0, NULL)
-                if self.cogr_ds != NULL:
+                if self.cogr_ds is not NULL:
                     cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
+                    assert cogr_driver is not NULL
                     ograpi.OGR_DS_Destroy(self.cogr_ds)
                     ograpi.OGR_Dr_DeleteDataSource(cogr_driver, path)
                     log.debug("Deleted pre-existing data at %s", path)
             cogr_driver = ograpi.OGRGetDriverByName(collection.driver)
+            assert cogr_driver is not NULL
             self.cogr_ds = ograpi.OGR_Dr_CreateDataSource(
                 cogr_driver, path, NULL)
-            if self.cogr_ds == NULL:
+            if self.cogr_ds is NULL:
                 raise RuntimeError("Failed to open %s" % path)
-            
+
+            # Set the spatial reference system from the given crs.
+            if collection.crs:
+                collection
+                cogr_srs = ograpi.OSRNewSpatialReference(NULL)
+                assert cogr_srs is not NULL
+                ograpi.OSRImportFromProj4(cogr_srs, <char *>collection.crs)
+
             self.cogr_layer = ograpi.OGR_DS_CreateLayer(
                 self.cogr_ds, 
                 collection.name,
-                NULL,
+                cogr_srs,
                 GEOMETRY_TYPES.index(collection.schema['geometry']),
                 NULL
                 )
+            assert self.cogr_layer is not NULL
             log.debug("Created layer")
             
+            # Next, make a layer definition from the given schema.
             for key, value in collection.schema['properties'].items():
                 log.debug("Creating field: %s %s", key, value)
                 cogr_fielddefn = ograpi.OGR_Fld_Create(
                     key, 
                     FIELD_TYPES.index(value) )
+                assert cogr_fielddefn is not NULL
                 ograpi.OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1)
                 ograpi.OGR_Fld_Destroy(cogr_fielddefn)
             log.debug("Created fields")
+
 
         log.debug("Writing started")
 
@@ -546,6 +599,7 @@ cdef class WritingSession(Session):
             raise ValueError("Feature data not match collection schema")
         
         cdef void *cogr_layer = self.cogr_layer
+        assert cogr_layer is not NULL
         cdef void *cogr_feature = OGRFeatureBuilder().build(feature, collection)
         result = ograpi.OGR_L_CreateFeature(cogr_layer, cogr_feature)
         if result != OGRERR_NONE:
@@ -569,6 +623,7 @@ cdef class Iterator:
         cdef Session session
         session = self.collection.session
         cdef void *cogr_layer = session.cogr_layer
+        assert cogr_layer is not NULL
         if bbox:
             ograpi.OGR_L_SetSpatialFilterRect(
                 cogr_layer, bbox[0], bbox[1], bbox[2], bbox[3])
@@ -587,8 +642,4 @@ cdef class Iterator:
         feature = FeatureBuilder().build(cogr_feature)
         _deleteOgrFeature(cogr_feature)
         return feature
-
-# Ensure that errors end up in the python session's stdout
-cdef void * errorHandler(eErrClass, int err_no, char *msg):
-    print msg
 
