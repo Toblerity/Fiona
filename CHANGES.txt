@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+0.6 (?)
+----------------
+- Support for collection coordinate reference systems based on Proj4.
+- Redirect OGR warnings and errors to the Fiona log.
+- Assert that pointers returned from the ograpi functions are not NULL before
+  using.
+
 0.5 (2011-12-19)
 ----------------
 - Support for reading and writing collections of any geometry type.
