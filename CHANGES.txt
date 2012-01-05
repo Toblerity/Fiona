@@ -1,7 +1,7 @@
 CHANGES
 =======
 
-0.6 (?)
+0.6 (2012-01-05)
 ----------------
 - Support for collection coordinate reference systems based on Proj4.
 - Redirect OGR warnings and errors to the Fiona log.
@@ -21,3 +21,4 @@ CHANGES
 0.1.1 (2008-12-04)
 ------------------
 - Support for features with no geometry.
+
