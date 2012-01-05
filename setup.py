@@ -8,7 +8,7 @@ from distutils.core import Extension
 readme_text = file('README.rst', 'rb').read()
 
 setup(name          = 'Fiona',
-      version       = '0.5',
+      version       = '0.6',
       description   = "Fiona is OGR's neater API",
       license       = 'BSD',
       keywords      = 'gis vector feature data',
