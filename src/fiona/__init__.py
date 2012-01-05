@@ -82,9 +82,10 @@ def collection(path, mode='r', driver=None, schema=None, crs=None):
     
     must be provided. A coordinate reference system for collections in
     write mode can be defined by the ``crs`` parameter. It takes Proj4
-    strings such as 
+    style mappings like
     
-      "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+      {'proj': 'longlat', 'ellps': 'WGS84', 'datum': 'WGS84', 
+       'no_defs': True}
     
     """
 
