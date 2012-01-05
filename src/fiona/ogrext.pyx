@@ -498,19 +498,37 @@ cdef class Session:
         return {'properties': dict(props), 'geometry': GEOMETRY_TYPES[geom_type]}
 
     def get_crs(self):
-        cdef char *params = NULL
+        cdef char *proj = NULL
         assert self.cogr_layer is not NULL
         cdef void *cogr_crs = ograpi.OGR_L_GetSpatialRef(self.cogr_layer)
         log.debug("Got coordinate system")
         value = None
         if cogr_crs is not NULL:
-            ograpi.OSRExportToProj4(cogr_crs, &params)
-            assert params is not NULL
-            log.debug("Params: %s", params)
-            value = params
+            ograpi.OSRExportToProj4(cogr_crs, &proj)
+            assert proj is not NULL
+            log.debug("Params: %s", proj)
+            value = proj
             value = value.strip()
-            ograpi.CPLFree(params)
-        return value
+            crs = {}
+            for param in value.split():
+                kv = param.split("=")
+                if len(kv) == 2:
+                    k, v = kv
+                    try:
+                        v = float(v)
+                        if v % 1 == 0:
+                            v = int(v)
+                    except ValueError:
+                        # Leave v as a string
+                        pass
+                elif len(kv) == 1:
+                    k, v = kv[0], True
+                else:
+                    raise ValueError("Unexpected proj parameter %s" % param)
+                k = k.lstrip("+")
+                crs[k] = v
+            ograpi.CPLFree(proj)
+        return crs
 
     def isactive(self):
         if self.cogr_layer != NULL and self.cogr_ds != NULL:
@@ -560,10 +578,16 @@ cdef class WritingSession(Session):
 
             # Set the spatial reference system from the given crs.
             if collection.crs:
-                collection
                 cogr_srs = ograpi.OSRNewSpatialReference(NULL)
                 assert cogr_srs is not NULL
-                ograpi.OSRImportFromProj4(cogr_srs, <char *>collection.crs)
+                params = []
+                for k, v in collection.crs.items():
+                    if v is True or (k == 'no_defs' and v):
+                        params.append("+%s" % k)
+                    else:
+                        params.append("+%s=%s" % (k, v))
+                proj = " ".join(params)
+                ograpi.OSRImportFromProj4(cogr_srs, <char *>proj)
 
             self.cogr_layer = ograpi.OGR_DS_CreateLayer(
                 self.cogr_ds, 

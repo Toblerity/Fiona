@@ -36,7 +36,8 @@ class ShapefileCollectionTest(unittest.TestCase):
 
     def test_crs(self):
         c = collection("docs/data/test_uk.shp", "r")
-        self.assertEqual(c.crs, "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+        self.failUnlessEqual(c.crs['ellps'], 'WGS84')
+        self.failUnless(c.crs['no_defs'])
 
     def test_context(self):
         with collection("docs/data/test_uk.shp", "r") as c:
@@ -109,10 +110,9 @@ class ShapefileWriteCollectionTest(unittest.TestCase):
     def test_write_polygon_with_crs(self):
         with collection("docs/data/test_uk.shp", "r") as input:
             schema = input.schema.copy()
-            crs = input.crs
             with collection(
                     "test_write_polygon.shp", "w", "ESRI Shapefile",
-                    schema, crs
+                    schema=schema, crs={'init': "epsg:4326", 'no_defs': True}
                     ) as output:
                 for f in input:
                     output.write(f)
