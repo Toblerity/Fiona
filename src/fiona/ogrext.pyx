@@ -502,7 +502,7 @@ cdef class Session:
         assert self.cogr_layer is not NULL
         cdef void *cogr_crs = ograpi.OGR_L_GetSpatialRef(self.cogr_layer)
         log.debug("Got coordinate system")
-        value = None
+        crs = {}
         if cogr_crs is not NULL:
             ograpi.OSRExportToProj4(cogr_crs, &proj)
             assert proj is not NULL
@@ -528,6 +528,8 @@ cdef class Session:
                 k = k.lstrip("+")
                 crs[k] = v
             ograpi.CPLFree(proj)
+        else:
+            log.debug("Did not find a projection for this collection (cogr_crs was NULL).")
         return crs
 
     def isactive(self):
