@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+0.6.1 (?)
+---------
+- Handle the case of undefined crs for disk collections.
+
 0.6 (2012-01-05)
 ----------------
 - Support for collection coordinate reference systems based on Proj4.

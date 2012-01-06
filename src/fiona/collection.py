@@ -84,7 +84,7 @@ class Collection(object):
     @property
     def crs(self):
         """Returns a Proj4 string"""
-        if not self._crs and self.mode in ("a", "r"):
+        if self._crs is None and self.mode in ("a", "r"):
             self._crs = self.session.get_crs()
         return self._crs
 

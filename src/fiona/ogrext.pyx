@@ -509,7 +509,6 @@ cdef class Session:
             log.debug("Params: %s", proj)
             value = proj
             value = value.strip()
-            crs = {}
             for param in value.split():
                 kv = param.split("=")
                 if len(kv) == 2:
@@ -529,7 +528,7 @@ cdef class Session:
                 crs[k] = v
             ograpi.CPLFree(proj)
         else:
-            log.debug("Did not find a projection for this collection (cogr_crs was NULL).")
+            log.debug("Projection not found (cogr_crs was NULL)")
         return crs
 
     def isactive(self):
