@@ -1,8 +1,8 @@
 CHANGES
 =======
 
-0.6.1 (?)
----------
+0.6.1 (2011-01-06)
+------------------
 - Handle the case of undefined crs for disk collections.
 
 0.6 (2012-01-05)
