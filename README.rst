@@ -25,20 +25,25 @@ support at this time.
 Installation
 ============
 
-Assuming you will install in a virtual environment and gdal-config_ is
-properly installed::
+Assuming you're using a virtualenv (if not, skip to the 4th command) and
+GDAL/OGR libraries, headers, and `gdal-config`_ program are installed to well
+known locations on your system (via your system's package manager),
+installation is this simple::
 
-  $ virtualenv .
-  $ source bin/activate
-  (Fiona)$ pip install -d Fiona Fiona-0.5.tar.gz
-  (Fiona)$ cd Fiona
-  (Fiona)$ python setup.py build_ext $(gdal-config --cflags) $(gdal-config --libs) install
+  $ mkdir fiona_env
+  $ virtualenv fiona_env
+  $ source fiona_env/bin/activate
+  (fiona_env)$ pip install Fiona
 
 If gdal-config is not available or if GDAL/OGR headers and libs aren't
-installed to a well known location, you must pass the build options
-and locations in using setup arguments as shown above::
+installed to a well known location, you must set include dirs, library dirs,
+and libraries options via the setup.cfg file or setup command line as shown
+below (using ``git``)::
 
-  (Fiona)$ python setup.py build_ext -I/path/to/include -L/path/to/lib -lgdal install
+  (fiona_env)$ git clone git://github.com/Toblerity/Fiona.git
+  (fiona_env)$ cd Fiona
+  (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal install
+
 Usage
 =====
 
@@ -81,23 +86,24 @@ Development and testing
 Building from the source requires Cython. Tests require Nose. From the
 distribution root::
 
-  $ virtualenv .
-  $ source bin/activate
-  (Fiona)$ ./cypsrc
-  (Fiona)$ python setup.py build_ext $(gdal-config --cflags) $(gdal-config --libs) develop
-  (Fiona)$ python setup.py $(gdal-config --cflags) $(gdal-config --libs) nosetests
+  (fiona_env)$ git clone git://github.com/Toblerity/Fiona.git
+  (fiona_env)$ cd Fiona
+  (fiona_env)$ ./cypsrc
+  (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal develop
+  (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal nosetests
 
 Credits
 =======
 
 Fiona is written by:
 
-* Sean Gillies
+* Sean Gillies (https://github.com/sgillies)
 
 With contributions by:
 
-* Frédéric Junod
-* Michael Weisman
+* Frédéric Junod (https://github.com/fredj)
+* Ariel Núñez (https://github.com/ingenieroariel)
+* Michael Weisman (https://github.com/mweisman)
 
 Fiona would not be possible without the great work of Frank Warmerdam and other
 GDAL/OGR developers.
