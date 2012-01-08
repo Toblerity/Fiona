@@ -52,19 +52,18 @@ the GeoJSON format and if you want to do anything fancy with them you will
 probably need Shapely or something like it::
 
   from fiona import collection
-  from shapely import asShape, mapping
 
   # Open a source of features
   with collection("docs/data/test_uk.shp", "r") as source:
   
       # Define a schema for the feature sink
-      schema = input.schema.copy()
+      schema = source.schema.copy()
       schema['geometry'] = 'Point'
       
       # Open a new sink for features
       with collection(
               "test_write.shp", "w", driver="ESRI Shapefile",
-              schema=schema, crs=input.crs
+              schema=schema, crs=source.crs
               ) as sink:
           
           # Process only the features intersecting a box
