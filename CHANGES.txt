@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+0.6.1 (2011-01-?)
+------------------
+- Diagnose and set the driver property of collection in read mode.
+
 0.6.1 (2011-01-06)
 ------------------
 - Handle the case of undefined crs for disk collections.
