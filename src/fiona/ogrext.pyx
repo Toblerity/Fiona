@@ -373,8 +373,11 @@ cdef class FeatureBuilder:
             elif fieldtype is FloatType:
                 props[key] = ograpi.OGR_F_GetFieldAsDouble(feature, i)
             elif fieldtype is UnicodeType:
-                props[key] = unicode(
-                    ograpi.OGR_F_GetFieldAsString(feature, i), 'utf-8' )
+                try:
+                    val = ograpi.OGR_F_GetFieldAsString(feature, i)
+                    props[key] = unicode(val, 'utf-8')
+                except UnicodeDecodeError:
+                    props[key] = val
             else:
                 props[key] = None
 
@@ -473,6 +476,13 @@ cdef class Session:
         assert self.cogr_layer is not NULL
         return ograpi.OGR_L_GetFeatureCount(self.cogr_layer, 0)
 
+    def get_driver(self):
+        cdef void *cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
+        assert cogr_driver is not NULL
+        cdef char *name = ograpi.OGR_Dr_GetName(cogr_driver)
+        driver_name = name
+        return driver_name
+ 
     def get_schema(self):
         cdef int i
         cdef int n
