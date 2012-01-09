@@ -28,6 +28,10 @@ class ShapefileCollectionTest(unittest.TestCase):
         c = collection("docs/data/test_uk.shp", "r")
         self.failUnlessEqual(len(c), 48)
 
+    def test_driver(self):
+        c = collection("docs/data/test_uk.shp", "r")
+        self.failUnlessEqual(c.driver, "ESRI Shapefile")
+
     def test_schema(self):
         c = collection("docs/data/test_uk.shp", "r")
         s = c.schema['properties']

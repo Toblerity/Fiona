@@ -62,8 +62,8 @@ probably need Shapely or something like it::
       
       # Open a new sink for features
       with collection(
-              "test_write.shp", "w", driver="ESRI Shapefile",
-              schema=schema, crs=source.crs
+              "test_write.shp", "w",
+              driver=source.driver, schema=schema, crs=source.crs
               ) as sink:
           
           # Process only the features intersecting a box
