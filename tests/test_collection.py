@@ -160,4 +160,10 @@ class CollectionTest(unittest.TestCase):
     def test_no_path(self):
         self.assertRaises(OSError, collection, "no-path.shp", "a")
 
+    def test_no_read_conn_str(self):
+        self.assertRaises(OSError, collection, "PG:dbname=databasename", "r")
+
+    def test_no_read_directory(self):
+        self.assertRaises(ValueError, collection, ".", "r")
+
 
