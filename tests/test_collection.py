@@ -28,6 +28,10 @@ class ShapefileCollectionTest(unittest.TestCase):
         c = collection("docs/data/test_uk.shp", "r")
         self.failUnlessEqual(len(c), 48)
 
+    def test_driver(self):
+        c = collection("docs/data/test_uk.shp", "r")
+        self.failUnlessEqual(c.driver, "ESRI Shapefile")
+
     def test_schema(self):
         c = collection("docs/data/test_uk.shp", "r")
         s = c.schema['properties']
@@ -155,5 +159,11 @@ class CollectionTest(unittest.TestCase):
 
     def test_no_path(self):
         self.assertRaises(OSError, collection, "no-path.shp", "a")
+
+    def test_no_read_conn_str(self):
+        self.assertRaises(OSError, collection, "PG:dbname=databasename", "r")
+
+    def test_no_read_directory(self):
+        self.assertRaises(ValueError, collection, ".", "r")
 
 

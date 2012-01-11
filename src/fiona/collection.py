@@ -26,12 +26,14 @@ class Collection(object):
 
         self.session = None
         self._len = -1
+        self._driver = None
         self._schema = None
         self._crs = None
         self.path = path
         self.name = os.path.basename(os.path.splitext(path)[0])
         self.mode = mode
-        self.driver = driver
+        if driver:
+            self._driver = driver
         if schema:
             self._schema = schema
         if crs:
@@ -73,6 +75,13 @@ class Collection(object):
     def opened(self):
         """``True`` if data can be accessed, otherwise ``False``."""
         return self.session is not None
+
+    @property 
+    def driver(self):
+        """Returns the name of the proper OGR driver"""
+        if not self._driver and self.mode in ("a", "r"):
+            self._driver = self.session.get_driver()
+        return self._driver
 
     @property 
     def schema(self):

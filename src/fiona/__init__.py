@@ -61,7 +61,7 @@ Because Fiona collections are context managers, they are closed and (in
 writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
-__version__ = "0.5"
+__version__ = "0.6.2"
 
 import os
 
@@ -88,12 +88,16 @@ def collection(path, mode='r', driver=None, schema=None, crs=None):
        'no_defs': True}
     
     """
-
     if mode in ('a', 'r'):
         if not os.path.exists(path):
-            raise OSError("File or directory '%s' not found" % path)
+            raise OSError("Nonexistent path '%s'" % path)
+        if not os.path.isfile(path):
+            raise ValueError("Path must be a file")
         c = Collection(path, mode)
     elif mode == 'w':
+        dirname = os.path.dirname(path) or "."
+        if not os.path.exists(dirname):
+            raise OSError("Nonexistent path '%s'" % path)
         if not driver:
             raise ValueError("An OGR driver name must be specified")
         if not schema:

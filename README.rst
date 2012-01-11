@@ -52,19 +52,19 @@ the GeoJSON format and if you want to do anything fancy with them you will
 probably need Shapely or something like it::
 
   from fiona import collection
-  from shapely import asShape, mapping
 
   # Open a source of features
   with collection("docs/data/test_uk.shp", "r") as source:
   
       # Define a schema for the feature sink
-      schema = input.schema.copy()
+      schema = source.schema.copy()
       schema['geometry'] = 'Point'
       
-      # Open a new sink for features
+      # Open a new sink for features, using the same format driver
+      # and coordinate reference system as the source.
       with collection(
-              "test_write.shp", "w", driver="ESRI Shapefile",
-              schema=schema, crs=input.crs
+              "test_write.shp", "w",
+              driver=source.driver, schema=schema, crs=source.crs
               ) as sink:
           
           # Process only the features intersecting a box
@@ -83,14 +83,21 @@ probably need Shapely or something like it::
 Development and testing
 =======================
 
-Building from the source requires Cython. Tests require Nose. From the
-distribution root::
+Building from the source requires Cython. Tests require Nose. If the GDAL/OGR
+libraries, headers, and `gdal-config`_ program are installed to well known
+locations on your system (via your system's package manager), you can do this::
 
   (fiona_env)$ git clone git://github.com/Toblerity/Fiona.git
   (fiona_env)$ cd Fiona
   (fiona_env)$ ./cypsrc
+  (fiona_env)$ python setup.py develop
+  (fiona_env)$ python setup.py nosetests
+
+If you have a non-standard environment, you'll need to specify the include and
+lib dirs and GDAL library on the command line::
+
   (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal develop
-  (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal nosetests
+  (fiona_env)$ python setup.py nosetests
 
 Credits
 =======
