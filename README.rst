@@ -60,7 +60,8 @@ probably need Shapely or something like it::
       schema = source.schema.copy()
       schema['geometry'] = 'Point'
       
-      # Open a new sink for features
+      # Open a new sink for features, using the same format driver
+      # and coordinate reference system as the source.
       with collection(
               "test_write.shp", "w",
               driver=source.driver, schema=schema, crs=source.crs
