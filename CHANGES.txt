@@ -1,9 +1,11 @@
 CHANGES
 =======
 
-0.6.1 (2011-01-?)
+0.6.2 (2011-01-10)
 ------------------
 - Diagnose and set the driver property of collection in read mode.
+- Fail if collection paths are not to files. Multi-collection workspaces are
+  a (maybe) TODO.
 
 0.6.1 (2011-01-06)
 ------------------
