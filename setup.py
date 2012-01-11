@@ -38,7 +38,7 @@ except Exception, e:
 readme_text = file('README.rst', 'rb').read()
 
 setup(name          = 'Fiona',
-      version       = '0.6.1',
+      version       = '0.6.2',
       description   = "Fiona is OGR's neater API",
       license       = 'BSD',
       keywords      = 'gis vector feature data',
