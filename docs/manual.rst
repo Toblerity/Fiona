@@ -80,8 +80,7 @@ Example
 The canonical example for Fiona is this: copying from one shapefile to another,
 through a spatial filter, and making a trivial transformation of feature
 geometry.
-
-.. sourcecode:: python
+::
 
   from fiona import collection
 
