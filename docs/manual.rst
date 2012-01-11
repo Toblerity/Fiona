@@ -117,3 +117,16 @@ Reading and Writing Data
 
 TODO.
 
+Only files can be opened as collections.
+::
+
+  >>> collection("PG:dbname=databasename", "r")
+  Traceback (most recent call last):
+    ...
+  OSError: Nonexistent path 'PG:dbname=databasename'
+  >>> collection(".", "r")
+  Traceback (most recent call last):
+    ...
+  ValueError: Path must be a file
+
+
