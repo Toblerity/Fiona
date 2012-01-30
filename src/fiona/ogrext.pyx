@@ -1,5 +1,6 @@
 # These are extension functions and classes using the OGR C API.
 
+import datetime
 import logging
 import os
 import sys
@@ -7,6 +8,7 @@ from types import IntType, FloatType, StringType, UnicodeType
 
 from fiona cimport ograpi
 from fiona import ogrinit
+from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 
 log = logging.getLogger("Fiona")
 
@@ -17,28 +19,45 @@ GEOMETRY_TYPES = [
 
 # Mapping of OGR integer field types to Fiona field type names.
 #
-# Only ints, floats, and unicode strings are supported. On the web, dates and
-# times are represented as strings (see RFC 3339). 
+# Lists are currently unsupported in this version, but might be done as
+# arrays in a future version.
+#
+# Fiona tries to conform to RFC 3339 with respect to date and time. Its
+# 'date', 'time', and 'datetime' types are sub types of 'str'.
+#
+
 FIELD_TYPES = [
     'int',          # OFTInteger, Simple 32bit integer
     None,           # OFTIntegerList, List of 32bit integers
-    'float',       # OFTReal, Double Precision floating point
+    'float',        # OFTReal, Double Precision floating point
     None,           # OFTRealList, List of doubles
     'str',          # OFTString, String of ASCII chars
     None,           # OFTStringList, Array of strings
     None,           # OFTWideString, deprecated
     None,           # OFTWideStringList, deprecated
     None,           # OFTBinary, Raw Binary data
-    None,           # OFTDate, Date
-    None,           # OFTTime, Time
-    None,           # OFTDateTime, Date and Time
+    'date',         # OFTDate, Date
+    'time',         # OFTTime, Time
+    'datetime',     # OFTDateTime, Date and Time
     ]
+
+class FionaDateType(UnicodeType):
+    pass
+
+class FionaTimeType(UnicodeType):
+    pass
+
+class FionaDateTimeType(UnicodeType):
+    pass
 
 # Mapping of Fiona field type names to Python types.
 FIELD_TYPES_MAP = {
     'int':      IntType,
     'float':    FloatType,
     'str':      UnicodeType,
+    'date':     FionaDateType,
+    'time':     FionaTimeType,
+    'datetime': FionaDateTimeType
     }
 
 # OGR integer error types.
@@ -356,6 +375,14 @@ cdef class FeatureBuilder:
         assert feature is not NULL
         cdef void *fdefn
         cdef int i
+        cdef int y = 0
+        cdef int m = 0
+        cdef int d = 0
+        cdef int hh = 0
+        cdef int mm = 0
+        cdef int ss = 0
+        cdef int tz = 0
+        cdef int retval
         props = {}
         for i in range(ograpi.OGR_F_GetFieldCount(feature)):
             fdefn = ograpi.OGR_F_GetFieldDefnRef(feature, i)
@@ -378,6 +405,16 @@ cdef class FeatureBuilder:
                     props[key] = unicode(val, 'utf-8')
                 except UnicodeDecodeError:
                     props[key] = val
+            elif fieldtype in (FionaDateType, FionaTimeType, FionaDateTimeType):
+                retval = ograpi.OGR_F_GetFieldAsDateTime(
+                    feature, i, &y, &m, &d, &hh, &mm, &ss, &tz)
+                if fieldtype is FionaDateType:
+                    props[key] = datetime.date(y, m, d).isoformat()
+                elif fieldtype is FionaTimeType:
+                    props[key] = datetime.time(hh, mm, ss).isoformat()
+                else:
+                    props[key] = datetime.datetime(
+                        y, m, d, hh, mm, ss).isoformat()
             else:
                 props[key] = None
 
@@ -421,6 +458,15 @@ cdef class OGRFeatureBuilder:
                 ograpi.OGR_F_SetFieldDouble(cogr_feature, i, value)
             elif ptype in (UnicodeType, StringType):
                 ograpi.OGR_F_SetFieldString(cogr_feature, i, value)
+            elif ptype in (FionaDateType, FionaTimeType, FionaDateTimeType):
+                if ptype is FionaDateType:
+                    y, m, d, hh, mm, ss, ff = parse_date(value)
+                elif ptype is FionaTimeType:
+                    y, m, d, hh, mm, ss, ff = parse_time(value)
+                else:
+                    y, m, d, hh, mm, ss, ff = parse_datetime(value)
+                ograpi.OGR_F_SetFieldDateTime(
+                    cogr_feature, i, y, m, d, hh, mm, ss, 0)
             else:
                 raise ValueError("Invalid field type %s" % ptype)
             log.debug("Set field %s: %s" % (key, value))
