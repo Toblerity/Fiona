@@ -115,7 +115,7 @@ geometry.
 Reading and Writing Data
 ========================
 
-TODO.
+
 
 Only files can be opened as collections.
 ::

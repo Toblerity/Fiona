@@ -1,13 +1,19 @@
 CHANGES
 =======
 
-0.6.2 (2011-01-10)
+0.7 (2012-01-29)
+----------------
+- Initial timezone-naive support for date, time, and datetime fields. Don't use
+  these field types if you can avoid them. RFC 3339 datetimes in a string field
+  are much better.
+
+0.6.2 (2012-01-10)
 ------------------
 - Diagnose and set the driver property of collection in read mode.
 - Fail if collection paths are not to files. Multi-collection workspaces are
   a (maybe) TODO.
 
-0.6.1 (2011-01-06)
+0.6.1 (2012-01-06)
 ------------------
 - Handle the case of undefined crs for disk collections.
 

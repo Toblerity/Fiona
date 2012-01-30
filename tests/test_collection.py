@@ -121,6 +121,23 @@ class ShapefileWriteCollectionTest(unittest.TestCase):
                 for f in input:
                     output.write(f)
 
+class ShapefileWriteWithDateCollectionTest(unittest.TestCase):
+    
+    def test_write_point_wdate(self):
+        with collection("docs/data/test_uk.shp", "r") as input:
+            schema = input.schema.copy()
+            schema['geometry'] = 'Point'
+            schema['properties']['date'] = 'date'
+            with collection(
+                    "test_write_date.shp", "w", "ESRI Shapefile", schema
+                    ) as output:
+                for f in input.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
+                    f['geometry'] = {
+                        'type': 'Point',
+                        'coordinates': f['geometry']['coordinates'][0][0] }
+                    f['properties']['date'] = "2012-01-29"
+                    output.write(f)
+
 class ShapefileAppendTest(unittest.TestCase):
 
     def setUp(self):
