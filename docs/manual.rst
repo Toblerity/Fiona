@@ -33,18 +33,18 @@ use, with no gotchas. Vector data access for humans.
 Is it Useful?
 -------------
 
-Yes. But understand that Fiona is geared to excel in a certain range of tasks
-and isn't going to be optimal for others. Fiona trades memory and speed for
-simplicity and reliability. It copies vector data from the data source to
-Python objects, where OGR's Python bindings use C pointers. The Python objects
-are simpler and safer to use, but more memory intensive. Fiona's performance is
-relatively more slow if you only need access to a single feature property – and
-of course if you just want to reproject or filter data files, nothing beats the
+Please understand this: Fiona is designed to excel in a certain range of tasks
+and is less optimal in others. Fiona trades memory and speed for simplicity and
+reliability. Where OGR's Python bindings (for example) use C pointers, Fiona
+copies vector data from the data source to Python objects.  These are simpler
+and safer to use, but more memory intensive. Fiona's performance is relatively
+more slow if you only need access to a single feature property – and of course
+if you just want to reproject or filter data files, nothing beats the
 ``ogr2ogr`` program – but Fiona's performance is much better than OGR's Python
 bindings if you want *all* feature data (all properties and all coordinates).
-The copying is a constraint, yes, but it simplifies things. With Fiona, you
+The copying is a constraint, yes, but it simplifies things.  With Fiona, you
 don't have to track references to C objects to avoid crashes, and you can work
-with feature data using familiar Python mapping accessors. Less worry, less
+with feature data using familiar Python mapping accessors.  Less worry, less
 time spent reading API documentation.
 
 Guidance
@@ -77,45 +77,81 @@ In what cases would you not benefit from using Fiona?
 Example
 -------
 
-The canonical example for Fiona is this: copying from one shapefile to another,
-through a spatial filter, and making a trivial transformation of feature
-geometry.
-::
+The first example of using Fiona is this: copying features from one shapefile
+to another, adding two properties and making sure that all feature polygons are
+facing "up". Orientation of polygons is significant in some applications,
+extruded polygons in Google Earth for one. There's a shapefile in the Fiona
+repository that we'll use in this and other examples.
 
-  from fiona import collection
+.. sourcecode:: python
 
-  # Open a source of features
-  with collection("docs/data/test_uk.shp", "r") as source:
+  import datetime
+  import logging
+  import sys
   
-      # Define a schema for the feature sink
-      schema = source.schema.copy()
-      schema['geometry'] = 'Point'
+  from fiona import collection
+  
+  
+  logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+  
+  def signed_area(coords):
+      """Return the signed area enclosed by a ring using the linear time
+      algorithm at http://www.cgafaq.info/wiki/Polygon_Area. A value >= 0
+      indicates a counter-clockwise oriented ring.
+      """
+      xs, ys = map(list, zip(*coords))
+      xs.append(xs[1])
+      ys.append(ys[1]) 
+      return sum(xs[i]*(ys[i+1]-ys[i-1]) for i in range(1, len(coords)))/2.0
+  
+  
+  with collection("docs/data/test_uk.shp", "r") as source:
       
-      # Open a new sink for features
+      # Copy the source schema and add two new properties.
+      schema = source.schema.copy()
+      schema['properties']['s_area'] = 'float'
+      schema['properties']['timestamp'] = 'str'
+      
+      # Create a sink for processed features with the same format and 
+      # coordinate reference system as the source.
       with collection(
-              "test_write.shp", "w",
-              driver=source.driver, 
-              schema=schema, 
+              "oriented-ccw.shp", "w",
+              driver=source.driver,
+              schema=schema,
               crs=source.crs
               ) as sink:
           
-          # Process only the features intersecting a box
-          for f in source.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
-          
-              # Get point on the boundary of the feature
-              f['geometry'] = f['geometry'] = {
-                  'type': 'Point',
-                  'coordinates': f['geometry']['coordinates'][0][0] }
+          for f in source:
               
-              # Stage feature for writing
-              sink.write(f)
+              try:
+  
+                  # If any feature's polygon is facing "down" (has rings
+                  # wound clockwise), its rings will be reordered to flip
+                  # it "up".
+                  g = f['geometry']
+                  assert g['type'] == "Polygon"
+                  rings = g['coordinates']
+                  sa = sum(signed_area(r) for r in rings)
+                  if sa < 0.0:
+                      rings = [r[::-1] for r in rings]
+                      g['coordinates'] = rings
+                      f['geometry'] = g
+  
+                  # Add the signed area of the polygon and a timestamp
+                  # to the feature properties map.
+                  f['properties'].update(
+                      s_area=sa,
+                      timestamp=datetime.datetime.now().isoformat() )
+  
+                  sink.write(f)
               
-      # The sink shapefile is written to disk when its ``with`` block ends
+              except Exception, e:
+                  logging.exception("Error processing feature %s:", f['id'])
+
+          # The sink collection is written to disk when its block ends
 
 Reading and Writing Data
 ========================
-
-
 
 Only files can be opened as collections.
 ::
