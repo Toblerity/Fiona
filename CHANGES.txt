@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+(?)
+---
+- Added a .closed attribute and a .reopen() method. Also a __del__() which will
+  close a Collection, but still not to be depended upon.
+
 0.7 (2012-01-29)
 ----------------
 - Initial timezone-naive support for date, time, and datetime fields. Don't use

@@ -48,6 +48,11 @@ class Collection(object):
             self.close()
         self.workspace = None
 
+    def __del__(self):
+        # Note: you can't count on this being called. Call close() explicitly
+        # or use the context manager protocol ("with").
+        self.__exit__(None, None, None)
+
     def __len__(self):
         if self._len < 0:
             self._len = self.session.get_length()
@@ -71,10 +76,20 @@ class Collection(object):
         self.session.stop()
         self.session = None
 
+    def reopen(self):
+        """Close and open."""
+        self.close()
+        self.open()
+
+    @property
+    def closed(self):
+        """``False`` if data can be accessed, otherwise ``True``."""
+        return self.session is None
+
     @property
     def opened(self):
         """``True`` if data can be accessed, otherwise ``False``."""
-        return self.session is not None
+        return not self.closed
 
     @property 
     def driver(self):
