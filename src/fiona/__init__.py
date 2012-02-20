@@ -66,7 +66,7 @@ __version__ = "0.7"
 import os
 
 from fiona.collection import Collection
-
+from fiona.ogrext import FIELD_TYPES_MAP as types
 
 def collection(path, mode='r', driver=None, schema=None, crs=None):
     
