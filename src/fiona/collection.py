@@ -25,7 +25,8 @@ class Collection(object):
         """
 
         self.session = None
-        self._len = -1
+        self._buffer = []
+        self._len = 0
         self._driver = None
         self._schema = None
         self._crs = None
@@ -39,13 +40,18 @@ class Collection(object):
         if crs:
             self._crs = crs
         self.workspace = workspace
+        if self.mode == "r":
+            self.session = Session()
+            self.session.start(self)
+        elif self.mode in ("a", "w"):
+            self.session = WritingSession()
+            self.session.start(self)
 
     def __enter__(self):
         return self
 
     def __exit__(self, type, value, traceback):
-        if self.session:
-            self.close()
+        self.close()
         self.workspace = None
 
     def __del__(self):
@@ -54,81 +60,78 @@ class Collection(object):
         self.__exit__(None, None, None)
 
     def __len__(self):
-        if self._len < 0:
+        if self._len <= 0:
             self._len = self.session.get_length()
-        return self._len
+        return self._len + len(self._buffer)
 
-    def open(self):
-        """Begins access to data."""
+    def _flushbuffer(self):
+        """Flush the buffer."""
         if self.session is not None:
-            raise IOError("Collection is already open")
-        if self.mode == "r":
-            self.session = Session()
-            self.session.start(self)
-        elif self.mode in ("a", "w"):
-            self.session = WritingSession()
-            self.session.start(self)
+            self.session.writerecs(self._buffer, self)
+            self._len += len(self._buffer)
+            self._buffer = []
 
     def close(self):
-        """In append or write mode, flushes data to disk, then ends access."""
-        if self.session is None:
-            raise IOError("Collection is not open")
-        self.session.stop()
-        self.session = None
-
-    def reopen(self):
-        """Close and open."""
-        self.close()
-        self.open()
+        """In append or write mode, flushes data to disk, then ends
+        access."""
+        if self.session is not None: 
+            if self.mode in ('a', 'w'):
+                self._flushbuffer()
+            self.session.stop()
+            self.session = None
 
     @property
     def closed(self):
         """``False`` if data can be accessed, otherwise ``True``."""
         return self.session is None
 
-    @property
-    def opened(self):
-        """``True`` if data can be accessed, otherwise ``False``."""
-        return not self.closed
-
     @property 
     def driver(self):
-        """Returns the name of the proper OGR driver"""
+        """Returns the name of the proper OGR driver."""
         if not self._driver and self.mode in ("a", "r"):
             self._driver = self.session.get_driver()
         return self._driver
 
     @property 
     def schema(self):
-        """Returns a mapping describing the data schema"""
+        """Returns a mapping describing the data schema."""
         if not self._schema and self.mode in ("a", "r"):
             self._schema = self.session.get_schema()
         return self._schema
 
     @property
     def crs(self):
-        """Returns a Proj4 string"""
+        """Returns a Proj4 string."""
         if self._crs is None and self.mode in ("a", "r"):
             self._crs = self.session.get_crs()
         return self._crs
 
     def __iter__(self):
-        """Returns an iterator over GeoJSON-like mappings of features"""
+        """Returns an iterator over records."""
         if self.mode != 'r':
             raise IOError("Collection is not open for reading")
         return Iterator(self)
 
+    @property
+    def all(self):
+        """Returns an iterator over all records."""
+        return iter(self)
+
     def filter(self, bbox=None):
-        """Returns an iterator over GeoJSON-like mappings of features, but 
-        filtered by a test for spatial intersection with the provided ``bbox``,
-        a (minx, miny, maxx, maxy) tuple."""
+        """Returns an iterator over records, but filtered by a test for
+        spatial intersection with the provided ``bbox``, a (minx, miny,
+        maxx, maxy) tuple."""
         if self.mode != 'r':
-            raise IOError("Collection is not open for reading")
+            raise IOError("Collection is not open for reading") 
         return Iterator(self, bbox)
 
-    def write(self, feature):
-        """Stages a GeoJSON-like feature mapping for writing to disk."""
+    def write(self, record):
+        """Stages a record for writing to disk."""
+        self.writerecords([record])
+
+    def writerecords(self, records):
+        """Stages multiple records for writing to disk."""
         if self.mode not in ('a', 'w'):
             raise IOError("Collection is not open for reading")
-        self.session.write(feature, self)
+        self._buffer.extend(list(records))
 

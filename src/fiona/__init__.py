@@ -61,12 +61,12 @@ Because Fiona collections are context managers, they are closed and (in
 writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
-__version__ = "0.7"
+__version__ = "0.8"
 
 import os
 
 from fiona.collection import Collection
-from fiona.ogrext import FIELD_TYPES_MAP as types
+
 
 def collection(path, mode='r', driver=None, schema=None, crs=None):
     
@@ -105,6 +105,5 @@ def collection(path, mode='r', driver=None, schema=None, crs=None):
         c = Collection(path, mode, driver, schema, crs)
     else:
         raise ValueError("Invalid mode: %s" % mode)
-    c.open()
     return c
 

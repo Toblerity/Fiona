@@ -409,8 +409,12 @@ Writing Vector Data
 ===================
 
 A vector file can be opened for writing in mode ``"a"`` (append) or mode
-``"w"`` (write). The "update" mode of :program:`OGR` is very format dependent
-and is not supported by Fiona.
+``"w"`` (write).
+
+.. admonition:: Note
+   
+   The "update" mode of :program:`OGR` is quite format dependent
+   and is not supported by Fiona.
 
 Appending Data to Existing Files
 --------------------------------
