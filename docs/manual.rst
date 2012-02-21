@@ -51,8 +51,8 @@ have to track references to C objects to avoid crashes, and you can work with
 vector data using familiar Python mapping accessors.  Less worry, less time
 spent reading API documentation.
 
-Guidance
---------
+Rules of Thumb
+--------------
 
 In what cases would you benefit from using Fiona?
 
@@ -192,8 +192,10 @@ reading documentation. A Python programmer knows how to use a mapping, so why
 not treat features as dictionaries? Use of existing Python idioms is one of
 Fiona's major design principles.
 
-TL;DR: Fiona subscribes to the conventional record model of data, but provides
-GeoJSON-like access to the data via Python file-like and mapping protocols.
+.. admonition:: TL;DR
+   
+   Fiona subscribes to the conventional record model of data, but provides
+   GeoJSON-like access to the data via Python file-like and mapping protocols.
 
 Reading Vector Data
 ===================
@@ -206,15 +208,15 @@ Reading a GIS vector file begins by opening it in mode ``"r"`` using Fiona's
 
   >>> from fiona import collection
   >>> c = collection("docs/data/test_uk.shp", "r")
-  >>> c.opened
-  True
+  >>> c.closed
+  False
 
 Fiona's :py:class:`~fiona.collection.Collection` is like a Python
 :py:class:`file`, but is iterable for records rather than lines.
 
 .. sourcecode:: pycon
 
-  >>> iter(c).next()
+  >>> c.next()
   {'geometry': {'type': 'Polygon', 'coordinates': ...
   >>> len(list(c))
   47
@@ -224,54 +226,75 @@ emptying it as with a Python :py:class:`file`.
 
 .. sourcecode:: pycon
 
-  >>> iter(c).next()
+  >>> c.next()
   Traceback (most recent call last):
   ...
   StopIteration
   >>> len(list(c))
   0
 
-A future version of Fiona may (should?) allow you to seek records by their index,
-but for now you must :py:meth:`~fiona.collection.Collection.reopen` the
-collection to get back to the beginning.
+A future version of Fiona may (should?) allow you to seek records by their
+index, but for now you must reopen the collection to get back to the beginning.
 
 .. sourcecode:: pycon
 
-  >>> c.reopen()
+  >>> c = collection("docs/data/test_uk.shp", "r")
   >>> len(list(c))
   48
 
-A :py:class:`~fiona.collection.Collection` involves external resources. There's
-no guarantee that these will be released unless you explictly
-:py:meth:`~fiona.collection.Collection.close` the
-object or use a :keyword:`with` statement. When
-a :py:class:`~fiona.collection.Collection` is a context guard, it is closed at
-the end of the :keyword:`with` block no matter what happens within the block.
+Filtering
+---------
+
+Details TODO.
 
 .. sourcecode:: pycon
 
-  >>> with collection("docs/data/test_uk.shp", "r") as c:
-  ...     print len(list(c))
-  ...     assert True is False
+  >>> c = collection("docs/data/test_uk.shp", "r")
+  >>> hits = c.filter(bbox=(-5.0, 55.0, 0.0, 60.0))
+  >>> len(list(hits))
+  7
+
+Closing Files
+-------------
+
+A :py:class:`~fiona.collection.Collection` involves external resources. There's
+no guarantee that these will be released unless you explictly
+:py:meth:`~fiona.collection.Collection.close` the object or use
+a :keyword:`with` statement. When a :py:class:`~fiona.collection.Collection` is
+a context guard, it is closed no matter what happens within the block.
+
+.. sourcecode:: pycon
+
+  >>> try:
+  ...     with collection("docs/data/test_uk.shp", "r") as c:
+  ...         print len(list(c))
+  ...         assert True is False
+  ... except:
+  ...     print c.closed
+  ...     raise
   ... 
   48
-  Traceback (most recent call last):
-  ...
-  AssertionError
-  >>> c.closed
   True
+  Traceback (most recent call last):
+    ...
+  AssertionError
 
-Call :py:meth:`~fiona.collection.Collection.close` or use :keyword:`with` and
-you'll never stumble over tied-up external resources, locked files, etc.
+An exception is raised in the :keyword:`with` block above, but as you can see
+from the print statement in the :keyword:`except` clause :py:meth:`c.__exit__`
+(and thereby :py:meth:`c.close`) has been called.
 
-Collection Schema and CRS
--------------------------
+.. important:: Always call :py:meth:`~fiona.collection.Collection.close` or 
+   use :keyword:`with` and you'll never stumble over tied-up external resources,
+   locked files, etc.
 
-In addition to some attributes like those of :py:class:`file`
+Format Drivers, CRS, and Schemas
+================================
+
+In addition to attributes like those of :py:class:`file`
 (:py:attr:`~file.mode`, :py:attr:`~file.closed`),
-a :py:class:`~fiona.collection.Collection` has
-a read-only :py:attr:`~fiona.collection.Collection.driver` attribute which
-names the :program:`OGR` :dfn:`driver` used to open the vector file.
+a :py:class:`~fiona.collection.Collection` has a read-only
+:py:attr:`~fiona.collection.Collection.driver` attribute which names the
+:program:`OGR` :dfn:`format driver` used to open the vector file.
 
 .. sourcecode:: pycon
 
@@ -289,9 +312,17 @@ accessed via a read-only :py:attr:`~fiona.collection.Collection.crs` attribute.
 
 The CRS is represented by a mapping of :program:`PROJ.4` parameters.
 
-Finally, the schema of a :py:class:`~fiona.collection.Collection`'s record type
-(a vector file has a single type of record, remember) is accessed via
-a read-only :py:attr:`~fiona.collection.Collection.schema` attribute.
+The number of records in the collection's file can be obtained via Python's built
+in :py:func:`len` function.
+
+.. sourcecode:: pycon
+
+  >>> len(c)
+  48
+
+Finally, the schema of its record type (a vector file has a single type of
+record, remember) is accessed via a read-only
+:py:attr:`~fiona.collection.Collection.schema` attribute.
 
 .. sourcecode:: pycon
 
@@ -303,52 +334,208 @@ a read-only :py:attr:`~fiona.collection.Collection.schema` attribute.
                   'CNTRY_NAME': 'str',
                   'FIPS_CNTRY': 'str',
                   'POP_CNTRY': 'float'}}
+
+Keeping Schemas Simple
+----------------------
+
+Fiona takes a less is more approach to record types and schemas. Data about
+record types is structured as closely to data about records as can be done.
+Modulo a record's 'id' key, the keys of a schema mapping are the same as the
+keys of the collection's record mappings.
+
+.. sourcecode:: pycon
+
+  >>> rec = c.next()
+  >>> set(rec.keys()) - set(c.schema.keys())
+  set(['id'])
+  >>> set(rec['properties'].keys()) == set(c.schema['properties'].keys())
+  True
+
+The values of the schema mapping are either additional mappings or field type
+names like 'Polygon', 'float', and 'str'. The corresponding Python types can
+be found in a dictionary named :py:attr:`fiona.types`.
+
+.. sourcecode:: pycon
+
+  >>> pprint.pprint(fiona.types)
+  {'date': <class 'fiona.ogrext.FionaDateType'>,
+   'datetime': <class 'fiona.ogrext.FionaDateTimeType'>,
+   'float': <type 'float'>,
+   'int': <type 'int'>,
+   'str': <type 'unicode'>,
+   'time': <class 'fiona.ogrext.FionaTimeType'>}
+
+Field Types
+-----------
+
+TODO: details. In a nutshell, the types and their names are as near to what you'd
+expect in Python (or Javascript) as possible. The 'str' vs 'unicode' muddle is
+a fact of life in Python < 3.0. Fiona records have Unicode strings, but their
+field type name is 'str'.
+
+.. sourcecode:: pycon
+
+  >>> type(rec['properties']['CNTRY_NAME'])
+  <type 'unicode'>
+  >>> c.schema['properties']['CNTRY_NAME']
+  'str'
+  >>> fiona.types[c.schema['properties']['CNTRY_NAME']]
+  <type 'unicode'>
 
 Records
--------
+=======
 
-A record you get from a collection is a Python `dict` structured exactly like
-a GeoJSON [GeoJSON]_ `Feature`. It is self-describing; the names of its fields
-are contained within the data structure and the values in the fields are typed
-properly for the type of record. Numeric field values are type ``int`` and
-``float``, for example, not strings.
-
-It has no references to the `Collection` from which it originates or any other
-external resource.
-
-
-
-Attributes
-----------
-
-The mode the file was opened in ...
+A record you get from a collection is a Python :py:class:`dict` structured
+exactly like a GeoJSON Feature. Fiona records are self-describing; the names of
+its fields are contained within the data structure and the values in the fields
+are typed properly for the type of record. Numeric field values are instances of
+type :py:class:`int` and :py:class:`float`, for example, not strings.
 
 .. sourcecode:: pycon
 
-  >>> c.mode
-  'r'
+  >>> pprint.pprint(rec)
+  {'geometry': {'coordinates': [[(-4.6636110000000004, 51.158332999999999),
+                                 (-4.669168, 51.159438999999999),
+                                 (-4.6733339999999997, 51.161385000000003),
+                                 (-4.6744450000000004, 51.165275999999999),
+                                 (-4.6713899999999997, 51.185271999999998),
+                                 (-4.6694449999999996, 51.193053999999997),
+                                 (-4.6655559999999996, 51.195),
+                                 (-4.6588900000000004, 51.195),
+                                 (-4.6563889999999999, 51.192214999999997),
+                                 (-4.6463890000000001, 51.164444000000003),
+                                 (-4.6469449999999997, 51.160828000000002),
+                                 (-4.6516679999999999, 51.159438999999999),
+                                 (-4.6636110000000004, 51.158332999999999)]],
+                'type': 'Polygon'},
+   'id': '1',
+   'properties': {'AREA': 244820.0,
+                  'CAT': 232.0,
+                  'CNTRY_NAME': u'United Kingdom',
+                  'FIPS_CNTRY': u'UK',
+                  'POP_CNTRY': 60270708.0}}
 
-The name of the OGR driver used to open the file ...
+The record data has no references to the
+:py:class:`~fiona.collection.Collection` from which it originates or to any
+other external resource. It's entirely independent and safe to use in any way.
+Closing the collection does not affect the record at all.
 
 .. sourcecode:: pycon
 
-  >>> c.driver
+  >>> c.close()
+  >>> pprint.pprint(rec['properties'])
+  {'AREA': 244820.0,
+   'CAT': 232.0,
+   'CNTRY_NAME': u'United Kingdom',
+   'FIPS_CNTRY': u'UK',
+   'POP_CNTRY': 60270708.0}
+
+Record Id
+---------
+
+TODO.
+
+Record Properties
+-----------------
+
+TODO.
+
+Record Geometry
+---------------
+
+TODO.
+
+Writing Vector Data
+===================
+
+A vector file can be opened for writing in mode ``"a"`` (append) or mode
+``"w"`` (write).
+
+.. admonition:: Note
+   
+   The in situ "update" mode of :program:`OGR` is quite format dependent
+   and is therefore not supported by Fiona.
+
+Appending Data to Existing Files
+--------------------------------
+
+Details TODO. 
+
+.. sourcecode:: pycon
+
+  >>> import os
+  >>> os.system("cp docs/data/test_uk.* /tmp")
+  0
+  >>> with collection("/tmp/test_uk.shp", "a") as c:
+  ...     print len(c)
+  ...     c.write(rec)
+  ...     print len(c)
+  ... 
+  48
+  49
+
+The count of records remains even after the collection is closed.
+
+.. sourcecode:: pycon
+
+  >>> c.closed
+  True
+  >>> len(c)
+  49
+  
+
+The record you write must match the file's schema (because a file contains one
+type of record, remember). You'll get a :py:class:`ValueError` if it doesn't.
+
+.. sourcecode:: pycon
+
+  >>> with collection("/tmp/test_uk.shp", "a") as c:
+  ...     c.write({'properties': {'foo': 'bar'}})
+  ... 
+  Traceback (most recent call last):
+    ...
+  ValueError: Record data not match collection schema
+
+
+The :py:meth:`~fiona.collection.Collection.write` method writes a single
+record to the collection's file. Its sibling
+:py:meth:`~fiona.collection.Collection.writerecords` writes a sequence (or
+iterator) of records.
+
+.. sourcecode:: pycon
+
+  >>> with collection("/tmp/test_uk.shp", "a") as c:
+  ...     c.writerecords([rec, rec, rec])
+  ...     print len(c)
+  ... 
+  52
+
+.. admonition:: Buffering
+
+   Fiona's output is buffered. The records passed to :py:meth:`write` and 
+   :py:meth:`writerecords` are flushed to disk when the collection is closed.
+   This means that writing large files is memory intensive. Work is planned to
+   make output more efficient by the 1.0 release.
+
+Writing New Files
+-----------------
+
+Details TODO.
+
+Copy the parameters of our demo file.
+
+.. sourcecode:: pycon
+
+  >>> with collection("docs/data/test_uk.shp", "r") as source:
+  ...     source_driver = source.driver
+  ...     source_crs = source.crs
+  ...     source_schema = source.schema
+  ... 
+  >>> source_driver
   'ESRI Shapefile'
-
-The coordinate reference system of the file ...
-
-.. sourcecode:: pycon
-
-  >>> c.crs
+  >>> source_crs
   {'no_defs': True, 'ellps': 'WGS84', 'datum': 'WGS84', 'proj': 'longlat'}
-
-And finally, the schema of the file, a description of the geometries and
-attributes of all its records.
-
-.. sourcecode:: pycon
-
-  >>> import pprint
-  >>> pprint.pprint(c.schema)
+  >>> pprint.pprint(source_schema)
   {'geometry': 'Polygon',
    'properties': {'AREA': 'float',
                   'CAT': 'float',
@@ -356,16 +543,26 @@ attributes of all its records.
                   'FIPS_CNTRY': 'str',
                   'POP_CNTRY': 'float'}}
 
+And now create a new file using them.
 
+.. sourcecode:: pycon
 
-  >>> collection("PG:dbname=databasename", "r")
-  Traceback (most recent call last):
-    ...
-  OSError: Nonexistent path 'PG:dbname=databasename'
-  >>> collection(".", "r")
-  Traceback (most recent call last):
-    ...
-  ValueError: Path must be a file
+  >>> with collection(
+  ...         "/tmp/foo.shp",
+  ...         "w",
+  ...         driver=source_driver,
+  ...         crs=source_crs,
+  ...         schema=source_schema) as c:
+  ...     print len(c)
+  ...     c.write(rec)
+  ...     print len(c)
+  ... 
+  0
+  1
+  >>> c.closed
+  True
+  >>> len(c)
+  1
 
 
 .. [Kent1978] William Kent, Data and Reality, North Holland, 1978.

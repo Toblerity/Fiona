@@ -619,7 +619,7 @@ cdef class WritingSession(Session):
 
         elif collection.mode == 'w':
             if os.path.exists(path):
-                self.cogr_ds = ograpi.OGROpen(path, 0, NULL)
+                self.cogr_ds = ograpi.OGROpen(path, 1, NULL)
                 if self.cogr_ds is not NULL:
                     cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
                     assert cogr_driver is not NULL
@@ -670,22 +670,30 @@ cdef class WritingSession(Session):
 
         log.debug("Writing started")
 
-    def write(self, feature, collection):
-        log.debug("Creating feature in layer: %s" % feature)
-        try:
-            for key in feature['properties']:
-                assert key in collection.schema['properties']
-            assert feature['geometry']['type'] == collection.schema['geometry']
-        except AssertionError:
-            raise ValueError("Feature data not match collection schema")
+    def writerecs(self, records, collection):
+        """Writes buffered records to disk."""
         
         cdef void *cogr_layer = self.cogr_layer
         assert cogr_layer is not NULL
-        cdef void *cogr_feature = OGRFeatureBuilder().build(feature, collection)
-        result = ograpi.OGR_L_CreateFeature(cogr_layer, cogr_feature)
-        if result != OGRERR_NONE:
-            raise RuntimeError("Failed to add feature: %s" % result)
-        _deleteOgrFeature(cogr_feature)
+        cdef void *cogr_feature
+
+        for record in records:
+            log.debug("Creating feature in layer: %s" % record)
+            try:
+                # Validate against collection's schema.
+                for key in record['properties']:
+                    assert key in collection.schema['properties']
+                assert record['geometry']['type'] == collection.schema[
+                                                        'geometry']
+            except AssertionError:
+                raise ValueError("Record data not match collection schema")
+
+            cogr_feature = OGRFeatureBuilder().build(record, collection)
+            result = ograpi.OGR_L_CreateFeature(cogr_layer, cogr_feature)
+            if result != OGRERR_NONE:
+                raise RuntimeError("Failed to add feature: %s" % record)
+            _deleteOgrFeature(cogr_feature)
+        
         return result
 
 

@@ -16,20 +16,20 @@ class ShapefileCollectionTest(unittest.TestCase):
         c = collection("docs/data/test_uk.shp", "r")
         self.failUnlessEqual(c.name, "test_uk")
         self.failUnlessEqual(c.mode, "r")
-        self.failUnlessEqual(c.opened, True)
-        self.assertRaises(IOError, c.open)
         self.failUnless(iter(c))
         c.close()
         self.assertRaises(ValueError, iter, c)
-        self.failUnlessEqual(c.opened, False)
-        self.assertRaises(IOError, c.close)
 
     def test_len(self):
         c = collection("docs/data/test_uk.shp", "r")
         self.failUnlessEqual(len(c), 48)
+        c.close()
+        self.failUnlessEqual(len(c), 48)
 
     def test_driver(self):
         c = collection("docs/data/test_uk.shp", "r")
+        self.failUnlessEqual(c.driver, "ESRI Shapefile")
+        c.close()
         self.failUnlessEqual(c.driver, "ESRI Shapefile")
 
     def test_schema(self):
@@ -46,9 +46,8 @@ class ShapefileCollectionTest(unittest.TestCase):
     def test_context(self):
         with collection("docs/data/test_uk.shp", "r") as c:
             self.failUnlessEqual(c.name, "test_uk")
-            self.failUnlessEqual(c.opened, True)
             self.failUnlessEqual(len(c), 48)
-        self.failUnlessEqual(c.opened, False)
+        self.failUnlessEqual(c.closed, True)
 
     def test_iter_one(self):
         with collection("docs/data/test_uk.shp", "r") as c:
@@ -109,7 +108,26 @@ class ShapefileWriteCollectionTest(unittest.TestCase):
                     f['geometry'] = {
                         'type': 'Point',
                         'coordinates': f['geometry']['coordinates'][0][0] }
+                    output.writerecords([f])
+                self.failUnlessEqual(len(output._buffer), 7)
+                self.failUnlessEqual(len(output), 7)
+        self.failUnlessEqual(len(output), 7)
+
+    def test_write_point2(self):
+        with collection("docs/data/test_uk.shp", "r") as input:
+            schema = input.schema.copy()
+            schema['geometry'] = 'Point'
+            with collection(
+                    "test_write_point.shp", "w", "ESRI Shapefile", schema
+                    ) as output:
+                for f in input.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
+                    f['geometry'] = {
+                        'type': 'Point',
+                        'coordinates': f['geometry']['coordinates'][0][0] }
                     output.write(f)
+                self.failUnlessEqual(len(output._buffer), 7)
+                self.failUnlessEqual(len(output), 7)
+        self.failUnlessEqual(len(output), 7)
 
     def test_write_polygon_with_crs(self):
         with collection("docs/data/test_uk.shp", "r") as input:

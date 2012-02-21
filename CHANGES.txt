@@ -3,8 +3,12 @@ CHANGES
 
 (?)
 ---
-- Added a .closed attribute and a .reopen() method. Also a __del__() which will
-  close a Collection, but still not to be depended upon.
+- Replaced .opened attribute with .closed (product of collection() is always
+  opened). Also a __del__() which will close a Collection, but still not to be
+  depended upon.
+- Added writerecords method.
+- Added a record buffer and better counting of records in a collection.
+- Manage one iterator per collection/session.
 
 0.7 (2012-01-29)
 ----------------
