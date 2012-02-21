@@ -43,6 +43,13 @@ class ShapefileCollectionTest(unittest.TestCase):
         self.failUnlessEqual(c.crs['ellps'], 'WGS84')
         self.failUnless(c.crs['no_defs'])
 
+    def test_bounds(self):
+        c = collection("docs/data/test_uk.shp", "r")
+        self.failUnlessAlmostEqual(c.bounds[0], -8.621389, 6)
+        self.failUnlessAlmostEqual(c.bounds[1], 49.911659, 6)
+        self.failUnlessAlmostEqual(c.bounds[2], 1.749444, 6)
+        self.failUnlessAlmostEqual(c.bounds[3], 60.844444, 6)
+
     def test_context(self):
         with collection("docs/data/test_uk.shp", "r") as c:
             self.failUnlessEqual(c.name, "test_uk")
@@ -111,7 +118,12 @@ class ShapefileWriteCollectionTest(unittest.TestCase):
                     output.writerecords([f])
                 self.failUnlessEqual(len(output._buffer), 7)
                 self.failUnlessEqual(len(output), 7)
+        
         self.failUnlessEqual(len(output), 7)
+        self.failUnlessAlmostEqual(output.bounds[0], -3.231389, 6)
+        self.failUnlessAlmostEqual(output.bounds[1], 51.614998, 6)
+        self.failUnlessAlmostEqual(output.bounds[2], -1.180556, 6)
+        self.failUnlessAlmostEqual(output.bounds[3], 60.224998, 6)
 
     def test_write_point2(self):
         with collection("docs/data/test_uk.shp", "r") as input:

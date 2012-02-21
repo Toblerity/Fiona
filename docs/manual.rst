@@ -287,8 +287,8 @@ from the print statement in the :keyword:`except` clause :py:meth:`c.__exit__`
    use :keyword:`with` and you'll never stumble over tied-up external resources,
    locked files, etc.
 
-Format Drivers, CRS, and Schemas
-================================
+Format Drivers, CRS, Bounds, and Schema
+=======================================
 
 In addition to attributes like those of :py:class:`file`
 (:py:attr:`~file.mode`, :py:attr:`~file.closed`),
@@ -319,6 +319,22 @@ in :py:func:`len` function.
 
   >>> len(c)
   48
+
+The :dfn:`minimum bounding rectangle` (MBR) or :dfn:`bounds` of the collection's
+records is obtained via a read-only
+:py:attr:`~fiona.collection.Collection.bounds` attribute.
+
+.. sourcecode:: pycon
+
+  >>> c.bounds
+  (-8.6213890000000006, 49.911659, 1.749444, 60.844444000000003)
+
+.. admonition:: Note
+
+   Getting the length or bounds of a collection (or closing a collection) has
+   the side effect of flushing any written records to the file on disk. You
+   may also call :py:meth:`~fiona.collection.Collection.flush` in your code.
+   It does nothing when there are no written records.
 
 Finally, the schema of its record type (a vector file has a single type of
 record, remember) is accessed via a read-only

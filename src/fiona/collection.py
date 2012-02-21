@@ -28,6 +28,7 @@ class Collection(object):
         self.iterator = None
         self._buffer = []
         self._len = 0
+        self._bounds = None
         self._driver = None
         self._schema = None
         self._crs = None
@@ -47,11 +48,6 @@ class Collection(object):
         elif self.mode in ("a", "w"):
             self.session = WritingSession()
             self.session.start(self)
-
-    def __len__(self):
-        if self._len <= 0:
-            self._len = self.session.get_length()
-        return self._len + len(self._buffer)
 
     @property 
     def driver(self):
@@ -105,11 +101,32 @@ class Collection(object):
         self.writerecords([record])
 
     def _flushbuffer(self):
-        """Flush the buffer."""
-        if self.session is not None:
+        if self.session is not None and len(self._buffer) > 0:
             self.session.writerecs(self._buffer, self)
-            self._len += len(self._buffer)
+            self.session.sync()
+            new_len = self.session.get_length()
+            self._len = new_len > self._len \
+                and new_len or self._len + len(self._buffer)
             self._buffer = []
+            self._bounds = self.session.get_extent()
+
+    def __len__(self):
+        if self._len <= 0 and self.session is not None:
+            self._len = self.session.get_length()
+        self._flushbuffer()
+        return self._len
+
+    @property
+    def bounds(self):
+        """Returns (minx, miny, maxx, maxy)."""
+        if self._bounds is None and self.session is not None:
+            self._bounds = self.session.get_extent()
+        self._flushbuffer()
+        return self._bounds
+
+    def flush(self):
+        """Flush the buffer."""
+        self._flushbuffer()
 
     def close(self):
         """In append or write mode, flushes data to disk, then ends

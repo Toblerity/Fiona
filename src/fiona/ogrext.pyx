@@ -587,6 +587,12 @@ cdef class Session:
             log.debug("Projection not found (cogr_crs was NULL)")
         return crs
 
+    def get_extent(self):
+        assert self.cogr_layer is not NULL
+        cdef ograpi.OGREnvelope extent
+        result = ograpi.OGR_L_GetExtent(self.cogr_layer, &extent, 1)
+        return (extent.MinX, extent.MinY, extent.MaxX, extent.MaxY)
+
     def isactive(self):
         if self.cogr_layer != NULL and self.cogr_ds != NULL:
             return 1
@@ -667,11 +673,10 @@ cdef class WritingSession(Session):
                 ograpi.OGR_Fld_Destroy(cogr_fielddefn)
             log.debug("Created fields")
 
-
         log.debug("Writing started")
 
     def writerecs(self, records, collection):
-        """Writes buffered records to disk."""
+        """Writes buffered records to OGR."""
         
         cdef void *cogr_layer = self.cogr_layer
         assert cogr_layer is not NULL
@@ -691,10 +696,17 @@ cdef class WritingSession(Session):
             cogr_feature = OGRFeatureBuilder().build(record, collection)
             result = ograpi.OGR_L_CreateFeature(cogr_layer, cogr_feature)
             if result != OGRERR_NONE:
-                raise RuntimeError("Failed to add feature: %s" % record)
+                raise RuntimeError("Failed to write record: %s" % record)
             _deleteOgrFeature(cogr_feature)
-        
-        return result
+
+    def sync(self):
+        """Syncs OGR to disk."""
+        cdef void *cogr_ds = self.cogr_ds
+        assert cogr_ds is not NULL
+        log.debug("Syncing OGR to disk")
+        result = ograpi.OGR_DS_SyncToDisk(cogr_ds)
+        if result != OGRERR_NONE:
+            raise RuntimeError("Failed to sync to disk")
 
 
 cdef class Iterator:
