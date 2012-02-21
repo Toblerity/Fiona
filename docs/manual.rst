@@ -208,15 +208,15 @@ Reading a GIS vector file begins by opening it in mode ``"r"`` using Fiona's
 
   >>> from fiona import collection
   >>> c = collection("docs/data/test_uk.shp", "r")
-  >>> c.opened
-  True
+  >>> c.closed
+  False
 
 Fiona's :py:class:`~fiona.collection.Collection` is like a Python
 :py:class:`file`, but is iterable for records rather than lines.
 
 .. sourcecode:: pycon
 
-  >>> iter(c).next()
+  >>> c.next()
   {'geometry': {'type': 'Polygon', 'coordinates': ...
   >>> len(list(c))
   47
@@ -226,22 +226,36 @@ emptying it as with a Python :py:class:`file`.
 
 .. sourcecode:: pycon
 
-  >>> iter(c).next()
+  >>> c.next()
   Traceback (most recent call last):
   ...
   StopIteration
   >>> len(list(c))
   0
 
-A future version of Fiona may (should?) allow you to seek records by their index,
-but for now you must :py:meth:`~fiona.collection.Collection.reopen` the
-collection to get back to the beginning.
+A future version of Fiona may (should?) allow you to seek records by their
+index, but for now you must reopen the collection to get back to the beginning.
 
 .. sourcecode:: pycon
 
-  >>> c.reopen()
+  >>> c = collection("docs/data/test_uk.shp", "r")
   >>> len(list(c))
   48
+
+Filtering
+---------
+
+Details TODO.
+
+.. sourcecode:: pycon
+
+  >>> c = collection("docs/data/test_uk.shp", "r")
+  >>> hits = c.filter(bbox=(-5.0, 55.0, 0.0, 60.0))
+  >>> len(list(hits))
+  7
+
+Closing Files
+-------------
 
 A :py:class:`~fiona.collection.Collection` involves external resources. There's
 no guarantee that these will be released unless you explictly
@@ -273,8 +287,8 @@ from the print statement in the :keyword:`except` clause :py:meth:`c.__exit__`
    use :keyword:`with` and you'll never stumble over tied-up external resources,
    locked files, etc.
 
-Collection Driver, CRS, and Schema
-----------------------------------
+Format Drivers, CRS, and Schemas
+================================
 
 In addition to attributes like those of :py:class:`file`
 (:py:attr:`~file.mode`, :py:attr:`~file.closed`),
@@ -298,6 +312,14 @@ accessed via a read-only :py:attr:`~fiona.collection.Collection.crs` attribute.
 
 The CRS is represented by a mapping of :program:`PROJ.4` parameters.
 
+The number of records in the collection's file can be obtained via Python's built
+in :py:func:`len` function.
+
+.. sourcecode:: pycon
+
+  >>> len(c)
+  48
+
 Finally, the schema of its record type (a vector file has a single type of
 record, remember) is accessed via a read-only
 :py:attr:`~fiona.collection.Collection.schema` attribute.
@@ -313,6 +335,9 @@ record, remember) is accessed via a read-only
                   'FIPS_CNTRY': 'str',
                   'POP_CNTRY': 'float'}}
 
+Keeping Schemas Simple
+----------------------
+
 Fiona takes a less is more approach to record types and schemas. Data about
 record types is structured as closely to data about records as can be done.
 Modulo a record's 'id' key, the keys of a schema mapping are the same as the
@@ -320,7 +345,7 @@ keys of the collection's record mappings.
 
 .. sourcecode:: pycon
 
-  >>> rec = iter(c).next()
+  >>> rec = c.next()
   >>> set(rec.keys()) - set(c.schema.keys())
   set(['id'])
   >>> set(rec['properties'].keys()) == set(c.schema['properties'].keys())
@@ -358,7 +383,7 @@ field type name is 'str'.
   <type 'unicode'>
 
 Records
--------
+=======
 
 A record you get from a collection is a Python :py:class:`dict` structured
 exactly like a GeoJSON Feature. Fiona records are self-describing; the names of
@@ -405,6 +430,21 @@ Closing the collection does not affect the record at all.
    'FIPS_CNTRY': u'UK',
    'POP_CNTRY': 60270708.0}
 
+Record Id
+---------
+
+TODO.
+
+Record Properties
+-----------------
+
+TODO.
+
+Record Geometry
+---------------
+
+TODO.
+
 Writing Vector Data
 ===================
 
@@ -413,8 +453,8 @@ A vector file can be opened for writing in mode ``"a"`` (append) or mode
 
 .. admonition:: Note
    
-   The "update" mode of :program:`OGR` is quite format dependent
-   and is not supported by Fiona.
+   The in situ "update" mode of :program:`OGR` is quite format dependent
+   and is therefore not supported by Fiona.
 
 Appending Data to Existing Files
 --------------------------------
@@ -429,17 +469,23 @@ Details TODO.
   >>> with collection("/tmp/test_uk.shp", "a") as c:
   ...     print len(c)
   ...     c.write(rec)
+  ...     print len(c)
   ... 
   48
-  >>> c.open()
+  49
+
+The count of records remains even after the collection is closed.
+
+.. sourcecode:: pycon
+
+  >>> c.closed
+  True
   >>> len(c)
   49
   
 
-TODO: Should the length be updated immediately?
-
-The record you write must match the file's schema. You'll get
-a :py:class:`ValueError` if it doesn't.
+The record you write must match the file's schema (because a file contains one
+type of record, remember). You'll get a :py:class:`ValueError` if it doesn't.
 
 .. sourcecode:: pycon
 
@@ -448,7 +494,28 @@ a :py:class:`ValueError` if it doesn't.
   ... 
   Traceback (most recent call last):
     ...
-  ValueError: Feature data not match collection schema
+  ValueError: Record data not match collection schema
+
+
+The :py:meth:`~fiona.collection.Collection.write` method writes a single
+record to the collection's file. Its sibling
+:py:meth:`~fiona.collection.Collection.writerecords` writes a sequence (or
+iterator) of records.
+
+.. sourcecode:: pycon
+
+  >>> with collection("/tmp/test_uk.shp", "a") as c:
+  ...     c.writerecords([rec, rec, rec])
+  ...     print len(c)
+  ... 
+  52
+
+.. admonition:: Buffering
+
+   Fiona's output is buffered. The records passed to :py:meth:`write` and 
+   :py:meth:`writerecords` are flushed to disk when the collection is closed.
+   This means that writing large files is memory intensive. Work is planned to
+   make output more efficient by the 1.0 release.
 
 Writing New Files
 -----------------
@@ -488,9 +555,12 @@ And now create a new file using them.
   ...         schema=source_schema) as c:
   ...     print len(c)
   ...     c.write(rec)
-  ...
+  ...     print len(c)
+  ... 
   0
-  >>> c.open()
+  1
+  >>> c.closed
+  True
   >>> len(c)
   1
 
