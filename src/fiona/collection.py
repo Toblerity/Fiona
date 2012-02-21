@@ -25,6 +25,7 @@ class Collection(object):
         """
 
         self.session = None
+        self.iterator = None
         self._buffer = []
         self._len = 0
         self._driver = None
@@ -47,43 +48,10 @@ class Collection(object):
             self.session = WritingSession()
             self.session.start(self)
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        self.close()
-        self.workspace = None
-
-    def __del__(self):
-        # Note: you can't count on this being called. Call close() explicitly
-        # or use the context manager protocol ("with").
-        self.__exit__(None, None, None)
-
     def __len__(self):
         if self._len <= 0:
             self._len = self.session.get_length()
         return self._len + len(self._buffer)
-
-    def _flushbuffer(self):
-        """Flush the buffer."""
-        if self.session is not None:
-            self.session.writerecs(self._buffer, self)
-            self._len += len(self._buffer)
-            self._buffer = []
-
-    def close(self):
-        """In append or write mode, flushes data to disk, then ends
-        access."""
-        if self.session is not None: 
-            if self.mode in ('a', 'w'):
-                self._flushbuffer()
-            self.session.stop()
-            self.session = None
-
-    @property
-    def closed(self):
-        """``False`` if data can be accessed, otherwise ``True``."""
-        return self.session is None
 
     @property 
     def driver(self):
@@ -106,32 +74,67 @@ class Collection(object):
             self._crs = self.session.get_crs()
         return self._crs
 
-    def __iter__(self):
-        """Returns an iterator over records."""
-        if self.mode != 'r':
-            raise IOError("Collection is not open for reading")
-        return Iterator(self)
-
-    @property
-    def all(self):
-        """Returns an iterator over all records."""
-        return iter(self)
-
     def filter(self, bbox=None):
         """Returns an iterator over records, but filtered by a test for
         spatial intersection with the provided ``bbox``, a (minx, miny,
         maxx, maxy) tuple."""
-        if self.mode != 'r':
-            raise IOError("Collection is not open for reading") 
-        return Iterator(self, bbox)
+        if self.closed:
+            raise ValueError("Collection is not open for reading")
+        elif self.mode != 'r':
+            raise IOError("Collection is not open for reading")
+        if self.iterator is None:
+            self.iterator = Iterator(self, bbox)
+        return self.iterator
 
-    def write(self, record):
-        """Stages a record for writing to disk."""
-        self.writerecords([record])
+    def __iter__(self):
+        """Returns an iterator over records."""
+        return self.filter()
+
+    def next(self):
+        """Returns next record from iterator."""
+        return iter(self).next()
 
     def writerecords(self, records):
         """Stages multiple records for writing to disk."""
         if self.mode not in ('a', 'w'):
             raise IOError("Collection is not open for reading")
         self._buffer.extend(list(records))
+
+    def write(self, record):
+        """Stages a record for writing to disk."""
+        self.writerecords([record])
+
+    def _flushbuffer(self):
+        """Flush the buffer."""
+        if self.session is not None:
+            self.session.writerecs(self._buffer, self)
+            self._len += len(self._buffer)
+            self._buffer = []
+
+    def close(self):
+        """In append or write mode, flushes data to disk, then ends
+        access."""
+        if self.session is not None: 
+            if self.mode in ('a', 'w'):
+                self._flushbuffer()
+            self.session.stop()
+            self.session = None
+            self.iterator = None
+
+    @property
+    def closed(self):
+        """``False`` if data can be accessed, otherwise ``True``."""
+        return self.session is None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
+        self.workspace = None
+
+    def __del__(self):
+        # Note: you can't count on this being called. Call close() explicitly
+        # or use the context manager protocol ("with").
+        self.__exit__(None, None, None)
 
