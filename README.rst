@@ -2,17 +2,17 @@
 README
 ======
 
-Fiona is OGR's neater API – sleek and elegant on the outside, indomitable power
-on the inside.
+Fiona is OGR's neater API – sleek on the outside, indomitable power on the
+inside.
 
 Fiona provides a minimal, uncomplicated Python interface to the open source GIS
 community's most trusted geodata access library and integrates readily with
 other Python GIS packages such as pyproj_, Rtree_, and Shapely_.
 
-How minimal? Fiona can read features as mappings from shapefiles or other GIS
-vector formats and write mappings as features to files using the same formats.
-That's all. There aren't any feature or geometry classes. Features and their
-geometries are just data.
+How minimal? Fiona can read feature records as mappings from shapefiles or
+other GIS vector formats and write mappings as records to files using the same
+formats. That's all. There aren't any feature or geometry classes. Records and
+their geometries are just data.
 
 Dependencies
 ============
@@ -47,7 +47,7 @@ below (using ``git``)::
 Usage
 =====
 
-Collections are much like ``file`` objects. Features are mappings modeled on
+Collections are much like ``file`` objects. Records are mappings modeled on
 the GeoJSON format and if you want to do anything fancy with them you will
 probably need Shapely or something like it::
 
@@ -71,7 +71,7 @@ probably need Shapely or something like it::
           for f in source.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
           
               # Get point on the boundary of the feature
-              f['geometry'] = f['geometry'] = {
+              f['geometry'] {
                   'type': 'Point',
                   'coordinates': f['geometry']['coordinates'][0][0] }
               

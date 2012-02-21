@@ -6,6 +6,11 @@ cdef extern from "cpl_conv.h":
     void    CPLFree (void *ptr)
 
 ctypedef int OGRErr
+ctypedef struct OGREnvelope:
+    double MinX
+    double MaxX
+    double MinY
+    double MaxY
 
 cdef extern from "ogr_srs_api.h":
     void    OSRCleanup ()
@@ -74,6 +79,7 @@ cdef extern from "ogr_api.h":
     int     OGR_G_WkbSize (void *geometry)
     OGRErr  OGR_L_CreateFeature (void *layer, void *feature)
     int     OGR_L_CreateField (void *layer, void *fielddefn, int flexible)
+    OGRErr  OGR_L_GetExtent (void *layer, void *extent, int force)
     void *  OGR_L_GetFeature (void *layer, int n)
     int     OGR_L_GetFeatureCount (void *layer, int m)
     void *  OGR_L_GetLayerDefn (void *layer)
