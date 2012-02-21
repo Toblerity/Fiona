@@ -71,7 +71,7 @@ probably need Shapely or something like it::
           for f in source.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
           
               # Get point on the boundary of the feature
-              f['geometry'] = f['geometry'] = {
+              f['geometry'] = {
                   'type': 'Point',
                   'coordinates': f['geometry']['coordinates'][0][0] }
               
