@@ -211,6 +211,11 @@ Reading a GIS vector file begins by opening it in mode ``"r"`` using Fiona's
   >>> c.closed
   False
 
+.. admonition:: Possible API Change
+
+   :py:func:`fiona.collection` may be renamed (or aliased) to 
+   :py:func:`fiona.open` in a future version.
+
 Fiona's :py:class:`~fiona.collection.Collection` is like a Python
 :py:class:`file`, but is iterable for records rather than lines.
 
@@ -245,7 +250,12 @@ index, but for now you must reopen the collection to get back to the beginning.
 Filtering
 ---------
 
-Details TODO.
+With some vector data formats a spatial index accompanies the records, allowing
+efficient bounding box searches. A collection's
+:py:meth:`~fiona.collection.Collection.filter` method returns an iterator over
+records that intersect a given ``(minx, miny, maxx, maxy)`` bounding box. The
+collection's own coordinate reference system (see below) is used to interpret
+the box's values.
 
 .. sourcecode:: pycon
 
@@ -449,7 +459,15 @@ Closing the collection does not affect the record at all.
 Record Id
 ---------
 
-TODO.
+A record has an ``id`` key. Its corresponding value is a string unique within
+the data file.
+
+.. sourcecode:: pycon
+
+  >>> rec['id']
+  '1'
+
+TODO: double check what OGR does about FIDs.
 
 Record Properties
 -----------------
