@@ -449,6 +449,36 @@ Closing the collection does not affect the record at all.
 .. sourcecode:: pycon
 
   >>> c.close()
+  >>> rec['id']
+  '1'
+
+Record Id
+---------
+
+A record has an ``id`` key. As in the GeoJSON specification, its corresponding
+value is a string unique within the data file.
+
+.. sourcecode:: pycon
+
+  >>> c = collection("docs/data/test_uk.shp", "r")
+  >>> rec = c.next()
+  >>> rec['id']
+  '0'
+
+.. admonition:: OGR Details
+
+   In the :program:`OGR` model, feature ids are long integers. Fiona record ids
+   are therefore usually string representations of integer record indexes.
+
+Record Properties
+-----------------
+
+A record has a ``properties`` key. Its corresponding value is a mapping. The
+keys of the properties mapping are the same as the keys of the properties
+mapping in the schema of the collection the record comes from (see above). 
+
+.. sourcecode:: pycon
+
   >>> pprint.pprint(rec['properties'])
   {'AREA': 244820.0,
    'CAT': 232.0,
@@ -456,28 +486,70 @@ Closing the collection does not affect the record at all.
    'FIPS_CNTRY': u'UK',
    'POP_CNTRY': 60270708.0}
 
-Record Id
----------
-
-A record has an ``id`` key. Its corresponding value is a string unique within
-the data file.
-
-.. sourcecode:: pycon
-
-  >>> rec['id']
-  '1'
-
-TODO: double check what OGR does about FIDs.
-
-Record Properties
------------------
-
-TODO.
-
 Record Geometry
 ---------------
 
-TODO.
+A record has a ``geometry`` key. Its corresponding value is a mapping with
+``type`` and ``coordinates`` keys.
+
+.. sourcecode:: pycon
+
+  >>> pprint.pprint(rec['geometry'])
+  {'coordinates': [[(0.89916700000000005, 51.357216000000001),
+                    (0.88527800000000001, 51.358330000000002),
+                    (0.78749999999999998, 51.369438000000002),
+                    (0.781111, 51.370552000000004),
+                    (0.76611099999999999, 51.375832000000003),
+                    (0.75944400000000001, 51.380828999999999),
+                    (0.745278, 51.394440000000003),
+                    (0.74083299999999996, 51.400275999999998),
+                    (0.73499999999999999, 51.408332999999999),
+                    (0.74055599999999999, 51.429718000000001),
+                    (0.74888900000000003, 51.443604000000001),
+                    (0.76027800000000001, 51.444716999999997),
+                    (0.79111100000000001, 51.439995000000003),
+                    (0.89222199999999996, 51.421387000000003),
+                    (0.90416700000000005, 51.418883999999998),
+                    (0.90888899999999995, 51.416938999999999),
+                    (0.93055500000000002, 51.398887999999999),
+                    (0.93666700000000003, 51.393608),
+                    (0.94388899999999998, 51.384995000000004),
+                    (0.94750000000000001, 51.378608999999997),
+                    (0.94777800000000001, 51.374718000000001),
+                    (0.94694400000000001, 51.371108999999997),
+                    (0.9425, 51.369163999999998),
+                    (0.90472200000000003, 51.358055),
+                    (0.89916700000000005, 51.357216000000001)]],
+   'type': 'Polygon'}
+
+Since the coordinates are just tuples, or lists of tuples, or lists of lists of
+tuples, the ``type`` tells you how to interpret them.
+
++-------------------+---------------------------------------------------+
+| Type              | Coordinates                                       |
++===================+===================================================+
+| Point             | A single (x, y) tuple                             |
++-------------------+---------------------------------------------------+
+| LineString        | A list of (x, y) tuple vertices                   |
++-------------------+---------------------------------------------------+
+| Polygon           | A list of rings (each a list of (x, y) tuples)    |
++-------------------+---------------------------------------------------+
+| MultiPoint        | A list of points (each a single (x, y) tuple)     |
++-------------------+---------------------------------------------------+
+| MultiLineString   | A list of lines (each a list of (x, y) tuples)    |
++-------------------+---------------------------------------------------+
+| MultiPolygon      | A list of polygons (see above)                    |
++-------------------+---------------------------------------------------+
+
+Fiona, like the GeoJSON format, has both Northern Hemisphere "North is up" and
+Cartesian "X-Y" biases. The values within a tuple that we denote as ``(x, y)``
+above are either (longitude E of the prime meridian, latitude N of the equator)
+or, for other projected coordinate systems, (easting, northing).
+
+.. admonition:: Long-Lat, not Lat-Long
+
+   Even though most of us say "lat, long" out loud, Fiona's ``x,y`` is always
+   easting, northing, which means (long, lat). Longitude first, latitude second.
 
 Writing Vector Data
 ===================
