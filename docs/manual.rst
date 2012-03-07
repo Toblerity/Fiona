@@ -22,20 +22,27 @@ The Fiona User Manual
 Introduction
 ============
 
-The data in geographic information systems (GIS) is roughly divided into
-:dfn:`rasters` representing continuous scalar fields (land surface temperature or
-elevation, for example) and :dfn:`vectors` representing discrete entities like
-roads and administrative boundaries. Concerned exclusively with the latter,
-Fiona is a Python wrapper for vector data access functions from the `OGR
-<http://www.gdal.org/ogr/>`_ library.  A very simple wrapper for minimalists.
-It reads data records from files as GeoJSON-like mappings and writes the same
-kind of mappings as records back to files. That's it. There are no layers, no
-cursors, no geometric operations, no transformations between coordinate
-systems, no remote method calls; all these concerns are left to other Python
-packages such as :py:mod:`Shapely <https://github.com/Toblerity/Shapely>` and
-:py:mod:`pyproj <http://code.google.com/p/pyproj/>` and Python language
-protocols. Why? To eliminate unnecessary complication. Fiona is simple to
-understand and use, with no gotchas.
+We make :dfn:`geographic information systems` (GIS) to help us plan, react to,
+and understand changes in our physical, political, economic, and cultural
+landscapes. A generation ago, GIS was something done only by big institutions
+like nations and cities, but it's become ubiquitous today thanks to
+accurate and inexpensive global positioning systems, commoditization of
+satellite imagery, and open source software.
+
+The kinds of data in GIS are roughly divided into :dfn:`rasters` representing
+continuous scalar fields (land surface temperature or elevation, for example)
+and :dfn:`vectors` representing discrete entities like roads and administrative
+boundaries. Concerned exclusively with the latter, Fiona is a Python wrapper
+for vector data access functions from the `OGR <http://www.gdal.org/ogr/>`_
+library.  A very simple wrapper for minimalists.  It reads data records from
+files as GeoJSON-like mappings and writes the same kind of mappings as records
+back to files. That's it. There are no layers, no cursors, no geometric
+operations, no transformations between coordinate systems, no remote method
+calls; all these concerns are left to other Python packages such as
+:py:mod:`Shapely <https://github.com/Toblerity/Shapely>` and :py:mod:`pyproj
+<http://code.google.com/p/pyproj/>` and Python language protocols. Why? To
+eliminate unnecessary complication. Fiona is simple to understand and use, with
+no gotchas.
 
 Please understand this: Fiona is designed to excel in a certain range of tasks
 and is less optimal in others. Fiona trades memory and speed for simplicity and
@@ -71,7 +78,7 @@ In what cases would you not benefit from using Fiona?
   :py:mod:`json` or :py:mod:`simplejson` modules.
 * If your data is in a RDBMS like PostGIS, use a Python DB package or ORM like
   :py:mod:`SQLAlchemy` or :py:mod:`GeoAlchemy`. Maybe you're using
-  :py:mod:`GeoDjango` in this already. If so, carry on.
+  :py:mod:`GeoDjango` already. If so, carry on.
 * If your data is served via HTTP from CouchDB or CartoDB, etc, use an HTTP
   package (:py:mod:`httplib2`, :py:mod:`Requests`, etc) or the provider's
   Python API.
@@ -250,8 +257,8 @@ index, but for now you must reopen the collection to get back to the beginning.
 Filtering
 ---------
 
-With some vector data formats a spatial index accompanies the records, allowing
-efficient bounding box searches. A collection's
+With some vector data formats a spatial index accompanies the data file,
+allowing efficient bounding box searches. A collection's
 :py:meth:`~fiona.collection.Collection.filter` method returns an iterator over
 records that intersect a given ``(minx, miny, maxx, maxy)`` bounding box. The
 collection's own coordinate reference system (see below) is used to interpret
