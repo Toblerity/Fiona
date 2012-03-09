@@ -17,24 +17,29 @@ class OGRBuilderExceptionsTest(unittest.TestCase):
         geom = {'type': "Bogus", 'coordinates': None}
         self.assertRaises(ValueError, geometryRT, geom)
 
-class PointRoundTripTest(unittest.TestCase):
-    def test(self):
-        geom = {'type': "Point", 'coordinates': (0.0, 0.0)}
-        result = geometryRT(geom)
-        self.failUnlessEqual(result['type'], "Point")
-        self.failUnlessEqual(result['coordinates'], (0.0, 0.0))
+class RoundTripping(object):
+    def test_type(self):
+        self.failUnlessEqual(
+            geometryRT(self.geom)['type'], self.geom['type'])
+    def test_coordinates(self):
+        self.failUnlessEqual(
+            geometryRT(self.geom)['coordinates'], self.geom['coordinates'])
 
-class LineStringRoundTripTest(unittest.TestCase):
-    def test(self):
-        geom = {'type': "LineString", 'coordinates': [(0.0, 0.0), (1.0, 1.0)]}
-        result = geometryRT(geom)
-        self.failUnlessEqual(result['type'], "LineString")
-        self.failUnlessEqual(result['coordinates'], [(0.0, 0.0), (1.0, 1.0)])
+class PointRoundTripTest(unittest.TestCase, RoundTripping):
+    def setUp(self):
+        self.geom = {'type': "Point", 'coordinates': (0.0, 0.0)}
+
+class LineStringRoundTripTest(unittest.TestCase, RoundTripping):
+    def setUp(self):
+        self.geom = {
+            'type': "LineString", 
+            'coordinates': [(0.0, 0.0), (1.0, 1.0)]}
 
 class PolygonRoundTripTest(unittest.TestCase):
     def test(self):
         geom = {'type': "Polygon", 
-                'coordinates': [[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0)]]}
+                'coordinates': [
+                    [(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0)]] }
         result = geometryRT(geom)
         self.failUnlessEqual(result['type'], "Polygon")
         self.failUnlessEqual(
