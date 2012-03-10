@@ -10,45 +10,93 @@ from fiona import collection
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
-class ShapefileCollectionTest(unittest.TestCase):
-
-    def test_io(self):
-        c = collection("docs/data/test_uk.shp", "r")
-        self.failUnlessEqual(c.name, "test_uk")
-        self.failUnlessEqual(c.mode, "r")
-        self.failUnless(iter(c))
-        c.close()
-        self.assertRaises(ValueError, iter, c)
+class ReadingTest(unittest.TestCase):
+    
+    def setUp(self):
+        self.c = collection("docs/data/test_uk.shp", "r")
+    
+    def tearDown(self):
+        self.c.close()
+    
+    def test_name(self):
+        self.failUnlessEqual(self.c.name, "test_uk")
+    
+    def test_mode(self):
+        self.failUnlessEqual(self.c.mode, "r")
+    
+    def test_iter(self):
+        self.failUnless(iter(self.c))
+    
+    def test_closed_no_iter(self):
+        self.c.close()
+        self.assertRaises(ValueError, iter, self.c)
 
     def test_len(self):
-        c = collection("docs/data/test_uk.shp", "r")
-        self.failUnlessEqual(len(c), 48)
-        c.close()
-        self.failUnlessEqual(len(c), 48)
+        self.failUnlessEqual(len(self.c), 48)
+    
+    def test_closed_len(self):
+        # Len is lazy, it's never computed in this case. TODO?
+        self.c.close()
+        self.failUnlessEqual(len(self.c), 0)
 
+    def test_len_closed_len(self):
+        # Lazy len is computed in this case and sticks.
+        len(self.c)
+        self.c.close()
+        self.failUnlessEqual(len(self.c), 48)
+    
     def test_driver(self):
-        c = collection("docs/data/test_uk.shp", "r")
-        self.failUnlessEqual(c.driver, "ESRI Shapefile")
-        c.close()
-        self.failUnlessEqual(c.driver, "ESRI Shapefile")
+        self.failUnlessEqual(self.c.driver, "ESRI Shapefile")
+    
+    def test_closed_driver(self):
+        # Driver is lazy too, never computed in this case. TODO?
+        self.c.close()
+        self.failUnlessEqual(self.c.driver, None)
 
+    def test_driver_closed_driver(self):
+        self.c.driver
+        self.c.close()
+        self.failUnlessEqual(self.c.driver, "ESRI Shapefile")
+    
     def test_schema(self):
-        c = collection("docs/data/test_uk.shp", "r")
-        s = c.schema['properties']
+        s = self.c.schema['properties']
         self.failUnlessEqual(s['CAT'], "float")
         self.failUnlessEqual(s['FIPS_CNTRY'], "str")
 
+    def test_closed_schema(self):
+        # Schema is lazy too, never computed in this case. TODO?
+        self.c.close()
+        self.failUnlessEqual(self.c.schema, None)
+
+    def test_schema_closed_schema(self):
+        self.c.schema
+        self.c.close()
+        self.failUnlessEqual(
+            sorted(self.c.schema.keys()),
+            ['geometry', 'properties'])
+
     def test_crs(self):
-        c = collection("docs/data/test_uk.shp", "r")
-        self.failUnlessEqual(c.crs['ellps'], 'WGS84')
-        self.failUnless(c.crs['no_defs'])
+        crs = self.c.crs
+        self.failUnlessEqual(crs['ellps'], 'WGS84')
+        self.failUnless(crs['no_defs'])
+
+    def test_closed_crs(self):
+        # Crs is lazy too, never computed in this case. TODO?
+        self.c.close()
+        self.failUnlessEqual(self.c.crs, None)
+
+    def test_crs_closed_crs(self):
+        self.c.crs
+        self.c.close()
+        self.failUnlessEqual(
+            sorted(self.c.crs.keys()),
+            ['datum', 'ellps', 'no_defs', 'proj'])
 
     def test_bounds(self):
-        c = collection("docs/data/test_uk.shp", "r")
-        self.failUnlessAlmostEqual(c.bounds[0], -8.621389, 6)
-        self.failUnlessAlmostEqual(c.bounds[1], 49.911659, 6)
-        self.failUnlessAlmostEqual(c.bounds[2], 1.749444, 6)
-        self.failUnlessAlmostEqual(c.bounds[3], 60.844444, 6)
+        self.failUnlessAlmostEqual(self.c.bounds[0], -8.621389, 6)
+        self.failUnlessAlmostEqual(self.c.bounds[1], 49.911659, 6)
+        self.failUnlessAlmostEqual(self.c.bounds[2], 1.749444, 6)
+        self.failUnlessAlmostEqual(self.c.bounds[3], 60.844444, 6)
 
     def test_context(self):
         with collection("docs/data/test_uk.shp", "r") as c:
@@ -57,89 +105,86 @@ class ShapefileCollectionTest(unittest.TestCase):
         self.failUnlessEqual(c.closed, True)
 
     def test_iter_one(self):
-        with collection("docs/data/test_uk.shp", "r") as c:
-            f = iter(c).next()
-            self.failUnlessEqual(f['id'], "0")
-            self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
-
-    def test_iter_one(self):
-        with collection("docs/data/test_uk.shp", "r") as c:
-            f = iter(c).next()
-            self.failUnlessEqual(f['id'], "0")
-            self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
+        f = iter(self.c).next()
+        self.failUnlessEqual(f['id'], "0")
+        self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
 
     def test_iter_list(self):
-        with collection("docs/data/test_uk.shp", "r") as c:
-            f = list(c)[0]
-            self.failUnlessEqual(f['id'], "0")
-            self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
+        f = list(self.c)[0]
+        self.failUnlessEqual(f['id'], "0")
+        self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
 
     def test_filter_1(self):
-        with collection("docs/data/test_uk.shp", "r") as c:
-            results = list(c.filter(bbox=(-15.0, 35.0, 15.0, 65.0)))
-            self.failUnlessEqual(len(results), 48)
-            f = results[0]
-            self.failUnlessEqual(f['id'], "0")
-            self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
-
-    def test_filter_1(self):
-        with collection("docs/data/test_uk.shp", "r") as c:
-            results = list(c.filter(bbox=(-15.0, 35.0, 15.0, 65.0)))
-            self.failUnlessEqual(len(results), 48)
-            f = results[0]
-            self.failUnlessEqual(f['id'], "0")
-            self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
+        results = list(self.c.filter(bbox=(-15.0, 35.0, 15.0, 65.0)))
+        self.failUnlessEqual(len(results), 48)
+        f = results[0]
+        self.failUnlessEqual(f['id'], "0")
+        self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
 
     def test_no_write(self):
-        with collection("docs/data/test_uk.shp", "r") as c:
-            self.assertRaises(IOError, c.write, {})
+        self.assertRaises(IOError, self.c.write, {})
 
+# The file writing tests below presume we can write to /tmp.
 
-class ShapefileWriteCollectionTest(unittest.TestCase):
-    
-    def test_no_read(self):
+class GenericWritingTest(unittest.TestCase):
+
+    def setUp(self):
         schema = {'geometry': 'Point', 'properties': {'label': 'str'}}
-        with collection(
-                "test-no-iter.shp", "w", "ESRI Shapefile", schema=schema) as c:
-            self.assertRaises(IOError, iter, c)
-            self.assertRaises(IOError, c.filter)
+        self.c = collection(
+                "test-no-iter.shp", 
+                "w", 
+                "ESRI Shapefile", 
+                schema=schema)
 
-    def test_write_point(self):
-        with collection("docs/data/test_uk.shp", "r") as input:
-            schema = input.schema.copy()
-            schema['geometry'] = 'Point'
-            with collection(
-                    "test_write_point.shp", "w", "ESRI Shapefile", schema
-                    ) as output:
-                for f in input.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
-                    f['geometry'] = {
-                        'type': 'Point',
-                        'coordinates': f['geometry']['coordinates'][0][0] }
-                    output.writerecords([f])
-                self.failUnlessEqual(len(output._buffer), 7)
-                self.failUnlessEqual(len(output), 7)
-        
-        self.failUnlessEqual(len(output), 7)
-        self.failUnlessAlmostEqual(output.bounds[0], -3.231389, 6)
-        self.failUnlessAlmostEqual(output.bounds[1], 51.614998, 6)
-        self.failUnlessAlmostEqual(output.bounds[2], -1.180556, 6)
-        self.failUnlessAlmostEqual(output.bounds[3], 60.224998, 6)
+    def tearDown(self):
+        self.c.close()
 
-    def test_write_point2(self):
-        with collection("docs/data/test_uk.shp", "r") as input:
-            schema = input.schema.copy()
-            schema['geometry'] = 'Point'
-            with collection(
-                    "test_write_point.shp", "w", "ESRI Shapefile", schema
-                    ) as output:
-                for f in input.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
-                    f['geometry'] = {
-                        'type': 'Point',
-                        'coordinates': f['geometry']['coordinates'][0][0] }
-                    output.write(f)
-                self.failUnlessEqual(len(output._buffer), 7)
-                self.failUnlessEqual(len(output), 7)
-        self.failUnlessEqual(len(output), 7)
+    def test_no_iter(self):
+        self.assertRaises(IOError, iter, self.c)
+
+    def test_no_filter(self):
+        self.assertRaises(IOError, self.c.filter)
+
+class PointWritingTest(unittest.TestCase):
+
+    def setUp(self):
+        self.sink = collection(
+            "/tmp/point_writing_test.shp",
+            "w",
+            driver="ESRI Shapefile",
+            schema={
+                'geometry': 'Point', 
+                'properties': {'title': 'str'}})
+
+    def tearDown(self):
+        self.sink.close()
+
+    def test_write_one(self):
+        self.failUnlessEqual(len(self.sink), 0)
+        self.failUnlessEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
+        f = {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
+            'properties': {'title': 'point one'}}
+        self.sink.writerecords([f])
+        self.failUnlessEqual(len(self.sink), 1)
+        self.failUnlessEqual(self.sink.bounds, (0.0, 0.1, 0.0, 0.1))
+
+    def test_write_two(self):
+        self.failUnlessEqual(len(self.sink), 0)
+        self.failUnlessEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
+        f1 = {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
+            'properties': {'title': 'point one'}}
+        f2 = {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, -0.1)},
+            'properties': {'title': 'point two'}}
+        self.sink.writerecords([f1, f2])
+        self.failUnlessEqual(len(self.sink), 2)
+        self.failUnlessEqual(self.sink.bounds, (0.0, -0.1, 0.0, 0.1))
+
+# TODO: clean up tests below, removing use of distributed data as fixture.
+
+class PolygonWritingTest(unittest.TestCase):
 
     def test_write_polygon_with_crs(self):
         with collection("docs/data/test_uk.shp", "r") as input:
