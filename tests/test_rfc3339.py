@@ -9,66 +9,39 @@ from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 class DateParseTest(unittest.TestCase):
-    
+
     def test_yyyymmdd(self):
-        y, m, d, hh, mm, ss, ff = parse_date("2012-01-29")
-        self.failUnlessEqual(y, 2012)
-        self.failUnlessEqual(m, 1)
-        self.failUnlessEqual(d, 29)
-        self.failUnlessEqual(hh, 0)
+        self.failUnlessEqual(
+            parse_date("2012-01-29"), (2012, 1, 29, 0, 0, 0, 0.0))
 
 class TimeParseTest(unittest.TestCase):
     
     def test_hhmmss(self):
-        y, m, d, hh, mm, ss, ff = parse_time("10:11:12")
-        self.failUnlessEqual(y, 0)
-        self.failUnlessEqual(hh, 10)
-        self.failUnlessEqual(mm, 11)
-        self.failUnlessEqual(ss, 12)
-        self.failUnlessEqual(ff, 0.0)
+        self.failUnlessEqual(
+            parse_time("10:11:12"), (0, 0, 0, 10, 11, 12, 0.0))
 
     def test_hhmm(self):
-        y, m, d, hh, mm, ss, ff = parse_time("10:11")
-        self.failUnlessEqual(y, 0)
-        self.failUnlessEqual(hh, 10)
-        self.failUnlessEqual(mm, 11)
-        self.failUnlessEqual(ss, 0)
-        self.failUnlessEqual(ff, 0.0)
+        self.failUnlessEqual(
+            parse_time("10:11"), (0, 0, 0, 10, 11, 0, 0.0))
 
     def test_hhmmssff(self):
-        y, m, d, hh, mm, ss, ff = parse_time("10:11:12.42")
-        self.failUnlessEqual(y, 0)
-        self.failUnlessEqual(hh, 10)
-        self.failUnlessEqual(mm, 11)
-        self.failUnlessEqual(ss, 12)
-        self.failUnlessEqual(ff, 0.42*1000000.0)
+        self.failUnlessEqual(
+            parse_time("10:11:12.42"), 
+            (0, 0, 0, 10, 11, 12, 0.42*1000000.0))
 
     def test_hhmmssz(self):
-        y, m, d, hh, mm, ss, ff = parse_time("10:11:12Z")
-        self.failUnlessEqual(y, 0)
-        self.failUnlessEqual(hh, 10)
-        self.failUnlessEqual(mm, 11)
-        self.failUnlessEqual(ss, 12)
-        self.failUnlessEqual(ff, 0.0)
+        self.failUnlessEqual(
+            parse_time("10:11:12Z"), (0, 0, 0, 10, 11, 12, 0.0))
 
     def test_hhmmssoff(self):
-        y, m, d, hh, mm, ss, ff = parse_time("10:11:12-01:00")
-        self.failUnlessEqual(y, 0)
-        self.failUnlessEqual(hh, 10)
-        self.failUnlessEqual(mm, 11)
-        self.failUnlessEqual(ss, 12)
-        self.failUnlessEqual(ff, 0.0)
+        self.failUnlessEqual(
+            parse_time("10:11:12-01:00"), (0, 0, 0, 10, 11, 12, 0.0))
 
 class DatetimeParseTest(unittest.TestCase):
     
     def test_yyyymmdd(self):
-        y, m, d, hh, mm, ss, ff = parse_datetime("2012-01-29T10:11:12")
-        self.failUnlessEqual(y, 2012)
-        self.failUnlessEqual(m, 1)
-        self.failUnlessEqual(d, 29)
-        self.failUnlessEqual(hh, 10)
-        self.failUnlessEqual(mm, 11)
-        self.failUnlessEqual(ss, 12)
-        self.failUnlessEqual(ff, 0.0)
+        self.failUnlessEqual(
+            parse_datetime("2012-01-29T10:11:12"), 
+            (2012, 1, 29, 10, 11, 12, 0.0))
 
 
