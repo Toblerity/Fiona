@@ -154,7 +154,8 @@ class PointWritingTest(unittest.TestCase):
             driver="ESRI Shapefile",
             schema={
                 'geometry': 'Point', 
-                'properties': {'title': 'str'}})
+                'properties': {'title': 'str', 'date': 'date'}},
+            crs={'init': "epsg:4326", 'no_defs': True})
 
     def tearDown(self):
         self.sink.close()
@@ -164,7 +165,7 @@ class PointWritingTest(unittest.TestCase):
         self.failUnlessEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
         f = {
             'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
-            'properties': {'title': 'point one'}}
+            'properties': {'title': 'point one', 'date': "2012-01-29"}}
         self.sink.writerecords([f])
         self.failUnlessEqual(len(self.sink), 1)
         self.failUnlessEqual(self.sink.bounds, (0.0, 0.1, 0.0, 0.1))
@@ -174,46 +175,15 @@ class PointWritingTest(unittest.TestCase):
         self.failUnlessEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
         f1 = {
             'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
-            'properties': {'title': 'point one'}}
+            'properties': {'title': 'point one', 'date': "2012-01-29"}}
         f2 = {
             'geometry': {'type': 'Point', 'coordinates': (0.0, -0.1)},
-            'properties': {'title': 'point two'}}
+            'properties': {'title': 'point two', 'date': "2012-01-29"}}
         self.sink.writerecords([f1, f2])
         self.failUnlessEqual(len(self.sink), 2)
         self.failUnlessEqual(self.sink.bounds, (0.0, -0.1, 0.0, 0.1))
 
-# TODO: clean up tests below, removing use of distributed data as fixture.
-
-class PolygonWritingTest(unittest.TestCase):
-
-    def test_write_polygon_with_crs(self):
-        with collection("docs/data/test_uk.shp", "r") as input:
-            schema = input.schema.copy()
-            with collection(
-                    "test_write_polygon.shp", "w", "ESRI Shapefile",
-                    schema=schema, crs={'init': "epsg:4326", 'no_defs': True}
-                    ) as output:
-                for f in input:
-                    output.write(f)
-
-class ShapefileWriteWithDateCollectionTest(unittest.TestCase):
-    
-    def test_write_point_wdate(self):
-        with collection("docs/data/test_uk.shp", "r") as input:
-            schema = input.schema.copy()
-            schema['geometry'] = 'Point'
-            schema['properties']['date'] = 'date'
-            with collection(
-                    "test_write_date.shp", "w", "ESRI Shapefile", schema
-                    ) as output:
-                for f in input.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
-                    f['geometry'] = {
-                        'type': 'Point',
-                        'coordinates': f['geometry']['coordinates'][0][0] }
-                    f['properties']['date'] = "2012-01-29"
-                    output.write(f)
-
-class ShapefileAppendTest(unittest.TestCase):
+class AppendingTest(unittest.TestCase):
 
     def setUp(self):
         os.mkdir("append-test")
