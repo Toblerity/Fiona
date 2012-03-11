@@ -3,8 +3,8 @@ The Fiona User Manual
 =====================
 
 :Author: Sean Gillies, <sean.gillies@gmail.com>
-:Revision: 1.0
-:Date: 18 February 2012
+:Revision: 0.8
+:Date: 10 March 2012
 :Copyright: 
   This work is licensed under a `Creative Commons Attribution 3.0
   United States License`__.
@@ -32,17 +32,17 @@ satellite imagery, and open source software.
 The kinds of data in GIS are roughly divided into :dfn:`rasters` representing
 continuous scalar fields (land surface temperature or elevation, for example)
 and :dfn:`vectors` representing discrete entities like roads and administrative
-boundaries. Concerned exclusively with the latter, Fiona is a Python wrapper
-for vector data access functions from the `OGR <http://www.gdal.org/ogr/>`_
-library.  A very simple wrapper for minimalists.  It reads data records from
-files as GeoJSON-like mappings and writes the same kind of mappings as records
-back to files. That's it. There are no layers, no cursors, no geometric
-operations, no transformations between coordinate systems, no remote method
-calls; all these concerns are left to other Python packages such as
-:py:mod:`Shapely <https://github.com/Toblerity/Shapely>` and :py:mod:`pyproj
-<http://code.google.com/p/pyproj/>` and Python language protocols. Why? To
-eliminate unnecessary complication. Fiona is simple to understand and use, with
-no gotchas.
+boundaries. Fiona is concerned exclusively with the latter. It is a Python
+wrapper for vector data access functions from the `OGR
+<http://www.gdal.org/ogr/>`_ library.  A very simple wrapper for minimalists.
+It reads data records from files as GeoJSON-like mappings and writes the same
+kind of mappings as records back to files. That's it. There are no layers, no
+cursors, no geometric operations, no transformations between coordinate
+systems, no remote method calls; all these concerns are left to other Python
+packages such as :py:mod:`Shapely <https://github.com/Toblerity/Shapely>` and
+:py:mod:`pyproj <http://code.google.com/p/pyproj/>` and Python language
+protocols. Why? To eliminate unnecessary complication. Fiona aims to be simple
+to understand and use, with no gotchas.
 
 Please understand this: Fiona is designed to excel in a certain range of tasks
 and is less optimal in others. Fiona trades memory and speed for simplicity and
@@ -368,6 +368,28 @@ record, remember) is accessed via a read-only
                   'FIPS_CNTRY': 'str',
                   'POP_CNTRY': 'float'}}
 
+The ``bounds``, ``crs``, ``driver``, and ``schema`` properties are both lazy
+and sticky, meaning that the values stick around even after the file is closed.
+
+.. sourcecode:: pycon
+
+  >>> c = collection("docs/data/test_uk.shp", "r")
+  >>> c.bounds
+  (-8.6213890000000006, 49.911659, 1.749444, 60.844444000000003)
+  >>> c.close()
+  >>> c.bounds
+  (-8.6213890000000006, 49.911659, 1.749444, 60.844444000000003)
+
+However, if the file is closed before the property was computed the property
+remains in a meaningless state.
+
+.. sourcecode:: pycon
+
+  >>> c = collection("data/test_uk.shp", "r")
+  >>> c.close()
+  >>> c.bounds is None
+  True
+
 Keeping Schemas Simple
 ----------------------
 
@@ -558,6 +580,44 @@ or, for other projected coordinate systems, (easting, northing).
    Even though most of us say "lat, long" out loud, Fiona's ``x,y`` is always
    easting, northing, which means (long, lat). Longitude first, latitude second.
 
+Point Set Theory and Simple Features
+------------------------------------
+
+In a proper, well-scrubbed vector data file the geometry mappings explained
+above are representations of geometric objects made up of :dfn:`point sets`.
+The following
+
+.. sourcecode:: python
+
+  {'type': 'LineString', 'coordinates': [(0.0, 0.0), (0.0, 1.0)]}
+
+represents not just two points, but the set of infinitely many points along the
+line of length 1.0 from ``(0.0, 0.0)`` to ``(0.0, 1.0)``. In the application of
+point set theory commonly called :dfn:`Simple Features Access` [SFA]_ two
+geometric objects are equal if their point sets are equal whether they are
+equal in the Python sense or not. If you have Shapely (which implements Simple
+Features Access) installed, you can see this in by verifying the following.
+
+.. sourcecode:: pycon
+
+  >>> from shapely.geometry import shape
+  >>> l1 = shape(
+  ...     {'type': 'LineString', 'coordinates': [(0, 0), (2, 2)]})
+  >>> l2 = shape(
+  ...     {'type': 'LineString', 'coordinates': [(0, 0), (1, 1), (2, 2)]})
+  >>> l1 == l2
+  False
+  >>> l1.equals(l2)
+  True
+
+.. admonition:: Dirty data
+
+   Some files may contain vectors that are :dfn:`invalid` from a simple features
+   standpoint due to accident (inadequate quality control on the producer's end)
+   or intention ("dirty" vectors saved to a file for special treatment). Fiona
+   doesn't sniff for or attempt to clean dirty data, so make sure you're getting
+   yours from a clean source.
+
 Writing Vector Data
 ===================
 
@@ -682,4 +742,5 @@ And now create a new file using them.
 .. [ESRI1998] ESRI Shapefile Technical Description. July 1998. http://www.esri.com/library/whitepapers/pdfs/shapefile.pdf
 .. [GeoJSON] http://geojson.org
 .. [JSON] http://www.ietf.org/rfc/rfc4627
+.. [SFA] http://en.wikipedia.org/wiki/Simple_feature_access
 
