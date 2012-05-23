@@ -29,6 +29,12 @@ class PointRoundTripTest(unittest.TestCase):
               'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
         self.failUnlessEqual(g['properties']['title'], 'foo')
+    def test_none_property(self):
+        f = { 'id': '1',
+              'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
+              'properties': {'title': None} }
+        g = featureRT(f, self.c)
+        self.failUnlessEqual(g['properties']['title'], None)
 
 class LineStringRoundTripTest(unittest.TestCase):
     def setUp(self):
