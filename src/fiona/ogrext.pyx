@@ -395,7 +395,9 @@ cdef class FeatureBuilder:
                     "Invalid field type %s" % ograpi.OGR_Fld_GetType(fdefn))
             # TODO: other types
             fieldtype = FIELD_TYPES_MAP[fieldtypename]
-            if fieldtype is IntType:
+            if not ograpi.OGR_F_IsFieldSet(feature, i):
+                props[key] = None
+            elif fieldtype is IntType:
                 props[key] = ograpi.OGR_F_GetFieldAsInteger(feature, i)
             elif fieldtype is FloatType:
                 props[key] = ograpi.OGR_F_GetFieldAsDouble(feature, i)
@@ -467,6 +469,8 @@ cdef class OGRFeatureBuilder:
                     y, m, d, hh, mm, ss, ff = parse_datetime(value)
                 ograpi.OGR_F_SetFieldDateTime(
                     cogr_feature, i, y, m, d, hh, mm, ss, 0)
+            elif value is None:
+                pass # keep field unset/null
             else:
                 raise ValueError("Invalid field type %s" % ptype)
             log.debug("Set field %s: %s" % (key, value))
