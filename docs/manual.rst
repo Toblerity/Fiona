@@ -3,8 +3,8 @@ The Fiona User Manual
 =====================
 
 :Author: Sean Gillies, <sean.gillies@gmail.com>
-:Revision: 1.0
-:Date: 18 February 2012
+:Revision: 0.8
+:Date: 10 March 2012
 :Copyright: 
   This work is licensed under a `Creative Commons Attribution 3.0
   United States License`__.
@@ -22,11 +22,18 @@ The Fiona User Manual
 Introduction
 ============
 
-The data in geographic information systems (GIS) is roughly divided into
-:dfn:`rasters` representing continuous scalar fields (land surface temperature or
-elevation, for example) and :dfn:`vectors` representing discrete entities like
-roads and administrative boundaries. Concerned exclusively with the latter,
-Fiona is a Python wrapper for vector data access functions from the `OGR
+We make :dfn:`geographic information systems` (GIS) to help us plan, react to,
+and understand changes in our physical, political, economic, and cultural
+landscapes. A generation ago, GIS was something done only by big institutions
+like nations and cities, but it's become ubiquitous today thanks to
+accurate and inexpensive global positioning systems, commoditization of
+satellite imagery, and open source software.
+
+The kinds of data in GIS are roughly divided into :dfn:`rasters` representing
+continuous scalar fields (land surface temperature or elevation, for example)
+and :dfn:`vectors` representing discrete entities like roads and administrative
+boundaries. Fiona is concerned exclusively with the latter. It is a Python
+wrapper for vector data access functions from the `OGR
 <http://www.gdal.org/ogr/>`_ library.  A very simple wrapper for minimalists.
 It reads data records from files as GeoJSON-like mappings and writes the same
 kind of mappings as records back to files. That's it. There are no layers, no
@@ -34,8 +41,8 @@ cursors, no geometric operations, no transformations between coordinate
 systems, no remote method calls; all these concerns are left to other Python
 packages such as :py:mod:`Shapely <https://github.com/Toblerity/Shapely>` and
 :py:mod:`pyproj <http://code.google.com/p/pyproj/>` and Python language
-protocols. Why? To eliminate unnecessary complication. Fiona is simple to
-understand and use, with no gotchas.
+protocols. Why? To eliminate unnecessary complication. Fiona aims to be simple
+to understand and use, with no gotchas.
 
 Please understand this: Fiona is designed to excel in a certain range of tasks
 and is less optimal in others. Fiona trades memory and speed for simplicity and
@@ -71,7 +78,7 @@ In what cases would you not benefit from using Fiona?
   :py:mod:`json` or :py:mod:`simplejson` modules.
 * If your data is in a RDBMS like PostGIS, use a Python DB package or ORM like
   :py:mod:`SQLAlchemy` or :py:mod:`GeoAlchemy`. Maybe you're using
-  :py:mod:`GeoDjango` in this already. If so, carry on.
+  :py:mod:`GeoDjango` already. If so, carry on.
 * If your data is served via HTTP from CouchDB or CartoDB, etc, use an HTTP
   package (:py:mod:`httplib2`, :py:mod:`Requests`, etc) or the provider's
   Python API.
@@ -211,6 +218,11 @@ Reading a GIS vector file begins by opening it in mode ``"r"`` using Fiona's
   >>> c.closed
   False
 
+.. admonition:: Possible API Change
+
+   :py:func:`fiona.collection` may be renamed (or aliased) to 
+   :py:func:`fiona.open` in a future version.
+
 Fiona's :py:class:`~fiona.collection.Collection` is like a Python
 :py:class:`file`, but is iterable for records rather than lines.
 
@@ -245,7 +257,12 @@ index, but for now you must reopen the collection to get back to the beginning.
 Filtering
 ---------
 
-Details TODO.
+With some vector data formats a spatial index accompanies the data file,
+allowing efficient bounding box searches. A collection's
+:py:meth:`~fiona.collection.Collection.filter` method returns an iterator over
+records that intersect a given ``(minx, miny, maxx, maxy)`` bounding box. The
+collection's own coordinate reference system (see below) is used to interpret
+the box's values.
 
 .. sourcecode:: pycon
 
@@ -351,6 +368,28 @@ record, remember) is accessed via a read-only
                   'FIPS_CNTRY': 'str',
                   'POP_CNTRY': 'float'}}
 
+The ``bounds``, ``crs``, ``driver``, and ``schema`` properties are both lazy
+and sticky, meaning that the values stick around even after the file is closed.
+
+.. sourcecode:: pycon
+
+  >>> c = collection("docs/data/test_uk.shp", "r")
+  >>> c.bounds
+  (-8.6213890000000006, 49.911659, 1.749444, 60.844444000000003)
+  >>> c.close()
+  >>> c.bounds
+  (-8.6213890000000006, 49.911659, 1.749444, 60.844444000000003)
+
+However, if the file is closed before the property was computed the property
+remains in a meaningless state.
+
+.. sourcecode:: pycon
+
+  >>> c = collection("data/test_uk.shp", "r")
+  >>> c.close()
+  >>> c.bounds is None
+  True
+
 Keeping Schemas Simple
 ----------------------
 
@@ -439,6 +478,36 @@ Closing the collection does not affect the record at all.
 .. sourcecode:: pycon
 
   >>> c.close()
+  >>> rec['id']
+  '1'
+
+Record Id
+---------
+
+A record has an ``id`` key. As in the GeoJSON specification, its corresponding
+value is a string unique within the data file.
+
+.. sourcecode:: pycon
+
+  >>> c = collection("docs/data/test_uk.shp", "r")
+  >>> rec = c.next()
+  >>> rec['id']
+  '0'
+
+.. admonition:: OGR Details
+
+   In the :program:`OGR` model, feature ids are long integers. Fiona record ids
+   are therefore usually string representations of integer record indexes.
+
+Record Properties
+-----------------
+
+A record has a ``properties`` key. Its corresponding value is a mapping. The
+keys of the properties mapping are the same as the keys of the properties
+mapping in the schema of the collection the record comes from (see above). 
+
+.. sourcecode:: pycon
+
   >>> pprint.pprint(rec['properties'])
   {'AREA': 244820.0,
    'CAT': 232.0,
@@ -446,20 +515,108 @@ Closing the collection does not affect the record at all.
    'FIPS_CNTRY': u'UK',
    'POP_CNTRY': 60270708.0}
 
-Record Id
----------
-
-TODO.
-
-Record Properties
------------------
-
-TODO.
-
 Record Geometry
 ---------------
 
-TODO.
+A record has a ``geometry`` key. Its corresponding value is a mapping with
+``type`` and ``coordinates`` keys.
+
+.. sourcecode:: pycon
+
+  >>> pprint.pprint(rec['geometry'])
+  {'coordinates': [[(0.89916700000000005, 51.357216000000001),
+                    (0.88527800000000001, 51.358330000000002),
+                    (0.78749999999999998, 51.369438000000002),
+                    (0.781111, 51.370552000000004),
+                    (0.76611099999999999, 51.375832000000003),
+                    (0.75944400000000001, 51.380828999999999),
+                    (0.745278, 51.394440000000003),
+                    (0.74083299999999996, 51.400275999999998),
+                    (0.73499999999999999, 51.408332999999999),
+                    (0.74055599999999999, 51.429718000000001),
+                    (0.74888900000000003, 51.443604000000001),
+                    (0.76027800000000001, 51.444716999999997),
+                    (0.79111100000000001, 51.439995000000003),
+                    (0.89222199999999996, 51.421387000000003),
+                    (0.90416700000000005, 51.418883999999998),
+                    (0.90888899999999995, 51.416938999999999),
+                    (0.93055500000000002, 51.398887999999999),
+                    (0.93666700000000003, 51.393608),
+                    (0.94388899999999998, 51.384995000000004),
+                    (0.94750000000000001, 51.378608999999997),
+                    (0.94777800000000001, 51.374718000000001),
+                    (0.94694400000000001, 51.371108999999997),
+                    (0.9425, 51.369163999999998),
+                    (0.90472200000000003, 51.358055),
+                    (0.89916700000000005, 51.357216000000001)]],
+   'type': 'Polygon'}
+
+Since the coordinates are just tuples, or lists of tuples, or lists of lists of
+tuples, the ``type`` tells you how to interpret them.
+
++-------------------+---------------------------------------------------+
+| Type              | Coordinates                                       |
++===================+===================================================+
+| Point             | A single (x, y) tuple                             |
++-------------------+---------------------------------------------------+
+| LineString        | A list of (x, y) tuple vertices                   |
++-------------------+---------------------------------------------------+
+| Polygon           | A list of rings (each a list of (x, y) tuples)    |
++-------------------+---------------------------------------------------+
+| MultiPoint        | A list of points (each a single (x, y) tuple)     |
++-------------------+---------------------------------------------------+
+| MultiLineString   | A list of lines (each a list of (x, y) tuples)    |
++-------------------+---------------------------------------------------+
+| MultiPolygon      | A list of polygons (see above)                    |
++-------------------+---------------------------------------------------+
+
+Fiona, like the GeoJSON format, has both Northern Hemisphere "North is up" and
+Cartesian "X-Y" biases. The values within a tuple that we denote as ``(x, y)``
+above are either (longitude E of the prime meridian, latitude N of the equator)
+or, for other projected coordinate systems, (easting, northing).
+
+.. admonition:: Long-Lat, not Lat-Long
+
+   Even though most of us say "lat, long" out loud, Fiona's ``x,y`` is always
+   easting, northing, which means (long, lat). Longitude first, latitude second.
+
+Point Set Theory and Simple Features
+------------------------------------
+
+In a proper, well-scrubbed vector data file the geometry mappings explained
+above are representations of geometric objects made up of :dfn:`point sets`.
+The following
+
+.. sourcecode:: python
+
+  {'type': 'LineString', 'coordinates': [(0.0, 0.0), (0.0, 1.0)]}
+
+represents not just two points, but the set of infinitely many points along the
+line of length 1.0 from ``(0.0, 0.0)`` to ``(0.0, 1.0)``. In the application of
+point set theory commonly called :dfn:`Simple Features Access` [SFA]_ two
+geometric objects are equal if their point sets are equal whether they are
+equal in the Python sense or not. If you have Shapely (which implements Simple
+Features Access) installed, you can see this in by verifying the following.
+
+.. sourcecode:: pycon
+
+  >>> from shapely.geometry import shape
+  >>> l1 = shape(
+  ...     {'type': 'LineString', 'coordinates': [(0, 0), (2, 2)]})
+  >>> l2 = shape(
+  ...     {'type': 'LineString', 'coordinates': [(0, 0), (1, 1), (2, 2)]})
+  >>> l1 == l2
+  False
+  >>> l1.equals(l2)
+  True
+
+.. admonition:: Dirty data
+
+   Some files may contain vectors that are :dfn:`invalid` from a simple features
+   standpoint due to accident (inadequate quality control on the producer's end)
+   or intention ("dirty" vectors saved to a file for special treatment). Fiona
+   doesn't sniff for or attempt to clean dirty data, so make sure you're getting
+   yours from a clean source.
 
 Writing Vector Data
 ===================
@@ -585,4 +742,5 @@ And now create a new file using them.
 .. [ESRI1998] ESRI Shapefile Technical Description. July 1998. http://www.esri.com/library/whitepapers/pdfs/shapefile.pdf
 .. [GeoJSON] http://geojson.org
 .. [JSON] http://www.ietf.org/rfc/rfc4627
+.. [SFA] http://en.wikipedia.org/wiki/Simple_feature_access
 

@@ -53,9 +53,9 @@ below (using ``git``)::
 Usage
 =====
 
-Collections are much like ``file`` objects. Records are mappings modeled on
-the GeoJSON format and if you want to do anything fancy with them you will
-probably need Shapely or something like it::
+Records are read from and written to ``file``-like collection objects. Records
+are mappings modeled on the GeoJSON format and if you want to do anything fancy
+with them you will probably need Shapely or something like it::
 
   from fiona import collection
 

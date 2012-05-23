@@ -52,21 +52,21 @@ class Collection(object):
     @property 
     def driver(self):
         """Returns the name of the proper OGR driver."""
-        if not self._driver and self.mode in ("a", "r"):
+        if not self._driver and self.mode in ("a", "r") and self.session:
             self._driver = self.session.get_driver()
         return self._driver
 
     @property 
     def schema(self):
         """Returns a mapping describing the data schema."""
-        if not self._schema and self.mode in ("a", "r"):
+        if not self._schema and self.mode in ("a", "r") and self.session:
             self._schema = self.session.get_schema()
         return self._schema
 
     @property
     def crs(self):
         """Returns a Proj4 string."""
-        if self._crs is None and self.mode in ("a", "r"):
+        if self._crs is None and self.mode in ("a", "r") and self.session:
             self._crs = self.session.get_crs()
         return self._crs
 
