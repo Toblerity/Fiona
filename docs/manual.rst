@@ -641,6 +641,7 @@ record extracted in the example below.
 
   >>> with collection("docs/data/test_uk.shp", "r") as c:
   ...     rec = c.next()
+  >>> rec['id'] = '-1'
   >>> rec['properties']['CNTRY_NAME'] = u"Gondor"
   >>> import os
   >>> os.system("cp docs/data/test_uk.* /tmp")
@@ -686,7 +687,7 @@ type of record, remember). You'll get a :py:class:`ValueError` if it doesn't.
 
 Now, what about record ids? The id of a record written to a file is ignored and
 replaced by the next value appropriate for the file. If you read the file just
-appended to above, the 49th feature is:
+appended to above,
 
 .. sourecode:: pycon
 
@@ -696,6 +697,9 @@ appended to above, the 49th feature is:
   '48'
   >>> records[-1]['properties']['CNTRY_NAME']
   u'Gondor'
+
+You'll see that the id of ``'-1'`` which the record had when written is
+replaced by ``'48'``.
 
 The :py:meth:`~fiona.collection.Collection.write` method writes a single
 record to the collection's file. Its sibling
@@ -710,6 +714,12 @@ iterator) of records.
   ... 
   52
 
+.. admonition:: Duplication
+
+   Fiona's collections do not guard against duplication. The code above will
+   write 3 duplicate records to the file, and they will be given unique
+   sequential ids.
+
 .. admonition:: Buffering
 
    Fiona's output is buffered. The records passed to :py:meth:`write` and 
@@ -720,7 +730,12 @@ iterator) of records.
 Writing New Files
 -----------------
 
-Details TODO.
+Writing a new file is more complex than appending to an existing file because
+the file CRS, format, and schema have not yet been defined and must be done so
+by the programmer. Still, it's not very complicated. A schema is just a mapping,
+as described above. A CRS is also just a mapping, and the possible formats are
+enumerated in the :py:attr:`fiona.drivers` list.
+
 
 Copy the parameters of our demo file.
 

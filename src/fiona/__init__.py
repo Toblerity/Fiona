@@ -61,7 +61,7 @@ Because Fiona collections are context managers, they are closed and (in
 writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
-__version__ = "0.8"
+__version__ = "0.8.1"
 
 import os
 
@@ -121,9 +121,11 @@ drivers = [
     ("AeronavFAA", "r"),
 #ESRI ArcObjects 	ArcObjects 	No 	Yes 	No, needs ESRI ArcObjects
 #Arc/Info Binary Coverage 	AVCBin 	No 	Yes 	Yes
-    ("AVCBin", "r"),
+# multi-layer
+#   ("AVCBin", "r"),
 #Arc/Info .E00 (ASCII) Coverage 	AVCE00 	No 	Yes 	Yes
-    ("AVCE00", "r"),
+# multi-layer
+#    ("AVCE00", "r"),
 #Arc/Info Generate 	ARCGEN 	No 	No 	Yes
     ("ARCGEN", "r"),
 #Atlas BNA 	BNA 	Yes 	No 	Yes
@@ -135,10 +137,12 @@ drivers = [
 #CouchDB / GeoCouch 	CouchDB 	Yes 	Yes 	No, needs libcurl
 #DODS/OPeNDAP 	DODS 	No 	Yes 	No, needs libdap
 #EDIGEO 	EDIGEO 	No 	Yes 	Yes
-    ("EDIGEO", "r"),
+# multi-layer? Hard to tell from the OGR docs
+#   ("EDIGEO", "r"),
 #ElasticSearch 	ElasticSearch 	Yes (write-only) 	- 	No, needs libcurl
 #ESRI FileGDB 	FileGDB 	Yes 	Yes 	No, needs FileGDB API library
-    ("FileGDB", "raw?"),
+# multi-layer
+#   ("FileGDB", "raw?"),
 #ESRI Personal GeoDatabase 	PGeo 	No 	Yes 	No, needs ODBC library
 #ESRI ArcSDE 	SDE 	No 	Yes 	No, needs ESRI SDE
 #ESRI Shapefile 	ESRI Shapefile 	Yes 	Yes 	Yes
@@ -146,7 +150,8 @@ drivers = [
 #FMEObjects Gateway 	FMEObjects Gateway 	No 	Yes 	No, needs FME
 #GeoJSON 	GeoJSON 	Yes 	Yes 	Yes
 #Géoconcept Export 	Geoconcept 	Yes 	Yes 	Yes
-    ("Geoconcept", "raw"),
+# multi-layers
+#   ("Geoconcept", "raw"),
 #Geomedia .mdb 	Geomedia 	No 	No 	No, needs ODBC library
 #GeoRSS 	GeoRSS 	Yes 	Yes 	Yes (read support needs libexpat)
 #Google Fusion Tables 	GFT 	Yes 	Yes 	No, needs libcurl
@@ -181,7 +186,8 @@ drivers = [
 #Open Document Spreadsheet 	ODS 	Yes 	No 	No, needs libexpat
 #OGDI Vectors (VPF, VMAP, DCW) 	OGDI 	No 	Yes 	No, needs OGDI library
 #OpenAir 	OpenAir 	No 	Yes 	Yes
-    ("OpenAir", "r"),
+# multi-layer
+#   ("OpenAir", "r"),
 #PCI Geomatics Database File 	PCIDSK 	No 	No 	Yes, using internal PCIDSK SDK (from GDAL 1.7.0)
     ("PCIDSK", "r"),
 #PDS 	PDS 	No 	Yes 	Yes
@@ -190,11 +196,14 @@ drivers = [
 #PostgreSQL/PostGIS 	PostgreSQL/PostGIS 	Yes 	Yes 	No, needs PostgreSQL client library (libpq)
 #EPIInfo .REC 	REC 	No 	No 	Yes
 #S-57 (ENC) 	S57 	No 	Yes 	Yes
-    ("S57", "r"),
+# multi-layer
+#   ("S57", "r"),
 #SDTS 	SDTS 	No 	Yes 	Yes
-    ("SDTS", "r"),
+# multi-layer
+#   ("SDTS", "r"),
 #SEG-P1 / UKOOA P1/90 	SEGUKOOA 	No 	Yes 	Yes
-    ("SEGUKOOA", "r"),
+# multi-layers
+#   ("SEGUKOOA", "r"),
 #SEG-Y 	SEGY 	No 	No 	Yes
     ("SEGY", "r"),
 #Norwegian SOSI Standard 	SOSI 	No 	Yes 	No, needs FYBA library
@@ -203,16 +212,22 @@ drivers = [
     ("SUA", "r"),
 #SVG 	SVG 	No 	Yes 	No, needs libexpat
 #UK .NTF 	UK. NTF 	No 	Yes 	Yes
-    ("UK. NTF", "r"),
+# multi-layer
+#   ("UK. NTF", "r"),
 #U.S. Census TIGER/Line 	TIGER 	No 	Yes 	Yes
-    ("TIGER", "r"),
+# multi-layer
+#   ("TIGER", "r"),
 #VFK data 	VFK 	No 	Yes 	Yes
-    ("VFK", "r"),
+# multi-layer
+#   ("VFK", "r"),
 #VRT - Virtual Datasource 	VRT 	No 	Yes 	Yes
-    ("VRT", "r"),
+# multi-layer
+#   ("VRT", "r"),
 #OGC WFS (Web Feature Service) 	WFS 	Yes 	Yes 	No, needs libcurl
 #MS Excel format 	XLS 	No 	No 	No, needs libfreexl
 #Office Open XML spreadsheet 	XLSX 	Yes 	No 	No, needs libexpat
 #X-Plane/Flighgear aeronautical data 	XPLANE 	No 	Yes 	Yes
-    ("XPLANE", "r") ]
+# multi-layer
+#   ("XPLANE", "r") 
+]
 
