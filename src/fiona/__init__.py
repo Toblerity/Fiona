@@ -61,7 +61,7 @@ Because Fiona collections are context managers, they are closed and (in
 writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
-__version__ = "0.8.1"
+__version__ = "0.8.2"
 
 import os
 
