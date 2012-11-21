@@ -129,7 +129,9 @@ class ReadingTest(unittest.TestCase):
 class GenericWritingTest(unittest.TestCase):
 
     def setUp(self):
-        schema = {'geometry': 'Point', 'properties': {'label': 'str'}}
+        schema = {
+            'geometry': 'Point', 
+            'properties': {'label': 'str', u'verit\xe9': 'int'} }
         self.c = collection(
                 "test-no-iter.shp", 
                 "w", 
