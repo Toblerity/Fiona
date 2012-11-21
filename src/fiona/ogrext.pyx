@@ -189,7 +189,7 @@ cdef class GeomBuilder:
         # The only method anyone needs to call
         assert geom is not NULL
         self.code = ograpi.OGR_G_GetGeometryType(geom)
-        self.typename = GEOMETRY_TYPES[self.code]
+        self.typename = GEOMETRY_TYPES[self.code % 0x80000000]
         self.ndims = ograpi.OGR_G_GetCoordinateDimension(geom)
         self.geom = geom
         return getattr(self, '_build' + self.typename)()
