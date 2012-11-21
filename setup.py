@@ -9,6 +9,14 @@ import subprocess
 logging.basicConfig()
 log = logging.getLogger()
 
+# Parse the version from the fiona module
+for line in open('src/fiona/__init__.py', 'rb'):
+    if line.find("__version__") >= 0:
+        version = line.split("=")[1].strip()
+        version = version.strip('"')
+        version = version.strip("'")
+        continue
+
 # By default we'll try to get options via gdal-config.
 # On systems without, options will need to be set in setup.cfg or on the
 # setup command line.
@@ -38,7 +46,7 @@ except Exception, e:
 readme_text = file('README.rst', 'rb').read()
 
 setup(name          = 'Fiona',
-      version       = '0.8',
+      version       = version,
       description   = "Fiona is OGR's neater API",
       license       = 'BSD',
       keywords      = 'gis vector feature data',
