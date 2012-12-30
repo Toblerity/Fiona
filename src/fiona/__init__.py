@@ -105,6 +105,9 @@ def collection(path, mode='r', driver=None, schema=None, crs=None):
         c = Collection(path, mode, driver, schema, crs)
     else:
         raise ValueError("Invalid mode: %s" % mode)
+    if c.driver not in drivers or mode not in drivers[c.driver]:
+        raise ValueError(
+            "Invalid driver %s or driver mode %s" % (c.driver, mode) )
     return c
 
 # Here is the list of available drivers as (name, modes) tuples. Currently,
@@ -114,7 +117,7 @@ def collection(path, mode='r', driver=None, schema=None, crs=None):
 # entries for each at http://www.gdal.org/ogr/ogr_formats.html to screen
 # out the multi-layer formats.
 
-drivers = [
+drivers = dict([
 #OGR Vector Formats
 #Format Name 	Code 	Creation 	Georeferencing 	Compiled by default
 #Aeronav FAA files 	AeronavFAA 	No 	Yes 	Yes
@@ -229,5 +232,5 @@ drivers = [
 #X-Plane/Flighgear aeronautical data 	XPLANE 	No 	Yes 	Yes
 # multi-layer
 #   ("XPLANE", "r") 
-]
+])
 

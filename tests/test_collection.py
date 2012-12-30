@@ -49,9 +49,8 @@ class ReadingTest(unittest.TestCase):
         self.failUnlessEqual(self.c.driver, "ESRI Shapefile")
     
     def test_closed_driver(self):
-        # Driver is lazy too, never computed in this case. TODO?
         self.c.close()
-        self.failUnlessEqual(self.c.driver, None)
+        self.failUnlessEqual(self.c.driver, "ESRI Shapefile")
 
     def test_driver_closed_driver(self):
         self.c.driver
