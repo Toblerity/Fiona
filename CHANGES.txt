@@ -5,6 +5,8 @@ CHANGES
 -----------
 - Accessing file metadata (crs, schema, bounds) on never inspected closed files
   returns None without exceptions.
+- Add a dict of supported_drivers and their supported modes.
+- Raise ValueError for unsupported drivers and modes.
 
 0.8 (2012-02-21)
 ----------------
