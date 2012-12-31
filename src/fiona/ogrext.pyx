@@ -79,8 +79,8 @@ cdef void * _createOgrGeomFromWKB(object wkb) except NULL:
     geom_type = bytearray(wkb)[1]
     cdef unsigned char *buffer = wkb
     cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(geom_type)
-    assert cogr_geometry is not NULL
-    ograpi.OGR_G_ImportFromWkb(cogr_geometry, buffer, len(wkb))
+    if cogr_geometry is not NULL:
+        ograpi.OGR_G_ImportFromWkb(cogr_geometry, buffer, len(wkb))
     return cogr_geometry
 
 cdef _deleteOgrGeom(void *cogr_geometry):
@@ -136,7 +136,8 @@ cdef class GeomBuilder:
     cdef _buildCoords(self, void *geom):
         # Build a coordinate sequence
         cdef int i
-        assert geom is not NULL
+        if geom is NULL:
+            raise ValueError("Null geom")
         npoints = ograpi.OGR_G_GetPointCount(geom)
         coords = []
         for i in range(npoints):
@@ -158,7 +159,8 @@ cdef class GeomBuilder:
     cdef _buildParts(self, void *geom):
         cdef int j
         cdef void *part
-        assert geom is not NULL
+        if geom is NULL:
+            raise ValueError("Null geom")
         parts = []
         for j in range(ograpi.OGR_G_GetGeometryCount(geom)):
             part = ograpi.OGR_G_GetGeometryRef(geom, j)
@@ -187,7 +189,8 @@ cdef class GeomBuilder:
     
     cdef build(self, void *geom):
         # The only method anyone needs to call
-        assert geom is not NULL
+        if geom is NULL:
+            raise ValueError("Null geom")
         self.code = ograpi.OGR_G_GetGeometryType(geom)
         self.typename = GEOMETRY_TYPES[self.code % 0x80000000]
         self.ndims = ograpi.OGR_G_GetCoordinateDimension(geom)
@@ -212,7 +215,8 @@ cdef class OGRGeomBuilder:
 
     cdef void * _buildPoint(self) except NULL:
         cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(1)
-        assert cogr_geometry is not NULL
+        if cogr_geometry is NULL:
+            raise ValueError
         if self.ndims > 2:
             x, y, z = self.coordinates
             ograpi.OGR_G_AddPoint(cogr_geometry, x, y, z)
@@ -223,7 +227,8 @@ cdef class OGRGeomBuilder:
     
     cdef void * _buildLineString(self) except NULL:
         cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(2)
-        assert cogr_geometry is not NULL
+        if cogr_geometry is NULL:
+            raise ValueError
         for values in self.coordinates:
             log.debug("Adding point %s", values)
             if len(values) > 2:
@@ -236,7 +241,8 @@ cdef class OGRGeomBuilder:
     
     cdef void * _buildLinearRing(self) except NULL:
         cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(101)
-        assert cogr_geometry is not NULL
+        if cogr_geometry is NULL:
+            raise ValueError
         for values in self.coordinates:
             log.debug("Adding point %s", values)
             if len(values) > 2:
@@ -253,7 +259,8 @@ cdef class OGRGeomBuilder:
     cdef void * _buildPolygon(self) except NULL:
         cdef void *cogr_ring
         cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(3)
-        assert cogr_geometry is not NULL
+        if cogr_geometry is NULL:
+            raise ValueError
         self.ndims = len(self.coordinates[0][0])
         for ring in self.coordinates:
             log.debug("Adding ring %s", ring)
@@ -267,7 +274,8 @@ cdef class OGRGeomBuilder:
     cdef void * _buildMultiPoint(self) except NULL:
         cdef void *cogr_part
         cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(4)
-        assert cogr_geometry is not NULL
+        if cogr_geometry is NULL:
+            raise ValueError
         for values in self.coordinates:
             log.debug("Adding point %s", values)
             cogr_part = ograpi.OGR_G_CreateGeometry(1)
@@ -284,7 +292,8 @@ cdef class OGRGeomBuilder:
     cdef void * _buildMultiLineString(self) except NULL:
         cdef void *cogr_part
         cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(5)
-        assert cogr_geometry is not NULL
+        if cogr_geometry is NULL:
+            raise ValueError
         for line in self.coordinates:
             log.debug("Adding line %s", line)
             cogr_part = OGRGeomBuilder().build(
@@ -297,7 +306,8 @@ cdef class OGRGeomBuilder:
     cdef void * _buildMultiPolygon(self) except NULL:
         cdef void *cogr_part
         cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(6)
-        assert cogr_geometry is not NULL
+        if cogr_geometry is NULL:
+            raise ValueError
         for part in self.coordinates:
             log.debug("Adding polygon %s", part)
             cogr_part = OGRGeomBuilder().build(
@@ -310,7 +320,8 @@ cdef class OGRGeomBuilder:
     cdef void * _buildGeometryCollection(self) except NULL:
         cdef void *cogr_part
         cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(7)
-        assert cogr_geometry is not NULL
+        if cogr_geometry is NULL:
+            raise ValueError
         for part in self.coordinates:
             log.debug("Adding part %s", part)
             cogr_part = OGRGeomBuilder().build(part)
@@ -372,7 +383,8 @@ cdef class FeatureBuilder:
 
     cdef build(self, void *feature):
         # The only method anyone ever needs to call
-        assert feature is not NULL
+        if feature is NULL:
+            raise ValueError("Null feature")
         cdef void *fdefn
         cdef int i
         cdef int y = 0
@@ -386,9 +398,11 @@ cdef class FeatureBuilder:
         props = {}
         for i in range(ograpi.OGR_F_GetFieldCount(feature)):
             fdefn = ograpi.OGR_F_GetFieldDefnRef(feature, i)
-            assert fdefn is not NULL
+            if fdefn is NULL:
+                raise ValueError("Null feature definition")
             key = ograpi.OGR_Fld_GetNameRef(fdefn)
-            assert key is not NULL
+            if key is NULL:
+                raise ValueError("Null field name reference")
             fieldtypename = FIELD_TYPES[ograpi.OGR_Fld_GetType(fdefn)]
             if not fieldtypename:
                 raise ValueError(
@@ -404,8 +418,9 @@ cdef class FeatureBuilder:
             elif fieldtype is UnicodeType:
                 try:
                     val = ograpi.OGR_F_GetFieldAsString(feature, i)
-                    props[key] = unicode(val, 'utf-8')
+                    props[key] = val.decode('utf-8')
                 except UnicodeDecodeError:
+                    log.warn("Failed to decode %s using UTF-8 codec", val)
                     props[key] = val
             elif fieldtype in (FionaDateType, FionaTimeType, FionaDateTimeType):
                 retval = ograpi.OGR_F_GetFieldAsDateTime(
@@ -421,7 +436,8 @@ cdef class FeatureBuilder:
                 props[key] = None
 
         cdef void *cogr_geometry = ograpi.OGR_F_GetGeometryRef(feature)
-        assert cogr_geometry is not NULL
+        if cogr_geometry is NULL:
+            raise ValueError("Null geometry")
         geom = GeomBuilder().build(cogr_geometry)
         
         return {
@@ -442,24 +458,37 @@ cdef class OGRFeatureBuilder:
         cdef WritingSession session
         session = collection.session
         cdef void *cogr_layer = session.cogr_layer
-        assert cogr_layer is not NULL
+        if cogr_layer is NULL:
+            raise ValueError("Null layer")
         cdef void *cogr_featuredefn = ograpi.OGR_L_GetLayerDefn(cogr_layer)
-        assert cogr_featuredefn is not NULL
+        if cogr_featuredefn is NULL:
+            raise ValueError("Null feature definition")
         cdef void *cogr_feature = ograpi.OGR_F_Create(cogr_featuredefn)
-        assert cogr_feature is not NULL
+        if cogr_feature is NULL:
+            raise ValueError("Null feature")
         
         cdef void *cogr_geometry = OGRGeomBuilder().build(feature['geometry'])
         ograpi.OGR_F_SetGeometryDirectly(cogr_feature, cogr_geometry)
         
         for key, value in feature['properties'].items():
-            i = ograpi.OGR_F_GetFieldIndex(cogr_feature, key)
+            try:
+                key_encoded = key.encode('utf-8')
+            except UnicodeDecodeError:
+                log.warn("Failed to encode %s using UTF-8 codec", key)
+                key_encoded = key
+            i = ograpi.OGR_F_GetFieldIndex(cogr_feature, key_encoded)
             ptype = type(value) #FIELD_TYPES_MAP[key]
             if ptype is IntType:
                 ograpi.OGR_F_SetFieldInteger(cogr_feature, i, value)
             elif ptype is FloatType:
                 ograpi.OGR_F_SetFieldDouble(cogr_feature, i, value)
             elif ptype in (UnicodeType, StringType):
-                ograpi.OGR_F_SetFieldString(cogr_feature, i, value)
+                try:
+                    value_encoded = value.encode('utf-8')
+                except UnicodeDecodeError:
+                    log.warn("Failed to encode %s using UTF-8 codec", value)
+                    value_encoded = value
+                ograpi.OGR_F_SetFieldString(cogr_feature, i, value_encoded)
             elif ptype in (FionaDateType, FionaTimeType, FionaDateTimeType):
                 if ptype is FionaDateType:
                     y, m, d, hh, mm, ss, ff = parse_date(value)
@@ -488,7 +517,8 @@ def featureRT(feature, collection):
     # For testing purposes only, leaks the JSON data
     cdef void *cogr_feature = OGRFeatureBuilder().build(feature, collection)
     cdef void *cogr_geometry = ograpi.OGR_F_GetGeometryRef(cogr_feature)
-    assert cogr_geometry is not NULL
+    if cogr_geometry is NULL:
+        raise ValueError("Null geometry")
     log.debug("Geometry: %s" % ograpi.OGR_G_ExportToJson(cogr_geometry))
     result = FeatureBuilder().build(cogr_feature)
     _deleteOgrFeature(cogr_feature)
@@ -511,10 +541,12 @@ cdef class Session:
 
     def start(self, collection):
         self.cogr_ds = ograpi.OGROpen(collection.path, 0, NULL)
-        assert self.cogr_ds is not NULL
+        if self.cogr_ds is NULL:
+            raise ValueError("Null data source")
         self.cogr_layer = ograpi.OGR_DS_GetLayerByName(
             self.cogr_ds, collection.name)
-        assert self.cogr_layer is not NULL
+        if self.cogr_layer is NULL:
+            raise ValueError("Null layer")
 
     def stop(self):
         self.cogr_layer = NULL
@@ -523,12 +555,14 @@ cdef class Session:
         self.cogr_ds = NULL
 
     def get_length(self):
-        assert self.cogr_layer is not NULL
+        if self.cogr_layer is NULL:
+            raise ValueError("Null layer")
         return ograpi.OGR_L_GetFeatureCount(self.cogr_layer, 0)
 
     def get_driver(self):
         cdef void *cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
-        assert cogr_driver is not NULL
+        if cogr_driver is NULL:
+            raise ValueError("Null driver")
         cdef char *name = ograpi.OGR_Dr_GetName(cogr_driver)
         driver_name = name
         return driver_name
@@ -539,33 +573,43 @@ cdef class Session:
         cdef void *cogr_featuredefn
         cdef void *cogr_fielddefn
         props = []
-        assert self.cogr_layer is not NULL
+        if self.cogr_layer is NULL:
+            raise ValueError("Null layer")
         cogr_featuredefn = ograpi.OGR_L_GetLayerDefn(self.cogr_layer)
-        assert cogr_featuredefn is not NULL
+        if cogr_featuredefn is NULL:
+            raise ValueError("Null feature definition")
         n = ograpi.OGR_FD_GetFieldCount(cogr_featuredefn)
         for i from 0 <= i < n:
             cogr_fielddefn = ograpi.OGR_FD_GetFieldDefn(cogr_featuredefn, i)
-            assert cogr_fielddefn is not NULL
+            if cogr_fielddefn is NULL:
+                raise ValueError("Null field definition")
             fieldtypename = FIELD_TYPES[ograpi.OGR_Fld_GetType(cogr_fielddefn)]
             if not fieldtypename:
                 raise ValueError(
                     "Invalid field type %s" % ograpi.OGR_Fld_GetType(
                                                 cogr_fielddefn))
             key = ograpi.OGR_Fld_GetNameRef(cogr_fielddefn)
-            assert key is not NULL
+            if not bool(key):
+                raise ValueError("Invalid field name ref: %s" % key)
+            try:
+                key = key.decode('utf-8')
+            except UnicodeDecodeError:
+                log.warn("Failed to decode %s using UTF-8 codec", key)
             props.append((key, fieldtypename))
         geom_type = ograpi.OGR_FD_GetGeomType(cogr_featuredefn)
         return {'properties': dict(props), 'geometry': GEOMETRY_TYPES[geom_type]}
 
     def get_crs(self):
         cdef char *proj = NULL
-        assert self.cogr_layer is not NULL
+        if self.cogr_layer is NULL:
+            raise ValueError("Null layer")
         cdef void *cogr_crs = ograpi.OGR_L_GetSpatialRef(self.cogr_layer)
         log.debug("Got coordinate system")
         crs = {}
         if cogr_crs is not NULL:
             ograpi.OSRExportToProj4(cogr_crs, &proj)
-            assert proj is not NULL
+            if proj is NULL:
+                raise ValueError("Null projection")
             log.debug("Params: %s", proj)
             value = proj
             value = value.strip()
@@ -592,7 +636,8 @@ cdef class Session:
         return crs
 
     def get_extent(self):
-        assert self.cogr_layer is not NULL
+        if self.cogr_layer is NULL:
+            raise ValueError("Null layer")
         cdef ograpi.OGREnvelope extent
         result = ograpi.OGR_L_GetExtent(self.cogr_layer, &extent, 1)
         return (extent.MinX, extent.MinY, extent.MaxX, extent.MaxY)
@@ -618,7 +663,8 @@ cdef class WritingSession(Session):
                 if self.cogr_ds is NULL:
                     raise RuntimeError("Failed to open %s" % path)
                 cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
-                assert cogr_driver is not NULL
+                if cogr_driver is NULL:
+                    raise ValueError("Null driver")
                 self.cogr_layer = ograpi.OGR_DS_GetLayerByName(
                                         self.cogr_ds, collection.name)
                 if self.cogr_layer is NULL:
@@ -632,12 +678,14 @@ cdef class WritingSession(Session):
                 self.cogr_ds = ograpi.OGROpen(path, 1, NULL)
                 if self.cogr_ds is not NULL:
                     cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
-                    assert cogr_driver is not NULL
+                    if cogr_driver is NULL:
+                        raise ValueError("Null driver")
                     ograpi.OGR_DS_Destroy(self.cogr_ds)
                     ograpi.OGR_Dr_DeleteDataSource(cogr_driver, path)
                     log.debug("Deleted pre-existing data at %s", path)
             cogr_driver = ograpi.OGRGetDriverByName(collection.driver)
-            assert cogr_driver is not NULL
+            if cogr_driver is NULL:
+                raise ValueError("Null driver")
             self.cogr_ds = ograpi.OGR_Dr_CreateDataSource(
                 cogr_driver, path, NULL)
             if self.cogr_ds is NULL:
@@ -646,7 +694,8 @@ cdef class WritingSession(Session):
             # Set the spatial reference system from the given crs.
             if collection.crs:
                 cogr_srs = ograpi.OSRNewSpatialReference(NULL)
-                assert cogr_srs is not NULL
+                if cogr_srs is NULL:
+                    raise ValueError("Null spatial reference")
                 params = []
                 for k, v in collection.crs.items():
                     if v is True or (k == 'no_defs' and v):
@@ -663,16 +712,20 @@ cdef class WritingSession(Session):
                 GEOMETRY_TYPES.index(collection.schema['geometry']),
                 NULL
                 )
-            assert self.cogr_layer is not NULL
+            if self.cogr_layer is NULL:
+                raise ValueError("Null layer")
             log.debug("Created layer")
             
             # Next, make a layer definition from the given schema.
             for key, value in collection.schema['properties'].items():
                 log.debug("Creating field: %s %s", key, value)
+                # OGR needs UTF-8 field names.
+                key_encoded = key.encode("utf-8")
                 cogr_fielddefn = ograpi.OGR_Fld_Create(
-                    key, 
+                    key_encoded, 
                     FIELD_TYPES.index(value) )
-                assert cogr_fielddefn is not NULL
+                if cogr_fielddefn is NULL:
+                    raise ValueError("Null field definition")
                 ograpi.OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1)
                 ograpi.OGR_Fld_Destroy(cogr_fielddefn)
             log.debug("Created fields")
@@ -683,19 +736,25 @@ cdef class WritingSession(Session):
         """Writes buffered records to OGR."""
         
         cdef void *cogr_layer = self.cogr_layer
-        assert cogr_layer is not NULL
+        if cogr_layer is NULL:
+            raise ValueError("Null layer")
         cdef void *cogr_feature
 
         for record in records:
             log.debug("Creating feature in layer: %s" % record)
-            try:
-                # Validate against collection's schema.
-                for key in record['properties']:
-                    assert key in collection.schema['properties']
-                assert record['geometry']['type'] == collection.schema[
-                                                        'geometry']
-            except AssertionError:
-                raise ValueError("Record data not match collection schema")
+            # Validate against collection's schema.
+            if (
+                    set(record['properties'].keys()) -
+                    set(collection.schema['properties'].keys())
+                    ) or (
+                        record['geometry']['type'] != \
+                        collection.schema['geometry'] ):
+                raise ValueError(
+                    "Record (%s) not match collection schema (%s)" % (
+                        {'properties': record['properties'].keys(),
+                         'geometry': record['geometry']['type']},
+                        {'properties': collection.schema['properties'].keys(),
+                         'geometry': collection.schema['geometry']}, ))
 
             cogr_feature = OGRFeatureBuilder().build(record, collection)
             result = ograpi.OGR_L_CreateFeature(cogr_layer, cogr_feature)
@@ -706,7 +765,8 @@ cdef class WritingSession(Session):
     def sync(self):
         """Syncs OGR to disk."""
         cdef void *cogr_ds = self.cogr_ds
-        assert cogr_ds is not NULL
+        if cogr_ds is NULL:
+            raise ValueError("Null data source")
         log.debug("Syncing OGR to disk")
         result = ograpi.OGR_DS_SyncToDisk(cogr_ds)
         if result != OGRERR_NONE:
@@ -728,7 +788,8 @@ cdef class Iterator:
         cdef Session session
         session = self.collection.session
         cdef void *cogr_layer = session.cogr_layer
-        assert cogr_layer is not NULL
+        if cogr_layer is NULL:
+            raise ValueError("Null layer")
         if bbox:
             ograpi.OGR_L_SetSpatialFilterRect(
                 cogr_layer, bbox[0], bbox[1], bbox[2], bbox[3])

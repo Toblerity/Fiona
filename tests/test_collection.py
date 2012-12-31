@@ -7,8 +7,21 @@ import sys
 import unittest
 
 from fiona import collection
+from fiona.collection import supported_drivers
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+
+
+class SupportedDriversTest(unittest.TestCase):
+    def test_shapefile(self):
+        self.failUnless("ESRI Shapefile" in supported_drivers)
+        self.failUnlessEqual(
+            set(supported_drivers["ESRI Shapefile"]), set("raw") )
+    def test_map(self):
+        self.failUnless("MapInfo File" in supported_drivers)
+        self.failUnlessEqual(
+            set(supported_drivers["MapInfo File"]), set("raw") )
+
 
 class ReadingTest(unittest.TestCase):
     
@@ -49,7 +62,6 @@ class ReadingTest(unittest.TestCase):
         self.failUnlessEqual(self.c.driver, "ESRI Shapefile")
     
     def test_closed_driver(self):
-        # Driver is lazy too, never computed in this case. TODO?
         self.c.close()
         self.failUnlessEqual(self.c.driver, None)
 
@@ -124,12 +136,23 @@ class ReadingTest(unittest.TestCase):
     def test_no_write(self):
         self.assertRaises(IOError, self.c.write, {})
 
+class UnsupportedDriverTest(unittest.TestCase):
+    
+    def test_immediate_fail_driver(self):
+        schema = {
+            'geometry': 'Point', 
+            'properties': {'label': 'str', u'verit\xe9': 'int'} }
+        self.assertRaises(
+            ValueError, collection, "/tmp/foo", "w", "FileGDB", schema=schema )
+
 # The file writing tests below presume we can write to /tmp.
 
 class GenericWritingTest(unittest.TestCase):
 
     def setUp(self):
-        schema = {'geometry': 'Point', 'properties': {'label': 'str'}}
+        schema = {
+            'geometry': 'Point', 
+            'properties': {'label': 'str', u'verit\xe9': 'int'} }
         self.c = collection(
                 "test-no-iter.shp", 
                 "w", 
