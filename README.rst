@@ -2,8 +2,7 @@
 README
 ======
 
-Fiona is OGR's neater API – sleek on the outside, indomitable power on the
-inside.
+Fiona is OGR's neat, nimble, no-nonsense API.
 
 Fiona provides a minimal, uncomplicated Python interface to the open source GIS
 community's most trusted geodata access library and integrates readily with
