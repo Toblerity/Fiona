@@ -112,6 +112,17 @@ class Collection(object):
         """Stages a record for writing to disk."""
         self.writerecords([record])
 
+    def validate_record(self, record):
+        """Compares the record to the collection's schema.
+
+        Returns ``True`` if the record matches, else ``False``.
+        """
+        # Currently we only compare keys of properties, not the types of
+        # values.
+        return not set(record['properties'].keys()
+            ).symmetric_difference(set(self.schema['properties'].keys())) \
+        and record['geometry']['type'] == self.schema['geometry']
+
     def _flushbuffer(self):
         if self.session is not None and len(self._buffer) > 0:
             self.session.writerecs(self._buffer, self)
@@ -166,6 +177,7 @@ class Collection(object):
         # Note: you can't count on this being called. Call close() explicitly
         # or use the context manager protocol ("with").
         self.__exit__(None, None, None)
+
 
 # Here is the list of available drivers as (name, modes) tuples. Currently,
 # we only expose the defaults (excepting FileGDB). We also don't expose

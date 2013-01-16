@@ -206,6 +206,16 @@ class PointWritingTest(unittest.TestCase):
         self.failUnlessEqual(len(self.sink), 2)
         self.failUnlessEqual(self.sink.bounds, (0.0, -0.1, 0.0, 0.1))
 
+    def test_validate_record(self):
+        fvalid = {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
+            'properties': {'title': 'point one', 'date': "2012-01-29"}}
+        finvalid = {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, -0.1)},
+            'properties': {'not-a-title': 'point two', 'date': "2012-01-29"}}
+        self.assertTrue(self.sink.validate_record(fvalid))
+        self.assertFalse(self.sink.validate_record(finvalid))
+
 class AppendingTest(unittest.TestCase):
 
     def setUp(self):
