@@ -8,6 +8,7 @@ CHANGES
 - Add a dict of supported_drivers and their supported modes.
 - Raise ValueError for unsupported drivers and modes.
 - Remove asserts from ogrext.pyx.
+- Add validate_record method to collections.
 
 0.8 (2012-02-21)
 ----------------
