@@ -734,27 +734,41 @@ cdef class WritingSession(Session):
 
     def writerecs(self, records, collection):
         """Writes buffered records to OGR."""
-        
+        cdef void *cogr_driver
+        cdef void *cogr_feature
+
         cdef void *cogr_layer = self.cogr_layer
         if cogr_layer is NULL:
             raise ValueError("Null layer")
-        cdef void *cogr_feature
+        
+        schema_geom_type = collection.schema['geometry']
+        cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
+        if ograpi.OGR_Dr_GetName(cogr_driver) == b"ESRI Shapefile" \
+                and "Point" not in collection.schema['geometry']:
+            schema_geom_type = collection.schema['geometry'].lstrip("Multi")
+            def validate_geometry_type(rec):
+                return rec['geometry']['type'].lstrip(
+                    "Multi") == schema_geom_type
+        else:
+            schema_geom_type = collection.schema['geometry']
+            def validate_geometry_type(rec):
+                return rec['geometry']['type'] == schema_geom_type
 
+        schema_props_keys = set(collection.schema['properties'].keys())
         for record in records:
             log.debug("Creating feature in layer: %s" % record)
             # Validate against collection's schema.
-            if (
-                    set(record['properties'].keys()) -
-                    set(collection.schema['properties'].keys())
-                    ) or (
-                        record['geometry']['type'] != \
-                        collection.schema['geometry'] ):
+            if set(record['properties'].keys()) != schema_props_keys:
                 raise ValueError(
-                    "Record (%s) not match collection schema (%s)" % (
-                        {'properties': record['properties'].keys(),
-                         'geometry': record['geometry']['type']},
-                        {'properties': collection.schema['properties'].keys(),
-                         'geometry': collection.schema['geometry']}, ))
+                    "Record does not match collection schema: %r != %r" % (
+                        record['properties'].keys(), 
+                        list(schema_props_keys) ))
+            if not validate_geometry_type(record):
+                raise ValueError(
+                    "Record's geometry type does not match "
+                    "collection schema's geometry type: %r != %r" % (
+                         record['geometry']['type'],
+                         collection.schema['geometry'] ))
 
             cogr_feature = OGRFeatureBuilder().build(record, collection)
             result = ograpi.OGR_L_CreateFeature(cogr_layer, cogr_feature)
