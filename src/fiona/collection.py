@@ -119,9 +119,9 @@ class Collection(object):
         """
         # Currently we only compare keys of properties, not the types of
         # values.
-        return not set(record['properties'].keys()
-            ).symmetric_difference(set(self.schema['properties'].keys())) \
-        and self.validate_record_geometry(record)
+        return set(record['properties'].keys()
+            ) == set(self.schema['properties'].keys()
+            ) and self.validate_record_geometry(record)
 
     def validate_record_geometry(self, record):
         """Compares the record's geometry to the collection's schema.
