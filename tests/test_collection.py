@@ -216,6 +216,55 @@ class PointWritingTest(unittest.TestCase):
         self.assertTrue(self.sink.validate_record(fvalid))
         self.assertFalse(self.sink.validate_record(finvalid))
 
+    def test_validate_record_shapefile_multi(self):
+        fvalid = {
+            'geometry': {'type': 'MultiPoint', 'coordinates': [(0.0, 0.1)]},
+            'properties': {'title': 'point one', 'date': "2012-01-29"}}
+        self.assertTrue(self.sink.validate_record(fvalid))
+
+class LineWritingTest(unittest.TestCase):
+
+    def setUp(self):
+        self.sink = collection(
+            "/tmp/line_writing_test.shp",
+            "w",
+            driver="ESRI Shapefile",
+            schema={
+                'geometry': 'LineString', 
+                'properties': {'title': 'str', 'date': 'date'}},
+            crs={'init': "epsg:4326", 'no_defs': True})
+
+    def tearDown(self):
+        self.sink.close()
+
+    def test_write_one(self):
+        self.failUnlessEqual(len(self.sink), 0)
+        self.failUnlessEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
+        f = {
+            'geometry': {'type': 'LineString', 
+                         'coordinates': [(0.0, 0.1), (0.0, 0.2)]},
+            'properties': {'title': 'line one', 'date': "2012-01-29"}}
+        self.sink.writerecords([f])
+        self.failUnlessEqual(len(self.sink), 1)
+        self.failUnlessEqual(self.sink.bounds, (0.0, 0.1, 0.0, 0.2))
+
+    def test_write_two(self):
+        self.failUnlessEqual(len(self.sink), 0)
+        self.failUnlessEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
+        f1 = {
+            'geometry': {'type': 'LineString', 
+                         'coordinates': [(0.0, 0.1), (0.0, 0.2)]},
+            'properties': {'title': 'line one', 'date': "2012-01-29"}}
+        f2 = {
+            'geometry': {'type': 'MultiLineString', 
+                         'coordinates': [
+                            [(0.0, 0.0), (0.0, -0.1)], 
+                            [(0.0, -0.1), (0.0, -0.2)] ]},
+            'properties': {'title': 'line two', 'date': "2012-01-29"}}
+        self.sink.writerecords([f1, f2])
+        self.failUnlessEqual(len(self.sink), 2)
+        self.failUnlessEqual(self.sink.bounds, (0.0, -0.2, 0.0, 0.2))
+
 class AppendingTest(unittest.TestCase):
 
     def setUp(self):
@@ -240,7 +289,11 @@ class AppendingTest(unittest.TestCase):
         with collection("append-test/test_append_point.shp", "a") as c:
             self.assertEqual(c.schema['geometry'], 'Point')
             c.write({'geometry': {'type': 'Point', 'coordinates': (0.0, 45.0)},
-                     'properties': {'FIPS_CNTRY': 'UK'}})
+                     'properties': { 'FIPS_CNTRY': 'UK', 
+                                     'AREA': 0.0, 
+                                     'CAT': 1.0, 
+                                     'POP_CNTRY': 0, 
+                                     'CNTRY_NAME': u'Foo'} })
             self.assertEqual(len(c), 8)
 
 class CollectionTest(unittest.TestCase):

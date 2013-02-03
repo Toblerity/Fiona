@@ -121,7 +121,19 @@ class Collection(object):
         # values.
         return not set(record['properties'].keys()
             ).symmetric_difference(set(self.schema['properties'].keys())) \
-        and record['geometry']['type'] == self.schema['geometry']
+        and self.validate_record_geometry(record)
+
+    def validate_record_geometry(self, record):
+        """Compares the record's geometry to the collection's schema.
+
+        Returns ``True`` if the record matches, else ``False``.
+        """
+        # Shapefiles welcome mixes of geometry and their multi- types.
+        if self.driver == "ESRI Shapefile":
+            return record['geometry']['type'].lstrip(
+                "Multi") == self.schema['geometry'].lstrip("Multi")
+        else:
+            return record['geometry']['type'] == self.schema['geometry']
 
     def _flushbuffer(self):
         if self.session is not None and len(self._buffer) > 0:

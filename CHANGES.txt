@@ -9,6 +9,7 @@ CHANGES
 - Raise ValueError for unsupported drivers and modes.
 - Remove asserts from ogrext.pyx.
 - Add validate_record method to collections.
+- Handle Shapefile's mix of LineString/Polygon and multis (#18).
 
 0.8 (2012-02-21)
 ----------------
