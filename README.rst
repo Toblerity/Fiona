@@ -30,6 +30,9 @@ support at this time.
 Installation
 ============
 
+*nix systems
+------------
+
 Assuming you're using a virtualenv (if not, skip to the 4th command) and
 GDAL/OGR libraries, headers, and `gdal-config`_ program are installed to well
 known locations on your system (via your system's package manager),
@@ -48,6 +51,12 @@ below (using ``git``)::
   (fiona_env)$ git clone git://github.com/Toblerity/Fiona.git
   (fiona_env)$ cd Fiona
   (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal install
+
+Windows
+-------
+
+Binary installers are available at http://www.lfd.uci.edu/~gohlke/pythonlibs/#fiona and coming
+eventually to PyPI.
 
 Usage
 =====
