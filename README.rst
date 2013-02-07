@@ -30,8 +30,8 @@ support at this time.
 Installation
 ============
 
-*nix systems
-------------
+Unix-like systems
+-----------------
 
 Assuming you're using a virtualenv (if not, skip to the 4th command) and
 GDAL/OGR libraries, headers, and `gdal-config`_ program are installed to well
