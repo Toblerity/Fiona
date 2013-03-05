@@ -27,7 +27,6 @@ class Collection(object):
 
         self.session = None
         self.iterator = None
-        self._buffer = []
         self._len = 0
         self._bounds = None
         self._driver = None
@@ -51,6 +50,13 @@ class Collection(object):
             self.session.start(self)
         if self.session:
             self.guard_driver_mode()
+
+    def __repr__(self):
+        return "<%s Collection '%s', mode '%s' at %s>" % (
+            self.closed and "closed" or "open",
+            self.path + ":" + self.name,
+            self.mode,
+            hex(id(self)))
 
     def guard_driver_mode(self):
         drv = self.session.get_driver()
@@ -82,6 +88,11 @@ class Collection(object):
             self._crs = self.session.get_crs()
         return self._crs
 
+    @property
+    def meta(self):
+        """Returns a mapping with the driver, schema, and crs properties."""
+        return {'driver': self.driver, 'schema': self.schema, 'crs': self.crs}
+
     def filter(self, bbox=None):
         """Returns an iterator over records, but filtered by a test for
         spatial intersection with the provided ``bbox``, a (minx, miny,
@@ -106,7 +117,9 @@ class Collection(object):
         """Stages multiple records for writing to disk."""
         if self.mode not in ('a', 'w'):
             raise IOError("Collection is not open for reading")
-        self._buffer.extend(list(records))
+        self.session.writerecs(records, self)
+        self._len = self.session.get_length()
+        self._bounds = self.session.get_extent()
 
     def write(self, record):
         """Stages a record for writing to disk."""
@@ -128,27 +141,20 @@ class Collection(object):
 
         Returns ``True`` if the record matches, else ``False``.
         """
-        # Shapefiles welcome mixes of geometry and their multi- types.
-        if self.driver == "ESRI Shapefile":
+        # Shapefiles welcome mixes of line/multis and polygon/multis.
+        # OGR reports these mixed files as type "Polygon" or "LineString"
+        # but will return either these or their multi counterparts when 
+        # reading features.
+        if (self.driver == "ESRI Shapefile" and 
+                "Point" not in record['geometry']['type']):
             return record['geometry']['type'].lstrip(
                 "Multi") == self.schema['geometry'].lstrip("Multi")
         else:
             return record['geometry']['type'] == self.schema['geometry']
 
-    def _flushbuffer(self):
-        if self.session is not None and len(self._buffer) > 0:
-            self.session.writerecs(self._buffer, self)
-            self.session.sync()
-            new_len = self.session.get_length()
-            self._len = new_len > self._len \
-                and new_len or self._len + len(self._buffer)
-            self._buffer = []
-            self._bounds = self.session.get_extent()
-
     def __len__(self):
         if self._len <= 0 and self.session is not None:
             self._len = self.session.get_length()
-        self._flushbuffer()
         return self._len
 
     @property
@@ -156,19 +162,22 @@ class Collection(object):
         """Returns (minx, miny, maxx, maxy)."""
         if self._bounds is None and self.session is not None:
             self._bounds = self.session.get_extent()
-        self._flushbuffer()
         return self._bounds
 
     def flush(self):
         """Flush the buffer."""
-        self._flushbuffer()
+        if self.session is not None and self.session.get_length() > 0:
+            self.session.sync(self)
+            new_len = self.session.get_length()
+            self._len = new_len > self._len and new_len or self._len
+            self._bounds = self.session.get_extent()
 
     def close(self):
         """In append or write mode, flushes data to disk, then ends
         access."""
         if self.session is not None: 
             if self.mode in ('a', 'w'):
-                self._flushbuffer()
+                self.flush()
             self.session.stop()
             self.session = None
             self.iterator = None

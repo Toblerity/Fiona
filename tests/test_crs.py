@@ -25,3 +25,8 @@ def test_to_string():
     assert crs.to_string(
         val) == "+datum=WGS84 +ellps=WGS84 +no_defs +proj=longlat"
 
+def test_from_epsg():
+    val = crs.from_epsg(4326)
+    assert val['init'] == "epsg:4326"
+    assert val['no_defs'] == True
+

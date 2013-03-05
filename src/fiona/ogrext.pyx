@@ -719,6 +719,12 @@ cdef class WritingSession(Session):
             # Next, make a layer definition from the given schema.
             for key, value in collection.schema['properties'].items():
                 log.debug("Creating field: %s %s", key, value)
+                # Is there a field width?
+                if value.startswith('str') and ':' in value:
+                    value, width = value.split(':')
+                    width = int(width)
+                else:
+                    width = None
                 # OGR needs UTF-8 field names.
                 key_encoded = key.encode("utf-8")
                 cogr_fielddefn = ograpi.OGR_Fld_Create(
@@ -726,6 +732,8 @@ cdef class WritingSession(Session):
                     FIELD_TYPES.index(value) )
                 if cogr_fielddefn is NULL:
                     raise ValueError("Null field definition")
+                if width:
+                    ograpi.OGR_Fld_SetWidth(cogr_fielddefn, width)
                 ograpi.OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1)
                 ograpi.OGR_Fld_Destroy(cogr_fielddefn)
             log.debug("Created fields")
@@ -776,14 +784,15 @@ cdef class WritingSession(Session):
                 raise RuntimeError("Failed to write record: %s" % record)
             _deleteOgrFeature(cogr_feature)
 
-    def sync(self):
+    def sync(self, collection):
         """Syncs OGR to disk."""
         cdef void *cogr_ds = self.cogr_ds
+        cdef void *cogr_layer = self.cogr_layer
         if cogr_ds is NULL:
             raise ValueError("Null data source")
         log.debug("Syncing OGR to disk")
-        result = ograpi.OGR_DS_SyncToDisk(cogr_ds)
-        if result != OGRERR_NONE:
+        retval = ograpi.OGR_DS_SyncToDisk(cogr_ds)
+        if retval != OGRERR_NONE:
             raise RuntimeError("Failed to sync to disk")
 
 

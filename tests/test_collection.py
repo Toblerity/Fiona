@@ -6,7 +6,7 @@ import shutil
 import sys
 import unittest
 
-from fiona import collection
+import fiona
 from fiona.collection import supported_drivers
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
@@ -26,11 +26,27 @@ class SupportedDriversTest(unittest.TestCase):
 class ReadingTest(unittest.TestCase):
     
     def setUp(self):
-        self.c = collection("docs/data/test_uk.shp", "r")
+        self.c = fiona.open("docs/data/test_uk.shp", "r")
     
     def tearDown(self):
         self.c.close()
-    
+
+    def test_open_repr(self):
+        self.failUnlessEqual(
+            repr(self.c),
+            ("<open Collection 'docs/data/test_uk.shp:test_uk', mode 'r' "
+            "at %s>" % hex(id(self.c))))
+
+    def test_closed_repr(self):
+        self.c.close()
+        self.failUnlessEqual(
+            repr(self.c),
+            ("<closed Collection 'docs/data/test_uk.shp:test_uk', mode 'r' "
+            "at %s>" % hex(id(self.c))))
+
+    def test_path(self):
+        self.failUnlessEqual(self.c.path, "docs/data/test_uk.shp")
+
     def test_name(self):
         self.failUnlessEqual(self.c.name, "test_uk")
     
@@ -104,6 +120,10 @@ class ReadingTest(unittest.TestCase):
             sorted(self.c.crs.keys()),
             ['datum', 'ellps', 'no_defs', 'proj'])
 
+    def test_meta(self):
+        self.failUnlessEqual(
+            sorted(self.c.meta.keys()), ['crs', 'driver', 'schema'])
+
     def test_bounds(self):
         self.failUnlessAlmostEqual(self.c.bounds[0], -8.621389, 6)
         self.failUnlessAlmostEqual(self.c.bounds[1], 49.911659, 6)
@@ -111,7 +131,7 @@ class ReadingTest(unittest.TestCase):
         self.failUnlessAlmostEqual(self.c.bounds[3], 60.844444, 6)
 
     def test_context(self):
-        with collection("docs/data/test_uk.shp", "r") as c:
+        with fiona.open("docs/data/test_uk.shp", "r") as c:
             self.failUnlessEqual(c.name, "test_uk")
             self.failUnlessEqual(len(c), 48)
         self.failUnlessEqual(c.closed, True)
@@ -143,7 +163,7 @@ class UnsupportedDriverTest(unittest.TestCase):
             'geometry': 'Point', 
             'properties': {'label': 'str', u'verit\xe9': 'int'} }
         self.assertRaises(
-            ValueError, collection, "/tmp/foo", "w", "FileGDB", schema=schema )
+            ValueError, fiona.open, "/tmp/foo", "w", "FileGDB", schema=schema )
 
 # The file writing tests below presume we can write to /tmp.
 
@@ -153,7 +173,7 @@ class GenericWritingTest(unittest.TestCase):
         schema = {
             'geometry': 'Point', 
             'properties': {'label': 'str', u'verit\xe9': 'int'} }
-        self.c = collection(
+        self.c = fiona.open(
                 "test-no-iter.shp", 
                 "w", 
                 "ESRI Shapefile", 
@@ -171,7 +191,7 @@ class GenericWritingTest(unittest.TestCase):
 class PointWritingTest(unittest.TestCase):
 
     def setUp(self):
-        self.sink = collection(
+        self.sink = fiona.open(
             "/tmp/point_writing_test.shp",
             "w",
             driver="ESRI Shapefile",
@@ -216,16 +236,10 @@ class PointWritingTest(unittest.TestCase):
         self.assertTrue(self.sink.validate_record(fvalid))
         self.assertFalse(self.sink.validate_record(finvalid))
 
-    def test_validate_record_shapefile_multi(self):
-        fvalid = {
-            'geometry': {'type': 'MultiPoint', 'coordinates': [(0.0, 0.1)]},
-            'properties': {'title': 'point one', 'date': "2012-01-29"}}
-        self.assertTrue(self.sink.validate_record(fvalid))
-
 class LineWritingTest(unittest.TestCase):
 
     def setUp(self):
-        self.sink = collection(
+        self.sink = fiona.open(
             "/tmp/line_writing_test.shp",
             "w",
             driver="ESRI Shapefile",
@@ -265,15 +279,15 @@ class LineWritingTest(unittest.TestCase):
         self.failUnlessEqual(len(self.sink), 2)
         self.failUnlessEqual(self.sink.bounds, (0.0, -0.2, 0.0, 0.2))
 
-class AppendingTest(unittest.TestCase):
+class PointAppendTest(unittest.TestCase):
 
     def setUp(self):
-        os.mkdir("append-test")
-        with collection("docs/data/test_uk.shp", "r") as input:
+        os.mkdir("test_append_point")
+        with fiona.open("docs/data/test_uk.shp", "r") as input:
             schema = input.schema.copy()
             schema['geometry'] = 'Point'
-            with collection(
-                    "append-test/" + "test_append_point.shp", 
+            with fiona.open(
+                    "test_append_point/" + "test_append_point.shp", 
                     "w", "ESRI Shapefile", schema
                     ) as output:
                 for f in input.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
@@ -283,10 +297,10 @@ class AppendingTest(unittest.TestCase):
                     output.write(f)
 
     def tearDown(self):
-        shutil.rmtree("append-test")
+        shutil.rmtree("test_append_point")
 
     def test_append_point(self):
-        with collection("append-test/test_append_point.shp", "a") as c:
+        with fiona.open("test_append_point/test_append_point.shp", "a") as c:
             self.assertEqual(c.schema['geometry'], 'Point')
             c.write({'geometry': {'type': 'Point', 'coordinates': (0.0, 45.0)},
                      'properties': { 'FIPS_CNTRY': 'UK', 
@@ -296,22 +310,74 @@ class AppendingTest(unittest.TestCase):
                                      'CNTRY_NAME': u'Foo'} })
             self.assertEqual(len(c), 8)
 
+class LineAppendTest(unittest.TestCase):
+
+    def setUp(self):
+        os.mkdir("test_append_line")
+        with fiona.open(
+                "test_append_line/" + "test_append_line.shp",
+                "w",
+                driver="ESRI Shapefile",
+                schema={
+                    'geometry': 'MultiLineString', 
+                    'properties': {'title': 'str', 'date': 'date'}},
+                crs={'init': "epsg:4326", 'no_defs': True}) as output:
+            f = {'geometry': {'type': 'MultiLineString', 
+                              'coordinates': [[(0.0, 0.1), (0.0, 0.2)]]},
+                'properties': {'title': 'line one', 'date': "2012-01-29"}}
+            output.writerecords([f])
+
+    def tearDown(self):
+        shutil.rmtree("test_append_line")
+
+    def test_append_line(self):
+        with fiona.open("test_append_line/test_append_line.shp", "a") as c:
+            self.assertEqual(c.schema['geometry'], 'LineString')
+            f1 = {
+                'geometry': {'type': 'LineString', 
+                             'coordinates': [(0.0, 0.1), (0.0, 0.2)]},
+                'properties': {'title': 'line one', 'date': "2012-01-29"}}
+            f2 = {
+                'geometry': {'type': 'MultiLineString', 
+                             'coordinates': [
+                                [(0.0, 0.0), (0.0, -0.1)], 
+                                [(0.0, -0.1), (0.0, -0.2)] ]},
+                'properties': {'title': 'line two', 'date': "2012-01-29"}}
+            c.writerecords([f1, f2])
+            self.failUnlessEqual(len(c), 3)
+            self.failUnlessEqual(c.bounds, (0.0, -0.2, 0.0, 0.2))
+
+class ShapefileFieldWidthTest(unittest.TestCase):
+    
+    def test_text(self):
+        with fiona.open("/tmp/textfield.shp", "w",
+                driver="ESRI Shapefile",
+                schema={'geometry': 'Point', 'properties': {'text': 'str:255'}}
+                ) as c:
+            c.write(
+                {'geometry': {'type': 'Point', 'coordinates': (0.0, 45.0)},
+                 'properties': { 'text': 'a' * 255 }})
+        with fiona.open("/tmp/textfield.shp", "r") as c:
+            f = next(c)
+        self.failUnlessEqual(f['properties']['text'], 'a' * 255)
+
+
 class CollectionTest(unittest.TestCase):
 
     def test_invalid_mode(self):
-        self.assertRaises(ValueError, collection, "/tmp/bogus.shp", "r+")
+        self.assertRaises(ValueError, fiona.open, "/tmp/bogus.shp", "r+")
 
     def test_w_args(self):
-        self.assertRaises(ValueError, collection, "test-no-iter.shp", "w")
-        self.assertRaises(ValueError, collection, "test-no-iter.shp", "w", "Driver")
+        self.assertRaises(ValueError, fiona.open, "test-no-iter.shp", "w")
+        self.assertRaises(ValueError, fiona.open, "test-no-iter.shp", "w", "Driver")
 
     def test_no_path(self):
-        self.assertRaises(OSError, collection, "no-path.shp", "a")
+        self.assertRaises(OSError, fiona.open, "no-path.shp", "a")
 
     def test_no_read_conn_str(self):
-        self.assertRaises(OSError, collection, "PG:dbname=databasename", "r")
+        self.assertRaises(OSError, fiona.open, "PG:dbname=databasename", "r")
 
     def test_no_read_directory(self):
-        self.assertRaises(ValueError, collection, ".", "r")
+        self.assertRaises(ValueError, fiona.open, ".", "r")
 
 

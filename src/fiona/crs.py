@@ -40,6 +40,15 @@ def from_string(prjs):
         (p.split('=') for p in parts) )
     return dict((k,v) for k, v in items if k in all_proj_keys)
 
+def from_epsg(code):
+    """Given an integer code, returns an EPSG-like mapping.
+
+    Note: the input code is not validated against an EPSG database.
+    """
+    if int(code) <= 0:
+        raise ValueError("EPSG codes are positive integers")
+    return {'init': "epsg:%s" % code, 'no_defs': True}
+
 
 # Below is the big list of PROJ4 parameters from
 # http://trac.osgeo.org/proj/wiki/GenParms.

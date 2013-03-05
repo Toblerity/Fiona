@@ -61,6 +61,7 @@ Because Fiona collections are context managers, they are closed and (in
 writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
+__all__ = []
 __version__ = "0.9"
 
 import os
@@ -68,7 +69,7 @@ import os
 from fiona.collection import Collection, supported_drivers
 
 
-def collection(path, mode='r', driver=None, schema=None, crs=None):
+def open(path, mode='r', driver=None, schema=None, crs=None):
     
     """Open file at ``path`` in ``mode`` "r" (read), "a" (append), or
     "w" (write) and return a ``Collection`` object.
@@ -115,4 +116,5 @@ def collection(path, mode='r', driver=None, schema=None, crs=None):
         raise ValueError("Invalid mode: %s" % mode)
     return c
 
+collection = open
 
