@@ -279,15 +279,15 @@ class LineWritingTest(unittest.TestCase):
         self.failUnlessEqual(len(self.sink), 2)
         self.failUnlessEqual(self.sink.bounds, (0.0, -0.2, 0.0, 0.2))
 
-class AppendingTest(unittest.TestCase):
+class PointAppendTest(unittest.TestCase):
 
     def setUp(self):
-        os.mkdir("append-test")
+        os.mkdir("test_append_point")
         with fiona.open("docs/data/test_uk.shp", "r") as input:
             schema = input.schema.copy()
             schema['geometry'] = 'Point'
             with fiona.open(
-                    "append-test/" + "test_append_point.shp", 
+                    "test_append_point/" + "test_append_point.shp", 
                     "w", "ESRI Shapefile", schema
                     ) as output:
                 for f in input.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
@@ -297,10 +297,10 @@ class AppendingTest(unittest.TestCase):
                     output.write(f)
 
     def tearDown(self):
-        shutil.rmtree("append-test")
+        shutil.rmtree("test_append_point")
 
     def test_append_point(self):
-        with fiona.open("append-test/test_append_point.shp", "a") as c:
+        with fiona.open("test_append_point/test_append_point.shp", "a") as c:
             self.assertEqual(c.schema['geometry'], 'Point')
             c.write({'geometry': {'type': 'Point', 'coordinates': (0.0, 45.0)},
                      'properties': { 'FIPS_CNTRY': 'UK', 
@@ -309,6 +309,44 @@ class AppendingTest(unittest.TestCase):
                                      'POP_CNTRY': 0, 
                                      'CNTRY_NAME': u'Foo'} })
             self.assertEqual(len(c), 8)
+
+class LineAppendTest(unittest.TestCase):
+
+    def setUp(self):
+        os.mkdir("test_append_line")
+        with fiona.open(
+                "test_append_line/" + "test_append_line.shp",
+                "w",
+                driver="ESRI Shapefile",
+                schema={
+                    'geometry': 'MultiLineString', 
+                    'properties': {'title': 'str', 'date': 'date'}},
+                crs={'init': "epsg:4326", 'no_defs': True}) as output:
+            f = {'geometry': {'type': 'MultiLineString', 
+                              'coordinates': [[(0.0, 0.1), (0.0, 0.2)]]},
+                'properties': {'title': 'line one', 'date': "2012-01-29"}}
+            output.writerecords([f])
+
+    def tearDown(self):
+        shutil.rmtree("test_append_line")
+
+    def test_append_line(self):
+        with fiona.open("test_append_line/test_append_line.shp", "a") as c:
+            self.assertEqual(c.schema['geometry'], 'LineString')
+            f1 = {
+                'geometry': {'type': 'LineString', 
+                             'coordinates': [(0.0, 0.1), (0.0, 0.2)]},
+                'properties': {'title': 'line one', 'date': "2012-01-29"}}
+            f2 = {
+                'geometry': {'type': 'MultiLineString', 
+                             'coordinates': [
+                                [(0.0, 0.0), (0.0, -0.1)], 
+                                [(0.0, -0.1), (0.0, -0.2)] ]},
+                'properties': {'title': 'line two', 'date': "2012-01-29"}}
+            c.writerecords([f1, f2])
+            self.failUnlessEqual(len(c), 3)
+            self.failUnlessEqual(c.bounds, (0.0, -0.2, 0.0, 0.2))
+
 
 class CollectionTest(unittest.TestCase):
 
