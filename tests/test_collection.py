@@ -347,6 +347,20 @@ class LineAppendTest(unittest.TestCase):
             self.failUnlessEqual(len(c), 3)
             self.failUnlessEqual(c.bounds, (0.0, -0.2, 0.0, 0.2))
 
+class ShapefileFieldWidthTest(unittest.TestCase):
+    
+    def test_text(self):
+        with fiona.open("/tmp/textfield.shp", "w",
+                driver="ESRI Shapefile",
+                schema={'geometry': 'Point', 'properties': {'text': 'str:255'}}
+                ) as c:
+            c.write(
+                {'geometry': {'type': 'Point', 'coordinates': (0.0, 45.0)},
+                 'properties': { 'text': 'a' * 255 }})
+        with fiona.open("/tmp/textfield.shp", "r") as c:
+            f = next(c)
+        self.failUnlessEqual(f['properties']['text'], 'a' * 255)
+
 
 class CollectionTest(unittest.TestCase):
 

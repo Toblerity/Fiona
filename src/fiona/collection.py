@@ -167,7 +167,7 @@ class Collection(object):
     def flush(self):
         """Flush the buffer."""
         if self.session is not None and self.session.get_length() > 0:
-            self.session.sync()
+            self.session.sync(self)
             new_len = self.session.get_length()
             self._len = new_len > self._len and new_len or self._len
             self._bounds = self.session.get_extent()
