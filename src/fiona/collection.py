@@ -27,7 +27,6 @@ class Collection(object):
 
         self.session = None
         self.iterator = None
-        self._buffer = []
         self._len = 0
         self._bounds = None
         self._driver = None
@@ -118,7 +117,9 @@ class Collection(object):
         """Stages multiple records for writing to disk."""
         if self.mode not in ('a', 'w'):
             raise IOError("Collection is not open for reading")
-        self._buffer.extend(list(records))
+        self.session.writerecs(records, self)
+        self._len = self.session.get_length()
+        self._bounds = self.session.get_extent()
 
     def write(self, record):
         """Stages a record for writing to disk."""
@@ -151,20 +152,9 @@ class Collection(object):
         else:
             return record['geometry']['type'] == self.schema['geometry']
 
-    def _flushbuffer(self):
-        if self.session is not None and len(self._buffer) > 0:
-            self.session.writerecs(self._buffer, self)
-            self.session.sync()
-            new_len = self.session.get_length()
-            self._len = new_len > self._len \
-                and new_len or self._len + len(self._buffer)
-            self._buffer = []
-            self._bounds = self.session.get_extent()
-
     def __len__(self):
         if self._len <= 0 and self.session is not None:
             self._len = self.session.get_length()
-        self._flushbuffer()
         return self._len
 
     @property
@@ -172,19 +162,22 @@ class Collection(object):
         """Returns (minx, miny, maxx, maxy)."""
         if self._bounds is None and self.session is not None:
             self._bounds = self.session.get_extent()
-        self._flushbuffer()
         return self._bounds
 
     def flush(self):
         """Flush the buffer."""
-        self._flushbuffer()
+        if self.session is not None and self.session.get_length() > 0:
+            self.session.sync()
+            new_len = self.session.get_length()
+            self._len = new_len > self._len and new_len or self._len
+            self._bounds = self.session.get_extent()
 
     def close(self):
         """In append or write mode, flushes data to disk, then ends
         access."""
         if self.session is not None: 
             if self.mode in ('a', 'w'):
-                self._flushbuffer()
+                self.flush()
             self.session.stop()
             self.session = None
             self.iterator = None
