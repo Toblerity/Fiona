@@ -52,6 +52,13 @@ class Collection(object):
         if self.session:
             self.guard_driver_mode()
 
+    def __repr__(self):
+        return "<%s Collection '%s', mode '%s' at %s>" % (
+            self.closed and "closed" or "open",
+            self.path + ":" + self.name,
+            self.mode,
+            hex(id(self)))
+
     def guard_driver_mode(self):
         drv = self.session.get_driver()
         if drv not in supported_drivers:
@@ -81,6 +88,11 @@ class Collection(object):
         if self._crs is None and self.mode in ("a", "r") and self.session:
             self._crs = self.session.get_crs()
         return self._crs
+
+    @property
+    def meta(self):
+        """Returns a mapping with the driver, schema, and crs properties."""
+        return {'driver': self.driver, 'schema': self.schema, 'crs': self.crs}
 
     def filter(self, bbox=None):
         """Returns an iterator over records, but filtered by a test for
@@ -128,8 +140,12 @@ class Collection(object):
 
         Returns ``True`` if the record matches, else ``False``.
         """
-        # Shapefiles welcome mixes of geometry and their multi- types.
-        if self.driver == "ESRI Shapefile":
+        # Shapefiles welcome mixes of line/multis and polygon/multis.
+        # OGR reports these mixed files as type "Polygon" or "LineString"
+        # but will return either these or their multi counterparts when 
+        # reading features.
+        if (self.driver == "ESRI Shapefile" and 
+                "Point" not in record['geometry']['type']):
             return record['geometry']['type'].lstrip(
                 "Multi") == self.schema['geometry'].lstrip("Multi")
         else:

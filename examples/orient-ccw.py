@@ -4,7 +4,7 @@ import datetime
 import logging
 import sys
 
-from fiona import collection
+import fiona
 
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
@@ -20,7 +20,7 @@ def signed_area(coords):
     return sum(xs[i]*(ys[i+1]-ys[i-1]) for i in range(1, len(coords)))/2.0
 
 
-with collection("docs/data/test_uk.shp", "r") as source:
+with fiona.open("docs/data/test_uk.shp", "r") as source:
     
     # Copy the source schema and add two new properties.
     schema = source.schema.copy()
@@ -29,7 +29,7 @@ with collection("docs/data/test_uk.shp", "r") as source:
     
     # Create a sink for processed features with the same format and 
     # coordinate reference system as the source.
-    with collection(
+    with fiona.open(
             "oriented-ccw.shp", "w",
             driver=source.driver,
             schema=schema,
