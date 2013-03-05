@@ -794,15 +794,6 @@ cdef class WritingSession(Session):
         retval = ograpi.OGR_DS_SyncToDisk(cogr_ds)
         if retval != OGRERR_NONE:
             raise RuntimeError("Failed to sync to disk")
-        sql = "RESIZE " + collection.name
-        cdef void *result = ograpi.OGR_DS_ExecuteSQL(
-            cogr_ds,
-            sql,
-            NULL,
-            NULL)
-        if result != NULL:
-            ograpi.OGR_DS_ReleaseResultSet(cogr_ds, result)
-            raise RuntimeError("Failed to resize columns")
 
 
 cdef class Iterator:
