@@ -395,13 +395,14 @@ cdef class FeatureBuilder:
         cdef int ss = 0
         cdef int tz = 0
         cdef int retval
+        cdef char *key
         props = {}
         for i in range(ograpi.OGR_F_GetFieldCount(feature)):
             fdefn = ograpi.OGR_F_GetFieldDefnRef(feature, i)
             if fdefn is NULL:
                 raise ValueError("Null feature definition")
             key = ograpi.OGR_Fld_GetNameRef(fdefn)
-            if key is NULL:
+            if key == NULL:
                 raise ValueError("Null field name reference")
             fieldtypename = FIELD_TYPES[ograpi.OGR_Fld_GetType(fdefn)]
             if not fieldtypename:
@@ -589,13 +590,20 @@ cdef class Session:
                     "Invalid field type %s" % ograpi.OGR_Fld_GetType(
                                                 cogr_fielddefn))
             key = ograpi.OGR_Fld_GetNameRef(cogr_fielddefn)
+            val = fieldtypename
             if not bool(key):
                 raise ValueError("Invalid field name ref: %s" % key)
             try:
                 key = key.decode('utf-8')
+                if fieldtypename == 'str':
+                    width = ograpi.OGR_Fld_GetWidth(cogr_fielddefn)
+                    if width != 80 and width > 0:
+                        val = "str:" + str(width)
+                    else:
+                        val = "str"
             except UnicodeDecodeError:
                 log.warn("Failed to decode %s using UTF-8 codec", key)
-            props.append((key, fieldtypename))
+            props.append((key, val))
         geom_type = ograpi.OGR_FD_GetGeomType(cogr_featuredefn)
         return {'properties': dict(props), 'geometry': GEOMETRY_TYPES[geom_type]}
 

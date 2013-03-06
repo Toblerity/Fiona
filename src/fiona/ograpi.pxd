@@ -60,6 +60,7 @@ cdef extern from "ogr_api.h":
     void    OGR_Fld_Destroy (void *fielddefn)
     char *  OGR_Fld_GetNameRef (void *fielddefn)
     int     OGR_Fld_GetType (void *fielddefn)
+    int     OGR_Fld_GetWidth (void *fielddefn)
     void    OGR_Fld_Set (void *fielddefn, char *name, int fieldtype, int width, int precision, int justification)
     void    OGR_Fld_SetWidth (void *fielddefn, int n)
     OGRErr  OGR_G_AddGeometryDirectly (void *geometry, void *part)
