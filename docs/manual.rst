@@ -3,8 +3,8 @@ The Fiona User Manual
 =====================
 
 :Author: Sean Gillies, <sean.gillies@gmail.com>
-:Revision: 0.8
-:Date: 10 March 2012
+:Revision: 0.9
+:Date: 7 March 2013
 :Copyright: 
   This work is licensed under a `Creative Commons Attribution 3.0
   United States License`__.
@@ -12,8 +12,8 @@ The Fiona User Manual
 .. __: http://creativecommons.org/licenses/by/3.0/us/
 
 :Abstract:
-  Fiona is OGR's neater API. This document explains how to use the Fiona
-  package for reading and writing geospatial data files.
+  Fiona is OGR's neat, nimble, no-nonsense API. This document explains how to
+  use the Fiona package for reading and writing geospatial data files.
 
 .. sectnum::
 
@@ -100,7 +100,7 @@ the Fiona repository that we'll use in this and other examples.
   import logging
   import sys
   
-  from fiona import collection
+  import fiona
   
   
   logging.basicConfig(stream=sys.stderr, level=logging.INFO)
@@ -116,20 +116,20 @@ the Fiona repository that we'll use in this and other examples.
       return sum(xs[i]*(ys[i+1]-ys[i-1]) for i in range(1, len(coords)))/2.0
   
   
-  with collection("docs/data/test_uk.shp", "r") as source:
+  with fiona.open('docs/data/test_uk.shp', 'r') as source:
       
       # Copy the source schema and add two new properties.
-      schema = source.schema.copy()
-      schema['properties']['s_area'] = 'float'
-      schema['properties']['timestamp'] = 'str'
+      sink_schema = source.schema.copy()
+      sink_schema['properties']['s_area'] = 'float'
+      sink_schema['properties']['timestamp'] = 'datetime'
       
       # Create a sink for processed features with the same format and 
       # coordinate reference system as the source.
-      with collection(
-              "oriented-ccw.shp", "w",
-              driver=source.driver,
-              schema=schema,
+      with fiona.open(
+              'oriented-ccw.shp', 'w',
               crs=source.crs
+              driver=source.driver,
+              schema=sink_schema,
               ) as sink:
           
           for f in source:
@@ -159,7 +159,7 @@ the Fiona repository that we'll use in this and other examples.
               except Exception, e:
                   logging.exception("Error processing feature %s:", f['id'])
 
-          # The sink collection is written to disk when its block ends
+          # The sink file is written to disk and closed when its block ends.
 
 Data Model
 ==========
@@ -207,21 +207,23 @@ Fiona's major design principles.
 Reading Vector Data
 ===================
 
-Reading a GIS vector file begins by opening it in mode ``"r"`` using Fiona's
-:py:func:`~fiona.collection` function. It returns an opened
+Reading a GIS vector file begins by opening it in mode ``'r'`` using Fiona's
+:py:func:`~fiona.open` function. It returns an opened
 :py:class:`~fiona.collection.Collection` object.
 
 .. sourcecode:: pycon
 
-  >>> from fiona import collection
-  >>> c = collection("docs/data/test_uk.shp", "r")
+  >>> import fiona
+  >>> c = fiona.open('docs/data/test_uk.shp', 'r')
+  >>> c
+  <open Collection 'docs/data/test_uk.shp:test_uk', mode 'r' at 0x3763d0>
   >>> c.closed
   False
 
-.. admonition:: Possible API Change
+.. admonition:: API Change
 
-   :py:func:`fiona.collection` may be renamed (or aliased) to 
-   :py:func:`fiona.open` in a future version.
+   :py:func:`fiona.collection` is deprecated, but aliased to 
+   :py:func:`fiona.open` in version 0.9.
 
 Fiona's :py:class:`~fiona.collection.Collection` is like a Python
 :py:class:`file`, but is iterable for records rather than lines.
@@ -245,12 +247,12 @@ emptying it as with a Python :py:class:`file`.
   >>> len(list(c))
   0
 
-A future version of Fiona may (should?) allow you to seek records by their
-index, but for now you must reopen the collection to get back to the beginning.
+Seeking the beginning of the file is not supported. You must reopen the
+collection to get back to the beginning.
 
 .. sourcecode:: pycon
 
-  >>> c = collection("docs/data/test_uk.shp", "r")
+  >>> c = fiona.open('docs/data/test_uk.shp', 'r')
   >>> len(list(c))
   48
 
@@ -266,7 +268,7 @@ the box's values.
 
 .. sourcecode:: pycon
 
-  >>> c = collection("docs/data/test_uk.shp", "r")
+  >>> c = fiona.open('docs/data/test_uk.shp', 'r')
   >>> hits = c.filter(bbox=(-5.0, 55.0, 0.0, 60.0))
   >>> len(list(hits))
   7
@@ -283,7 +285,7 @@ a context guard, it is closed no matter what happens within the block.
 .. sourcecode:: pycon
 
   >>> try:
-  ...     with collection("docs/data/test_uk.shp", "r") as c:
+  ...     with fiona.open('docs/data/test_uk.shp', 'r') as c:
   ...         print len(list(c))
   ...         assert True is False
   ... except:
@@ -308,14 +310,14 @@ Format Drivers, CRS, Bounds, and Schema
 =======================================
 
 In addition to attributes like those of :py:class:`file`
-(:py:attr:`~file.mode`, :py:attr:`~file.closed`),
+(:py:attr:`~file.name`, :py:attr:`~file.mode`, :py:attr:`~file.closed`),
 a :py:class:`~fiona.collection.Collection` has a read-only
 :py:attr:`~fiona.collection.Collection.driver` attribute which names the
 :program:`OGR` :dfn:`format driver` used to open the vector file.
 
 .. sourcecode:: pycon
 
-  >>> c = collection("docs/data/test_uk.shp", "r")
+  >>> c = fiona.open('docs/data/test_uk.shp', 'r')
   >>> c.driver
   'ESRI Shapefile'
 
@@ -346,13 +348,6 @@ records is obtained via a read-only
   >>> c.bounds
   (-8.6213890000000006, 49.911659, 1.749444, 60.844444000000003)
 
-.. admonition:: Note
-
-   Getting the length or bounds of a collection (or closing a collection) has
-   the side effect of flushing any written records to the file on disk. You
-   may also call :py:meth:`~fiona.collection.Collection.flush` in your code.
-   It does nothing when there are no written records.
-
 Finally, the schema of its record type (a vector file has a single type of
 record, remember) is accessed via a read-only
 :py:attr:`~fiona.collection.Collection.schema` attribute.
@@ -367,28 +362,6 @@ record, remember) is accessed via a read-only
                   'CNTRY_NAME': 'str',
                   'FIPS_CNTRY': 'str',
                   'POP_CNTRY': 'float'}}
-
-The ``bounds``, ``crs``, ``driver``, and ``schema`` properties are both lazy
-and sticky, meaning that the values stick around even after the file is closed.
-
-.. sourcecode:: pycon
-
-  >>> c = collection("docs/data/test_uk.shp", "r")
-  >>> c.bounds
-  (-8.6213890000000006, 49.911659, 1.749444, 60.844444000000003)
-  >>> c.close()
-  >>> c.bounds
-  (-8.6213890000000006, 49.911659, 1.749444, 60.844444000000003)
-
-However, if the file is closed before the property was computed the property
-remains in a meaningless state.
-
-.. sourcecode:: pycon
-
-  >>> c = collection("data/test_uk.shp", "r")
-  >>> c.close()
-  >>> c.bounds is None
-  True
 
 Keeping Schemas Simple
 ----------------------
@@ -436,6 +409,13 @@ field type name is 'str'.
   'str'
   >>> fiona.types[c.schema['properties']['CNTRY_NAME']]
   <type 'unicode'>
+
+String type fields may also indicate their maximum width. A value of 'str:25'
+indicates that all values will be no longer than 25 characters. If this value
+is used in the schema of a file opened for writing, values of that property
+will be truncated at 25 characters. The default width is 80 chars, which means
+'str' and 'str:80' are more or less equivalent.
+
 
 Records
 =======
@@ -489,7 +469,7 @@ value is a string unique within the data file.
 
 .. sourcecode:: pycon
 
-  >>> c = collection("docs/data/test_uk.shp", "r")
+  >>> c = fiona.open('docs/data/test_uk.shp', 'r')
   >>> rec = c.next()
   >>> rec['id']
   '0'
@@ -622,8 +602,8 @@ Features Access) installed, you can see this in by verifying the following.
 Writing Vector Data
 ===================
 
-A vector file can be opened for writing in mode ``"a"`` (append) or mode
-``"w"`` (write).
+A vector file can be opened for writing in mode ``'a'`` (append) or mode
+``'w'`` (write).
 
 .. admonition:: Note
    
@@ -639,23 +619,23 @@ record extracted in the example below.
 
 .. sourcecode:: pycon
 
-  >>> with collection("docs/data/test_uk.shp", "r") as c:
+  >>> with fiona.open('docs/data/test_uk.shp', 'r') as c:
   ...     rec = c.next()
   >>> rec['id'] = '-1'
-  >>> rec['properties']['CNTRY_NAME'] = u"Gondor"
+  >>> rec['properties']['CNTRY_NAME'] = u'Gondor'
   >>> import os
   >>> os.system("cp docs/data/test_uk.* /tmp")
   0
 
 The coordinate reference system. format, and schema of the file are already
-defined, so it's opened with just two arguments as for reading, but in ``"a"``
+defined, so it's opened with just two arguments as for reading, but in ``'a'``
 mode. The new record is written to the end of the file using the
 :py:meth:`~fiona.collection.Collection.write` method. Accordingly, the length
 of the file grows from 48 to 49.
 
 .. sourcecode:: pycon
 
-  >>> with collection("/tmp/test_uk.shp", "a") as c:
+  >>> with fiona.open('/tmp/test_uk.shp', 'a') as c:
   ...     print len(c)
   ...     c.write(rec)
   ...     print len(c)
@@ -663,22 +643,12 @@ of the file grows from 48 to 49.
   48
   49
 
-The count of records remains even after the collection is closed.
-
-.. sourcecode:: pycon
-
-  >>> c.closed
-  True
-  >>> len(c)
-  49
-  
-
 The record you write must match the file's schema (because a file contains one
 type of record, remember). You'll get a :py:class:`ValueError` if it doesn't.
 
 .. sourcecode:: pycon
 
-  >>> with collection("/tmp/test_uk.shp", "a") as c:
+  >>> with fiona.open('/tmp/test_uk.shp', 'a') as c:
   ...     c.write({'properties': {'foo': 'bar'}})
   ... 
   Traceback (most recent call last):
@@ -691,7 +661,7 @@ appended to above,
 
 .. sourecode:: pycon
 
-  >>> with collection("/tmp/test_uk.shp", "r") as c:
+  >>> with fiona.open('/tmp/test_uk.shp', 'a') as c:
   ...     records = list(c)
   >>> records[-1]['id']
   '48'
@@ -708,7 +678,7 @@ iterator) of records.
 
 .. sourcecode:: pycon
 
-  >>> with collection("/tmp/test_uk.shp", "a") as c:
+  >>> with fiona.open('/tmp/test_uk.shp', 'a') as c:
   ...     c.writerecords([rec, rec, rec])
   ...     print len(c)
   ... 
@@ -722,10 +692,10 @@ iterator) of records.
 
 .. admonition:: Buffering
 
-   Fiona's output is buffered. The records passed to :py:meth:`write` and 
+   Fiona's output is buffered. The records passed to :py:meth:`write` and
    :py:meth:`writerecords` are flushed to disk when the collection is closed.
-   This means that writing large files is memory intensive. Work is planned to
-   make output more efficient by the 1.0 release.
+   You may also call :py:meth:`flush` periodically to write the buffer contents
+   to disk.
 
 Writing New Files
 -----------------
@@ -736,12 +706,11 @@ by the programmer. Still, it's not very complicated. A schema is just a mapping,
 as described above. A CRS is also just a mapping, and the possible formats are
 enumerated in the :py:attr:`fiona.drivers` list.
 
-
 Copy the parameters of our demo file.
 
 .. sourcecode:: pycon
 
-  >>> with collection("docs/data/test_uk.shp", "r") as source:
+  >>> with fiona.open('docs/data/test_uk.shp', 'r') as source:
   ...     source_driver = source.driver
   ...     source_crs = source.crs
   ...     source_schema = source.schema
@@ -762,9 +731,9 @@ And now create a new file using them.
 
 .. sourcecode:: pycon
 
-  >>> with collection(
-  ...         "/tmp/foo.shp",
-  ...         "w",
+  >>> with fiona.open(
+  ...         '/tmp/foo.shp',
+  ...         'w',
   ...         driver=source_driver,
   ...         crs=source_crs,
   ...         schema=source_schema) as c:
@@ -779,6 +748,16 @@ And now create a new file using them.
   >>> len(c)
   1
 
+The :py:attr:`~fiona.collection.Collection.meta` attribute makes duplication of
+a file's meta properties even easier.
+
+.. sourcecode:: pycon
+
+  >>> source = fiona.open('docs/data/test_uk.shp', 'r')
+  >>> sink = fiona.open('/tmp/foo.shp', 'w', **source.meta)
+
+References
+==========
 
 .. [Kent1978] William Kent, Data and Reality, North Holland, 1978.
 .. [ESRI1998] ESRI Shapefile Technical Description. July 1998. http://www.esri.com/library/whitepapers/pdfs/shapefile.pdf
