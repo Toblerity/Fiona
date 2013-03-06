@@ -4,24 +4,26 @@ import sys
 
 from pyproj import Proj, transform
 
-from fiona import collection
-
+import fiona
+from fiona.crs import from_epsg
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
-with collection("docs/data/test_uk.shp", "r") as input:
+with fiona.open('docs/data/test_uk.shp', 'r') as source:
     
-    schema = input.schema.copy()
-    p_in = Proj(input.crs)
+    sink_schema = source.schema.copy()
+    p_in = Proj(source.crs)
 
-    with collection(
-            "with-pyproj.shp", "w", "ESRI Shapefile",
-            schema=schema,
-            crs={'init': "epsg:27700", 'no_defs': True}
-            ) as output:
+    with fiona.open(
+            'with-pyproj.shp', 'w',
+            crs=from_epsg(27700),
+            driver=source.driver,
+            schema=sink_schema,
+            ) as sink:
         
-        p_out = Proj(output.crs)
-        for f in input:
+        p_out = Proj(sink.crs)
+
+        for f in source:
             
             try:
                 assert f['geometry']['type'] == "Polygon"
@@ -30,7 +32,7 @@ with collection("docs/data/test_uk.shp", "r") as input:
                     x2, y2 = transform(p_in, p_out, *zip(*ring))
                     new_coords.append(zip(x2, y2))
                 f['geometry']['coordinates'] = new_coords
-                output.write(f)
+                sink.write(f)
             
             except Exception, e:
                 # Writing uncleanable features to a different shapefile
