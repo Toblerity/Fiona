@@ -4,20 +4,19 @@ import sys
 
 from shapely.geometry import mapping, shape
 
-from fiona import collection
-
+import fiona
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
-with collection("docs/data/test_uk.shp", "r") as input:
+with fiona.open('docs/data/test_uk.shp', 'r') as source:
     
-    schema = input.schema.copy()
-    
-    with collection(
-            "with-shapely.shp", "w", "ESRI Shapefile", schema
-            ) as output:
+    # **source.meta is a shortcut to get the crs, driver, and schema
+    # keyword arguments from the source Collection.
+    with fiona.open(
+            'with-shapely.shp', 'w',
+            **source.meta) as sink:
         
-        for f in input:
+        for f in source:
             
             try:
                 geom = shape(f['geometry'])
@@ -27,7 +26,7 @@ with collection("docs/data/test_uk.shp", "r") as input:
                     assert clean.geom_type == 'Polygon'
                     geom = clean
                 f['geometry'] = mapping(geom)
-                output.write(f)
+                sink.write(f)
             
             except Exception, e:
                 # Writing uncleanable features to a different shapefile

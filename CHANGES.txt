@@ -1,7 +1,7 @@
 CHANGES
 =======
 
-0.9 (2012-)
+0.9 (2013-03-06)
 -----------
 - Accessing file metadata (crs, schema, bounds) on never inspected closed files
   returns None without exceptions.
@@ -9,6 +9,8 @@ CHANGES
 - Raise ValueError for unsupported drivers and modes.
 - Remove asserts from ogrext.pyx.
 - Add validate_record method to collections.
+- Add helpful coordinate system functions to fiona.crs.
+- Promote use of fiona.open over fiona.collection.
 - Handle Shapefile's mix of LineString/Polygon and multis (#18).
 - Allow users to specify width of shapefile text fields (#20).
 

@@ -54,39 +54,45 @@ Usage
 =====
 
 Records are read from and written to ``file``-like `Collection` objects. Records
-are mappings modeled on the GeoJSON format and if you want to do anything fancy
-with them you will probably need Shapely or something like it.
+are mappings modeled on the GeoJSON format. They don't have any spatial methods
+of their own, so if you want to do anything fancy with them you will probably
+need Shapely or something like it. Here is an example of using Fiona to read
+some records from one data file, change their geometry attributes, and write
+them to a new data file.
 
 .. code-block:: python
 
   import fiona
 
-  # Open a source of features
-  with fiona.open("docs/data/test_uk.shp", "r") as source:
+  # Open a file for reading. We'll call this the "source."
+  with fiona.open('docs/data/test_uk.shp', 'r') as source:
   
-      # Define a schema for the feature sink
-      schema = source.schema.copy()
-      schema['geometry'] = 'Point'
+      # The file we'll write to, the "sink", must be initialized with a
+      # coordinate system, a format driver name, and a record schema.
+      sink_schema = source.schema.copy()
+      sink_schema['geometry'] = 'Point'
       
-      # Open a new sink for features, using the same format driver
-      # and coordinate reference system as the source.
+      # Open an output file, using the same format driver and coordinate
+      # reference system as the source.
       with fiona.open(
-              "test_write.shp", "w",
-              driver=source.driver, schema=schema, crs=source.crs
+              'test_write.shp', 'w',
+              crs=source.crs, driver=source.driver, schema=sink_schema,
               ) as sink:
           
-          # Process only the features intersecting a box
+          # Process only the records intersecting a box.
           for f in source.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
           
-              # Get point on the boundary of the feature
+              # Get a point on the boundary of the record's geometry.
               f['geometry'] = {
                   'type': 'Point',
-                  'coordinates': f['geometry']['coordinates'][0][0] }
+                  'coordinates': f['geometry']['coordinates'][0][0]}
               
-              # Stage feature for writing
+              # Write the record out.
               sink.write(f)
               
-      # The sink shapefile is written to disk when its ``with`` block ends
+      # The sink's contents are flushed to disk and the file is closed
+      # when its ``with`` block ends. This effectively executes 
+      # ``sink.flush(); sink.close()``.
 
 Development and testing
 =======================
