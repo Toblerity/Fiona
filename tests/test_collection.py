@@ -357,9 +357,11 @@ class ShapefileFieldWidthTest(unittest.TestCase):
             c.write(
                 {'geometry': {'type': 'Point', 'coordinates': (0.0, 45.0)},
                  'properties': { 'text': 'a' * 255 }})
-        with fiona.open("/tmp/textfield.shp", "r") as c:
-            f = next(c)
+        c = fiona.open("/tmp/textfield.shp", "r")
+        self.failUnlessEqual(c.schema['properties']['text'], 'str:255')
+        f = next(iter(c))
         self.failUnlessEqual(f['properties']['text'], 'a' * 255)
+        c.close()
 
 
 class CollectionTest(unittest.TestCase):

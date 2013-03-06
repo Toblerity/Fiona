@@ -24,8 +24,9 @@ Dependencies
 
 Fiona requires Python 2.6+ and libgdal 1.3.2+. To build from a source
 distribution or repository clone you will need a C compiler and GDAL and Python
-development headers and libraries. There are no binary distributions or Windows
-support at this time.
+development headers and libraries. While there are no official binary
+distributions or Windows support at this time, you can find Windows installers
+at http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#fiona.
 
 Installation
 ============
@@ -61,14 +62,16 @@ eventually to PyPI.
 Usage
 =====
 
-Records are read from and written to ``file``-like collection objects. Records
+Records are read from and written to ``file``-like `Collection` objects. Records
 are mappings modeled on the GeoJSON format and if you want to do anything fancy
-with them you will probably need Shapely or something like it::
+with them you will probably need Shapely or something like it.
 
-  from fiona import collection
+.. code-block:: python
+
+  import fiona
 
   # Open a source of features
-  with collection("docs/data/test_uk.shp", "r") as source:
+  with fiona.open("docs/data/test_uk.shp", "r") as source:
   
       # Define a schema for the feature sink
       schema = source.schema.copy()
@@ -76,7 +79,7 @@ with them you will probably need Shapely or something like it::
       
       # Open a new sink for features, using the same format driver
       # and coordinate reference system as the source.
-      with collection(
+      with fiona.open(
               "test_write.shp", "w",
               driver=source.driver, schema=schema, crs=source.crs
               ) as sink:
