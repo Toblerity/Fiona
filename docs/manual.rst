@@ -3,7 +3,7 @@ The Fiona User Manual
 =====================
 
 :Author: Sean Gillies, <sean.gillies@gmail.com>
-:Revision: 0.9
+:Revision: 0.9.1
 :Date: 7 March 2013
 :Copyright: 
   This work is licensed under a `Creative Commons Attribution 3.0
@@ -255,6 +255,16 @@ collection to get back to the beginning.
   >>> c = fiona.open('docs/data/test_uk.shp', 'r')
   >>> len(list(c))
   48
+
+.. admonition:: File Encoding
+
+   The format drivers will attempt to detect the encoding of your data, but may
+   fail. In my experience GDAL 1.7.2 (for example) doesn't detect that the
+   encoding of the Natural Earth dataset is Windows-1252. In this case, the
+   proper encoding can be specified explicitly by using the ``encoding``
+   keyword parameter of :py:func:`fiona.open`: ``encoding='Windows-1252'``.
+   
+   New in version 0.9.1.
 
 Filtering
 ---------

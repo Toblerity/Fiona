@@ -11,6 +11,10 @@ from fiona import ogrinit
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 
 log = logging.getLogger("Fiona")
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+log.addHandler(NullHandler())
 
 # Mapping of OGR integer geometry types to GeoJSON type names.
 GEOMETRY_TYPES = [
@@ -381,7 +385,7 @@ cdef class FeatureBuilder:
     argument is not destroyed.
     """
 
-    cdef build(self, void *feature):
+    cdef build(self, void *feature, encoding='utf-8'):
         # The only method anyone ever needs to call
         if feature is NULL:
             raise ValueError("Null feature")
@@ -419,9 +423,10 @@ cdef class FeatureBuilder:
             elif fieldtype is UnicodeType:
                 try:
                     val = ograpi.OGR_F_GetFieldAsString(feature, i)
-                    props[key] = val.decode('utf-8')
+                    props[key] = val.decode(encoding)
                 except UnicodeDecodeError:
-                    log.warn("Failed to decode %s using UTF-8 codec", val)
+                    log.warn(
+                        "Failed to decode %s using %s codec", val, encoding)
                     props[key] = val
             elif fieldtype in (FionaDateType, FionaTimeType, FionaDateTimeType):
                 retval = ograpi.OGR_F_GetFieldAsDateTime(
@@ -471,11 +476,12 @@ cdef class OGRFeatureBuilder:
         cdef void *cogr_geometry = OGRGeomBuilder().build(feature['geometry'])
         ograpi.OGR_F_SetGeometryDirectly(cogr_feature, cogr_geometry)
         
+        encoding = collection.encoding or 'utf-8'
         for key, value in feature['properties'].items():
             try:
-                key_encoded = key.encode('utf-8')
+                key_encoded = key.encode(encoding)
             except UnicodeDecodeError:
-                log.warn("Failed to encode %s using UTF-8 codec", key)
+                log.warn("Failed to encode %s using %s codec", key, encoding)
                 key_encoded = key
             i = ograpi.OGR_F_GetFieldIndex(cogr_feature, key_encoded)
             ptype = type(value) #FIELD_TYPES_MAP[key]
@@ -485,9 +491,10 @@ cdef class OGRFeatureBuilder:
                 ograpi.OGR_F_SetFieldDouble(cogr_feature, i, value)
             elif ptype in (UnicodeType, StringType):
                 try:
-                    value_encoded = value.encode('utf-8')
+                    value_encoded = value.encode(encoding)
                 except UnicodeDecodeError:
-                    log.warn("Failed to encode %s using UTF-8 codec", value)
+                    log.warn(
+                        "Failed to encode %s using %s codec", value, encoding)
                     value_encoded = value
                 ograpi.OGR_F_SetFieldString(cogr_feature, i, value_encoded)
             elif ptype in (FionaDateType, FionaTimeType, FionaDateTimeType):
@@ -521,7 +528,8 @@ def featureRT(feature, collection):
     if cogr_geometry is NULL:
         raise ValueError("Null geometry")
     log.debug("Geometry: %s" % ograpi.OGR_G_ExportToJson(cogr_geometry))
-    result = FeatureBuilder().build(cogr_feature)
+    encoding = collection.encoding or 'utf-8'
+    result = FeatureBuilder().build(cogr_feature, encoding)
     _deleteOgrFeature(cogr_feature)
     return result
 
@@ -836,7 +844,8 @@ cdef class Iterator:
         cogr_feature = ograpi.OGR_L_GetNextFeature(session.cogr_layer)
         if cogr_feature == NULL:
             raise StopIteration
-        feature = FeatureBuilder().build(cogr_feature)
+        encoding = self.collection.encoding or 'utf-8'
+        feature = FeatureBuilder().build(cogr_feature, encoding)
         _deleteOgrFeature(cogr_feature)
         return feature
 

@@ -13,7 +13,9 @@ class Collection(object):
 
     def __init__(
             self, path, mode='r', 
-            driver=None, schema=None, crs=None, workspace=None):
+            driver=None, schema=None, crs=None, 
+            encoding=None,
+            workspace=None):
         
         """The required ``path`` is the absolute or relative path to
         a file, such as '/data/test_uk.shp'. In ``mode`` 'r', data can
@@ -35,6 +37,7 @@ class Collection(object):
         self.path = path
         self.name = os.path.basename(os.path.splitext(path)[0])
         self.mode = mode
+        self.encoding = encoding
         if driver:
             self._driver = driver
         if schema:

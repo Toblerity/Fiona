@@ -1,6 +1,12 @@
 CHANGES
 =======
 
+0.9.1 (2013-03-07)
+------------------
+- Silence the logger in ogrext.so (can be overridden).
+- Allow user specification of record field encoding (like 'Windows-1252' for
+  Natural Earth shapefiles) to help when OGR can't detect it.
+
 0.9 (2013-03-06)
 -----------
 - Accessing file metadata (crs, schema, bounds) on never inspected closed files
