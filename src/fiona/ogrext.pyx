@@ -11,6 +11,10 @@ from fiona import ogrinit
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 
 log = logging.getLogger("Fiona")
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+log.addHandler(NullHandler())
 
 # Mapping of OGR integer geometry types to GeoJSON type names.
 GEOMETRY_TYPES = [
