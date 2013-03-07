@@ -47,7 +47,7 @@ readme_text = file('README.rst', 'rb').read()
 
 setup(name          = 'Fiona',
       version       = version,
-      description   = "Fiona is OGR's neater API",
+      description   = "Fiona reads and writes spatial data files",
       license       = 'BSD',
       keywords      = 'gis vector feature data',
       author        = 'Sean Gillies',

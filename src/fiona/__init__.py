@@ -62,14 +62,14 @@ writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
 __all__ = []
-__version__ = "0.9"
+__version__ = "0.9.1"
 
 import os
 
 from fiona.collection import Collection, supported_drivers
 
 
-def open(path, mode='r', driver=None, schema=None, crs=None):
+def open(path, mode='r', driver=None, schema=None, crs=None, encoding=None):
     
     """Open file at ``path`` in ``mode`` "r" (read), "a" (append), or
     "w" (write) and return a ``Collection`` object.
@@ -88,6 +88,9 @@ def open(path, mode='r', driver=None, schema=None, crs=None):
       {'proj': 'longlat', 'ellps': 'WGS84', 'datum': 'WGS84', 
        'no_defs': True}
     
+    The drivers used by Fiona will try to detect the encoding of data
+    files. If they fail, you may provide the proper ``encoding``, such as
+    'Windows-1252' for the Natural Earth datasets.
     """
     # Fail immediately if driver and mode are unsupported.
     if driver:
@@ -102,7 +105,7 @@ def open(path, mode='r', driver=None, schema=None, crs=None):
             raise OSError("Nonexistent path '%s'" % path)
         if not os.path.isfile(path):
             raise ValueError("Path must be a file")
-        c = Collection(path, mode)
+        c = Collection(path, mode, encoding=encoding)
     elif mode == 'w':
         dirname = os.path.dirname(path) or "."
         if not os.path.exists(dirname):
@@ -111,7 +114,9 @@ def open(path, mode='r', driver=None, schema=None, crs=None):
             raise ValueError("An OGR driver name must be specified")
         if not schema:
             raise ValueError("A collection schema must be specified")
-        c = Collection(path, mode, driver, schema, crs)
+        c = Collection(path, mode, 
+            crs=crs, driver=driver, schema=schema, 
+            encoding=encoding)
     else:
         raise ValueError("Invalid mode: %s" % mode)
     return c
