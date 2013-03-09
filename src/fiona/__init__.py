@@ -123,3 +123,16 @@ def open(path, mode='r', driver=None, schema=None, crs=None, encoding=None):
 
 collection = open
 
+def prop_width(val):
+    """Returns the width of a str type property.
+
+    Undefined for non-str properties. Example:
+
+      >>> prop_width('str:25')
+      25
+      >>> prop_width('str')
+      80
+    """
+    if val.startswith('str'):
+        return int((val.split(":")[1:] or ["80"])[0])
+    return None
