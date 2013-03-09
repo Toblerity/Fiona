@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+0.9.2 ()
+--------
+- Add function to get the width of str type properties.
+
 0.9.1 (2013-03-07)
 ------------------
 - Silence the logger in ogrext.so (can be overridden).
