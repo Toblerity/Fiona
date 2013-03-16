@@ -8,6 +8,7 @@ import unittest
 
 import fiona
 from fiona.collection import supported_drivers
+from fiona.errors import FionaValueError, DriverError, SchemaError, CRSError
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
@@ -163,7 +164,8 @@ class UnsupportedDriverTest(unittest.TestCase):
             'geometry': 'Point', 
             'properties': {'label': 'str', u'verit\xe9': 'int'} }
         self.assertRaises(
-            ValueError, fiona.open, "/tmp/foo", "w", "FileGDB", schema=schema )
+            DriverError, 
+            fiona.open, "/tmp/foo", "w", "FileGDB", schema=schema)
 
 # The file writing tests below presume we can write to /tmp.
 
@@ -370,14 +372,15 @@ class CollectionTest(unittest.TestCase):
         self.assertRaises(ValueError, fiona.open, "/tmp/bogus.shp", "r+")
 
     def test_w_args(self):
-        self.assertRaises(ValueError, fiona.open, "test-no-iter.shp", "w")
-        self.assertRaises(ValueError, fiona.open, "test-no-iter.shp", "w", "Driver")
+        self.assertRaises(FionaValueError, fiona.open, "test-no-iter.shp", "w")
+        self.assertRaises(
+            FionaValueError, fiona.open, "test-no-iter.shp", "w", "Driver")
 
     def test_no_path(self):
-        self.assertRaises(OSError, fiona.open, "no-path.shp", "a")
+        self.assertRaises(IOError, fiona.open, "no-path.shp", "a")
 
     def test_no_read_conn_str(self):
-        self.assertRaises(OSError, fiona.open, "PG:dbname=databasename", "r")
+        self.assertRaises(IOError, fiona.open, "PG:dbname=databasename", "r")
 
     def test_no_read_directory(self):
         self.assertRaises(ValueError, fiona.open, ".", "r")

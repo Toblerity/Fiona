@@ -8,6 +8,7 @@ from types import IntType, FloatType, StringType, UnicodeType
 
 from fiona cimport ograpi
 from fiona import ogrinit
+from fiona.errors import DriverError, SchemaError, CRSError
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 
 log = logging.getLogger("Fiona")
@@ -46,13 +47,13 @@ FIELD_TYPES = [
     ]
 
 class FionaDateType(UnicodeType):
-    pass
+    """Dates without time."""
 
 class FionaTimeType(UnicodeType):
-    pass
+    """Times without dates."""
 
 class FionaDateTimeType(UnicodeType):
-    pass
+    """Dates and times."""
 
 # Mapping of Fiona field type names to Python types.
 FIELD_TYPES_MAP = {
