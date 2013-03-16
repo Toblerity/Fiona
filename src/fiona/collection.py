@@ -4,6 +4,7 @@
 import os
 
 from fiona.ogrext import Iterator, Session, WritingSession
+from fiona.errors import DriverError, SchemaError, CRSError
 
 
 class Collection(object):
@@ -26,6 +27,18 @@ class Collection(object):
         In ``mode`` 'w', an OGR ``driver`` name and a ``schema`` are
         required. A Proj4 ``crs`` string is recommended.
         """
+        if not isinstance(path, basestring):
+            raise TypeError("invalid path: %r" % path)
+        if not isinstance(mode, basestring):
+            raise TypeError("invalid mode: %r" % mode)
+        if driver and not isinstance(driver, basestring):
+            raise TypeError("invalid driver: %r" % driver)
+        if schema and not hasattr(schema, 'get'):
+            raise TypeError("invalid schema: %r" % schema)
+        if crs and not hasattr(crs, 'get'):
+            raise TypeError("invalid schema: %r" % crs)
+        if encoding and not isinstance(encoding, basestring):
+            raise TypeError("invalid encoding: %r" % encoding)
 
         self.session = None
         self.iterator = None
@@ -34,17 +47,48 @@ class Collection(object):
         self._driver = None
         self._schema = None
         self._crs = None
+        
         self.path = path
         self.name = os.path.basename(os.path.splitext(path)[0])
+        
+        if mode not in ('r', 'w', 'a'):
+            raise ValueError(
+                "mode string must be one of 'r', 'w', or 'a', not %s" % mode)
         self.mode = mode
+        
+        # We don't validate encoding against available codecs, exceptions
+        # will come from first calls to encode/decode.
         self.encoding = encoding
-        if driver:
+        
+        if mode == 'w':
+
+            if not driver:
+                raise DriverError("no driver")
+            elif driver not in supported_drivers:
+                raise DriverError(
+                    "unsupported driver: %r" % driver)
+            elif self.mode not in supported_drivers[driver]:
+                raise DriverError(
+                    "unsupported mode: %r" % self.mode)
             self._driver = driver
-        if schema:
+            
+            if not schema:
+                raise SchemaError("no schema")
+            elif 'properties' not in schema:
+                raise SchemaError("schema lacks: properties")
+            elif 'geometry' not in schema:
+                raise SchemaError("schema lacks: geometry")
             self._schema = schema
-        if crs:
-            self._crs = crs
+            
+            if crs:
+                if 'init' in crs or 'proj' in crs:
+                    self._crs = crs
+                else:
+                    raise CRSError("crs lacks init or proj parameter")
+        
+        # For backwards compatibility. Ignored.
         self.workspace = workspace
+
         if self.mode == "r":
             self.session = Session()
             self.session.start(self)
@@ -62,13 +106,11 @@ class Collection(object):
             hex(id(self)))
 
     def guard_driver_mode(self):
-        drv = self.session.get_driver()
-        if drv not in supported_drivers:
-            raise ValueError(
-                "Invalid or unsupported driver '%s'" % drv )
-        elif self.mode not in supported_drivers[drv]:
-            raise ValueError(
-                "Invalid driver mode '%s'" % self.mode )
+        driver = self.session.get_driver()
+        if driver not in supported_drivers:
+            raise DriverError("unsupported driver: %r" % driver)
+        if self.mode not in supported_drivers[driver]:
+            raise DriverError("unsupported mode: %r" % self.mode)
 
     @property
     def driver(self):
@@ -101,9 +143,9 @@ class Collection(object):
         spatial intersection with the provided ``bbox``, a (minx, miny,
         maxx, maxy) tuple."""
         if self.closed:
-            raise ValueError("Collection is not open for reading")
+            raise ValueError("I/O operation on closed collection")
         elif self.mode != 'r':
-            raise IOError("Collection is not open for reading")
+            raise IOError("collection not open for reading")
         if self.iterator is None:
             self.iterator = Iterator(self, bbox)
         return self.iterator
@@ -118,8 +160,10 @@ class Collection(object):
 
     def writerecords(self, records):
         """Stages multiple records for writing to disk."""
+        if self.closed:
+            raise ValueError("I/O operation on closed collection")
         if self.mode not in ('a', 'w'):
-            raise IOError("Collection is not open for reading")
+            raise IOError("collection not open for writing")
         self.session.writerecs(records, self)
         self._len = self.session.get_length()
         self._bounds = self.session.get_extent()

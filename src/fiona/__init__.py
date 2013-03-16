@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Fiona is OGR's neater API – sleek and elegant on the outside,
-indomitable power on the inside.
+Fiona is OGR's neat, nimble, no-nonsense API.
 
 Fiona provides a minimal, uncomplicated Python interface to the open
 source GIS community's most trusted geodata access library and
@@ -42,27 +41,29 @@ ring of the polygon and using that as the point geometry for a new
 feature writing to a "points.shp" file.
 
   >>> from fiona import collection
-  >>> with collection("docs/data/test_uk.shp", "r") as input:
-  ...     schema = input.schema.copy()
-  ...     schema['geometry'] = 'Point'
+  >>> with collection("docs/data/test_uk.shp", "r") as inp:
+  ...     output_schema = inp.schema.copy()
+  ...     output_schema['geometry'] = 'Point'
   ...     with collection(
-  ...             "points.shp", "w", "ESRI Shapefile",
-  ...             schema=schema, crs=input.crs
-  ...             ) as output:
-  ...         for f in input.filter(
+  ...             "points.shp", "w",
+  ...             crs=inp.crs, 
+  ...             driver="ESRI Shapefile", 
+  ...             schema=output_schema
+  ...             ) as out:
+  ...         for f in inp.filter(
   ...                 bbox=(-5.0, 55.0, 0.0, 60.0)
   ...                 ):
   ...             value = f['geometry']['coordinates'][0][0]
-  ...             f['geometry'] = dict(
-  ...                 type='Point', coordinates=value)
-  ...             output.write(f)
+  ...             f['geometry'] = {
+  ...                 'type': 'Point', 'coordinates': value}
+  ...             out.write(f)
 
 Because Fiona collections are context managers, they are closed and (in
 writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
 __all__ = []
-__version__ = "0.9.1"
+__version__ = "0.10"
 
 import os
 
@@ -92,33 +93,17 @@ def open(path, mode='r', driver=None, schema=None, crs=None, encoding=None):
     files. If they fail, you may provide the proper ``encoding``, such as
     'Windows-1252' for the Natural Earth datasets.
     """
-    # Fail immediately if driver and mode are unsupported.
-    if driver:
-        if driver not in supported_drivers:
-            raise ValueError(
-                "Invalid or unsupported driver '%s'" % driver )
-        elif mode not in supported_drivers[driver]:
-            raise ValueError(
-                "Invalid driver mode '%s'" % mode )
     if mode in ('a', 'r'):
         if not os.path.exists(path):
-            raise OSError("Nonexistent path '%s'" % path)
-        if not os.path.isfile(path):
-            raise ValueError("Path must be a file")
+            raise IOError("no such file or directory: %r" % path)
         c = Collection(path, mode, encoding=encoding)
     elif mode == 'w':
-        dirname = os.path.dirname(path) or "."
-        if not os.path.exists(dirname):
-            raise OSError("Nonexistent path '%s'" % path)
-        if not driver:
-            raise ValueError("An OGR driver name must be specified")
-        if not schema:
-            raise ValueError("A collection schema must be specified")
-        c = Collection(path, mode, 
+        c = Collection(path, mode=mode, 
             crs=crs, driver=driver, schema=schema, 
             encoding=encoding)
     else:
-        raise ValueError("Invalid mode: %s" % mode)
+        raise ValueError(
+            "mode string must be one of 'r', 'w', or 'a', not %s" % mode)
     return c
 
 collection = open
