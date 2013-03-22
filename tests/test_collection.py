@@ -282,15 +282,15 @@ class LineWritingTest(unittest.TestCase):
         self.failUnlessEqual(self.sink.bounds, (0.0, -0.2, 0.0, 0.2))
 
 class PointAppendTest(unittest.TestCase):
-
+    # Tests 3D shapefiles too
     def setUp(self):
         os.mkdir("test_append_point")
         with fiona.open("docs/data/test_uk.shp", "r") as input:
-            schema = input.schema.copy()
-            schema['geometry'] = 'Point'
+            output_schema = input.schema.copy()
+            output_schema['geometry'] = '3D Point'
             with fiona.open(
                     "test_append_point/" + "test_append_point.shp", 
-                    "w", "ESRI Shapefile", schema
+                    "w", crs=None, driver="ESRI Shapefile", schema=output_schema
                     ) as output:
                 for f in input.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
                     f['geometry'] = {
@@ -303,7 +303,7 @@ class PointAppendTest(unittest.TestCase):
 
     def test_append_point(self):
         with fiona.open("test_append_point/test_append_point.shp", "a") as c:
-            self.assertEqual(c.schema['geometry'], 'Point')
+            self.assertEqual(c.schema['geometry'], '3D Point')
             c.write({'geometry': {'type': 'Point', 'coordinates': (0.0, 45.0)},
                      'properties': { 'FIPS_CNTRY': 'UK', 
                                      'AREA': 0.0, 

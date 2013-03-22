@@ -748,7 +748,7 @@ cdef class WritingSession(Session):
                 self.cogr_ds, 
                 collection.name,
                 cogr_srs,
-                [k for k,v in GEOMETRY_TYPES.items() if 
+                <unsigned int>[k for k,v in GEOMETRY_TYPES.items() if 
                     v == collection.schema['geometry']][0],
                 NULL
                 )
