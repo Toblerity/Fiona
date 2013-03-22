@@ -18,9 +18,24 @@ class NullHandler(logging.Handler):
 log.addHandler(NullHandler())
 
 # Mapping of OGR integer geometry types to GeoJSON type names.
-GEOMETRY_TYPES = [
-    'Unknown', 'Point', 'LineString', 'Polygon', 'MultiPoint', 
-    'MultiLineString', 'MultiPolygon', 'GeometryCollection' ]
+GEOMETRY_TYPES = {
+    0: 'Unknown',
+    1: 'Point',
+    2: 'LineString',
+    3: 'Polygon',
+    4: 'MultiPoint',
+    5: 'MultiLineString',
+    6: 'MultiPolygon',
+    7: 'GeometryCollection',
+    100: 'None',
+    101: 'LinearRing',
+    0x80000001: '3D Point',
+    0x80000002: '3D LineString',
+    0x80000003: '3D Polygon',
+    0x80000004: '3D MultiPoint',
+    0x80000005: '3D MultiLineString',
+    0x80000006: '3D MultiPolygon',
+    0x80000007: '3D GeometryCollection' }
 
 # Mapping of OGR integer field types to Fiona field type names.
 #
@@ -196,8 +211,10 @@ cdef class GeomBuilder:
         # The only method anyone needs to call
         if geom is NULL:
             raise ValueError("Null geom")
-        self.code = ograpi.OGR_G_GetGeometryType(geom)
-        self.typename = GEOMETRY_TYPES[self.code % 0x80000000]
+        
+        cdef unsigned int etype = ograpi.OGR_G_GetGeometryType(geom)
+        self.code = etype
+        self.typename = GEOMETRY_TYPES[self.code & (~0x80000000)]
         self.ndims = ograpi.OGR_G_GetCoordinateDimension(geom)
         self.geom = geom
         return getattr(self, '_build' + self.typename)()
@@ -443,10 +460,10 @@ cdef class FeatureBuilder:
                 props[key] = None
 
         cdef void *cogr_geometry = ograpi.OGR_F_GetGeometryRef(feature)
-        if cogr_geometry is NULL:
-            raise ValueError("Null geometry")
-        geom = GeomBuilder().build(cogr_geometry)
-        
+        if cogr_geometry is not NULL:
+            geom = GeomBuilder().build(cogr_geometry)
+        else:
+            geom = None
         return {
             'id': str(ograpi.OGR_F_GetFID(feature)),
             'geometry': geom,
@@ -583,8 +600,10 @@ cdef class Session:
         cdef void *cogr_featuredefn
         cdef void *cogr_fielddefn
         props = []
+        
         if self.cogr_layer is NULL:
             raise ValueError("Null layer")
+
         cogr_featuredefn = ograpi.OGR_L_GetLayerDefn(self.cogr_layer)
         if cogr_featuredefn is NULL:
             raise ValueError("Null feature definition")
@@ -613,8 +632,11 @@ cdef class Session:
             except UnicodeDecodeError:
                 log.warn("Failed to decode %s using UTF-8 codec", key)
             props.append((key, val))
-        geom_type = ograpi.OGR_FD_GetGeomType(cogr_featuredefn)
-        return {'properties': dict(props), 'geometry': GEOMETRY_TYPES[geom_type]}
+
+        cdef unsigned int geom_type = ograpi.OGR_FD_GetGeomType(
+            cogr_featuredefn)
+        return {
+            'properties': dict(props), 'geometry': GEOMETRY_TYPES[geom_type]}
 
     def get_crs(self):
         cdef char *proj = NULL
@@ -726,7 +748,8 @@ cdef class WritingSession(Session):
                 self.cogr_ds, 
                 collection.name,
                 cogr_srs,
-                GEOMETRY_TYPES.index(collection.schema['geometry']),
+                <unsigned int>[k for k,v in GEOMETRY_TYPES.items() if 
+                    v == collection.schema['geometry']][0],
                 NULL
                 )
             if self.cogr_layer is NULL:
@@ -770,12 +793,13 @@ cdef class WritingSession(Session):
         cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
         if ograpi.OGR_Dr_GetName(cogr_driver) == b"ESRI Shapefile" \
                 and "Point" not in collection.schema['geometry']:
-            schema_geom_type = collection.schema['geometry'].lstrip("Multi")
+            schema_geom_type = collection.schema['geometry'].lstrip(
+                "3D ").lstrip("Multi")
             def validate_geometry_type(rec):
                 return rec['geometry']['type'].lstrip(
                     "Multi") == schema_geom_type
         else:
-            schema_geom_type = collection.schema['geometry']
+            schema_geom_type = collection.schema['geometry'].lstrip("3D ")
             def validate_geometry_type(rec):
                 return rec['geometry']['type'] == schema_geom_type
 
