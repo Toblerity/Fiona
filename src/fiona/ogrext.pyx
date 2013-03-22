@@ -460,10 +460,10 @@ cdef class FeatureBuilder:
                 props[key] = None
 
         cdef void *cogr_geometry = ograpi.OGR_F_GetGeometryRef(feature)
-        if cogr_geometry is NULL:
-            raise ValueError("Null geometry")
-        geom = GeomBuilder().build(cogr_geometry)
-        
+        if cogr_geometry is not NULL:
+            geom = GeomBuilder().build(cogr_geometry)
+        else:
+            geom = None
         return {
             'id': str(ograpi.OGR_F_GetFID(feature)),
             'geometry': geom,
