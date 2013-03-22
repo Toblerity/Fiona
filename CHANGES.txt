@@ -1,9 +1,10 @@
 CHANGES
 =======
 
-0.9.2 ()
---------
+0.10 (2013-03---)
+-----------------
 - Add function to get the width of str type properties.
+- Handle validation and schema representation of 2.5D geometry types (#29).
 
 0.9.1 (2013-03-07)
 ------------------

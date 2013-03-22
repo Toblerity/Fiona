@@ -195,9 +195,11 @@ class Collection(object):
         if (self.driver == "ESRI Shapefile" and 
                 "Point" not in record['geometry']['type']):
             return record['geometry']['type'].lstrip(
-                "Multi") == self.schema['geometry'].lstrip("Multi")
+                "Multi") == self.schema['geometry'].lstrip("3D ").lstrip(
+                    "Multi")
         else:
-            return record['geometry']['type'] == self.schema['geometry']
+            return (record['geometry']['type'] ==
+                self.schema['geometry'].lstrip("3D "))
 
     def __len__(self):
         if self._len <= 0 and self.session is not None:

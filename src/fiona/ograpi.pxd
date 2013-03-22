@@ -12,6 +12,9 @@ ctypedef struct OGREnvelope:
     double MinY
     double MaxY
 
+cdef extern from "ogr_core.h":
+    char *  OGRGeometryTypeToName(int)
+
 cdef extern from "ogr_srs_api.h":
     void    OSRCleanup ()
     void *  OSRClone (void *srs)
