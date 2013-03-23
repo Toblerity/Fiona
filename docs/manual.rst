@@ -3,8 +3,7 @@ The Fiona User Manual
 =====================
 
 :Author: Sean Gillies, <sean.gillies@gmail.com>
-:Revision: 0.9.1
-:Date: 7 March 2013
+:Date: 23 March 2013
 :Copyright: 
   This work is licensed under a `Creative Commons Attribution 3.0
   United States License`__.
@@ -341,16 +340,41 @@ accessed via a read-only :py:attr:`~fiona.collection.Collection.crs` attribute.
 
 The CRS is represented by a mapping of :program:`PROJ.4` parameters.
 
-The number of records in the collection's file can be obtained via Python's built
-in :py:func:`len` function.
+The :py:mod:`fiona.crs` module provides 3 functions to assist with these
+mappings. :py:func:`~fiona.crs.to_string` converts mappings to PROJ.4 strings:
+
+.. sourcecode:: pycon
+
+  >>> from fiona.crs import to_string
+  >>> print to_string(c.crs)
+  +datum=WGS84 +ellps=WGS84 +no_defs +proj=longlat
+
+:py:func:`~fiona.crs.from_string` does the inverse.
+
+.. sourcecode:: pycon
+
+  >>> from fiona.crs import from_string
+  >>> from_string("+datum=WGS84 +ellps=WGS84 +no_defs +proj=longlat")
+  {'no_defs': True, 'ellps': 'WGS84', 'datum': 'WGS84', 'proj': 'longlat'}
+
+:py:func:`~fiona.crs.from_epsg` is a shortcut to CRS mappings from EPSG codes.
+
+.. sourcecode:: pycon
+
+  >>> from fiona.crs import from_epsg
+  >>> from_epsg(3857)
+  {'init': 'epsg:3857', 'no_defs': True}
+
+The number of records in the collection's file can be obtained via Python's
+built in :py:func:`len` function.
 
 .. sourcecode:: pycon
 
   >>> len(c)
   48
 
-The :dfn:`minimum bounding rectangle` (MBR) or :dfn:`bounds` of the collection's
-records is obtained via a read-only
+The :dfn:`minimum bounding rectangle` (MBR) or :dfn:`bounds` of the
+collection's records is obtained via a read-only
 :py:attr:`~fiona.collection.Collection.bounds` attribute.
 
 .. sourcecode:: pycon
@@ -406,10 +430,10 @@ be found in a dictionary named :py:attr:`fiona.types`.
 Field Types
 -----------
 
-TODO: details. In a nutshell, the types and their names are as near to what you'd
-expect in Python (or Javascript) as possible. The 'str' vs 'unicode' muddle is
-a fact of life in Python < 3.0. Fiona records have Unicode strings, but their
-field type name is 'str'.
+TODO: details. In a nutshell, the types and their names are as near to what
+you'd expect in Python (or Javascript) as possible. The 'str' vs 'unicode'
+muddle is a fact of life in Python < 3.0. Fiona records have Unicode strings,
+but their field type name is 'str'.
 
 .. sourcecode:: pycon
 
@@ -426,6 +450,46 @@ is used in the schema of a file opened for writing, values of that property
 will be truncated at 25 characters. The default width is 80 chars, which means
 'str' and 'str:80' are more or less equivalent.
 
+Fiona provides a function to get the width of properties.
+
+.. sourcecode:: pycon
+
+  >>> from fiona import prop_width
+  >>> prop_width('str:25')
+  25
+  >>> prop_width('str')
+  80
+
+Geometry Types
+--------------
+
+Fiona supports the geometry types in GeoJSON and their 3D variants. This means
+that the value of a schema's geometry item will be one of the following:
+
+ - Point
+ - LineString
+ - Polygon
+ - MultiPoint
+ - MultiLineString
+ - MultiPolygon
+ - GeometryCollection
+ - 3D Point
+ - 3D LineString
+ - 3D Polygon
+ - 3D MultiPoint
+ - 3D MultiLineString
+ - 3D MultiPolygon
+ - 3D GeometryCollection
+
+The last seven of these, the 3D types, apply only to collection schema. The
+geometry types of features are always one of the first seven. A '3D Point'
+collection, for example, always has features with geometry type 'Point'. The
+coordinates of those geometries will be (x, y, z) tuples.
+
+Note that one of the most common vector data formats, Esri's Shapefile, has no
+'MultiLineString' or 'MultiPolygon' schema geometries. However, a Shapefile
+that indicates 'Polygon' in its schema may yield either 'Polygon' or
+'MultiPolygon' features.
 
 Records
 =======
@@ -433,8 +497,8 @@ Records
 A record you get from a collection is a Python :py:class:`dict` structured
 exactly like a GeoJSON Feature. Fiona records are self-describing; the names of
 its fields are contained within the data structure and the values in the fields
-are typed properly for the type of record. Numeric field values are instances of
-type :py:class:`int` and :py:class:`float`, for example, not strings.
+are typed properly for the type of record. Numeric field values are instances
+of type :py:class:`int` and :py:class:`float`, for example, not strings.
 
 .. sourcecode:: pycon
 
@@ -603,11 +667,11 @@ Features Access) installed, you can see this in by verifying the following.
 
 .. admonition:: Dirty data
 
-   Some files may contain vectors that are :dfn:`invalid` from a simple features
-   standpoint due to accident (inadequate quality control on the producer's end)
-   or intention ("dirty" vectors saved to a file for special treatment). Fiona
-   doesn't sniff for or attempt to clean dirty data, so make sure you're getting
-   yours from a clean source.
+   Some files may contain vectors that are :dfn:`invalid` from a simple
+   features standpoint due to accident (inadequate quality control on the
+   producer's end) or intention ("dirty" vectors saved to a file for special
+   treatment). Fiona doesn't sniff for or attempt to clean dirty data, so make
+   sure you're getting yours from a clean source.
 
 Writing Vector Data
 ===================
@@ -669,7 +733,7 @@ Now, what about record ids? The id of a record written to a file is ignored and
 replaced by the next value appropriate for the file. If you read the file just
 appended to above,
 
-.. sourecode:: pycon
+.. sourcecode:: pycon
 
   >>> with fiona.open('/tmp/test_uk.shp', 'a') as c:
   ...     records = list(c)
@@ -712,9 +776,9 @@ Writing New Files
 
 Writing a new file is more complex than appending to an existing file because
 the file CRS, format, and schema have not yet been defined and must be done so
-by the programmer. Still, it's not very complicated. A schema is just a mapping,
-as described above. A CRS is also just a mapping, and the possible formats are
-enumerated in the :py:attr:`fiona.drivers` list.
+by the programmer. Still, it's not very complicated. A schema is just
+a mapping, as described above. A CRS is also just a mapping, and the possible
+formats are enumerated in the :py:attr:`fiona.drivers` list.
 
 Copy the parameters of our demo file.
 
@@ -765,6 +829,15 @@ a file's meta properties even easier.
 
   >>> source = fiona.open('docs/data/test_uk.shp', 'r')
   >>> sink = fiona.open('/tmp/foo.shp', 'w', **source.meta)
+
+Coordinates and Geometry Types
+------------------------------
+
+If you write 3D coordinates, ones having (x, y, z) tuples, to a 2D file
+('Point' schema geometry, for example) the z values will be lost.
+
+If you write 2D coordinates, ones having only (x, y) tuples, to a 3D file ('3D
+Point' schema geometry, for example) a default z value of 0 will be provided.
 
 References
 ==========

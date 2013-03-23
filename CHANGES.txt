@@ -1,10 +1,10 @@
 CHANGES
 =======
 
-0.10 (2013-03---)
+0.10 (2013-03-23)
 -----------------
 - Add function to get the width of str type properties.
-- Handle validation and schema representation of 2.5D geometry types (#29).
+- Handle validation and schema representation of 3D geometry types (#29).
 - Return {'geometry': None} in the case of a NULL geometry (#31).
 
 0.9.1 (2013-03-07)
