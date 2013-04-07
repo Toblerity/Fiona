@@ -2,9 +2,11 @@ try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
-from distutils.core import Extension
 import logging
 import subprocess
+
+from Cython.Build import cythonize
+from Cython.Build.Dependencies import create_extension_list
 
 logging.basicConfig()
 log = logging.getLogger()
@@ -39,42 +41,37 @@ try:
             library_dirs.extend(item[2:].split(":"))
         elif item.startswith("-l"):
             libraries.append(item[2:])
-except Exception, e:
+except Exception as e:
     log.error("Failed to get options via gdal-config: %s", str(e))
 
 # Get text from README.txt
-readme_text = file('README.rst', 'rb').read()
+readme_text = open('README.rst', 'rb').read()
 
-setup(name          = 'Fiona',
-      version       = version,
-      description   = "Fiona reads and writes spatial data files",
-      license       = 'BSD',
-      keywords      = 'gis vector feature data',
-      author        = 'Sean Gillies',
-      author_email  = 'sean.gillies@gmail.com',
-      maintainer        = 'Sean Gillies',
-      maintainer_email  = 'sean.gillies@gmail.com',
-      url   = 'http://github.com/Toblerity/Fiona',
-      long_description = readme_text,
-      package_dir = {'': 'src'},
-      packages = ['fiona'],
-      install_requires  = [],
-      tests_require = ['nose'],
-      ext_modules = [
-        Extension(
-            'fiona.ogrinit', 
-            ['src/fiona/ogrinit.c'],
-            include_dirs=include_dirs,
-            library_dirs=library_dirs,
-            libraries=libraries ),
-        Extension(
-            'fiona.ogrext', 
-            ['src/fiona/ogrext.c'],
-            include_dirs=include_dirs,
-            library_dirs=library_dirs,
-            libraries=libraries ),
-        ],
-      classifiers   = [
+modules = create_extension_list(['src/fiona/*.pyx'])
+for module in modules:
+    module.include_dirs = include_dirs
+    module.library_dirs = library_dirs
+    module.libraries = libraries
+
+setup(
+    name='Fiona',
+    version=version,
+    description="Fiona reads and writes spatial data files",
+    license='BSD',
+    keywords='gis vector feature data',
+    author='Sean Gillies',
+    author_email='sean.gillies@gmail.com',
+    maintainer='Sean Gillies',
+    maintainer_email='sean.gillies@gmail.com',
+    url='http://github.com/Toblerity/Fiona',
+    long_description=readme_text,
+    package_dir={'': 'src'},
+    packages=['fiona'],
+    install_requires=[],
+    tests_require=['nose'],
+    test_suite='nose.collector',
+    ext_modules=cythonize(modules),
+    classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
@@ -82,5 +79,5 @@ setup(name          = 'Fiona',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Topic :: Scientific/Engineering :: GIS',
-        ],
+    ],
 )

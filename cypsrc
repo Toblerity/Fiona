@@ -1,5 +1,0 @@
-#!/bin/sh
-cd src
-cython fiona/ogrinit.pyx
-cython fiona/ogrext.pyx
-cd ..
