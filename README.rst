@@ -112,7 +112,7 @@ locations on your system (via your system's package manager), you can do this::
 
   (fiona_env)$ git clone git://github.com/Toblerity/Fiona.git
   (fiona_env)$ cd Fiona
-  (fiona_env)$ ./cypsrc
+  (fiona_env)$ python setup.py build_ext --inplace
   (fiona_env)$ python setup.py develop
   (fiona_env)$ python setup.py nosetests
 
