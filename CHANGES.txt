@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+Next
+----
+- Cythonize .pyx files (#34).
+
 0.10 (2013-03-23)
 -----------------
 - Add function to get the width of str type properties.

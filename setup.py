@@ -45,7 +45,7 @@ except Exception as e:
     log.error("Failed to get options via gdal-config: %s", str(e))
 
 # Get text from README.txt
-readme_text = open('README.rst', 'rb').read()
+readme_text = open('README.rst', 'r').read()
 
 modules = create_extension_list(['src/fiona/*.pyx'])
 for module in modules:
