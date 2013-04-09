@@ -4,6 +4,7 @@ CHANGES
 Next
 ----
 - Cythonize .pyx files (#34).
+- Work with or around lack of OGR's internal recoding of record data (#35).
 
 0.10 (2013-03-23)
 -----------------

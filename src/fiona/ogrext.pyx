@@ -496,9 +496,7 @@ cdef class OGRFeatureBuilder:
         
         # OGR_F_SetFieldString takes UTF-8 encoded strings ('bytes' in 
         # Python 3).
-        encoding = session.get_fileencoding()
-        if ograpi.OGR_L_TestCapability(cogr_layer, "StringsAsUTF8"):
-            encoding = 'utf-8'
+        encoding = session.get_internalencoding()
 
         for key, value in feature['properties'].items():
             try:
@@ -563,12 +561,15 @@ cdef class Session:
     
     cdef void *cogr_ds
     cdef void *cogr_layer
-    cdef object colencoding
+    cdef object _fileencoding
+    cdef object _encoding
+    cdef object collection
 
     def __cinit__(self):
         self.cogr_ds = NULL
         self.cogr_layer = NULL
-        self.colencoding = None
+        self._fileencoding = None
+        self._encoding = None
 
     def __dealloc__(self):
         self.stop()
@@ -581,7 +582,7 @@ cdef class Session:
             self.cogr_ds, collection.name)
         if self.cogr_layer is NULL:
             raise ValueError("Null layer")
-        self.colencoding = collection.encoding
+        self.collection = collection
 
     def stop(self):
         self.cogr_layer = NULL
@@ -590,11 +591,24 @@ cdef class Session:
         self.cogr_ds = NULL
 
     def get_fileencoding(self):
-        # Determine encoding.
-        encoding = self.colencoding or (
-            self.get_driver() == "ESRI Shapefile" and 'iso-8859-1'
-            ) or sys.getdefaultencoding()
-        return encoding
+        if not self._fileencoding:
+            # Figure out what encoding to use. The encoding parameter given
+            # to the collection constructor takes highest precedence, then
+            # 'iso-8859-1', then the system's default encoding as last resort.
+            sysencoding = sys.getdefaultencoding()
+            userencoding = self.collection.encoding
+            self._fileencoding = userencoding or (
+                (self.get_driver() == "ESRI Shapefile" or
+                 sysencoding == 'ascii') and 'iso-8859-1') or sysencoding
+        return self._fileencoding
+
+    def get_internalencoding(self):
+        if not self._encoding:
+            fileencoding = self.get_fileencoding()
+            self._encoding = (
+                ograpi.OGR_L_TestCapability(self.cogr_layer, "StringsAsUTF8") and
+                'utf-8') or fileencoding
+        return self._encoding
 
     def get_length(self):
         if self.cogr_layer is NULL:
@@ -637,7 +651,8 @@ cdef class Session:
             if not bool(key_bytes):
                 raise ValueError("Invalid field name ref: %s" % key)
             try:
-                key = key_bytes.decode(self.get_fileencoding())
+                encoding = self.get_internalencoding()
+                key = key_bytes.decode(encoding)
                 if fieldtypename == 'str':
                     width = ograpi.OGR_Fld_GetWidth(cogr_fielddefn)
                     if width != 80 and width > 0:
@@ -711,6 +726,8 @@ cdef class WritingSession(Session):
         cdef void *cogr_driver
         cdef void *cogr_srs = NULL
         cdef char **options = NULL
+
+        self.collection = collection
         path = collection.path
 
         if collection.mode == 'a':
@@ -761,12 +778,18 @@ cdef class WritingSession(Session):
                 proj = " ".join(params)
                 ograpi.OSRImportFromProj4(cogr_srs, <char *>proj)
 
-            self.colencoding = collection.encoding
-            encoding = self.colencoding or (
-                collection.driver == "ESRI Shapefile" and 'iso-8859-1'
-                ) or sys.getdefaultencoding()
-            if encoding:
-                options = ograpi.CSLSetNameValue(options, "ENCODING", encoding)
+            # Figure out what encoding to use. The encoding parameter given
+            # to the collection constructor takes highest precedence, then
+            # 'iso-8859-1', then the system's default encoding as last resort.
+            sysencoding = sys.getdefaultencoding()
+            userencoding = collection.encoding
+            self._fileencoding = userencoding or (
+                (collection.driver == "ESRI Shapefile" or
+                 sysencoding == 'ascii') and 'iso-8859-1') or sysencoding
+            
+            fileencoding = self.get_fileencoding()
+            if fileencoding:
+                options = ograpi.CSLSetNameValue(options, "ENCODING", fileencoding)
             self.cogr_layer = ograpi.OGR_DS_CreateLayer(
                 self.cogr_ds, 
                 collection.name,
@@ -777,6 +800,7 @@ cdef class WritingSession(Session):
                 )
             if options:
                 ograpi.CSLDestroy(options)
+
             if self.cogr_layer is NULL:
                 raise ValueError("Null layer")
             log.debug("Created layer")
@@ -790,7 +814,8 @@ cdef class WritingSession(Session):
                     width = int(width)
                 else:
                     width = None
-                # OGR needs UTF-8 field names.
+                
+                encoding = self.get_internalencoding()
                 key_bytes = key.encode(encoding)
                 cogr_fielddefn = ograpi.OGR_Fld_Create(
                     key_bytes, 
@@ -883,10 +908,7 @@ cdef class Iterator:
         if bbox:
             ograpi.OGR_L_SetSpatialFilterRect(
                 cogr_layer, bbox[0], bbox[1], bbox[2], bbox[3])
-        
-        self.encoding = session.get_fileencoding()
-        if ograpi.OGR_L_TestCapability(cogr_layer, "StringsAsUTF8"):
-            self.encoding = 'utf-8'
+        self.encoding = session.get_internalencoding()
 
     def __iter__(self):
         return self

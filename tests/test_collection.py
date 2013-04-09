@@ -53,7 +53,10 @@ class ReadingTest(unittest.TestCase):
     
     def test_mode(self):
         self.failUnlessEqual(self.c.mode, "r")
-    
+
+    def test_collection(self):
+        self.failUnlessEqual(self.c.encoding, "iso-8859-1")
+
     def test_iter(self):
         self.failUnless(iter(self.c))
     
@@ -179,10 +182,14 @@ class GenericWritingTest(unittest.TestCase):
                 "test-no-iter.shp", 
                 "w", 
                 "ESRI Shapefile", 
-                schema=schema)
+                schema=schema,
+                encoding='Windows-1252')
 
     def tearDown(self):
         self.c.close()
+
+    def test_encoding(self):
+        self.assertEquals(self.c.encoding, 'Windows-1252')
 
     def test_no_iter(self):
         self.assertRaises(IOError, iter, self.c)
