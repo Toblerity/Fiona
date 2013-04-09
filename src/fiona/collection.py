@@ -2,6 +2,7 @@
 # Collections provide file-like access to feature data
 
 import os
+import sys
 
 from fiona.ogrext import Iterator, Session, WritingSession
 from fiona.errors import DriverError, SchemaError, CRSError
@@ -56,10 +57,6 @@ class Collection(object):
                 "mode string must be one of 'r', 'w', or 'a', not %s" % mode)
         self.mode = mode
         
-        # We don't validate encoding against available codecs, exceptions
-        # will come from first calls to encode/decode.
-        self.encoding = encoding
-        
         if mode == 'w':
 
             if not driver:
@@ -85,19 +82,25 @@ class Collection(object):
                     self._crs = crs
                 else:
                     raise CRSError("crs lacks init or proj parameter")
-        
+
         # For backwards compatibility. Ignored.
         self.workspace = workspace
-
+        
         if self.mode == "r":
+            self.encoding = encoding
             self.session = Session()
             self.session.start(self)
+            self.encoding = self.session.get_fileencoding()
+
         elif self.mode in ("a", "w"):
+            self.encoding = encoding
             self.session = WritingSession()
             self.session.start(self)
+            self.encoding = self.session.get_fileencoding()
+
         if self.session:
             self.guard_driver_mode()
-
+        
     def __repr__(self):
         return "<%s Collection '%s', mode '%s' at %s>" % (
             self.closed and "closed" or "open",

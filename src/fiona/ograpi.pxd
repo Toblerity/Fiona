@@ -5,6 +5,10 @@
 cdef extern from "cpl_conv.h":
     void    CPLFree (void *ptr)
 
+cdef extern from "cpl_string.h":
+    char ** CSLSetNameValue (char **list, char *name, char *value)
+    void    CSLDestroy (char **list)
+
 ctypedef int OGRErr
 ctypedef struct OGREnvelope:
     double MinX
@@ -100,6 +104,7 @@ cdef extern from "ogr_api.h":
     void    OGR_L_SetSpatialFilterRect (
                 void *layer, double minx, double miny, double maxx, double maxy
                 )
+    int     OGR_L_TestCapability (void *layer, char *name)
     void *  OGRGetDriverByName (char *)
     void *  OGROpen (char *path, int mode, void *x)
     void *  OGROpenShared (char *path, int mode, void *x)

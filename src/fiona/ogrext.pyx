@@ -494,14 +494,19 @@ cdef class OGRFeatureBuilder:
         cdef void *cogr_geometry = OGRGeomBuilder().build(feature['geometry'])
         ograpi.OGR_F_SetGeometryDirectly(cogr_feature, cogr_geometry)
         
-        encoding = collection.encoding or 'utf-8'
+        # OGR_F_SetFieldString takes UTF-8 encoded strings ('bytes' in 
+        # Python 3).
+        encoding = session.get_fileencoding()
+        if ograpi.OGR_L_TestCapability(cogr_layer, "StringsAsUTF8"):
+            encoding = 'utf-8'
+
         for key, value in feature['properties'].items():
             try:
-                key_encoded = key.encode(encoding)
+                key_bytes = key.encode(encoding)
             except UnicodeDecodeError:
                 log.warn("Failed to encode %s using %s codec", key, encoding)
-                key_encoded = key
-            i = ograpi.OGR_F_GetFieldIndex(cogr_feature, key_encoded)
+                key_bytes = key
+            i = ograpi.OGR_F_GetFieldIndex(cogr_feature, key_bytes)
             ptype = type(value) #FIELD_TYPES_MAP[key]
             if ptype is IntType:
                 ograpi.OGR_F_SetFieldInteger(cogr_feature, i, value)
@@ -509,12 +514,12 @@ cdef class OGRFeatureBuilder:
                 ograpi.OGR_F_SetFieldDouble(cogr_feature, i, value)
             elif ptype in (UnicodeType, StringType):
                 try:
-                    value_encoded = value.encode(encoding)
+                    value_bytes = value.encode(encoding)
                 except UnicodeDecodeError:
                     log.warn(
                         "Failed to encode %s using %s codec", value, encoding)
-                    value_encoded = value
-                ograpi.OGR_F_SetFieldString(cogr_feature, i, value_encoded)
+                    value_bytes = value
+                ograpi.OGR_F_SetFieldString(cogr_feature, i, value_bytes)
             elif ptype in (FionaDateType, FionaTimeType, FionaDateTimeType):
                 if ptype is FionaDateType:
                     y, m, d, hh, mm, ss, ff = parse_date(value)
@@ -558,10 +563,12 @@ cdef class Session:
     
     cdef void *cogr_ds
     cdef void *cogr_layer
+    cdef object colencoding
 
     def __cinit__(self):
         self.cogr_ds = NULL
         self.cogr_layer = NULL
+        self.colencoding = None
 
     def __dealloc__(self):
         self.stop()
@@ -574,12 +581,20 @@ cdef class Session:
             self.cogr_ds, collection.name)
         if self.cogr_layer is NULL:
             raise ValueError("Null layer")
+        self.colencoding = collection.encoding
 
     def stop(self):
         self.cogr_layer = NULL
         if self.cogr_ds is not NULL:
             ograpi.OGR_DS_Destroy(self.cogr_ds)
         self.cogr_ds = NULL
+
+    def get_fileencoding(self):
+        # Determine encoding.
+        encoding = self.colencoding or (
+            self.get_driver() == "ESRI Shapefile" and 'iso-8859-1'
+            ) or sys.getdefaultencoding()
+        return encoding
 
     def get_length(self):
         if self.cogr_layer is NULL:
@@ -617,12 +632,12 @@ cdef class Session:
                 raise ValueError(
                     "Invalid field type %s" % ograpi.OGR_Fld_GetType(
                                                 cogr_fielddefn))
-            key = ograpi.OGR_Fld_GetNameRef(cogr_fielddefn)
+            key_bytes = ograpi.OGR_Fld_GetNameRef(cogr_fielddefn)
             val = fieldtypename
-            if not bool(key):
+            if not bool(key_bytes):
                 raise ValueError("Invalid field name ref: %s" % key)
             try:
-                key = key.decode('utf-8')
+                key = key_bytes.decode(self.get_fileencoding())
                 if fieldtypename == 'str':
                     width = ograpi.OGR_Fld_GetWidth(cogr_fielddefn)
                     if width != 80 and width > 0:
@@ -631,6 +646,7 @@ cdef class Session:
                         val = "str"
             except UnicodeDecodeError:
                 log.warn("Failed to decode %s using UTF-8 codec", key)
+                key = key_bytes
             props.append((key, val))
 
         cdef unsigned int geom_type = ograpi.OGR_FD_GetGeomType(
@@ -694,6 +710,7 @@ cdef class WritingSession(Session):
         cdef void *cogr_fielddefn
         cdef void *cogr_driver
         cdef void *cogr_srs = NULL
+        cdef char **options = NULL
         path = collection.path
 
         if collection.mode == 'a':
@@ -744,14 +761,22 @@ cdef class WritingSession(Session):
                 proj = " ".join(params)
                 ograpi.OSRImportFromProj4(cogr_srs, <char *>proj)
 
+            self.colencoding = collection.encoding
+            encoding = self.colencoding or (
+                collection.driver == "ESRI Shapefile" and 'iso-8859-1'
+                ) or sys.getdefaultencoding()
+            if encoding:
+                options = ograpi.CSLSetNameValue(options, "ENCODING", encoding)
             self.cogr_layer = ograpi.OGR_DS_CreateLayer(
                 self.cogr_ds, 
                 collection.name,
                 cogr_srs,
                 <unsigned int>[k for k,v in GEOMETRY_TYPES.items() if 
                     v == collection.schema['geometry']][0],
-                NULL
+                options
                 )
+            if options:
+                ograpi.CSLDestroy(options)
             if self.cogr_layer is NULL:
                 raise ValueError("Null layer")
             log.debug("Created layer")
@@ -766,9 +791,9 @@ cdef class WritingSession(Session):
                 else:
                     width = None
                 # OGR needs UTF-8 field names.
-                key_encoded = key.encode("utf-8")
+                key_bytes = key.encode(encoding)
                 cogr_fielddefn = ograpi.OGR_Fld_Create(
-                    key_encoded, 
+                    key_bytes, 
                     FIELD_TYPES.index(value) )
                 if cogr_fielddefn is NULL:
                     raise ValueError("Null field definition")
@@ -844,6 +869,7 @@ cdef class Iterator:
 
     # Reference to its Collection
     cdef collection
+    cdef encoding
 
     def __init__(self, collection, bbox=None):
         if collection.session is None:
@@ -857,6 +883,10 @@ cdef class Iterator:
         if bbox:
             ograpi.OGR_L_SetSpatialFilterRect(
                 cogr_layer, bbox[0], bbox[1], bbox[2], bbox[3])
+        
+        self.encoding = session.get_fileencoding()
+        if ograpi.OGR_L_TestCapability(cogr_layer, "StringsAsUTF8"):
+            self.encoding = 'utf-8'
 
     def __iter__(self):
         return self
@@ -869,8 +899,7 @@ cdef class Iterator:
         cogr_feature = ograpi.OGR_L_GetNextFeature(session.cogr_layer)
         if cogr_feature == NULL:
             raise StopIteration
-        encoding = self.collection.encoding or 'utf-8'
-        feature = FeatureBuilder().build(cogr_feature, encoding)
+        feature = FeatureBuilder().build(cogr_feature, self.encoding)
         _deleteOgrFeature(cogr_feature)
         return feature
 
