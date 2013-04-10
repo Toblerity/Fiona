@@ -4,6 +4,7 @@
 
 cdef extern from "cpl_conv.h":
     void    CPLFree (void *ptr)
+    void    CPLSetThreadLocalConfigOption (char *key, char *val)
 
 cdef extern from "cpl_string.h":
     char ** CSLSetNameValue (char **list, char *name, char *value)

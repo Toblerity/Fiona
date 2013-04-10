@@ -1,0 +1,59 @@
+=========================
+Fiona and String Encoding
+=========================
+
+Reading
+-------
+
+With Fiona, all 'str' type record attributes are unicode strings. The source
+data is encoded in some way. It might be a standard encoding (ISO-8859-1 or
+UTF-8) or it might be a format-specific encoding. How do we get from encoded
+strings to Python unicode? ::
+
+  encoded File | (decode?) OGR (encode?) | (decode) Fiona
+  
+                E_f           R           E_i
+
+The internal encoding `E_i` is used by the ``FeatureBuilder`` class to create
+Fiona's record dicts. `E_f` is the encoding of the data file. `R` is ``True``
+if OGR is recoding record attribute values to UTF-8 (a recent feature that
+isn't implemented for all format drivers, hence the question marks in the
+sketch above), else ``False``.
+
+The value of E_i is determined like this::
+
+  E_i = (R and 'utf-8') or E_f
+
+In the real world of sloppy data, we may not know the exact encoding of the
+data file. Fiona's best guess at it is this::
+
+  E_f = E_u or (R and E_o) or (S and 'iso-8859-1') or E_p
+
+`E_u`, here, is any encoding provided by the programmer (through the
+``Collection`` constructor). `E_o` is an encoding detected by OGR (which
+doesn't provide an API to get the detected encoding). `S` is ``True`` if the 
+file is a Shapefile (because that's the format default). `E_p` is
+locale.getpreferredencoding().
+
+Bottom line: if you know that your data file has an encoding other than
+ISO-8859-1, specify it. If you don't know what the encoding is, you can let the
+format driver try to figure it out (Requires GDAL 1.9.1+).
+
+Writing
+-------
+
+On the writing side::
+
+  Fiona (encode) | (decode?) OGR (encode?) | encoded File
+  
+                E_i           R           E_f
+
+We derive `E_i` from `R` and `E_f` again as above. `E_f` is::
+
+  E_f = E_u or (S and 'iso-8859-1') or E_p
+
+Appending
+---------
+
+The diagram is the same as above, but `E_f` is as in the Reading section.
+

@@ -1,6 +1,7 @@
 # These are extension functions and classes using the OGR C API.
 
 import datetime
+import locale
 import logging
 import os
 import sys
@@ -91,6 +92,10 @@ OGRERR_CORRUPT_DATA = 5
 OGRERR_FAILURE = 6
 OGRERR_UNSUPPORTED_SRS = 7
 OGRERR_INVALID_HANDLE = 8
+
+# Recent versions of OGR can sometimes detect file encoding, but don't
+# provide access yet to the detected encoding. Hence this variable.
+OGR_DETECTED_ENCODING = '-ogr-detected-encoding'
 
 # Geometry related functions and classes follow.
 
@@ -405,8 +410,6 @@ cdef class FeatureBuilder:
 
     cdef build(self, void *feature, encoding='utf-8'):
         # The only method anyone ever needs to call
-        if feature is NULL:
-            raise ValueError("Null feature")
         cdef void *fdefn
         cdef int i
         cdef int y = 0
@@ -418,6 +421,10 @@ cdef class FeatureBuilder:
         cdef int tz = 0
         cdef int retval
         cdef char *key
+        
+        if feature is NULL:
+            raise ValueError("Null feature")
+
         props = {}
         for i in range(ograpi.OGR_F_GetFieldCount(feature)):
             fdefn = ograpi.OGR_F_GetFieldDefnRef(feature, i)
@@ -583,6 +590,17 @@ cdef class Session:
         if self.cogr_layer is NULL:
             raise ValueError("Null layer")
         self.collection = collection
+        
+        userencoding = self.collection.encoding
+        if userencoding:
+            ograpi.CPLSetThreadLocalConfigOption('SHAPE_ENCODING', '')
+            self._fileencoding = userencoding
+        else:
+            self._fileencoding = (
+                ograpi.OGR_L_TestCapability(self.cogr_layer, "StringsAsUTF8") and
+                OGR_DETECTED_ENCODING) or (
+                self.get_driver() == "ESRI Shapefile" and
+                'iso-8859-1') or locale.getpreferredencoding()
 
     def stop(self):
         self.cogr_layer = NULL
@@ -591,22 +609,14 @@ cdef class Session:
         self.cogr_ds = NULL
 
     def get_fileencoding(self):
-        if not self._fileencoding:
-            # Figure out what encoding to use. The encoding parameter given
-            # to the collection constructor takes highest precedence, then
-            # 'iso-8859-1', then the system's default encoding as last resort.
-            sysencoding = sys.getdefaultencoding()
-            userencoding = self.collection.encoding
-            self._fileencoding = userencoding or (
-                (self.get_driver() == "ESRI Shapefile" or
-                 sysencoding == 'ascii') and 'iso-8859-1') or sysencoding
         return self._fileencoding
 
     def get_internalencoding(self):
         if not self._encoding:
             fileencoding = self.get_fileencoding()
             self._encoding = (
-                ograpi.OGR_L_TestCapability(self.cogr_layer, "StringsAsUTF8") and
+                ograpi.OGR_L_TestCapability(
+                    self.cogr_layer, "StringsAsUTF8") and
                 'utf-8') or fileencoding
         return self._encoding
 
@@ -746,6 +756,13 @@ cdef class WritingSession(Session):
             else:
                 raise OSError("No such file or directory %s" % path)
 
+            userencoding = self.collection.encoding
+            self._fileencoding = userencoding or (
+                ograpi.OGR_L_TestCapability(self.cogr_layer, "StringsAsUTF8") and
+                OGR_DETECTED_ENCODING) or (
+                self.get_driver() == "ESRI Shapefile" and
+                'iso-8859-1') or locale.getpreferredencoding()
+
         elif collection.mode == 'w':
             if os.path.exists(path):
                 self.cogr_ds = ograpi.OGROpen(path, 1, NULL)
@@ -781,12 +798,12 @@ cdef class WritingSession(Session):
             # Figure out what encoding to use. The encoding parameter given
             # to the collection constructor takes highest precedence, then
             # 'iso-8859-1', then the system's default encoding as last resort.
-            sysencoding = sys.getdefaultencoding()
+            sysencoding = locale.getpreferredencoding()
             userencoding = collection.encoding
             self._fileencoding = userencoding or (
-                (collection.driver == "ESRI Shapefile" or
-                 sysencoding == 'ascii') and 'iso-8859-1') or sysencoding
-            
+                collection.driver == "ESRI Shapefile" and
+                'iso-8859-1') or sysencoding
+
             fileencoding = self.get_fileencoding()
             if fileencoding:
                 options = ograpi.CSLSetNameValue(options, "ENCODING", fileencoding)
