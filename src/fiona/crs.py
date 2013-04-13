@@ -25,7 +25,7 @@ def to_string(crs):
             crs.items() )):
         items.append(
             "+" + "=".join(
-                filter(lambda y: y and y is not True, (k, v))) )
+                map(str, filter(lambda y: y and y is not True, (k, v)))) )
     return " ".join(items)
 
 def from_string(prjs):
@@ -35,8 +35,17 @@ def from_string(prjs):
     are checked against the ``all_proj_keys`` list.
     """
     parts = [o.lstrip('+') for o in prjs.strip().split()]
+    def parse(v):
+        try:
+            return int(v)
+        except ValueError:
+            pass
+        try:
+            return float(v)
+        except ValueError:
+            return v
     items = map(
-        lambda kv: len(kv) == 2 and tuple(kv) or (kv[0], True),
+        lambda kv: len(kv) == 2 and (kv[0], parse(kv[1])) or (kv[0], True),
         (p.split('=') for p in parts) )
     return dict((k,v) for k, v in items if k in all_proj_keys)
 
