@@ -1,6 +1,12 @@
 CHANGES
 =======
 
+0.12 (2013-04-15)
+-----------------
+- Fix broken installation of extension modules (#35).
+- Log CPL errors at their matching Python log levels.
+- Use upper case for encoding names within OGR, lower case in Python.
+
 0.11 (2013-04-14)
 -----------------
 - Cythonize .pyx files (#34).

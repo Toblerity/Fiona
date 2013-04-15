@@ -11,12 +11,11 @@ cdef extern from "ogr_api.h":
     void OGRRegisterAll()
     void OGRCleanupAll()
 
-log = logging.getLogger("Fiona")
+code_map = {0: 0, 1: logging.DEBUG, 2: logging.WARNING, 3: logging.ERROR, 4: logging.CRITICAL}
+logger = logging.getLogger("Fiona")
 
-
-# Write OGR errors to the Fiona log
-cdef void * errorHandler(eErrClass, int err_no, char *msg):
-    log.error("OGR Error %s: %s", err_no, msg)
+cdef void * errorHandler(int eErrClass, int err_no, char *msg):
+    logger.log(code_map[eErrClass], "OGR Error %s: %s", err_no, msg)
 
 def setup():
     CPLSetErrorHandler(<void *>errorHandler)
