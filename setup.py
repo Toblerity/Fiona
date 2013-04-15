@@ -1,5 +1,8 @@
 import logging
+import os
 import subprocess
+import sys
+
 try:
     from setuptools import setup
 except ImportError:
@@ -7,7 +10,11 @@ except ImportError:
 # Have to do this after importing setuptools, which monkey patches distutils.
 from distutils.extension import Extension
 
-from Cython.Build import cythonize
+# Use Cython if available.
+try:
+    from Cython.Build import cythonize
+except ImportError:
+    cythonize = None
 
 logging.basicConfig()
 log = logging.getLogger()
@@ -47,22 +54,29 @@ try:
         elif item.startswith("-l"):
             libraries.append(item[2:])
 except Exception as e:
-    log.error("Failed to get options via gdal-config: %s", str(e))
+    log.warning("Failed to get options via gdal-config: %s", str(e))
 
-# Cythonize our extension modules.
-ext_modules = cythonize([
-    Extension(
-        'fiona.ogrinit', 
-        ['src/fiona/ogrinit.pyx'],
-        include_dirs=include_dirs,
-        library_dirs=library_dirs,
-        libraries=libraries ),
-    Extension(
-        'fiona.ogrext', 
-        ['src/fiona/ogrext.pyx'],
-        include_dirs=include_dirs,
-        library_dirs=library_dirs,
-        libraries=libraries )])
+ext_options = dict(
+    include_dirs=include_dirs,
+    library_dirs=library_dirs,
+    libraries=libraries)
+
+# When building from a repo, Cython is required.
+if os.path.exists("MANIFEST.in"):
+    log.info("MANIFEST.in found, presume a repo, cythonizing...")
+    if not cythonize:
+        log.critical(
+            "Cython.Build.cythonize not found. "
+            "Cython is required to build from a repo.")
+        sys.exit(1)
+    ext_modules = cythonize([
+        Extension('fiona.ogrinit', ['src/fiona/ogrinit.pyx'], **ext_options),
+        Extension('fiona.ogrext', ['src/fiona/ogrext.pyx'], **ext_options)])
+# If there's no manifest template, as in an sdist, we just specify .c files.
+else:
+    ext_modules = [
+        Extension('fiona.ogrinit', ['src/fiona/ogrinit.c'], **ext_options),
+        Extension('fiona.ogrext', ['src/fiona/ogrext.c'], **ext_options)]
 
 setup(
     name='Fiona',
