@@ -109,7 +109,7 @@ class ReadingTest(unittest.TestCase):
 
     def test_crs(self):
         crs = self.c.crs
-        self.failUnlessEqual(crs['ellps'], 'WGS84')
+        self.failUnlessEqual(crs['datum'], 'WGS84')
         self.failUnless(crs['no_defs'])
 
     def test_closed_crs(self):
@@ -122,7 +122,7 @@ class ReadingTest(unittest.TestCase):
         self.c.close()
         self.failUnlessEqual(
             sorted(self.c.crs.keys()),
-            ['datum', 'ellps', 'no_defs', 'proj'])
+            ['datum', 'no_defs', 'proj'])
 
     def test_meta(self):
         self.failUnlessEqual(
@@ -207,10 +207,16 @@ class PointWritingTest(unittest.TestCase):
             schema={
                 'geometry': 'Point', 
                 'properties': {'title': 'str', 'date': 'date'}},
-            crs={'init': "epsg:4326", 'no_defs': True})
+            crs={'init': "epsg:4326", 'no_defs': True},
+            encoding='utf-8')
 
     def tearDown(self):
         self.sink.close()
+
+    def test_cpg(self):
+        """Requires GDAL 1.9"""
+        self.sink.close()
+        self.failUnless(open("/tmp/point_writing_test.cpg").readline() == 'utf-8')
 
     def test_write_one(self):
         self.failUnlessEqual(len(self.sink), 0)
