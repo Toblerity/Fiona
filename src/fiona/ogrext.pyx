@@ -594,13 +594,13 @@ cdef class Session:
         userencoding = self.collection.encoding
         if userencoding:
             ograpi.CPLSetThreadLocalConfigOption('SHAPE_ENCODING', '')
-            self._fileencoding = userencoding
+            self._fileencoding = userencoding.upper()
         else:
             self._fileencoding = (
                 ograpi.OGR_L_TestCapability(self.cogr_layer, "StringsAsUTF8") and
                 OGR_DETECTED_ENCODING) or (
                 self.get_driver() == "ESRI Shapefile" and
-                'ISO-8859-1') or locale.getpreferredencoding()
+                'ISO-8859-1') or locale.getpreferredencoding().upper()
 
     def stop(self):
         self.cogr_layer = NULL
@@ -757,11 +757,11 @@ cdef class WritingSession(Session):
                 raise OSError("No such file or directory %s" % path)
 
             userencoding = self.collection.encoding
-            self._fileencoding = userencoding or (
+            self._fileencoding = (userencoding or (
                 ograpi.OGR_L_TestCapability(self.cogr_layer, "StringsAsUTF8") and
                 OGR_DETECTED_ENCODING) or (
                 self.get_driver() == "ESRI Shapefile" and
-                'ISO-8859-1') or locale.getpreferredencoding()
+                'ISO-8859-1') or locale.getpreferredencoding()).upper()
 
         elif collection.mode == 'w':
             if os.path.exists(path):
@@ -800,9 +800,9 @@ cdef class WritingSession(Session):
             # 'iso-8859-1', then the system's default encoding as last resort.
             sysencoding = locale.getpreferredencoding()
             userencoding = collection.encoding
-            self._fileencoding = userencoding or (
+            self._fileencoding = (userencoding or (
                 collection.driver == "ESRI Shapefile" and
-                'ISO-8859-1') or sysencoding
+                'ISO-8859-1') or sysencoding).upper()
 
             fileencoding = self.get_fileencoding()
             if fileencoding:

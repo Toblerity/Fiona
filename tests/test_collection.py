@@ -216,7 +216,7 @@ class PointWritingTest(unittest.TestCase):
     def test_cpg(self):
         """Requires GDAL 1.9"""
         self.sink.close()
-        self.failUnless(open("/tmp/point_writing_test.cpg").readline() == 'utf-8')
+        self.failUnless(open("/tmp/point_writing_test.cpg").readline() == 'UTF-8')
 
     def test_write_one(self):
         self.failUnlessEqual(len(self.sink), 0)

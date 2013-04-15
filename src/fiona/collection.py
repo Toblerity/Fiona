@@ -93,13 +93,13 @@ class Collection(object):
             
             # If encoding param is None, we'll use what the session
             # suggests.
-            self.encoding = encoding or self.session.get_fileencoding()
+            self.encoding = encoding or self.session.get_fileencoding().lower()
 
         elif self.mode in ("a", "w"):
             self.encoding = encoding
             self.session = WritingSession()
             self.session.start(self)
-            self.encoding = encoding or self.session.get_fileencoding()
+            self.encoding = encoding or self.session.get_fileencoding().lower()
 
         if self.session:
             self.guard_driver_mode()
