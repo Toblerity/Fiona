@@ -600,7 +600,7 @@ cdef class Session:
                 ograpi.OGR_L_TestCapability(self.cogr_layer, "StringsAsUTF8") and
                 OGR_DETECTED_ENCODING) or (
                 self.get_driver() == "ESRI Shapefile" and
-                'iso-8859-1') or locale.getpreferredencoding()
+                'ISO-8859-1') or locale.getpreferredencoding()
 
     def stop(self):
         self.cogr_layer = NULL
@@ -761,7 +761,7 @@ cdef class WritingSession(Session):
                 ograpi.OGR_L_TestCapability(self.cogr_layer, "StringsAsUTF8") and
                 OGR_DETECTED_ENCODING) or (
                 self.get_driver() == "ESRI Shapefile" and
-                'iso-8859-1') or locale.getpreferredencoding()
+                'ISO-8859-1') or locale.getpreferredencoding()
 
         elif collection.mode == 'w':
             if os.path.exists(path):
@@ -802,7 +802,7 @@ cdef class WritingSession(Session):
             userencoding = collection.encoding
             self._fileencoding = userencoding or (
                 collection.driver == "ESRI Shapefile" and
-                'iso-8859-1') or sysencoding
+                'ISO-8859-1') or sysencoding
 
             fileencoding = self.get_fileencoding()
             if fileencoding:
