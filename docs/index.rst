@@ -11,8 +11,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   README.rst
-   manual.rst
+   README
+   manual
 
 
 Indices and tables

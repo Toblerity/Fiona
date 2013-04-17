@@ -1,5 +1,9 @@
-CHANGES
+Changes
 =======
+
+0.12.1 (2013-04-16)
+-------------------
+- Fix messed up linking of README in sdist (#39).
 
 0.12 (2013-04-15)
 -----------------
@@ -26,7 +30,7 @@ CHANGES
   Natural Earth shapefiles) to help when OGR can't detect it.
 
 0.9 (2013-03-06)
------------
+----------------
 - Accessing file metadata (crs, schema, bounds) on never inspected closed files
   returns None without exceptions.
 - Add a dict of supported_drivers and their supported modes.

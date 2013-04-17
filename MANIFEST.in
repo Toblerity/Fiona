@@ -1,7 +1,7 @@
-exclude *.txt
-recursive-include docs *.rst
+exclude *.txt *.py
+include CHANGES.txt CREDITS.txt LICENSE.txt VERSION.txt README.rst benchmark.py setup.py
+recursive-include docs *.rst *.txt
 recursive-include docs/data *
 recursive-exclude docs/_build *
-include CHANGES.txt CREDITS.txt LICENSE.txt VERSION.txt README.rst benchmark.py
 recursive-include tests *.py *.txt
 exclude MANIFEST.in

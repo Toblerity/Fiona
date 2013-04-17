@@ -22,7 +22,7 @@ For more details, see:
 Dependencies
 ============
 
-Fiona requires Python 2.6+ and libgdal 1.3.2+. To build from a source
+Fiona requires Python 2.6+ and libgdal 1.8+. To build from a source
 distribution or repository clone you will need a C compiler and GDAL and Python
 development headers and libraries. While there are no official binary
 distributions or Windows support at this time, you can find Windows installers
@@ -69,7 +69,7 @@ need Shapely or something like it. Here is an example of using Fiona to read
 some records from one data file, change their geometry attributes, and write
 them to a new data file.
 
-.. code-block:: python
+::
 
   import fiona
 
