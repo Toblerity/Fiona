@@ -30,7 +30,15 @@ with open('src/fiona/__init__.py', 'r') as f:
 
 # Get long description text from README.rst.
 with open('README.rst', 'r') as f:
-    long_description = f.read()
+    readme = f.read()
+
+with open('CREDITS.txt', 'r', encoding='utf-8') as f:
+    credits = f.read()
+
+with open('CHANGES.txt', 'r') as f:
+    changes = f.read()
+
+import pdb; pdb.set_trace()
 
 # By default we'll try to get options via gdal-config. On systems without,
 # options will need to be set in setup.cfg or on the setup command line.
@@ -89,7 +97,7 @@ setup(
     maintainer='Sean Gillies',
     maintainer_email='sean.gillies@gmail.com',
     url='http://github.com/Toblerity/Fiona',
-    long_description=long_description,
+    long_description=readme + "\n" + credits + "\n" + changes,
     package_dir={'': 'src'},
     packages=['fiona'],
     install_requires=[],

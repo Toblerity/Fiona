@@ -1,1 +1,21 @@
-Sean Gillies
+Credits
+=======
+
+Fiona is written by:
+
+* Sean Gillies (https://github.com/sgillies)
+
+With contributions by:
+
+* Frédéric Junod (https://github.com/fredj)
+* Ariel Núñez (https://github.com/ingenieroariel)
+* Michael Weisman (https://github.com/mweisman)
+
+Fiona would not be possible without the great work of Frank Warmerdam and other
+GDAL/OGR developers.
+
+Some portions of this work were supported by a grant (for Pleiades_) from the
+U.S. National Endowment for the Humanities (http://www.neh.gov).
+
+.. _Pleiades: http://pleiades.stoa.org
+

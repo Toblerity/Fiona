@@ -1,6 +1,6 @@
-======
-README
-======
+=====
+Fiona
+=====
 
 Fiona is OGR's neat, nimble, no-nonsense API.
 
@@ -122,29 +122,9 @@ lib dirs and GDAL library on the command line::
   (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal develop
   (fiona_env)$ python setup.py nosetests
 
-Credits
-=======
-
-Fiona is written by:
-
-* Sean Gillies (https://github.com/sgillies)
-
-With contributions by:
-
-* Frédéric Junod (https://github.com/fredj)
-* Ariel Núñez (https://github.com/ingenieroariel)
-* Michael Weisman (https://github.com/mweisman)
-
-Fiona would not be possible without the great work of Frank Warmerdam and other
-GDAL/OGR developers.
-
-Some portions of this work were supported by a grant (for Pleiades_) from the
-U.S. National Endowment for the Humanities (http://www.neh.gov).
-
 .. _libgdal: http://www.gdal.org
 .. _pyproj: http://pypi.python.org/pypi/pyproj/
 .. _Rtree: http://pypi.python.org/pypi/Rtree/
 .. _Shapely: http://pypi.python.org/pypi/Shapely/
 .. _gdal-config: http://www.gdal.org/gdal-config.html
-.. _Pleiades: http://pleiades.stoa.org
 
