@@ -34,5 +34,7 @@ if __name__ == '__main__':
                 print("\nData description (col.schema):")
                 pprint.pprint(meta['schema'])
         else:
-            print(json.dumps(list(col), indent=2))
+            collection = {'type': 'FeatureCollection'}
+            collection['features'] = list(col)
+            print(json.dumps(collection, indent=2))
 
