@@ -3,6 +3,7 @@
 import argparse
 import fiona
 import json
+import logging
 import pprint
 import sys
 
@@ -13,7 +14,10 @@ def open_output(arg):
         return open(arg, 'wb')
 
 if __name__ == '__main__':
-    
+
+    logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+    logger = logging.getLogger('fiona.tool')
+
     parser = argparse.ArgumentParser(
         prog="python -mfiona.tool",
         description="Serialize a file's records or data description to GeoJSON")
@@ -27,22 +31,26 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--description',
         action='store_true', 
         help="serialize file's data description (schema) only")
-    parser.add_argument('-e', '--encoding', 
+    parser.add_argument('--encoding', 
         default=None,
         metavar='ENC',
         help="Specify encoding of the input file")
-    parser.add_argument('-i', '--indent', 
+    parser.add_argument('-n', '--indent', 
         type=int,
         default=None,
         metavar='N',
         help="indentation level in N number of chars")
-    parser.add_argument('-c', '--compact', 
+    parser.add_argument('--compact', 
         action='store_true',
         help="use compact separators (',', ':')")
-    parser.add_argument('-r', '--record-buffered',
+    parser.add_argument('--record-buffered',
         dest='record_buffered',
         action='store_true',
         help="buffer writes at record, not collection (default), level")
+    parser.add_argument('--ignore-errors',
+        dest='ignore_errors',
+        action='store_true',
+        help="log errors but do not stop serialization")
 
     args = parser.parse_args()
 
@@ -54,6 +62,7 @@ if __name__ == '__main__':
         dump_kw['separators'] = (',', ':')
 
     item_sep = args.compact and ',' or ', '
+    ignore_errors = args.ignore_errors
 
     with open_output(args.outfile) as sink:
 
@@ -62,7 +71,7 @@ if __name__ == '__main__':
             if args.description:
                 meta = source.meta.copy()
                 meta.update(name=args.infile)
-                json.dump(meta, sink, **dump_kw))
+                json.dump(meta, sink, **dump_kw)
             
             elif args.record_buffered:
                 # Buffer GeoJSON data at the feature level for smaller
@@ -77,42 +86,70 @@ if __name__ == '__main__':
                 sink.write(head)
                 sink.write("[")
                 
-                # Isolated nature of the typical GIS record allows us to
-                # write it individually.
+                itr = iter(source)
+                
+                # Try the first record.
                 try:
-                    itr = iter(source)
-                    
-                    # Because trailing commas aren't valid in JSON arrays
-                    # we'll write the first record differently from the
-                    # rest.
                     first = next(itr)
                     if indented:
                         sink.write(rec_indent)
                     sink.write(
                         json.dumps(first, **dump_kw
                             ).replace("\n", rec_indent))
-                    
-                    # Write the item separator before each of the remaining
-                    # records.
-                    for rec in itr:
-                        
+                except StopIteration:
+                    pass
+                except Exception as exc:
+                    if ignore_errors:
+                        logger.error(
+                            "failed to serialize record 0 (%s), continuing",
+                            exc)
+                    else:
+                        # Close up the GeoJSON, leaving it more or less valid
+                        # no matter what happens above.
+                        logger.critical(
+                            "failed to serialize record %d (%s), quiting",
+                            i, exc)
+                        sink.write("]")
+                        sink.write(tail)
+                        if indented:
+                            sink.write("\n")
+                        raise
+                
+                # Because trailing commas aren't valid in JSON arrays
+                # we'll write the item separator before each of the remaining
+                # records.
+                for i, rec in enumerate(itr, 1):
+                    try:
                         if indented:
                             sink.write(rec_indent)
                         sink.write(item_sep)
                         sink.write(
                             json.dumps(rec, **dump_kw
                                 ).replace("\n", rec_indent))
-
-                except Exception as exc:
-                    raise
+                    except Exception as exc:
+                        if ignore_errors:
+                            logger.error(
+                                "failed to serialize record %d (%s), "
+                                "continuing",
+                                i, exc)
+                        else:
+                            # Close up the GeoJSON, leaving it more or less valid
+                            # no matter what happens above.
+                            logger.critical(
+                                "failed to serialize record %d (%s), "
+                                "quiting",
+                                i, exc)
+                            sink.write("]")
+                            sink.write(tail)
+                            if indented:
+                                sink.write("\n")
+                            raise
                 
-                finally:
-                    # Close up the GeoJSON, leaving it more or less valid
-                    # no matter what happens above.
-                    sink.write("]")
-                    sink.write(tail)
-                    if indented:
-                        sink.write("\n")
+                # Close up the GeoJSON after passing over all records.
+                sink.write("]")
+                sink.write(tail)
+                if indented:
+                    sink.write("\n")
 
             else:
                 # Buffer GeoJSON data at the collection level. The default.
