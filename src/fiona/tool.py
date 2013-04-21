@@ -72,10 +72,10 @@ if __name__ == '__main__':
                 head, tail = json.dumps(collection, **dump_kw).split('[]')
                 rec_indent = " " * (2 * (args.indent or 0))
 
+                sink.write(head)
+                sink.write("[")
+                
                 try:
-                    sink.write(head)
-                    sink.write("[")
-                    
                     itr = iter(source)
                     
                     # Because trailing commas aren't valid in JSON arrays
