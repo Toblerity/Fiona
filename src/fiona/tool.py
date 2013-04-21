@@ -6,12 +6,6 @@ import json
 import pprint
 import sys
 
-def open_input(arg):
-    if arg == sys.stdin:
-        return arg
-    else:
-        return fiona.open(arg, 'r')
-
 def open_output(arg):
     if arg == sys.stdout:
         return arg
@@ -33,6 +27,10 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--description',
         action='store_true', 
         help="serialize file's data description (schema) only")
+    parser.add_argument('-e', '--encoding', 
+        default=None,
+        metavar='ENC',
+        help="Specify encoding of the input file")
     parser.add_argument('-i', '--indent', 
         type=int,
         default=None,
@@ -48,6 +46,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    # Keyword args to be used in all following json.dump* calls.
     dump_kw = {}
     if args.indent:
         dump_kw['indent'] = args.indent
@@ -58,23 +57,28 @@ if __name__ == '__main__':
 
     with open_output(args.outfile) as sink:
 
-        with open_input(args.infile) as source:
+        with fiona.open(args.infile) as source:
 
             if args.description:
                 meta = source.meta.copy()
                 meta.update(name=args.infile)
-                sink.write(json.dumps(meta, **dump_kw))
+                json.dump(meta, sink, **dump_kw))
             
             elif args.record_buffered:
-                # Buffer writes at the feature level for smaller memory
-                # footprint.
+                # Buffer GeoJSON data at the feature level for smaller
+                # memory footprint.
+
+                indented = bool(args.indent)
+                rec_indent = "\n" + " " * (2 * (args.indent or 0))
+
                 collection = {'type': 'FeatureCollection', 'features': []}
                 head, tail = json.dumps(collection, **dump_kw).split('[]')
-                rec_indent = " " * (2 * (args.indent or 0))
-
+                
                 sink.write(head)
                 sink.write("[")
                 
+                # Isolated nature of the typical GIS record allows us to
+                # write it individually.
                 try:
                     itr = iter(source)
                     
@@ -82,35 +86,36 @@ if __name__ == '__main__':
                     # we'll write the first record differently from the
                     # rest.
                     first = next(itr)
-                    if args.indent:
-                        sink.write("\n")
+                    if indented:
                         sink.write(rec_indent)
                     sink.write(
                         json.dumps(first, **dump_kw
-                            ).replace("\n", "\n" + rec_indent))
+                            ).replace("\n", rec_indent))
                     
                     # Write the item separator before each of the remaining
                     # records.
                     for rec in itr:
-                        if args.indent:
-                            sink.write("\n")
+                        
+                        if indented:
                             sink.write(rec_indent)
                         sink.write(item_sep)
                         sink.write(
                             json.dumps(rec, **dump_kw
-                                ).replace("\n", "\n" + rec_indent))
+                                ).replace("\n", rec_indent))
 
                 except Exception as exc:
                     raise
                 
                 finally:
+                    # Close up the GeoJSON, leaving it more or less valid
+                    # no matter what happens above.
                     sink.write("]")
                     sink.write(tail)
-                    if args.indent:
+                    if indented:
                         sink.write("\n")
 
             else:
-                # Buffer writes at the collection level. The default.
+                # Buffer GeoJSON data at the collection level. The default.
                 collection = {'type': 'FeatureCollection'}
                 collection['features'] = list(source)
                 json.dump(collection, sink, **dump_kw)
