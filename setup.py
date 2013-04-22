@@ -98,6 +98,7 @@ setup(
     long_description=readme + "\n" + changes + "\n" + credits,
     package_dir={'': 'src'},
     packages=['fiona'],
+    scripts = ['src/bin/dumpgj'],
     install_requires=[],
     tests_require=['nose'],
     test_suite='nose.collector',

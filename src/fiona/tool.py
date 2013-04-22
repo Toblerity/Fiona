@@ -1,4 +1,7 @@
-# The Fiona data tool.
+""" fiona.tool
+
+Converts Shapefiles (etc) to GeoJSON.
+"""
 
 import argparse
 import fiona
@@ -13,14 +16,14 @@ def open_output(arg):
     else:
         return open(arg, 'wb')
 
-if __name__ == '__main__':
-
+def main():
+    """Returns 0 on success, 1 on error, for sys.exit."""
     logging.basicConfig(stream=sys.stderr, level=logging.INFO)
     logger = logging.getLogger('fiona.tool')
 
     parser = argparse.ArgumentParser(
         prog="python -mfiona.tool",
-        description="Serialize a file's records or data description to GeoJSON")
+        description="Serialize a file's records or description to GeoJSON")
     
     parser.add_argument('infile', 
         help="input file name")
@@ -31,10 +34,6 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--description',
         action='store_true', 
         help="serialize file's data description (schema) only")
-    parser.add_argument('--encoding', 
-        default=None,
-        metavar='ENC',
-        help="Specify encoding of the input file")
     parser.add_argument('-n', '--indent', 
         type=int,
         default=None,
@@ -43,6 +42,10 @@ if __name__ == '__main__':
     parser.add_argument('--compact', 
         action='store_true',
         help="use compact separators (',', ':')")
+    parser.add_argument('--encoding', 
+        default=None,
+        metavar='ENC',
+        help="Specify encoding of the input file")
     parser.add_argument('--record-buffered',
         dest='record_buffered',
         action='store_true',
@@ -90,7 +93,7 @@ if __name__ == '__main__':
                 
                 # Try the first record.
                 try:
-                    first = next(itr)
+                    i, first = 0, next(itr)
                     if indented:
                         sink.write(rec_indent)
                     sink.write(
@@ -99,25 +102,28 @@ if __name__ == '__main__':
                 except StopIteration:
                     pass
                 except Exception as exc:
+                    # Ignoring errors is *not* the default.
                     if ignore_errors:
                         logger.error(
-                            "failed to serialize record 0 (%s), continuing",
-                            exc)
+                            "failed to serialize file record %d (%s), "
+                            "continuing",
+                            i, exc)
                     else:
-                        # Close up the GeoJSON, leaving it more or less valid
-                        # no matter what happens above.
+                        # Log error and close up the GeoJSON, leaving it
+                        # more or less valid no matter what happens above.
                         logger.critical(
-                            "failed to serialize record %d (%s), quiting",
+                            "failed to serialize file record %d (%s), "
+                            "quiting",
                             i, exc)
                         sink.write("]")
                         sink.write(tail)
                         if indented:
                             sink.write("\n")
-                        raise
+                        return 1
                 
                 # Because trailing commas aren't valid in JSON arrays
-                # we'll write the item separator before each of the remaining
-                # records.
+                # we'll write the item separator before each of the
+                # remaining features.
                 for i, rec in enumerate(itr, 1):
                     try:
                         if indented:
@@ -129,23 +135,21 @@ if __name__ == '__main__':
                     except Exception as exc:
                         if ignore_errors:
                             logger.error(
-                                "failed to serialize record %d (%s), "
+                                "failed to serialize file record %d (%s), "
                                 "continuing",
                                 i, exc)
                         else:
-                            # Close up the GeoJSON, leaving it more or less valid
-                            # no matter what happens above.
                             logger.critical(
-                                "failed to serialize record %d (%s), "
+                                "failed to serialize file record %d (%s), "
                                 "quiting",
                                 i, exc)
                             sink.write("]")
                             sink.write(tail)
                             if indented:
                                 sink.write("\n")
-                            raise
+                            return 1
                 
-                # Close up the GeoJSON after passing over all records.
+                # Close up the GeoJSON after writing all features.
                 sink.write("]")
                 sink.write(tail)
                 if indented:
@@ -156,4 +160,9 @@ if __name__ == '__main__':
                 collection = {'type': 'FeatureCollection'}
                 collection['features'] = list(source)
                 json.dump(collection, sink, **dump_kw)
+
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())
 
