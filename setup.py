@@ -87,6 +87,10 @@ else:
         Extension('fiona.ogrinit', ['src/fiona/ogrinit.c'], **ext_options),
         Extension('fiona.ogrext', ['src/fiona/ogrext.c'], **ext_options)]
 
+requirements = ['six']
+if sys.version_info < (2, 7):
+    requirements.append('argparse')
+
 setup(
     name='Fiona',
     version=version,
@@ -102,7 +106,7 @@ setup(
     package_dir={'': 'src'},
     packages=['fiona'],
     scripts = ['src/bin/dumpgj'],
-    install_requires=['six'],
+    install_requires=requirements,
     tests_require=['nose'],
     test_suite='nose.collector',
     ext_modules=ext_modules,
