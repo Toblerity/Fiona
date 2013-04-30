@@ -102,7 +102,7 @@ setup(
     package_dir={'': 'src'},
     packages=['fiona'],
     scripts = ['src/bin/dumpgj'],
-    install_requires=[],
+    install_requires=['six'],
     tests_require=['nose'],
     test_suite='nose.collector',
     ext_modules=ext_modules,

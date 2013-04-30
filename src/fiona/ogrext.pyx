@@ -5,6 +5,8 @@ import logging
 import os
 import sys
 
+from six import integer_types, string_types
+
 from fiona cimport ograpi
 from fiona import ogrinit
 from fiona.errors import DriverError, SchemaError, CRSError
@@ -503,12 +505,11 @@ cdef class OGRFeatureBuilder:
                 log.warn("Failed to encode %s using %s codec", key, encoding)
                 key_encoded = key
             i = ograpi.OGR_F_GetFieldIndex(cogr_feature, key_encoded)
-            ptype = type(value)
-            if ptype is int:
+            if isinstance(value, integer_types):
                 ograpi.OGR_F_SetFieldInteger(cogr_feature, i, value)
-            elif ptype is float:
+            elif isinstance(value, float):
                 ograpi.OGR_F_SetFieldDouble(cogr_feature, i, value)
-            elif ptype in (str, bytes):
+            elif isinstance(value, string_types):
                 try:
                     value_encoded = value.encode(encoding)
                 except UnicodeDecodeError:
@@ -516,10 +517,10 @@ cdef class OGRFeatureBuilder:
                         "Failed to encode %s using %s codec", value, encoding)
                     value_encoded = value
                 ograpi.OGR_F_SetFieldString(cogr_feature, i, value_encoded)
-            elif ptype in (FionaDateType, FionaTimeType, FionaDateTimeType):
-                if ptype is FionaDateType:
+            elif isinstance(value, (FionaDateType, FionaTimeType, FionaDateTimeType)):
+                if isinstance(value, FionaDateType):
                     y, m, d, hh, mm, ss, ff = parse_date(value)
-                elif ptype is FionaTimeType:
+                elif isinstance(value, FionaTimeType):
                     y, m, d, hh, mm, ss, ff = parse_time(value)
                 else:
                     y, m, d, hh, mm, ss, ff = parse_datetime(value)
@@ -528,7 +529,7 @@ cdef class OGRFeatureBuilder:
             elif value is None:
                 pass # keep field unset/null
             else:
-                raise ValueError("Invalid field type %s" % ptype)
+                raise ValueError("Invalid field type %s" % type(value))
             log.debug("Set field %s: %s" % (key, value))
         return cogr_feature
 
