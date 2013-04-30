@@ -22,7 +22,7 @@ For more details, see:
 Dependencies
 ============
 
-Fiona requires Python 2.6+ and libgdal 1.8+. To build from a source
+Fiona requires Python 2.6, 2.7, or 3.3 and libgdal 1.8+. To build from a source
 distribution or repository clone you will need a C compiler and GDAL and Python
 development headers and libraries. While there are no official binary
 distributions or Windows support at this time, you can find Windows installers
@@ -56,18 +56,18 @@ below (using ``git``)::
 Windows
 -------
 
-Binary installers are available at http://www.lfd.uci.edu/~gohlke/pythonlibs/#fiona and coming
-eventually to PyPI.
+Binary installers are available at
+http://www.lfd.uci.edu/~gohlke/pythonlibs/#fiona and coming eventually to PyPI.
 
 Usage
 =====
 
-Records are read from and written to ``file``-like `Collection` objects. Records
-are mappings modeled on the GeoJSON format. They don't have any spatial methods
-of their own, so if you want to do anything fancy with them you will probably
-need Shapely or something like it. Here is an example of using Fiona to read
-some records from one data file, change their geometry attributes, and write
-them to a new data file.
+Records are read from and written to ``file``-like `Collection` objects.
+Records are mappings modeled on the GeoJSON format. They don't have any spatial
+methods of their own, so if you want to do anything fancy with them you will
+probably need Shapely or something like it. Here is an example of using Fiona
+to read some records from one data file, change their geometry attributes, and
+write them to a new data file.
 
 ::
 
@@ -112,15 +112,14 @@ locations on your system (via your system's package manager), you can do this::
 
   (fiona_env)$ git clone git://github.com/Toblerity/Fiona.git
   (fiona_env)$ cd Fiona
-  (fiona_env)$ python setup.py build_ext --inplace
   (fiona_env)$ python setup.py develop
-  (fiona_env)$ python setup.py nosetests
+  (fiona_env)$ nosetests
 
 If you have a non-standard environment, you'll need to specify the include and
 lib dirs and GDAL library on the command line::
 
   (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal develop
-  (fiona_env)$ python setup.py nosetests
+  (fiona_env)$ nosetests
 
 .. _libgdal: http://www.gdal.org
 .. _pyproj: http://pypi.python.org/pypi/pyproj/
