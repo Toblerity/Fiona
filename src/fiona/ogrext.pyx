@@ -4,7 +4,6 @@ import datetime
 import logging
 import os
 import sys
-from types import IntType, FloatType, StringType, UnicodeType
 
 from fiona cimport ograpi
 from fiona import ogrinit
@@ -61,20 +60,20 @@ FIELD_TYPES = [
     'datetime',     # OFTDateTime, Date and Time
     ]
 
-class FionaDateType(UnicodeType):
+class FionaDateType(str):
     """Dates without time."""
 
-class FionaTimeType(UnicodeType):
+class FionaTimeType(str):
     """Times without dates."""
 
-class FionaDateTimeType(UnicodeType):
+class FionaDateTimeType(str):
     """Dates and times."""
 
 # Mapping of Fiona field type names to Python types.
 FIELD_TYPES_MAP = {
-    'int':      IntType,
-    'float':    FloatType,
-    'str':      UnicodeType,
+    'int':      int,
+    'float':    float,
+    'str':      str,
     'date':     FionaDateType,
     'time':     FionaTimeType,
     'datetime': FionaDateTimeType
@@ -417,15 +416,17 @@ cdef class FeatureBuilder:
         cdef int ss = 0
         cdef int tz = 0
         cdef int retval
-        cdef char *key
+        cdef char *key_c
         props = {}
         for i in range(ograpi.OGR_F_GetFieldCount(feature)):
             fdefn = ograpi.OGR_F_GetFieldDefnRef(feature, i)
             if fdefn is NULL:
                 raise ValueError("Null feature definition")
-            key = ograpi.OGR_Fld_GetNameRef(fdefn)
-            if key == NULL:
+            key_c = ograpi.OGR_Fld_GetNameRef(fdefn)
+            if key_c == NULL:
                 raise ValueError("Null field name reference")
+            key_b = key_c
+            key = key_b.decode()
             fieldtypename = FIELD_TYPES[ograpi.OGR_Fld_GetType(fdefn)]
             if not fieldtypename:
                 raise ValueError(
@@ -434,11 +435,11 @@ cdef class FeatureBuilder:
             fieldtype = FIELD_TYPES_MAP[fieldtypename]
             if not ograpi.OGR_F_IsFieldSet(feature, i):
                 props[key] = None
-            elif fieldtype is IntType:
+            elif fieldtype is int:
                 props[key] = ograpi.OGR_F_GetFieldAsInteger(feature, i)
-            elif fieldtype is FloatType:
+            elif fieldtype is float:
                 props[key] = ograpi.OGR_F_GetFieldAsDouble(feature, i)
-            elif fieldtype is UnicodeType:
+            elif fieldtype is str:
                 try:
                     val = ograpi.OGR_F_GetFieldAsString(feature, i)
                     props[key] = val.decode(encoding)
@@ -502,12 +503,12 @@ cdef class OGRFeatureBuilder:
                 log.warn("Failed to encode %s using %s codec", key, encoding)
                 key_encoded = key
             i = ograpi.OGR_F_GetFieldIndex(cogr_feature, key_encoded)
-            ptype = type(value) #FIELD_TYPES_MAP[key]
-            if ptype is IntType:
+            ptype = type(value)
+            if ptype is int:
                 ograpi.OGR_F_SetFieldInteger(cogr_feature, i, value)
-            elif ptype is FloatType:
+            elif ptype is float:
                 ograpi.OGR_F_SetFieldDouble(cogr_feature, i, value)
-            elif ptype in (UnicodeType, StringType):
+            elif ptype in (str, bytes):
                 try:
                     value_encoded = value.encode(encoding)
                 except UnicodeDecodeError:
@@ -567,11 +568,17 @@ cdef class Session:
         self.stop()
 
     def start(self, collection):
-        self.cogr_ds = ograpi.OGROpen(collection.path, 0, NULL)
+        cdef char *path_c
+        cdef char *name_c
+        path_b = collection.path.encode()
+        path_c = path_b
+        self.cogr_ds = ograpi.OGROpen(path_c, 0, NULL)
         if self.cogr_ds is NULL:
             raise ValueError("Null data source")
+        name_b = collection.name.encode()
+        name_c = name_b
         self.cogr_layer = ograpi.OGR_DS_GetLayerByName(
-            self.cogr_ds, collection.name)
+            self.cogr_ds, name_c)
         if self.cogr_layer is NULL:
             raise ValueError("Null layer")
 
@@ -592,13 +599,14 @@ cdef class Session:
             raise ValueError("Null driver")
         cdef char *name = ograpi.OGR_Dr_GetName(cogr_driver)
         driver_name = name
-        return driver_name
+        return driver_name.decode()
  
     def get_schema(self):
         cdef int i
         cdef int n
         cdef void *cogr_featuredefn
         cdef void *cogr_fielddefn
+        cdef char *key_c
         props = []
         
         if self.cogr_layer is NULL:
@@ -617,20 +625,18 @@ cdef class Session:
                 raise ValueError(
                     "Invalid field type %s" % ograpi.OGR_Fld_GetType(
                                                 cogr_fielddefn))
-            key = ograpi.OGR_Fld_GetNameRef(cogr_fielddefn)
-            val = fieldtypename
-            if not bool(key):
+            key_c = ograpi.OGR_Fld_GetNameRef(cogr_fielddefn)
+            key_b = key_c
+            if not bool(key_b):
                 raise ValueError("Invalid field name ref: %s" % key)
-            try:
-                key = key.decode('utf-8')
-                if fieldtypename == 'str':
-                    width = ograpi.OGR_Fld_GetWidth(cogr_fielddefn)
-                    if width != 80 and width > 0:
-                        val = "str:" + str(width)
-                    else:
-                        val = "str"
-            except UnicodeDecodeError:
-                log.warn("Failed to decode %s using UTF-8 codec", key)
+            key = key_b.decode()
+            val = fieldtypename
+            if fieldtypename == 'str':
+                width = ograpi.OGR_Fld_GetWidth(cogr_fielddefn)
+                if width != 80 and width > 0:
+                    val = "str:" + str(width)
+                else:
+                    val = "str"
             props.append((key, val))
 
         cdef unsigned int geom_type = ograpi.OGR_FD_GetGeomType(
@@ -639,18 +645,19 @@ cdef class Session:
             'properties': dict(props), 'geometry': GEOMETRY_TYPES[geom_type]}
 
     def get_crs(self):
-        cdef char *proj = NULL
+        cdef char *proj_c = NULL
         if self.cogr_layer is NULL:
             raise ValueError("Null layer")
         cdef void *cogr_crs = ograpi.OGR_L_GetSpatialRef(self.cogr_layer)
         log.debug("Got coordinate system")
         crs = {}
         if cogr_crs is not NULL:
-            ograpi.OSRExportToProj4(cogr_crs, &proj)
-            if proj is NULL:
+            ograpi.OSRExportToProj4(cogr_crs, &proj_c)
+            if proj_c is NULL:
                 raise ValueError("Null projection")
-            log.debug("Params: %s", proj)
-            value = proj
+            proj_b = proj_c
+            log.debug("Params: %s", proj_b)
+            value = proj_b.decode()
             value = value.strip()
             for param in value.split():
                 kv = param.split("=")
@@ -669,7 +676,7 @@ cdef class Session:
                     raise ValueError("Unexpected proj parameter %s" % param)
                 k = k.lstrip("+")
                 crs[k] = v
-            ograpi.CPLFree(proj)
+            ograpi.CPLFree(proj_c)
         else:
             log.debug("Projection not found (cogr_crs was NULL)")
         return crs
@@ -694,18 +701,26 @@ cdef class WritingSession(Session):
         cdef void *cogr_fielddefn
         cdef void *cogr_driver
         cdef void *cogr_srs = NULL
+        cdef char *path_c
+        cdef char *driver_c
+        cdef char *name_c
+        cdef char *proj_c
         path = collection.path
 
         if collection.mode == 'a':
             if os.path.exists(path):
-                self.cogr_ds = ograpi.OGROpen(path, 1, NULL)
+                path_b = path.encode()
+                path_c = path_b
+                self.cogr_ds = ograpi.OGROpen(path_c, 1, NULL)
                 if self.cogr_ds is NULL:
                     raise RuntimeError("Failed to open %s" % path)
                 cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
                 if cogr_driver is NULL:
                     raise ValueError("Null driver")
+                name_b = collection.name.encode()
+                name_c = name_b
                 self.cogr_layer = ograpi.OGR_DS_GetLayerByName(
-                                        self.cogr_ds, collection.name)
+                                        self.cogr_ds, name_c)
                 if self.cogr_layer is NULL:
                     raise RuntimeError(
                         "Failed to get layer %s" % collection.name)
@@ -713,20 +728,24 @@ cdef class WritingSession(Session):
                 raise OSError("No such file or directory %s" % path)
 
         elif collection.mode == 'w':
+            path_b = path.encode()
+            path_c = path_b
+            driver_b = collection.driver.encode()
+            driver_c = driver_b
             if os.path.exists(path):
-                self.cogr_ds = ograpi.OGROpen(path, 1, NULL)
+                self.cogr_ds = ograpi.OGROpen(path_c, 1, NULL)
                 if self.cogr_ds is not NULL:
                     cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
                     if cogr_driver is NULL:
                         raise ValueError("Null driver")
                     ograpi.OGR_DS_Destroy(self.cogr_ds)
-                    ograpi.OGR_Dr_DeleteDataSource(cogr_driver, path)
+                    ograpi.OGR_Dr_DeleteDataSource(cogr_driver, path_c)
                     log.debug("Deleted pre-existing data at %s", path)
-            cogr_driver = ograpi.OGRGetDriverByName(collection.driver)
+            cogr_driver = ograpi.OGRGetDriverByName(driver_c)
             if cogr_driver is NULL:
                 raise ValueError("Null driver")
             self.cogr_ds = ograpi.OGR_Dr_CreateDataSource(
-                cogr_driver, path, NULL)
+                cogr_driver, path_c, NULL)
             if self.cogr_ds is NULL:
                 raise RuntimeError("Failed to open %s" % path)
 
@@ -742,11 +761,15 @@ cdef class WritingSession(Session):
                     else:
                         params.append("+%s=%s" % (k, v))
                 proj = " ".join(params)
-                ograpi.OSRImportFromProj4(cogr_srs, <char *>proj)
+                proj_b = proj.encode()
+                proj_c = proj_b
+                ograpi.OSRImportFromProj4(cogr_srs, proj_c)
 
+            name_b = collection.name.encode()
+            name_c = name_b
             self.cogr_layer = ograpi.OGR_DS_CreateLayer(
                 self.cogr_ds, 
-                collection.name,
+                name_c,
                 cogr_srs,
                 <unsigned int>[k for k,v in GEOMETRY_TYPES.items() if 
                     v == collection.schema['geometry']][0],

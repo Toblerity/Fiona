@@ -27,17 +27,17 @@ class Collection(object):
         In ``mode`` 'w', an OGR ``driver`` name and a ``schema`` are
         required. A Proj4 ``crs`` string is recommended.
         """
-        if not isinstance(path, basestring):
+        if not isinstance(path, str):
             raise TypeError("invalid path: %r" % path)
-        if not isinstance(mode, basestring):
+        if not isinstance(mode, str):
             raise TypeError("invalid mode: %r" % mode)
-        if driver and not isinstance(driver, basestring):
+        if driver and not isinstance(driver, str):
             raise TypeError("invalid driver: %r" % driver)
         if schema and not hasattr(schema, 'get'):
             raise TypeError("invalid schema: %r" % schema)
         if crs and not hasattr(crs, 'get'):
             raise TypeError("invalid schema: %r" % crs)
-        if encoding and not isinstance(encoding, basestring):
+        if encoding and not isinstance(encoding, str):
             raise TypeError("invalid encoding: %r" % encoding)
 
         self.session = None
@@ -154,9 +154,11 @@ class Collection(object):
         """Returns an iterator over records."""
         return self.filter()
 
-    def next(self):
+    def __next__(self):
         """Returns next record from iterator."""
-        return iter(self).next()
+        return next(iter(self))
+
+    next = __next__
 
     def writerecords(self, records):
         """Stages multiple records for writing to disk."""

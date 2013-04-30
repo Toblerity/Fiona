@@ -63,7 +63,7 @@ writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
 __all__ = []
-__version__ = "0.10"
+__version__ = "0.13"
 
 import os
 

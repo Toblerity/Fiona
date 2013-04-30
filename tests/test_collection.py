@@ -106,7 +106,7 @@ class ReadingTest(unittest.TestCase):
 
     def test_crs(self):
         crs = self.c.crs
-        self.failUnlessEqual(crs['ellps'], 'WGS84')
+        self.failUnlessEqual(crs['datum'], 'WGS84')
         self.failUnless(crs['no_defs'])
 
     def test_closed_crs(self):
@@ -119,7 +119,7 @@ class ReadingTest(unittest.TestCase):
         self.c.close()
         self.failUnlessEqual(
             sorted(self.c.crs.keys()),
-            ['datum', 'ellps', 'no_defs', 'proj'])
+            ['datum', 'no_defs', 'proj'])
 
     def test_meta(self):
         self.failUnlessEqual(
@@ -138,7 +138,8 @@ class ReadingTest(unittest.TestCase):
         self.failUnlessEqual(c.closed, True)
 
     def test_iter_one(self):
-        f = iter(self.c).next()
+        itr = iter(self.c)
+        f = next(itr)
         self.failUnlessEqual(f['id'], "0")
         self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
 

@@ -1,27 +1,48 @@
+import logging
+import os
+import subprocess
+import sys
+
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
-import logging
-import subprocess
+# Have to do this after importing setuptools, which monkey patches distutils.
+from distutils.extension import Extension
 
-from Cython.Build import cythonize
-from Cython.Build.Dependencies import create_extension_list
+# Use Cython if available.
+try:
+    from Cython.Build import cythonize
+except ImportError:
+    cythonize = None
 
 logging.basicConfig()
 log = logging.getLogger()
 
-# Parse the version from the fiona module
-for line in open('src/fiona/__init__.py', 'rb'):
-    if line.find("__version__") >= 0:
-        version = line.split("=")[1].strip()
-        version = version.strip('"')
-        version = version.strip("'")
-        continue
+# Parse the version from the fiona module.
+with open('src/fiona/__init__.py', 'r') as f:
+    for line in f:
+        if line.find("__version__") >= 0:
+            version = line.split("=")[1].strip()
+            version = version.strip('"')
+            version = version.strip("'")
+            continue
 
-# By default we'll try to get options via gdal-config.
-# On systems without, options will need to be set in setup.cfg or on the
-# setup command line.
+with open('VERSION.txt', 'w') as f:
+    f.write(version)
+
+# Get long description text from README.rst.
+with open('README.rst', 'r') as f:
+    readme = f.read()
+
+with open('CREDITS.txt', 'r') as f:
+    credits = f.read()
+
+with open('CHANGES.txt', 'r') as f:
+    changes = f.read()
+
+# By default we'll try to get options via gdal-config. On systems without,
+# options will need to be set in setup.cfg or on the setup command line.
 include_dirs = []
 library_dirs = []
 libraries = []
@@ -42,16 +63,29 @@ try:
         elif item.startswith("-l"):
             libraries.append(item[2:])
 except Exception as e:
-    log.error("Failed to get options via gdal-config: %s", str(e))
+    log.warning("Failed to get options via gdal-config: %s", str(e))
 
-# Get text from README.txt
-readme_text = open('README.rst', 'r').read()
+ext_options = dict(
+    include_dirs=include_dirs,
+    library_dirs=library_dirs,
+    libraries=libraries)
 
-modules = create_extension_list(['src/fiona/*.pyx'])
-for module in modules:
-    module.include_dirs = include_dirs
-    module.library_dirs = library_dirs
-    module.libraries = libraries
+# When building from a repo, Cython is required.
+if os.path.exists("MANIFEST.in"):
+    log.info("MANIFEST.in found, presume a repo, cythonizing...")
+    if not cythonize:
+        log.critical(
+            "Cython.Build.cythonize not found. "
+            "Cython is required to build from a repo.")
+        sys.exit(1)
+    ext_modules = cythonize([
+        Extension('fiona.ogrinit', ['src/fiona/ogrinit.pyx'], **ext_options),
+        Extension('fiona.ogrext', ['src/fiona/ogrext.pyx'], **ext_options)])
+# If there's no manifest template, as in an sdist, we just specify .c files.
+else:
+    ext_modules = [
+        Extension('fiona.ogrinit', ['src/fiona/ogrinit.c'], **ext_options),
+        Extension('fiona.ogrext', ['src/fiona/ogrext.c'], **ext_options)]
 
 setup(
     name='Fiona',
@@ -64,13 +98,14 @@ setup(
     maintainer='Sean Gillies',
     maintainer_email='sean.gillies@gmail.com',
     url='http://github.com/Toblerity/Fiona',
-    long_description=readme_text,
+    long_description=readme + "\n" + changes + "\n" + credits,
     package_dir={'': 'src'},
     packages=['fiona'],
+    scripts = ['src/bin/dumpgj'],
     install_requires=[],
     tests_require=['nose'],
     test_suite='nose.collector',
-    ext_modules=cythonize(modules),
+    ext_modules=ext_modules,
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
@@ -81,3 +116,4 @@ setup(
         'Topic :: Scientific/Engineering :: GIS',
     ],
 )
+
