@@ -141,7 +141,8 @@ class ReadingTest(unittest.TestCase):
         self.failUnlessEqual(c.closed, True)
 
     def test_iter_one(self):
-        f = iter(self.c).next()
+        itr = iter(self.c)
+        f = next(itr)
         self.failUnlessEqual(f['id'], "0")
         self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
 

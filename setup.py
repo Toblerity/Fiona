@@ -28,6 +28,9 @@ with open('src/fiona/__init__.py', 'r') as f:
             version = version.strip("'")
             continue
 
+with open('VERSION.txt', 'w') as f:
+    f.write(version)
+
 # Get long description text from README.rst.
 with open('README.rst', 'r') as f:
     readme = f.read()
@@ -99,7 +102,7 @@ setup(
     package_dir={'': 'src'},
     packages=['fiona'],
     scripts = ['src/bin/dumpgj'],
-    install_requires=[],
+    install_requires=['six'],
     tests_require=['nose'],
     test_suite='nose.collector',
     ext_modules=ext_modules,
@@ -113,3 +116,4 @@ setup(
         'Topic :: Scientific/Engineering :: GIS',
     ],
 )
+

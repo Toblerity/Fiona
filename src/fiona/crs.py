@@ -21,7 +21,7 @@ def to_string(crs):
     items = []
     for k, v in sorted(filter(
             lambda x: x[0] in all_proj_keys and x[1] is not False and type
-                (x[1]) in (bool, int, float, str, unicode), 
+                (x[1]) in (bool, int, float, str), 
             crs.items() )):
         items.append(
             "+" + "=".join(
