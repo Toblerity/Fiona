@@ -1,6 +1,10 @@
 Changes
 =======
 
+0.13 (2013-04-30)
+-----------------
+- Python 2/3 compatibility in a single package. Pythons 2.6, 2.7, 3.3 now supported.
+
 0.12.1 (2013-04-16)
 -------------------
 - Fix messed up linking of README in sdist (#39).

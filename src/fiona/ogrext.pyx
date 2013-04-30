@@ -746,6 +746,7 @@ cdef class WritingSession(Session):
         cdef char *driver_c
         cdef char *name_c
         cdef char *proj_c
+        cdef char *fileencoding_c
         path = collection.path
 
         if collection.mode == 'a':
@@ -824,7 +825,9 @@ cdef class WritingSession(Session):
 
             fileencoding = self.get_fileencoding()
             if fileencoding:
-                options = ograpi.CSLSetNameValue(options, "ENCODING", fileencoding)
+                fileencoding_b = fileencoding.encode()
+                fileencoding_c = fileencoding_b
+                options = ograpi.CSLSetNameValue(options, "ENCODING", fileencoding_c)
             
             name_b = collection.name.encode()
             name_c = name_b
