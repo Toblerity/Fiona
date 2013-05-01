@@ -14,13 +14,16 @@ from six.moves import map
 
 
 def open_output(arg):
+    """Returns an opened output stream."""
     if arg == sys.stdout:
         return arg
     else:
         return open(arg, 'wb')
 
 def make_ld_context(context_items):
-    """See http://json-ld.org/spec/latest/json-ld."""
+    """Returns a JSON-LD Context object. 
+    
+    See http://json-ld.org/spec/latest/json-ld."""
     ctx = {
         'type': '@type',
         'id': '@id',
@@ -38,14 +41,15 @@ def make_ld_context(context_items):
         'MultiLineString': 'http://geovocab.org/geometry#MultiLineString',
         'MultiPolygon': 'http://geovocab.org/geometry#MultiPolygon',
         'GeometryCollection': 
-            'http://geovocab.org/geometry#GeometryCollection'}
+            'http://geovocab.org/geometry#GeometryCollection',
+        'coordinates': '_:n5'}
     for item in context_items or []:
         t, uri = item.split("=")
         ctx[t.strip()] = uri.strip()
     return ctx
 
 def crs_uri(crs):
-    """Return a CRS URN computed from a crs dict."""
+    """Returns a CRS URN computed from a crs dict."""
     # References version 6.3 of the EPSG database.
     # TODO: get proper version from GDAL/OGR API?
     if crs['proj'] == 'longlat' and (
@@ -58,7 +62,7 @@ def crs_uri(crs):
         return None
 
 def id_record(rec):
-    """Return a blank node id for a record."""
+    """Converts a record's id to a blank node id and returns the record."""
     rec['id'] = '_:f%s' % rec['id']
     return rec
 
