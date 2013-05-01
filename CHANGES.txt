@@ -1,6 +1,10 @@
 Changes
 =======
 
+Next
+----
+- Add option to add JSON-LD in the dumpgj program.
+
 0.13 (2013-04-30)
 -----------------
 - Python 2/3 compatibility in a single package. Pythons 2.6, 2.7, 3.3 now supported.
