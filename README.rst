@@ -70,7 +70,6 @@ to read some records from one data file, change their geometry attributes, and
 write them to a new data file.
 
 ::
-
   import fiona
 
   # Open a file for reading. We'll call this the "source."
@@ -78,15 +77,15 @@ write them to a new data file.
   
       # The file we'll write to, the "sink", must be initialized with a
       # coordinate system, a format driver name, and a record schema.
-      sink_schema = source.schema.copy()
-      sink_schema['geometry'] = 'Point'
+      # We can get initial values from the open collection's ``meta``
+      # property and then modify them as desired.
+      meta = source.meta
+      meta['schema']['geometry'] = 'Point'
       
       # Open an output file, using the same format driver and coordinate
-      # reference system as the source.
-      with fiona.open(
-              'test_write.shp', 'w',
-              crs=source.crs, driver=source.driver, schema=sink_schema,
-              ) as sink:
+      # reference system as the source. The ``meta`` mapping fills in 
+      # the keyword parameters of fiona.open().
+      with fiona.open('test_write.shp', 'w', **meta) as sink:
           
           # Process only the records intersecting a box.
           for f in source.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
@@ -102,6 +101,39 @@ write them to a new data file.
       # The sink's contents are flushed to disk and the file is closed
       # when its ``with`` block ends. This effectively executes 
       # ``sink.flush(); sink.close()``.
+
+Dumpgj
+======
+
+Fiona installs a script named "dumpgj". It converts files to GeoJSON with
+JSON-LD context as an option.
+
+::
+  $ dumpgj --help
+  usage: dumpgj [-h] [-d] [-n N] [--compact] [--encoding ENC]
+                [--record-buffered] [--ignore-errors] [--use-ld-context]
+                [--add-ld-context-item TERM=URI]
+                infile [outfile]
+  
+  Serialize a file's records or description to GeoJSON
+  
+  positional arguments:
+    infile                input file name
+    outfile               output file name, defaults to stdout if omitted
+  
+  optional arguments:
+    -h, --help            show this help message and exit
+    -d, --description     serialize file's data description (schema) only
+    -n N, --indent N      indentation level in N number of chars
+    --compact             use compact separators (',', ':')
+    --encoding ENC        Specify encoding of the input file
+    --record-buffered     Economical buffering of writes at record, not
+                          collection (default), level
+    --ignore-errors       log errors but do not stop serialization
+    --use-ld-context      add a JSON-LD context to JSON output
+    --add-ld-context-item TERM=URI
+                          map a term to a URI and add it to the output's JSON LD
+                          context
 
 Development and testing
 =======================

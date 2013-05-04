@@ -5,6 +5,8 @@ Changes
 -----------------
 - Add option to add JSON-LD in the dumpgj program.
 - Compare values to six.string_types in Collection constructor.
+- Add encoding to Collection.meta.
+- Document dumpgj in README.
 
 0.13 (2013-04-30)
 -----------------

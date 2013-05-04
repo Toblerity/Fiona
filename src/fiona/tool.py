@@ -57,7 +57,7 @@ def crs_uri(crs):
         return 'urn:ogc:def:crs:OGC:1.3:CRS84'
     elif 'epsg:' in crs.get('init', ''):
         epsg, code = crs['init'].split(':')
-        return 'urn:ogc:def:crs:EPSG:6.3:%s' % code
+        return 'urn:ogc:def:crs:EPSG::%s' % code
     else:
         return None
 
@@ -72,7 +72,6 @@ def main():
     logger = logging.getLogger('fiona.tool')
 
     parser = argparse.ArgumentParser(
-        prog="python -mfiona.tool",
         description="Serialize a file's records or description to GeoJSON")
     
     parser.add_argument('infile', 
@@ -99,7 +98,7 @@ def main():
     parser.add_argument('--record-buffered',
         dest='record_buffered',
         action='store_true',
-        help="buffer writes at record, not collection (default), level")
+        help="Economical buffering of writes at record, not collection (default), level")
     parser.add_argument('--ignore-errors',
         dest='ignore_errors',
         action='store_true',
@@ -111,6 +110,7 @@ def main():
     parser.add_argument('--add-ld-context-item',
         dest='ld_context_items',
         action='append',
+        metavar='TERM=URI',
         help="map a term to a URI and add it to the output's JSON LD context")
 
     args = parser.parse_args()
