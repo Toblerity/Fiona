@@ -6,7 +6,7 @@ import sys
 
 from fiona.ogrext import Iterator, Session, WritingSession
 from fiona.errors import DriverError, SchemaError, CRSError
-
+from six import string_types
 
 class Collection(object):
 
@@ -28,17 +28,17 @@ class Collection(object):
         In ``mode`` 'w', an OGR ``driver`` name and a ``schema`` are
         required. A Proj4 ``crs`` string is recommended.
         """
-        if not isinstance(path, str):
+        if not isinstance(path, string_types):
             raise TypeError("invalid path: %r" % path)
-        if not isinstance(mode, str):
+        if not isinstance(mode, string_types):
             raise TypeError("invalid mode: %r" % mode)
-        if driver and not isinstance(driver, str):
+        if driver and not isinstance(driver, string_types):
             raise TypeError("invalid driver: %r" % driver)
         if schema and not hasattr(schema, 'get'):
             raise TypeError("invalid schema: %r" % schema)
         if crs and not hasattr(crs, 'get'):
             raise TypeError("invalid schema: %r" % crs)
-        if encoding and not isinstance(encoding, str):
+        if encoding and not isinstance(encoding, string_types):
             raise TypeError("invalid encoding: %r" % encoding)
 
         self.session = None

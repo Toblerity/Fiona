@@ -235,7 +235,7 @@ def main():
                     '_crs': crs_uri(meta['crs']) }
                 if args.use_ld_context:
                     collection['@context'] = make_ld_context(args.ld_context_items)
-                    collection['features'] = list(map(id_record, source))
+                    collection['features'] = list(map(id_record, source))[:1]
                 else:
                     collection['features'] = list(source)
                 json.dump(collection, sink, **dump_kw)

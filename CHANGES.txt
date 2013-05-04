@@ -1,9 +1,10 @@
 Changes
 =======
 
-Next
-----
+0.14 (2013-05-04)
+-----------------
 - Add option to add JSON-LD in the dumpgj program.
+- Compare values to six.string_types in Collection constructor.
 
 0.13 (2013-04-30)
 -----------------
