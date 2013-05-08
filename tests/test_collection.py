@@ -92,7 +92,7 @@ class ReadingTest(unittest.TestCase):
     
     def test_schema(self):
         s = self.c.schema['properties']
-        self.failUnlessEqual(s['CAT'], "float")
+        self.failUnlessEqual(s['CAT'], "float:16")
         self.failUnlessEqual(s['FIPS_CNTRY'], "str")
 
     def test_closed_schema(self):

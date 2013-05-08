@@ -670,12 +670,28 @@ cdef class Session:
                 raise ValueError("Invalid field name ref: %s" % key)
             key = key_b.decode()
             val = fieldtypename
-            if fieldtypename == 'str':
+            if fieldtypename == 'float':
+                fmt = ""
                 width = ograpi.OGR_Fld_GetWidth(cogr_fielddefn)
-                if width != 80 and width > 0:
-                    val = "str:" + str(width)
-                else:
-                    val = "str"
+                if width and width != 24:
+                    fmt = ":%d" % width
+                precision = ograpi.OGR_Fld_GetPrecision(cogr_fielddefn)
+                if precision and precision != 15:
+                    fmt += ".%d" % precision
+                val = "float" + fmt
+            elif fieldtypename == 'int':
+                fmt = ""
+                width = ograpi.OGR_Fld_GetWidth(cogr_fielddefn)
+                if width and width != 11:
+                    fmt = ":%d" % width
+                val = fieldtypename + fmt
+            elif fieldtypename == 'str':
+                fmt = ""
+                width = ograpi.OGR_Fld_GetWidth(cogr_fielddefn)
+                if width and width != 80:
+                    fmt = ":%d" % width
+                val = fieldtypename + fmt
+
             props.append((key, val))
 
         cdef unsigned int geom_type = ograpi.OGR_FD_GetGeomType(
@@ -849,12 +865,15 @@ cdef class WritingSession(Session):
             # Next, make a layer definition from the given schema.
             for key, value in collection.schema['properties'].items():
                 log.debug("Creating field: %s %s", key, value)
-                # Is there a field width?
-                if value.startswith('str') and ':' in value:
-                    value, width = value.split(':')
-                    width = int(width)
-                else:
-                    width = None
+                
+                # Is there a field width/precision?
+                width = precision = None
+                if ':' in value:
+                    value, fmt = value.split(':')
+                    if '.' in fmt:
+                        width, precision = map(int, fmt.split('.'))
+                    else:
+                        width = int(fmt)
                 
                 encoding = self.get_internalencoding()
                 key_bytes = key.encode(encoding)
@@ -865,6 +884,8 @@ cdef class WritingSession(Session):
                     raise ValueError("Null field definition")
                 if width:
                     ograpi.OGR_Fld_SetWidth(cogr_fielddefn, width)
+                if precision:
+                    ograpi.OGR_Fld_SetPrecision(cogr_fielddefn, precision)
                 ograpi.OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1)
                 ograpi.OGR_Fld_Destroy(cogr_fielddefn)
             log.debug("Created fields")

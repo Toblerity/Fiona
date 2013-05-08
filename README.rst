@@ -31,6 +31,13 @@ at http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#fiona.
 Installation
 ============
 
+Requirements
+------------
+
+Fiona depends on the modules ``six`` and ``argparse``. The latter is standard
+in Python 2.7+. Easy_install and pip will fetch these requirements for you, but
+users installing Fiona from a Windows installer must get them separately.
+
 Unix-like systems
 -----------------
 
@@ -70,6 +77,7 @@ to read some records from one data file, change their geometry attributes, and
 write them to a new data file.
 
 ::
+
   import fiona
 
   # Open a file for reading. We'll call this the "source."
@@ -109,6 +117,7 @@ Fiona installs a script named "dumpgj". It converts files to GeoJSON with
 JSON-LD context as an option.
 
 ::
+
   $ dumpgj --help
   usage: dumpgj [-h] [-d] [-n N] [--compact] [--encoding ENC]
                 [--record-buffered] [--ignore-errors] [--use-ld-context]

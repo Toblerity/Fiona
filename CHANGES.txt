@@ -1,6 +1,10 @@
 Changes
 =======
 
+Next
+----
+- Get and set numeric field widths (#42).
+
 0.14 (2013-05-04)
 -----------------
 - Add option to add JSON-LD in the dumpgj program.
