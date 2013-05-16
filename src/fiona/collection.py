@@ -6,7 +6,7 @@ import sys
 
 from fiona.ogrext import Iterator, Session, WritingSession
 from fiona.errors import DriverError, SchemaError, CRSError
-
+from six import string_types
 
 class Collection(object):
 
@@ -28,17 +28,17 @@ class Collection(object):
         In ``mode`` 'w', an OGR ``driver`` name and a ``schema`` are
         required. A Proj4 ``crs`` string is recommended.
         """
-        if not isinstance(path, basestring):
+        if not isinstance(path, string_types):
             raise TypeError("invalid path: %r" % path)
-        if not isinstance(mode, basestring):
+        if not isinstance(mode, string_types):
             raise TypeError("invalid mode: %r" % mode)
-        if driver and not isinstance(driver, basestring):
+        if driver and not isinstance(driver, string_types):
             raise TypeError("invalid driver: %r" % driver)
         if schema and not hasattr(schema, 'get'):
             raise TypeError("invalid schema: %r" % schema)
         if crs and not hasattr(crs, 'get'):
             raise TypeError("invalid schema: %r" % crs)
-        if encoding and not isinstance(encoding, basestring):
+        if encoding and not isinstance(encoding, string_types):
             raise TypeError("invalid encoding: %r" % encoding)
 
         self.session = None
@@ -142,7 +142,11 @@ class Collection(object):
     @property
     def meta(self):
         """Returns a mapping with the driver, schema, and crs properties."""
-        return {'driver': self.driver, 'schema': self.schema, 'crs': self.crs}
+        return {
+            'driver': self.driver, 
+            'schema': self.schema, 
+            'crs': self.crs,
+            'encoding': self.encoding }
 
     def filter(self, bbox=None):
         """Returns an iterator over records, but filtered by a test for
@@ -160,9 +164,11 @@ class Collection(object):
         """Returns an iterator over records."""
         return self.filter()
 
-    def next(self):
+    def __next__(self):
         """Returns next record from iterator."""
-        return iter(self).next()
+        return next(iter(self))
+
+    next = __next__
 
     def writerecords(self, records):
         """Stages multiple records for writing to disk."""

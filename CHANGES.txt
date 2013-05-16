@@ -1,6 +1,21 @@
 Changes
 =======
 
+Next
+----
+- Get and set numeric field widths (#42).
+
+0.14 (2013-05-04)
+-----------------
+- Add option to add JSON-LD in the dumpgj program.
+- Compare values to six.string_types in Collection constructor.
+- Add encoding to Collection.meta.
+- Document dumpgj in README.
+
+0.13 (2013-04-30)
+-----------------
+- Python 2/3 compatibility in a single package. Pythons 2.6, 2.7, 3.3 now supported.
+
 0.12.1 (2013-04-16)
 -------------------
 - Fix messed up linking of README in sdist (#39).

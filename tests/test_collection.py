@@ -92,7 +92,7 @@ class ReadingTest(unittest.TestCase):
     
     def test_schema(self):
         s = self.c.schema['properties']
-        self.failUnlessEqual(s['CAT'], "float")
+        self.failUnlessEqual(s['CAT'], "float:16")
         self.failUnlessEqual(s['FIPS_CNTRY'], "str")
 
     def test_closed_schema(self):
@@ -126,7 +126,8 @@ class ReadingTest(unittest.TestCase):
 
     def test_meta(self):
         self.failUnlessEqual(
-            sorted(self.c.meta.keys()), ['crs', 'driver', 'schema'])
+            sorted(self.c.meta.keys()), 
+            ['crs', 'driver', 'encoding', 'schema'])
 
     def test_bounds(self):
         self.failUnlessAlmostEqual(self.c.bounds[0], -8.621389, 6)
@@ -141,7 +142,8 @@ class ReadingTest(unittest.TestCase):
         self.failUnlessEqual(c.closed, True)
 
     def test_iter_one(self):
-        f = iter(self.c).next()
+        itr = iter(self.c)
+        f = next(itr)
         self.failUnlessEqual(f['id'], "0")
         self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
 

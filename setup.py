@@ -28,6 +28,9 @@ with open('src/fiona/__init__.py', 'r') as f:
             version = version.strip("'")
             continue
 
+with open('VERSION.txt', 'w') as f:
+    f.write(version)
+
 # Get long description text from README.rst.
 with open('README.rst', 'r') as f:
     readme = f.read()
@@ -84,6 +87,10 @@ else:
         Extension('fiona.ogrinit', ['src/fiona/ogrinit.c'], **ext_options),
         Extension('fiona.ogrext', ['src/fiona/ogrext.c'], **ext_options)]
 
+requirements = ['six']
+if sys.version_info < (2, 7):
+    requirements.append('argparse')
+
 setup(
     name='Fiona',
     version=version,
@@ -99,7 +106,7 @@ setup(
     package_dir={'': 'src'},
     packages=['fiona'],
     scripts = ['src/bin/dumpgj'],
-    install_requires=[],
+    install_requires=requirements,
     tests_require=['nose'],
     test_suite='nose.collector',
     ext_modules=ext_modules,
@@ -110,6 +117,8 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
         'Topic :: Scientific/Engineering :: GIS',
     ],
 )
+

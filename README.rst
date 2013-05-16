@@ -22,14 +22,21 @@ For more details, see:
 Dependencies
 ============
 
-Fiona requires Python 2.6+ and GDAL 1.8+. To build from a source distribution
-or repository clone you will need a C compiler and GDAL and Python development
-headers and libraries. While there are no official binary distributions or
-Windows support at this time, you can find Windows installers at
-http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#fiona.
+Fiona requires Python 2.6, 2.7, or 3.3 and libgdal 1.8+. To build from a source
+distribution or repository clone you will need a C compiler and GDAL and Python
+development headers and libraries. While there are no official binary
+distributions or Windows support at this time, you can find Windows installers
+at http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#fiona.
 
 Installation
 ============
+
+Requirements
+------------
+
+Fiona depends on the modules ``six`` and ``argparse``. The latter is standard
+in Python 2.7+. Easy_install and pip will fetch these requirements for you, but
+users installing Fiona from a Windows installer must get them separately.
 
 Unix-like systems
 -----------------
@@ -78,15 +85,15 @@ write them to a new data file.
   
       # The file we'll write to, the "sink", must be initialized with a
       # coordinate system, a format driver name, and a record schema.
-      sink_schema = source.schema.copy()
-      sink_schema['geometry'] = 'Point'
+      # We can get initial values from the open collection's ``meta``
+      # property and then modify them as desired.
+      meta = source.meta
+      meta['schema']['geometry'] = 'Point'
       
       # Open an output file, using the same format driver and coordinate
-      # reference system as the source.
-      with fiona.open(
-              'test_write.shp', 'w',
-              crs=source.crs, driver=source.driver, schema=sink_schema,
-              ) as sink:
+      # reference system as the source. The ``meta`` mapping fills in 
+      # the keyword parameters of fiona.open().
+      with fiona.open('test_write.shp', 'w', **meta) as sink:
           
           # Process only the records intersecting a box.
           for f in source.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
@@ -103,6 +110,40 @@ write them to a new data file.
       # when its ``with`` block ends. This effectively executes 
       # ``sink.flush(); sink.close()``.
 
+Dumpgj
+======
+
+Fiona installs a script named "dumpgj". It converts files to GeoJSON with
+JSON-LD context as an option.
+
+::
+
+  $ dumpgj --help
+  usage: dumpgj [-h] [-d] [-n N] [--compact] [--encoding ENC]
+                [--record-buffered] [--ignore-errors] [--use-ld-context]
+                [--add-ld-context-item TERM=URI]
+                infile [outfile]
+  
+  Serialize a file's records or description to GeoJSON
+  
+  positional arguments:
+    infile                input file name
+    outfile               output file name, defaults to stdout if omitted
+  
+  optional arguments:
+    -h, --help            show this help message and exit
+    -d, --description     serialize file's data description (schema) only
+    -n N, --indent N      indentation level in N number of chars
+    --compact             use compact separators (',', ':')
+    --encoding ENC        Specify encoding of the input file
+    --record-buffered     Economical buffering of writes at record, not
+                          collection (default), level
+    --ignore-errors       log errors but do not stop serialization
+    --use-ld-context      add a JSON-LD context to JSON output
+    --add-ld-context-item TERM=URI
+                          map a term to a URI and add it to the output's JSON LD
+                          context
+
 Development and testing
 =======================
 
@@ -112,15 +153,14 @@ locations on your system (via your system's package manager), you can do this::
 
   (fiona_env)$ git clone git://github.com/Toblerity/Fiona.git
   (fiona_env)$ cd Fiona
-  (fiona_env)$ python setup.py build_ext --inplace
   (fiona_env)$ python setup.py develop
-  (fiona_env)$ python setup.py nosetests
+  (fiona_env)$ nosetests
 
 If you have a non-standard environment, you'll need to specify the include and
 lib dirs and GDAL library on the command line::
 
   (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal develop
-  (fiona_env)$ python setup.py nosetests
+  (fiona_env)$ nosetests
 
 .. _libgdal: http://www.gdal.org
 .. _pyproj: http://pypi.python.org/pypi/pyproj/
