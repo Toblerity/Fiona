@@ -22,11 +22,11 @@ For more details, see:
 Dependencies
 ============
 
-Fiona requires Python 2.6+ and libgdal 1.8+. To build from a source
-distribution or repository clone you will need a C compiler and GDAL and Python
-development headers and libraries. While there are no official binary
-distributions or Windows support at this time, you can find Windows installers
-at http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#fiona.
+Fiona requires Python 2.6+ and GDAL 1.8+. To build from a source distribution
+or repository clone you will need a C compiler and GDAL and Python development
+headers and libraries. While there are no official binary distributions or
+Windows support at this time, you can find Windows installers at
+http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#fiona.
 
 Installation
 ============
@@ -36,8 +36,8 @@ Unix-like systems
 
 Assuming you're using a virtualenv (if not, skip to the 4th command) and
 GDAL/OGR libraries, headers, and `gdal-config`_ program are installed to well
-known locations on your system (via your system's package manager),
-installation is this simple::
+known locations on your system via your system's package manager (``brew
+install gdal`` using Homebrew on OS X), installation is this simple::
 
   $ mkdir fiona_env
   $ virtualenv fiona_env
@@ -56,18 +56,18 @@ below (using ``git``)::
 Windows
 -------
 
-Binary installers are available at http://www.lfd.uci.edu/~gohlke/pythonlibs/#fiona and coming
-eventually to PyPI.
+Binary installers are available at
+http://www.lfd.uci.edu/~gohlke/pythonlibs/#fiona and coming eventually to PyPI.
 
 Usage
 =====
 
-Records are read from and written to ``file``-like `Collection` objects. Records
-are mappings modeled on the GeoJSON format. They don't have any spatial methods
-of their own, so if you want to do anything fancy with them you will probably
-need Shapely or something like it. Here is an example of using Fiona to read
-some records from one data file, change their geometry attributes, and write
-them to a new data file.
+Records are read from and written to ``file``-like `Collection` objects.
+Records are mappings modeled on the GeoJSON format. They don't have any spatial
+methods of their own, so if you want to do anything fancy with them you will
+probably need Shapely or something like it. Here is an example of using Fiona
+to read some records from one data file, change their geometry attributes, and
+write them to a new data file.
 
 ::
 
