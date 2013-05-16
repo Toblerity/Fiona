@@ -126,7 +126,7 @@ the Fiona repository that we'll use in this and other examples.
       # coordinate reference system as the source.
       with fiona.open(
               'oriented-ccw.shp', 'w',
-              crs=source.crs
+              crs=source.crs,
               driver=source.driver,
               schema=sink_schema,
               ) as sink:
