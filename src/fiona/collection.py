@@ -309,7 +309,7 @@ supported_drivers = dict([
 #ElasticSearch 	ElasticSearch 	Yes (write-only) 	- 	No, needs libcurl
 #ESRI FileGDB 	FileGDB 	Yes 	Yes 	No, needs FileGDB API library
 # multi-layer
-#   ("FileGDB", "raw?"),
+    ("FileGDB", "raw"),
 #ESRI Personal GeoDatabase 	PGeo 	No 	Yes 	No, needs ODBC library
 #ESRI ArcSDE 	SDE 	No 	Yes 	No, needs ESRI SDE
 #ESRI Shapefile 	ESRI Shapefile 	Yes 	Yes 	Yes
