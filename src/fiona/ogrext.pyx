@@ -595,7 +595,7 @@ cdef class Session:
         self.cogr_layer = ograpi.OGR_DS_GetLayerByName(
             self.cogr_ds, name_c)
         if self.cogr_layer is NULL:
-            raise ValueError("Null layer")
+            raise ValueError("Null layer: " + collection.name)
         self.collection = collection
         
         userencoding = self.collection.encoding

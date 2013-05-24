@@ -17,7 +17,9 @@ class Collection(object):
             self, path, mode='r', 
             driver=None, schema=None, crs=None, 
             encoding=None,
-            workspace=None):
+            name=None,
+            vsi=None,
+            archive=None):
         
         """The required ``path`` is the absolute or relative path to
         a file, such as '/data/test_uk.shp'. In ``mode`` 'r', data can
@@ -40,6 +42,13 @@ class Collection(object):
             raise TypeError("invalid schema: %r" % crs)
         if encoding and not isinstance(encoding, string_types):
             raise TypeError("invalid encoding: %r" % encoding)
+        if name and not isinstance(name, string_types):
+            raise TypeError("invalid name: %r" % name)
+        if vsi:
+            if not isinstance(vsi, string_types) or vsi not in ('zip', 'tar', 'gzip'):
+                raise TypeError("invalid vsi: %r" % vsi)
+        if archive and not isinstance(archive, string_types):
+            raise TypeError("invalid archive: %r" % archive)
 
         self.session = None
         self.iterator = None
@@ -49,8 +58,16 @@ class Collection(object):
         self._schema = None
         self._crs = None
         
-        self.path = path
-        self.name = os.path.basename(os.path.splitext(path)[0])
+        # If a VSF and archive file are specified, we convert the path to
+        # an OGR VSI path (see cpl_vsi.h).
+        if vsi:
+            if archive:
+                self.path = "/vsi%s/%s%s" % (vsi, archive, path)
+            else:
+                self.path = "/vsi%s/%s" % (vsi, path)
+        else:
+            self.path = path
+        self.name = name or os.path.basename(os.path.splitext(path)[0])
         
         if mode not in ('r', 'w', 'a'):
             raise ValueError(
@@ -83,9 +100,6 @@ class Collection(object):
                 else:
                     raise CRSError("crs lacks init or proj parameter")
 
-        # For backwards compatibility. Ignored.
-        self.workspace = workspace
-        
         if self.mode == "r":
             self.encoding = encoding
             self.session = Session()
@@ -253,7 +267,6 @@ class Collection(object):
 
     def __exit__(self, type, value, traceback):
         self.close()
-        self.workspace = None
 
     def __del__(self):
         # Note: you can't count on this being called. Call close() explicitly

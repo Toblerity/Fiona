@@ -70,7 +70,11 @@ import os
 from fiona.collection import Collection, supported_drivers
 
 
-def open(path, mode='r', driver=None, schema=None, crs=None, encoding=None):
+def open(path, mode='r', 
+        driver=None, schema=None, crs=None,
+        encoding=None,
+        name=None,
+        vfs=None):
     
     """Open file at ``path`` in ``mode`` "r" (read), "a" (append), or
     "w" (write) and return a ``Collection`` object.
@@ -92,15 +96,37 @@ def open(path, mode='r', driver=None, schema=None, crs=None, encoding=None):
     The drivers used by Fiona will try to detect the encoding of data
     files. If they fail, you may provide the proper ``encoding``, such as
     'Windows-1252' for the Natural Earth datasets.
+    
+    When the provided path is to a file containing multiple named layers
+    of data, a layer can be singled out by ``name``.
+    
+    A virtual filesystem can be specified. The ``vfs`` parameter may be
+    an Apache Commons VFS style string beginning with "zip://" or
+    "tar://"". In this case, the ``path`` must be an absolute path within
+    that container.
     """
+    # Parse the vfs into a vsi and an archive path.
+    archive = vsi = None
+    if vfs:
+        parts = vfs.split("://")
+        vsi = parts.pop(0) if parts else None
+        archive = parts.pop(0) if parts else None
+    else:
+        parts = path.split("://")
+        path = parts.pop() if parts else None
+        vsi = parts.pop() if parts else None
     if mode in ('a', 'r'):
-        if not os.path.exists(path):
+        if archive:
+            if not os.path.exists(archive):
+                raise IOError("no such archive file: %r" % archive)
+        elif not os.path.exists(path):
             raise IOError("no such file or directory: %r" % path)
-        c = Collection(path, mode, encoding=encoding)
+        c = Collection(path, mode, 
+                encoding=encoding, name=name, vsi=vsi, archive=archive)
     elif mode == 'w':
-        c = Collection(path, mode=mode, 
-            crs=crs, driver=driver, schema=schema, 
-            encoding=encoding)
+        c = Collection(path, mode, 
+                crs=crs, driver=driver, schema=schema, 
+                encoding=encoding, name=name, vsi=vsi, archive=archive)
     else:
         raise ValueError(
             "mode string must be one of 'r', 'w', or 'a', not %s" % mode)
