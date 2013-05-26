@@ -73,7 +73,7 @@ from fiona.collection import Collection, supported_drivers
 def open(path, mode='r', 
         driver=None, schema=None, crs=None,
         encoding=None,
-        name=None,
+        layer=None,
         vfs=None):
     
     """Open file at ``path`` in ``mode`` "r" (read), "a" (append), or
@@ -98,7 +98,7 @@ def open(path, mode='r',
     'Windows-1252' for the Natural Earth datasets.
     
     When the provided path is to a file containing multiple named layers
-    of data, a layer can be singled out by ``name``.
+    of data, a layer can be singled out by ``layer``.
     
     A virtual filesystem can be specified. The ``vfs`` parameter may be
     an Apache Commons VFS style string beginning with "zip://" or
@@ -122,11 +122,11 @@ def open(path, mode='r',
         elif not os.path.exists(path):
             raise IOError("no such file or directory: %r" % path)
         c = Collection(path, mode, 
-                encoding=encoding, name=name, vsi=vsi, archive=archive)
+                encoding=encoding, layer=layer, vsi=vsi, archive=archive)
     elif mode == 'w':
         c = Collection(path, mode, 
                 crs=crs, driver=driver, schema=schema, 
-                encoding=encoding, name=name, vsi=vsi, archive=archive)
+                encoding=encoding, layer=layer, vsi=vsi, archive=archive)
     else:
         raise ValueError(
             "mode string must be one of 'r', 'w', or 'a', not %s" % mode)

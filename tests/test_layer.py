@@ -13,7 +13,7 @@ from .test_collection import ReadingTest
 class FileReadingTest(ReadingTest):
     
     def setUp(self):
-        self.c = fiona.open("docs/data/test_uk.shp", "r", name="test_uk")
+        self.c = fiona.open("docs/data/test_uk.shp", "r", layer="test_uk")
     
     def tearDown(self):
         self.c.close()
@@ -21,7 +21,7 @@ class FileReadingTest(ReadingTest):
 class DirReadingTest(ReadingTest):
     
     def setUp(self):
-        self.c = fiona.open("docs/data", "r", name="test_uk")
+        self.c = fiona.open("docs/data", "r", layer="test_uk")
     
     def tearDown(self):
         self.c.close()
@@ -45,5 +45,5 @@ class DirReadingTest(ReadingTest):
 class InvalidLayerTest(unittest.TestCase):
 
     def test_invalid(self):
-        self.assertRaises(ValueError, fiona.open, ("docs/data/test_uk.shp"), name="foo")
+        self.assertRaises(ValueError, fiona.open, ("docs/data/test_uk.shp"), layer="foo")
 

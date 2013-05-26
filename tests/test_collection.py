@@ -170,7 +170,7 @@ class UnsupportedDriverTest(unittest.TestCase):
             'properties': {'label': 'str', u'verit\xe9': 'int'} }
         self.assertRaises(
             DriverError, 
-            fiona.open, "/tmp/foo", "w", "FileGDB", schema=schema)
+            fiona.open, "/tmp/foo", "w", "Bogus", schema=schema)
 
 # The file writing tests below presume we can write to /tmp.
 

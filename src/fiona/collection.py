@@ -17,7 +17,7 @@ class Collection(object):
             self, path, mode='r', 
             driver=None, schema=None, crs=None, 
             encoding=None,
-            name=None,
+            layer=None,
             vsi=None,
             archive=None):
         
@@ -42,8 +42,8 @@ class Collection(object):
             raise TypeError("invalid schema: %r" % crs)
         if encoding and not isinstance(encoding, string_types):
             raise TypeError("invalid encoding: %r" % encoding)
-        if name and not isinstance(name, string_types):
-            raise TypeError("invalid name: %r" % name)
+        if layer and not isinstance(layer, string_types):
+            raise TypeError("invalid name: %r" % layer)
         if vsi:
             if not isinstance(vsi, string_types) or vsi not in ('zip', 'tar', 'gzip'):
                 raise TypeError("invalid vsi: %r" % vsi)
@@ -67,7 +67,7 @@ class Collection(object):
                 self.path = "/vsi%s/%s" % (vsi, path)
         else:
             self.path = path
-        self.name = name or os.path.basename(os.path.splitext(path)[0])
+        self.name = layer or os.path.basename(os.path.splitext(path)[0])
         
         if mode not in ('r', 'w', 'a'):
             raise ValueError(
