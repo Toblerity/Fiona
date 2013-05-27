@@ -43,7 +43,7 @@ with fiona.open('docs/data/test_uk.shp', layer='test_uk') as c:
 # Same as above but using the path to the directory containing the shapefile,
 # specified explicitly by name.
 
-with fiona.open('docs/data', layer="test_uk") as c:
+with fiona.open('docs/data', layer='test_uk') as c:
     assert len(c) == 48
 
 # 4. Opening a single file within a zip archive.
@@ -54,6 +54,19 @@ with fiona.open('docs/data', layer="test_uk") as c:
 # Open a file given its absolute path within a virtual filesystem. The VFS
 # is given an Apache Commons VFS identifier. It may contain either an absolute
 # path or a path relative to the working directory.
+#
+# Example archive:
+#
+# $ unzip -l docs/data/test_uk.zip
+# Archive:  docs/data/test_uk.zip
+#   Length     Date   Time    Name
+#  --------    ----   ----    ----
+#     10129  04-08-13 20:49   test_uk.dbf
+#       143  04-08-13 20:49   test_uk.prj
+#     65156  04-08-13 20:49   test_uk.shp
+#       484  04-08-13 20:49   test_uk.shx
+#  --------                   -------
+#     75912                   4 files
 
 with fiona.open('/test_uk.shp', vfs='zip://docs/data/test_uk.zip') as c:
     assert len(c) == 48
