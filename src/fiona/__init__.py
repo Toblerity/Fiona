@@ -66,8 +66,10 @@ __all__ = []
 __version__ = "0.14"
 
 import os
+from six import string_types
 
-from fiona.collection import Collection, supported_drivers
+from fiona.collection import Collection, supported_drivers, vsi_path
+from fiona.ogrext import _listlayers
 
 
 def open(path, mode='r', 
@@ -106,15 +108,7 @@ def open(path, mode='r',
     that container.
     """
     # Parse the vfs into a vsi and an archive path.
-    archive = vsi = None
-    if vfs:
-        parts = vfs.split("://")
-        vsi = parts.pop(0) if parts else None
-        archive = parts.pop(0) if parts else None
-    else:
-        parts = path.split("://")
-        path = parts.pop() if parts else None
-        vsi = parts.pop() if parts else None
+    path, vsi, archive = parse_paths(path, vfs)
     if mode in ('a', 'r'):
         if archive:
             if not os.path.exists(archive):
@@ -134,6 +128,44 @@ def open(path, mode='r',
 
 collection = open
 
+def listlayers(path, vfs=None):
+    """Returns a list of layer names.
+    
+    The required ``path`` argument may be an absolute or relative file or
+    directory path.
+    
+    A virtual filesystem can be specified. The ``vfs`` parameter may be
+    an Apache Commons VFS style string beginning with "zip://" or
+    "tar://"". In this case, the ``path`` must be an absolute path within
+    that container.
+    """
+    if not isinstance(path, string_types):
+        raise TypeError("invalid path: %r" % path)
+    if vfs and not isinstance(vfs, string_types):
+        raise TypeError("invalid vfs: %r" % vfs)
+    
+    path, vsi, archive = parse_paths(path, vfs)
+    
+    if archive:
+        if not os.path.exists(archive):
+            raise IOError("no such archive file: %r" % archive)
+    elif not os.path.exists(path):
+        raise IOError("no such file or directory: %r" % path)
+    
+    return _listlayers(vsi_path(path, vsi, archive))
+
+def parse_paths(path, vfs=None):
+    archive = vsi = None
+    if vfs:
+        parts = vfs.split("://")
+        vsi = parts.pop(0) if parts else None
+        archive = parts.pop(0) if parts else None
+    else:
+        parts = path.split("://")
+        path = parts.pop() if parts else None
+        vsi = parts.pop() if parts else None
+    return path, vsi, archive
+
 def prop_width(val):
     """Returns the width of a str type property.
 
@@ -147,3 +179,4 @@ def prop_width(val):
     if val.startswith('str'):
         return int((val.split(":")[1:] or ["80"])[0])
     return None
+

@@ -58,15 +58,7 @@ class Collection(object):
         self._schema = None
         self._crs = None
         
-        # If a VSF and archive file are specified, we convert the path to
-        # an OGR VSI path (see cpl_vsi.h).
-        if vsi:
-            if archive:
-                self.path = "/vsi%s/%s%s" % (vsi, archive, path)
-            else:
-                self.path = "/vsi%s/%s" % (vsi, path)
-        else:
-            self.path = path
+        self.path = vsi_path(path, vsi, archive)
         self.name = layer or os.path.basename(os.path.splitext(path)[0])
         
         if mode not in ('r', 'w', 'a'):
@@ -272,6 +264,19 @@ class Collection(object):
         # Note: you can't count on this being called. Call close() explicitly
         # or use the context manager protocol ("with").
         self.__exit__(None, None, None)
+
+
+def vsi_path(path, vsi=None, archive=None):
+    # If a VSF and archive file are specified, we convert the path to
+    # an OGR VSI path (see cpl_vsi.h).
+    if vsi:
+        if archive:
+            result = "/vsi%s/%s%s" % (vsi, archive, path)
+        else:
+            result = "/vsi%s/%s" % (vsi, path)
+    else:
+        result = path
+    return result
 
 
 # Here is the list of available drivers as (name, modes) tuples. Currently,

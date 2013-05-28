@@ -987,3 +987,37 @@ cdef class Iterator:
         _deleteOgrFeature(cogr_feature)
         return feature
 
+
+def _listlayers(path):
+
+    """Provides a list of the layers in an OGR data source.
+    """
+    
+    cdef void *cogr_ds
+    cdef void *cogr_layer
+    cdef char *path_c
+    cdef char *name_c
+    
+    # Open OGR data source.
+    path_b = path.encode()
+    path_c = path_b
+    cogr_ds = ograpi.OGROpen(path_c, 0, NULL)
+    if cogr_ds is NULL:
+        raise ValueError("Null data source")
+    
+    # Loop over the layers to get their names.
+    layer_count = ograpi.OGR_DS_GetLayerCount(cogr_ds)
+    layer_names = []
+    for i in range(layer_count):
+        cogr_layer = ograpi.OGR_DS_GetLayer(cogr_ds, i)
+        name_c = ograpi.OGR_L_GetName(cogr_layer)
+        name_b = name_c
+        layer_names.append(name_b.decode())
+    
+    # Close up data source.
+    if cogr_ds is not NULL:
+        ograpi.OGR_DS_Destroy(cogr_ds)
+    cogr_ds = NULL
+
+    return layer_names
+
