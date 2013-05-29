@@ -63,7 +63,7 @@ writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
 __all__ = []
-__version__ = "0.14"
+__version__ = "0.15"
 
 import os
 from six import string_types
@@ -129,7 +129,7 @@ def open(path, mode='r',
 collection = open
 
 def listlayers(path, vfs=None):
-    """Returns a list of layer names.
+    """Returns a list of layer names in their index order.
     
     The required ``path`` argument may be an absolute or relative file or
     directory path.

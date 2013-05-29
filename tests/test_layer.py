@@ -10,10 +10,14 @@ logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 from .test_collection import ReadingTest
 
+def test_index_selection():
+    with fiona.open('docs/data/test_uk.shp', 'r', layer=0) as c:
+        assert len(c) == 48
+
 class FileReadingTest(ReadingTest):
     
     def setUp(self):
-        self.c = fiona.open("docs/data/test_uk.shp", "r", layer="test_uk")
+        self.c = fiona.open('docs/data/test_uk.shp', 'r', layer='test_uk')
     
     def tearDown(self):
         self.c.close()

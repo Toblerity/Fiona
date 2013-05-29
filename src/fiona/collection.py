@@ -42,7 +42,7 @@ class Collection(object):
             raise TypeError("invalid schema: %r" % crs)
         if encoding and not isinstance(encoding, string_types):
             raise TypeError("invalid encoding: %r" % encoding)
-        if layer and not isinstance(layer, string_types):
+        if layer and not isinstance(layer, tuple(list(string_types) + [int])):
             raise TypeError("invalid name: %r" % layer)
         if vsi:
             if not isinstance(vsi, string_types) or vsi not in ('zip', 'tar', 'gzip'):
@@ -59,7 +59,10 @@ class Collection(object):
         self._crs = None
         
         self.path = vsi_path(path, vsi, archive)
-        self.name = layer or os.path.basename(os.path.splitext(path)[0])
+        if layer == 0:
+            self.name = 0
+        else:
+            self.name = layer or os.path.basename(os.path.splitext(path)[0])
         
         if mode not in ('r', 'w', 'a'):
             raise ValueError(
@@ -113,7 +116,7 @@ class Collection(object):
     def __repr__(self):
         return "<%s Collection '%s', mode '%s' at %s>" % (
             self.closed and "closed" or "open",
-            self.path + ":" + self.name,
+            self.path + ":" + str(self.name),
             self.mode,
             hex(id(self)))
 

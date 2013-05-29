@@ -4,6 +4,9 @@ Changes
 Next
 ----
 - Get and set numeric field widths (#42).
+- Add support for multi-layer data sources (#17).
+- Add support for zip and tar virtual filesystems (#45).
+- Add listlayers() function.
 
 0.14 (2013-05-04)
 -----------------

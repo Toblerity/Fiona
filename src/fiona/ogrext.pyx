@@ -590,12 +590,19 @@ cdef class Session:
         self.cogr_ds = ograpi.OGROpen(path_c, 0, NULL)
         if self.cogr_ds is NULL:
             raise ValueError("Null data source")
-        name_b = collection.name.encode()
-        name_c = name_b
-        self.cogr_layer = ograpi.OGR_DS_GetLayerByName(
-            self.cogr_ds, name_c)
+        
+        if isinstance(collection.name, string_types):
+            name_b = collection.name.encode()
+            name_c = name_b
+            self.cogr_layer = ograpi.OGR_DS_GetLayerByName(
+                                self.cogr_ds, name_c)
+        elif isinstance(collection.name, int):
+            self.cogr_layer = ograpi.OGR_DS_GetLayer(
+                                self.cogr_ds, collection.name)
+
         if self.cogr_layer is NULL:
             raise ValueError("Null layer: " + collection.name)
+        
         self.collection = collection
         
         userencoding = self.collection.encoding
