@@ -18,7 +18,7 @@ def open_output(arg):
     if arg == sys.stdout:
         return arg
     else:
-        return open(arg, 'wb')
+        return open(arg, 'w')
 
 def make_ld_context(context_items):
     """Returns a JSON-LD Context object. 

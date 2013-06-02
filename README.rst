@@ -78,7 +78,7 @@ probably need Shapely or something like it. Here is an example of using Fiona
 to read some records from one data file, change their geometry attributes, and
 write them to a new data file.
 
-::
+.. sourcecode:: python
 
   import fiona
 
