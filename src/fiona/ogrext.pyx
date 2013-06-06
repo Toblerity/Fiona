@@ -782,10 +782,16 @@ cdef class WritingSession(Session):
                 cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
                 if cogr_driver is NULL:
                     raise ValueError("Null driver")
-                name_b = collection.name.encode()
-                name_c = name_b
-                self.cogr_layer = ograpi.OGR_DS_GetLayerByName(
+
+                if isinstance(collection.name, string_types):
+                    name_b = collection.name.encode()
+                    name_c = name_b
+                    self.cogr_layer = ograpi.OGR_DS_GetLayerByName(
                                         self.cogr_ds, name_c)
+                elif isinstance(collection.name, int):
+                    self.cogr_layer = ograpi.OGR_DS_GetLayer(
+                                        self.cogr_ds, collection.name)
+
                 if self.cogr_layer is NULL:
                     raise RuntimeError(
                         "Failed to get layer %s" % collection.name)

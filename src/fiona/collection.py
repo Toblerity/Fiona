@@ -59,18 +59,24 @@ class Collection(object):
         self._crs = None
         
         self.path = vsi_path(path, vsi, archive)
-        if layer == 0:
-            self.name = 0
-        else:
-            self.name = layer or os.path.basename(os.path.splitext(path)[0])
         
+        if mode == 'w':
+            if driver == 'GeoJSON':
+                self.name = 'OgrGeoJSON'
+            else:
+                self.name = layer or os.path.basename(os.path.splitext(path)[0])
+        else:
+            if layer in (0, None):
+                self.name = 0
+            else:
+                self.name = layer or os.path.basename(os.path.splitext(path)[0])
+
         if mode not in ('r', 'w', 'a'):
             raise ValueError(
                 "mode string must be one of 'r', 'w', or 'a', not %s" % mode)
         self.mode = mode
         
-        if mode == 'w':
-
+        if self.mode == 'w':
             if not driver:
                 raise DriverError("no driver")
             elif driver not in supported_drivers:
@@ -324,6 +330,7 @@ supported_drivers = dict([
     ("ESRI Shapefile", "raw"),
 #FMEObjects Gateway 	FMEObjects Gateway 	No 	Yes 	No, needs FME
 #GeoJSON 	GeoJSON 	Yes 	Yes 	Yes
+    ("GeoJSON", "rw"),
 #Géoconcept Export 	Geoconcept 	Yes 	Yes 	Yes
 # multi-layers
 #   ("Geoconcept", "raw"),

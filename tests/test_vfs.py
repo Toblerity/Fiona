@@ -21,14 +21,14 @@ class ZipReadingTest(ReadingTest):
     def test_open_repr(self):
         self.failUnlessEqual(
             repr(self.c),
-            ("<open Collection '/vsizip/docs/data/test_uk.zip:test_uk', mode 'r' "
+            ("<open Collection '/vsizip/docs/data/test_uk.zip:0', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_closed_repr(self):
         self.c.close()
         self.failUnlessEqual(
             repr(self.c),
-            ("<closed Collection '/vsizip/docs/data/test_uk.zip:test_uk', mode 'r' "
+            ("<closed Collection '/vsizip/docs/data/test_uk.zip:0', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_path(self):
@@ -45,14 +45,14 @@ class ZipArchiveReadingTest(ReadingTest):
     def test_open_repr(self):
         self.failUnlessEqual(
             repr(self.c),
-            ("<open Collection '/vsizip/docs/data/test_uk.zip/test_uk.shp:test_uk', mode 'r' "
+            ("<open Collection '/vsizip/docs/data/test_uk.zip/test_uk.shp:0', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_closed_repr(self):
         self.c.close()
         self.failUnlessEqual(
             repr(self.c),
-            ("<closed Collection '/vsizip/docs/data/test_uk.zip/test_uk.shp:test_uk', mode 'r' "
+            ("<closed Collection '/vsizip/docs/data/test_uk.zip/test_uk.shp:0', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_path(self):
@@ -69,14 +69,14 @@ class TarArchiveReadingTest(ReadingTest):
     def test_open_repr(self):
         self.failUnlessEqual(
             repr(self.c),
-            ("<open Collection '/vsitar/docs/data/test_uk.tar/testing/test_uk.shp:test_uk', mode 'r' "
+            ("<open Collection '/vsitar/docs/data/test_uk.tar/testing/test_uk.shp:0', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_closed_repr(self):
         self.c.close()
         self.failUnlessEqual(
             repr(self.c),
-            ("<closed Collection '/vsitar/docs/data/test_uk.tar/testing/test_uk.shp:test_uk', mode 'r' "
+            ("<closed Collection '/vsitar/docs/data/test_uk.tar/testing/test_uk.shp:0', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_path(self):

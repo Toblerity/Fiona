@@ -22,6 +22,22 @@ class FileReadingTest(ReadingTest):
     def tearDown(self):
         self.c.close()
 
+    def test_open_repr(self):
+        self.failUnlessEqual(
+            repr(self.c),
+            ("<open Collection 'docs/data/test_uk.shp:test_uk', mode 'r' "
+            "at %s>" % hex(id(self.c))))
+
+    def test_closed_repr(self):
+        self.c.close()
+        self.failUnlessEqual(
+            repr(self.c),
+            ("<closed Collection 'docs/data/test_uk.shp:test_uk', mode 'r' "
+            "at %s>" % hex(id(self.c))))
+
+    def test_name(self):
+        self.failUnlessEqual(self.c.name, 'test_uk')
+
 class DirReadingTest(ReadingTest):
     
     def setUp(self):
@@ -42,6 +58,9 @@ class DirReadingTest(ReadingTest):
             repr(self.c),
             ("<closed Collection 'docs/data:test_uk', mode 'r' "
             "at %s>" % hex(id(self.c))))
+
+    def test_name(self):
+        self.failUnlessEqual(self.c.name, 'test_uk')
 
     def test_path(self):
         self.failUnlessEqual(self.c.path, "docs/data")
