@@ -181,7 +181,7 @@ class GenericWritingTest(unittest.TestCase):
             'geometry': 'Point', 
             'properties': {'label': 'str', u'verit\xe9': 'int'} }
         self.c = fiona.open(
-                "test-no-iter.shp", 
+                "/tmp/test-no-iter.shp", 
                 "w", 
                 "ESRI Shapefile", 
                 schema=schema,
@@ -387,9 +387,9 @@ class CollectionTest(unittest.TestCase):
         self.assertRaises(ValueError, fiona.open, "/tmp/bogus.shp", "r+")
 
     def test_w_args(self):
-        self.assertRaises(FionaValueError, fiona.open, "test-no-iter.shp", "w")
+        self.assertRaises(FionaValueError, fiona.open, "/tmp/test-no-iter.shp", "w")
         self.assertRaises(
-            FionaValueError, fiona.open, "test-no-iter.shp", "w", "Driver")
+            FionaValueError, fiona.open, "/tmp/test-no-iter.shp", "w", "Driver")
 
     def test_no_path(self):
         self.assertRaises(IOError, fiona.open, "no-path.shp", "a")
@@ -398,6 +398,6 @@ class CollectionTest(unittest.TestCase):
         self.assertRaises(IOError, fiona.open, "PG:dbname=databasename", "r")
 
     def test_no_read_directory(self):
-        self.assertRaises(ValueError, fiona.open, ".", "r")
+        self.assertRaises(ValueError, fiona.open, "/dev/null", "r")
 
 

@@ -40,8 +40,8 @@ a shapefile and for each, picking off the first vertex of the exterior
 ring of the polygon and using that as the point geometry for a new
 feature writing to a "points.shp" file.
 
-  >>> from fiona import collection
-  >>> with collection("docs/data/test_uk.shp", "r") as inp:
+  >>> import fiona
+  >>> with fiona.open('docs/data/test_uk.shp', 'r') as inp:
   ...     output_schema = inp.schema.copy()
   ...     output_schema['geometry'] = 'Point'
   ...     with collection(
@@ -72,11 +72,15 @@ from fiona.collection import Collection, supported_drivers, vsi_path
 from fiona.ogrext import _listlayers
 
 
-def open(path, mode='r', 
-        driver=None, schema=None, crs=None,
+def open(
+        path, 
+        mode='r', 
+        driver=None, 
+        schema=None, 
+        crs=None,
         encoding=None,
         layer=None,
-        vfs=None):
+        vfs=None ):
     
     """Open file at ``path`` in ``mode`` "r" (read), "a" (append), or
     "w" (write) and return a ``Collection`` object.

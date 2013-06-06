@@ -589,7 +589,8 @@ cdef class Session:
         path_c = path_b
         self.cogr_ds = ograpi.OGROpen(path_c, 0, NULL)
         if self.cogr_ds is NULL:
-            raise ValueError("Null data source")
+            raise ValueError(
+                "No data available at path '%s'" % collection.path)
         
         if isinstance(collection.name, string_types):
             name_b = collection.name.encode()
@@ -611,7 +612,8 @@ cdef class Session:
             self._fileencoding = userencoding.upper()
         else:
             self._fileencoding = (
-                ograpi.OGR_L_TestCapability(self.cogr_layer, "StringsAsUTF8") and
+                ograpi.OGR_L_TestCapability(
+                    self.cogr_layer, "StringsAsUTF8") and
                 OGR_DETECTED_ENCODING) or (
                 self.get_driver() == "ESRI Shapefile" and
                 'ISO-8859-1') or locale.getpreferredencoding().upper()
@@ -1016,7 +1018,7 @@ def _listlayers(path):
     path_c = path_b
     cogr_ds = ograpi.OGROpen(path_c, 0, NULL)
     if cogr_ds is NULL:
-        raise ValueError("Null data source")
+        raise ValueError("No data available at path '%s'" % path)
     
     # Loop over the layers to get their names.
     layer_count = ograpi.OGR_DS_GetLayerCount(cogr_ds)

@@ -71,12 +71,15 @@ http://www.lfd.uci.edu/~gohlke/pythonlibs/#fiona and coming eventually to PyPI.
 Usage
 =====
 
-Records are read from and written to ``file``-like `Collection` objects.
-Records are mappings modeled on the GeoJSON format. They don't have any spatial
-methods of their own, so if you want to do anything fancy with them you will
-probably need Shapely or something like it. Here is an example of using Fiona
-to read some records from one data file, change their geometry attributes, and
-write them to a new data file.
+Collections
+-----------
+
+Records are read from and written to ``file``-like `Collection` objects
+returned from the ``fiona.open()`` function.  Records are mappings modeled on
+the GeoJSON format. They don't have any spatial methods of their own, so if you
+want to do anything fancy with them you will probably need Shapely or something
+like it. Here is an example of using Fiona to read some records from one data
+file, change their geometry attributes, and write them to a new data file.
 
 .. sourcecode:: python
 
@@ -111,6 +114,57 @@ write them to a new data file.
       # The sink's contents are flushed to disk and the file is closed
       # when its ``with`` block ends. This effectively executes 
       # ``sink.flush(); sink.close()``.
+
+Collections from Multilayer data
+--------------------------------
+
+Collections can also be made from single layers within multilayer files or
+directories of data. The target layer is specified by name or by its integer
+index within the file or directory. The ``fiona.listlayers()`` function
+provides an index ordered list of layer names.
+
+.. sourcecode:: python
+
+    for i, layername in enumerate(fiona.listlayers('docs/data')):
+        with fiona.open('docs/data', layer=layername) as c:
+            print(i, layername, len(c))
+    
+    # Output:
+    # 0 test_uk 48
+
+Again, the layer can be specified by its index. In this case, ``layer=0`` and
+``layer='test_uk'`` specify the same layer in the data file or directory.
+
+.. sourcecode:: python
+
+    for i, layername in enumerate(fiona.listlayers('docs/data')):
+        with fiona.open('docs/data', layer=i) as c:
+            print(i, layername, len(c))
+    
+    # Output:
+    # 0 test_uk 48
+
+Collections from archives and virtual file systems
+--------------------------------------------------
+
+Zip and Tar archives can be treated as virtual filesystems and Collections can
+be made from paths and layers within them. In other words, Fiona lets you read
+and write zipped Shapefiles.
+
+.. sourcecode:: python
+
+    for i, layername in enumerate(
+            fiona.listlayers(
+                '/', 
+                vfs='zip://docs/data/test_uk.zip')):
+        with fiona.open(
+                '/', 
+                vfs='zip://docs/data/test_uk.zip', 
+                layer=i) as c:
+            print(i, layername, len(c))
+    
+    # Output:
+    # 0 test_uk 48
 
 Dumpgj
 ======
