@@ -19,7 +19,8 @@ class Collection(object):
             encoding=None,
             layer=None,
             vsi=None,
-            archive=None):
+            archive=None,
+            **kwargs):
         
         """The required ``path`` is the absolute or relative path to
         a file, such as '/data/test_uk.shp'. In ``mode`` 'r', data can
@@ -29,6 +30,9 @@ class Collection(object):
         
         In ``mode`` 'w', an OGR ``driver`` name and a ``schema`` are
         required. A Proj4 ``crs`` string is recommended.
+        
+        In 'w' mode, kwargs will be mapped to OGR layer creation
+        options.
         """
         if not isinstance(path, string_types):
             raise TypeError("invalid path: %r" % path)
@@ -61,8 +65,13 @@ class Collection(object):
         self.path = vsi_path(path, vsi, archive)
         
         if mode == 'w':
+            if layer and not isinstance(layer, string_types):
+                raise ValueError("in 'r' mode, layer names must be strings")
             if driver == 'GeoJSON':
+                if layer is not None:
+                    raise ValueError("the GeoJSON format does not have layers")
                 self.name = 'OgrGeoJSON'
+            # TODO: raise ValueError as above for other single-layer formats.
             else:
                 self.name = layer or os.path.basename(os.path.splitext(path)[0])
         else:
@@ -113,7 +122,7 @@ class Collection(object):
         elif self.mode in ("a", "w"):
             self.encoding = encoding
             self.session = WritingSession()
-            self.session.start(self)
+            self.session.start(self, **kwargs)
             self.encoding = encoding or self.session.get_fileencoding().lower()
 
         if self.session:

@@ -7,7 +7,7 @@ import sys
 import unittest
 
 import fiona
-from fiona.collection import supported_drivers
+from fiona.collection import Collection, supported_drivers
 from fiona.errors import FionaValueError, DriverError, SchemaError, CRSError
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
@@ -23,6 +23,47 @@ class SupportedDriversTest(unittest.TestCase):
         self.failUnlessEqual(
             set(supported_drivers["MapInfo File"]), set("raw") )
 
+class CollectionArgsTest(unittest.TestCase):
+    def test_path(self):
+        self.assertRaises(TypeError, Collection, (0))
+    def test_mode(self):
+        self.assertRaises(TypeError, Collection, ("foo"), mode=0)
+    def test_driver(self):
+        self.assertRaises(TypeError, Collection, ("foo"), mode='w', driver=1)
+    def test_schema(self):
+        self.assertRaises(
+            TypeError, Collection, ("foo"), mode='w', 
+            driver="ESRI Shapefile", schema=1)
+    def test_crs(self):
+        self.assertRaises(
+            TypeError, Collection, ("foo"), mode='w', 
+            driver="ESRI Shapefile", schema=0, crs=1)
+    def test_encoding(self):
+        self.assertRaises(
+            TypeError, Collection, ("foo"), mode='r', 
+            encoding=1)
+    def test_layer(self):
+        self.assertRaises(
+            TypeError, Collection, ("foo"), mode='r', 
+            layer=0.5)
+    def test_vsi(self):
+        self.assertRaises(
+            TypeError, Collection, ("foo"), mode='r', 
+            vsi='git')
+    def test_archive(self):
+        self.assertRaises(
+            TypeError, Collection, ("foo"), mode='r', 
+            archive=1)
+    def test_write_numeric_layer(self):
+        self.assertRaises(ValueError, Collection, ("foo"), mode='w', layer=1)
+    def test_write_geojson_layer(self):
+        self.assertRaises(ValueError, Collection, ("foo"), mode='w', driver='GeoJSON', layer='foo')
+    def test_append_geojson(self):
+        self.assertRaises(ValueError, Collection, ("foo"), mode='w', driver='ARCGEN')
+
+class OpenExceptionTest(unittest.TestCase):
+    def test_no_archive(self):
+        self.assertRaises(IOError, fiona.open, ("/"), mode='r', vfs="zip:///foo.zip")
 
 class ReadingTest(unittest.TestCase):
     

@@ -587,6 +587,7 @@ cdef class Session:
         cdef char *name_c
         path_b = collection.path.encode()
         path_c = path_b
+        
         self.cogr_ds = ograpi.OGROpen(path_c, 0, NULL)
         if self.cogr_ds is NULL:
             raise ValueError(
@@ -602,7 +603,7 @@ cdef class Session:
                                 self.cogr_ds, collection.name)
 
         if self.cogr_layer is NULL:
-            raise ValueError("Null layer: " + collection.name)
+            raise ValueError("Null layer: " + repr(collection.name))
         
         self.collection = collection
         
@@ -764,6 +765,8 @@ cdef class WritingSession(Session):
     def start(self, collection):
         cdef void *cogr_fielddefn
         cdef void *cogr_driver
+        cdef void *cogr_ds
+        cdef void *cogr_layer
         cdef void *cogr_srs = NULL
         cdef char **options = NULL
         self.collection = collection
@@ -812,22 +815,37 @@ cdef class WritingSession(Session):
             path_c = path_b
             driver_b = collection.driver.encode()
             driver_c = driver_b
-            if os.path.exists(path):
-                self.cogr_ds = ograpi.OGROpen(path_c, 1, NULL)
-                if self.cogr_ds is not NULL:
-                    cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
-                    if cogr_driver is NULL:
-                        raise ValueError("Null driver")
-                    ograpi.OGR_DS_Destroy(self.cogr_ds)
-                    ograpi.OGR_Dr_DeleteDataSource(cogr_driver, path_c)
-                    log.debug("Deleted pre-existing data at %s", path)
+
             cogr_driver = ograpi.OGRGetDriverByName(driver_c)
             if cogr_driver is NULL:
                 raise ValueError("Null driver")
-            self.cogr_ds = ograpi.OGR_Dr_CreateDataSource(
-                cogr_driver, path_c, NULL)
-            if self.cogr_ds is NULL:
+
+            if not os.path.exists(path):
+                cogr_ds = ograpi.OGR_Dr_CreateDataSource(
+                    cogr_driver, path_c, NULL)
+
+            else:
+                cogr_ds = ograpi.OGROpen(path_c, 1, NULL)
+                
+                if not cogr_ds:
+                    cogr_ds = ograpi.OGR_Dr_CreateDataSource(
+                        cogr_driver, path_c, NULL)
+
+                elif collection.name is None:
+                    ograpi.OGR_DS_Destroy(cogr_ds)
+                    cogr_ds == NULL
+                    log.debug("Deleted pre-existing data at %s", path)
+                    
+                    cogr_ds = ograpi.OGR_Dr_CreateDataSource(
+                        cogr_driver, path_c, NULL)
+
+                else:
+                    pass
+
+            if cogr_ds is NULL:
                 raise RuntimeError("Failed to open %s" % path)
+            else:
+                self.cogr_ds = cogr_ds
 
             # Set the spatial reference system from the given crs.
             if collection.crs:
@@ -859,7 +877,28 @@ cdef class WritingSession(Session):
                 fileencoding_b = fileencoding.encode()
                 fileencoding_c = fileencoding_b
                 options = ograpi.CSLSetNameValue(options, "ENCODING", fileencoding_c)
+
+            # Does the layer exist already? If so, we delete it.
+            layer_count = ograpi.OGR_DS_GetLayerCount(self.cogr_ds)
+            layer_names = []
+            for i in range(layer_count):
+                cogr_layer = ograpi.OGR_DS_GetLayer(cogr_ds, i)
+                name_c = ograpi.OGR_L_GetName(cogr_layer)
+                name_b = name_c
+                layer_names.append(name_b.decode())
+
+            idx = -1
+            if isinstance(collection.name, string_types):
+                if collection.name in layer_names:
+                    idx = layer_names.index(collection.name)
+            elif isinstance(collection.name, int):
+                if collection.name >= 0 and collection.name < layer_count:
+                    idx = collection.name
+            if idx >= 0:
+                log.debug("Deleted pre-existing layer at %s", collection.name)
+                ograpi.OGR_DS_DeleteLayer(self.cogr_ds, idx)
             
+            # Create the named layer in the datasource.
             name_b = collection.name.encode()
             name_c = name_b
             self.cogr_layer = ograpi.OGR_DS_CreateLayer(

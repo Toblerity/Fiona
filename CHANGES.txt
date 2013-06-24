@@ -3,10 +3,16 @@ Changes
 
 Next
 ----
+- Add support for writing layers to multi-layer files.
+
+0.15 (2013-06-06)
+-----------------
 - Get and set numeric field widths (#42).
 - Add support for multi-layer data sources (#17).
 - Add support for zip and tar virtual filesystems (#45).
 - Add listlayers() function.
+- Add GeoJSON to list of supported formats (#47).
+- Allow selection of layers by index or name.
 
 0.14 (2013-05-04)
 -----------------

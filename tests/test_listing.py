@@ -27,3 +27,20 @@ def test_zip_path():
 def test_zip_path_arch():
     assert fiona.listlayers('/test_uk.shp', vfs='zip://docs/data/test_uk.zip') == ['test_uk']
 
+class ListLayersArgsTest(unittest.TestCase):
+    def test_path(self):
+        self.assertRaises(TypeError, fiona.listlayers, (1))
+    def test_vfs(self):
+        self.assertRaises(TypeError, fiona.listlayers, ("/"), vfs=1)
+    def test_path_ioerror(self):
+        self.assertRaises(IOError, fiona.listlayers, ("foobar"))
+
+def test_parse_path():
+    assert fiona.parse_paths("zip://foo.zip") == ("foo.zip", "zip", None)
+
+def test_parse_path2():
+    assert fiona.parse_paths("foo") == ("foo", None, None)
+
+def test_parse_vfs():
+    assert fiona.parse_paths("/", "zip://foo.zip") == ("/", "zip", "foo.zip")
+
