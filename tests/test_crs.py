@@ -48,3 +48,11 @@ def test_from_epsg():
     assert val['init'] == "epsg:4326"
     assert val['no_defs'] == True
 
+def test_from_epsg_neg():
+    try:
+        val = crs.from_epsg(-1)
+    except ValueError:
+        pass
+    except:
+        raise
+

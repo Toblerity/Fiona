@@ -36,7 +36,7 @@ class Collection(object):
         """
         if not isinstance(path, string_types):
             raise TypeError("invalid path: %r" % path)
-        if not isinstance(mode, string_types):
+        if not isinstance(mode, string_types) or mode not in ('r', 'w', 'a'):
             raise TypeError("invalid mode: %r" % mode)
         if driver and not isinstance(driver, string_types):
             raise TypeError("invalid driver: %r" % driver)
@@ -79,10 +79,7 @@ class Collection(object):
                 self.name = 0
             else:
                 self.name = layer or os.path.basename(os.path.splitext(path)[0])
-
-        if mode not in ('r', 'w', 'a'):
-            raise ValueError(
-                "mode string must be one of 'r', 'w', or 'a', not %s" % mode)
+        
         self.mode = mode
         
         if self.mode == 'w':
