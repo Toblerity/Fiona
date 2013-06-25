@@ -63,7 +63,7 @@ writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
 __all__ = []
-__version__ = "0.15"
+__version__ = "0.16"
 
 import os
 from six import string_types

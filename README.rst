@@ -115,8 +115,8 @@ file, change their geometry attributes, and write them to a new data file.
       # when its ``with`` block ends. This effectively executes 
       # ``sink.flush(); sink.close()``.
 
-Collections from Multilayer data
---------------------------------
+Reading Multilayer data
+-----------------------
 
 Collections can also be made from single layers within multilayer files or
 directories of data. The target layer is specified by name or by its integer
@@ -143,6 +143,41 @@ Again, the layer can be specified by its index. In this case, ``layer=0`` and
     
     # Output:
     # 0 test_uk 48
+
+Writing Multilayer data
+-----------------------
+
+Multilayer data can be written as well. Layers must be specified by name when
+writing.
+
+.. sourcecode:: python
+
+    with open('docs/data/test_uk.shp') as c:
+        meta = c.meta
+        f = next(c)
+    
+    with fiona.open('/tmp/foo', 'w', layer='bar', **meta) as c:
+        c.write(f)
+    
+    print(fiona.listlayers('/tmp/foo'))
+    # Output: ['bar']
+    
+    with fiona.open('/tmp/foo', layer='bar') as c:
+        print(len(c))
+        f = next(c)
+        print(f['geometry']['type'])
+        print(f['properties'])
+    
+    # Output:
+    # 1
+    # Polygon
+    # {'FIPS_CNTRY': 'UK', 'POP_CNTRY': 60270708.0, 'CAT': 232.0, 
+    #  'AREA': 244820.0, 'CNTRY_NAME': 'United Kingdom'}
+
+.. sourcecode:: console
+
+    $ ls /tmp/foo
+    bar.cpg bar.dbf bar.prj bar.shp bar.shx
 
 Collections from archives and virtual file systems
 --------------------------------------------------

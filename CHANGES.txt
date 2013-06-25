@@ -1,9 +1,10 @@
 Changes
 =======
 
-Next
-----
+0.16 (2013-06-24)
+-----------------
 - Add support for writing layers to multi-layer files.
+- Add tests to reach 100% Python code coverage.
 
 0.15 (2013-06-06)
 -----------------
