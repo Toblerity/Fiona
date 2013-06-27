@@ -1,6 +1,10 @@
 Changes
 =======
 
+Next
+----
+- Add listlayers, open, prop_width to __init__py:__all__
+
 0.16 (2013-06-24)
 -----------------
 - Add support for writing layers to multi-layer files.

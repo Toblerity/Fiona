@@ -2,7 +2,7 @@ exclude *.txt *.py
 include CHANGES.txt CREDITS.txt LICENSE.txt VERSION.txt README.rst benchmark.py setup.py
 recursive-include docs *.rst *.txt
 recursive-include docs/data test_uk.dbf test_uk.prj test_uk.shp test_uk.shx
-recursive-exclude docs/data *.zip *.tar
+recursive-exclude docs/data *.zip *.tar *.json
 recursive-exclude docs/data/testing *
 recursive-exclude docs/_build *
 recursive-include tests *.py *.txt
