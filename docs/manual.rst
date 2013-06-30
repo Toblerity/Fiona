@@ -3,7 +3,8 @@ The Fiona User Manual
 =====================
 
 :Author: Sean Gillies, <sean.gillies@gmail.com>
-:Date: 23 March 2013
+:Version: |release|
+:Date: |today|
 :Copyright: 
   This work is licensed under a `Creative Commons Attribution 3.0
   United States License`__.
