@@ -177,8 +177,7 @@ class Collection(object):
             raise ValueError("I/O operation on closed collection")
         elif self.mode != 'r':
             raise IOError("collection not open for reading")
-        if self.iterator is None:
-            self.iterator = Iterator(self, bbox)
+        self.iterator = Iterator(self, bbox)
         return self.iterator
 
     def __iter__(self):
@@ -187,7 +186,9 @@ class Collection(object):
 
     def __next__(self):
         """Returns next record from iterator."""
-        return next(iter(self))
+        if not self.iterator:
+            iter(self)
+        return next(self.iterator)
 
     next = __next__
 

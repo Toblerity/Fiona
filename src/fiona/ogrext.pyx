@@ -1021,6 +1021,7 @@ cdef class Iterator:
         cdef void *cogr_layer = session.cogr_layer
         if cogr_layer is NULL:
             raise ValueError("Null layer")
+        ograpi.OGR_L_ResetReading(cogr_layer)
         if bbox:
             ograpi.OGR_L_SetSpatialFilterRect(
                 cogr_layer, bbox[0], bbox[1], bbox[2], bbox[3])
