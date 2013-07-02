@@ -193,6 +193,12 @@ class ReadingTest(unittest.TestCase):
         self.failUnlessEqual(f['id'], "0")
         self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
 
+    def test_re_iter_list(self):
+        f = list(self.c)[0] # Run through iterator
+        f = list(self.c)[0] # Run through a new, reset iterator
+        self.failUnlessEqual(f['id'], "0")
+        self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
+
     def test_filter_1(self):
         results = list(self.c.filter(bbox=(-15.0, 35.0, 15.0, 65.0)))
         self.failUnlessEqual(len(results), 48)
