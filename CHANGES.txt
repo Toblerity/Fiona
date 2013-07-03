@@ -1,8 +1,8 @@
 Changes
 =======
 
-Next
-----
+0.16.1 (2013-07-02)
+-------------------
 - Add listlayers, open, prop_width to __init__py:__all__.
 - Reset reading of OGR layer whenever we ask for a collection iterator (#49).
 
