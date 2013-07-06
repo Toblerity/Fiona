@@ -6,7 +6,7 @@ import logging
 import os
 import sys
 
-from six import integer_types, string_types
+from six import integer_types, string_types, text_type
 
 from fiona cimport ograpi
 from fiona import ogrinit
@@ -76,7 +76,7 @@ class FionaDateTimeType(str):
 FIELD_TYPES_MAP = {
     'int':      int,
     'float':    float,
-    'str':      str,
+    'str':      text_type,
     'date':     FionaDateType,
     'time':     FionaTimeType,
     'datetime': FionaDateTimeType

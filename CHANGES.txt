@@ -1,6 +1,10 @@
 Changes
 =======
 
+Next (2013-07-06)
+-----------------
+- Add prop_type() function.
+
 0.16.1 (2013-07-02)
 -------------------
 - Add listlayers, open, prop_width to __init__py:__all__.

@@ -62,14 +62,15 @@ Because Fiona collections are context managers, they are closed and (in
 writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
-__all__ = ['listlayers', 'open', 'prop_width']
-__version__ = "0.16.1"
+__all__ = ['listlayers', 'open', 'prop_type', 'prop_width']
+__version__ = "1.0"
 
 import os
 from six import string_types
 
 from fiona.collection import Collection, supported_drivers, vsi_path
-from fiona.ogrext import _listlayers
+from fiona.ogrext import _listlayers, FIELD_TYPES_MAP
+
 
 
 def open(
@@ -184,3 +185,15 @@ def prop_width(val):
         return int((val.split(":")[1:] or ["80"])[0])
     return None
 
+def prop_type(text):
+    """Returns a schema property's proper Python type.
+    
+    Example:
+    
+      >>> prop_type('int')
+      <class 'int'>
+      >>> prop_type('str:25')
+      <class 'str'>
+    """
+    key = text.split(':')[0]
+    return FIELD_TYPES_MAP[key]
