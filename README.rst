@@ -2,18 +2,16 @@
 Fiona
 =====
 
-Fiona is OGR's neat, nimble, no-nonsense API.
+Fiona provides minimal, uncomplicated Python interfaces to functions in OGR_,
+the best open source C/C++ library for reading and writing geographic vector
+data.
 
-Fiona provides a minimal, uncomplicated Python interface to the open source GIS
-community's most trusted geodata access library and integrates readily with
-other Python GIS packages such as pyproj_, Rtree_, and Shapely_.
-
-How minimal? Fiona can read feature records as mappings from shapefiles or
-other GIS vector formats and write mappings as records to files using the same
-formats. That's all. There aren't any feature or geometry classes. Records and
-their geometries are just data.
-
-
+Fiona focuses on reading and writing data in standard Python IO style, and
+relies upon familiar Python types and protocols such as files, dictionaries,
+mappings, and iterators instead of classes specific to OGR. It can read and
+write data using multi-layered formats and zipped virtual file systems and
+integrates readily with other Python GIS packages such as pyproj_, Rtree_, and
+Shapely_. Fiona is OGR's neat, nimble, no-nonsense API for Python programmers.
 
 For more details, see:
 
@@ -24,11 +22,11 @@ For more details, see:
 Dependencies
 ============
 
-Fiona requires Python 2.6, 2.7, or 3.3 and libgdal 1.8+. To build from a source
-distribution or repository clone you will need a C compiler and GDAL and Python
-development headers and libraries. While there are no official binary
-distributions or Windows support at this time, you can find Windows installers
-at http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#fiona.
+Fiona requires Python 2.6, 2.7, or 3.3 and libgdal (includes OGR) 1.8+. To
+build from a source distribution or repository clone you will need a C compiler
+and GDAL and Python development headers and libraries. While there are no
+official binary distributions or Windows support at this time, you can find
+Windows installers at http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#fiona.
 
 Installation
 ============
@@ -125,14 +123,14 @@ provides an index ordered list of layer names.
 
 .. sourcecode:: python
 
-    for i, layername in enumerate(fiona.listlayers('docs/data')):
+    for layername in fiona.listlayers('docs/data'):
         with fiona.open('docs/data', layer=layername) as c:
-            print(i, layername, len(c))
+            print(layername, len(c))
     
     # Output:
-    # 0 test_uk 48
+    # test_uk 48
 
-Again, the layer can be specified by its index. In this case, ``layer=0`` and
+Layer can also be specified by index. In this case, ``layer=0`` and
 ``layer='test_uk'`` specify the same layer in the data file or directory.
 
 .. sourcecode:: python
@@ -173,6 +171,8 @@ writing.
     # Polygon
     # {'FIPS_CNTRY': 'UK', 'POP_CNTRY': 60270708.0, 'CAT': 232.0, 
     #  'AREA': 244820.0, 'CNTRY_NAME': 'United Kingdom'}
+
+A view of the /tmp/foo directory will confirm the creation of the new files.
 
 .. sourcecode:: console
 
@@ -253,7 +253,7 @@ lib dirs and GDAL library on the command line::
   (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal develop
   (fiona_env)$ nosetests
 
-.. _libgdal: http://www.gdal.org
+.. _OGR: http://www.gdal.org/ogr
 .. _pyproj: http://pypi.python.org/pypi/pyproj/
 .. _Rtree: http://pypi.python.org/pypi/Rtree/
 .. _Shapely: http://pypi.python.org/pypi/Shapely/
