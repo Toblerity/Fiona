@@ -1,17 +1,17 @@
-=====
-Fiona
-=====
+=================================================================
+Fiona: OGR's neat, nimble, no-nonsense API for Python programmers
+=================================================================
 
-Fiona provides minimal, uncomplicated Python interfaces to functions in OGR_,
+**Fiona** provides uncomplicated Python interfaces to functions in OGR_,
 the best open source C/C++ library for reading and writing geographic vector
 data.
 
-Fiona focuses on reading and writing data in standard Python IO style, and
-relies upon familiar Python types and protocols such as files, dictionaries,
-mappings, and iterators instead of classes specific to OGR. It can read and
-write data using multi-layered formats and zipped virtual file systems and
-integrates readily with other Python GIS packages such as pyproj_, Rtree_, and
-Shapely_. Fiona is OGR's neat, nimble, no-nonsense API for Python programmers.
+Fiona is designed to be simple and dependable. It focuses on reading and
+writing data in standard Python IO style, and relies upon familiar Python types
+and protocols such as files, dictionaries, mappings, and iterators instead of
+classes specific to OGR. Fiona can read and write real-world data using
+multi-layered GIS formats and zipped virtual file systems and integrates
+readily with other Python GIS packages such as pyproj_, Rtree_, and Shapely_.
 
 For more details, see:
 
