@@ -27,7 +27,7 @@ class ReadAccess(unittest.TestCase):
         f1 = next(self.c)
         with fiona.open("docs/data/test_uk.shp", "r", layer="test_uk") as c2:
             f2 = next(c2)
-            self.assertEqual(repr(f1), repr(f2))
+            self.assertEqual(f1, f2)
 
 class ReadWriteAccess(unittest.TestCase):
     # To check that we'll be able to read from a file that we're
@@ -61,14 +61,14 @@ class ReadWriteAccess(unittest.TestCase):
         c2 = fiona.open("/tmp/multi_write_test.shp", "r")
         f2 = next(c2)
         del f2['id']
-        self.assertEqual(repr(self.f), repr(f2))
+        self.assertEqual(self.f, f2)
 
     def test_read_after_close(self):
         c2 = fiona.open("/tmp/multi_write_test.shp", "r")
         self.c.close()
         f2 = next(c2)
         del f2['id']
-        self.assertEqual(repr(self.f), repr(f2))
+        self.assertEqual(self.f, f2)
 
 class LayerCreation(unittest.TestCase):
     dir = '/tmp/layer_creation'
@@ -106,7 +106,7 @@ class LayerCreation(unittest.TestCase):
         c2 = fiona.open("/tmp/layer_creation/write_test.shp", "r")
         f2 = next(c2)
         del f2['id']
-        self.assertEqual(repr(self.f), repr(f2))
+        self.assertEqual(self.f, f2)
 
     def test_read_after_close(self):
         c2 = fiona.open("/tmp/layer_creation/write_test.shp", "r")

@@ -12,6 +12,7 @@ from fiona cimport ograpi
 from fiona import ogrinit
 from fiona.errors import DriverError, SchemaError, CRSError
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
+from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 
 log = logging.getLogger("Fiona")
 class NullHandler(logging.Handler):
@@ -43,10 +44,6 @@ GEOMETRY_TYPES = {
 #
 # Lists are currently unsupported in this version, but might be done as
 # arrays in a future version.
-#
-# Fiona tries to conform to RFC 3339 with respect to date and time. Its
-# 'date', 'time', and 'datetime' types are sub types of 'str'.
-#
 
 FIELD_TYPES = [
     'int',          # OFTInteger, Simple 32bit integer
@@ -62,15 +59,6 @@ FIELD_TYPES = [
     'time',         # OFTTime, Time
     'datetime',     # OFTDateTime, Date and Time
     ]
-
-class FionaDateType(str):
-    """Dates without time."""
-
-class FionaTimeType(str):
-    """Times without dates."""
-
-class FionaDateTimeType(str):
-    """Dates and times."""
 
 # Mapping of Fiona field type names to Python types.
 FIELD_TYPES_MAP = {

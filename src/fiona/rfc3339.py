@@ -10,6 +10,17 @@ import re
 
 log = logging.getLogger("Fiona")
 
+# Fiona's 'date', 'time', and 'datetime' types are sub types of 'str'.
+
+class FionaDateType(str):
+    """Dates without time."""
+
+class FionaTimeType(str):
+    """Times without dates."""
+
+class FionaDateTimeType(str):
+    """Dates and times."""
+
 pattern_date = re.compile(r"(\d\d\d\d)(-)?(\d\d)(-)?(\d\d)")
 pattern_time = re.compile(
     r"(\d\d)(:)?(\d\d)(:)?(\d\d)?(\.\d+)?(Z|([+-])?(\d\d)?(:)?(\d\d))?" )
