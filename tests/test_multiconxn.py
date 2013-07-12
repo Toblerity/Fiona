@@ -113,5 +113,5 @@ class LayerCreation(unittest.TestCase):
         self.c.close()
         f2 = next(c2)
         del f2['id']
-        self.assertEqual(repr(self.f), repr(f2))
+        self.assertEqual(self.f, f2)
 

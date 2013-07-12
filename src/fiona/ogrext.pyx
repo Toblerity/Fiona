@@ -419,7 +419,7 @@ cdef class FeatureBuilder:
             if key_c == NULL:
                 raise ValueError("Null field name reference")
             key_b = key_c
-            key = key_b.decode()
+            key = key_b.decode('utf-8')
             fieldtypename = FIELD_TYPES[ograpi.OGR_Fld_GetType(fdefn)]
             if not fieldtypename:
                 raise ValueError(
@@ -432,7 +432,7 @@ cdef class FeatureBuilder:
                 props[key] = ograpi.OGR_F_GetFieldAsInteger(feature, i)
             elif fieldtype is float:
                 props[key] = ograpi.OGR_F_GetFieldAsDouble(feature, i)
-            elif fieldtype is str:
+            elif fieldtype is text_type:
                 try:
                     val = ograpi.OGR_F_GetFieldAsString(feature, i)
                     props[key] = val.decode(encoding)
@@ -451,6 +451,7 @@ cdef class FeatureBuilder:
                     props[key] = datetime.datetime(
                         y, m, d, hh, mm, ss).isoformat()
             else:
+                log.debug("%s: None, fieldtype: %r, %r" % (key, fieldtype, fieldtype in string_types))
                 props[key] = None
 
         cdef void *cogr_geometry = ograpi.OGR_F_GetGeometryRef(feature)
@@ -573,7 +574,12 @@ cdef class Session:
     def start(self, collection):
         cdef char *path_c
         cdef char *name_c
-        path_b = collection.path.encode()
+        
+        try:
+            path_b = collection.path.encode('utf-8')
+        except UnicodeDecodeError:
+            # Presume already a UTF-8 encoded string
+            path_b = collection.path
         path_c = path_b
         
         self.cogr_ds = ograpi.OGROpen(path_c, 0, NULL)
@@ -582,7 +588,7 @@ cdef class Session:
                 "No data available at path '%s'" % collection.path)
         
         if isinstance(collection.name, string_types):
-            name_b = collection.name.encode()
+            name_b = collection.name.encode('utf-8')
             name_c = name_b
             self.cogr_layer = ograpi.OGR_DS_GetLayerByName(
                                 self.cogr_ds, name_c)
@@ -666,7 +672,7 @@ cdef class Session:
             key_b = key_c
             if not bool(key_b):
                 raise ValueError("Invalid field name ref: %s" % key)
-            key = key_b.decode()
+            key = key_b.decode('utf-8')
             val = fieldtypename
             if fieldtypename == 'float':
                 fmt = ""
@@ -767,7 +773,10 @@ cdef class WritingSession(Session):
 
         if collection.mode == 'a':
             if os.path.exists(path):
-                path_b = path.encode()
+                try:
+                    path_b = path.encode('utf-8')
+                except UnicodeDecodeError:
+                    path_b = path
                 path_c = path_b
                 self.cogr_ds = ograpi.OGROpen(path_c, 1, NULL)
                 if self.cogr_ds is NULL:
@@ -799,7 +808,10 @@ cdef class WritingSession(Session):
                 'ISO-8859-1') or locale.getpreferredencoding()).upper()
 
         elif collection.mode == 'w':
-            path_b = path.encode()
+            try:
+                path_b = path.encode('utf-8')
+            except UnicodeDecodeError:
+                path_b = path
             path_c = path_b
             driver_b = collection.driver.encode()
             driver_c = driver_b
@@ -873,7 +885,7 @@ cdef class WritingSession(Session):
                 cogr_layer = ograpi.OGR_DS_GetLayer(cogr_ds, i)
                 name_c = ograpi.OGR_L_GetName(cogr_layer)
                 name_b = name_c
-                layer_names.append(name_b.decode())
+                layer_names.append(name_b.decode('utf-8'))
 
             idx = -1
             if isinstance(collection.name, string_types):
@@ -887,7 +899,7 @@ cdef class WritingSession(Session):
                 ograpi.OGR_DS_DeleteLayer(self.cogr_ds, idx)
             
             # Create the named layer in the datasource.
-            name_b = collection.name.encode()
+            name_b = collection.name.encode('utf-8')
             name_c = name_b
             self.cogr_layer = ograpi.OGR_DS_CreateLayer(
                 self.cogr_ds, 
@@ -1042,7 +1054,10 @@ def _listlayers(path):
     cdef char *name_c
     
     # Open OGR data source.
-    path_b = path.encode()
+    try:
+        path_b = path.encode('utf-8')
+    except UnicodeDecodeError:
+        path_b = path
     path_c = path_b
     cogr_ds = ograpi.OGROpen(path_c, 0, NULL)
     if cogr_ds is NULL:
@@ -1055,7 +1070,7 @@ def _listlayers(path):
         cogr_layer = ograpi.OGR_DS_GetLayer(cogr_ds, i)
         name_c = ograpi.OGR_L_GetName(cogr_layer)
         name_b = name_c
-        layer_names.append(name_b.decode())
+        layer_names.append(name_b.decode('utf-8'))
     
     # Close up data source.
     if cogr_ds is not NULL:
