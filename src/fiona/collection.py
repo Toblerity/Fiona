@@ -166,8 +166,7 @@ class Collection(object):
         return {
             'driver': self.driver, 
             'schema': self.schema, 
-            'crs': self.crs,
-            'encoding': self.encoding }
+            'crs': self.crs }
 
     def filter(self, bbox=None):
         """Returns an iterator over records, but filtered by a test for

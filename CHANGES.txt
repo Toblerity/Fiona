@@ -4,6 +4,9 @@ Changes
 Next (2013-07-06)
 -----------------
 - Add prop_type() function.
+- Allow UTF-8 encoded paths for Python 2 (#51). For Python 3, paths must
+  always be str, never bytes.
+- Remove encoding from collection.meta, it's a file creation option only.
 
 0.16.1 (2013-07-02)
 -------------------

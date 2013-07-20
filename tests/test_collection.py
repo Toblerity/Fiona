@@ -168,7 +168,7 @@ class ReadingTest(unittest.TestCase):
     def test_meta(self):
         self.failUnlessEqual(
             sorted(self.c.meta.keys()), 
-            ['crs', 'driver', 'encoding', 'schema'])
+            ['crs', 'driver', 'schema'])
 
     def test_bounds(self):
         self.failUnlessAlmostEqual(self.c.bounds[0], -8.621389, 6)
