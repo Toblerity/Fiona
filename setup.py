@@ -46,6 +46,8 @@ with open('CHANGES.txt', 'r') as f:
 include_dirs = []
 library_dirs = []
 libraries = []
+extra_link_args = []
+
 try:
     gdal_config = "gdal-config"
     with open("gdal-config.txt", "w") as gcfg:
@@ -62,13 +64,18 @@ try:
             library_dirs.extend(item[2:].split(":"))
         elif item.startswith("-l"):
             libraries.append(item[2:])
+        else:
+            # e.g. -framework GDAL
+            extra_link_args.append(item)
+
 except Exception as e:
     log.warning("Failed to get options via gdal-config: %s", str(e))
 
 ext_options = dict(
     include_dirs=include_dirs,
     library_dirs=library_dirs,
-    libraries=libraries)
+    libraries=libraries,
+    extra_link_args=extra_link_args)
 
 # When building from a repo, Cython is required.
 if os.path.exists("MANIFEST.in"):

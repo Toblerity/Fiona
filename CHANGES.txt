@@ -7,6 +7,7 @@ Next (2013-07-06)
 - Allow UTF-8 encoded paths for Python 2 (#51). For Python 3, paths must
   always be str, never bytes.
 - Remove encoding from collection.meta, it's a file creation option only.
+- Support for linking GDAL frameworks (#54).
 
 0.16.1 (2013-07-02)
 -------------------
