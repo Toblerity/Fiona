@@ -49,14 +49,14 @@ and is less optimal in others. Fiona trades memory and speed for simplicity and
 reliability. Where OGR's Python bindings (for example) use C pointers, Fiona
 copies vector data from the data source to Python objects.  These are simpler
 and safer to use, but more memory intensive. Fiona's performance is relatively
-more slow if you only need access to a single record field – and of course
-if you just want to reproject or filter data files, nothing beats the
+more slow if you only need access to a single record field – and of course if
+you just want to reproject or filter data files, nothing beats the
 :command:`ogr2ogr` program – but Fiona's performance is much better than OGR's
 Python bindings if you want *all* fields and coordinates of a record. The
-copying is a constraint, yes, but it simplifies things.  With Fiona, you don't
-have to track references to C objects to avoid crashes, and you can work with
-vector data using familiar Python mapping accessors.  Less worry, less time
-spent reading API documentation.
+copying is a constraint, but it simplifies programs. With Fiona, you don't have
+to track references to C objects to avoid crashes, and you can work with vector
+data using familiar Python mapping accessors. Less worry, less time spent
+reading API documentation.
 
 Rules of Thumb
 --------------
@@ -230,7 +230,7 @@ Fiona's :py:class:`~fiona.collection.Collection` is like a Python
 
 .. sourcecode:: pycon
 
-  >>> c.next()
+  >>> next(c)
   {'geometry': {'type': 'Polygon', 'coordinates': ...
   >>> len(list(c))
   47
@@ -240,7 +240,7 @@ emptying it as with a Python :py:class:`file`.
 
 .. sourcecode:: pycon
 
-  >>> c.next()
+  >>> next(c)
   Traceback (most recent call last):
   ...
   StopIteration
@@ -408,7 +408,7 @@ keys of the collection's record mappings.
 
 .. sourcecode:: pycon
 
-  >>> rec = c.next()
+  >>> rec = next(c)
   >>> set(rec.keys()) - set(c.schema.keys())
   set(['id'])
   >>> set(rec['properties'].keys()) == set(c.schema['properties'].keys())
@@ -431,10 +431,10 @@ be found in a dictionary named :py:attr:`fiona.types`.
 Field Types
 -----------
 
-TODO: details. In a nutshell, the types and their names are as near to what
-you'd expect in Python (or Javascript) as possible. The 'str' vs 'unicode'
-muddle is a fact of life in Python < 3.0. Fiona records have Unicode strings,
-but their field type name is 'str'.
+In a nutshell, the types and their names are as near to what you'd expect in
+Python (or Javascript) as possible. The 'str' vs 'unicode' muddle is a fact of
+life in Python < 3.0. Fiona records have Unicode strings, but their field type
+name is 'str' (looking forward to Python 3).
 
 .. sourcecode:: pycon
 
@@ -451,7 +451,7 @@ is used in the schema of a file opened for writing, values of that property
 will be truncated at 25 characters. The default width is 80 chars, which means
 'str' and 'str:80' are more or less equivalent.
 
-Fiona provides a function to get the width of properties.
+Fiona provides a function to get the width of a property.
 
 .. sourcecode:: pycon
 
@@ -460,6 +460,26 @@ Fiona provides a function to get the width of properties.
   25
   >>> prop_width('str')
   80
+
+Another function gets the proper Python type of a property.
+
+.. sourcecode:: pycon
+
+  >>> from fiona import prop_type
+  >>> prop_type('int')
+  <type 'int'>
+  >>> prop_type('float')
+  <type 'float'>
+  >>> prop_type('str:25')
+  <type 'unicode'>
+
+The example above is for Python 2. With Python 3, the type of 'str' properties
+is different.
+
+.. sourcecode:: pycon
+
+  >>> prop_type('str:25')
+  <class 'str'>
 
 Geometry Types
 --------------
@@ -545,7 +565,7 @@ value is a string unique within the data file.
 .. sourcecode:: pycon
 
   >>> c = fiona.open('docs/data/test_uk.shp', 'r')
-  >>> rec = c.next()
+  >>> rec = next(c)
   >>> rec['id']
   '0'
 
@@ -695,7 +715,7 @@ record extracted in the example below.
 .. sourcecode:: pycon
 
   >>> with fiona.open('docs/data/test_uk.shp', 'r') as c:
-  ...     rec = c.next()
+  ...     rec = next(c)
   >>> rec['id'] = '-1'
   >>> rec['properties']['CNTRY_NAME'] = u'Gondor'
   >>> import os
@@ -839,6 +859,93 @@ If you write 3D coordinates, ones having (x, y, z) tuples, to a 2D file
 
 If you write 2D coordinates, ones having only (x, y) tuples, to a 3D file ('3D
 Point' schema geometry, for example) a default z value of 0 will be provided.
+
+
+Advanced Topics
+===============
+
+Reading Multilayer data
+-----------------------
+
+Up to this point, only simple datasets with one thematic layer or feature type
+per file have been shown and the venerable Esri Shapefile has been the primary
+example. Other GIS data formats can encode multiple layers or feature types
+within a single file or directory. Esri's `File Geodatabase
+<http://www.gdal.org/ogr/drv_filegdb.html>`__ is one example of such a format.
+A more useful example, for the purpose of this manual, is a directory
+comprising multiple shapefiles. The following three shell commands will create
+just such a two layered data source from the test data distributed with Fiona.
+
+.. sourcecode:: console
+
+  $ mkdir /tmp/data
+  $ ogr2ogr /tmp/data/ docs/data/test_uk.shp test_uk -nln foo
+  $ ogr2ogr /tmp/data/ docs/data/test_uk.shp test_uk -nln bar
+
+The layers of a data source can be listed using :func:`fiona.listlayers()`.
+
+.. sourcecode:: pycon
+
+  >>> fiona.listlayers('/tmp/data')
+  ['bar', 'foo']
+
+Unlike OGR, Fiona has no classes representing layers or data sources. To access
+the features of a layer, open a collection using the path to the data source
+and specify the layer by name using the `layer` keyword.
+
+.. sourcecode:: pycon
+
+  >>> import pprint
+  >>> datasrc_path = '/tmp/data'
+  >>> for name in fiona.listlayers(datasrc_path):
+  ...     with fiona.open(datasrc_path, layer=name) as c:
+  ...         pprint.pprint(c.schema)
+  ...
+  {'geometry': 'Polygon',
+   'properties': {'AREA': 'float:15.2',
+                  'CAT': 'float:16',
+                  'CNTRY_NAME': 'str',
+                  'FIPS_CNTRY': 'str',
+                  'POP_CNTRY': 'float:15.2'}}
+  {'geometry': 'Polygon',
+   'properties': {'AREA': 'float:15.2',
+                  'CAT': 'float:16',
+                  'CNTRY_NAME': 'str',
+                  'FIPS_CNTRY': 'str',
+                  'POP_CNTRY': 'float:15.2'}}
+
+Layers can also be specified by their index.
+
+.. sourcecode:: pycon
+
+  >>> for i, name in enumerate(fiona.listlayers(datasrc_path)):
+  ...     with fiona.open(datasrc_path, layer=i) as c:
+  ...         print(len(c))
+  ...
+  48
+  48
+
+Writing Multilayer data
+-----------------------
+
+To write a new layer.
+
+.. sourcecode:: pycon
+
+  >>> with fiona.open(datasrc_path, layer='bar') as c:
+  ...     with fiona.open(datasrc_path, 'w', layer='wah', **c.meta) as d:
+  ...         d.write(next(c))
+  ...
+  >>> fiona.listlayers(datasrc_path)
+  ['bar', 'foo', 'wah']
+
+In 'w' mode, existing layers will be overwritten if specified, just as normal
+files are overwritten by Python's :func:`open()` function.
+
+Virtual filesystems
+-------------------
+
+
 
 References
 ==========
