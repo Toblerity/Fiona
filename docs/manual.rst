@@ -22,12 +22,12 @@ The Fiona User Manual
 Introduction
 ============
 
-We make :dfn:`geographic information systems` (GIS) to help us plan, react to,
-and understand changes in our physical, political, economic, and cultural
-landscapes. A generation ago, GIS was something done only by big institutions
-like nations and cities, but it's become ubiquitous today thanks to
-accurate and inexpensive global positioning systems, commoditization of
-satellite imagery, and open source software.
+:dfn:`Geographic information systems` (GIS) help us plan, react to, and
+understand changes in our physical, political, economic, and cultural
+landscapes. A generation ago, GIS was something done only by major institutions
+like nations and cities, but it's become ubiquitous today thanks to accurate
+and inexpensive global positioning systems, commoditization of satellite
+imagery, and open source software.
 
 The kinds of data in GIS are roughly divided into :dfn:`rasters` representing
 continuous scalar fields (land surface temperature or elevation, for example)
@@ -92,7 +92,7 @@ another, adding two attributes and making sure that all polygons are facing
 "up". Orientation of polygons is significant in some applications, extruded
 polygons in Google Earth for one. No other library (like :py:mod:`Shapely`) is
 needed here, which keeps it uncomplicated. There's a :file:`test_uk` file in
-the Fiona repository that we'll use in this and other examples.
+the Fiona repository for use in this and other examples.
 
 .. sourcecode:: python
 
@@ -101,7 +101,6 @@ the Fiona repository that we'll use in this and other examples.
   import sys
   
   import fiona
-  
   
   logging.basicConfig(stream=sys.stderr, level=logging.INFO)
   
@@ -114,7 +113,6 @@ the Fiona repository that we'll use in this and other examples.
       xs.append(xs[1])
       ys.append(ys[1]) 
       return sum(xs[i]*(ys[i+1]-ys[i-1]) for i in range(1, len(coords)))/2.0
-  
   
   with fiona.open('docs/data/test_uk.shp', 'r') as source:
       
@@ -646,7 +644,7 @@ tuples, the ``type`` tells you how to interpret them.
 +-------------------+---------------------------------------------------+
 
 Fiona, like the GeoJSON format, has both Northern Hemisphere "North is up" and
-Cartesian "X-Y" biases. The values within a tuple that we denote as ``(x, y)``
+Cartesian "X-Y" biases. The values within a tuple that denoted as ``(x, y)``
 above are either (longitude E of the prime meridian, latitude N of the equator)
 or, for other projected coordinate systems, (easting, northing).
 
@@ -882,7 +880,7 @@ just such a two layered data source from the test data distributed with Fiona.
   $ ogr2ogr /tmp/data/ docs/data/test_uk.shp test_uk -nln foo
   $ ogr2ogr /tmp/data/ docs/data/test_uk.shp test_uk -nln bar
 
-The layers of a data source can be listed using :func:`fiona.listlayers()`.
+The layers of a data source can be listed using :py:func:`fiona.listlayers`.
 
 .. sourcecode:: pycon
 
@@ -914,7 +912,7 @@ and specify the layer by name using the `layer` keyword.
                   'FIPS_CNTRY': 'str',
                   'POP_CNTRY': 'float:15.2'}}
 
-Layers can also be specified by their index.
+Layers may also be specified by their index.
 
 .. sourcecode:: pycon
 
@@ -925,13 +923,26 @@ Layers can also be specified by their index.
   48
   48
 
-Writing Multilayer data
------------------------
-
-To write a new layer.
+If no layer is specified, :py:func:`fiona.open` returns an open collection using the
+first layer.
 
 .. sourcecode:: pycon
 
+  >>> with fiona.open(datasrc_path) as c:
+  ...     c.name == fiona.listlayers(datasrc_path)[0]
+  ...
+  True
+
+Writing Multilayer data
+-----------------------
+
+To write an entirely new layer to a multilayer data source, simply provide
+a unique name to the `layer` keyword argument.
+
+.. sourcecode:: pycon
+
+  >>> 'wah' not in fiona.listlayers(datasrc_path)
+  True
   >>> with fiona.open(datasrc_path, layer='bar') as c:
   ...     with fiona.open(datasrc_path, 'w', layer='wah', **c.meta) as d:
   ...         d.write(next(c))
@@ -939,13 +950,55 @@ To write a new layer.
   >>> fiona.listlayers(datasrc_path)
   ['bar', 'foo', 'wah']
 
-In 'w' mode, existing layers will be overwritten if specified, just as normal
-files are overwritten by Python's :func:`open()` function.
+In ``'w'`` mode, existing layers will be overwritten if specified, just as normal
+files are overwritten by Python's :py:func:`open` function.
+
+.. sourcode:: pycon
+
+  >>> 'wah' in fiona.listlayers(datasrc_path)
+  True
+  >>> with fiona.open(datasrc_path, layer='bar') as c:
+  ...     with fiona.open(datasrc_path, 'w', layer='wah', **c.meta) as d:
+  ...         # Overwrites the existing layer named 'wah'!
 
 Virtual filesystems
 -------------------
 
+Zip and Tar archives can be treated as virtual filesystems and collections can
+be made from paths and layers within them. In other words, Fiona lets you read
+zipped Shapefiles. For example, make a Zip archive from the shapefile
+distributed with Fiona.
 
+.. sourcecode:: console
+
+  $ zip /tmp/zed.zip docs/data/test_uk.*
+  adding: docs/data/test_uk.shp (deflated 48%)
+  adding: docs/data/test_uk.shx (deflated 37%)
+  adding: docs/data/test_uk.dbf (deflated 98%)
+  adding: docs/data/test_uk.prj (deflated 15%)
+
+The `vfs` keyword parameter for :py:func:`fiona.listlayers` and
+:py:func:`fiona.open` may be an Apache Commons VFS style string beginning with
+"zip://" or "tar://" and followed by an absolute or relative path to the
+archive file. When this parameter is used, the first argument to must be an
+absolute path within that archive. The layers in that Zip archive are:
+
+.. sourcecode:: pycon
+
+  >>> import fiona
+  >>> fiona.listlayers('/docs/data', vfs='zip:///tmp/zed.zip')
+  ['test_uk']
+
+The single shapefile may also be accessed like so:
+
+.. sourcecode:: pycon
+
+  >>> with fiona.open(
+  ...         '/docs/data/test_uk.shp', 
+  ...         vfs='zip:///tmp/zed.zip') as c:
+  ...     print(len(c))
+  ...
+  48
 
 References
 ==========

@@ -76,27 +76,27 @@ class ReadingTest(unittest.TestCase):
     def test_open_repr(self):
         self.failUnlessEqual(
             repr(self.c),
-            ("<open Collection 'docs/data/test_uk.shp:0', mode 'r' "
+            ("<open Collection 'docs/data/test_uk.shp:test_uk', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_closed_repr(self):
         self.c.close()
         self.failUnlessEqual(
             repr(self.c),
-            ("<closed Collection 'docs/data/test_uk.shp:0', mode 'r' "
+            ("<closed Collection 'docs/data/test_uk.shp:test_uk', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_path(self):
-        self.failUnlessEqual(self.c.path, "docs/data/test_uk.shp")
+        self.failUnlessEqual(self.c.path, 'docs/data/test_uk.shp')
 
     def test_name(self):
-        self.failUnlessEqual(self.c.name, 0)
+        self.failUnlessEqual(self.c.name, 'test_uk')
     
     def test_mode(self):
-        self.failUnlessEqual(self.c.mode, "r")
+        self.failUnlessEqual(self.c.mode, 'r')
 
     def test_collection(self):
-        self.failUnlessEqual(self.c.encoding, "iso-8859-1")
+        self.failUnlessEqual(self.c.encoding, 'iso-8859-1')
 
     def test_iter(self):
         self.failUnless(iter(self.c))
@@ -178,7 +178,7 @@ class ReadingTest(unittest.TestCase):
 
     def test_context(self):
         with fiona.open("docs/data/test_uk.shp", "r") as c:
-            self.failUnlessEqual(c.name, 0)
+            self.failUnlessEqual(c.name, 'test_uk')
             self.failUnlessEqual(len(c), 48)
         self.failUnlessEqual(c.closed, True)
 

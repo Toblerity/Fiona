@@ -595,6 +595,9 @@ cdef class Session:
         elif isinstance(collection.name, int):
             self.cogr_layer = ograpi.OGR_DS_GetLayer(
                                 self.cogr_ds, collection.name)
+            name_c = ograpi.OGR_L_GetName(self.cogr_layer)
+            name_b = name_c
+            collection.name = name_b.decode('utf-8')
 
         if self.cogr_layer is NULL:
             raise ValueError("Null layer: " + repr(collection.name))
