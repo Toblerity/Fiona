@@ -285,7 +285,7 @@ Closing Files
 -------------
 
 A :py:class:`~fiona.collection.Collection` involves external resources. There's
-no guarantee that these will be released unless you explictly
+no guarantee that these will be released unless you explicitly
 :py:meth:`~fiona.collection.Collection.close` the object or use
 a :keyword:`with` statement. When a :py:class:`~fiona.collection.Collection` is
 a context guard, it is closed no matter what happens within the block.
@@ -966,7 +966,7 @@ Virtual filesystems
 
 Zip and Tar archives can be treated as virtual filesystems and collections can
 be made from paths and layers within them. In other words, Fiona lets you read
-zipped Shapefiles. For example, make a Zip archive from the shapefile
+zipped shapefiles. For example, make a Zip archive from the shapefile
 distributed with Fiona.
 
 .. sourcecode:: console

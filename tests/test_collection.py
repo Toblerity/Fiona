@@ -416,15 +416,15 @@ class ShapefileFieldWidthTest(unittest.TestCase):
     def test_text(self):
         with fiona.open("/tmp/textfield.shp", "w",
                 driver="ESRI Shapefile",
-                schema={'geometry': 'Point', 'properties': {'text': 'str:255'}}
+                schema={'geometry': 'Point', 'properties': {'text': 'str:254'}}
                 ) as c:
             c.write(
                 {'geometry': {'type': 'Point', 'coordinates': (0.0, 45.0)},
-                 'properties': { 'text': 'a' * 255 }})
+                 'properties': { 'text': 'a' * 254 }})
         c = fiona.open("/tmp/textfield.shp", "r")
-        self.failUnlessEqual(c.schema['properties']['text'], 'str:255')
+        self.failUnlessEqual(c.schema['properties']['text'], 'str:254')
         f = next(iter(c))
-        self.failUnlessEqual(f['properties']['text'], 'a' * 255)
+        self.failUnlessEqual(f['properties']['text'], 'a' * 254)
         c.close()
 
 
