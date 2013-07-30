@@ -13,7 +13,8 @@ The Fiona User Manual
 
 :Abstract:
   Fiona is OGR's neat, nimble, no-nonsense API. This document explains how to
-  use the Fiona package for reading and writing geospatial data files.
+  use the Fiona package for reading and writing geospatial data files. See the
+  `README <README.html>`__ for installation and quick start instructions.
 
 .. sectnum::
 
@@ -223,6 +224,8 @@ Reading a GIS vector file begins by opening it in mode ``'r'`` using Fiona's
    :py:func:`fiona.collection` is deprecated, but aliased to 
    :py:func:`fiona.open` in version 0.9.
 
+Mode ``'r'`` is the default and will be omitted in following examples.
+
 Fiona's :py:class:`~fiona.collection.Collection` is like a Python
 :py:class:`file`, but is iterable for records rather than lines.
 
@@ -250,7 +253,7 @@ collection to get back to the beginning.
 
 .. sourcecode:: pycon
 
-  >>> c = fiona.open('docs/data/test_uk.shp', 'r')
+  >>> c = fiona.open('docs/data/test_uk.shp')
   >>> len(list(c))
   48
 
@@ -264,36 +267,19 @@ collection to get back to the beginning.
    
    New in version 0.9.1.
 
-Filtering
----------
-
-With some vector data formats a spatial index accompanies the data file,
-allowing efficient bounding box searches. A collection's
-:py:meth:`~fiona.collection.Collection.filter` method returns an iterator over
-records that intersect a given ``(minx, miny, maxx, maxy)`` bounding box. The
-collection's own coordinate reference system (see below) is used to interpret
-the box's values.
-
-.. sourcecode:: pycon
-
-  >>> c = fiona.open('docs/data/test_uk.shp', 'r')
-  >>> hits = c.filter(bbox=(-5.0, 55.0, 0.0, 60.0))
-  >>> len(list(hits))
-  7
-
 Closing Files
 -------------
 
 A :py:class:`~fiona.collection.Collection` involves external resources. There's
 no guarantee that these will be released unless you explicitly
 :py:meth:`~fiona.collection.Collection.close` the object or use
-a :keyword:`with` statement. When a :py:class:`~fiona.collection.Collection` is
-a context guard, it is closed no matter what happens within the block.
+a :py:keyword:`with` statement. When a :py:class:`~fiona.collection.Collection`
+is a context guard, it is closed no matter what happens within the block.
 
 .. sourcecode:: pycon
 
   >>> try:
-  ...     with fiona.open('docs/data/test_uk.shp', 'r') as c:
+  ...     with fiona.open('docs/data/test_uk.shp') as c:
   ...         print len(list(c))
   ...         assert True is False
   ... except:
@@ -325,7 +311,7 @@ a :py:class:`~fiona.collection.Collection` has a read-only
 
 .. sourcecode:: pycon
 
-  >>> c = fiona.open('docs/data/test_uk.shp', 'r')
+  >>> c = fiona.open('docs/data/test_uk.shp')
   >>> c.driver
   'ESRI Shapefile'
 
@@ -562,7 +548,7 @@ value is a string unique within the data file.
 
 .. sourcecode:: pycon
 
-  >>> c = fiona.open('docs/data/test_uk.shp', 'r')
+  >>> c = fiona.open('docs/data/test_uk.shp')
   >>> rec = next(c)
   >>> rec['id']
   '0'
@@ -712,7 +698,7 @@ record extracted in the example below.
 
 .. sourcecode:: pycon
 
-  >>> with fiona.open('docs/data/test_uk.shp', 'r') as c:
+  >>> with fiona.open('docs/data/test_uk.shp') as c:
   ...     rec = next(c)
   >>> rec['id'] = '-1'
   >>> rec['properties']['CNTRY_NAME'] = u'Gondor'
@@ -803,7 +789,7 @@ Copy the parameters of our demo file.
 
 .. sourcecode:: pycon
 
-  >>> with fiona.open('docs/data/test_uk.shp', 'r') as source:
+  >>> with fiona.open('docs/data/test_uk.shp') as source:
   ...     source_driver = source.driver
   ...     source_crs = source.crs
   ...     source_schema = source.schema
@@ -846,7 +832,7 @@ a file's meta properties even easier.
 
 .. sourcecode:: pycon
 
-  >>> source = fiona.open('docs/data/test_uk.shp', 'r')
+  >>> source = fiona.open('docs/data/test_uk.shp')
   >>> sink = fiona.open('/tmp/foo.shp', 'w', **source.meta)
 
 Coordinates and Geometry Types
@@ -861,6 +847,37 @@ Point' schema geometry, for example) a default z value of 0 will be provided.
 
 Advanced Topics
 ===============
+
+Filtering
+---------
+
+With some vector data formats a spatial index accompanies the data file,
+allowing efficient bounding box searches. A collection's
+:py:meth:`~fiona.collection.Collection.filter` method returns an iterator over
+records that intersect a given ``(minx, miny, maxx, maxy)`` bounding box. The
+collection's own coordinate reference system (see below) is used to interpret
+the box's values.
+
+.. sourcecode:: pycon
+
+  >>> c = fiona.open('docs/data/test_uk.shp')
+  >>> hits = c.filter(bbox=(-5.0, 55.0, 0.0, 60.0))
+  >>> len(list(hits))
+  7
+
+To filter features by property values, use Python's builtin :py:func:`filter` and
+:py:keyword:`lambda` or your own filter function that takes a single feature
+record and returns ``True`` or ``False``.
+
+.. sourcecode:: pycon
+
+  >>> def pass_positive_area(rec):
+  ...     return rec['properties'].get('AREA', 0.0) > 0.0
+  ...
+  >>> c = fiona.open('docs/data/test_uk.shp')
+  >>> hits = filter(pass_positive_area, c)
+  >>> len(hits)
+  48
 
 Reading Multilayer data
 -----------------------
@@ -880,7 +897,8 @@ just such a two layered data source from the test data distributed with Fiona.
   $ ogr2ogr /tmp/data/ docs/data/test_uk.shp test_uk -nln foo
   $ ogr2ogr /tmp/data/ docs/data/test_uk.shp test_uk -nln bar
 
-The layers of a data source can be listed using :py:func:`fiona.listlayers`.
+The layers of a data source can be listed using :py:func:`fiona.listlayers`. In
+the shapefile format case, layer names match base names of the files.
 
 .. sourcecode:: pycon
 
@@ -933,6 +951,20 @@ first layer.
   ...
   True
 
+The most general way to open a shapefile for reading, using all of the
+parameters of :py:func:`fiona.open`, is to treat it as a data source with
+a named layer.
+
+.. sourcecode:: pycon
+
+  >>> fiona.open('docs/data/test_uk.shp', 'r', layer='test_uk')
+
+In practice, it is fine to rely on the implicit first layer and default ``'r'`` mode and open a shapefile like this:
+
+.. sourcecode:: pycon
+
+  >>> fiona.open('docs/data/test_uk.shp')
+
 Writing Multilayer data
 -----------------------
 
@@ -953,7 +985,7 @@ a unique name to the `layer` keyword argument.
 In ``'w'`` mode, existing layers will be overwritten if specified, just as normal
 files are overwritten by Python's :py:func:`open` function.
 
-.. sourcode:: pycon
+.. sourcecode:: pycon
 
   >>> 'wah' in fiona.listlayers(datasrc_path)
   True
@@ -999,6 +1031,57 @@ The single shapefile may also be accessed like so:
   ...     print(len(c))
   ...
   48
+
+Dumpgj
+======
+
+Fiona installs a script named ``dumpgj``. It converts files to GeoJSON with
+JSON-LD context as an option and is intended to be an upgrade to "ogr2ogr -f
+GeoJSON".
+
+.. sourcecode:: console
+
+  $ dumpgj --help
+  usage: dumpgj [-h] [-d] [-n N] [--compact] [--encoding ENC]
+                [--record-buffered] [--ignore-errors] [--use-ld-context]
+                [--add-ld-context-item TERM=URI]
+                infile [outfile]
+  
+  Serialize a file's records or description to GeoJSON
+  
+  positional arguments:
+    infile                input file name
+    outfile               output file name, defaults to stdout if omitted
+  
+  optional arguments:
+    -h, --help            show this help message and exit
+    -d, --description     serialize file's data description (schema) only
+    -n N, --indent N      indentation level in N number of chars
+    --compact             use compact separators (',', ':')
+    --encoding ENC        Specify encoding of the input file
+    --record-buffered     Economical buffering of writes at record, not
+                          collection (default), level
+    --ignore-errors       log errors but do not stop serialization
+    --use-ld-context      add a JSON-LD context to JSON output
+    --add-ld-context-item TERM=URI
+                          map a term to a URI and add it to the output's JSON LD
+                          context
+
+Final Notes
+===========
+
+This manual is a work in progress and will grow and improve with Fiona.
+Questions and suggestions are very welcome. Please feel free to use the `issue
+tracker <https://github.com/Toblerity/Fiona/issues>`__ or email the author
+directly.
+
+Do see the `README <README.html>`__ for installation instructions and
+information about supported versions of Python and other software dependencies.
+
+Fiona would not be possible without the `contributions of other developers
+<README.html#credits>`__, especially Frank Warmerdam and Even Roualt, the
+developers of GDAL/OGR; and Mike Weisman, who saved Fiona from neglect and
+obscurity.
 
 References
 ==========

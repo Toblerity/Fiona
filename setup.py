@@ -99,8 +99,11 @@ if sys.version_info < (2, 7):
     requirements.append('argparse')
 
 setup(
+    metadata_version='1.2',
     name='Fiona',
     version=version,
+    requires_python = '>=2.6',
+    requires_external = 'GDAL (>=1.8)',
     description="Fiona reads and writes spatial data files",
     license='BSD',
     keywords='gis vector feature data',
@@ -118,12 +121,12 @@ setup(
     test_suite='nose.collector',
     ext_modules=ext_modules,
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
-        'Programming Language :: Python',
+        'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 3',
         'Topic :: Scientific/Engineering :: GIS',
     ],

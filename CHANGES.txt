@@ -1,7 +1,7 @@
 Changes
 =======
 
-Next (2013-07-06)
+1.0 (2013-07-30)
 -----------------
 - Add prop_type() function.
 - Allow UTF-8 encoded paths for Python 2 (#51). For Python 3, paths must

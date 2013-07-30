@@ -22,11 +22,20 @@ For more details, see:
 Dependencies
 ============
 
-Fiona requires Python 2.6, 2.7, or 3.3 and libgdal (includes OGR) 1.8+. To
-build from a source distribution or repository clone you will need a C compiler
-and GDAL and Python development headers and libraries. While there are no
-official binary distributions or Windows support at this time, you can find
-Windows installers at http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#fiona.
+Fiona requires Python 2.6, 2.7, or 3.3 and GDAL/OGR 1.8+. To build from
+a source distribution or repository copy you will need a C compiler and GDAL
+and Python development headers and libraries (libgdal1-dev for Debian/Ubuntu,
+gdal-dev for CentOS/Fedora).
+
+The popular `Kyngchaos GDAL frameworks
+<http://www.kyngchaos.com/software/frameworks#gdal_complete>`__ will satisfy
+the dependency for OS X. Fiona's author uses Homebrew (``brew install gdal``)
+on OS X.
+
+While there are no official binary distributions or Windows support at this
+time, you can find Windows installers at
+http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#fiona.
+
 
 Installation
 ============
@@ -84,7 +93,7 @@ file, change their geometry attributes, and write them to a new data file.
   import fiona
 
   # Open a file for reading. We'll call this the "source."
-  with fiona.open('docs/data/test_uk.shp', 'r') as source:
+  with fiona.open('docs/data/test_uk.shp') as source:
   
       # The file we'll write to, the "sink", must be initialized with a
       # coordinate system, a format driver name, and a record schema.
