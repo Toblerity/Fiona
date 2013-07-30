@@ -7,9 +7,14 @@ Fiona is written by:
 
 With contributions by:
 
+* Stefano Costa (https://github.com/steko)
+* Ludovic Delauné (https://github.com/ldgeo)
 * Frédéric Junod (https://github.com/fredj)
+* lordi (https://github.com/lordi)
 * Ariel Núñez (https://github.com/ingenieroariel)
+* Oliver Tonnhofer (https://github.com/olt)
 * Michael Weisman (https://github.com/mweisman)
+* Andy Wilson (https://github.com/wilsaj)
 
 Fiona would not be possible without the great work of Frank Warmerdam and other
 GDAL/OGR developers.
