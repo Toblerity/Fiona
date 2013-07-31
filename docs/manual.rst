@@ -1079,7 +1079,7 @@ Do see the `README <README.html>`__ for installation instructions and
 information about supported versions of Python and other software dependencies.
 
 Fiona would not be possible without the `contributions of other developers
-<README.html#credits>`__, especially Frank Warmerdam and Even Roualt, the
+<README.html#credits>`__, especially Frank Warmerdam and Even Rouault, the
 developers of GDAL/OGR; and Mike Weisman, who saved Fiona from neglect and
 obscurity.
 
