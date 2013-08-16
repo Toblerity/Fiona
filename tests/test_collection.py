@@ -226,7 +226,7 @@ class GenericWritingTest(unittest.TestCase):
     def setUp(self):
         schema = {
             'geometry': 'Point', 
-            'properties': {'label': 'str', u'verit\xe9': 'int'} }
+            'properties': [('label', 'str'), (u'verit\xe9', 'int')] }
         self.c = fiona.open(
                 "/tmp/test-no-iter.shp", 
                 "w", 
@@ -255,7 +255,7 @@ class PointWritingTest(unittest.TestCase):
             driver="ESRI Shapefile",
             schema={
                 'geometry': 'Point', 
-                'properties': {'title': 'str', 'date': 'date'}},
+                'properties': [('title', 'str'), ('date', 'date')]},
             crs={'init': "epsg:4326", 'no_defs': True},
             encoding='utf-8')
 
@@ -309,12 +309,12 @@ class LineWritingTest(unittest.TestCase):
             driver="ESRI Shapefile",
             schema={
                 'geometry': 'LineString', 
-                'properties': {'title': 'str', 'date': 'date'}},
+                'properties': [('title', 'str'), ('date', 'date')]},
             crs={'init': "epsg:4326", 'no_defs': True})
 
     def tearDown(self):
         self.sink.close()
-
+    
     def test_write_one(self):
         self.failUnlessEqual(len(self.sink), 0)
         self.failUnlessEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))

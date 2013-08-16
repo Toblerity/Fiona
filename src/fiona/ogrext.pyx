@@ -11,6 +11,7 @@ from six import integer_types, string_types, text_type
 from fiona cimport ograpi
 from fiona import ogrinit
 from fiona.errors import DriverError, SchemaError, CRSError
+from fiona.odict import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 
@@ -410,7 +411,7 @@ cdef class FeatureBuilder:
         cdef int tz = 0
         cdef int retval
         cdef char *key_c
-        props = {}
+        props = OrderedDict()
         for i in range(ograpi.OGR_F_GetFieldCount(feature)):
             fdefn = ograpi.OGR_F_GetFieldDefnRef(feature, i)
             if fdefn is NULL:
@@ -704,7 +705,8 @@ cdef class Session:
         cdef unsigned int geom_type = ograpi.OGR_FD_GetGeomType(
             cogr_featuredefn)
         return {
-            'properties': dict(props), 'geometry': GEOMETRY_TYPES[geom_type]}
+            'properties': OrderedDict(props), 
+            'geometry': GEOMETRY_TYPES[geom_type]}
 
     def get_crs(self):
         cdef char *proj_c = NULL
@@ -919,7 +921,8 @@ cdef class WritingSession(Session):
                 raise ValueError("Null layer")
             log.debug("Created layer")
             
-            # Next, make a layer definition from the given schema.
+            # Next, make a layer definition from the given schema properties,
+            # which are an ordered dict since Fiona 1.0.1.
             for key, value in collection.schema['properties'].items():
                 log.debug("Creating field: %s %s", key, value)
                 

@@ -130,6 +130,7 @@ def main():
         with fiona.open(args.infile) as source:
 
             meta = source.meta.copy()
+            meta['fields'] = source.meta['schema']['properties'].items()
 
             if args.description:
                 meta.update(name=args.infile)

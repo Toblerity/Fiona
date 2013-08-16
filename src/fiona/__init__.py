@@ -69,8 +69,8 @@ import os
 from six import string_types
 
 from fiona.collection import Collection, supported_drivers, vsi_path
+from fiona.odict import OrderedDict
 from fiona.ogrext import _listlayers, FIELD_TYPES_MAP
-
 
 
 def open(
@@ -123,8 +123,14 @@ def open(
         c = Collection(path, mode, 
                 encoding=encoding, layer=layer, vsi=vsi, archive=archive)
     elif mode == 'w':
+        if schema:
+            # Make an ordered dict of schema properties.
+            this_schema = schema.copy()
+            this_schema['properties'] = OrderedDict(schema['properties'])
+        else:
+            this_schema = None
         c = Collection(path, mode, 
-                crs=crs, driver=driver, schema=schema, 
+                crs=crs, driver=driver, schema=this_schema, 
                 encoding=encoding, layer=layer, vsi=vsi, archive=archive)
     else:
         raise ValueError(
