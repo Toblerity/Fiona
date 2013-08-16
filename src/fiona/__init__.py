@@ -63,7 +63,7 @@ writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
 __all__ = ['listlayers', 'open', 'prop_type', 'prop_width']
-__version__ = "1.0"
+__version__ = "1.0.1"
 
 import os
 from six import string_types
@@ -90,27 +90,33 @@ def open(
     OGR docs or ``ogr2ogr --help`` on the command line) and a schema
     mapping such as:
     
-      {'geometry': 'Point', 'properties': { 'class': 'int', 'label':
-      'str', 'value': 'float'}}
+      {'geometry': 'Point',
+       'properties': [('class', 'int'), ('label', 'str'), 
+                      ('value', 'float')]}
     
-    must be provided. A coordinate reference system for collections in
-    write mode can be defined by the ``crs`` parameter. It takes Proj4
-    style mappings like
+    must be provided. If a particular ordering of properties ("fields"
+    in GIS parlance) in the written file is desired, a list of (key,
+    value) pairs as above or an ordered dict is required. If no ordering
+    is needed, a standard dict will suffice.
+    
+    A coordinate reference system for collections in write mode can be
+    defined by the ``crs`` parameter. It takes Proj4 style mappings like
     
       {'proj': 'longlat', 'ellps': 'WGS84', 'datum': 'WGS84', 
        'no_defs': True}
     
     The drivers used by Fiona will try to detect the encoding of data
-    files. If they fail, you may provide the proper ``encoding``, such as
-    'Windows-1252' for the Natural Earth datasets.
+    files. If they fail, you may provide the proper ``encoding``, such
+    as 'Windows-1252' for the Natural Earth datasets.
     
     When the provided path is to a file containing multiple named layers
     of data, a layer can be singled out by ``layer``.
     
     A virtual filesystem can be specified. The ``vfs`` parameter may be
     an Apache Commons VFS style string beginning with "zip://" or
-    "tar://"". In this case, the ``path`` must be an absolute path within
-    that container.
+    "tar://"". In this case, the ``path`` must be an absolute path
+    within that container.
+
     """
     # Parse the vfs into a vsi and an archive path.
     path, vsi, archive = parse_paths(path, vfs)

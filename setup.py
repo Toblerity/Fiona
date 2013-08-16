@@ -97,6 +97,7 @@ else:
 requirements = ['six']
 if sys.version_info < (2, 7):
     requirements.append('argparse')
+    requirements.append('ordereddict')
 
 setup(
     metadata_version='1.2',

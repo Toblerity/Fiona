@@ -148,7 +148,12 @@ class Collection(object):
 
     @property 
     def schema(self):
-        """Returns a mapping describing the data schema."""
+        """Returns a mapping describing the data schema.
+        
+        The mapping has 'geometry' and 'properties' items. The former is a
+        string such as 'Point' and the latter is an ordered mapping that
+        follows the order of fields in the data file.
+        """
         if not self._schema and self.mode in ("a", "r") and self.session:
             self._schema = self.session.get_schema()
         return self._schema

@@ -13,8 +13,9 @@ The Fiona User Manual
 
 :Abstract:
   Fiona is OGR's neat, nimble, no-nonsense API. This document explains how to
-  use the Fiona package for reading and writing geospatial data files. See the
-  `README <README.html>`__ for installation and quick start instructions.
+  use the Fiona package for reading and writing geospatial data files. Python
+  3 is used in examples. See the `README <README.html>`__ for installation and
+  quick start instructions.
 
 .. sectnum::
 
@@ -215,7 +216,7 @@ Reading a GIS vector file begins by opening it in mode ``'r'`` using Fiona's
   >>> import fiona
   >>> c = fiona.open('docs/data/test_uk.shp', 'r')
   >>> c
-  <open Collection 'docs/data/test_uk.shp:test_uk', mode 'r' at 0x3763d0>
+  <open Collection 'docs/data/test_uk.shp:test_uk', mode 'r' at 0x...>
   >>> c.closed
   False
 
@@ -234,7 +235,7 @@ Fiona's :py:class:`~fiona.collection.Collection` is like a Python
   >>> next(c)
   {'geometry': {'type': 'Polygon', 'coordinates': ...
   >>> len(list(c))
-  47
+  48
 
 Note that :py:func:`list` iterates over the entire collection, effectively
 emptying it as with a Python :py:class:`file`.
@@ -280,10 +281,10 @@ is a context guard, it is closed no matter what happens within the block.
 
   >>> try:
   ...     with fiona.open('docs/data/test_uk.shp') as c:
-  ...         print len(list(c))
+  ...         print(len(list(c)))
   ...         assert True is False
   ... except:
-  ...     print c.closed
+  ...     print(c.closed)
   ...     raise
   ... 
   48
@@ -331,7 +332,7 @@ mappings. :py:func:`~fiona.crs.to_string` converts mappings to PROJ.4 strings:
 .. sourcecode:: pycon
 
   >>> from fiona.crs import to_string
-  >>> print to_string(c.crs)
+  >>> print(to_string(c.crs))
   +datum=WGS84 +ellps=WGS84 +no_defs +proj=longlat
 
 :py:func:`~fiona.crs.from_string` does the inverse.
@@ -365,23 +366,25 @@ collection's records is obtained via a read-only
 .. sourcecode:: pycon
 
   >>> c.bounds
-  (-8.6213890000000006, 49.911659, 1.749444, 60.844444000000003)
+  (-8.621389, 49.911659, 1.749444, 60.844444)
 
 Finally, the schema of its record type (a vector file has a single type of
 record, remember) is accessed via a read-only
-:py:attr:`~fiona.collection.Collection.schema` attribute.
+:py:attr:`~fiona.collection.Collection.schema` attribute. It has 'geometry'
+and 'properties' items. The former is a string and the latter is an ordered
+dict with items having the same order as the fields in the data file.
 
 .. sourcecode:: pycon
 
   >>> import pprint
   >>> pprint.pprint(c.schema)
   {'geometry': 'Polygon',
-   'properties': {'AREA': 'float',
-                  'CAT': 'float',
-                  'CNTRY_NAME': 'str',
+   'properties': {'CAT': 'float:16',
                   'FIPS_CNTRY': 'str',
-                  'POP_CNTRY': 'float'}}
-
+                  'CNTRY_NAME': 'str',
+                  'AREA': 'float:15.2',
+                  'POP_CNTRY': 'float:15.2'}}
+  
 Keeping Schemas Simple
 ----------------------
 
@@ -394,23 +397,23 @@ keys of the collection's record mappings.
 
   >>> rec = next(c)
   >>> set(rec.keys()) - set(c.schema.keys())
-  set(['id'])
+  {'id'}
   >>> set(rec['properties'].keys()) == set(c.schema['properties'].keys())
   True
 
 The values of the schema mapping are either additional mappings or field type
 names like 'Polygon', 'float', and 'str'. The corresponding Python types can
-be found in a dictionary named :py:attr:`fiona.types`.
+be found in a dictionary named :py:attr:`fiona.FIELD_TYPES_MAP`.
 
 .. sourcecode:: pycon
 
-  >>> pprint.pprint(fiona.types)
-  {'date': <class 'fiona.ogrext.FionaDateType'>,
-   'datetime': <class 'fiona.ogrext.FionaDateTimeType'>,
-   'float': <type 'float'>,
-   'int': <type 'int'>,
-   'str': <type 'unicode'>,
-   'time': <class 'fiona.ogrext.FionaTimeType'>}
+  >>> pprint.pprint(fiona.FIELD_TYPES_MAP)
+  {'date': <class 'fiona.rfc3339.FionaDateType'>,
+   'datetime': <class 'fiona.rfc3339.FionaDateTimeType'>,
+   'float': <class 'float'>,
+   'int': <class 'int'>,
+   'str': <class 'str'>,
+   'time': <class 'fiona.rfc3339.FionaTimeType'>}
 
 Field Types
 -----------
@@ -423,11 +426,11 @@ name is 'str' (looking forward to Python 3).
 .. sourcecode:: pycon
 
   >>> type(rec['properties']['CNTRY_NAME'])
-  <type 'unicode'>
+  <class 'str'>
   >>> c.schema['properties']['CNTRY_NAME']
   'str'
-  >>> fiona.types[c.schema['properties']['CNTRY_NAME']]
-  <type 'unicode'>
+  >>> fiona.FIELD_TYPES_MAP[c.schema['properties']['CNTRY_NAME']]
+  <class 'str'>
 
 String type fields may also indicate their maximum width. A value of 'str:25'
 indicates that all values will be no longer than 25 characters. If this value
@@ -455,15 +458,15 @@ Another function gets the proper Python type of a property.
   >>> prop_type('float')
   <type 'float'>
   >>> prop_type('str:25')
-  <type 'unicode'>
+  <class 'str'>
 
-The example above is for Python 2. With Python 3, the type of 'str' properties
-is different.
+The example above is for Python 3. With Python 2, the type of 'str' properties
+is 'unicode'.
 
 .. sourcecode:: pycon
 
   >>> prop_type('str:25')
-  <class 'str'>
+  <class 'unicode'>
 
 Geometry Types
 --------------
@@ -508,25 +511,25 @@ of type :py:class:`int` and :py:class:`float`, for example, not strings.
 .. sourcecode:: pycon
 
   >>> pprint.pprint(rec)
-  {'geometry': {'coordinates': [[(-4.6636110000000004, 51.158332999999999),
-                                 (-4.669168, 51.159438999999999),
-                                 (-4.6733339999999997, 51.161385000000003),
-                                 (-4.6744450000000004, 51.165275999999999),
-                                 (-4.6713899999999997, 51.185271999999998),
-                                 (-4.6694449999999996, 51.193053999999997),
-                                 (-4.6655559999999996, 51.195),
-                                 (-4.6588900000000004, 51.195),
-                                 (-4.6563889999999999, 51.192214999999997),
-                                 (-4.6463890000000001, 51.164444000000003),
-                                 (-4.6469449999999997, 51.160828000000002),
-                                 (-4.6516679999999999, 51.159438999999999),
-                                 (-4.6636110000000004, 51.158332999999999)]],
+  {'geometry': {'coordinates': [[(-4.663611, 51.158333),
+                                 (-4.669168, 51.159439),
+                                 (-4.673334, 51.161385),
+                                 (-4.674445, 51.165276),
+                                 (-4.67139, 51.185272),
+                                 (-4.669445, 51.193054),
+                                 (-4.665556, 51.195),
+                                 (-4.65889, 51.195),
+                                 (-4.656389, 51.192215),
+                                 (-4.646389, 51.164444),
+                                 (-4.646945, 51.160828),
+                                 (-4.651668, 51.159439),
+                                 (-4.663611, 51.158333)]],
                 'type': 'Polygon'},
    'id': '1',
-   'properties': {'AREA': 244820.0,
-                  'CAT': 232.0,
-                  'CNTRY_NAME': u'United Kingdom',
-                  'FIPS_CNTRY': u'UK',
+   'properties': {'CAT': 232.0,
+                  'FIPS_CNTRY': 'UK',
+                  'CNTRY_NAME': 'United Kingdom',
+                  'AREA': 244820.0,
                   'POP_CNTRY': 60270708.0}}
 
 The record data has no references to the
@@ -561,17 +564,18 @@ value is a string unique within the data file.
 Record Properties
 -----------------
 
-A record has a ``properties`` key. Its corresponding value is a mapping. The
-keys of the properties mapping are the same as the keys of the properties
-mapping in the schema of the collection the record comes from (see above). 
+A record has a ``properties`` key. Its corresponding value is a mapping: an
+ordered dict to be precise. The keys of the properties mapping are the same as
+the keys of the properties mapping in the schema of the collection the record
+comes from (see above).
 
 .. sourcecode:: pycon
 
   >>> pprint.pprint(rec['properties'])
-  {'AREA': 244820.0,
-   'CAT': 232.0,
-   'CNTRY_NAME': u'United Kingdom',
-   'FIPS_CNTRY': u'UK',
+  {'CAT': 232.0,
+   'FIPS_CNTRY': 'UK',
+   'CNTRY_NAME': 'United Kingdom',
+   'AREA': 244820.0,
    'POP_CNTRY': 60270708.0}
 
 Record Geometry
@@ -583,31 +587,31 @@ A record has a ``geometry`` key. Its corresponding value is a mapping with
 .. sourcecode:: pycon
 
   >>> pprint.pprint(rec['geometry'])
-  {'coordinates': [[(0.89916700000000005, 51.357216000000001),
-                    (0.88527800000000001, 51.358330000000002),
-                    (0.78749999999999998, 51.369438000000002),
-                    (0.781111, 51.370552000000004),
-                    (0.76611099999999999, 51.375832000000003),
-                    (0.75944400000000001, 51.380828999999999),
-                    (0.745278, 51.394440000000003),
-                    (0.74083299999999996, 51.400275999999998),
-                    (0.73499999999999999, 51.408332999999999),
-                    (0.74055599999999999, 51.429718000000001),
-                    (0.74888900000000003, 51.443604000000001),
-                    (0.76027800000000001, 51.444716999999997),
-                    (0.79111100000000001, 51.439995000000003),
-                    (0.89222199999999996, 51.421387000000003),
-                    (0.90416700000000005, 51.418883999999998),
-                    (0.90888899999999995, 51.416938999999999),
-                    (0.93055500000000002, 51.398887999999999),
-                    (0.93666700000000003, 51.393608),
-                    (0.94388899999999998, 51.384995000000004),
-                    (0.94750000000000001, 51.378608999999997),
-                    (0.94777800000000001, 51.374718000000001),
-                    (0.94694400000000001, 51.371108999999997),
-                    (0.9425, 51.369163999999998),
-                    (0.90472200000000003, 51.358055),
-                    (0.89916700000000005, 51.357216000000001)]],
+  {'coordinates': [[(0.899167, 51.357216),
+                    (0.885278, 51.35833),
+                    (0.7875, 51.369438),
+                    (0.781111, 51.370552),
+                    (0.766111, 51.375832),
+                    (0.759444, 51.380829),
+                    (0.745278, 51.39444),
+                    (0.740833, 51.400276),
+                    (0.735, 51.408333),
+                    (0.740556, 51.429718),
+                    (0.748889, 51.443604),
+                    (0.760278, 51.444717),
+                    (0.791111, 51.439995),
+                    (0.892222, 51.421387),
+                    (0.904167, 51.418884),
+                    (0.908889, 51.416939),
+                    (0.930555, 51.398888),
+                    (0.936667, 51.393608),
+                    (0.943889, 51.384995),
+                    (0.9475, 51.378609),
+                    (0.947778, 51.374718),
+                    (0.946944, 51.371109),
+                    (0.9425, 51.369164),
+                    (0.904722, 51.358055),
+                    (0.899167, 51.357216)]],
    'type': 'Polygon'}
 
 Since the coordinates are just tuples, or lists of tuples, or lists of lists of
@@ -701,7 +705,7 @@ record extracted in the example below.
   >>> with fiona.open('docs/data/test_uk.shp') as c:
   ...     rec = next(c)
   >>> rec['id'] = '-1'
-  >>> rec['properties']['CNTRY_NAME'] = u'Gondor'
+  >>> rec['properties']['CNTRY_NAME'] = 'Gondor'
   >>> import os
   >>> os.system("cp docs/data/test_uk.* /tmp")
   0
@@ -715,9 +719,9 @@ of the file grows from 48 to 49.
 .. sourcecode:: pycon
 
   >>> with fiona.open('/tmp/test_uk.shp', 'a') as c:
-  ...     print len(c)
+  ...     print(len(c))
   ...     c.write(rec)
-  ...     print len(c)
+  ...     print(len(c))
   ... 
   48
   49
@@ -745,7 +749,7 @@ appended to above,
   >>> records[-1]['id']
   '48'
   >>> records[-1]['properties']['CNTRY_NAME']
-  u'Gondor'
+  'Gondor'
 
 You'll see that the id of ``'-1'`` which the record had when written is
 replaced by ``'48'``.
@@ -759,7 +763,7 @@ iterator) of records.
 
   >>> with fiona.open('/tmp/test_uk.shp', 'a') as c:
   ...     c.writerecords([rec, rec, rec])
-  ...     print len(c)
+  ...     print(len(c))
   ... 
   52
 
@@ -800,11 +804,11 @@ Copy the parameters of our demo file.
   {'no_defs': True, 'ellps': 'WGS84', 'datum': 'WGS84', 'proj': 'longlat'}
   >>> pprint.pprint(source_schema)
   {'geometry': 'Polygon',
-   'properties': {'AREA': 'float',
-                  'CAT': 'float',
-                  'CNTRY_NAME': 'str',
+   'properties': {'CAT': 'float:16',
                   'FIPS_CNTRY': 'str',
-                  'POP_CNTRY': 'float'}}
+                  'CNTRY_NAME': 'str',
+                  'AREA': 'float:15.2',
+                  'POP_CNTRY': 'float:15.2'}}
 
 And now create a new file using them.
 
@@ -816,9 +820,9 @@ And now create a new file using them.
   ...         driver=source_driver,
   ...         crs=source_crs,
   ...         schema=source_schema) as c:
-  ...     print len(c)
+  ...     print(len(c))
   ...     c.write(rec)
-  ...     print len(c)
+  ...     print(len(c))
   ... 
   0
   1
@@ -826,6 +830,30 @@ And now create a new file using them.
   True
   >>> len(c)
   1
+
+The written file's fields are preserved in the specified order.
+
+.. sourcecode:: console
+
+  $ ogrinfo /tmp/foo.shp foo -so
+  INFO: Open of `/tmp/foo.shp'
+        using driver `ESRI Shapefile' successful.
+  
+  Layer name: foo
+  Geometry: 3D Polygon
+  Feature Count: 1
+  Extent: (0.735000, 51.357216) - (0.947778, 51.444717)
+  Layer SRS WKT:
+  GEOGCS["GCS_WGS_1984",
+      DATUM["WGS_1984",
+          SPHEROID["WGS_84",6378137,298.257223563]],
+      PRIMEM["Greenwich",0],
+      UNIT["Degree",0.017453292519943295]]
+  CAT: Real (16.0)
+  FIPS_CNTRY: String (80.0)
+  CNTRY_NAME: String (80.0)
+  AREA: Real (15.2)
+  POP_CNTRY: Real (15.2)
 
 The :py:attr:`~fiona.collection.Collection.meta` attribute makes duplication of
 a file's meta properties even easier.
@@ -876,7 +904,7 @@ record and returns ``True`` or ``False``.
   ...
   >>> c = fiona.open('docs/data/test_uk.shp')
   >>> hits = filter(pass_positive_area, c)
-  >>> len(hits)
+  >>> len(list(hits))
   48
 
 Reading Multilayer data
@@ -918,16 +946,16 @@ and specify the layer by name using the `layer` keyword.
   ...         pprint.pprint(c.schema)
   ...
   {'geometry': 'Polygon',
-   'properties': {'AREA': 'float:15.2',
-                  'CAT': 'float:16',
-                  'CNTRY_NAME': 'str',
+   'properties': {'CAT': 'float:16',
                   'FIPS_CNTRY': 'str',
+                  'CNTRY_NAME': 'str',
+                  'AREA': 'float:15.2',
                   'POP_CNTRY': 'float:15.2'}}
   {'geometry': 'Polygon',
-   'properties': {'AREA': 'float:15.2',
-                  'CAT': 'float:16',
-                  'CNTRY_NAME': 'str',
+   'properties': {'CAT': 'float:16',
                   'FIPS_CNTRY': 'str',
+                  'CNTRY_NAME': 'str',
+                  'AREA': 'float:15.2',
                   'POP_CNTRY': 'float:15.2'}}
 
 Layers may also be specified by their index.
