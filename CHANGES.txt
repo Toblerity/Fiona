@@ -1,6 +1,11 @@
 Changes
 =======
 
+1.0.1 (2013-08-16)
+------------------
+- Allow ordering of written fields and preservation of field order when
+  reading (#57).
+
 1.0 (2013-07-30)
 -----------------
 - Add prop_type() function.
