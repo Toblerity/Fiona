@@ -2,6 +2,7 @@ import logging
 import os
 import shutil
 import sys
+import tempfile
 import unittest
 
 import fiona
@@ -71,6 +72,6 @@ class InvalidLayerTest(unittest.TestCase):
         self.assertRaises(ValueError, fiona.open, ("docs/data/test_uk.shp"), layer="foo")
 
     def test_write_numeric_layer(self):
-        self.assertRaises(ValueError, fiona.open, ("/tmp/test-no-iter.shp"), mode='w', layer=0)
-
-
+        self.assertRaises(ValueError, fiona.open,
+                          (os.path.join(tempfile.gettempdir(), "test-no-iter.shp")),
+                          mode='w', layer=0)
