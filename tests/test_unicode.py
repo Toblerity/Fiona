@@ -21,7 +21,7 @@ class UnicodePathTest(unittest.TestCase):
         shutil.copytree('docs/data/', self.dir)
 
     def tearDown(self):
-        shutil.rmtree(self.dir)
+        shutil.rmtree(os.path.dirname(self.dir))
 
     def test_unicode_path(self):
         path = self.dir + '/test_uk.shp'
