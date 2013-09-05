@@ -2,6 +2,7 @@ import logging
 import os
 import shutil
 import sys
+import tempfile
 import unittest
 
 import fiona
@@ -34,8 +35,9 @@ class ReadWriteAccess(unittest.TestCase):
     # writing to.
     
     def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
         self.c = fiona.open(
-            "/tmp/multi_write_test.shp",
+            os.path.join(self.tempdir, "multi_write_test.shp"),
             "w",
             driver="ESRI Shapefile",
             schema={
@@ -51,29 +53,31 @@ class ReadWriteAccess(unittest.TestCase):
 
     def tearDown(self):
         self.c.close()
+        shutil.rmtree(self.tempdir)
 
     def test_meta(self):
-        c2 = fiona.open("/tmp/multi_write_test.shp", "r")
+        c2 = fiona.open(os.path.join(self.tempdir, "multi_write_test.shp"), "r")
         self.assertEqual(len(self.c), len(c2))
         self.assertEqual(sorted(self.c.schema.items()), sorted(c2.schema.items()))
 
     def test_read(self):
-        c2 = fiona.open("/tmp/multi_write_test.shp", "r")
+        c2 = fiona.open(os.path.join(self.tempdir, "multi_write_test.shp"), "r")
         f2 = next(c2)
         del f2['id']
         self.assertEqual(self.f, f2)
 
     def test_read_after_close(self):
-        c2 = fiona.open("/tmp/multi_write_test.shp", "r")
+        c2 = fiona.open(os.path.join(self.tempdir, "multi_write_test.shp"), "r")
         self.c.close()
         f2 = next(c2)
         del f2['id']
         self.assertEqual(self.f, f2)
 
 class LayerCreation(unittest.TestCase):
-    dir = '/tmp/layer_creation'
 
     def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+        self.dir = os.path.join(self.tempdir, 'layer_creation')
         if os.path.exists(self.dir):
             shutil.rmtree(self.dir)
         os.mkdir(self.dir)
@@ -95,21 +99,21 @@ class LayerCreation(unittest.TestCase):
 
     def tearDown(self):
         self.c.close()
-        shutil.rmtree(self.dir)
+        shutil.rmtree(self.tempdir)
 
     def test_meta(self):
-        c2 = fiona.open("/tmp/layer_creation/write_test.shp", "r")
+        c2 = fiona.open(os.path.join(self.dir, "write_test.shp"), "r")
         self.assertEqual(len(self.c), len(c2))
         self.assertEqual(sorted(self.c.schema.items()), sorted(c2.schema.items()))
 
     def test_read(self):
-        c2 = fiona.open("/tmp/layer_creation/write_test.shp", "r")
+        c2 = fiona.open(os.path.join(self.dir, "write_test.shp"), "r")
         f2 = next(c2)
         del f2['id']
         self.assertEqual(self.f, f2)
 
     def test_read_after_close(self):
-        c2 = fiona.open("/tmp/layer_creation/write_test.shp", "r")
+        c2 = fiona.open(os.path.join(self.dir, "write_test.shp"), "r")
         self.c.close()
         f2 = next(c2)
         del f2['id']

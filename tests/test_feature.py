@@ -1,7 +1,10 @@
 # testing features, to be called by nosetests
 
 import logging
+import os
+import shutil
 import sys
+import tempfile
 import unittest
 
 from fiona import collection
@@ -12,9 +15,13 @@ from fiona.ogrext import featureRT
 
 class PointRoundTripTest(unittest.TestCase):
     def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
         schema = {'geometry': 'Point', 'properties': {'title': 'str'}}
-        self.c = Collection(
-            "/tmp/foo.shp", "w", driver="ESRI Shapefile", schema=schema)
+        self.c = Collection(os.path.join(self.tempdir, "foo.shp"),
+                            "w", driver="ESRI Shapefile", schema=schema)
+    def tearDown(self):
+        self.c.close()
+        shutil.rmtree(self.tempdir)
     def test_geometry(self):
         f = { 'id': '1', 
               'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
@@ -38,9 +45,13 @@ class PointRoundTripTest(unittest.TestCase):
 
 class LineStringRoundTripTest(unittest.TestCase):
     def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
         schema = {'geometry': 'LineString', 'properties': {'title': 'str'}}
-        self.c = Collection(
-            "/tmp/foo.shp", "w", "ESRI Shapefile", schema=schema)
+        self.c = Collection(os.path.join(self.tempdir, "foo.shp"),
+                            "w", "ESRI Shapefile", schema=schema)
+    def tearDown(self):
+        self.c.close()
+        shutil.rmtree(self.tempdir)
     def test_geometry(self):
         f = { 'id': '1', 
               'geometry': { 'type': 'LineString', 
@@ -60,9 +71,13 @@ class LineStringRoundTripTest(unittest.TestCase):
 
 class PolygonRoundTripTest(unittest.TestCase):
     def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
         schema = {'geometry': 'Polygon', 'properties': {'title': 'str'}}
-        self.c = Collection(
-            "/tmp/foo.shp", "w", "ESRI Shapefile", schema=schema)
+        self.c = Collection(os.path.join(self.tempdir, "foo.shp"),
+                            "w", "ESRI Shapefile", schema=schema)
+    def tearDown(self):
+        self.c.close()
+        shutil.rmtree(self.tempdir)
     def test_geometry(self):
         f = { 'id': '1', 
               'geometry': { 'type': 'Polygon', 
