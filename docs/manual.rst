@@ -831,7 +831,9 @@ And now create a new file using them.
   >>> len(c)
   1
 
-The written file's fields are preserved in the specified order.
+Because the properties of the source schema are ordered and are passed in the
+same order to the write-mode collection, the written file's fields have the
+same order as those of the source file.
 
 .. sourcecode:: console
 
@@ -862,6 +864,49 @@ a file's meta properties even easier.
 
   >>> source = fiona.open('docs/data/test_uk.shp')
   >>> sink = fiona.open('/tmp/foo.shp', 'w', **source.meta)
+
+Ordering Record Fields
+......................
+
+Beginning with Fiona 1.0.1, the 'properties' item of :py:func:`fiona.open`'s
+'schema' keyword argument may be an ordered dict or a list of (key, value)
+pairs, specifying an ordering that carries into written files. If an ordinary
+dict is given, the ordering is determined by the output of that dict's
+:py:func:`~items` method.
+
+For example, since
+
+.. sourcecode:: pycon
+  
+  >>> {'bar': 'int', 'foo': 'str'}.keys()
+  ['foo', 'bar']
+
+a schema of ``{'properties': {'bar': 'int', 'foo': 'str'}}`` will produce
+a shapefile where the first field is 'foo' and the second field is 'bar'. If
+you want 'bar' to be the first field, you must use a list of property items
+
+.. sourcecode:: python
+
+  c = fiona.open(
+      '/tmp/file.shp', 
+      'w', 
+      schema={'properties': [('bar', 'int'), ('foo', 'str')], ...},
+      ... )
+
+or an ordered dict.
+
+.. sourcecode:: python
+
+  from collections import OrderedDict
+
+  schema_props = OrderedDict([('bar', 'int'), ('foo', 'str')])
+
+  c = fiona.open(
+      '/tmp/file.shp', 
+      'w', 
+      schema={'properties': schema_props, ...},
+      ... )
+
 
 Coordinates and Geometry Types
 ------------------------------
@@ -969,8 +1014,8 @@ Layers may also be specified by their index.
   48
   48
 
-If no layer is specified, :py:func:`fiona.open` returns an open collection using the
-first layer.
+If no layer is specified, :py:func:`fiona.open` returns an open collection
+using the first layer.
 
 .. sourcecode:: pycon
 
@@ -987,7 +1032,8 @@ a named layer.
 
   >>> fiona.open('docs/data/test_uk.shp', 'r', layer='test_uk')
 
-In practice, it is fine to rely on the implicit first layer and default ``'r'`` mode and open a shapefile like this:
+In practice, it is fine to rely on the implicit first layer and default ``'r'``
+mode and open a shapefile like this:
 
 .. sourcecode:: pycon
 
