@@ -6,6 +6,7 @@ import tempfile
 import unittest
 
 import fiona
+from fiona.odict import OrderedDict
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
@@ -42,12 +43,13 @@ class ReadWriteAccess(unittest.TestCase):
             driver="ESRI Shapefile",
             schema={
                 'geometry': 'Point', 
-                'properties': {'title': 'str', 'date': 'date'}},
+                'properties': [('title', 'str'), ('date', 'date')]},
             crs={'init': "epsg:4326", 'no_defs': True},
             encoding='utf-8')
         self.f = {
+            'type': 'Feature',
             'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
-            'properties': {'title': 'point one', 'date': "2012-01-29"}}
+            'properties': OrderedDict([('title', 'point one'), ('date', '2012-01-29')])}
         self.c.writerecords([self.f])
         self.c.flush()
 
@@ -88,12 +90,13 @@ class LayerCreation(unittest.TestCase):
             driver='ESRI Shapefile',
             schema={
                 'geometry': 'Point', 
-                'properties': {'title': 'str', 'date': 'date'}},
+                'properties': [('title', 'str'), ('date', 'date')]},
             crs={'init': "epsg:4326", 'no_defs': True},
             encoding='utf-8')
         self.f = {
+            'type': 'Feature',
             'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
-            'properties': {'title': 'point one', 'date': "2012-01-29"}}
+            'properties': OrderedDict([('title', 'point one'), ('date', '2012-01-29')])}
         self.c.writerecords([self.f])
         self.c.flush()
 

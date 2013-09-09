@@ -162,7 +162,6 @@ def main():
                 # Try the first record.
                 try:
                     i, first = 0, next(itr)
-                    first['type'] = 'Feature'
                     if args.use_ld_context:
                         first = id_record(first)
                     if indented:
@@ -196,7 +195,6 @@ def main():
                 # we'll write the item separator before each of the
                 # remaining features.
                 for i, rec in enumerate(itr, 1):
-                    rec['type'] = 'Feature'
                     try:
                         if args.use_ld_context:
                             rec = id_record(rec)
@@ -241,8 +239,6 @@ def main():
                     collection['features'] = list(map(id_record, source))[:1]
                 else:
                     collection['features'] = list(source)
-                for f in collection['features']:
-                    f['type'] = 'Feature'
                 json.dump(collection, sink, **dump_kw)
 
     return 0

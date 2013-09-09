@@ -461,6 +461,7 @@ cdef class FeatureBuilder:
         else:
             geom = None
         return {
+            'type': 'Feature',
             'id': str(ograpi.OGR_F_GetFID(feature)),
             'geometry': geom,
             'properties': props }
