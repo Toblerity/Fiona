@@ -4,6 +4,9 @@ Changes
 1.0.2 (Next)
 ------------
 - Add type='Feature' to records read from a Collection (#68).
+- Skip geometry validation when using GeoJSON driver (#61).
+- Dumpgj file description reports record properties as a list (as in
+  dict.items()) instead of a dict.
 
 1.0.1 (2013-08-16)
 ------------------

@@ -912,7 +912,7 @@ cdef class WritingSession(Session):
                 name_c,
                 cogr_srs,
                 <unsigned int>[k for k,v in GEOMETRY_TYPES.items() if 
-                    v == collection.schema['geometry']][0],
+                    v == collection.schema.get('geometry', 'Unknown')][0],
                 options
                 )
             if options:
@@ -964,7 +964,10 @@ cdef class WritingSession(Session):
         
         schema_geom_type = collection.schema['geometry']
         cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
-        if ograpi.OGR_Dr_GetName(cogr_driver) == b"ESRI Shapefile" \
+        if ograpi.OGR_Dr_GetName(cogr_driver) == b"GeoJSON":
+            def validate_geometry_type(rec):
+                return True
+        elif ograpi.OGR_Dr_GetName(cogr_driver) == b"ESRI Shapefile" \
                 and "Point" not in collection.schema['geometry']:
             schema_geom_type = collection.schema['geometry'].lstrip(
                 "3D ").lstrip("Multi")

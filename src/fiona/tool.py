@@ -130,10 +130,11 @@ def main():
         with fiona.open(args.infile) as source:
 
             meta = source.meta.copy()
-            meta['fields'] = source.meta['schema']['properties'].items()
+            meta['fields'] = dict(source.schema['properties'].items())
 
             if args.description:
-                meta.update(name=args.infile)
+                meta['name'] = args.infile
+                meta['schema']['properties'] = list(source.schema['properties'].items())
                 json.dump(meta, sink, **dump_kw)
             
             elif args.record_buffered:
