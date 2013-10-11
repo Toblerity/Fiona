@@ -1,6 +1,10 @@
 Changes
 =======
 
+Next
+----
+- Fix serialization of +init projections (#69).
+
 1.0.2 (2013-09-09)
 ------------------
 - Smarter, better test setup (#65, #66, #67).

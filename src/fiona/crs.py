@@ -70,6 +70,7 @@ _param_data = """
 +b         Semiminor radius of the ellipsoid axis
 +datum     Datum name (see `proj -ld`)
 +ellps     Ellipsoid name (see `proj -le`)
++init      Initialize from a named CRS
 +k         Scaling factor (old name)
 +k_0       Scaling factor (new name)
 +lat_0     Latitude of origin
