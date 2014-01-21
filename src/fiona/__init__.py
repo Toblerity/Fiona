@@ -63,7 +63,7 @@ writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
 __all__ = ['listlayers', 'open', 'prop_type', 'prop_width']
-__version__ = "1.0.3-dev"
+__version__ = "1.0.3"
 
 import os
 from six import string_types
