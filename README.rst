@@ -88,39 +88,59 @@ want to do anything fancy with them you will probably need Shapely or something
 like it. Here is an example of using Fiona to read some records from one data
 file, change their geometry attributes, and write them to a new data file.
 
-.. sourcecode:: python
+.. code-block:: python
 
-  import fiona
-
-  # Open a file for reading. We'll call this the "source."
-  with fiona.open('docs/data/test_uk.shp') as source:
+    import fiona
   
-      # The file we'll write to, the "sink", must be initialized with a
-      # coordinate system, a format driver name, and a record schema.
-      # We can get initial values from the open collection's ``meta``
-      # property and then modify them as desired.
-      meta = source.meta
-      meta['schema']['geometry'] = 'Point'
-      
-      # Open an output file, using the same format driver and coordinate
-      # reference system as the source. The ``meta`` mapping fills in 
-      # the keyword parameters of fiona.open().
-      with fiona.open('test_write.shp', 'w', **meta) as sink:
+    # Register format drivers with a context manager
+    
+    with fiona.drivers():
+
+        # Open a file for reading. We'll call this the "source."
+        
+        with fiona.open('docs/data/test_uk.shp') as source:
+
+            # The file we'll write to, the "sink", must be initialized
+            # with a coordinate system, a format driver name, and
+            # a record schema.  We can get initial values from the open
+            # collection's ``meta`` property and then modify them as
+            # desired.
+
+            meta = source.meta
+            meta['schema']['geometry'] = 'Point'
+
+            # Open an output file, using the same format driver and
+            # coordinate reference system as the source. The ``meta``
+            # mapping fills in the keyword parameters of fiona.open().
+            
+            with fiona.open('test_write.shp', 'w', **meta) as sink:
+
+                # Process only the records intersecting a box.
+                for f in source.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
           
-          # Process only the records intersecting a box.
-          for f in source.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
-          
-              # Get a point on the boundary of the record's geometry.
-              f['geometry'] = {
-                  'type': 'Point',
-                  'coordinates': f['geometry']['coordinates'][0][0]}
+                    # Get a point on the boundary of the record's
+                    # geometry.
+                    
+                    f['geometry'] = {
+                        'type': 'Point',
+                        'coordinates': f['geometry']['coordinates'][0][0]}
               
-              # Write the record out.
-              sink.write(f)
+                    # Write the record out.
+                    
+                    sink.write(f)
               
-      # The sink's contents are flushed to disk and the file is closed
-      # when its ``with`` block ends. This effectively executes 
-      # ``sink.flush(); sink.close()``.
+        # The sink's contents are flushed to disk and the file is
+        # closed when its ``with`` block ends. This effectively
+        # executes ``sink.flush(); sink.close()``.
+
+    # At the end of the ``with fiona.drivers()`` block, context
+    # manager exits and all drivers are de-registered.
+
+The fiona.drivers() function and context manager are new in 1.1. The
+example above shows the way to use it to register and de-register
+drivers in a deterministic and efficient way. Code written for Fiona 1.0
+will continue to work: opened collections may manage the global driver
+registry if no other manager is present.
 
 Reading Multilayer data
 -----------------------
@@ -130,11 +150,13 @@ directories of data. The target layer is specified by name or by its integer
 index within the file or directory. The ``fiona.listlayers()`` function
 provides an index ordered list of layer names.
 
-.. sourcecode:: python
+.. code-block:: python
 
-    for layername in fiona.listlayers('docs/data'):
-        with fiona.open('docs/data', layer=layername) as c:
-            print(layername, len(c))
+    with fiona.drivers():
+
+        for layername in fiona.listlayers('docs/data'):
+            with fiona.open('docs/data', layer=layername) as c:
+                print(layername, len(c))
     
     # Output:
     # test_uk 48
@@ -142,11 +164,13 @@ provides an index ordered list of layer names.
 Layer can also be specified by index. In this case, ``layer=0`` and
 ``layer='test_uk'`` specify the same layer in the data file or directory.
 
-.. sourcecode:: python
+.. code-block:: python
 
-    for i, layername in enumerate(fiona.listlayers('docs/data')):
-        with fiona.open('docs/data', layer=i) as c:
-            print(i, layername, len(c))
+    with fiona.drivers():
+
+        for i, layername in enumerate(fiona.listlayers('docs/data')):
+            with fiona.open('docs/data', layer=i) as c:
+                print(i, layername, len(c))
     
     # Output:
     # 0 test_uk 48
@@ -157,33 +181,35 @@ Writing Multilayer data
 Multilayer data can be written as well. Layers must be specified by name when
 writing.
 
-.. sourcecode:: python
+.. code-block:: python
+    
+    with fiona.drivers():
 
-    with open('docs/data/test_uk.shp') as c:
-        meta = c.meta
-        f = next(c)
+        with open('docs/data/test_uk.shp') as c:
+            meta = c.meta
+            f = next(c)
     
-    with fiona.open('/tmp/foo', 'w', layer='bar', **meta) as c:
-        c.write(f)
+        with fiona.open('/tmp/foo', 'w', layer='bar', **meta) as c:
+            c.write(f)
     
-    print(fiona.listlayers('/tmp/foo'))
-    # Output: ['bar']
+        print(fiona.listlayers('/tmp/foo'))
+        # Output: ['bar']
     
-    with fiona.open('/tmp/foo', layer='bar') as c:
-        print(len(c))
-        f = next(c)
-        print(f['geometry']['type'])
-        print(f['properties'])
+        with fiona.open('/tmp/foo', layer='bar') as c:
+            print(len(c))
+            f = next(c)
+            print(f['geometry']['type'])
+            print(f['properties'])
     
-    # Output:
-    # 1
-    # Polygon
-    # {'FIPS_CNTRY': 'UK', 'POP_CNTRY': 60270708.0, 'CAT': 232.0, 
-    #  'AREA': 244820.0, 'CNTRY_NAME': 'United Kingdom'}
+        # Output:
+        # 1
+        # Polygon
+        # {'FIPS_CNTRY': 'UK', 'POP_CNTRY': 60270708.0, 'CAT': 232.0, 
+        #  'AREA': 244820.0, 'CNTRY_NAME': 'United Kingdom'}
 
 A view of the /tmp/foo directory will confirm the creation of the new files.
 
-.. sourcecode:: console
+.. code-block:: console
 
     $ ls /tmp/foo
     bar.cpg bar.dbf bar.prj bar.shp bar.shx
@@ -195,17 +221,19 @@ Zip and Tar archives can be treated as virtual filesystems and Collections can
 be made from paths and layers within them. In other words, Fiona lets you read
 and write zipped Shapefiles.
 
-.. sourcecode:: python
+.. code-block:: python
 
-    for i, layername in enumerate(
-            fiona.listlayers(
-                '/', 
-                vfs='zip://docs/data/test_uk.zip')):
-        with fiona.open(
-                '/', 
-                vfs='zip://docs/data/test_uk.zip', 
-                layer=i) as c:
-            print(i, layername, len(c))
+    with fiona.drivers():
+
+        for i, layername in enumerate(
+                fiona.listlayers(
+                    '/', 
+                    vfs='zip://docs/data/test_uk.zip')):
+            with fiona.open(
+                    '/', 
+                    vfs='zip://docs/data/test_uk.zip', 
+                    layer=i) as c:
+                print(i, layername, len(c))
     
     # Output:
     # 0 test_uk 48
@@ -216,7 +244,7 @@ Dumpgj
 Fiona installs a script named "dumpgj". It converts files to GeoJSON with
 JSON-LD context as an option.
 
-::
+.. code-block:: console
 
   $ dumpgj --help
   usage: dumpgj [-h] [-d] [-n N] [--compact] [--encoding ENC]

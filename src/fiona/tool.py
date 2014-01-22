@@ -125,93 +125,67 @@ def main():
     item_sep = args.compact and ',' or ', '
     ignore_errors = args.ignore_errors
 
-    with open_output(args.outfile) as sink:
+    with fiona.drivers():
+        
+        with open_output(args.outfile) as sink:
 
-        with fiona.open(args.infile) as source:
+            with fiona.open(args.infile) as source:
 
-            meta = source.meta.copy()
-            meta['fields'] = dict(source.schema['properties'].items())
+                meta = source.meta.copy()
+                meta['fields'] = dict(source.schema['properties'].items())
 
-            if args.description:
-                meta['name'] = args.infile
-                meta['schema']['properties'] = list(source.schema['properties'].items())
-                json.dump(meta, sink, **dump_kw)
-            
-            elif args.record_buffered:
-                # Buffer GeoJSON data at the feature level for smaller
-                # memory footprint.
-
-                indented = bool(args.indent)
-                rec_indent = "\n" + " " * (2 * (args.indent or 0))
-
-                collection = {
-                    'type': 'FeatureCollection',  
-                    'fiona:schema': meta['schema'], 
-                    'fiona:crs': meta['crs'],
-                    '_crs': crs_uri(meta['crs']),
-                    'features': [] }
-                if args.use_ld_context:
-                    collection['@context'] = make_ld_context(args.ld_context_items)
+                if args.description:
+                    meta['name'] = args.infile
+                    meta['schema']['properties'] = list(
+                        source.schema['properties'].items())
+                    json.dump(meta, sink, **dump_kw)
                 
-                head, tail = json.dumps(collection, **dump_kw).split('[]')
-                
-                sink.write(head)
-                sink.write("[")
-                
-                itr = iter(source)
-                
-                # Try the first record.
-                try:
-                    i, first = 0, next(itr)
+                elif args.record_buffered:
+                    # Buffer GeoJSON data at the feature level for smaller
+                    # memory footprint.
+
+                    indented = bool(args.indent)
+                    rec_indent = "\n" + " " * (2 * (args.indent or 0))
+
+                    collection = {
+                        'type': 'FeatureCollection',  
+                        'fiona:schema': meta['schema'], 
+                        'fiona:crs': meta['crs'],
+                        '_crs': crs_uri(meta['crs']),
+                        'features': [] }
                     if args.use_ld_context:
-                        first = id_record(first)
-                    if indented:
-                        sink.write(rec_indent)
-                    sink.write(
-                        json.dumps(first, **dump_kw
-                            ).replace("\n", rec_indent))
-                except StopIteration:
-                    pass
-                except Exception as exc:
-                    # Ignoring errors is *not* the default.
-                    if ignore_errors:
-                        logger.error(
-                            "failed to serialize file record %d (%s), "
-                            "continuing",
-                            i, exc)
-                    else:
-                        # Log error and close up the GeoJSON, leaving it
-                        # more or less valid no matter what happens above.
-                        logger.critical(
-                            "failed to serialize file record %d (%s), "
-                            "quiting",
-                            i, exc)
-                        sink.write("]")
-                        sink.write(tail)
-                        if indented:
-                            sink.write("\n")
-                        return 1
-                
-                # Because trailing commas aren't valid in JSON arrays
-                # we'll write the item separator before each of the
-                # remaining features.
-                for i, rec in enumerate(itr, 1):
+                        collection['@context'] = make_ld_context(
+                            args.ld_context_items)
+                    
+                    head, tail = json.dumps(collection, **dump_kw).split('[]')
+                    
+                    sink.write(head)
+                    sink.write("[")
+                    
+                    itr = iter(source)
+                    
+                    # Try the first record.
                     try:
+                        i, first = 0, next(itr)
                         if args.use_ld_context:
-                            rec = id_record(rec)
+                            first = id_record(first)
                         if indented:
                             sink.write(rec_indent)
-                        sink.write(item_sep)
                         sink.write(
-                            json.dumps(rec, **dump_kw
+                            json.dumps(first, **dump_kw
                                 ).replace("\n", rec_indent))
+                    except StopIteration:
+                        pass
                     except Exception as exc:
+                        # Ignoring errors is *not* the default.
                         if ignore_errors:
                             logger.error(
                                 "failed to serialize file record %d (%s), "
                                 "continuing",
                                 i, exc)
                         else:
+                            # Log error and close up the GeoJSON, leaving it
+                            # more or less valid no matter what happens above.
                             logger.critical(
                                 "failed to serialize file record %d (%s), "
                                 "quiting",
@@ -221,26 +195,57 @@ def main():
                             if indented:
                                 sink.write("\n")
                             return 1
-                
-                # Close up the GeoJSON after writing all features.
-                sink.write("]")
-                sink.write(tail)
-                if indented:
-                    sink.write("\n")
+                    
+                    # Because trailing commas aren't valid in JSON arrays
+                    # we'll write the item separator before each of the
+                    # remaining features.
+                    for i, rec in enumerate(itr, 1):
+                        try:
+                            if args.use_ld_context:
+                                rec = id_record(rec)
+                            if indented:
+                                sink.write(rec_indent)
+                            sink.write(item_sep)
+                            sink.write(
+                                json.dumps(rec, **dump_kw
+                                    ).replace("\n", rec_indent))
+                        except Exception as exc:
+                            if ignore_errors:
+                                logger.error(
+                                    "failed to serialize file record %d (%s), "
+                                    "continuing",
+                                    i, exc)
+                            else:
+                                logger.critical(
+                                    "failed to serialize file record %d (%s), "
+                                    "quiting",
+                                    i, exc)
+                                sink.write("]")
+                                sink.write(tail)
+                                if indented:
+                                    sink.write("\n")
+                                return 1
+                    
+                    # Close up the GeoJSON after writing all features.
+                    sink.write("]")
+                    sink.write(tail)
+                    if indented:
+                        sink.write("\n")
 
-            else:
-                # Buffer GeoJSON data at the collection level. The default.
-                collection = {
-                    'type': 'FeatureCollection', 
-                    'fiona:schema': meta['schema'], 
-                    'fiona:crs': meta['crs'],
-                    '_crs': crs_uri(meta['crs']) }
-                if args.use_ld_context:
-                    collection['@context'] = make_ld_context(args.ld_context_items)
-                    collection['features'] = list(map(id_record, source))[:1]
                 else:
-                    collection['features'] = list(source)
-                json.dump(collection, sink, **dump_kw)
+                    # Buffer GeoJSON data at the collection level. The default.
+                    collection = {
+                        'type': 'FeatureCollection', 
+                        'fiona:schema': meta['schema'], 
+                        'fiona:crs': meta['crs'],
+                        '_crs': crs_uri(meta['crs']) }
+                    if args.use_ld_context:
+                        collection['@context'] = make_ld_context(
+                            args.ld_context_items)
+                        collection['features'] = list(map(id_record, source))[:1]
+                    else:
+                        collection['features'] = list(source)
+                    json.dump(collection, sink, **dump_kw)
 
     return 0
 
