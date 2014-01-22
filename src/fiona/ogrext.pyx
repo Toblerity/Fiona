@@ -9,17 +9,18 @@ import sys
 from six import integer_types, string_types, text_type
 
 from fiona cimport ograpi
-from fiona import ogrinit
 from fiona.errors import DriverError, SchemaError, CRSError
 from fiona.odict import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
+
 
 log = logging.getLogger("Fiona")
 class NullHandler(logging.Handler):
     def emit(self, record):
         pass
 log.addHandler(NullHandler())
+
 
 # Mapping of OGR integer geometry types to GeoJSON type names.
 GEOMETRY_TYPES = {

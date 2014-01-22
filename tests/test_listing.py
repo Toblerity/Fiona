@@ -10,7 +10,8 @@ import fiona.ogrext
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 def test_single_file_private():
-    assert fiona.ogrext._listlayers('docs/data/test_uk.shp') == ['test_uk']
+    with fiona.drivers():
+        assert fiona.ogrext._listlayers('docs/data/test_uk.shp') == ['test_uk']
 
 def test_single_file():
     assert fiona.listlayers('docs/data/test_uk.shp') == ['test_uk']

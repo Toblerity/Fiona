@@ -63,14 +63,23 @@ writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
 __all__ = ['listlayers', 'open', 'prop_type', 'prop_width']
-__version__ = "1.0.3"
+__version__ = "1.1"
 
+import logging
 import os
 from six import string_types
 
 from fiona.collection import Collection, supported_drivers, vsi_path
+from fiona._drivers import DriverManager, DummyManager, driver_count
 from fiona.odict import OrderedDict
 from fiona.ogrext import _listlayers, FIELD_TYPES_MAP
+
+
+log = logging.getLogger('Fiona')
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+log.addHandler(NullHandler())
 
 
 def open(
@@ -169,7 +178,8 @@ def listlayers(path, vfs=None):
     elif not os.path.exists(path):
         raise IOError("no such file or directory: %r" % path)
     
-    return _listlayers(vsi_path(path, vsi, archive))
+    with drivers():
+        return _listlayers(vsi_path(path, vsi, archive))
 
 def parse_paths(path, vfs=None):
     archive = vsi = None
@@ -209,3 +219,13 @@ def prop_type(text):
     """
     key = text.split(':')[0]
     return FIELD_TYPES_MAP[key]
+
+def drivers(*args):
+    """Returns a context manager with registered drivers."""
+    if driver_count() == 0:
+        log.debug("Creating a DriverManager in drivers()")
+        return DriverManager()
+    else:
+        log.debug("Creating a DummyManager in drivers()")
+        return DummyManager()
+
