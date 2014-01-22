@@ -505,6 +505,8 @@ cdef class OGRFeatureBuilder:
                 key_bytes = key
             key_c = key_bytes
             i = ograpi.OGR_F_GetFieldIndex(cogr_feature, key_c)
+            if i < 0:
+                continue
             if isinstance(value, integer_types):
                 ograpi.OGR_F_SetFieldInteger(cogr_feature, i, value)
             elif isinstance(value, float):
