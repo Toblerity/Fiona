@@ -1,12 +1,11 @@
 language: python
 python:
-  - "2.6"
   - "2.7"
   - "3.3"
 before_install:
-  - sudo add-apt-repository -y ppa:ubuntugis/ppa
+  - sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
   - sudo apt-get update
-  - sudo apt-get install gdal-bin libgdal-dev 
+  - sudo apt-get install gdal-bin libgdal1-dev
 install:
   - "pip install -r requirements.txt"
   - "python setup.py develop"
