@@ -486,6 +486,6 @@ class GeoJSONCRSWritingTest(unittest.TestCase):
         info = subprocess.check_output(
             ["ogrinfo", self.filename, "OGRGeoJSON"])
         self.assert_(
-            'GEOGCS["WGS 84' in info,
+            'GEOGCS["WGS 84' in info.decode('utf-8'),
             info)
 
