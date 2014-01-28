@@ -6,6 +6,9 @@ Fiona: OGR's neat, nimble, no-nonsense API for Python programmers
 the best open source C/C++ library for reading and writing geographic vector
 data.
 
+.. image:: https://travis-ci.org/Toblerity/Fiona.png?branch=master   
+   :target: https://travis-ci.org/Toblerity/Fiona
+
 Fiona is designed to be simple and dependable. It focuses on reading and
 writing data in standard Python IO style, and relies upon familiar Python types
 and protocols such as files, dictionaries, mappings, and iterators instead of
