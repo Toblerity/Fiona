@@ -202,15 +202,20 @@ class ReadingTest(unittest.TestCase):
         self.failUnlessEqual(f['id'], "0")
         self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
 
+    def test_no_write(self):
+        self.assertRaises(IOError, self.c.write, {})
+
+class FilterReadingTest(unittest.TestCase):
+    def setUp(self):
+        self.c = fiona.open("docs/data/test_uk.shp", "r")
+    def tearDown(self):
+        self.c.close()
     def test_filter_1(self):
         results = list(self.c.filter(bbox=(-15.0, 35.0, 15.0, 65.0)))
         self.failUnlessEqual(len(results), 48)
         f = results[0]
         self.failUnlessEqual(f['id'], "0")
         self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
-
-    def test_no_write(self):
-        self.assertRaises(IOError, self.c.write, {})
 
 class UnsupportedDriverTest(unittest.TestCase):
     
