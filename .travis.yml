@@ -3,9 +3,9 @@ python:
 #  - "2.6"
   - "2.7"
 #  - "3.3"
-# command to install dependencies
+before_install:
+ - sudo apt-get install -qq libgdal1-dev
 install:
   - "pip install -r requirements.txt"
   - "pip install ."
-# command to run tests
 script: nosetests
