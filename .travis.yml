@@ -7,5 +7,6 @@ before_install:
  - sudo apt-get install -qq libgdal1-dev
 install:
   - "pip install -r requirements.txt"
-  - "pip install ."
+  - "python setup.py sdist"
+  - "pip install dist/Fiona*tar.gz"
 script: nosetests
