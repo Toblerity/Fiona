@@ -20,7 +20,7 @@ def create_jsonfile(jsonfilename):
     import fiona
     from fiona.crs import from_string
     from fiona.tool import crs_uri
-    with fiona.collection(os.path.join(DATADIR, FILES[0]), 'r') as source:
+    with fiona.open(os.path.join(DATADIR, FILES[0]), 'r') as source:
         features = [feat for feat in source]
         crs = ' '.join('+%s=%s' % (k,v) for k,v in source.crs.items())
     my_layer = {'type': 'FeatureCollection',
