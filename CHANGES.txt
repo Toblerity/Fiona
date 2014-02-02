@@ -1,8 +1,8 @@
 Changes
 =======
 
-Next
-----
+1.1.1 (2014-02-02)
+------------------
 - Add an interactive file inspector like the one in rasterio.
 - CRS to_string bug fix (#83).
 
