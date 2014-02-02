@@ -116,7 +116,7 @@ setup(
     long_description=readme + "\n" + changes + "\n" + credits,
     package_dir={'': 'src'},
     packages=['fiona'],
-    scripts = ['src/bin/dumpgj'],
+    scripts = ['src/bin/dumpgj', 'src/bin/fiona.insp'],
     install_requires=requirements,
     tests_require=['nose'],
     test_suite='nose.collector',

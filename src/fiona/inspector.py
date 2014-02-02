@@ -1,7 +1,6 @@
 
 import code
 import logging
-import pprint
 import sys
 
 import fiona
@@ -16,11 +15,13 @@ def main(srcfile):
     with fiona.drivers(), fiona.open(srcfile) as src:
             
         code.interact(
-            'Fiona %s Interactive Inspector\n'
-            'Type "src.name", "src.schema", "next(src)", or "help(src)" '
-            'for more information.' %  fiona.__version__,
+            'Fiona %s Interactive Inspector (Python %s)\n'
+            'Type "src.schema", "next(src)", or "help(src)" '
+            'for more information.' %  (
+                fiona.__version__, '.'.join(map(str, sys.version_info[:3]))),
             local=locals())
 
+    return 1
 
 if __name__ == '__main__':
     
