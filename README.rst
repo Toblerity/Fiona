@@ -275,6 +275,18 @@ JSON-LD context as an option.
                           map a term to a URI and add it to the output's JSON LD
                           context
 
+Fiona.insp
+==========
+
+Like an ogrinfo on steroids, pass a filename to "fiona.insp".
+
+.. code-block:: console
+
+    $ fiona.insp docs/data/test_uk.shp
+    Fiona 1.1.1 Interactive Inspector (Python 2.7.5)
+    Type "src.schema", "next(src)", or "help(src)" for more information.
+    >>>
+
 Development and testing
 =======================
 
