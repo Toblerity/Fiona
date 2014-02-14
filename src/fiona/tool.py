@@ -3,14 +3,14 @@
 Converts Shapefiles (etc) to GeoJSON.
 """
 
-import argparse
-import fiona
 import json
 import logging
 import pprint
 import sys
 
 from six.moves import map
+
+import fiona
 
 
 def open_output(arg):
@@ -66,65 +66,8 @@ def id_record(rec):
     rec['id'] = '_:f%s' % rec['id']
     return rec
 
-def main():
+def main(args, dump_kw, item_sep, ignore_errors):
     """Returns 0 on success, 1 on error, for sys.exit."""
-    logging.basicConfig(stream=sys.stderr, level=logging.INFO)
-    logger = logging.getLogger('fiona.tool')
-
-    parser = argparse.ArgumentParser(
-        description="Serialize a file's records or description to GeoJSON")
-    
-    parser.add_argument('infile', 
-        help="input file name")
-    parser.add_argument('outfile',
-        nargs='?', 
-        help="output file name, defaults to stdout if omitted", 
-        default=sys.stdout)
-    parser.add_argument('-d', '--description',
-        action='store_true', 
-        help="serialize file's data description (schema) only")
-    parser.add_argument('-n', '--indent', 
-        type=int,
-        default=None,
-        metavar='N',
-        help="indentation level in N number of chars")
-    parser.add_argument('--compact', 
-        action='store_true',
-        help="use compact separators (',', ':')")
-    parser.add_argument('--encoding', 
-        default=None,
-        metavar='ENC',
-        help="Specify encoding of the input file")
-    parser.add_argument('--record-buffered',
-        dest='record_buffered',
-        action='store_true',
-        help="Economical buffering of writes at record, not collection (default), level")
-    parser.add_argument('--ignore-errors',
-        dest='ignore_errors',
-        action='store_true',
-        help="log errors but do not stop serialization")
-    parser.add_argument('--use-ld-context',
-        dest='use_ld_context',
-        action='store_true',
-        help="add a JSON-LD context to JSON output")
-    parser.add_argument('--add-ld-context-item',
-        dest='ld_context_items',
-        action='append',
-        metavar='TERM=URI',
-        help="map a term to a URI and add it to the output's JSON LD context")
-
-    args = parser.parse_args()
-
-    # Keyword args to be used in all following json.dump* calls.
-    dump_kw = {'sort_keys': True}
-    if args.indent:
-        dump_kw['indent'] = args.indent
-    if args.compact:
-        dump_kw['separators'] = (',', ':')
-
-    item_sep = args.compact and ',' or ', '
-    ignore_errors = args.ignore_errors
-
     with fiona.drivers():
         
         with open_output(args.outfile) as sink:
@@ -242,7 +185,7 @@ def main():
                     if args.use_ld_context:
                         collection['@context'] = make_ld_context(
                             args.ld_context_items)
-                        collection['features'] = list(map(id_record, source))[:1]
+                        collection['features'] = list(map(id_record, source))
                     else:
                         collection['features'] = list(source)
                     json.dump(collection, sink, **dump_kw)
@@ -250,5 +193,65 @@ def main():
     return 0
 
 if __name__ == '__main__':
-    sys.exit(main())
+
+    import argparse
+
+    logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+    logger = logging.getLogger('fiona.tool')
+
+    parser = argparse.ArgumentParser(
+        description="Serialize a file's records or description to GeoJSON")
+    
+    parser.add_argument('infile', 
+        help="input file name")
+    parser.add_argument('outfile',
+        nargs='?', 
+        help="output file name, defaults to stdout if omitted", 
+        default=sys.stdout)
+    parser.add_argument('-d', '--description',
+        action='store_true', 
+        help="serialize file's data description (schema) only")
+    parser.add_argument('-n', '--indent', 
+        type=int,
+        default=None,
+        metavar='N',
+        help="indentation level in N number of chars")
+    parser.add_argument('--compact', 
+        action='store_true',
+        help="use compact separators (',', ':')")
+    parser.add_argument('--encoding', 
+        default=None,
+        metavar='ENC',
+        help="Specify encoding of the input file")
+    parser.add_argument('--record-buffered',
+        dest='record_buffered',
+        action='store_true',
+        help="Economical buffering of writes at record, not collection (default), level")
+    parser.add_argument('--ignore-errors',
+        dest='ignore_errors',
+        action='store_true',
+        help="log errors but do not stop serialization")
+    parser.add_argument('--use-ld-context',
+        dest='use_ld_context',
+        action='store_true',
+        help="add a JSON-LD context to JSON output")
+    parser.add_argument('--add-ld-context-item',
+        dest='ld_context_items',
+        action='append',
+        metavar='TERM=URI',
+        help="map a term to a URI and add it to the output's JSON LD context")
+
+    args = parser.parse_args()
+
+    # Keyword args to be used in all following json.dump* calls.
+    dump_kw = {'sort_keys': True}
+    if args.indent:
+        dump_kw['indent'] = args.indent
+    if args.compact:
+        dump_kw['separators'] = (',', ':')
+
+    item_sep = args.compact and ',' or ', '
+    ignore_errors = args.ignore_errors
+
+    sys.exit(main(args, dump_kw, item_sep, ignore_errors))
 
