@@ -220,8 +220,8 @@ def prop_type(text):
     key = text.split(':')[0]
     return FIELD_TYPES_MAP[key]
 
-def drivers(*args):
+def drivers(*args, **kwargs):
     """Returns a context manager with registered drivers."""
     log.debug("Creating a DriverManager in drivers()")
-    return DriverManager()
+    return DriverManager(**kwargs)
 

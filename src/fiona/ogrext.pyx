@@ -424,8 +424,10 @@ cdef class FeatureBuilder:
             key = key_b.decode('utf-8')
             fieldtypename = FIELD_TYPES[ograpi.OGR_Fld_GetType(fdefn)]
             if not fieldtypename:
-                raise ValueError(
-                    "Invalid field type %s" % ograpi.OGR_Fld_GetType(fdefn))
+                log.warn(
+                    "Skipping field %s: invalid type %s", 
+                    key,
+                    ograpi.OGR_Fld_GetType(fdefn))
             # TODO: other types
             fieldtype = FIELD_TYPES_MAP[fieldtypename]
             if not ograpi.OGR_F_IsFieldSet(feature, i):
@@ -671,16 +673,17 @@ cdef class Session:
             cogr_fielddefn = ograpi.OGR_FD_GetFieldDefn(cogr_featuredefn, i)
             if cogr_fielddefn is NULL:
                 raise ValueError("Null field definition")
-            fieldtypename = FIELD_TYPES[ograpi.OGR_Fld_GetType(cogr_fielddefn)]
-            if not fieldtypename:
-                raise ValueError(
-                    "Invalid field type %s" % ograpi.OGR_Fld_GetType(
-                                                cogr_fielddefn))
             key_c = ograpi.OGR_Fld_GetNameRef(cogr_fielddefn)
             key_b = key_c
             if not bool(key_b):
                 raise ValueError("Invalid field name ref: %s" % key)
             key = key_b.decode('utf-8')
+            fieldtypename = FIELD_TYPES[ograpi.OGR_Fld_GetType(cogr_fielddefn)]
+            if not fieldtypename:
+                log.warn(
+                    "Skipping field %s: invalid type %s", 
+                    key,
+                    ograpi.OGR_Fld_GetType(cogr_fielddefn))
             val = fieldtypename
             if fieldtypename == 'float':
                 fmt = ""
