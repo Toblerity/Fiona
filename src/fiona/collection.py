@@ -109,7 +109,7 @@ class Collection(object):
                 else:
                     raise CRSError("crs lacks init or proj parameter")
         
-        if not self.driver_manager and driver_count() == 0:
+        if not self.driver_manager:
             # create a local manager and enter
             self.driver_manager = DriverManager()
             self.driver_manager.__enter__()

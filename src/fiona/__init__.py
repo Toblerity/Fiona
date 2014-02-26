@@ -63,14 +63,14 @@ writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
 __all__ = ['listlayers', 'open', 'prop_type', 'prop_width']
-__version__ = "1.1.2"
+__version__ = "1.1.3"
 
 import logging
 import os
 from six import string_types
 
 from fiona.collection import Collection, supported_drivers, vsi_path
-from fiona._drivers import DriverManager, DummyManager, driver_count
+from fiona._drivers import DriverManager, driver_count
 from fiona.odict import OrderedDict
 from fiona.ogrext import _listlayers, FIELD_TYPES_MAP
 
@@ -222,10 +222,6 @@ def prop_type(text):
 
 def drivers(*args):
     """Returns a context manager with registered drivers."""
-    if driver_count() == 0:
-        log.debug("Creating a DriverManager in drivers()")
-        return DriverManager()
-    else:
-        log.debug("Creating a DummyManager in drivers()")
-        return DummyManager()
+    log.debug("Creating a DriverManager in drivers()")
+    return DriverManager()
 

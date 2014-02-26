@@ -38,15 +38,6 @@ def driver_count():
     return GDALGetDriverCount() + OGRGetDriverCount()
 
 
-class DummyManager(object):
-    
-    def __enter__(self):
-        pass
-
-    def __exit__(self, *args):
-        pass
-
-
 cdef class DriverManager(object):
     
     def __enter__(self):
