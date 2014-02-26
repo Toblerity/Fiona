@@ -70,7 +70,7 @@ import os
 from six import string_types
 
 from fiona.collection import Collection, supported_drivers, vsi_path
-from fiona._drivers import DriverManager, driver_count
+from fiona._drivers import driver_count, GDALEnv
 from fiona.odict import OrderedDict
 from fiona.ogrext import _listlayers, FIELD_TYPES_MAP
 
@@ -222,6 +222,10 @@ def prop_type(text):
 
 def drivers(*args, **kwargs):
     """Returns a context manager with registered drivers."""
-    log.debug("Creating a DriverManager in drivers()")
-    return DriverManager(**kwargs)
+    if driver_count == 0:
+        log.debug("Creating a chief GDALEnv in drivers()")
+        return GDALEnv(True, **kwargs)
+    else:
+        log.debug("Creating a not-responsible GDALEnv in drivers()")
+        return GDALEnv(False, **kwargs)
 

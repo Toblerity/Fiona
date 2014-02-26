@@ -6,7 +6,7 @@ import sys
 
 from fiona.ogrext import Iterator, Session, WritingSession
 from fiona.errors import DriverError, SchemaError, CRSError
-from fiona._drivers import DriverManager, driver_count
+from fiona._drivers import driver_count, GDALEnv
 from six import string_types
 
 class Collection(object):
@@ -62,7 +62,7 @@ class Collection(object):
         self._driver = None
         self._schema = None
         self._crs = None
-        self.driver_manager = None
+        self.env = None
         
         self.path = vsi_path(path, vsi, archive)
         
@@ -109,10 +109,12 @@ class Collection(object):
                 else:
                     raise CRSError("crs lacks init or proj parameter")
         
-        if not self.driver_manager:
+        if driver_count == 0:
             # create a local manager and enter
-            self.driver_manager = DriverManager()
-            self.driver_manager.__enter__()
+            self.env = GDALEnv(True)
+        else:
+            self.env = GDALEnv(False)
+        self.env.__enter__()
 
         if self.mode == "r":
             self.encoding = encoding
@@ -275,8 +277,8 @@ class Collection(object):
             self.session.stop()
             self.session = None
             self.iterator = None
-        if self.driver_manager:
-            self.driver_manager.__exit__()
+        if self.env:
+            self.env.__exit__()
 
     @property
     def closed(self):
