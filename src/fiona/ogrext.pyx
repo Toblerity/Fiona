@@ -428,6 +428,7 @@ cdef class FeatureBuilder:
                     "Skipping field %s: invalid type %s", 
                     key,
                     ograpi.OGR_Fld_GetType(fdefn))
+                continue
             # TODO: other types
             fieldtype = FIELD_TYPES_MAP[fieldtypename]
             if not ograpi.OGR_F_IsFieldSet(feature, i):
@@ -684,6 +685,7 @@ cdef class Session:
                     "Skipping field %s: invalid type %s", 
                     key,
                     ograpi.OGR_Fld_GetType(cogr_fielddefn))
+                continue
             val = fieldtypename
             if fieldtypename == 'float':
                 fmt = ""
