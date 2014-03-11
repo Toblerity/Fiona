@@ -359,7 +359,7 @@ supported_drivers = dict([
 #Geomedia .mdb 	Geomedia 	No 	No 	No, needs ODBC library
 #GeoRSS 	GeoRSS 	Yes 	Yes 	Yes (read support needs libexpat)
 #Google Fusion Tables 	GFT 	Yes 	Yes 	No, needs libcurl
-#GML 	GML 	Yes 	Yes 	Yes (read support needs Xerces or libexpat)
+    ("GML", "rw"), # 	GML 	Yes 	Yes 	Yes (read support needs Xerces or libexpat)
 #GMT 	GMT 	Yes 	Yes 	Yes
     ("GMT", "raw"),
 #GPSBabel 	GPSBabel 	Yes 	Yes 	Yes (needs GPSBabel and GPX driver)
