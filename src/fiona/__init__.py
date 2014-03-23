@@ -72,7 +72,7 @@ from six import string_types
 from fiona.collection import Collection, supported_drivers, vsi_path
 from fiona._drivers import driver_count, GDALEnv
 from fiona.odict import OrderedDict
-from fiona.ogrext import _listlayers, FIELD_TYPES_MAP
+from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP
 
 
 log = logging.getLogger('Fiona')
@@ -228,4 +228,11 @@ def drivers(*args, **kwargs):
     else:
         log.debug("Creating a not-responsible GDALEnv in drivers()")
         return GDALEnv(False, **kwargs)
+
+def bounds(ob):
+    """Returns a (minx, miny, maxx, maxy) bounding box.
+    
+    The ``ob`` may be a feature record or geometry."""
+    geom = ob.get('geometry') or ob
+    return _bounds(geom)
 

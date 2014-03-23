@@ -390,6 +390,28 @@ def geometryRT(geometry):
     return result
 
 
+def _explode(coords):
+    """Explode a GeoJSON geometry's coordinates object and yield
+    coordinate tuples. As long as the input is conforming, the type of
+    the geometry doesn't matter."""
+    for e in coords:
+        if isinstance(e, (float, int)):
+            yield coords
+            break
+        else:
+            for f in _explode(e):
+                yield f
+
+
+def _bounds(geometry):
+    """Bounding box of a GeoJSON geometry"""
+    try:
+        x, y = zip(*list(_explode(geometry['coordinates'])))
+        return min(x), min(y), max(x), max(y)
+    except (KeyError, TypeError):
+        return None
+
+
 # Feature extension classes and functions follow.
 
 cdef class FeatureBuilder:
@@ -399,7 +421,7 @@ cdef class FeatureBuilder:
     argument is not destroyed.
     """
 
-    cdef build(self, void *feature, encoding='utf-8'):
+    cdef build(self, void *feature, encoding='utf-8', bbox=False):
         # The only method anyone ever needs to call
         cdef void *fdefn
         cdef int i

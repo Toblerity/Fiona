@@ -364,6 +364,7 @@ supported_drivers = dict([
     ("GMT", "raw"),
 #GPSBabel 	GPSBabel 	Yes 	Yes 	Yes (needs GPSBabel and GPX driver)
 #GPX 	GPX 	Yes 	Yes 	Yes (read support needs libexpat)
+    ("GPX", "raw"),
 #GRASS 	GRASS 	No 	Yes 	No, needs libgrass
 #GPSTrackMaker (.gtm, .gtz) 	GPSTrackMaker 	Yes 	Yes 	Yes
     ("GPSTrackMaker", "raw"),
