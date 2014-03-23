@@ -62,7 +62,7 @@ Because Fiona collections are context managers, they are closed and (in
 writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
-__all__ = ['listlayers', 'open', 'prop_type', 'prop_width']
+__all__ = ['bounds', 'listlayers', 'open', 'prop_type', 'prop_width']
 __version__ = "1.1.3"
 
 import logging

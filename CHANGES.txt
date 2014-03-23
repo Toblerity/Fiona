@@ -1,12 +1,13 @@
 Changes
 =======
 
-1.1.3 (2014-02-25)
+1.1.3 (2014-03-23)
 ------------------
-- Always register all GDAL and OGR drivers when entering the DriverManager context
-  (#80, #92).
+- Always register all GDAL and OGR drivers when entering the DriverManager
+  context (#80, #92).
 - Skip unsupported field types with a warning (#91).
 - Allow OGR config options to be passed to fiona.drivers() (#90, #93).
+- Add a bounds() function (#100).
 
 1.1.2 (2014-02-14)
 ------------------
