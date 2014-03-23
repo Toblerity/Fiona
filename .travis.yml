@@ -8,5 +8,6 @@ before_install:
   - sudo apt-get install gdal-bin libgdal-dev 
 install:
   - "pip install -r requirements.txt"
+  - "pip install py.test"
   - "python setup.py develop"
-script: nosetests --exclude test_filter_vsi
+script: py.test -k 'not test_filter_vsi'
