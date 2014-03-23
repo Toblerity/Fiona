@@ -8,6 +8,7 @@ Changes
 - Skip unsupported field types with a warning (#91).
 - Allow OGR config options to be passed to fiona.drivers() (#90, #93).
 - Add a bounds() function (#100).
+- Turn on GPX driver.
 
 1.1.2 (2014-02-14)
 ------------------
