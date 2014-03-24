@@ -24,7 +24,7 @@ def test_options(tmpdir=None):
         c = fiona.open("docs/data/test_uk.shp")
         c.close()
         log = open(logfile).read()
-        assert "OGR Error 0: OGR: OGROpen(docs/data/test_uk.shp" in log
+        assert "Option CPL_DEBUG" in log
 
     if tempdir and tmpdir is None:
         shutil.rmtree(tempdir)
