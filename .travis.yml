@@ -9,4 +9,4 @@ before_install:
 install:
   - "pip install -r requirements-dev.txt"
   - "python setup.py develop"
-script: py.test -k 'not test_filter_vsi'
+script: nosetests --exclude test_filter_vsi

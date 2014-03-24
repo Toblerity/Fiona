@@ -1,3 +1,4 @@
 Cython==0.20
+nose
 pytest
 setuptools

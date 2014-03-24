@@ -1,12 +1,19 @@
 
 import logging
+import os.path
+import shutil
 import sys
+import tempfile
 
 import fiona
 
-def test_options(tmpdir):
+def test_options(tmpdir=None):
     """Test that setting CPL_DEBUG=ON works"""
-    logfile = str(tmpdir.join('example.log'))
+    if tmpdir is None:
+        tempdir = tempfile.mkdtemp()
+        logfile = os.path.join(tempdir, 'example.log')
+    else:
+        logfile = str(tmpdir.join('example.log'))
     logger = logging.getLogger('Fiona')
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler(logfile)
@@ -19,3 +26,5 @@ def test_options(tmpdir):
         log = open(logfile).read()
         assert "OGR Error 0: OGR: OGROpen(docs/data/test_uk.shp" in log
 
+    if tempdir and tmpdir is None:
+        shutil.rmtree(tempdir)
