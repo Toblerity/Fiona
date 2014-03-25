@@ -956,6 +956,11 @@ cdef class WritingSession(Session):
             # which are an ordered dict since Fiona 1.0.1.
             for key, value in collection.schema['properties'].items():
                 log.debug("Creating field: %s %s", key, value)
+
+                # Convert 'long' to 'int'. See
+                # https://github.com/Toblerity/Fiona/issues/101.
+                if value == 'long':
+                    value = 'int'
                 
                 # Is there a field width/precision?
                 width = precision = None
