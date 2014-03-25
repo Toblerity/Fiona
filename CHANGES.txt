@@ -1,6 +1,10 @@
 Changes
 =======
 
+1.1.4 (?)
+---------
+- Convert 'long' in schemas to 'int' (#101).
+
 1.1.3 (2014-03-23)
 ------------------
 - Always register all GDAL and OGR drivers when entering the DriverManager
