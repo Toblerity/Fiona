@@ -502,6 +502,7 @@ cdef class OGRFeatureBuilder:
     """
     
     cdef void * build(self, feature, collection) except NULL:
+        cdef void *cogr_geometry = NULL
         cdef char *string_c
         cdef WritingSession session
         session = collection.session
@@ -515,7 +516,8 @@ cdef class OGRFeatureBuilder:
         if cogr_feature is NULL:
             raise ValueError("Null feature")
         
-        cdef void *cogr_geometry = OGRGeomBuilder().build(feature['geometry'])
+        if feature['geometry'] is not None:
+            cogr_geometry = OGRGeomBuilder().build(feature['geometry'])
         ograpi.OGR_F_SetGeometryDirectly(cogr_feature, cogr_geometry)
         
         # OGR_F_SetFieldString takes UTF-8 encoded strings ('bytes' in 
@@ -1018,12 +1020,13 @@ cdef class WritingSession(Session):
             schema_geom_type = collection.schema['geometry'].lstrip(
                 "3D ").lstrip("Multi")
             def validate_geometry_type(rec):
-                return rec['geometry']['type'].lstrip(
+                return rec['geometry'] is None or rec['geometry']['type'].lstrip(
                     "Multi") == schema_geom_type
         else:
             schema_geom_type = collection.schema['geometry'].lstrip("3D ")
             def validate_geometry_type(rec):
-                return rec['geometry']['type'] == schema_geom_type
+                return rec['geometry'] is None or \
+                       rec['geometry']['type'] == schema_geom_type
 
         schema_props_keys = set(collection.schema['properties'].keys())
         for record in records:

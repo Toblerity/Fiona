@@ -300,6 +300,16 @@ class PointWritingTest(unittest.TestCase):
         self.failUnlessEqual(len(self.sink), 2)
         self.failUnlessEqual(self.sink.bounds, (0.0, -0.1, 0.0, 0.1))
 
+    def test_write_one_null_geom(self):
+        self.failUnlessEqual(len(self.sink), 0)
+        self.failUnlessEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
+        f = {
+            'geometry': None,
+            'properties': {'title': 'point one', 'date': "2012-01-29"}}
+        self.sink.writerecords([f])
+        self.failUnlessEqual(len(self.sink), 1)
+        self.failUnlessEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
+
     def test_validate_record(self):
         fvalid = {
             'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
