@@ -23,4 +23,104 @@ class SchemaOrder(unittest.TestCase):
         with fiona.open(os.path.join(self.tempdir, 'test_schema.shp')) as c:
             self.assertEqual(list(c.schema['properties'].items()), items)
 
+class ShapefileSchema(unittest.TestCase):
+
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+
+    def test_schema(self):
+        items = sorted({
+            'AWATER10': 'float',
+            'CLASSFP10': 'str',
+            'ZipCodeType': 'str',
+            'EstimatedPopulation': 'float',
+            'LocationType': 'str',
+            'ALAND10': 'float',
+            'TotalWages': 'float',
+            'FUNCSTAT10': 'str',
+            'Long': 'float',
+            'City': 'str',
+            'TaxReturnsFiled': 'float',
+            'State': 'str',
+            'Location': 'str',
+            'GSrchCnt': 'float',
+            'INTPTLAT10': 'str',
+            'Lat': 'float',
+            'MTFCC10': 'str',
+            'Decommisioned': 'str',
+            'GEOID10': 'str',
+            'INTPTLON10': 'str'}.items())
+        with fiona.open(os.path.join(self.tempdir, 'test_schema.shp'), 'w',
+                driver="ESRI Shapefile",
+                schema={
+                    'geometry': 'Polygon', 
+                    'properties': items }) as c:
+            self.assertEqual(list(c.schema['properties'].items()), items)
+            c.write(
+                {'geometry': {'coordinates': [[(-117.882442, 33.783633),
+                                               (-117.882284, 33.783817),
+                                               (-117.863348, 33.760016),
+                                               (-117.863478, 33.760016),
+                                               (-117.863869, 33.760017),
+                                                (-117.864, 33.760017999999995),
+                                                (-117.864239, 33.760019),
+                                                (-117.876608, 33.755769),
+                                                (-117.882886, 33.783114),
+                                                (-117.882688, 33.783345),
+                                                (-117.882639, 33.783401999999995),
+                                                (-117.88259, 33.78346),
+                                                (-117.882442, 33.783633)]],
+                               'type': 'Polygon'},
+                 'id': '1',
+                 'properties':{
+                    'ALAND10': 8819240.0,
+                    'AWATER10': 309767.0,
+                    'CLASSFP10': 'B5',
+                    'City': 'SANTA ANA',
+                    'Decommisioned': False,
+                    'EstimatedPopulation': 27773.0,
+                    'FUNCSTAT10': 'S',
+                    'GEOID10': '92706',
+                    'GSrchCnt': 0.0,
+                    'INTPTLAT10': '+33.7653010',
+                    'INTPTLON10': '-117.8819759',
+                    'Lat': 33.759999999999998,
+                    'Location': 'NA-US-CA-SANTA ANA',
+                    'LocationType': 'PRIMARY',
+                    'Long': -117.88,
+                    'MTFCC10': 'G6350',
+                    'State': 'CA',
+                    'TaxReturnsFiled': 14635.0,
+                    'TotalWages': 521280485.0,
+                    'ZipCodeType': 'STANDARD'},
+                 'type': 'Feature'} )
+            self.assertEqual(len(c), 1)
+        with fiona.open(os.path.join(self.tempdir, 'test_schema.shp')) as c:
+            self.assertEqual(
+                list(c.schema['properties'].items()), 
+                sorted([('AWATER10', 'float'), 
+                 ('CLASSFP10', 'str'), 
+                 ('ZipCodeTyp', 'str'), 
+                 ('EstimatedP', 'float'), 
+                 ('LocationTy', 'str'), 
+                 ('ALAND10', 'float'), 
+                 ('INTPTLAT10', 'str'), 
+                 ('FUNCSTAT10', 'str'), 
+                 ('Long', 'float'), 
+                 ('City', 'str'), 
+                 ('TaxReturns', 'float'), 
+                 ('State', 'str'), 
+                 ('Location', 'str'), 
+                 ('GSrchCnt', 'float'), 
+                 ('TotalWages', 'float'), 
+                 ('Lat', 'float'), 
+                 ('MTFCC10', 'str'), 
+                 ('INTPTLON10', 'str'), 
+                 ('GEOID10', 'str'), 
+                 ('Decommisio', 'str')]) )
+            f = next(c)
+            self.assertEqual(f['properties']['EstimatedP'], 27773.0)
 

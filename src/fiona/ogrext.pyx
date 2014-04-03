@@ -524,7 +524,9 @@ cdef class OGRFeatureBuilder:
 
         for key, value in feature['properties'].items():
             try:
-                key_bytes = key.encode(encoding)
+                log.debug(
+                    "Looking up %s in %s", key, repr(session._schema_mapping))
+                key_bytes = session._schema_mapping[key].encode(encoding)
             except UnicodeDecodeError:
                 log.warn("Failed to encode %s using %s codec", key, encoding)
                 key_bytes = key
@@ -792,6 +794,8 @@ cdef class Session:
 
 cdef class WritingSession(Session):
     
+    cdef object _schema_mapping
+
     def start(self, collection):
         cdef void *cogr_fielddefn
         cdef void *cogr_driver
@@ -985,6 +989,13 @@ cdef class WritingSession(Session):
                 ograpi.OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1)
                 ograpi.OGR_Fld_Destroy(cogr_fielddefn)
             log.debug("Created fields")
+
+        # Mapping of the Python collection schema to the munged 
+        # OGR schema.
+        ogr_schema = self.get_schema()
+        self._schema_mapping = dict(zip(
+            collection.schema['properties'].keys(), 
+            ogr_schema['properties'].keys() ))
 
         log.debug("Writing started")
 
