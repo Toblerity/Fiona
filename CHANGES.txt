@@ -1,8 +1,8 @@
 Changes
 =======
 
-1.1.4 (?)
----------
+1.1.4 (2014-04-03)
+------------------
 - Convert 'long' in schemas to 'int' (#101).
 - Carefully map Python schema to the possibly munged internal schema (#105).
 - Allow writing of features with geometry: None (#71).
