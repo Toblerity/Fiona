@@ -42,6 +42,10 @@ GEOMETRY_TYPES = {
     0x80000006: '3D MultiPolygon',
     0x80000007: '3D GeometryCollection' }
 
+# mapping of GeoJSON type names to OGR integer geometry types
+GEOJSON2OGR_GEOMETRY_TYPES = dict((v, k) for k, v in GEOMETRY_TYPES.iteritems())
+
+
 # Mapping of OGR integer field types to Fiona field type names.
 #
 # Lists are currently unsupported in this version, but might be done as
@@ -227,120 +231,88 @@ cdef class GeomBuilder:
 cdef class OGRGeomBuilder:
     """Builds OGR geometries from Fiona geometries.
     """
-    cdef object coordinates
-    cdef object typename
-    cdef object ndims
+    cdef void * _createOgrGeometry(self, int geom_type) except NULL:
+        cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(geom_type)
+        if cogr_geometry is NULL:
+            raise Exception("Could not create OGR Geometry of type: %i" % geom_type)
+        return cogr_geometry
 
-    cdef void * _buildPoint(self) except NULL:
-        cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(1)
-        if cogr_geometry is NULL:
-            raise ValueError
-        if self.ndims > 2:
-            x, y, z = self.coordinates
-            ograpi.OGR_G_AddPoint(cogr_geometry, x, y, z)
-        else:
-            x, y = self.coordinates
+    cdef _addPointToGeometry(self, void *cogr_geometry, object coordinate):
+        if len(coordinate) == 2:
+            x, y = coordinate
             ograpi.OGR_G_AddPoint_2D(cogr_geometry, x, y)
+        else:
+            x, y, z = coordinate[:3]
+            ograpi.OGR_G_AddPoint(cogr_geometry, x, y, z)
+
+    cdef void * _buildPoint(self, object coordinates) except NULL:
+        cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['Point'])
+        self._addPointToGeometry(cogr_geometry, coordinates)
         return cogr_geometry
     
-    cdef void * _buildLineString(self) except NULL:
-        cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(2)
-        if cogr_geometry is NULL:
-            raise ValueError
-        for values in self.coordinates:
-            log.debug("Adding point %s", values)
-            if len(values) > 2:
-                x, y, z = values
-                ograpi.OGR_G_AddPoint(cogr_geometry, x, y, z)
-            else:
-                x, y = values
-                ograpi.OGR_G_AddPoint_2D(cogr_geometry, x, y)
+    cdef void * _buildLineString(self, object coordinates) except NULL:
+        cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['LineString'])
+        for coordinate in coordinates:
+            log.debug("Adding point %s", coordinate)
+            self._addPointToGeometry(cogr_geometry, coordinate)
         return cogr_geometry
     
-    cdef void * _buildLinearRing(self) except NULL:
-        cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(101)
-        if cogr_geometry is NULL:
-            raise ValueError
-        for values in self.coordinates:
-            log.debug("Adding point %s", values)
-            if len(values) > 2:
-                x, y, z = values
-                ograpi.OGR_G_AddPoint(cogr_geometry, x, y, z)
-            else:
-                x, y = values
-                log.debug("Adding values %f, %f", x, y)
-                ograpi.OGR_G_AddPoint_2D(cogr_geometry, x, y)
+    cdef void * _buildLinearRing(self, object coordinates) except NULL:
+        cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['LinearRing'])
+        for coordinate in coordinates:
+            log.debug("Adding point %s", coordinate)
+            self._addPointToGeometry(cogr_geometry, coordinate)
         log.debug("Closing ring")
         ograpi.OGR_G_CloseRings(cogr_geometry)
         return cogr_geometry
     
-    cdef void * _buildPolygon(self) except NULL:
+    cdef void * _buildPolygon(self, object coordinates) except NULL:
         cdef void *cogr_ring
-        cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(3)
-        if cogr_geometry is NULL:
-            raise ValueError
-        self.ndims = len(self.coordinates[0][0])
-        for ring in self.coordinates:
+        cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['Polygon'])
+        for ring in coordinates:
             log.debug("Adding ring %s", ring)
-            cogr_ring = OGRGeomBuilder().build(
-                {'type': 'LinearRing', 'coordinates': ring} )
+            cogr_ring = self._buildLinearRing(ring)
             log.debug("Built ring")
             ograpi.OGR_G_AddGeometryDirectly(cogr_geometry, cogr_ring)
             log.debug("Added ring %s", ring)
         return cogr_geometry
 
-    cdef void * _buildMultiPoint(self) except NULL:
+    cdef void * _buildMultiPoint(self, object coordinates) except NULL:
         cdef void *cogr_part
-        cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(4)
-        if cogr_geometry is NULL:
-            raise ValueError
-        for values in self.coordinates:
-            log.debug("Adding point %s", values)
-            cogr_part = ograpi.OGR_G_CreateGeometry(1)
-            if len(values) > 2:
-                x, y, z = values
-                ograpi.OGR_G_AddPoint(cogr_part, x, y, z)
-            else:
-                x, y = values
-                ograpi.OGR_G_AddPoint_2D(cogr_part, x, y)
+        cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['MultiPoint'])
+        for coordinate in coordinates:
+            log.debug("Adding point %s", coordinate)
+            cogr_part = self._buildPoint(coordinate)
             ograpi.OGR_G_AddGeometryDirectly(cogr_geometry, cogr_part)
-            log.debug("Added point %s", values)
+            log.debug("Added point %s", coordinate)
         return cogr_geometry
 
-    cdef void * _buildMultiLineString(self) except NULL:
+    cdef void * _buildMultiLineString(self, object coordinates) except NULL:
         cdef void *cogr_part
-        cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(5)
-        if cogr_geometry is NULL:
-            raise ValueError
-        for line in self.coordinates:
+        cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['MultiLineString'])
+        for line in coordinates:
             log.debug("Adding line %s", line)
-            cogr_part = OGRGeomBuilder().build(
-                {'type': 'LineString', 'coordinates': line} )
+            cogr_part = self._buildLineString(line)
             log.debug("Built line")
             ograpi.OGR_G_AddGeometryDirectly(cogr_geometry, cogr_part)
             log.debug("Added line %s", line)
         return cogr_geometry
 
-    cdef void * _buildMultiPolygon(self) except NULL:
+    cdef void * _buildMultiPolygon(self, object coordinates) except NULL:
         cdef void *cogr_part
-        cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(6)
-        if cogr_geometry is NULL:
-            raise ValueError
-        for part in self.coordinates:
+        cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['MultiPolygon'])
+        for part in coordinates:
             log.debug("Adding polygon %s", part)
-            cogr_part = OGRGeomBuilder().build(
-                {'type': 'Polygon', 'coordinates': part} )
+            cogr_part = self._buildPolygon(part)
             log.debug("Built polygon")
             ograpi.OGR_G_AddGeometryDirectly(cogr_geometry, cogr_part)
             log.debug("Added polygon %s", part)
         return cogr_geometry
 
-    cdef void * _buildGeometryCollection(self) except NULL:
+    cdef void * _buildGeometryCollection(self, object coordinates) except NULL:
         cdef void *cogr_part
-        cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(7)
-        if cogr_geometry is NULL:
-            raise ValueError
-        for part in self.coordinates:
+        cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['GeometryCollection'])
+        for part in coordinates:
             log.debug("Adding part %s", part)
             cogr_part = OGRGeomBuilder().build(part)
             log.debug("Built part")
@@ -349,31 +321,27 @@ cdef class OGRGeomBuilder:
         return cogr_geometry
 
     cdef void * build(self, object geometry) except NULL:
-        handler = DimensionsHandler()
-        self.typename = geometry['type']
-        self.coordinates = geometry.get('coordinates')
-        if self.coordinates:
-            self.ndims = handler.getNumDims(self.typename, self.coordinates)
-        if self.typename == 'Point':
-            return self._buildPoint()
-        elif self.typename == 'LineString':
-            return self._buildLineString()
-        elif self.typename == 'LinearRing':
-            return self._buildLinearRing()
-        elif self.typename == 'Polygon':
-            return self._buildPolygon()
-        elif self.typename == 'MultiPoint':
-            return self._buildMultiPoint()
-        elif self.typename == 'MultiLineString':
-            return self._buildMultiLineString()
-        elif self.typename == 'MultiPolygon':
-            return self._buildMultiPolygon()
-        elif self.typename == 'GeometryCollection':
-            self.coordinates = geometry.get('geometries')
-            self.ndims = handler.getNumDims(self.typename, self.coordinates)
-            return self._buildGeometryCollection()
+        cdef object typename = geometry['type']
+        cdef object coordinates = geometry.get('coordinates')
+        if typename == 'Point':
+            return self._buildPoint(coordinates)
+        elif typename == 'LineString':
+            return self._buildLineString(coordinates)
+        elif typename == 'LinearRing':
+            return self._buildLinearRing(coordinates)
+        elif typename == 'Polygon':
+            return self._buildPolygon(coordinates)
+        elif typename == 'MultiPoint':
+            return self._buildMultiPoint(coordinates)
+        elif typename == 'MultiLineString':
+            return self._buildMultiLineString(coordinates)
+        elif typename == 'MultiPolygon':
+            return self._buildMultiPolygon(coordinates)
+        elif typename == 'GeometryCollection':
+            coordinates = geometry.get('geometries')
+            return self._buildGeometryCollection(coordinates)
         else:
-            raise ValueError("Unsupported geometry type %s" % self.typename)
+            raise ValueError("Unsupported geometry type %s" % typename)
 
 
 cdef geometry(void *geom):
