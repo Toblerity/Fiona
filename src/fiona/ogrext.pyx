@@ -9,6 +9,7 @@ import sys
 from six import integer_types, string_types, text_type
 
 from fiona cimport ograpi
+from fiona._err import cpl_errs
 from fiona.errors import DriverError, SchemaError, CRSError
 from fiona.odict import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
@@ -584,7 +585,8 @@ cdef class Session:
             path_b = collection.path
         path_c = path_b
         
-        self.cogr_ds = ograpi.OGROpen(path_c, 0, NULL)
+        with cpl_errs:
+            self.cogr_ds = ograpi.OGROpen(path_c, 0, NULL)
         if self.cogr_ds is NULL:
             raise ValueError(
                 "No data available at path '%s'" % collection.path)
@@ -788,7 +790,8 @@ cdef class WritingSession(Session):
                 except UnicodeDecodeError:
                     path_b = path
                 path_c = path_b
-                self.cogr_ds = ograpi.OGROpen(path_c, 1, NULL)
+                with cpl_errs:
+                    self.cogr_ds = ograpi.OGROpen(path_c, 1, NULL)
                 if self.cogr_ds is NULL:
                     raise RuntimeError("Failed to open %s" % path)
                 cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
@@ -835,9 +838,9 @@ cdef class WritingSession(Session):
                     cogr_driver, path_c, NULL)
 
             else:
-                cogr_ds = ograpi.OGROpen(path_c, 1, NULL)
-                
-                if not cogr_ds:
+                with cpl_errs:
+                    cogr_ds = ograpi.OGROpen(path_c, 1, NULL)
+                if cogr_ds == NULL:
                     cogr_ds = ograpi.OGR_Dr_CreateDataSource(
                         cogr_driver, path_c, NULL)
 
@@ -1086,7 +1089,8 @@ def _listlayers(path):
     except UnicodeDecodeError:
         path_b = path
     path_c = path_b
-    cogr_ds = ograpi.OGROpen(path_c, 0, NULL)
+    with cpl_errs:
+        cogr_ds = ograpi.OGROpen(path_c, 0, NULL)
     if cogr_ds is NULL:
         raise ValueError("No data available at path '%s'" % path)
     

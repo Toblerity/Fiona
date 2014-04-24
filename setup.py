@@ -87,11 +87,13 @@ if os.path.exists("MANIFEST.in"):
         sys.exit(1)
     ext_modules = cythonize([
         Extension('fiona._drivers', ['src/fiona/_drivers.pyx'], **ext_options),
+        Extension('fiona._err', ['src/fiona/_err.pyx'], **ext_options),
         Extension('fiona.ogrext', ['src/fiona/ogrext.pyx'], **ext_options)])
 # If there's no manifest template, as in an sdist, we just specify .c files.
 else:
     ext_modules = [
         Extension('fiona._drivers', ['src/fiona/_drivers.c'], **ext_options),
+        Extension('fiona._err', ['src/fiona/_err.c'], **ext_options),
         Extension('fiona.ogrext', ['src/fiona/ogrext.c'], **ext_options)]
 
 requirements = ['six']
