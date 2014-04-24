@@ -157,7 +157,7 @@ cdef class GeomBuilder:
     cdef _buildCoords(self, void *geom):
         # Build a coordinate sequence
         cdef int i
-        if geom is NULL:
+        if geom == NULL:
             raise ValueError("Null geom")
         npoints = ograpi.OGR_G_GetPointCount(geom)
         coords = []
@@ -180,7 +180,7 @@ cdef class GeomBuilder:
     cdef _buildParts(self, void *geom):
         cdef int j
         cdef void *part
-        if geom is NULL:
+        if geom == NULL:
             raise ValueError("Null geom")
         parts = []
         for j in range(ograpi.OGR_G_GetGeometryCount(geom)):
@@ -210,7 +210,7 @@ cdef class GeomBuilder:
     
     cdef build(self, void *geom):
         # The only method anyone needs to call
-        if geom is NULL:
+        if geom == NULL:
             raise ValueError("Null geom")
         
         cdef unsigned int etype = ograpi.OGR_G_GetGeometryType(geom)
@@ -234,7 +234,7 @@ cdef class OGRGeomBuilder:
     """
     cdef void * _createOgrGeometry(self, int geom_type) except NULL:
         cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(geom_type)
-        if cogr_geometry is NULL:
+        if cogr_geometry == NULL:
             raise Exception("Could not create OGR Geometry of type: %i" % geom_type)
         return cogr_geometry
 
@@ -406,7 +406,7 @@ cdef class FeatureBuilder:
         props = OrderedDict()
         for i in range(ograpi.OGR_F_GetFieldCount(feature)):
             fdefn = ograpi.OGR_F_GetFieldDefnRef(feature, i)
-            if fdefn is NULL:
+            if fdefn == NULL:
                 raise ValueError("Null feature definition")
             key_c = ograpi.OGR_Fld_GetNameRef(fdefn)
             if key_c == NULL:
@@ -476,13 +476,13 @@ cdef class OGRFeatureBuilder:
         cdef WritingSession session
         session = collection.session
         cdef void *cogr_layer = session.cogr_layer
-        if cogr_layer is NULL:
+        if cogr_layer == NULL:
             raise ValueError("Null layer")
         cdef void *cogr_featuredefn = ograpi.OGR_L_GetLayerDefn(cogr_layer)
-        if cogr_featuredefn is NULL:
+        if cogr_featuredefn == NULL:
             raise ValueError("Null feature definition")
         cdef void *cogr_feature = ograpi.OGR_F_Create(cogr_featuredefn)
-        if cogr_feature is NULL:
+        if cogr_feature == NULL:
             raise ValueError("Null feature")
         
         if feature['geometry'] is not None:
@@ -546,7 +546,7 @@ def featureRT(feature, collection):
     # For testing purposes only, leaks the JSON data
     cdef void *cogr_feature = OGRFeatureBuilder().build(feature, collection)
     cdef void *cogr_geometry = ograpi.OGR_F_GetGeometryRef(cogr_feature)
-    if cogr_geometry is NULL:
+    if cogr_geometry == NULL:
         raise ValueError("Null geometry")
     log.debug("Geometry: %s" % ograpi.OGR_G_ExportToJson(cogr_geometry))
     encoding = collection.encoding or 'utf-8'
@@ -587,7 +587,7 @@ cdef class Session:
         
         with cpl_errs:
             self.cogr_ds = ograpi.OGROpen(path_c, 0, NULL)
-        if self.cogr_ds is NULL:
+        if self.cogr_ds == NULL:
             raise ValueError(
                 "No data available at path '%s'" % collection.path)
         
@@ -603,7 +603,7 @@ cdef class Session:
             name_b = name_c
             collection.name = name_b.decode('utf-8')
 
-        if self.cogr_layer is NULL:
+        if self.cogr_layer == NULL:
             raise ValueError("Null layer: " + repr(collection.name))
         
         self.collection = collection
@@ -639,13 +639,13 @@ cdef class Session:
         return self._encoding
 
     def get_length(self):
-        if self.cogr_layer is NULL:
+        if self.cogr_layer == NULL:
             raise ValueError("Null layer")
         return ograpi.OGR_L_GetFeatureCount(self.cogr_layer, 0)
 
     def get_driver(self):
         cdef void *cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
-        if cogr_driver is NULL:
+        if cogr_driver == NULL:
             raise ValueError("Null driver")
         cdef char *name = ograpi.OGR_Dr_GetName(cogr_driver)
         driver_name = name
@@ -659,16 +659,16 @@ cdef class Session:
         cdef char *key_c
         props = []
         
-        if self.cogr_layer is NULL:
+        if self.cogr_layer == NULL:
             raise ValueError("Null layer")
 
         cogr_featuredefn = ograpi.OGR_L_GetLayerDefn(self.cogr_layer)
-        if cogr_featuredefn is NULL:
+        if cogr_featuredefn == NULL:
             raise ValueError("Null feature definition")
         n = ograpi.OGR_FD_GetFieldCount(cogr_featuredefn)
         for i from 0 <= i < n:
             cogr_fielddefn = ograpi.OGR_FD_GetFieldDefn(cogr_featuredefn, i)
-            if cogr_fielddefn is NULL:
+            if cogr_fielddefn == NULL:
                 raise ValueError("Null field definition")
             key_c = ograpi.OGR_Fld_GetNameRef(cogr_fielddefn)
             key_b = key_c
@@ -715,14 +715,14 @@ cdef class Session:
 
     def get_crs(self):
         cdef char *proj_c = NULL
-        if self.cogr_layer is NULL:
+        if self.cogr_layer == NULL:
             raise ValueError("Null layer")
         cdef void *cogr_crs = ograpi.OGR_L_GetSpatialRef(self.cogr_layer)
         log.debug("Got coordinate system")
         crs = {}
         if cogr_crs is not NULL:
             ograpi.OSRExportToProj4(cogr_crs, &proj_c)
-            if proj_c is NULL:
+            if proj_c == NULL:
                 raise ValueError("Null projection")
             proj_b = proj_c
             log.debug("Params: %s", proj_b)
@@ -751,7 +751,7 @@ cdef class Session:
         return crs
 
     def get_extent(self):
-        if self.cogr_layer is NULL:
+        if self.cogr_layer == NULL:
             raise ValueError("Null layer")
         cdef ograpi.OGREnvelope extent
         result = ograpi.OGR_L_GetExtent(self.cogr_layer, &extent, 1)
@@ -792,10 +792,10 @@ cdef class WritingSession(Session):
                 path_c = path_b
                 with cpl_errs:
                     self.cogr_ds = ograpi.OGROpen(path_c, 1, NULL)
-                if self.cogr_ds is NULL:
+                if self.cogr_ds == NULL:
                     raise RuntimeError("Failed to open %s" % path)
                 cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
-                if cogr_driver is NULL:
+                if cogr_driver == NULL:
                     raise ValueError("Null driver")
 
                 if isinstance(collection.name, string_types):
@@ -807,7 +807,7 @@ cdef class WritingSession(Session):
                     self.cogr_layer = ograpi.OGR_DS_GetLayer(
                                         self.cogr_ds, collection.name)
 
-                if self.cogr_layer is NULL:
+                if self.cogr_layer == NULL:
                     raise RuntimeError(
                         "Failed to get layer %s" % collection.name)
             else:
@@ -830,7 +830,7 @@ cdef class WritingSession(Session):
             driver_c = driver_b
 
             cogr_driver = ograpi.OGRGetDriverByName(driver_c)
-            if cogr_driver is NULL:
+            if cogr_driver == NULL:
                 raise ValueError("Null driver")
 
             if not os.path.exists(path):
@@ -855,7 +855,7 @@ cdef class WritingSession(Session):
                 else:
                     pass
 
-            if cogr_ds is NULL:
+            if cogr_ds == NULL:
                 raise RuntimeError("Failed to open %s" % path)
             else:
                 self.cogr_ds = cogr_ds
@@ -863,7 +863,7 @@ cdef class WritingSession(Session):
             # Set the spatial reference system from the given crs.
             if collection.crs:
                 cogr_srs = ograpi.OSRNewSpatialReference(NULL)
-                if cogr_srs is NULL:
+                if cogr_srs == NULL:
                     raise ValueError("Null spatial reference")
                 params = []
                 for k, v in collection.crs.items():
@@ -925,7 +925,7 @@ cdef class WritingSession(Session):
             if options:
                 ograpi.CSLDestroy(options)
 
-            if self.cogr_layer is NULL:
+            if self.cogr_layer == NULL:
                 raise ValueError("Null layer")
             log.debug("Created layer")
             
@@ -953,7 +953,7 @@ cdef class WritingSession(Session):
                 cogr_fielddefn = ograpi.OGR_Fld_Create(
                     key_bytes, 
                     FIELD_TYPES.index(value) )
-                if cogr_fielddefn is NULL:
+                if cogr_fielddefn == NULL:
                     raise ValueError("Null field definition")
                 if width:
                     ograpi.OGR_Fld_SetWidth(cogr_fielddefn, width)
@@ -978,7 +978,7 @@ cdef class WritingSession(Session):
         cdef void *cogr_feature
 
         cdef void *cogr_layer = self.cogr_layer
-        if cogr_layer is NULL:
+        if cogr_layer == NULL:
             raise ValueError("Null layer")
         
         schema_geom_type = collection.schema['geometry']
@@ -1025,7 +1025,7 @@ cdef class WritingSession(Session):
         """Syncs OGR to disk."""
         cdef void *cogr_ds = self.cogr_ds
         cdef void *cogr_layer = self.cogr_layer
-        if cogr_ds is NULL:
+        if cogr_ds == NULL:
             raise ValueError("Null data source")
         log.debug("Syncing OGR to disk")
         retval = ograpi.OGR_DS_SyncToDisk(cogr_ds)
@@ -1049,7 +1049,7 @@ cdef class Iterator:
         cdef Session session
         session = self.collection.session
         cdef void *cogr_layer = session.cogr_layer
-        if cogr_layer is NULL:
+        if cogr_layer == NULL:
             raise ValueError("Null layer")
         ograpi.OGR_L_ResetReading(cogr_layer)
         if bbox:
@@ -1091,7 +1091,7 @@ def _listlayers(path):
     path_c = path_b
     with cpl_errs:
         cogr_ds = ograpi.OGROpen(path_c, 0, NULL)
-    if cogr_ds is NULL:
+    if cogr_ds == NULL:
         raise ValueError("No data available at path '%s'" % path)
     
     # Loop over the layers to get their names.
