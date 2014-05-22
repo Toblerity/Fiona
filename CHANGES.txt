@@ -5,6 +5,7 @@ Next
 ----
 - Addition of cpl_errs context manager (#108).
 - Check for NULLs with '==' test instead of 'is' (#109).
+- Open auxiliary files with encoding='utf-8' in setup for Python 3 (#110).
 
 1.1.4 (2014-04-03)
 ------------------
