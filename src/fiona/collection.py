@@ -4,7 +4,7 @@
 import os
 import sys
 
-from fiona.ogrext import Iterator, Session, WritingSession
+from fiona.ogrext import Iterator, Session, WritingSession, _getfeature
 from fiona.errors import DriverError, SchemaError, CRSError
 from fiona._drivers import driver_count, GDALEnv
 from six import string_types
@@ -204,6 +204,9 @@ class Collection(object):
         return next(self.iterator)
 
     next = __next__
+
+    def __getitem__(self, fid):
+        return _getfeature(self, fid)
 
     def writerecords(self, records):
         """Stages multiple records for writing to disk."""

@@ -202,6 +202,21 @@ class ReadingTest(unittest.TestCase):
         self.failUnlessEqual(f['id'], "0")
         self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
 
+    def test_getitem_one(self):
+        f = self.c[0]
+        self.failUnlessEqual(f['id'], "0")
+        self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
+
+    def test_getitem_iter_combo(self):
+        i = iter(self.c)
+        f = next(i)
+        f = next(i)
+        self.failUnlessEqual(f['id'], "1")
+        f = self.c[0]
+        self.failUnlessEqual(f['id'], "0")
+        f = next(i)
+        self.failUnlessEqual(f['id'], "2")
+
     def test_no_write(self):
         self.assertRaises(IOError, self.c.write, {})
 
