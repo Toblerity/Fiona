@@ -1,6 +1,10 @@
 Changes
 =======
 
+Next
+----
+- Leave GDAL finalization to the DLL's destructor (#113).
+  
 1.1.5 (2014-05-21)
 ------------------
 - Addition of cpl_errs context manager (#108).
