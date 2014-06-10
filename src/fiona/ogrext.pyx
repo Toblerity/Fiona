@@ -1072,6 +1072,25 @@ cdef class Iterator:
         _deleteOgrFeature(cogr_feature)
         return feature
 
+def _getfeature(collection, fid):
+
+    """Provides access to feature data by FID.
+    """
+
+    cdef void * cogr_feature
+    cdef Session session
+    cdef encoding
+
+    fid = int(fid)
+    if collection.session is None:
+        raise ValueError("I/O operation on closed collection")
+    session = collection.session
+    cogr_feature = ograpi.OGR_L_GetFeature(session.cogr_layer, fid)
+    if cogr_feature == NULL:
+        return None
+    encoding = session.get_internalencoding()
+    feature = FeatureBuilder().build(cogr_feature, encoding)
+    return feature
 
 def _listlayers(path):
 
