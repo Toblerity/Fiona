@@ -3,7 +3,9 @@ Changes
 
 Next
 ----
+- Implement Collection __getitem__() (#112).
 - Leave GDAL finalization to the DLL's destructor (#113).
+- Add Collection keys(), values(), items(), __contains__() (#114).
   
 1.1.5 (2014-05-21)
 ------------------

@@ -220,6 +220,21 @@ class ReadingTest(unittest.TestCase):
     def test_no_write(self):
         self.assertRaises(IOError, self.c.write, {})
 
+    def test_iter_items_list(self):
+        i, f = list(self.c.items())[0]
+        self.failUnlessEqual(i, 0)
+        self.failUnlessEqual(f['id'], "0")
+        self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
+
+    def test_iter_keys_list(self):
+        i = list(self.c.keys())[0]
+        self.failUnlessEqual(i, 0)
+
+    def test_in_keys(self):
+        self.failUnless(0 in self.c.keys())
+        self.failUnless(0 in self.c)
+
+
 class FilterReadingTest(unittest.TestCase):
     def setUp(self):
         self.c = fiona.open("docs/data/test_uk.shp", "r")

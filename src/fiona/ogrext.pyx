@@ -757,6 +757,37 @@ cdef class Session:
         result = ograpi.OGR_L_GetExtent(self.cogr_layer, &extent, 1)
         return (extent.MinX, extent.MinY, extent.MaxX, extent.MaxY)
 
+    def has_feature(self, fid):
+        """Provides access to feature data by FID.
+
+        Supports Collection.__contains__().
+        """
+        cdef void * cogr_feature
+        fid = int(fid)
+        cogr_feature = ograpi.OGR_L_GetFeature(self.cogr_layer, fid)
+        if cogr_feature != NULL:
+            _deleteOgrFeature(cogr_feature)
+            return True
+        else:
+            return False
+
+    def get_feature(self, fid):
+        """Provides access to feature data by FID.
+
+        Supports Collection.__getitem__().
+        """
+        cdef void * cogr_feature
+        cdef encoding
+        
+        fid = int(fid)
+        cogr_feature = ograpi.OGR_L_GetFeature(self.cogr_layer, fid)
+        if cogr_feature == NULL:
+            return None
+        encoding = self.get_internalencoding()
+        feature = FeatureBuilder().build(cogr_feature, encoding)
+        _deleteOgrFeature(cogr_feature)
+        return feature
+
     def isactive(self):
         if self.cogr_layer != NULL and self.cogr_ds != NULL:
             return 1
@@ -1072,25 +1103,37 @@ cdef class Iterator:
         _deleteOgrFeature(cogr_feature)
         return feature
 
-def _getfeature(collection, fid):
 
-    """Provides access to feature data by FID.
-    """
+cdef class ItemsIterator(Iterator):
 
-    cdef void * cogr_feature
-    cdef Session session
-    cdef encoding
+    def __next__(self):
+        cdef long fid
+        cdef void * cogr_feature
+        cdef Session session
+        session = self.collection.session
+        cogr_feature = ograpi.OGR_L_GetNextFeature(session.cogr_layer)
+        if cogr_feature == NULL:
+            raise StopIteration
+        fid = ograpi.OGR_F_GetFID(cogr_feature)
+        feature = FeatureBuilder().build(cogr_feature, self.encoding)
+        _deleteOgrFeature(cogr_feature)
+        return fid, feature
 
-    fid = int(fid)
-    if collection.session is None:
-        raise ValueError("I/O operation on closed collection")
-    session = collection.session
-    cogr_feature = ograpi.OGR_L_GetFeature(session.cogr_layer, fid)
-    if cogr_feature == NULL:
-        return None
-    encoding = session.get_internalencoding()
-    feature = FeatureBuilder().build(cogr_feature, encoding)
-    return feature
+
+cdef class KeysIterator(Iterator):
+
+    def __next__(self):
+        cdef long fid
+        cdef void * cogr_feature
+        cdef Session session
+        session = self.collection.session
+        cogr_feature = ograpi.OGR_L_GetNextFeature(session.cogr_layer)
+        if cogr_feature == NULL:
+            raise StopIteration
+        fid = ograpi.OGR_F_GetFID(cogr_feature)
+        _deleteOgrFeature(cogr_feature)
+        return fid
+
 
 def _listlayers(path):
 

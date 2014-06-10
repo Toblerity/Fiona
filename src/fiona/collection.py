@@ -4,7 +4,8 @@
 import os
 import sys
 
-from fiona.ogrext import Iterator, Session, WritingSession, _getfeature
+from fiona.ogrext import Iterator, ItemsIterator, KeysIterator
+from fiona.ogrext import Session, WritingSession
 from fiona.errors import DriverError, SchemaError, CRSError
 from fiona._drivers import driver_count, GDALEnv
 from six import string_types
@@ -193,6 +194,33 @@ class Collection(object):
         self.iterator = Iterator(self, bbox)
         return self.iterator
 
+    def items(self, bbox=None):
+        """Returns an iterator over FID, record pairs, optionally 
+        filtered by a test for spatial intersection with the provided
+        ``bbox``, a (minx, miny, maxx, maxy) tuple."""
+        if self.closed:
+            raise ValueError("I/O operation on closed collection")
+        elif self.mode != 'r':
+            raise IOError("collection not open for reading")
+        self.iterator = ItemsIterator(self, bbox)
+        return self.iterator
+
+    def keys(self, bbox=None):
+        """Returns an iterator over FIDs, optionally 
+        filtered by a test for spatial intersection with the provided
+        ``bbox``, a (minx, miny, maxx, maxy) tuple."""
+        if self.closed:
+            raise ValueError("I/O operation on closed collection")
+        elif self.mode != 'r':
+            raise IOError("collection not open for reading")
+        self.iterator = KeysIterator(self, bbox)
+        return self.iterator
+
+    def __contains__(self, fid):
+        return self.session.has_feature(fid)
+
+    values = filter
+
     def __iter__(self):
         """Returns an iterator over records."""
         return self.filter()
@@ -206,7 +234,7 @@ class Collection(object):
     next = __next__
 
     def __getitem__(self, fid):
-        return _getfeature(self, fid)
+        return self.session.get_feature(fid)
 
     def writerecords(self, records):
         """Stages multiple records for writing to disk."""
