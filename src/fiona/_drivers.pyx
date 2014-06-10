@@ -75,14 +75,9 @@ cdef class GDALEnv(object):
 
     def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
         cdef const char *key_c
-        if self.is_chef:
-            GDALDestroyDriverManager()
-            OGRCleanupAll()
-            CPLSetErrorHandler(NULL)
-            if driver_count() != 0:
-                raise ValueError("Drivers not de-registered")
         for key in self.options:
             key_b = key.upper().encode('utf-8')
             key_c = key_b
             CPLSetThreadLocalConfigOption(key_c, NULL)
+        CPLSetErrorHandler(NULL)
 
