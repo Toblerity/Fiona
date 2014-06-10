@@ -28,17 +28,22 @@ with open('src/fiona/__init__.py', 'r') as f:
             version = version.strip("'")
             continue
 
-with open('VERSION.txt', 'w') as f:
+# Fiona's auxiliary files are UTF-8 encoded and we'll specify this when
+# reading with Python 3+
+open_kwds = {}
+if sys.version_info > (3,):
+    open_kwds['encoding'] = 'utf-8'
+
+with open('VERSION.txt', 'w', **open_kwds) as f:
     f.write(version)
 
-# Get long description text from README.rst.
-with open('README.rst', 'r') as f:
+with open('README.rst', **open_kwds) as f:
     readme = f.read()
 
-with open('CREDITS.txt', 'r') as f:
+with open('CREDITS.txt', **open_kwds) as f:
     credits = f.read()
 
-with open('CHANGES.txt', 'r') as f:
+with open('CHANGES.txt', **open_kwds) as f:
     changes = f.read()
 
 # By default we'll try to get options via gdal-config. On systems without,
