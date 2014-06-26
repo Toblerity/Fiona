@@ -28,7 +28,7 @@ def to_string(crs):
             crs.items() )):
         items.append(
             "+" + "=".join(
-                map(str, filter(lambda y: y and y is not True, (k, v)))) )
+                map(str, filter(lambda y: (y or y is 0) and y is not True, (k, v)))) )
     return " ".join(items)
 
 def from_string(prjs):
