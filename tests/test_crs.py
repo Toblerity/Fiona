@@ -52,9 +52,9 @@ def test_to_string_zeroval():
     # Make a string with some 0 values (e.g. esri:102017)
     val = {'proj': 'laea', 'lat_0': 90, 'lon_0': 0, 'x_0': 0, 'y_0': 0, 
            'ellps': 'WGS84', 'datum': 'WGS84', 'units': 'm', 'no_defs': True}
-    assert crs.to_string(val) == "+datum=WGS84 +ellps=WGS84 +lat_0=90 "
-                                 "+lon_0=0 +no_defs +proj=laea +units=m "
-                                 "+x_0=0 +y_0=0"
+    assert crs.to_string(val) == (
+        "+datum=WGS84 +ellps=WGS84 +lat_0=90 +lon_0=0 +no_defs +proj=laea "
+        "+units=m +x_0=0 +y_0=0")
 
 def test_from_epsg():
     val = crs.from_epsg(4326)
