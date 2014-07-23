@@ -1,6 +1,10 @@
 Changes
 =======
 
+1.1.7 
+-----
+- Add fio CLI program.
+
 1.1.6 (2014-06-10)
 ------------------
 - Implement Collection __getitem__() (#112).

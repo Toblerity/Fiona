@@ -1,0 +1,81 @@
+#!/usr/bin/env python
+
+"""Fiona command line interface"""
+
+import itertools
+import json
+import logging
+import sys
+import warnings
+
+import click
+
+import fiona
+
+FIELD_TYPES_MAP_REV = {v: k for k, v in fiona.FIELD_TYPES_MAP.items()}
+
+warnings.simplefilter('default')
+
+def configure_logging(verbosity):
+    log_level = max(10, 30 - 10*verbosity)
+    logging.basicConfig(stream=sys.stderr, level=log_level)
+
+# The CLI command group.
+@click.group(help="Fiona command line interface.")
+@click.option('--verbose', '-v', count=True, help="Increase verbosity.")
+@click.option('--quiet', '-q', count=True, help="Decrease verbosity.")
+@click.pass_context
+def cli(ctx, verbose, quiet):
+    verbosity = verbose - quiet
+    configure_logging(verbosity)
+    ctx.obj = {}
+    ctx.obj['verbosity'] = verbosity
+
+# Commands are below.
+# Translate command.
+@cli.command(short_help="Translate GeoJSON to another vector format.")
+@click.argument('input', type=click.File('rb'), required=True)
+@click.argument('dst_path', type=click.Path(), required=True)
+@click.option('--driver', required=True, help="Output format driver name.")
+@click.option('--x-json-seq/--x-json-obj', default=False,
+              help="Read a LF-delimited JSON sequence (default is object). Experimental.")
+@click.pass_context
+def translate(ctx, input, dst_path, driver, x_json_seq):
+    verbosity = ctx.obj['verbosity']
+    logger = logging.getLogger('fio')
+    try:
+        if x_json_seq:
+            feature_gen = itertools.ifilter(
+                lambda o: o.get('type') == 'Feature',
+                map(json.loads, input))
+        else:
+            collection = json.load(input)
+            feature_gen = iter(collection['features'])
+        
+        # Use schema of first feature as a template.
+        # TODO: schema specified on command line?
+        first = next(feature_gen)
+        schema = {'geometry': first['geometry']['type']}
+        schema['properties'] = {
+            k: FIELD_TYPES_MAP_REV[type(v)] 
+            for k, v in first['properties'].items()}
+
+        with fiona.drivers(CPL_DEBUG=verbosity>2):
+            with fiona.open(
+                    dst_path, 'w', 
+                    driver=driver,
+                    crs={'init': 'epsg:4326'},
+                    schema=schema) as dst:
+                dst.write(first)
+                dst.writerecords(feature_gen)
+        sys.exit(0)
+    except IOError:
+        logger.info("IOError caught")
+        sys.exit(0)
+    except Exception:
+        logger.exception("Failed. Exception caught")
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    cli()
