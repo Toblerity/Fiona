@@ -51,18 +51,18 @@ def translate(ctx, input, dst_path, driver, x_json_seq):
         else:
             collection = json.load(input)
             feature_gen = iter(collection['features'])
-        
+
         # Use schema of first feature as a template.
         # TODO: schema specified on command line?
         first = next(feature_gen)
         schema = {'geometry': first['geometry']['type']}
         schema['properties'] = {
-            k: FIELD_TYPES_MAP_REV[type(v)] 
+            k: FIELD_TYPES_MAP_REV[type(v)]
             for k, v in first['properties'].items()}
 
         with fiona.drivers(CPL_DEBUG=verbosity>2):
             with fiona.open(
-                    dst_path, 'w', 
+                    dst_path, 'w',
                     driver=driver,
                     crs={'init': 'epsg:4326'},
                     schema=schema) as dst:
@@ -75,7 +75,6 @@ def translate(ctx, input, dst_path, driver, x_json_seq):
     except Exception:
         logger.exception("Failed. Exception caught")
         sys.exit(1)
-
 
 if __name__ == '__main__':
     cli()
