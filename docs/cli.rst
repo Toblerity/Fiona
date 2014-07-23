@@ -41,11 +41,11 @@ process command is one way of turning a GeoJSON file into a text sequence.
 
 .. code-block:: console
 
-    $ underscore -i docs/data/test_uk.json process '_.each(data.features, function(o){console.log(JSON.stringify(o));})' | fio translate - /tmp/test2.json --driver "ESRI Shapefile" --x-json-seq
+    $ underscore -i docs/data/test_uk.json process 'each(data.features,function(o){console.log(JSON.stringify(o));})' | fio translate - /tmp/test2.json --driver "ESRI Shapefile" --x-json-seq
     $ ls -l /tmp/test2.*
-    -rw-r--r--  1 sean  wheel     10 Jul 23 15:40 test2.cpg
-    -rw-r--r--  1 sean  wheel   9361 Jul 23 15:40 test2.dbf
-    -rw-r--r--  1 sean  wheel    143 Jul 23 15:40 test2.prj
-    -rw-r--r--  1 sean  wheel  65156 Jul 23 15:40 test2.shp
-    -rw-r--r--  1 sean  wheel    484 Jul 23 15:40 test2.shx
+    -rw-r--r--  1 sean  wheel     10 Jul 23 15:50 test2.cpg
+    -rw-r--r--  1 sean  wheel   9361 Jul 23 15:50 test2.dbf
+    -rw-r--r--  1 sean  wheel    143 Jul 23 15:50 test2.prj
+    -rw-r--r--  1 sean  wheel  65156 Jul 23 15:50 test2.shp
+    -rw-r--r--  1 sean  wheel    484 Jul 23 15:50 test2.shx
 
