@@ -1,16 +1,13 @@
 Changes
 =======
 
-1.1.7 
------
-- Add fio CLI program.
-
 1.1.6 (2014-06-10)
 ------------------
 - Implement Collection __getitem__() (#112).
 - Leave GDAL finalization to the DLL's destructor (#113).
 - Add Collection keys(), values(), items(), __contains__() (#114).
 - CRS bug fix (#116).
+- Add fio CLI program.
   
 1.1.5 (2014-05-21)
 ------------------
