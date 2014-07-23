@@ -268,6 +268,39 @@ collection to get back to the beginning.
    
    New in version 0.9.1.
 
+Collection indexing
+-------------------
+
+.. admonition::
+
+   New in version 1.1.6
+
+Features of a collection may also be accessed by index.
+
+.. code-block:: pycon
+
+    >>> import pprint
+    >>> with fiona.open('docs/data/test_uk.shp') as src:
+    ...     pprint.pprint(src[1])
+    ...
+    {'geometry': {'coordinates': [[(-4.663611, 51.158333),
+                                   (-4.669168, 51.159439),
+                                   (-4.673334, 51.161385),
+                                   (-4.674445, 51.165276),
+                                   (-4.67139, 51.185272),
+                                   (-4.669445, 51.193054),
+                                   (-4.665556, 51.195),
+                                   (-4.65889, 51.195),
+                                   (-4.656389, 51.192215),
+                                   (-4.646389, 51.164444),
+                                   (-4.646945, 51.160828),
+                                   (-4.651668, 51.159439),
+                                   (-4.663611, 51.158333)]],
+                  'type': 'Polygon'},
+     'id': '1',
+     'properties': OrderedDict([(u'CAT', 232.0), (u'FIPS_CNTRY', u'UK'), (u'CNTRY_NAME', u'United Kingdom'), (u'AREA', 244820.0), (u'POP_CNTRY', 60270708.0)]),
+     'type': 'Feature'}
+
 Closing Files
 -------------
 
