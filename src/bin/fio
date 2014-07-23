@@ -2,9 +2,9 @@
 
 """Fiona command line interface"""
 
-import itertools
 import json
 import logging
+import six.moves
 import sys
 import warnings
 
@@ -34,7 +34,7 @@ def cli(ctx, verbose, quiet):
 # Commands are below.
 # Translate command.
 @cli.command(short_help="Translate GeoJSON to another vector format.")
-@click.argument('input', type=click.File('rb'), required=True)
+@click.argument('input', type=click.File('r'), required=True)
 @click.argument('dst_path', type=click.Path(), required=True)
 @click.option('--driver', required=True, help="Output format driver name.")
 @click.option('--x-json-seq/--x-json-obj', default=False,
@@ -45,7 +45,7 @@ def translate(ctx, input, dst_path, driver, x_json_seq):
     logger = logging.getLogger('fio')
     try:
         if x_json_seq:
-            feature_gen = itertools.ifilter(
+            feature_gen = six.moves.filter(
                 lambda o: o.get('type') == 'Feature',
                 map(json.loads, input))
         else:

@@ -1,7 +1,7 @@
 Changes
 =======
 
-1.1.6 (2014-06-10)
+1.1.6 (2014-07-23)
 ------------------
 - Implement Collection __getitem__() (#112).
 - Leave GDAL finalization to the DLL's destructor (#113).
