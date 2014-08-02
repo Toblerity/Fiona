@@ -1,0 +1,17 @@
+fiona (1.1.6-0~trusty1) trusty; urgency=low
+
+  * Ported to Trusty.
+
+ -- Angelos Tzotsos <gcpp.kalxas@gmail.com>  Sat, 02 Aug 2014 18:36:00 +0200
+
+fiona (1.0.1~ppa8~revno-169~ubuntu13.10.1) saucy; urgency=low
+
+  * Auto build.
+
+ -- Timmie <timmichelsen@gmx-topmail.de>  Thu, 14 Nov 2013 21:06:23 +0000
+
+fiona (1.0.3-dev-1) unstable; urgency=low
+
+  * source package automatically created by stdeb 0.6.0+git
+
+ -- Sean Gillies <sean.gillies@gmail.com>  Sun, 03 Nov 2013 19:07:44 +0100
