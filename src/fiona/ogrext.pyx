@@ -686,22 +686,22 @@ cdef class Session:
             if fieldtypename == 'float':
                 fmt = ""
                 width = ograpi.OGR_Fld_GetWidth(cogr_fielddefn)
-                if width and width != 24:
+                if width: # and width != 24:
                     fmt = ":%d" % width
                 precision = ograpi.OGR_Fld_GetPrecision(cogr_fielddefn)
-                if precision and precision != 15:
+                if precision: # and precision != 15:
                     fmt += ".%d" % precision
                 val = "float" + fmt
             elif fieldtypename == 'int':
                 fmt = ""
                 width = ograpi.OGR_Fld_GetWidth(cogr_fielddefn)
-                if width and width != 11:
+                if width: # and width != 11:
                     fmt = ":%d" % width
                 val = fieldtypename + fmt
             elif fieldtypename == 'str':
                 fmt = ""
                 width = ograpi.OGR_Fld_GetWidth(cogr_fielddefn)
-                if width and width != 80:
+                if width: # and width != 80:
                     fmt = ":%d" % width
                 val = fieldtypename + fmt
 

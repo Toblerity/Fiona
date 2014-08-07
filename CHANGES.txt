@@ -1,6 +1,10 @@
 Changes
 =======
 
+Next
+----
+- Always show property width and precision in schema (#123).
+
 1.1.6 (2014-07-23)
 ------------------
 - Implement Collection __getitem__() (#112).

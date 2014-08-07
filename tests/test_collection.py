@@ -137,7 +137,7 @@ class ReadingTest(unittest.TestCase):
     def test_schema(self):
         s = self.c.schema['properties']
         self.failUnlessEqual(s['CAT'], "float:16")
-        self.failUnlessEqual(s['FIPS_CNTRY'], "str")
+        self.failUnlessEqual(s['FIPS_CNTRY'], "str:80")
 
     def test_closed_schema(self):
         # Schema is lazy too, never computed in this case. TODO?

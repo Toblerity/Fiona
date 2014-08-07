@@ -43,7 +43,7 @@ class ReadWriteAccess(unittest.TestCase):
             driver="ESRI Shapefile",
             schema={
                 'geometry': 'Point', 
-                'properties': [('title', 'str'), ('date', 'date')]},
+                'properties': [('title', 'str:80'), ('date', 'date')]},
             crs={'init': "epsg:4326", 'no_defs': True},
             encoding='utf-8')
         self.f = {
@@ -90,7 +90,7 @@ class LayerCreation(unittest.TestCase):
             driver='ESRI Shapefile',
             schema={
                 'geometry': 'Point', 
-                'properties': [('title', 'str'), ('date', 'date')]},
+                'properties': [('title', 'str:80'), ('date', 'date')]},
             crs={'init': "epsg:4326", 'no_defs': True},
             encoding='utf-8')
         self.f = {
