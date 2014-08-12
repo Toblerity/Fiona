@@ -288,8 +288,9 @@ class PointWritingTest(unittest.TestCase):
 
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
+        self.filename = os.path.join(self.tempdir, "point_writing_test.shp")
         self.sink = fiona.open(
-            os.path.join(self.tempdir, "point_writing_test.shp"),
+            self.filename,
             "w",
             driver="ESRI Shapefile",
             schema={
@@ -316,6 +317,12 @@ class PointWritingTest(unittest.TestCase):
         self.sink.writerecords([f])
         self.failUnlessEqual(len(self.sink), 1)
         self.failUnlessEqual(self.sink.bounds, (0.0, 0.1, 0.0, 0.1))
+        self.sink.close()
+        info = subprocess.check_output(
+            ["ogrinfo", self.filename, "point_writing_test"])
+        self.assert_(
+            'date (Date) = 2012/01/29' in info.decode('utf-8'),
+            info)
 
     def test_write_two(self):
         self.failUnlessEqual(len(self.sink), 0)

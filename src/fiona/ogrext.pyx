@@ -494,13 +494,15 @@ cdef class OGRFeatureBuilder:
         encoding = session.get_internalencoding()
 
         for key, value in feature['properties'].items():
+            log.debug(
+                "Looking up %s in %s", key, repr(session._schema_mapping))
+            ogr_key = session._schema_mapping[key]
+            schema_type = collection.schema['properties'][key]
             try:
-                log.debug(
-                    "Looking up %s in %s", key, repr(session._schema_mapping))
-                key_bytes = session._schema_mapping[key].encode(encoding)
+                key_bytes = ogr_key.encode(encoding)
             except UnicodeDecodeError:
                 log.warn("Failed to encode %s using %s codec", key, encoding)
-                key_bytes = key
+                key_bytes = ogr_key
             key_c = key_bytes
             i = ograpi.OGR_F_GetFieldIndex(cogr_feature, key_c)
             if i < 0:
@@ -509,6 +511,16 @@ cdef class OGRFeatureBuilder:
                 ograpi.OGR_F_SetFieldInteger(cogr_feature, i, value)
             elif isinstance(value, float):
                 ograpi.OGR_F_SetFieldDouble(cogr_feature, i, value)
+            elif (isinstance(value, string_types) 
+            and schema_type in ['date', 'time', 'datetime']):
+                if schema_type == 'date':
+                    y, m, d, hh, mm, ss, ff = parse_date(value)
+                elif schema_type == 'time':
+                    y, m, d, hh, mm, ss, ff = parse_time(value)
+                else:
+                    y, m, d, hh, mm, ss, ff = parse_datetime(value)
+                ograpi.OGR_F_SetFieldDateTime(
+                    cogr_feature, i, y, m, d, hh, mm, ss, 0)
             elif isinstance(value, string_types):
                 try:
                     value_bytes = value.encode(encoding)
@@ -518,15 +530,6 @@ cdef class OGRFeatureBuilder:
                     value_bytes = value
                 string_c = value_bytes
                 ograpi.OGR_F_SetFieldString(cogr_feature, i, string_c)
-            elif isinstance(value, (FionaDateType, FionaTimeType, FionaDateTimeType)):
-                if isinstance(value, FionaDateType):
-                    y, m, d, hh, mm, ss, ff = parse_date(value)
-                elif isinstance(value, FionaTimeType):
-                    y, m, d, hh, mm, ss, ff = parse_time(value)
-                else:
-                    y, m, d, hh, mm, ss, ff = parse_datetime(value)
-                ograpi.OGR_F_SetFieldDateTime(
-                    cogr_feature, i, y, m, d, hh, mm, ss, 0)
             elif value is None:
                 pass # keep field unset/null
             else:

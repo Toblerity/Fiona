@@ -36,11 +36,11 @@ class group_accessor(object):
         except IndexError:
             return 0
 
-def parse_time(s):
+def parse_time(text):
     """Given a RFC 3339 time, returns a tz-naive datetime tuple"""
-    match = re.search(pattern_time, s)
+    match = re.search(pattern_time, text)
     if match is None:
-        raise ValueError("Time data '%s' does not match pattern" % s)
+        raise ValueError("Time data '%s' does not match pattern" % text)
     g = group_accessor(match)
     log.debug("Match groups: %s", match.groups())
     return (0, 0, 0,
@@ -49,11 +49,11 @@ def parse_time(s):
         int(g.group(5)), 
         1000000.0*float(g.group(6)) )
 
-def parse_date(s):
+def parse_date(text):
     """Given a RFC 3339 date, returns a tz-naive datetime tuple"""
-    match = re.search(pattern_date, s)
+    match = re.search(pattern_date, text)
     if match is None:
-        raise ValueError("Time data '%s' does not match pattern" % s)
+        raise ValueError("Time data '%s' does not match pattern" % text)
     g = group_accessor(match)
     log.debug("Match groups: %s", match.groups())
     return (
@@ -62,11 +62,11 @@ def parse_date(s):
         int(g.group(5)),
         0, 0, 0, 0.0 )
 
-def parse_datetime(s):
+def parse_datetime(text):
     """Given a RFC 3339 datetime, returns a tz-naive datetime tuple"""
-    match = re.search(pattern_datetime, s)
+    match = re.search(pattern_datetime, text)
     if match is None:
-        raise ValueError("Time data '%s' does not match pattern" % s)
+        raise ValueError("Time data '%s' does not match pattern" % text)
     g = group_accessor(match)
     log.debug("Match groups: %s", match.groups())
     return (
