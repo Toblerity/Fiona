@@ -1,16 +1,14 @@
-=================================================================
-Fiona: OGR's neat, nimble, no-nonsense API for Python programmers
-=================================================================
+=====
+Fiona
+=====
 
-**Fiona** provides uncomplicated Python interfaces to functions in OGR_,
-the best open source C/C++ library for reading and writing geographic vector
-data.
+Fiona is OGR's neat, nimble, no-nonsense API for Python programmers.
 
 .. image:: https://travis-ci.org/Toblerity/Fiona.png?branch=master   
    :target: https://travis-ci.org/Toblerity/Fiona
 
 Fiona is designed to be simple and dependable. It focuses on reading and
-writing data in standard Python IO style, and relies upon familiar Python types
+writing data in standard Python IO style and relies upon familiar Python types
 and protocols such as files, dictionaries, mappings, and iterators instead of
 classes specific to OGR. Fiona can read and write real-world data using
 multi-layered GIS formats and zipped virtual file systems and integrates
@@ -25,26 +23,27 @@ For more details, see:
 Dependencies
 ============
 
-Fiona requires Python 2.6, 2.7, or 3.3 and GDAL/OGR 1.8+. To build from
-a source distribution or repository copy you will need a C compiler and GDAL
-and Python development headers and libraries (libgdal1-dev for Debian/Ubuntu,
-gdal-dev for CentOS/Fedora).
-
-The popular `Kyngchaos GDAL frameworks
-<http://www.kyngchaos.com/software/frameworks#gdal_complete>`__ will satisfy
-the dependency for OS X. Fiona's author uses Homebrew (``brew install gdal``)
-on OS X.
-
-While there are no official binary distributions or Windows support at this
-time, you can find Windows installers at
-http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#fiona.
-
 
 Installation
 ============
 
-Requirements
-------------
+
+Fiona requires Python 2.6, 2.7, 3.3, or 3.4 and GDAL/OGR 1.8+. To build from
+a source distribution you will need a C compiler and GDAL and Python
+development headers and libraries (libgdal1-dev for Debian/Ubuntu, gdal-dev for
+CentOS/Fedora).
+
+To build from a repository copy, you will also need Cython to build C sources
+from the project's .pyx files. See the project's requirements-dev.txt file for
+guidance.
+
+The popular `Kyngchaos GDAL frameworks
+<http://www.kyngchaos.com/software/frameworks#gdal_complete>`__ will satisfy
+the GDAL/OGR dependency for OS X. Fiona's author uses Homebrew (``brew install
+gdal``) on OS X.
+
+Python Requirements
+-------------------
 
 Fiona depends on the modules ``six`` and ``argparse``. The latter is standard
 in Python 2.7+. Easy_install and pip will fetch these requirements for you, but
