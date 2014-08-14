@@ -20,13 +20,8 @@ For more details, see:
 * Fiona `docs and manual <http://toblerity.github.com/fiona/>`__
 * Fiona `examples <https://github.com/Toblerity/Fiona/tree/master/examples>`__
 
-Dependencies
-============
-
-
 Installation
 ============
-
 
 Fiona requires Python 2.6, 2.7, 3.3, or 3.4 and GDAL/OGR 1.8+. To build from
 a source distribution you will need a C compiler and GDAL and Python
