@@ -2,13 +2,15 @@
 
 """Fiona command line interface"""
 
+import code
 import json
 import logging
-import six.moves
+import pprint
 import sys
 import warnings
 
 import click
+import six.moves
 
 import fiona
 
@@ -32,6 +34,50 @@ def cli(ctx, verbose, quiet):
     ctx.obj['verbosity'] = verbosity
 
 # Commands are below.
+
+# Info command.
+@cli.command(short_help="Print information about a data file.")
+@click.argument('src_path', type=click.Path(exists=True))
+@click.option('--indent', default=2, type=int, 
+              help="Indentation level for pretty printed output")
+@click.pass_context
+def info(ctx, src_path, indent):
+    verbosity = ctx.obj['verbosity']
+    logger = logging.getLogger('rio')
+    try:
+        with fiona.drivers(CPL_DEBUG=verbosity>2):
+            with fiona.open(src_path) as src:
+                output = src.meta
+                output.update(bbox=src.bounds, count=len(src))
+                pprint.pprint(output, indent=indent)
+        sys.exit(0)
+    except Exception:
+        logger.exception("Failed. Exception caught")
+        sys.exit(1)
+
+# Insp command.
+@cli.command(short_help="Open a data file and start an interpreter.")
+@click.argument('src_path', type=click.Path(exists=True))
+#@click.option('--mode', type=click.Choice(['r', 'r+']), default='r', help="File mode (default 'r').")
+@click.pass_context
+def insp(ctx, src_path):
+    verbosity = ctx.obj['verbosity']
+    logger = logging.getLogger('fio')
+    try:
+        with fiona.drivers(CPL_DEBUG=verbosity>2):
+            with fiona.open(src_path) as src:
+                code.interact(
+                    'Fiona %s Interactive Inspector (Python %s)\n'
+                    'Type "src.schema", "next(src)", or "help(src)" '
+                    'for more information.' %  (
+                        fiona.__version__, '.'.join(
+                            map(str, sys.version_info[:3]))),
+                    local=locals())
+            sys.exit(0)
+    except Exception:
+        logger.exception("Failed. Exception caught")
+        sys.exit(1)
+
 # Translate command.
 @cli.command(short_help="Translate GeoJSON to another vector format.")
 @click.argument('input', type=click.File('r'), required=True)

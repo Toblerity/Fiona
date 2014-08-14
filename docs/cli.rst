@@ -16,9 +16,26 @@ Fiona's new command line interface is a program named "fio".
       --help         Show this message and exit.
 
     Commands:
+      info       Print information about a data file.
+      insp       Open a data file and start an interpreter.
       translate  Translate GeoJSON to another vector format.
 
 It is developed using the ``click`` package and is new in 1.1.6.
+
+info
+----
+
+The info command pretty prints information about a data file.
+
+.. code-block:: console
+
+    $ fio info docs/data/test_uk.shp
+    { 'bbox': (-8.621389, 49.911659, 1.749444, 60.844444),
+      'count': 48,
+      'crs': { u'datum': u'WGS84', u'no_defs': True, u'proj': u'longlat'},
+      'driver': u'ESRI Shapefile',
+      'schema': { 'geometry': 'Polygon',
+                  'properties': OrderedDict([(u'CAT', 'float:16'), (u'FIPS_CNTRY', 'str:80'), (u'CNTRY_NAME', 'str:80'), (u'AREA', 'float:15.2'), (u'POP_CNTRY', 'float:15.2')])}}
 
 translate
 ---------

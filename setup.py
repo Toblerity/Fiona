@@ -101,7 +101,7 @@ else:
         Extension('fiona._err', ['src/fiona/_err.c'], **ext_options),
         Extension('fiona.ogrext', ['src/fiona/ogrext.c'], **ext_options)]
 
-requirements = ['six']
+requirements = ['click', 'six']
 if sys.version_info < (2, 7):
     requirements.append('argparse')
     requirements.append('ordereddict')

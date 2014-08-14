@@ -1025,13 +1025,14 @@ cdef class WritingSession(Session):
             schema_geom_type = collection.schema['geometry'].lstrip(
                 "3D ").lstrip("Multi")
             def validate_geometry_type(rec):
-                return rec['geometry'] is None or rec['geometry']['type'].lstrip(
-                    "Multi") == schema_geom_type
+                return rec['geometry'] is None or \
+                rec['geometry']['type'].lstrip(
+                    "3D ").lstrip("Multi") == schema_geom_type
         else:
             schema_geom_type = collection.schema['geometry'].lstrip("3D ")
             def validate_geometry_type(rec):
                 return rec['geometry'] is None or \
-                       rec['geometry']['type'] == schema_geom_type
+                       rec['geometry']['type'].lstrip("3D ") == schema_geom_type
 
         schema_props_keys = set(collection.schema['properties'].keys())
         for record in records:
