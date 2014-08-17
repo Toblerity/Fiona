@@ -5,6 +5,8 @@ import locale
 import logging
 import os
 import sys
+import warnings
+import math
 
 from six import integer_types, string_types, text_type
 
@@ -75,7 +77,24 @@ FIELD_TYPES_MAP = {
     'date':     FionaDateType,
     'time':     FionaTimeType,
     'datetime': FionaDateTimeType
-    }
+   }
+
+# OGR Layer capability
+OLC_RANDOMREAD = "RandomRead"
+OLC_SEQUENTIALWRITE = "SequentialWrite"
+OLC_RANDOMWRITE = "RandomWrite"
+OLC_FASTSPATIALFILTER = "FastSpatialFilter"
+OLC_FASTFEATURECOUNT = "FastFeatureCount"
+OLC_FASTGETEXTENT = "FastGetExtent"
+OLC_FASTSETNEXTBYINDEX = "FastSetNextByIndex"
+OLC_CREATEFIELD = "CreateField"
+OLC_CREATEGEOMFIELD = "CreateGeomField"
+OLC_DELETEFIELD = "DeleteField"
+OLC_REORDERFIELDS = "ReorderFields"
+OLC_ALTERFIELDDEFN = "AlterFieldDefn"
+OLC_DELETEFEATURE = "DeleteFeature"
+OLC_STRINGSASUTF8 = "StringsAsUTF8"
+OLC_TRANSACTIONS = "Transactions"
 
 # OGR integer error types.
 
@@ -567,12 +586,14 @@ cdef class Session:
     cdef object _fileencoding
     cdef object _encoding
     cdef object collection
+    cdef int _read_ts
 
     def __cinit__(self):
         self.cogr_ds = NULL
         self.cogr_layer = NULL
         self._fileencoding = None
         self._encoding = None
+        self._read_ts = 0
 
     def __dealloc__(self):
         self.stop()
@@ -618,7 +639,7 @@ cdef class Session:
         else:
             self._fileencoding = (
                 ograpi.OGR_L_TestCapability(
-                    self.cogr_layer, "StringsAsUTF8") and
+                    self.cogr_layer, OLC_STRINGSASUTF8) and
                 OGR_DETECTED_ENCODING) or (
                 self.get_driver() == "ESRI Shapefile" and
                 'ISO-8859-1') or locale.getpreferredencoding().upper()
@@ -637,13 +658,14 @@ cdef class Session:
             fileencoding = self.get_fileencoding()
             self._encoding = (
                 ograpi.OGR_L_TestCapability(
-                    self.cogr_layer, "StringsAsUTF8") and
+                    self.cogr_layer, OLC_STRINGSASUTF8) and
                 'utf-8') or fileencoding
         return self._encoding
 
     def get_length(self):
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
+        self._read_ts += 1
         return ograpi.OGR_L_GetFeatureCount(self.cogr_layer, 0)
 
     def get_driver(self):
@@ -757,6 +779,7 @@ cdef class Session:
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
         cdef ograpi.OGREnvelope extent
+        self._read_ts += 1
         result = ograpi.OGR_L_GetExtent(self.cogr_layer, &extent, 1)
         return (extent.MinX, extent.MinY, extent.MaxX, extent.MaxY)
 
@@ -767,6 +790,7 @@ cdef class Session:
         """
         cdef void * cogr_feature
         fid = int(fid)
+        self._read_ts += 1
         cogr_feature = ograpi.OGR_L_GetFeature(self.cogr_layer, fid)
         if cogr_feature != NULL:
             _deleteOgrFeature(cogr_feature)
@@ -783,6 +807,7 @@ cdef class Session:
         cdef encoding
         
         fid = int(fid)
+        self._read_ts += 1
         cogr_feature = ograpi.OGR_L_GetFeature(self.cogr_layer, fid)
         if cogr_feature == NULL:
             return None
@@ -849,7 +874,7 @@ cdef class WritingSession(Session):
 
             userencoding = self.collection.encoding
             self._fileencoding = (userencoding or (
-                ograpi.OGR_L_TestCapability(self.cogr_layer, "StringsAsUTF8") and
+                ograpi.OGR_L_TestCapability(self.cogr_layer, OLC_STRINGSASUTF8) and
                 OGR_DETECTED_ENCODING) or (
                 self.get_driver() == "ESRI Shapefile" and
                 'ISO-8859-1') or locale.getpreferredencoding()).upper()
@@ -1076,6 +1101,7 @@ cdef class Iterator:
     # Reference to its Collection
     cdef collection
     cdef encoding
+    cdef int _read_ts
 
     def __init__(self, collection, bbox=None):
         if collection.session is None:
@@ -1092,14 +1118,23 @@ cdef class Iterator:
                 cogr_layer, bbox[0], bbox[1], bbox[2], bbox[3])
         self.encoding = session.get_internalencoding()
 
+        session._read_ts += 1
+        self._read_ts = session._read_ts
+
     def __iter__(self):
         return self
 
     def __next__(self):
+
         cdef long fid
         cdef void * cogr_feature
         cdef Session session
         session = self.collection.session
+
+        if session._read_ts > self._read_ts:
+            warnings.warn("Read cursor may be altered. This can" \
+                         " lead to side effects", RuntimeWarning)
+
         cogr_feature = ograpi.OGR_L_GetNextFeature(session.cogr_layer)
         if cogr_feature == NULL:
             raise StopIteration
@@ -1107,14 +1142,104 @@ cdef class Iterator:
         _deleteOgrFeature(cogr_feature)
         return feature
 
+    def __getitem__(self, fid):
+        cdef Session session
+        session = self.collection.session
+
+        session._read_ts += 1
+        read_ts = session._read_ts
+
+        if isinstance(fid, slice):
+
+            def get_items(slice, it, ts):
+                fastindex = ograpi.OGR_L_TestCapability(
+                    session.cogr_layer, OLC_FASTSETNEXTBYINDEX)
+
+                if slice.start < 0 or slice.stop < 0:
+                    ftcount = ograpi.OGR_L_GetFeatureCount(session.cogr_layer, 0)
+                    if ftcount == -1:
+                        raise RuntimeError("Layer does not support counting")
+
+                # start index
+                ind = slice.start
+                if ind is None:
+                    ind = 0
+                if ind < 0:
+                    ind += ftcount
+
+                # step size
+                step = slice.step
+                if step is None:
+                    step = 1
+                if step == 0:
+                    raise ValueError("slice step cannot be zero")
+                if step < 0 and not fastindex:
+                    warnings.warn("Layer does not support" \
+                            "OLCFastSetNextByIndex, negative step size may" \
+                            " be slow", RuntimeWarning)
+
+                # stop index: None when no stop index set
+                stop = slice.stop
+                # counting from the back
+                if stop is not None and stop < 0:
+                    stop += ftcount
+
+                stepsign = int(math.copysign(1, step))
+                ograpi.OGR_L_SetNextByIndex(session.cogr_layer, ind)
+                while stop is None or ind * stepsign < stop * stepsign:
+
+                    if session._read_ts > ts:
+                        warnings.warn("Read cursor may be altered. This can" \
+                         " lead to side effects", RuntimeWarning)
+
+                    cogr_feature = ograpi.OGR_L_GetNextFeature(session.cogr_layer)
+                    if cogr_feature == NULL:
+                        break
+                    fid = ograpi.OGR_F_GetFID(cogr_feature)
+                    feature = FeatureBuilder().build(cogr_feature, self.encoding)
+                    _deleteOgrFeature(cogr_feature)
+
+                    yield feature
+
+                    ind += step
+                    if ind < 0:
+                        break
+
+                    if step > 1 and fastindex:
+                        ograpi.OGR_L_SetNextByIndex(session.cogr_layer, ind)
+
+                    elif step > 1 and not fastindex:
+                        for _ in xrange(step - 1):
+                            ograpi.OGR_L_GetNextFeature(session.cogr_layer)
+                    elif step < 0:
+                        ograpi.OGR_L_SetNextByIndex(session.cogr_layer, ind)
+
+            return get_items(fid, self, read_ts)
+
+        elif isinstance(fid, int):
+
+            index = fid
+            # from the back
+            if index < 0:
+                ftcount = ograpi.OGR_L_GetFeatureCount(session.cogr_layer, 0)
+                if ftcount == -1:
+                    raise RuntimeError("Layer does not support counting")
+                index += ftcount
+            return self.collection.session.get_feature(index)
 
 cdef class ItemsIterator(Iterator):
 
     def __next__(self):
+
         cdef long fid
         cdef void * cogr_feature
         cdef Session session
         session = self.collection.session
+
+        if session._read_ts > self._read_ts:
+            warnings.warn("Read cursor may be altered. This can" \
+                         " lead to side effects", RuntimeWarning)
+
         cogr_feature = ograpi.OGR_L_GetNextFeature(session.cogr_layer)
         if cogr_feature == NULL:
             raise StopIteration
@@ -1131,6 +1256,11 @@ cdef class KeysIterator(Iterator):
         cdef void * cogr_feature
         cdef Session session
         session = self.collection.session
+
+        if session._read_ts > self._read_ts:
+            warnings.warn("Read cursor may be altered. This can" \
+                         " lead to side effects", RuntimeWarning)
+
         cogr_feature = ograpi.OGR_L_GetNextFeature(session.cogr_layer)
         if cogr_feature == NULL:
             raise StopIteration
