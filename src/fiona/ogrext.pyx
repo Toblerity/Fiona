@@ -80,21 +80,21 @@ FIELD_TYPES_MAP = {
    }
 
 # OGR Layer capability
-OLC_RANDOMREAD = "RandomRead"
-OLC_SEQUENTIALWRITE = "SequentialWrite"
-OLC_RANDOMWRITE = "RandomWrite"
-OLC_FASTSPATIALFILTER = "FastSpatialFilter"
-OLC_FASTFEATURECOUNT = "FastFeatureCount"
-OLC_FASTGETEXTENT = "FastGetExtent"
-OLC_FASTSETNEXTBYINDEX = "FastSetNextByIndex"
-OLC_CREATEFIELD = "CreateField"
-OLC_CREATEGEOMFIELD = "CreateGeomField"
-OLC_DELETEFIELD = "DeleteField"
-OLC_REORDERFIELDS = "ReorderFields"
-OLC_ALTERFIELDDEFN = "AlterFieldDefn"
-OLC_DELETEFEATURE = "DeleteFeature"
-OLC_STRINGSASUTF8 = "StringsAsUTF8"
-OLC_TRANSACTIONS = "Transactions"
+OLC_RANDOMREAD = b"RandomRead"
+OLC_SEQUENTIALWRITE = b"SequentialWrite"
+OLC_RANDOMWRITE = b"RandomWrite"
+OLC_FASTSPATIALFILTER = b"FastSpatialFilter"
+OLC_FASTFEATURECOUNT = b"FastFeatureCount"
+OLC_FASTGETEXTENT = b"FastGetExtent"
+OLC_FASTSETNEXTBYINDEX = b"FastSetNextByIndex"
+OLC_CREATEFIELD = b"CreateField"
+OLC_CREATEGEOMFIELD = b"CreateGeomField"
+OLC_DELETEFIELD = b"DeleteField"
+OLC_REORDERFIELDS = b"ReorderFields"
+OLC_ALTERFIELDDEFN = b"AlterFieldDefn"
+OLC_DELETEFEATURE = b"DeleteFeature"
+OLC_STRINGSASUTF8 = b"StringsAsUTF8"
+OLC_TRANSACTIONS = b"Transactions"
 
 # OGR integer error types.
 
@@ -1021,7 +1021,7 @@ cdef class WritingSession(Session):
         cdef void *cogr_layer = self.cogr_layer
         if cogr_layer == NULL:
             raise ValueError("Null layer")
-        
+    
         schema_geom_type = collection.schema['geometry']
         cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
         if ograpi.OGR_Dr_GetName(cogr_driver) == b"GeoJSON":
@@ -1137,7 +1137,9 @@ cdef class Iterator:
                 fastindex = ograpi.OGR_L_TestCapability(
                     session.cogr_layer, OLC_FASTSETNEXTBYINDEX)
 
-                if slice.start < 0 or slice.stop < 0:
+                if (slice.start is not None and slice.start < 0) or \
+                   (slice.stop is not None and slice.stop < 0):
+
                     ftcount = ograpi.OGR_L_GetFeatureCount(session.cogr_layer, 0)
                     if ftcount == -1:
                         raise RuntimeError("Layer does not support counting")
