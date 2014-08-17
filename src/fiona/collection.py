@@ -134,9 +134,7 @@ class Collection(object):
 
         if self.session:
             self.guard_driver_mode()
-            
-        
-        
+
     def __repr__(self):
         return "<%s Collection '%s', mode '%s' at %s>" % (
             self.closed and "closed" or "open",
