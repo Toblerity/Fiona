@@ -798,24 +798,6 @@ cdef class Session:
         else:
             return False
 
-    def get_feature(self, fid):
-        """Provides access to feature data by FID.
-
-        Supports Collection.__getitem__().
-        """
-        cdef void * cogr_feature
-        cdef encoding
-        
-        fid = int(fid)
-        self._read_ts += 1
-        cogr_feature = ograpi.OGR_L_GetFeature(self.cogr_layer, fid)
-        if cogr_feature == NULL:
-            return None
-        encoding = self.get_internalencoding()
-        feature = FeatureBuilder().build(cogr_feature, encoding)
-        _deleteOgrFeature(cogr_feature)
-        return feature
-
     def isactive(self):
         if self.cogr_layer != NULL and self.cogr_ds != NULL:
             return 1
@@ -1225,7 +1207,15 @@ cdef class Iterator:
                 if ftcount == -1:
                     raise RuntimeError("Layer does not support counting")
                 index += ftcount
-            return self.collection.session.get_feature(index)
+
+            cogr_feature = ograpi.OGR_L_GetFeature(session.cogr_layer, index)
+            if cogr_feature == NULL:
+                return None
+
+            feature = FeatureBuilder().build(cogr_feature, self.encoding)
+            _deleteOgrFeature(cogr_feature)
+
+            return feature
 
 cdef class ItemsIterator(Iterator):
 
