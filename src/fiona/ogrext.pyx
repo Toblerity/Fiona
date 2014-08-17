@@ -1151,7 +1151,7 @@ cdef class Iterator:
 
         if isinstance(fid, slice):
 
-            def get_items(slice, it, ts):
+            def get_items(slice, ts):
                 fastindex = ograpi.OGR_L_TestCapability(
                     session.cogr_layer, OLC_FASTSETNEXTBYINDEX)
 
@@ -1214,7 +1214,7 @@ cdef class Iterator:
                     elif step < 0:
                         ograpi.OGR_L_SetNextByIndex(session.cogr_layer, ind)
 
-            return get_items(fid, self, read_ts)
+            return get_items(fid, read_ts)
 
         elif isinstance(fid, int):
 
