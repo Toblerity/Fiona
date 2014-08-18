@@ -1090,6 +1090,9 @@ cdef class Iterator:
         if bbox:
             ograpi.OGR_L_SetSpatialFilterRect(
                 cogr_layer, bbox[0], bbox[1], bbox[2], bbox[3])
+        else:
+            ograpi.OGR_L_SetSpatialFilter(
+                cogr_layer, NULL)
         self.encoding = session.get_internalencoding()
 
     def __iter__(self):
