@@ -521,6 +521,22 @@ cdef class OGRFeatureBuilder:
                     y, m, d, hh, mm, ss, ff = parse_datetime(value)
                 ograpi.OGR_F_SetFieldDateTime(
                     cogr_feature, i, y, m, d, hh, mm, ss, 0)
+            elif (isinstance(value, datetime.date)
+            and schema_type == 'date'):
+                y, m, d = value.year, value.month, value.day
+                ograpi.OGR_F_SetFieldDateTime(
+                    cogr_feature, i, y, m, d, 0, 0, 0, 0)
+            elif (isinstance(value, datetime.datetime)
+            and schema_type == 'datetime'):
+                y, m, d = value.year, value.month, value.day
+                hh, mm, ss = value.hour, value.minute, value.second
+                ograpi.OGR_F_SetFieldDateTime(
+                    cogr_feature, i, y, m, d, hh, mm, ss, 0)
+            elif (isinstance(value, datetime.time)
+            and schema_type == 'time'):
+                hh, mm, ss = value.hour, value.minute, value.second
+                ograpi.OGR_F_SetFieldDateTime(
+                    cogr_feature, i, 0, 0, 0, hh, mm, ss, 0)
             elif isinstance(value, string_types):
                 try:
                     value_bytes = value.encode(encoding)

@@ -7,6 +7,7 @@ import sys
 import subprocess
 import unittest
 import tempfile
+import datetime
 
 import fiona
 from fiona.collection import Collection, supported_drivers
@@ -536,3 +537,39 @@ class GeoJSONCRSWritingTest(unittest.TestCase):
             'GEOGCS["WGS 84' in info.decode('utf-8'),
             info)
 
+class DateTimeTest(unittest.TestCase):
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+
+    def test_date(self):
+        self.sink = fiona.open(
+            os.path.join(self.tempdir, "date_test.shp"),
+            "w",
+            driver="ESRI Shapefile",
+            schema={
+                'geometry': 'Point',
+                'properties': [('id', 'int'), ('date', 'date')]},
+            crs={'init': "epsg:4326", 'no_defs': True})
+
+        recs = [{
+            'geometry': {'type': 'Point',
+                         'coordinates': (7.0, 50.0)},
+            'properties': {'id': 1, 'date': '2013-02-25'}
+        }, {
+            'geometry': {'type': 'Point',
+                         'coordinates': (7.0, 50.2)},
+            'properties': {'id': 1, 'date': datetime.date(2014, 2, 3)}
+        }]
+        self.sink.writerecords(recs)
+        self.sink.close()
+        self.failUnlessEqual(len(self.sink), 2)
+
+        c = fiona.open(os.path.join(self.tempdir, "date_test.shp"), "r")
+        self.failUnlessEqual(len(c), 2)
+
+        rf1, rf2 = list(c)
+        self.failUnlessEqual(rf1['properties']['date'], '2013-02-25')
+        self.failUnlessEqual(rf2['properties']['date'], '2014-02-03')
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
