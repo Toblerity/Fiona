@@ -246,6 +246,11 @@ class FilterReadingTest(unittest.TestCase):
         f = results[0]
         self.failUnlessEqual(f['id'], "0")
         self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
+    def test_filter_reset(self):
+        results = list(self.c.filter(bbox=(-15.0, 55.0, 15.0, 65.0)))
+        self.failUnlessEqual(len(results), 41)
+        results = list(self.c.filter())
+        self.failUnlessEqual(len(results), 48)
 
 class UnsupportedDriverTest(unittest.TestCase):
     
