@@ -134,7 +134,7 @@ class Collection(object):
 
         if self.session:
             self.guard_driver_mode()
-        
+
     def __repr__(self):
         return "<%s Collection '%s', mode '%s' at %s>" % (
             self.closed and "closed" or "open",
@@ -234,7 +234,9 @@ class Collection(object):
     next = __next__
 
     def __getitem__(self, fid):
-        return self.session.get_feature(fid)
+        if not self.iterator:
+            iter(self)
+        return self.iterator[fid]
 
     def writerecords(self, records):
         """Stages multiple records for writing to disk."""
