@@ -814,6 +814,45 @@ cdef class Session:
         else:
             return False
 
+    def get_feature(self, fid):
+        """Provides access to feature data by FID.
+
+        Supports Collection.__contains__().
+        """
+        cdef void * cogr_feature
+        fid = int(fid)
+        self._read_ts += 1
+        cogr_feature = ograpi.OGR_L_GetFeature(self.cogr_layer, fid)
+        if cogr_feature != NULL:
+            _deleteOgrFeature(cogr_feature)
+            return True
+        else:
+            return False
+
+
+    def __getitem__(self, item):
+        cdef void * cogr_feature
+        if isinstance(item, slice):
+            itr = Iterator(self.collection, item.stop, item.start, item.step)
+            log.debug("Slice: %r", item)
+            return list(itr)
+        elif isinstance(item, int):
+            index = item
+            # from the back
+            if index < 0:
+                ftcount = ograpi.OGR_L_GetFeatureCount(self.cogr_layer, 0)
+                if ftcount == -1:
+                    raise RuntimeError("Layer does not support counting")
+                index += ftcount
+            cogr_feature = ograpi.OGR_L_GetFeature(self.cogr_layer, index)
+            if cogr_feature == NULL:
+                return None
+            feature = FeatureBuilder().build(
+                        cogr_feature, self.collection.encoding)
+            _deleteOgrFeature(cogr_feature)
+            return feature
+
+
     def isactive(self):
         if self.cogr_layer != NULL and self.cogr_ds != NULL:
             return 1
@@ -1100,8 +1139,14 @@ cdef class Iterator:
     cdef collection
     cdef encoding
     cdef int _read_ts
+    cdef int index
+    cdef stop
+    cdef start
+    cdef step
+    cdef fastindex
+    cdef stepsign
 
-    def __init__(self, collection, bbox=None):
+    def __init__(self, collection, stop=None, start=None, step=None, bbox=None):
         if collection.session is None:
             raise ValueError("I/O operation on closed collection")
         self.collection = collection
@@ -1122,12 +1167,46 @@ cdef class Iterator:
         session._read_ts += 1
         self._read_ts = session._read_ts
 
+        self.fastindex = ograpi.OGR_L_TestCapability(
+            session.cogr_layer, OLC_FASTSETNEXTBYINDEX)
+
+        ftcount = ograpi.OGR_L_GetFeatureCount(session.cogr_layer, 0)
+        if ftcount == -1:
+            raise RuntimeError("Layer does not support counting")
+
+        if stop is not None and stop < 0:
+            stop += ftcount
+
+        if start is None:
+            start = 0
+        if start is not None and start < 0:
+            start += ftcount
+
+        # step size
+        if step is None:
+            step = 1
+        if step == 0:
+            raise ValueError("slice step cannot be zero")
+        if step < 0 and not self.fastindex:
+            warnings.warn("Layer does not support" \
+                    "OLCFastSetNextByIndex, negative step size may" \
+                    " be slow", RuntimeWarning)
+        self.stepsign = int(math.copysign(1, step))
+        self.stop = stop
+        self.start = start
+        self.step = step
+
+        self.index = start
+        log.debug("Index: %d", self.index)
+        ograpi.OGR_L_SetNextByIndex(session.cogr_layer, self.index)
+
+
     def __iter__(self):
         return self
 
     def __next__(self):
 
-        cdef long fid
+        cdef int i
         cdef void * cogr_feature
         cdef Session session
         session = self.collection.session
@@ -1136,6 +1215,25 @@ cdef class Iterator:
             warnings.warn("Read cursor may be altered. This can" \
                          " lead to side effects", RuntimeWarning)
 
+        # Advance the iterator's position.
+        self.index += self.step
+        if self.index < self.start or (self.stop and self.index > self.stop):
+            raise StopIteration
+
+        if self.step > 1 and self.fastindex:
+            ograpi.OGR_L_SetNextByIndex(session.cogr_layer, self.index)
+
+        elif self.step > 1 and not self.fastindex:
+            for i in range(self.step):
+                cogr_feature = ograpi.OGR_L_GetNextFeature(session.cogr_layer)
+                if cogr_feature == NULL:
+                    raise StopIteration
+        elif self.step < 0:
+            ograpi.OGR_L_SetNextByIndex(session.cogr_layer, self.index)
+
+        log.debug("Index: %d", self.index)
+
+        # Get the next feature.
         cogr_feature = ograpi.OGR_L_GetNextFeature(session.cogr_layer)
         if cogr_feature == NULL:
             raise StopIteration
@@ -1143,100 +1241,76 @@ cdef class Iterator:
         _deleteOgrFeature(cogr_feature)
         return feature
 
-    def __getitem__(self, fid):
-        cdef Session session
-        session = self.collection.session
 
-        session._read_ts += 1
-        read_ts = session._read_ts
+#    def _get_items(self, ts):
+#        # Low level support for slicing.
+#        cdef Session session
+#        session = self.collection.session
+#
+#        if ((self.start is not None and self.start < 0) or 
+#                (self.stop is not None and self.stop < 0)):
+#            ftcount = ograpi.OGR_L_GetFeatureCount(session.cogr_layer, 0)
+#            if ftcount == -1:
+#                raise RuntimeError("Layer does not support counting")
+#
+#        while (self.stop is None or 
+#                self.index * self.stepsign < self.stop * self.stepsign):
+#
+#            if session._read_ts > ts:
+#                warnings.warn("Read cursor may be altered. This can" \
+#                 " lead to side effects", RuntimeWarning)
+#
+#            cogr_feature = ograpi.OGR_L_GetNextFeature(session.cogr_layer)
+#            if cogr_feature == NULL:
+#                raise StopIteration
+#
+#            fid = ograpi.OGR_F_GetFID(cogr_feature)
+#            feature = FeatureBuilder().build(cogr_feature, self.encoding)
+#            _deleteOgrFeature(cogr_feature)
+#
+#            yield feature
+#
+#            self.index += self.step
+#            if self.index < 0:
+#                raise StopIteration
+#
+#            if self.step > 1 and self.fastindex:
+#                ograpi.OGR_L_SetNextByIndex(session.cogr_layer, self.index)
+#
+#            elif self.step > 1 and not self.fastindex:
+#                for _ in xrange(step - 1):
+#                    ograpi.OGR_L_GetNextFeature(session.cogr_layer)
+#            elif step < 0:
+#                ograpi.OGR_L_SetNextByIndex(session.cogr_layer, ind)
+#
+#    def __getitem__(self, item):
+#        cdef Session session
+#        session = self.collection.session
+#
+#        session._read_ts += 1
+#        read_ts = session._read_ts
+#
+#        if isinstance(item, slice):
+#            return list(self._get_items(item.stop, item.start, item.step, read_ts))
+#
+#        elif isinstance(item, int):
+#            index = item
+#            # from the back
+#            if index < 0:
+#                ftcount = ograpi.OGR_L_GetFeatureCount(session.cogr_layer, 0)
+#                if ftcount == -1:
+#                    raise RuntimeError("Layer does not support counting")
+#                index += ftcount
+#
+#            cogr_feature = ograpi.OGR_L_GetFeature(session.cogr_layer, index)
+#            if cogr_feature == NULL:
+#                return None
+#
+#            feature = FeatureBuilder().build(cogr_feature, self.encoding)
+#            _deleteOgrFeature(cogr_feature)
+#
+#            return feature
 
-        if isinstance(fid, slice):
-
-            def get_items(slice, ts):
-                fastindex = ograpi.OGR_L_TestCapability(
-                    session.cogr_layer, OLC_FASTSETNEXTBYINDEX)
-
-                if (slice.start is not None and slice.start < 0) or \
-                   (slice.stop is not None and slice.stop < 0):
-
-                    ftcount = ograpi.OGR_L_GetFeatureCount(session.cogr_layer, 0)
-                    if ftcount == -1:
-                        raise RuntimeError("Layer does not support counting")
-
-                # start index
-                ind = slice.start
-                if ind is None:
-                    ind = 0
-                if ind < 0:
-                    ind += ftcount
-
-                # step size
-                step = slice.step
-                if step is None:
-                    step = 1
-                if step == 0:
-                    raise ValueError("slice step cannot be zero")
-                if step < 0 and not fastindex:
-                    warnings.warn("Layer does not support" \
-                            "OLCFastSetNextByIndex, negative step size may" \
-                            " be slow", RuntimeWarning)
-
-                # stop index: None when no stop index set
-                stop = slice.stop
-                # counting from the back
-                if stop is not None and stop < 0:
-                    stop += ftcount
-
-                stepsign = int(math.copysign(1, step))
-                ograpi.OGR_L_SetNextByIndex(session.cogr_layer, ind)
-                while stop is None or ind * stepsign < stop * stepsign:
-
-                    if session._read_ts > ts:
-                        warnings.warn("Read cursor may be altered. This can" \
-                         " lead to side effects", RuntimeWarning)
-
-                    cogr_feature = ograpi.OGR_L_GetNextFeature(session.cogr_layer)
-                    if cogr_feature == NULL:
-                        break
-                    fid = ograpi.OGR_F_GetFID(cogr_feature)
-                    feature = FeatureBuilder().build(cogr_feature, self.encoding)
-                    _deleteOgrFeature(cogr_feature)
-
-                    yield feature
-
-                    ind += step
-                    if ind < 0:
-                        break
-
-                    if step > 1 and fastindex:
-                        ograpi.OGR_L_SetNextByIndex(session.cogr_layer, ind)
-
-                    elif step > 1 and not fastindex:
-                        for _ in xrange(step - 1):
-                            ograpi.OGR_L_GetNextFeature(session.cogr_layer)
-                    elif step < 0:
-                        ograpi.OGR_L_SetNextByIndex(session.cogr_layer, ind)
-
-            return get_items(fid, read_ts)
-
-        elif isinstance(fid, int):
-
-            index = fid
-            # from the back
-            if index < 0:
-                ftcount = ograpi.OGR_L_GetFeatureCount(session.cogr_layer, 0)
-                if ftcount == -1:
-                    raise RuntimeError("Layer does not support counting")
-                index += ftcount
-
-            cogr_feature = ograpi.OGR_L_GetFeature(session.cogr_layer, index)
-            if cogr_feature == NULL:
-                return None
-
-            feature = FeatureBuilder().build(cogr_feature, self.encoding)
-            _deleteOgrFeature(cogr_feature)
-
-            return feature
 
 cdef class ItemsIterator(Iterator):
 
@@ -1254,9 +1328,24 @@ cdef class ItemsIterator(Iterator):
         cogr_feature = ograpi.OGR_L_GetNextFeature(session.cogr_layer)
         if cogr_feature == NULL:
             raise StopIteration
+
+        self.index += self.step
+        if self.index < 0:
+            raise StopIteration
+
+        if self.step > 1 and self.fastindex:
+            ograpi.OGR_L_SetNextByIndex(session.cogr_layer, self.index)
+
+        elif self.step > 1 and not self.fastindex:
+            for _ in xrange(self.step - 1):
+                ograpi.OGR_L_GetNextFeature(session.cogr_layer)
+        elif self.step < 0:
+            ograpi.OGR_L_SetNextByIndex(session.cogr_layer, self.index)
+
         fid = ograpi.OGR_F_GetFID(cogr_feature)
         feature = FeatureBuilder().build(cogr_feature, self.encoding)
         _deleteOgrFeature(cogr_feature)
+
         return fid, feature
 
 
@@ -1275,8 +1364,23 @@ cdef class KeysIterator(Iterator):
         cogr_feature = ograpi.OGR_L_GetNextFeature(session.cogr_layer)
         if cogr_feature == NULL:
             raise StopIteration
+
+        self.index += self.step
+        if self.index < 0:
+            raise StopIteration
+
+        if self.step > 1 and self.fastindex:
+            ograpi.OGR_L_SetNextByIndex(session.cogr_layer, self.index)
+
+        elif self.step > 1 and not self.fastindex:
+            for _ in xrange(self.step - 1):
+                ograpi.OGR_L_GetNextFeature(session.cogr_layer)
+        elif self.step < 0:
+            ograpi.OGR_L_SetNextByIndex(session.cogr_layer, self.index)
+
         fid = ograpi.OGR_F_GetFID(cogr_feature)
         _deleteOgrFeature(cogr_feature)
+
         return fid
 
 
