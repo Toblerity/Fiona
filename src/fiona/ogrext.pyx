@@ -1165,9 +1165,9 @@ cdef class Iterator:
             ograpi.OGR_L_SetSpatialFilterRect(
                 cogr_layer, bbox[0], bbox[1], bbox[2], bbox[3])
         elif mask:
-            # TODO rbuffat: make sure geometry gets deleted at the end
             cogr_geometry = OGRGeomBuilder().build(mask)
             ograpi.OGR_L_SetSpatialFilter(cogr_layer, cogr_geometry)
+            ograpi.OGR_G_DestroyGeometry(cogr_geometry)
             
         else:
             ograpi.OGR_L_SetSpatialFilter(
