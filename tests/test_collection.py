@@ -252,6 +252,11 @@ class FilterReadingTest(unittest.TestCase):
         self.failUnlessEqual(len(results), 41)
         results = list(self.c.filter())
         self.failUnlessEqual(len(results), 48)
+        
+    def test_filter_mask(self):
+        mask = {'type': 'Polygon', 'coordinates': (((-2.0, 60.0), (-2.0, 60.0), (0.0, 61.0), (0.0, 60.0), (-2.0, 60.0)),)}
+        results = list(self.c.filter(mask=mask))
+        self.failUnlessEqual(len(results), 1)
 
 class UnsupportedDriverTest(unittest.TestCase):
     

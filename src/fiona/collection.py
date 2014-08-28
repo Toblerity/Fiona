@@ -183,37 +183,37 @@ class Collection(object):
             'schema': self.schema, 
             'crs': self.crs }
 
-    def filter(self, stop=None, start=None, step=None, bbox=None):
+    def filter(self, stop=None, start=None, step=None, bbox=None, mask=None):
         """Returns an iterator over records, but filtered by a test for
         spatial intersection with the provided ``bbox``, a (minx, miny,
-        maxx, maxy) tuple."""
+        maxx, maxy) tuple or a geometry ``mask``."""
         if self.closed:
             raise ValueError("I/O operation on closed collection")
         elif self.mode != 'r':
             raise IOError("collection not open for reading")
-        self.iterator = Iterator(self, stop, start, step, bbox)
+        self.iterator = Iterator(self, stop, start, step, bbox, mask)
         return self.iterator
 
-    def items(self, stop=None, start=None, step=None, bbox=None):
+    def items(self, stop=None, start=None, step=None, bbox=None, mask=None):
         """Returns an iterator over FID, record pairs, optionally 
         filtered by a test for spatial intersection with the provided
-        ``bbox``, a (minx, miny, maxx, maxy) tuple."""
+        ``bbox``, a (minx, miny, maxx, maxy) tuple or a geometry ``mask``."""
         if self.closed:
             raise ValueError("I/O operation on closed collection")
         elif self.mode != 'r':
             raise IOError("collection not open for reading")
-        self.iterator = ItemsIterator(self, stop, start, step, bbox)
+        self.iterator = ItemsIterator(self, stop, start, step, bbox, mask)
         return self.iterator
 
-    def keys(self, stop=None, start=None, step=None, bbox=None):
+    def keys(self, stop=None, start=None, step=None, bbox=None, mask=None):
         """Returns an iterator over FIDs, optionally 
         filtered by a test for spatial intersection with the provided
-        ``bbox``, a (minx, miny, maxx, maxy) tuple."""
+        ``bbox``, a (minx, miny, maxx, maxy) tuple or a geometry ``mask``."""
         if self.closed:
             raise ValueError("I/O operation on closed collection")
         elif self.mode != 'r':
             raise IOError("collection not open for reading")
-        self.iterator = KeysIterator(self, stop, start, step, bbox)
+        self.iterator = KeysIterator(self, stop, start, step, bbox, mask)
         return self.iterator
 
     def __contains__(self, fid):
