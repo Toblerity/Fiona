@@ -183,37 +183,75 @@ class Collection(object):
             'schema': self.schema, 
             'crs': self.crs }
 
-    def filter(self, stop=None, start=None, step=None, bbox=None, mask=None):
+    def filter(self, *args, bbox=None, mask=None):
         """Returns an iterator over records, but filtered by a test for
         spatial intersection with the provided ``bbox``, a (minx, miny,
-        maxx, maxy) tuple or a geometry ``mask``."""
+        maxx, maxy) tuple or a geometry ``mask``.
+        
+        Positional arguments ``stop`` or ``start, stop[, step]`` allows
+        iteration to skip over items or stop at a specific item.
+        """
         if self.closed:
             raise ValueError("I/O operation on closed collection")
         elif self.mode != 'r':
             raise IOError("collection not open for reading")
-        self.iterator = Iterator(self, stop, start, step, bbox, mask)
+        if args:
+            s = slice(*args)
+            start = s.start
+            stop = s.stop
+            step = s.step
+        else:
+            start = stop = step = None
+        self.iterator = Iterator(
+            self, start, stop, step, bbox, mask)
         return self.iterator
 
-    def items(self, stop=None, start=None, step=None, bbox=None, mask=None):
+    def items(self, *args, bbox=None, mask=None):
         """Returns an iterator over FID, record pairs, optionally 
         filtered by a test for spatial intersection with the provided
-        ``bbox``, a (minx, miny, maxx, maxy) tuple or a geometry ``mask``."""
+        ``bbox``, a (minx, miny, maxx, maxy) tuple or a geometry
+        ``mask``.
+        
+        Positional arguments ``stop`` or ``start, stop[, step]`` allows
+        iteration to skip over items or stop at a specific item.
+        """
         if self.closed:
             raise ValueError("I/O operation on closed collection")
         elif self.mode != 'r':
             raise IOError("collection not open for reading")
-        self.iterator = ItemsIterator(self, stop, start, step, bbox, mask)
+        if args:
+            s = slice(*args)
+            start = s.start
+            stop = s.stop
+            step = s.step
+        else:
+            start = stop = step = None
+        self.iterator = ItemsIterator(
+            self, start, stop, step, bbox, mask)
         return self.iterator
 
-    def keys(self, stop=None, start=None, step=None, bbox=None, mask=None):
+    def keys(self, *args, bbox=None, mask=None):
         """Returns an iterator over FIDs, optionally 
         filtered by a test for spatial intersection with the provided
-        ``bbox``, a (minx, miny, maxx, maxy) tuple or a geometry ``mask``."""
+        ``bbox``, a (minx, miny, maxx, maxy) tuple or a geometry 
+        ``mask``.
+
+        Positional arguments ``stop`` or ``start, stop[, step]`` allows
+        iteration to skip over items or stop at a specific item.
+        """
         if self.closed:
             raise ValueError("I/O operation on closed collection")
         elif self.mode != 'r':
             raise IOError("collection not open for reading")
-        self.iterator = KeysIterator(self, stop, start, step, bbox, mask)
+        if args:
+            s = slice(*args)
+            start = s.start
+            stop = s.stop
+            step = s.step
+        else:
+            start = stop = step = None
+        self.iterator = KeysIterator(
+            self, start, stop, step, bbox, mask)
         return self.iterator
 
     def __contains__(self, fid):

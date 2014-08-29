@@ -954,22 +954,43 @@ Point' schema geometry, for example) a default z value of 0 will be provided.
 Advanced Topics
 ===============
 
-Filtering
----------
+Slicing and masking iterators
+-----------------------------
 
 With some vector data formats a spatial index accompanies the data file,
 allowing efficient bounding box searches. A collection's
-:py:meth:`~fiona.collection.Collection.filter` method returns an iterator over
-records that intersect a given ``(minx, miny, maxx, maxy)`` bounding box. The
+:py:meth:`~fiona.collection.Collection.items` method returns an iterator over
+pairs of FIDs and records that intersect a given ``(minx, miny, maxx, maxy)``
+bounding box or geometry object. The
 collection's own coordinate reference system (see below) is used to interpret
-the box's values.
+the box's values. If you want a list of the iterator's items, pass it to Python's
+builtin :py:func:`list` as shown below.
 
 .. sourcecode:: pycon
 
   >>> c = fiona.open('docs/data/test_uk.shp')
-  >>> hits = c.filter(bbox=(-5.0, 55.0, 0.0, 60.0))
-  >>> len(list(hits))
+  >>> hits = list(c.items(bbox=(-5.0, 55.0, 0.0, 60.0)))
+  >>> len(hits)
   7
+
+The iterator method takes the same ``stop`` or ``start, stop[, step]``
+slicing arguments as :py:func:`itertools.islice`. 
+To get just the first two items from that iterator, pass a stop index.
+
+.. sourcecode:: pycon
+
+    >>> hits = c.items(2, bbox=(-5.0, 55.0, 0.0, 60.0))
+    >>> len(list(hits))
+    2
+
+To get the third through fifth items from that iterator, pass start and stop
+indexes.
+
+.. sourcecode:: pycon
+
+    >>> hits = c.items(2, 5, bbox=(-5.0, 55.0, 0.0, 60.0))
+    >>> len(list(hits))
+    3
 
 To filter features by property values, use Python's builtin :py:func:`filter` and
 :py:keyword:`lambda` or your own filter function that takes a single feature
