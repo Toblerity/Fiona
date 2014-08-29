@@ -1146,19 +1146,29 @@ cdef class Iterator:
     cdef fastindex
     cdef stepsign
 
-    def __init__(self, collection, stop=None, start=None, step=None, bbox=None):
+    def __init__(self, collection, stop=None, start=None, step=None, bbox=None, mask=None):
         if collection.session is None:
             raise ValueError("I/O operation on closed collection")
         self.collection = collection
         cdef Session session
+        cdef void *cogr_geometry
         session = self.collection.session
         cdef void *cogr_layer = session.cogr_layer
         if cogr_layer == NULL:
             raise ValueError("Null layer")
         ograpi.OGR_L_ResetReading(cogr_layer)
+        
+        if bbox and mask:
+            raise RuntimeError("mask and bbox can not be set together")
+        
         if bbox:
             ograpi.OGR_L_SetSpatialFilterRect(
                 cogr_layer, bbox[0], bbox[1], bbox[2], bbox[3])
+        elif mask:
+            cogr_geometry = OGRGeomBuilder().build(mask)
+            ograpi.OGR_L_SetSpatialFilter(cogr_layer, cogr_geometry)
+            ograpi.OGR_G_DestroyGeometry(cogr_geometry)
+            
         else:
             ograpi.OGR_L_SetSpatialFilter(
                 cogr_layer, NULL)
