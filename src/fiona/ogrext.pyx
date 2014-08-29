@@ -833,7 +833,7 @@ cdef class Session:
     def __getitem__(self, item):
         cdef void * cogr_feature
         if isinstance(item, slice):
-            itr = Iterator(self.collection, item.stop, item.start, item.step)
+            itr = Iterator(self.collection, item.start, item.stop, item.step)
             log.debug("Slice: %r", item)
             return list(itr)
         elif isinstance(item, int):

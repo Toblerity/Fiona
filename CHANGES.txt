@@ -1,12 +1,14 @@
 Changes
 =======
 
-Next
-----
+1.2.0
+-----
 - Always show property width and precision in schema (#123).
 - Write datetime properties of features (#125).
 - Reset spatial filtering in filter() (#129).
 - Accept datetime.date objects as feature properties (#130).
+- Add slicing to collection iterators (#132).
+- Add geometry object masks to collection iterators (#136).
 
 1.1.6 (2014-07-23)
 ------------------
