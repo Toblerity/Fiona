@@ -183,7 +183,7 @@ class Collection(object):
             'schema': self.schema, 
             'crs': self.crs }
 
-    def filter(self, *args, bbox=None, mask=None):
+    def filter(self, *args, **kwds):
         """Returns an iterator over records, but filtered by a test for
         spatial intersection with the provided ``bbox``, a (minx, miny,
         maxx, maxy) tuple or a geometry ``mask``.
@@ -202,11 +202,15 @@ class Collection(object):
             step = s.step
         else:
             start = stop = step = None
+        bbox = kwds.get('bbox')
+        mask = kwds.get('mask')
+        if bbox and mask:
+            raise ValueError("mask and bbox can not be set together")
         self.iterator = Iterator(
             self, start, stop, step, bbox, mask)
         return self.iterator
 
-    def items(self, *args, bbox=None, mask=None):
+    def items(self, *args, **kwds):
         """Returns an iterator over FID, record pairs, optionally 
         filtered by a test for spatial intersection with the provided
         ``bbox``, a (minx, miny, maxx, maxy) tuple or a geometry
@@ -226,11 +230,15 @@ class Collection(object):
             step = s.step
         else:
             start = stop = step = None
+        bbox = kwds.get('bbox')
+        mask = kwds.get('mask')
+        if bbox and mask:
+            raise ValueError("mask and bbox can not be set together")
         self.iterator = ItemsIterator(
             self, start, stop, step, bbox, mask)
         return self.iterator
 
-    def keys(self, *args, bbox=None, mask=None):
+    def keys(self, *args, **kwds):
         """Returns an iterator over FIDs, optionally 
         filtered by a test for spatial intersection with the provided
         ``bbox``, a (minx, miny, maxx, maxy) tuple or a geometry 
@@ -250,6 +258,10 @@ class Collection(object):
             step = s.step
         else:
             start = stop = step = None
+        bbox = kwds.get('bbox')
+        mask = kwds.get('mask')
+        if bbox and mask:
+            raise ValueError("mask and bbox can not be set together")
         self.iterator = KeysIterator(
             self, start, stop, step, bbox, mask)
         return self.iterator
