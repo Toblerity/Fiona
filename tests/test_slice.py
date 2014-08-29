@@ -34,6 +34,44 @@ def test_collection_iterator_items_next():
         assert k == 5
         assert v['id'] == '5'
 
+def test_collection_iterator_items_slice():
+
+    with fiona.open('docs/data/test_uk.shp') as src:
+        l = len(src)
+        
+        items = list(src.items(start=0, stop=5))
+        assert len(items) == 5
+        
+        items = list(src.items(start=1, stop=5))
+        assert len(items) == 4
+
+        items = list(src.items(start=-5, stop=None))
+        assert len(items) == 5
+        
+        items = list(src.items(start=-5, stop=-1))
+        assert len(items) == 4
+        
+        items = list(src.items(start=0, stop=None))
+        assert len(items) == l
+
+        items = list(src.items(start=5, stop=None))
+        assert len(items) == (l - 5)
+
+        items = list(src.items(start=5, step=-1))
+        assert len(items) == 6
+        
+        items = list(src.items(start=5, step=-2))
+        assert len(items) == 3
+
+        items = list(src.items(start=4, step=-2))
+        assert len(items) == 3
+        
+        items = list(src.items(start=-1, stop=-5, step=-1))
+        assert len(items) == 4
+        
+        items = list(src.items(start=-5, stop=None, step=-1))
+        assert len(items) == (l - 5 + 1)
+
 def test_collection_iterator_keys_next():
     with fiona.open('docs/data/test_uk.shp') as src:
         k = next(src.keys(None, 5))
