@@ -9,6 +9,7 @@ Changes
 - Accept datetime.date objects as feature properties (#130).
 - Add slicing to collection iterators (#132).
 - Add geometry object masks to collection iterators (#136).
+- Change source layout to match Shapely and Rasterio (#138).
 
 1.1.6 (2014-07-23)
 ------------------
