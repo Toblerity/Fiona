@@ -15,7 +15,7 @@ With contributions by:
 * Kelsey Jordahl (https://github.com/kjordahl)
 * Frédéric Junod (https://github.com/fredj)
 * jwass (https://github.com/jwass)
-* Brandon Liu (https://github.com.bdon)
+* Brandon Liu (https://github.com/bdon)
 * lordi (https://github.com/lordi)
 * Ariel Núñez (https://github.com/ingenieroariel)
 * Oliver Tonnhofer (https://github.com/olt)
