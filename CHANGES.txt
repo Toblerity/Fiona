@@ -1,8 +1,8 @@
 Changes
 =======
 
-1.2.0
------
+1.2.0 (2014-09-02)
+------------------
 - Always show property width and precision in schema (#123).
 - Write datetime properties of features (#125).
 - Reset spatial filtering in filter() (#129).
