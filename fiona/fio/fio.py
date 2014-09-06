@@ -13,6 +13,7 @@ import click
 import six.moves
 
 import fiona
+import fiona.crs
 
 FIELD_TYPES_MAP_REV = {v: k for k, v in fiona.FIELD_TYPES_MAP.items()}
 
@@ -37,19 +38,44 @@ def cli(ctx, verbose, quiet):
 
 # Info command.
 @cli.command(short_help="Print information about a data file.")
-@click.argument('src_path', type=click.Path(exists=True))
-@click.option('--indent', default=2, type=int, 
-              help="Indentation level for pretty printed output")
+@click.argument('input', default='-', required=False)
+@click.option('--indent', default=None, type=int, 
+              help="Indentation level for pretty printed output.")
+
+# Options to pick out a single metadata item and print it as
+# a string.
+@click.option('--count', 'meta_member', flag_value='count',
+              help="Print the count of features.")
+@click.option('--driver', 'meta_member', flag_value='driver',
+              help="Print the format driver.")
+@click.option('--crs', 'meta_member', flag_value='crs',
+              help="Print the CRS as a PROJ.4 string.")
+@click.option('--bounds', 'meta_member', flag_value='bounds',
+              help="Print the nodata value.")
+
 @click.pass_context
-def info(ctx, src_path, indent):
+def info(ctx, input, indent, meta_member):
     verbosity = ctx.obj['verbosity']
     logger = logging.getLogger('rio')
+
+    stdout = click.get_text_stream('stdout')
     try:
         with fiona.drivers(CPL_DEBUG=verbosity>2):
-            with fiona.open(src_path) as src:
-                output = src.meta
-                output.update(bbox=src.bounds, count=len(src))
-                pprint.pprint(output, indent=indent)
+            with fiona.open(input) as src:
+                info = src.meta
+                info.update(bounds=src.bounds, count=len(src))
+                proj4 = fiona.crs.to_string(src.crs)
+                if proj4.startswith('+init=epsg'):
+                    proj4 = proj4.split('=')[1].upper()
+                info['crs'] = proj4
+                if meta_member:
+                    if isinstance(info[meta_member], (list, tuple)):
+                        print(" ".join(map(str, info[meta_member])))
+                    else:
+                        print(info[meta_member])
+                else:
+                    stdout.write(json.dumps(info, indent=indent))
+                    stdout.write("\n")
         sys.exit(0)
     except Exception:
         logger.exception("Failed. Exception caught")
