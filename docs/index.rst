@@ -7,6 +7,7 @@ Fiona Documentation Contents
    README
    User Manual <manual>
    API Documentation <modules>
+   CLI Documentation <cli>
 
 
 Indices and tables

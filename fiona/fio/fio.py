@@ -84,7 +84,6 @@ def info(ctx, input, indent, meta_member):
 # Insp command.
 @cli.command(short_help="Open a data file and start an interpreter.")
 @click.argument('src_path', type=click.Path(exists=True))
-#@click.option('--mode', type=click.Choice(['r', 'r+']), default='r', help="File mode (default 'r').")
 @click.pass_context
 def insp(ctx, src_path):
     verbosity = ctx.obj['verbosity']
@@ -100,50 +99,6 @@ def insp(ctx, src_path):
                             map(str, sys.version_info[:3]))),
                     local=locals())
             sys.exit(0)
-    except Exception:
-        logger.exception("Failed. Exception caught")
-        sys.exit(1)
-
-# Translate command.
-@cli.command(short_help="Translate GeoJSON to another vector format.")
-@click.argument('input', type=click.File('r'), required=True)
-@click.argument('dst_path', type=click.Path(), required=True)
-@click.option('--driver', required=True, help="Output format driver name.")
-@click.option('--x-json-seq/--x-json-obj', default=False,
-              help="Read a LF-delimited JSON sequence (default is object). Experimental.")
-@click.pass_context
-def translate(ctx, input, dst_path, driver, x_json_seq):
-    verbosity = ctx.obj['verbosity']
-    logger = logging.getLogger('fio')
-    try:
-        if x_json_seq:
-            feature_gen = six.moves.filter(
-                lambda o: o.get('type') == 'Feature',
-                map(json.loads, input))
-        else:
-            collection = json.load(input)
-            feature_gen = iter(collection['features'])
-
-        # Use schema of first feature as a template.
-        # TODO: schema specified on command line?
-        first = next(feature_gen)
-        schema = {'geometry': first['geometry']['type']}
-        schema['properties'] = {
-            k: FIELD_TYPES_MAP_REV[type(v)]
-            for k, v in first['properties'].items()}
-
-        with fiona.drivers(CPL_DEBUG=verbosity>2):
-            with fiona.open(
-                    dst_path, 'w',
-                    driver=driver,
-                    crs={'init': 'epsg:4326'},
-                    schema=schema) as dst:
-                dst.write(first)
-                dst.writerecords(feature_gen)
-        sys.exit(0)
-    except IOError:
-        logger.info("IOError caught")
-        sys.exit(0)
     except Exception:
         logger.exception("Failed. Exception caught")
         sys.exit(1)
@@ -174,7 +129,7 @@ def load(ctx, output, driver, x_json_seq):
         if x_json_seq:
             feature_gen = six.moves.filter(
                 lambda o: o.get('type') == 'Feature',
-                map(json.loads, input))
+                (json.loads(text.strip()) for text in input))
         else:
             collection = json.load(input)
             feature_gen = iter(collection['features'])
@@ -369,7 +324,7 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                         if precision >= 0:
                             feat = round_rec(feat, precision)
                         if x_json_seq_rs:
-                            sink.write(u"\u001e")
+                            sink.write(u'\u001e')
                         json.dump(feat, sink, **dump_kwds)
                         sink.write("\n")
 

@@ -6,6 +6,7 @@ Next
 - Add single metadata item accessors to fio inf (#142).
 - Move fio to setuptools entry point (#142).
 - Add fio dump and load commands (#143).
+- Remove fio translate command.
 
 1.2.0 (2014-09-02)
 ------------------
