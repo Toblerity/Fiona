@@ -618,11 +618,15 @@ cdef class Session:
         cdef char *path_c
         cdef char *name_c
         
+        if collection.path == '-':
+            path = '/vsistdin/'
+        else:
+            path = collection.path
         try:
-            path_b = collection.path.encode('utf-8')
+            path_b = path.encode('utf-8')
         except UnicodeDecodeError:
             # Presume already a UTF-8 encoded string
-            path_b = collection.path
+            path_b = path
         path_c = path_b
         
         with cpl_errs:

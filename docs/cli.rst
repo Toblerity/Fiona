@@ -25,44 +25,100 @@ It is developed using the ``click`` package and is new in 1.1.6.
 info
 ----
 
-The info command pretty prints information about a data file.
+The info command prints information about a data file as a JSON object.
 
 .. code-block:: console
 
-    $ fio info docs/data/test_uk.shp
-    { 'bbox': (-8.621389, 49.911659, 1.749444, 60.844444),
-      'count': 48,
-      'crs': { u'datum': u'WGS84', u'no_defs': True, u'proj': u'longlat'},
-      'driver': u'ESRI Shapefile',
-      'schema': { 'geometry': 'Polygon',
-                  'properties': OrderedDict([(u'CAT', 'float:16'), (u'FIPS_CNTRY', 'str:80'), (u'CNTRY_NAME', 'str:80'), (u'AREA', 'float:15.2'), (u'POP_CNTRY', 'float:15.2')])}}
+    $ fio info docs/data/test_uk.shp --indent 2
+    {
+      "count": 48,
+      "crs": "+datum=WGS84 +no_defs +proj=longlat",
+      "driver": "ESRI Shapefile",
+      "bounds": [
+        -8.621389,
+        49.911659,
+        1.749444,
+        60.844444
+      ],
+      "schema": {
+        "geometry": "Polygon",
+        "properties": {
+          "CAT": "float:16",
+          "FIPS_CNTRY": "str:80",
+          "CNTRY_NAME": "str:80",
+          "AREA": "float:15.2",
+          "POP_CNTRY": "float:15.2"
+        }
+      }
+    }
 
-translate
----------
-
-The translate command read GeoJSON input and writes a vector dataset using
-another format.
+You can process this JSON using, e.g., 
+[underscore-cli](https://github.com/ddopson/underscore-cli).
 
 .. code-block:: console
 
-    $ cat docs/data/test_uk.json | fio translate - /tmp/test.shp --driver "ESRI Shapefile"
+    $ fio info docs/data/test_uk.shp | underscore extract count
+    48
+
+You can also optionally get single info items as plain text (not JSON) 
+strings
+
+.. code-block:: console
+
+    $ fio info docs/data/test_uk.shp --count
+    48
+    $ fio info docs/data/test_uk.shp --bounds
+    -8.621389 49.911659 1.749444 60.844444
+
+dump
+----
+
+The dump command reads a vector dataset and writes its features to stdout
+using GeoJSON.
+
+.. code-block:: console
+
+    $ fio dump docs/data/test_uk.shp --indent 2 --precision 2 | head
+    {
+      "features": [
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  0.9,
+                  51.36
+                ],
+
+load
+----
+
+The load command reads GeoJSON features from stdin and writes them to a
+vector dataset using another format.
+
+.. code-block:: console
+
+    $ fio dump docs/data/test_uk.shp \
+    > | fio -qq load /tmp/test.shp --driver "ESRI Shapefile"
     $ ls -l /tmp/test.*
-    -rw-r--r--  1 sean  wheel     10 Jul 23 15:09 /tmp/test.cpg
-    -rw-r--r--  1 sean  wheel  11377 Jul 23 15:09 /tmp/test.dbf
-    -rw-r--r--  1 sean  wheel    143 Jul 23 15:09 /tmp/test.prj
-    -rw-r--r--  1 sean  wheel  65156 Jul 23 15:09 /tmp/test.shp
-    -rw-r--r--  1 sean  wheel    484 Jul 23 15:09 /tmp/test.shx
+    -rw-r--r--  1 sean  wheel     10 Sep  6 23:27 /tmp/test.cpg
+    -rw-r--r--  1 sean  wheel  11377 Sep  6 23:27 /tmp/test.dbf
+    -rw-r--r--  1 sean  wheel    143 Sep  6 23:27 /tmp/test.prj
+    -rw-r--r--  1 sean  wheel  65156 Sep  6 23:27 /tmp/test.shp
+    -rw-r--r--  1 sean  wheel    484 Sep  6 23:27 /tmp/test.shx
 
-This command supports `JSON text sequences <http://tools.ietf.org/html/draft-ietf-json-text-sequence-04>`__ as an experimental feature. Underscore-cli's
+This command supports `JSON text sequences <http://tools.ietf.org/html/draft-ietf-json-text-sequence-04>`__ as an experimental feature. The underscore-cli
 process command is one way of turning a GeoJSON file into a text sequence.
 
 .. code-block:: console
 
-    $ underscore -i docs/data/test_uk.json process 'each(data.features,function(o){console.log(JSON.stringify(o))})' | fio translate - /tmp/test2.json --driver "ESRI Shapefile" --x-json-seq
-    $ ls -l /tmp/test2.*
-    -rw-r--r--  1 sean  wheel     10 Jul 23 15:50 test2.cpg
-    -rw-r--r--  1 sean  wheel   9361 Jul 23 15:50 test2.dbf
-    -rw-r--r--  1 sean  wheel    143 Jul 23 15:50 test2.prj
-    -rw-r--r--  1 sean  wheel  65156 Jul 23 15:50 test2.shp
-    -rw-r--r--  1 sean  wheel    484 Jul 23 15:50 test2.shx
-
+    $ fio dump docs/data/test_uk.shp \
+    > | underscore process \
+    > 'each(data.features,function(o){console.log(JSON.stringify(o))})' \
+    > | fio load /tmp/test-seq.shp --x-json-seq --driver "ESRI Shapefile"
+    $ ls -l /tmp/test-seq.*
+    -rw-r--r--  1 sean  wheel     10 Sep  6 23:31 /tmp/test-seq.cpg
+    -rw-r--r--  1 sean  wheel   9361 Sep  6 23:31 /tmp/test-seq.dbf
+    -rw-r--r--  1 sean  wheel    143 Sep  6 23:31 /tmp/test-seq.prj
+    -rw-r--r--  1 sean  wheel  65156 Sep  6 23:31 /tmp/test-seq.shp
+    -rw-r--r--  1 sean  wheel    484 Sep  6 23:31 /tmp/test-seq.shx

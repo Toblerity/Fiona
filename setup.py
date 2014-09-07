@@ -123,7 +123,10 @@ setup(
     long_description=readme + "\n" + changes + "\n" + credits,
     package_dir={'': '.'},
     packages=['fiona'],
-    scripts = ['scripts/dumpgj', 'scripts/fio'],
+    entry_points='''
+        [console_scripts]
+        fio=fiona.fio.fio:cli
+        ''',
     install_requires=requirements,
     tests_require=['nose'],
     test_suite='nose.collector',
