@@ -11,10 +11,10 @@ def test_options(tmpdir=None):
     """Test that setting CPL_DEBUG=ON works"""
     if tmpdir is None:
         tempdir = tempfile.mkdtemp()
-        logfile = os.path.join(tempdir, 'example.log')
+        logfile = os.path.join(tempdir, "example.log")
     else:
-        logfile = str(tmpdir.join('example.log'))
-    logger = logging.getLogger('Fiona')
+        logfile = str(tmpdir.join("example.log"))
+    logger = logging.getLogger("Fiona")
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler(logfile)
     fh.setLevel(logging.DEBUG)

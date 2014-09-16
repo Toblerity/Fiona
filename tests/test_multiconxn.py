@@ -11,12 +11,12 @@ from fiona.odict import OrderedDict
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 class ReadAccess(unittest.TestCase):
-    # To check that we'll be able to get multiple 'r' connections to layers
+    # To check that we'll be able to get multiple "r" connections to layers
     # in a single file.
-    
+
     def setUp(self):
         self.c = fiona.open("docs/data/test_uk.shp", "r", layer="test_uk")
-    
+
     def tearDown(self):
         self.c.close()
 
@@ -34,7 +34,7 @@ class ReadAccess(unittest.TestCase):
 class ReadWriteAccess(unittest.TestCase):
     # To check that we'll be able to read from a file that we're
     # writing to.
-    
+
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
         self.c = fiona.open(
@@ -42,14 +42,14 @@ class ReadWriteAccess(unittest.TestCase):
             "w",
             driver="ESRI Shapefile",
             schema={
-                'geometry': 'Point', 
-                'properties': [('title', 'str:80'), ('date', 'date')]},
-            crs={'init': "epsg:4326", 'no_defs': True},
-            encoding='utf-8')
+                "geometry": "Point",
+                "properties": [("title", "str:80"), ("date", "date")]},
+            crs={"init": "epsg:4326", "no_defs": True},
+            encoding="utf-8")
         self.f = {
-            'type': 'Feature',
-            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
-            'properties': OrderedDict([('title', 'point one'), ('date', '2012-01-29')])}
+            "type": "Feature",
+            "geometry": {"type": "Point", "coordinates": (0.0, 0.1)},
+            "properties": OrderedDict([("title", "point one"), ("date", "2012-01-29")])}
         self.c.writerecords([self.f])
         self.c.flush()
 
@@ -65,38 +65,38 @@ class ReadWriteAccess(unittest.TestCase):
     def test_read(self):
         c2 = fiona.open(os.path.join(self.tempdir, "multi_write_test.shp"), "r")
         f2 = next(c2)
-        del f2['id']
+        del f2["id"]
         self.assertEqual(self.f, f2)
 
     def test_read_after_close(self):
         c2 = fiona.open(os.path.join(self.tempdir, "multi_write_test.shp"), "r")
         self.c.close()
         f2 = next(c2)
-        del f2['id']
+        del f2["id"]
         self.assertEqual(self.f, f2)
 
 class LayerCreation(unittest.TestCase):
 
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
-        self.dir = os.path.join(self.tempdir, 'layer_creation')
+        self.dir = os.path.join(self.tempdir, "layer_creation")
         if os.path.exists(self.dir):
             shutil.rmtree(self.dir)
         os.mkdir(self.dir)
         self.c = fiona.open(
             self.dir,
-            'w',
-            layer='write_test',
-            driver='ESRI Shapefile',
+            "w",
+            layer="write_test",
+            driver="ESRI Shapefile",
             schema={
-                'geometry': 'Point', 
-                'properties': [('title', 'str:80'), ('date', 'date')]},
-            crs={'init': "epsg:4326", 'no_defs': True},
-            encoding='utf-8')
+                "geometry": "Point",
+                "properties": [("title", "str:80"), ("date", "date")]},
+            crs={"init": "epsg:4326", "no_defs": True},
+            encoding="utf-8")
         self.f = {
-            'type': 'Feature',
-            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
-            'properties': OrderedDict([('title', 'point one'), ('date', '2012-01-29')])}
+            "type": "Feature",
+            "geometry": {"type": "Point", "coordinates": (0.0, 0.1)},
+            "properties": OrderedDict([("title", "point one"), ("date", "2012-01-29")])}
         self.c.writerecords([self.f])
         self.c.flush()
 
@@ -112,13 +112,13 @@ class LayerCreation(unittest.TestCase):
     def test_read(self):
         c2 = fiona.open(os.path.join(self.dir, "write_test.shp"), "r")
         f2 = next(c2)
-        del f2['id']
+        del f2["id"]
         self.assertEqual(self.f, f2)
 
     def test_read_after_close(self):
         c2 = fiona.open(os.path.join(self.dir, "write_test.shp"), "r")
         self.c.close()
         f2 = next(c2)
-        del f2['id']
+        del f2["id"]
         self.assertEqual(self.f, f2)
 

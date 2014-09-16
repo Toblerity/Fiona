@@ -17,7 +17,7 @@ import fiona.crs
 
 FIELD_TYPES_MAP_REV = {v: k for k, v in fiona.FIELD_TYPES_MAP.items()}
 
-warnings.simplefilter('default')
+warnings.simplefilter("default")
 
 def configure_logging(verbosity):
     log_level = max(10, 30 - 10*verbosity)
@@ -25,49 +25,49 @@ def configure_logging(verbosity):
 
 # The CLI command group.
 @click.group(help="Fiona command line interface.")
-@click.option('--verbose', '-v', count=True, help="Increase verbosity.")
-@click.option('--quiet', '-q', count=True, help="Decrease verbosity.")
+@click.option("--verbose", "-v", count=True, help="Increase verbosity.")
+@click.option("--quiet", "-q", count=True, help="Decrease verbosity.")
 @click.pass_context
 def cli(ctx, verbose, quiet):
     verbosity = verbose - quiet
     configure_logging(verbosity)
     ctx.obj = {}
-    ctx.obj['verbosity'] = verbosity
+    ctx.obj["verbosity"] = verbosity
 
 # Commands are below.
 
 # Info command.
 @cli.command(short_help="Print information about a data file.")
-@click.argument('input', default='-', required=False)
-@click.option('--indent', default=None, type=int, 
+@click.argument("input", default="-", required=False)
+@click.option("--indent", default=None, type=int,
               help="Indentation level for pretty printed output.")
 
 # Options to pick out a single metadata item and print it as
 # a string.
-@click.option('--count', 'meta_member', flag_value='count',
+@click.option("--count", "meta_member", flag_value="count",
               help="Print the count of features.")
-@click.option('--driver', 'meta_member', flag_value='driver',
+@click.option("--driver", "meta_member", flag_value="driver",
               help="Print the format driver.")
-@click.option('--crs', 'meta_member', flag_value='crs',
+@click.option("--crs", "meta_member", flag_value="crs",
               help="Print the CRS as a PROJ.4 string.")
-@click.option('--bounds', 'meta_member', flag_value='bounds',
+@click.option("--bounds", "meta_member", flag_value="bounds",
               help="Print the nodata value.")
 
 @click.pass_context
 def info(ctx, input, indent, meta_member):
-    verbosity = ctx.obj['verbosity']
-    logger = logging.getLogger('rio')
+    verbosity = ctx.obj["verbosity"]
+    logger = logging.getLogger("rio")
 
-    stdout = click.get_text_stream('stdout')
+    stdout = click.get_text_stream("stdout")
     try:
         with fiona.drivers(CPL_DEBUG=verbosity>2):
             with fiona.open(input) as src:
                 info = src.meta
                 info.update(bounds=src.bounds, count=len(src))
                 proj4 = fiona.crs.to_string(src.crs)
-                if proj4.startswith('+init=epsg'):
-                    proj4 = proj4.split('=')[1].upper()
-                info['crs'] = proj4
+                if proj4.startswith("+init=epsg"):
+                    proj4 = proj4.split("=")[1].upper()
+                info["crs"] = proj4
                 if meta_member:
                     if isinstance(info[meta_member], (list, tuple)):
                         print(" ".join(map(str, info[meta_member])))
@@ -83,19 +83,19 @@ def info(ctx, input, indent, meta_member):
 
 # Insp command.
 @cli.command(short_help="Open a data file and start an interpreter.")
-@click.argument('src_path', type=click.Path(exists=True))
+@click.argument("src_path", type=click.Path(exists=True))
 @click.pass_context
 def insp(ctx, src_path):
-    verbosity = ctx.obj['verbosity']
-    logger = logging.getLogger('fio')
+    verbosity = ctx.obj["verbosity"]
+    logger = logging.getLogger("fio")
     try:
         with fiona.drivers(CPL_DEBUG=verbosity>2):
             with fiona.open(src_path) as src:
                 code.interact(
-                    'Fiona %s Interactive Inspector (Python %s)\n'
-                    'Type "src.schema", "next(src)", or "help(src)" '
-                    'for more information.' %  (
-                        fiona.__version__, '.'.join(
+                    "Fiona %s Interactive Inspector (Python %s)\n"
+                    "Type 'src.schema', 'next(src)', or 'help(src)' "
+                    "for more information." %  (
+                        fiona.__version__, ".".join(
                             map(str, sys.version_info[:3]))),
                     local=locals())
             sys.exit(0)
@@ -107,11 +107,11 @@ def insp(ctx, src_path):
 # Load command.
 @cli.command(short_help="Load GeoJSON to a dataset in another format.")
 
-@click.argument('output', type=click.Path(), required=True)
+@click.argument("output", type=click.Path(), required=True)
 
-@click.option('--driver', required=True, help="Output format driver name.")
+@click.option("--driver", required=True, help="Output format driver name.")
 
-@click.option('--x-json-seq/--x-json-obj', default=False,
+@click.option("--x-json-seq/--x-json-obj", default=False,
     help="Read a LF-delimited JSON sequence (default is object). Experimental.")
 
 @click.pass_context
@@ -121,32 +121,32 @@ def load(ctx, output, driver, x_json_seq):
 
     The input is a GeoJSON feature collection or optionally a sequence of
     GeoJSON feature objects."""
-    verbosity = ctx.obj['verbosity']
-    logger = logging.getLogger('fio')
-    input = click.get_text_stream('stdin')
+    verbosity = ctx.obj["verbosity"]
+    logger = logging.getLogger("fio")
+    input = click.get_text_stream("stdin")
 
     try:
         if x_json_seq:
             feature_gen = six.moves.filter(
-                lambda o: o.get('type') == 'Feature',
+                lambda o: o.get("type") == "Feature",
                 (json.loads(text.strip()) for text in input))
         else:
             collection = json.load(input)
-            feature_gen = iter(collection['features'])
+            feature_gen = iter(collection["features"])
 
         # Use schema of first feature as a template.
         # TODO: schema specified on command line?
         first = next(feature_gen)
-        schema = {'geometry': first['geometry']['type']}
-        schema['properties'] = {
+        schema = {"geometry": first["geometry"]["type"]}
+        schema["properties"] = {
             k: FIELD_TYPES_MAP_REV[type(v)]
-            for k, v in first['properties'].items()}
+            for k, v in first["properties"].items()}
 
         with fiona.drivers(CPL_DEBUG=verbosity>2):
             with fiona.open(
-                    output, 'w',
+                    output, "w",
                     driver=driver,
-                    crs={'init': 'epsg:4326'},
+                    crs={"init": "epsg:4326"},
                     schema=schema) as dst:
                 dst.write(first)
                 dst.writerecords(feature_gen)
@@ -160,8 +160,8 @@ def load(ctx, output, driver, x_json_seq):
 
 
 def make_ld_context(context_items):
-    """Returns a JSON-LD Context object. 
-    
+    """Returns a JSON-LD Context object.
+
     See http://json-ld.org/spec/latest/json-ld."""
     ctx = {
       "@context": {
@@ -203,8 +203,8 @@ def make_ld_context(context_items):
 
 
 def id_record(rec):
-    """Converts a record's id to a blank node id and returns the record."""
-    rec['id'] = '_:f%s' % rec['id']
+    """Converts a record"s id to a blank node id and returns the record."""
+    rec["id"] = "_:f%s" % rec["id"]
     return rec
 
 
@@ -212,30 +212,30 @@ def round_rec(rec, precision=None):
     """Round coordinates of a geometric object to given precision."""
     if precision is None:
         return rec
-    geom = rec['geometry']
-    if geom['type'] == 'Point':
-        x, y = geom['coordinates']
+    geom = rec["geometry"]
+    if geom["type"] == "Point":
+        x, y = geom["coordinates"]
         xp, yp = [x], [y]
         if precision is not None:
             xp = [round(v, precision) for v in xp]
             yp = [round(v, precision) for v in yp]
         new_coords = tuple(zip(xp, yp))[0]
-    if geom['type'] in ['LineString', 'MultiPoint']:
-        xp, yp = zip(*geom['coordinates'])
+    if geom["type"] in ["LineString", "MultiPoint"]:
+        xp, yp = zip(*geom["coordinates"])
         if precision is not None:
             xp = [round(v, precision) for v in xp]
             yp = [round(v, precision) for v in yp]
         new_coords = tuple(zip(xp, yp))
-    elif geom['type'] in ['Polygon', 'MultiLineString']:
+    elif geom["type"] in ["Polygon", "MultiLineString"]:
         new_coords = []
-        for piece in geom['coordinates']:
+        for piece in geom["coordinates"]:
             xp, yp = zip(*piece)
             if precision is not None:
                 xp = [round(v, precision) for v in xp]
                 yp = [round(v, precision) for v in yp]
             new_coords.append(tuple(zip(xp, yp)))
-    elif geom['type'] == 'MultiPolygon':
-        parts = geom['coordinates']
+    elif geom["type"] == "MultiPolygon":
+        parts = geom["coordinates"]
         new_coords = []
         for part in parts:
             inner_coords = []
@@ -246,48 +246,48 @@ def round_rec(rec, precision=None):
                     yp = [round(v, precision) for v in yp]
                 inner_coords.append(tuple(zip(xp, yp)))
             new_coords.append(inner_coords)
-    rec['geometry'] = {'type': geom['type'], 'coordinates': new_coords}
+    rec["geometry"] = {"type": geom["type"], "coordinates": new_coords}
     return rec
 
 
 # Dump command
 @cli.command(short_help="Dump a dataset to GeoJSON.")
 
-@click.argument('input', type=click.Path(), required=True)
+@click.argument("input", type=click.Path(), required=True)
 
-@click.option('--encoding', help="Specify encoding of the input file.")
+@click.option("--encoding", help="Specify encoding of the input file.")
 
 # Coordinate precision option.
-@click.option('--precision', type=int, default=-1,
+@click.option("--precision", type=int, default=-1,
               help="Decimal precision of coordinates.")
 
-@click.option('--indent', default=None, type=int, 
+@click.option("--indent", default=None, type=int,
               help="Indentation level for pretty printed output.")
 
-@click.option('--compact/--no-compact', default=False,
+@click.option("--compact/--no-compact", default=False,
               help="Use compact separators (',', ':').")
 
-@click.option('--record-buffered/--no-record-buffered', default=False,
+@click.option("--record-buffered/--no-record-buffered", default=False,
     help="Economical buffering of writes at record, not collection "
          "(default), level.")
 
-@click.option('--ignore-errors/--no-ignore-errors', default=False,
+@click.option("--ignore-errors/--no-ignore-errors", default=False,
               help="log errors but do not stop serialization.")
 
-@click.option('--with-ld-context/--without-ld-context', default=False,
+@click.option("--with-ld-context/--without-ld-context", default=False,
         help="add a JSON-LD context to JSON output.")
 
-@click.option('--add-ld-context-item', multiple=True,
+@click.option("--add-ld-context-item", multiple=True,
         help="map a term to a URI and add it to the output's JSON LD context.")
 
-@click.option('--x-json-seq/--x-json-obj', default=False,
+@click.option("--x-json-seq/--x-json-obj", default=False,
     help="Write a LF-delimited JSON sequence (default is object). "
          "Experimental.")
 
 # Use ASCII RS control code to signal a sequence item (False is default).
 # See http://tools.ietf.org/html/draft-ietf-json-text-sequence-05.
 # Experimental.
-@click.option('--x-json-seq-rs/--x-json-seq-no-rs', default=False,
+@click.option("--x-json-seq-rs/--x-json-seq-no-rs", default=False,
         help="Use RS as text separator. Experimental.")
 
 @click.pass_context
@@ -297,34 +297,34 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
          x_json_seq, x_json_seq_rs):
     """Dump a dataset either as a GeoJSON feature collection (the default)
     or a sequence of GeoJSON features."""
-    verbosity = ctx.obj['verbosity']
-    logger = logging.getLogger('fio')
-    sink = click.get_text_stream('stdout')
+    verbosity = ctx.obj["verbosity"]
+    logger = logging.getLogger("fio")
+    sink = click.get_text_stream("stdout")
 
-    dump_kwds = {'sort_keys': True}
+    dump_kwds = {"sort_keys": True}
     if indent:
-        dump_kwds['indent'] = indent
+        dump_kwds["indent"] = indent
     if compact:
-        dump_kwds['separators'] = (',', ':')
+        dump_kwds["separators"] = (",", ":")
 
-    item_sep = compact and ',' or ', '
+    item_sep = compact and "," or ", "
 
     open_kwds = {}
     if encoding:
-        open_kwds['encoding'] = encoding
+        open_kwds["encoding"] = encoding
 
     try:
         with fiona.drivers(CPL_DEBUG=verbosity>2):
             with fiona.open(input, **open_kwds) as source:
                 meta = source.meta
-                meta['fields'] = dict(source.schema['properties'].items())
+                meta["fields"] = dict(source.schema["properties"].items())
 
                 if x_json_seq:
                     for feat in source:
                         if precision >= 0:
                             feat = round_rec(feat, precision)
                         if x_json_seq_rs:
-                            sink.write(u'\u001e')
+                            sink.write(u"\u001e")
                         json.dump(feat, sink, **dump_kwds)
                         sink.write("\n")
 
@@ -335,21 +335,21 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                     rec_indent = "\n" + " " * (2 * (indent or 0))
 
                     collection = {
-                        'type': 'FeatureCollection',  
-                        'fiona:schema': meta['schema'], 
-                        'fiona:crs': meta['crs'],
-                        'features': [] }
+                        "type": "FeatureCollection",
+                        "fiona:schema": meta["schema"],
+                        "fiona:crs": meta["crs"],
+                        "features": [] }
                     if with_ld_context:
-                        collection['@context'] = make_ld_context(
+                        collection["@context"] = make_ld_context(
                             add_ld_context_item)
-                    
-                    head, tail = json.dumps(collection, **dump_kwds).split('[]')
-                    
+
+                    head, tail = json.dumps(collection, **dump_kwds).split("[]")
+
                     sink.write(head)
                     sink.write("[")
-                    
+
                     itr = iter(source)
-                    
+
                     # Try the first record.
                     try:
                         i, first = 0, next(itr)
@@ -383,7 +383,7 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                             if indented:
                                 sink.write("\n")
                             raise
-                    
+
                     # Because trailing commas aren't valid in JSON arrays
                     # we'll write the item separator before each of the
                     # remaining features.
@@ -415,7 +415,7 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                                 if indented:
                                     sink.write("\n")
                                 raise
-                    
+
                     # Close up the GeoJSON after writing all features.
                     sink.write("]")
                     sink.write(tail)
@@ -425,25 +425,25 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                 else:
                     # Buffer GeoJSON data at the collection level. The default.
                     collection = {
-                        'type': 'FeatureCollection', 
-                        'fiona:schema': meta['schema'], 
-                        'fiona:crs': meta['crs']}
+                        "type": "FeatureCollection",
+                        "fiona:schema": meta["schema"],
+                        "fiona:crs": meta["crs"]}
                     if with_ld_context:
-                        collection['@context'] = make_ld_context(
+                        collection["@context"] = make_ld_context(
                             add_ld_context_item)
                         if precision >= 0:
-                            collection['features'] = [
+                            collection["features"] = [
                                 id_record(round_rec(rec, precision))
                                 for rec in source]
                         else:
-                            collection['features'] = [
+                            collection["features"] = [
                                 id_record(rec) for rec in source]
                     else:
                         if precision >= 0:
-                            collection['features'] = [
+                            collection["features"] = [
                                 round_rec(rec, precision) for rec in source]
                         else:
-                            collection['features'] = list(source)
+                            collection["features"] = list(source)
                     json.dump(collection, sink, **dump_kwds)
 
         sys.exit(0)
@@ -452,5 +452,5 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()
