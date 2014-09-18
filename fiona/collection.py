@@ -16,42 +16,42 @@ class Collection(object):
     mappings."""
 
     def __init__(
-            self, path, mode="r",
-            driver=None, schema=None, crs=None,
+            self, path, mode='r', 
+            driver=None, schema=None, crs=None, 
             encoding=None,
             layer=None,
             vsi=None,
             archive=None,
             **kwargs):
-
+        
         """The required ``path`` is the absolute or relative path to
-        a file, such as "/data/test_uk.shp". In ``mode`` "r", data can
-        be read only. In ``mode`` "a", data can be appended to a file.
-        In ``mode`` "w", data overwrites the existing contents of
+        a file, such as '/data/test_uk.shp'. In ``mode`` 'r', data can
+        be read only. In ``mode`` 'a', data can be appended to a file.
+        In ``mode`` 'w', data overwrites the existing contents of
         a file.
-
-        In ``mode`` "w", an OGR ``driver`` name and a ``schema`` are
+        
+        In ``mode`` 'w', an OGR ``driver`` name and a ``schema`` are
         required. A Proj4 ``crs`` string is recommended.
-
-        In "w" mode, kwargs will be mapped to OGR layer creation
+        
+        In 'w' mode, kwargs will be mapped to OGR layer creation
         options.
         """
         if not isinstance(path, string_types):
             raise TypeError("invalid path: %r" % path)
-        if not isinstance(mode, string_types) or mode not in ("r", "w", "a"):
+        if not isinstance(mode, string_types) or mode not in ('r', 'w', 'a'):
             raise TypeError("invalid mode: %r" % mode)
         if driver and not isinstance(driver, string_types):
             raise TypeError("invalid driver: %r" % driver)
-        if schema and not hasattr(schema, "get"):
+        if schema and not hasattr(schema, 'get'):
             raise TypeError("invalid schema: %r" % schema)
-        if crs and not hasattr(crs, "get"):
+        if crs and not hasattr(crs, 'get'):
             raise TypeError("invalid schema: %r" % crs)
         if encoding and not isinstance(encoding, string_types):
             raise TypeError("invalid encoding: %r" % encoding)
         if layer and not isinstance(layer, tuple(list(string_types) + [int])):
             raise TypeError("invalid name: %r" % layer)
         if vsi:
-            if not isinstance(vsi, string_types) or vsi not in ("zip", "tar", "gzip"):
+            if not isinstance(vsi, string_types) or vsi not in ('zip', 'tar', 'gzip'):
                 raise TypeError("invalid vsi: %r" % vsi)
         if archive and not isinstance(archive, string_types):
             raise TypeError("invalid archive: %r" % archive)
@@ -64,16 +64,16 @@ class Collection(object):
         self._schema = None
         self._crs = None
         self.env = None
-
+        
         self.path = vsi_path(path, vsi, archive)
-
-        if mode == "w":
+        
+        if mode == 'w':
             if layer and not isinstance(layer, string_types):
-                raise ValueError("in "r" mode, layer names must be strings")
-            if driver == "GeoJSON":
+                raise ValueError("in 'r' mode, layer names must be strings")
+            if driver == 'GeoJSON':
                 if layer is not None:
                     raise ValueError("the GeoJSON format does not have layers")
-                self.name = "OgrGeoJSON"
+                self.name = 'OgrGeoJSON'
             # TODO: raise ValueError as above for other single-layer formats.
             else:
                 self.name = layer or os.path.basename(os.path.splitext(path)[0])
@@ -82,10 +82,10 @@ class Collection(object):
                 self.name = 0
             else:
                 self.name = layer or os.path.basename(os.path.splitext(path)[0])
-
+        
         self.mode = mode
-
-        if self.mode == "w":
+        
+        if self.mode == 'w':
             if not driver:
                 raise DriverError("no driver")
             elif driver not in supported_drivers:
@@ -95,21 +95,21 @@ class Collection(object):
                 raise DriverError(
                     "unsupported mode: %r" % self.mode)
             self._driver = driver
-
+            
             if not schema:
                 raise SchemaError("no schema")
-            elif "properties" not in schema:
+            elif 'properties' not in schema:
                 raise SchemaError("schema lacks: properties")
-            elif "geometry" not in schema:
+            elif 'geometry' not in schema:
                 raise SchemaError("schema lacks: geometry")
             self._schema = schema
-
+            
             if crs:
-                if "init" in crs or "proj" in crs:
+                if 'init' in crs or 'proj' in crs:
                     self._crs = crs
                 else:
                     raise CRSError("crs lacks init or proj parameter")
-
+        
         if driver_count == 0:
             # create a local manager and enter
             self.env = GDALEnv(True)
@@ -121,7 +121,7 @@ class Collection(object):
             self.encoding = encoding
             self.session = Session()
             self.session.start(self)
-
+            
             # If encoding param is None, we'll use what the session
             # suggests.
             self.encoding = encoding or self.session.get_fileencoding().lower()
@@ -156,12 +156,12 @@ class Collection(object):
             self._driver = self.session.get_driver()
         return self._driver
 
-    @property
+    @property 
     def schema(self):
         """Returns a mapping describing the data schema.
-
-        The mapping has "geometry" and "properties" items. The former is a
-        string such as "Point" and the latter is an ordered mapping that
+        
+        The mapping has 'geometry' and 'properties' items. The former is a
+        string such as 'Point' and the latter is an ordered mapping that
         follows the order of fields in the data file.
         """
         if not self._schema and self.mode in ("a", "r") and self.session:
@@ -179,21 +179,21 @@ class Collection(object):
     def meta(self):
         """Returns a mapping with the driver, schema, and crs properties."""
         return {
-            "driver": self.driver,
-            "schema": self.schema,
-            "crs": self.crs }
+            'driver': self.driver, 
+            'schema': self.schema, 
+            'crs': self.crs }
 
     def filter(self, *args, **kwds):
         """Returns an iterator over records, but filtered by a test for
         spatial intersection with the provided ``bbox``, a (minx, miny,
         maxx, maxy) tuple or a geometry ``mask``.
-
+        
         Positional arguments ``stop`` or ``start, stop[, step]`` allows
         iteration to skip over items or stop at a specific item.
         """
         if self.closed:
             raise ValueError("I/O operation on closed collection")
-        elif self.mode != "r":
+        elif self.mode != 'r':
             raise IOError("collection not open for reading")
         if args:
             s = slice(*args)
@@ -202,8 +202,8 @@ class Collection(object):
             step = s.step
         else:
             start = stop = step = None
-        bbox = kwds.get("bbox")
-        mask = kwds.get("mask")
+        bbox = kwds.get('bbox')
+        mask = kwds.get('mask')
         if bbox and mask:
             raise ValueError("mask and bbox can not be set together")
         self.iterator = Iterator(
@@ -211,17 +211,17 @@ class Collection(object):
         return self.iterator
 
     def items(self, *args, **kwds):
-        """Returns an iterator over FID, record pairs, optionally
+        """Returns an iterator over FID, record pairs, optionally 
         filtered by a test for spatial intersection with the provided
         ``bbox``, a (minx, miny, maxx, maxy) tuple or a geometry
         ``mask``.
-
+        
         Positional arguments ``stop`` or ``start, stop[, step]`` allows
         iteration to skip over items or stop at a specific item.
         """
         if self.closed:
             raise ValueError("I/O operation on closed collection")
-        elif self.mode != "r":
+        elif self.mode != 'r':
             raise IOError("collection not open for reading")
         if args:
             s = slice(*args)
@@ -230,8 +230,8 @@ class Collection(object):
             step = s.step
         else:
             start = stop = step = None
-        bbox = kwds.get("bbox")
-        mask = kwds.get("mask")
+        bbox = kwds.get('bbox')
+        mask = kwds.get('mask')
         if bbox and mask:
             raise ValueError("mask and bbox can not be set together")
         self.iterator = ItemsIterator(
@@ -239,9 +239,9 @@ class Collection(object):
         return self.iterator
 
     def keys(self, *args, **kwds):
-        """Returns an iterator over FIDs, optionally
+        """Returns an iterator over FIDs, optionally 
         filtered by a test for spatial intersection with the provided
-        ``bbox``, a (minx, miny, maxx, maxy) tuple or a geometry
+        ``bbox``, a (minx, miny, maxx, maxy) tuple or a geometry 
         ``mask``.
 
         Positional arguments ``stop`` or ``start, stop[, step]`` allows
@@ -249,7 +249,7 @@ class Collection(object):
         """
         if self.closed:
             raise ValueError("I/O operation on closed collection")
-        elif self.mode != "r":
+        elif self.mode != 'r':
             raise IOError("collection not open for reading")
         if args:
             s = slice(*args)
@@ -258,8 +258,8 @@ class Collection(object):
             step = s.step
         else:
             start = stop = step = None
-        bbox = kwds.get("bbox")
-        mask = kwds.get("mask")
+        bbox = kwds.get('bbox')
+        mask = kwds.get('mask')
         if bbox and mask:
             raise ValueError("mask and bbox can not be set together")
         self.iterator = KeysIterator(
@@ -290,7 +290,7 @@ class Collection(object):
         """Stages multiple records for writing to disk."""
         if self.closed:
             raise ValueError("I/O operation on closed collection")
-        if self.mode not in ("a", "w"):
+        if self.mode not in ('a', 'w'):
             raise IOError("collection not open for writing")
         self.session.writerecs(records, self)
         self._len = self.session.get_length()
@@ -307,8 +307,8 @@ class Collection(object):
         """
         # Currently we only compare keys of properties, not the types of
         # values.
-        return set(record["properties"].keys()
-            ) == set(self.schema["properties"].keys()
+        return set(record['properties'].keys()
+            ) == set(self.schema['properties'].keys()
             ) and self.validate_record_geometry(record)
 
     def validate_record_geometry(self, record):
@@ -318,16 +318,16 @@ class Collection(object):
         """
         # Shapefiles welcome mixes of line/multis and polygon/multis.
         # OGR reports these mixed files as type "Polygon" or "LineString"
-        # but will return either these or their multi counterparts when
+        # but will return either these or their multi counterparts when 
         # reading features.
-        if (self.driver == "ESRI Shapefile" and
-                "Point" not in record["geometry"]["type"]):
-            return record["geometry"]["type"].lstrip(
-                "Multi") == self.schema["geometry"].lstrip("3D ").lstrip(
+        if (self.driver == "ESRI Shapefile" and 
+                "Point" not in record['geometry']['type']):
+            return record['geometry']['type'].lstrip(
+                "Multi") == self.schema['geometry'].lstrip("3D ").lstrip(
                     "Multi")
         else:
-            return (record["geometry"]["type"] ==
-                self.schema["geometry"].lstrip("3D "))
+            return (record['geometry']['type'] ==
+                self.schema['geometry'].lstrip("3D "))
 
     def __len__(self):
         if self._len <= 0 and self.session is not None:
@@ -352,8 +352,8 @@ class Collection(object):
     def close(self):
         """In append or write mode, flushes data to disk, then ends
         access."""
-        if self.session is not None:
-            if self.mode in ("a", "w"):
+        if self.session is not None: 
+            if self.mode in ('a', 'w'):
                 self.flush()
             self.session.stop()
             self.session = None
@@ -514,6 +514,6 @@ supported_drivers = dict([
 #Office Open XML spreadsheet 	XLSX 	Yes 	No 	No, needs libexpat
 #X-Plane/Flighgear aeronautical data 	XPLANE 	No 	Yes 	Yes
 # multi-layer
-#   ("XPLANE", "r")
+#   ("XPLANE", "r") 
 ])
 

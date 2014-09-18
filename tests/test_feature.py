@@ -16,97 +16,97 @@ from fiona.ogrext import featureRT
 class PointRoundTripTest(unittest.TestCase):
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
-        schema = {"geometry": "Point", "properties": {"title": "str"}}
+        schema = {'geometry': 'Point', 'properties': {'title': 'str'}}
         self.c = Collection(os.path.join(self.tempdir, "foo.shp"),
                             "w", driver="ESRI Shapefile", schema=schema)
     def tearDown(self):
         self.c.close()
         shutil.rmtree(self.tempdir)
     def test_geometry(self):
-        f = { "id": "1",
-              "geometry": {"type": "Point", "coordinates": (0.0, 0.0)},
-              "properties": {"title": u"foo"} }
+        f = { 'id': '1', 
+              'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
+              'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
         self.failUnlessEqual(
-            sorted(g["geometry"].items()),
-            [("coordinates", (0.0, 0.0)), ("type", "Point")])
+            sorted(g['geometry'].items()),
+            [('coordinates', (0.0, 0.0)), ('type', 'Point')])
     def test_properties(self):
-        f = { "id": "1",
-              "geometry": {"type": "Point", "coordinates": (0.0, 0.0)},
-              "properties": {"title": u"foo"} }
+        f = { 'id': '1', 
+              'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
+              'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
-        self.failUnlessEqual(g["properties"]["title"], "foo")
+        self.failUnlessEqual(g['properties']['title'], 'foo')
     def test_none_property(self):
-        f = { "id": "1",
-              "geometry": {"type": "Point", "coordinates": (0.0, 0.0)},
-              "properties": {"title": None} }
+        f = { 'id': '1',
+              'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
+              'properties': {'title': None} }
         g = featureRT(f, self.c)
-        self.failUnlessEqual(g["properties"]["title"], None)
+        self.failUnlessEqual(g['properties']['title'], None)
 
 class LineStringRoundTripTest(unittest.TestCase):
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
-        schema = {"geometry": "LineString", "properties": {"title": "str"}}
+        schema = {'geometry': 'LineString', 'properties': {'title': 'str'}}
         self.c = Collection(os.path.join(self.tempdir, "foo.shp"),
                             "w", "ESRI Shapefile", schema=schema)
     def tearDown(self):
         self.c.close()
         shutil.rmtree(self.tempdir)
     def test_geometry(self):
-        f = { "id": "1",
-              "geometry": { "type": "LineString",
-                            "coordinates": [(0.0, 0.0), (1.0, 1.0)] },
-              "properties": {"title": u"foo"} }
+        f = { 'id': '1', 
+              'geometry': { 'type': 'LineString', 
+                            'coordinates': [(0.0, 0.0), (1.0, 1.0)] },
+              'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
         self.failUnlessEqual(
-            sorted(g["geometry"].items()),
-            [("coordinates", [(0.0, 0.0), (1.0, 1.0)]),
-             ("type", "LineString")])
+            sorted(g['geometry'].items()),
+            [('coordinates', [(0.0, 0.0), (1.0, 1.0)]), 
+             ('type', 'LineString')])
     def test_properties(self):
-        f = { "id": "1",
-              "geometry": {"type": "Point", "coordinates": (0.0, 0.0)},
-              "properties": {"title": u"foo"} }
+        f = { 'id': '1',
+              'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
+              'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
-        self.failUnlessEqual(g["properties"]["title"], "foo")
+        self.failUnlessEqual(g['properties']['title'], 'foo')
 
 class PolygonRoundTripTest(unittest.TestCase):
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
-        schema = {"geometry": "Polygon", "properties": {"title": "str"}}
+        schema = {'geometry': 'Polygon', 'properties': {'title': 'str'}}
         self.c = Collection(os.path.join(self.tempdir, "foo.shp"),
                             "w", "ESRI Shapefile", schema=schema)
     def tearDown(self):
         self.c.close()
         shutil.rmtree(self.tempdir)
     def test_geometry(self):
-        f = { "id": "1",
-              "geometry": { "type": "Polygon",
-                            "coordinates":
-                                [[(0.0, 0.0),
-                                  (0.0, 1.0),
-                                  (1.0, 1.0),
-                                  (1.0, 0.0),
+        f = { 'id': '1', 
+              'geometry': { 'type': 'Polygon', 
+                            'coordinates': 
+                                [[(0.0, 0.0), 
+                                  (0.0, 1.0), 
+                                  (1.0, 1.0), 
+                                  (1.0, 0.0), 
                                   (0.0, 0.0)]] },
-              "properties": {"title": u"foo"} }
+              'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
         self.failUnlessEqual(
-            sorted(g["geometry"].items()),
-            [("coordinates", [[(0.0, 0.0),
-                                  (0.0, 1.0),
-                                  (1.0, 1.0),
-                                  (1.0, 0.0),
-                                  (0.0, 0.0)]]),
-             ("type", "Polygon")])
+            sorted(g['geometry'].items()),
+            [('coordinates', [[(0.0, 0.0), 
+                                  (0.0, 1.0), 
+                                  (1.0, 1.0), 
+                                  (1.0, 0.0), 
+                                  (0.0, 0.0)]]), 
+             ('type', 'Polygon')])
     def test_properties(self):
-        f = { "id": "1",
-              "geometry": { "type": "Polygon",
-                            "coordinates":
-                                [[(0.0, 0.0),
-                                  (0.0, 1.0),
-                                  (1.0, 1.0),
-                                  (1.0, 0.0),
+        f = { 'id': '1', 
+              'geometry': { 'type': 'Polygon', 
+                            'coordinates': 
+                                [[(0.0, 0.0), 
+                                  (0.0, 1.0), 
+                                  (1.0, 1.0), 
+                                  (1.0, 0.0), 
                                   (0.0, 0.0)]] },
-              "properties": {"title": u"foo"} }
+              'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
-        self.failUnlessEqual(g["properties"]["title"], "foo")
+        self.failUnlessEqual(g['properties']['title'], 'foo')
 

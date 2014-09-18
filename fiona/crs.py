@@ -7,7 +7,7 @@
 #
 # here we use mappings:
 #
-#   {"proj": "longlat", "ellps": "WGS84", "datum": "WGS84", "no_defs": True}
+#   {'proj': 'longlat', 'ellps': 'WGS84', 'datum': 'WGS84', 'no_defs': True}
 #
 
 from six import string_types
@@ -16,14 +16,14 @@ def to_string(crs):
     """Turn a parameter mapping into a more conventional PROJ.4 string.
 
     Mapping keys are tested against the ``all_proj_keys`` list. Values of
-    ``True`` are omitted, leaving the key bare: {"no_defs": True} -> "+no_defs"
+    ``True`` are omitted, leaving the key bare: {'no_defs': True} -> "+no_defs"
     and items where the value is otherwise not a str, int, or float are
     omitted.
     """
     items = []
     for k, v in sorted(filter(
             lambda x: x[0] in all_proj_keys and x[1] is not False and (
-                isinstance(x[1], (bool, int, float)) or
+                isinstance(x[1], (bool, int, float)) or 
                 isinstance(x[1], string_types)),
             crs.items() )):
         items.append(
@@ -38,7 +38,7 @@ def from_string(prjs):
     Bare parameters like "+no_defs" are given a value of ``True``. All keys
     are checked against the ``all_proj_keys`` list.
     """
-    parts = [o.lstrip("+") for o in prjs.strip().split()]
+    parts = [o.lstrip('+') for o in prjs.strip().split()]
     def parse(v):
         try:
             return int(v)
@@ -50,7 +50,7 @@ def from_string(prjs):
             return v
     items = map(
         lambda kv: len(kv) == 2 and (kv[0], parse(kv[1])) or (kv[0], True),
-        (p.split("=") for p in parts) )
+        (p.split('=') for p in parts) )
     return dict((k,v) for k, v in items if k in all_proj_keys)
 
 def from_epsg(code):
@@ -60,7 +60,7 @@ def from_epsg(code):
     """
     if int(code) <= 0:
         raise ValueError("EPSG codes are positive integers")
-    return {"init": "epsg:%s" % code, "no_defs": True}
+    return {'init': "epsg:%s" % code, 'no_defs': True}
 
 
 # Below is the big list of PROJ4 parameters from
@@ -85,7 +85,7 @@ _param_data = """
 +lonc      ? Longitude used with Oblique Mercator and possibly a few others
 +lon_wrap  Center longitude to use for wrapping (see below)
 +nadgrids  Filename of NTv2 grid file to use for datum transforms (see below)
-+no_defs   Don"t use the /usr/share/proj/proj_def.dat defaults file
++no_defs   Don't use the /usr/share/proj/proj_def.dat defaults file
 +over      Allow longitude output outside -180 to 180 range, disables wrapping (see below)
 +pm        Alternate prime meridian (typically a city name, see below)
 +proj      Projection name (see `proj -l`)
@@ -177,6 +177,6 @@ _param_data = """
 
 _lines = filter(lambda x: len(x) > 1, _param_data.split("\n"))
 all_proj_keys = list(
-    set(line.split()[0].lstrip("+").strip() for line in _lines)
-    ) + ["no_mayo"]
+    set(line.split()[0].lstrip("+").strip() for line in _lines) 
+    ) + ['no_mayo']
 

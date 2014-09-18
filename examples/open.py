@@ -19,10 +19,10 @@ import fiona
 #
 # The relative path to a file on the filesystem is given and its single layer
 # is selected implicitly (a shapefile has a single layer). The file is opened
-# for reading (mode "r"), but since this is the default, we'll omit it in
+# for reading (mode 'r'), but since this is the default, we'll omit it in
 # following examples.
 
-with fiona.open("docs/data/test_uk.shp", "r") as c:
+with fiona.open('docs/data/test_uk.shp', 'r') as c:
     assert len(c) == 48
 
 # 2. Opening a file with explicit layer selection (FileGDB, etc).
@@ -32,7 +32,7 @@ with fiona.open("docs/data/test_uk.shp", "r") as c:
 #
 # Same as above but layer specified explicitly by name..
 
-with fiona.open("docs/data/test_uk.shp", layer="test_uk") as c:
+with fiona.open('docs/data/test_uk.shp', layer='test_uk') as c:
     assert len(c) == 48
 
 # 3. Opening a directory for access to a single file.
@@ -43,7 +43,7 @@ with fiona.open("docs/data/test_uk.shp", layer="test_uk") as c:
 # Same as above but using the path to the directory containing the shapefile,
 # specified explicitly by name.
 
-with fiona.open("docs/data", layer="test_uk") as c:
+with fiona.open('docs/data', layer='test_uk') as c:
     assert len(c) == 48
 
 # 4. Opening a single file within a zip archive.
@@ -68,7 +68,7 @@ with fiona.open("docs/data", layer="test_uk") as c:
 #  --------                   -------
 #     75912                   4 files
 
-with fiona.open("/test_uk.shp", vfs="zip://docs/data/test_uk.zip") as c:
+with fiona.open('/test_uk.shp', vfs='zip://docs/data/test_uk.zip') as c:
     assert len(c) == 48
 
 # 5. Opening a directory within a zip archive to select a layer.
@@ -81,6 +81,6 @@ with fiona.open("/test_uk.shp", vfs="zip://docs/data/test_uk.zip") as c:
 # 4 and 3). It ought to be possible to open a file geodatabase within a zip
 # file like this.
 
-with fiona.open("/", layer="test_uk", vfs="zip://docs/data/test_uk.zip") as c:
+with fiona.open('/', layer='test_uk', vfs='zip://docs/data/test_uk.zip') as c:
     assert len(c) == 48
 

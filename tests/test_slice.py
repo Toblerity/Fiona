@@ -6,34 +6,34 @@ import fiona
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 def test_collection_get():
-    with fiona.open("docs/data/test_uk.shp") as src:
+    with fiona.open('docs/data/test_uk.shp') as src:
         result = src[5]
-        assert result["id"] == "5"
+        assert result['id'] == '5'
 
 def test_collection_slice():
-    with fiona.open("docs/data/test_uk.shp") as src:
+    with fiona.open('docs/data/test_uk.shp') as src:
         results = src[:5]
         assert isinstance(results, list)
         assert len(results) == 5
-        assert results[4]["id"] == "4"
+        assert results[4]['id'] == '4'
 
 def test_collection_iterator_slice():
-    with fiona.open("docs/data/test_uk.shp") as src:
+    with fiona.open('docs/data/test_uk.shp') as src:
         results = list(src.items(5))
         assert len(results) == 5
         k, v = results[4]
         assert k == 4
-        assert v["id"] == "4"
+        assert v['id'] == '4'
 
 def test_collection_iterator_next():
-    with fiona.open("docs/data/test_uk.shp") as src:
+    with fiona.open('docs/data/test_uk.shp') as src:
         k, v = next(src.items(5, None))
         assert k == 5
-        assert v["id"] == "5"
+        assert v['id'] == '5'
 
 def test_collection_iterator_items_slice():
 
-    with fiona.open("docs/data/test_uk.shp") as src:
+    with fiona.open('docs/data/test_uk.shp') as src:
         l = len(src)
 
         items = list(src.items(0, 5))
@@ -70,6 +70,6 @@ def test_collection_iterator_items_slice():
         assert len(items) == (l - 5 + 1)
 
 def test_collection_iterator_keys_next():
-    with fiona.open("docs/data/test_uk.shp") as src:
+    with fiona.open('docs/data/test_uk.shp') as src:
         k = next(src.keys(5, None))
         assert k == 5

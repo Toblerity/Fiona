@@ -44,9 +44,9 @@ def parse_time(text):
     g = group_accessor(match)
     log.debug("Match groups: %s", match.groups())
     return (0, 0, 0,
-        int(g.group(1)),
-        int(g.group(3)),
-        int(g.group(5)),
+        int(g.group(1)), 
+        int(g.group(3)), 
+        int(g.group(5)), 
         1000000.0*float(g.group(6)) )
 
 def parse_date(text):
@@ -57,8 +57,8 @@ def parse_date(text):
     g = group_accessor(match)
     log.debug("Match groups: %s", match.groups())
     return (
-        int(g.group(1)),
-        int(g.group(3)),
+        int(g.group(1)), 
+        int(g.group(3)), 
         int(g.group(5)),
         0, 0, 0, 0.0 )
 
@@ -70,11 +70,11 @@ def parse_datetime(text):
     g = group_accessor(match)
     log.debug("Match groups: %s", match.groups())
     return (
-        int(g.group(1)),
-        int(g.group(3)),
+        int(g.group(1)), 
+        int(g.group(3)), 
         int(g.group(5)),
-        int(g.group(7)),
-        int(g.group(9)),
-        int(g.group(11)),
+        int(g.group(7)), 
+        int(g.group(9)), 
+        int(g.group(11)), 
         1000000.0*float(g.group(12)) )
 
