@@ -1,8 +1,8 @@
 Changes
 =======
 
-Next
-----
+1.3.0 (2014-09-17)
+------------------
 - Add single metadata item accessors to fio inf (#142).
 - Move fio to setuptools entry point (#142).
 - Add fio dump and load commands (#143).

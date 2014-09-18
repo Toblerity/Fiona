@@ -122,7 +122,7 @@ setup(
     url='http://github.com/Toblerity/Fiona',
     long_description=readme + "\n" + changes + "\n" + credits,
     package_dir={'': '.'},
-    packages=['fiona'],
+    packages=['fiona', 'fiona.fio'],
     entry_points='''
         [console_scripts]
         fio=fiona.fio.fio:cli
