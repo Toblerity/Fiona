@@ -17,7 +17,7 @@ class RevolvingDoorTest(unittest.TestCase):
 
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
-    
+
     def tearDown(self):
         shutil.rmtree(self.tempdir)
 
@@ -28,7 +28,7 @@ class RevolvingDoorTest(unittest.TestCase):
             features = list(src)
 
         shpname = os.path.join(self.tempdir, 'foo.shp')
-        
+
         with fiona.open(shpname, 'w', **meta) as dst:
             dst.writerecords(features)
 

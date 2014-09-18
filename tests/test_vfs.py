@@ -12,7 +12,7 @@ from .test_collection import ReadingTest
 
 
 class VsiReadingTest(ReadingTest):
-    
+
     # There's a bug in GDAL 1.9.2 http://trac.osgeo.org/gdal/ticket/5093
     # in which the VSI driver reports the wrong number of features.
     # I'm overriding ReadingTest's test_filter_1 with a function that
@@ -27,10 +27,10 @@ class VsiReadingTest(ReadingTest):
         self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
 
 class ZipReadingTest(VsiReadingTest):
-    
+
     def setUp(self):
         self.c = fiona.open("zip://docs/data/test_uk.zip", "r")
-    
+
     def tearDown(self):
         self.c.close()
 
@@ -51,10 +51,10 @@ class ZipReadingTest(VsiReadingTest):
         self.failUnlessEqual(self.c.path, '/vsizip/docs/data/test_uk.zip')
 
 class ZipArchiveReadingTest(VsiReadingTest):
-    
+
     def setUp(self):
         self.c = fiona.open("/test_uk.shp", "r", vfs="zip://docs/data/test_uk.zip")
-    
+
     def tearDown(self):
         self.c.close()
 
@@ -75,10 +75,10 @@ class ZipArchiveReadingTest(VsiReadingTest):
         self.failUnlessEqual(self.c.path, '/vsizip/docs/data/test_uk.zip/test_uk.shp')
 
 class TarArchiveReadingTest(VsiReadingTest):
-    
+
     def setUp(self):
         self.c = fiona.open("/testing/test_uk.shp", "r", vfs="tar://docs/data/test_uk.tar")
-    
+
     def tearDown(self):
         self.c.close()
 

@@ -36,7 +36,7 @@ for feature in layer:
     props = {}
     for i in range(feature.GetFieldCount()):
         props[schema[i][0]] = feature.GetField(i)
-    
+
     coordinates = []
     for part in feature.GetGeometryRef():
         ring = []

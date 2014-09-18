@@ -21,8 +21,8 @@ def open_output(arg):
         return open(arg, 'w')
 
 def make_ld_context(context_items):
-    """Returns a JSON-LD Context object. 
-    
+    """Returns a JSON-LD Context object.
+
     See http://json-ld.org/spec/latest/json-ld."""
     ctx = {
         'type': '@type',
@@ -40,7 +40,7 @@ def make_ld_context(context_items):
         'MultiPoint': 'http://geovocab.org/geometry#MultiPoint',
         'MultiLineString': 'http://geovocab.org/geometry#MultiLineString',
         'MultiPolygon': 'http://geovocab.org/geometry#MultiPolygon',
-        'GeometryCollection': 
+        'GeometryCollection':
             'http://geovocab.org/geometry#GeometryCollection',
         'coordinates': '_:n5'}
     for item in context_items or []:
@@ -69,7 +69,7 @@ def id_record(rec):
 def main(args, dump_kw, item_sep, ignore_errors):
     """Returns 0 on success, 1 on error, for sys.exit."""
     with fiona.drivers():
-        
+
         with open_output(args.outfile) as sink:
 
             with fiona.open(args.infile) as source:
@@ -82,7 +82,7 @@ def main(args, dump_kw, item_sep, ignore_errors):
                     meta['schema']['properties'] = list(
                         source.schema['properties'].items())
                     json.dump(meta, sink, **dump_kw)
-                
+
                 elif args.record_buffered:
                     # Buffer GeoJSON data at the feature level for smaller
                     # memory footprint.
@@ -91,22 +91,22 @@ def main(args, dump_kw, item_sep, ignore_errors):
                     rec_indent = "\n" + " " * (2 * (args.indent or 0))
 
                     collection = {
-                        'type': 'FeatureCollection',  
-                        'fiona:schema': meta['schema'], 
+                        'type': 'FeatureCollection',
+                        'fiona:schema': meta['schema'],
                         'fiona:crs': meta['crs'],
                         '_crs': crs_uri(meta['crs']),
                         'features': [] }
                     if args.use_ld_context:
                         collection['@context'] = make_ld_context(
                             args.ld_context_items)
-                    
+
                     head, tail = json.dumps(collection, **dump_kw).split('[]')
-                    
+
                     sink.write(head)
                     sink.write("[")
-                    
+
                     itr = iter(source)
-                    
+
                     # Try the first record.
                     try:
                         i, first = 0, next(itr)
@@ -138,7 +138,7 @@ def main(args, dump_kw, item_sep, ignore_errors):
                             if indented:
                                 sink.write("\n")
                             return 1
-                    
+
                     # Because trailing commas aren't valid in JSON arrays
                     # we'll write the item separator before each of the
                     # remaining features.
@@ -168,7 +168,7 @@ def main(args, dump_kw, item_sep, ignore_errors):
                                 if indented:
                                     sink.write("\n")
                                 return 1
-                    
+
                     # Close up the GeoJSON after writing all features.
                     sink.write("]")
                     sink.write(tail)
@@ -178,8 +178,8 @@ def main(args, dump_kw, item_sep, ignore_errors):
                 else:
                     # Buffer GeoJSON data at the collection level. The default.
                     collection = {
-                        'type': 'FeatureCollection', 
-                        'fiona:schema': meta['schema'], 
+                        'type': 'FeatureCollection',
+                        'fiona:schema': meta['schema'],
                         'fiona:crs': meta['crs'],
                         '_crs': crs_uri(meta['crs']) }
                     if args.use_ld_context:
@@ -201,25 +201,25 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
         description="Serialize a file's records or description to GeoJSON")
-    
-    parser.add_argument('infile', 
+
+    parser.add_argument('infile',
         help="input file name")
     parser.add_argument('outfile',
-        nargs='?', 
-        help="output file name, defaults to stdout if omitted", 
+        nargs='?',
+        help="output file name, defaults to stdout if omitted",
         default=sys.stdout)
     parser.add_argument('-d', '--description',
-        action='store_true', 
+        action='store_true',
         help="serialize file's data description (schema) only")
-    parser.add_argument('-n', '--indent', 
+    parser.add_argument('-n', '--indent',
         type=int,
         default=None,
         metavar='N',
         help="indentation level in N number of chars")
-    parser.add_argument('--compact', 
+    parser.add_argument('--compact',
         action='store_true',
         help="use compact separators (',', ':')")
-    parser.add_argument('--encoding', 
+    parser.add_argument('--encoding',
         default=None,
         metavar='ENC',
         help="Specify encoding of the input file")

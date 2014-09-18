@@ -39,7 +39,7 @@ def cli(ctx, verbose, quiet):
 # Info command.
 @cli.command(short_help="Print information about a data file.")
 @click.argument('input', default='-', required=False)
-@click.option('--indent', default=None, type=int, 
+@click.option('--indent', default=None, type=int,
               help="Indentation level for pretty printed output.")
 
 # Options to pick out a single metadata item and print it as
@@ -160,8 +160,8 @@ def load(ctx, output, driver, x_json_seq):
 
 
 def make_ld_context(context_items):
-    """Returns a JSON-LD Context object. 
-    
+    """Returns a JSON-LD Context object.
+
     See http://json-ld.org/spec/latest/json-ld."""
     ctx = {
       "@context": {
@@ -261,7 +261,7 @@ def round_rec(rec, precision=None):
 @click.option('--precision', type=int, default=-1,
               help="Decimal precision of coordinates.")
 
-@click.option('--indent', default=None, type=int, 
+@click.option('--indent', default=None, type=int,
               help="Indentation level for pretty printed output.")
 
 @click.option('--compact/--no-compact', default=False,
@@ -335,21 +335,21 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                     rec_indent = "\n" + " " * (2 * (indent or 0))
 
                     collection = {
-                        'type': 'FeatureCollection',  
-                        'fiona:schema': meta['schema'], 
+                        'type': 'FeatureCollection',
+                        'fiona:schema': meta['schema'],
                         'fiona:crs': meta['crs'],
                         'features': [] }
                     if with_ld_context:
                         collection['@context'] = make_ld_context(
                             add_ld_context_item)
-                    
+
                     head, tail = json.dumps(collection, **dump_kwds).split('[]')
-                    
+
                     sink.write(head)
                     sink.write("[")
-                    
+
                     itr = iter(source)
-                    
+
                     # Try the first record.
                     try:
                         i, first = 0, next(itr)
@@ -383,7 +383,7 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                             if indented:
                                 sink.write("\n")
                             raise
-                    
+
                     # Because trailing commas aren't valid in JSON arrays
                     # we'll write the item separator before each of the
                     # remaining features.
@@ -415,7 +415,7 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                                 if indented:
                                     sink.write("\n")
                                 raise
-                    
+
                     # Close up the GeoJSON after writing all features.
                     sink.write("]")
                     sink.write(tail)
@@ -425,8 +425,8 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                 else:
                     # Buffer GeoJSON data at the collection level. The default.
                     collection = {
-                        'type': 'FeatureCollection', 
-                        'fiona:schema': meta['schema'], 
+                        'type': 'FeatureCollection',
+                        'fiona:schema': meta['schema'],
                         'fiona:crs': meta['crs']}
                     if with_ld_context:
                         collection['@context'] = make_ld_context(

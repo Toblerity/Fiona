@@ -13,10 +13,10 @@ logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 class ReadAccess(unittest.TestCase):
     # To check that we'll be able to get multiple 'r' connections to layers
     # in a single file.
-    
+
     def setUp(self):
         self.c = fiona.open("docs/data/test_uk.shp", "r", layer="test_uk")
-    
+
     def tearDown(self):
         self.c.close()
 
@@ -34,7 +34,7 @@ class ReadAccess(unittest.TestCase):
 class ReadWriteAccess(unittest.TestCase):
     # To check that we'll be able to read from a file that we're
     # writing to.
-    
+
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
         self.c = fiona.open(
@@ -42,7 +42,7 @@ class ReadWriteAccess(unittest.TestCase):
             "w",
             driver="ESRI Shapefile",
             schema={
-                'geometry': 'Point', 
+                'geometry': 'Point',
                 'properties': [('title', 'str:80'), ('date', 'date')]},
             crs={'init': "epsg:4326", 'no_defs': True},
             encoding='utf-8')
@@ -89,7 +89,7 @@ class LayerCreation(unittest.TestCase):
             layer='write_test',
             driver='ESRI Shapefile',
             schema={
-                'geometry': 'Point', 
+                'geometry': 'Point',
                 'properties': [('title', 'str:80'), ('date', 'date')]},
             crs={'init': "epsg:4326", 'no_defs': True},
             encoding='utf-8')

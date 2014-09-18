@@ -24,7 +24,7 @@ attribute table. For example:
    'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
    'properties': {'label': u'Null Island'} }
 
-is a Fiona feature with a point geometry and one property. 
+is a Fiona feature with a point geometry and one property.
 
 Features are read and written using objects returned by the
 ``collection`` function. These ``Collection`` objects are a lot like
@@ -46,8 +46,8 @@ feature writing to a "points.shp" file.
   ...     output_schema['geometry'] = 'Point'
   ...     with collection(
   ...             "points.shp", "w",
-  ...             crs=inp.crs, 
-  ...             driver="ESRI Shapefile", 
+  ...             crs=inp.crs,
+  ...             driver="ESRI Shapefile",
   ...             schema=output_schema
   ...             ) as out:
   ...         for f in inp.filter(
@@ -83,44 +83,44 @@ log.addHandler(NullHandler())
 
 
 def open(
-        path, 
-        mode='r', 
-        driver=None, 
-        schema=None, 
+        path,
+        mode='r',
+        driver=None,
+        schema=None,
         crs=None,
         encoding=None,
         layer=None,
         vfs=None ):
-    
+
     """Open file at ``path`` in ``mode`` "r" (read), "a" (append), or
     "w" (write) and return a ``Collection`` object.
-    
+
     In write mode, a driver name such as "ESRI Shapefile" or "GPX" (see
     OGR docs or ``ogr2ogr --help`` on the command line) and a schema
     mapping such as:
-    
+
       {'geometry': 'Point',
-       'properties': [('class', 'int'), ('label', 'str'), 
+       'properties': [('class', 'int'), ('label', 'str'),
                       ('value', 'float')]}
-    
+
     must be provided. If a particular ordering of properties ("fields"
     in GIS parlance) in the written file is desired, a list of (key,
     value) pairs as above or an ordered dict is required. If no ordering
     is needed, a standard dict will suffice.
-    
+
     A coordinate reference system for collections in write mode can be
     defined by the ``crs`` parameter. It takes Proj4 style mappings like
-    
-      {'proj': 'longlat', 'ellps': 'WGS84', 'datum': 'WGS84', 
+
+      {'proj': 'longlat', 'ellps': 'WGS84', 'datum': 'WGS84',
        'no_defs': True}
-    
+
     The drivers used by Fiona will try to detect the encoding of data
     files. If they fail, you may provide the proper ``encoding``, such
     as 'Windows-1252' for the Natural Earth datasets.
-    
+
     When the provided path is to a file containing multiple named layers
     of data, a layer can be singled out by ``layer``.
-    
+
     A virtual filesystem can be specified. The ``vfs`` parameter may be
     an Apache Commons VFS style string beginning with "zip://" or
     "tar://"". In this case, the ``path`` must be an absolute path
@@ -135,7 +135,7 @@ def open(
                 raise IOError("no such archive file: %r" % archive)
         elif path != '-' and not os.path.exists(path):
             raise IOError("no such file or directory: %r" % path)
-        c = Collection(path, mode, 
+        c = Collection(path, mode,
                 encoding=encoding, layer=layer, vsi=vsi, archive=archive)
     elif mode == 'w':
         if schema:
@@ -144,8 +144,8 @@ def open(
             this_schema['properties'] = OrderedDict(schema['properties'])
         else:
             this_schema = None
-        c = Collection(path, mode, 
-                crs=crs, driver=driver, schema=this_schema, 
+        c = Collection(path, mode,
+                crs=crs, driver=driver, schema=this_schema,
                 encoding=encoding, layer=layer, vsi=vsi, archive=archive)
     else:
         raise ValueError(
@@ -156,10 +156,10 @@ collection = open
 
 def listlayers(path, vfs=None):
     """Returns a list of layer names in their index order.
-    
+
     The required ``path`` argument may be an absolute or relative file or
     directory path.
-    
+
     A virtual filesystem can be specified. The ``vfs`` parameter may be
     an Apache Commons VFS style string beginning with "zip://" or
     "tar://"". In this case, the ``path`` must be an absolute path within
@@ -169,15 +169,15 @@ def listlayers(path, vfs=None):
         raise TypeError("invalid path: %r" % path)
     if vfs and not isinstance(vfs, string_types):
         raise TypeError("invalid vfs: %r" % vfs)
-    
+
     path, vsi, archive = parse_paths(path, vfs)
-    
+
     if archive:
         if not os.path.exists(archive):
             raise IOError("no such archive file: %r" % archive)
     elif not os.path.exists(path):
         raise IOError("no such file or directory: %r" % path)
-    
+
     with drivers():
         return _listlayers(vsi_path(path, vsi, archive))
 
@@ -209,9 +209,9 @@ def prop_width(val):
 
 def prop_type(text):
     """Returns a schema property's proper Python type.
-    
+
     Example:
-    
+
       >>> prop_type('int')
       <class 'int'>
       >>> prop_type('str:25')
@@ -231,7 +231,7 @@ def drivers(*args, **kwargs):
 
 def bounds(ob):
     """Returns a (minx, miny, maxx, maxy) bounding box.
-    
+
     The ``ob`` may be a feature record or geometry."""
     geom = ob.get('geometry') or ob
     return _bounds(geom)
