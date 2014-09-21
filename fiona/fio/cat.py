@@ -121,8 +121,8 @@ def round_rec(rec, precision=None):
 # Use ASCII RS control code to signal a sequence item (False is default).
 # See http://tools.ietf.org/html/draft-ietf-json-text-sequence-05.
 # Experimental.
-@click.option('--x-json-seq-rs/--x-json-seq-no-rs', default=False,
-        help="Use RS as text separator. Experimental.")
+@click.option('--x-json-seq-rs/--x-json-seq-no-rs', default=True,
+        help="Use RS as text separator instead of LF. Experimental.")
 
 @click.pass_context
 
@@ -382,7 +382,7 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
 # Use ASCII RS control code to signal a sequence item (False is default).
 # See http://tools.ietf.org/html/draft-ietf-json-text-sequence-05.
 # Experimental.
-@click.option('--x-json-seq-rs/--x-json-seq-no-rs', default=False,
+@click.option('--x-json-seq-rs/--x-json-seq-no-rs', default=True,
         help="Use RS as text separator. Experimental.")
 
 @click.pass_context
