@@ -760,36 +760,56 @@ cdef class Session:
 
     def get_crs(self):
         cdef char *proj_c = NULL
+        cdef char *auth_key = NULL
+        cdef char *auth_val = NULL
+        cdef void *cogr_crs = NULL
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
-        cdef void *cogr_crs = ograpi.OGR_L_GetSpatialRef(self.cogr_layer)
-        log.debug("Got coordinate system")
+        cogr_crs = ograpi.OGR_L_GetSpatialRef(self.cogr_layer)
         crs = {}
         if cogr_crs is not NULL:
-            ograpi.OSRExportToProj4(cogr_crs, &proj_c)
-            if proj_c == NULL:
-                raise ValueError("Null projection")
-            proj_b = proj_c
-            log.debug("Params: %s", proj_b)
-            value = proj_b.decode()
-            value = value.strip()
-            for param in value.split():
-                kv = param.split("=")
-                if len(kv) == 2:
-                    k, v = kv
-                    try:
-                        v = float(v)
-                        if v % 1 == 0:
-                            v = int(v)
-                    except ValueError:
-                        # Leave v as a string
-                        pass
-                elif len(kv) == 1:
-                    k, v = kv[0], True
-                else:
-                    raise ValueError("Unexpected proj parameter %s" % param)
-                k = k.lstrip("+")
-                crs[k] = v
+            log.debug("Got coordinate system")
+
+            retval = ograpi.OSRAutoIdentifyEPSG(cogr_crs)
+            if retval > 0:
+                log.info("Failed to auto identify EPSG: %d", retval)
+            
+            auth_key = ograpi.OSRGetAuthorityName(cogr_crs, NULL)
+            auth_val = ograpi.OSRGetAuthorityCode(cogr_crs, NULL)
+
+            if auth_key != NULL and auth_val != NULL:
+                key_b = auth_key
+                key = key_b.decode('utf-8')
+                if key == 'EPSG':
+                    val_b = auth_val
+                    val = val_b.decode('utf-8')
+                    crs['init'] = "epsg:" + val
+            else:
+                ograpi.OSRExportToProj4(cogr_crs, &proj_c)
+                if proj_c == NULL:
+                    raise ValueError("Null projection")
+                proj_b = proj_c
+                log.debug("Params: %s", proj_b)
+                value = proj_b.decode()
+                value = value.strip()
+                for param in value.split():
+                    kv = param.split("=")
+                    if len(kv) == 2:
+                        k, v = kv
+                        try:
+                            v = float(v)
+                            if v % 1 == 0:
+                                v = int(v)
+                        except ValueError:
+                            # Leave v as a string
+                            pass
+                    elif len(kv) == 1:
+                        k, v = kv[0], True
+                    else:
+                        raise ValueError("Unexpected proj parameter %s" % param)
+                    k = k.lstrip("+")
+                    crs[k] = v
+
             ograpi.CPLFree(proj_c)
         else:
             log.debug("Projection not found (cogr_crs was NULL)")
@@ -962,19 +982,31 @@ cdef class WritingSession(Session):
 
             # Set the spatial reference system from the given crs.
             if collection.crs:
-                cogr_srs = ograpi.OSRNewSpatialReference(NULL)
-                if cogr_srs == NULL:
-                    raise ValueError("Null spatial reference")
                 params = []
-                for k, v in collection.crs.items():
-                    if v is True or (k == 'no_defs' and v):
-                        params.append("+%s" % k)
+                if isinstance(collection.crs, dict):
+                    # EPSG is a special case.
+                    init = collection.crs.get('init')
+                    if init:
+                        auth, val = init.split(':')
+                        if auth.upper() == 'EPSG':
+                            ograpi.OSRImportFromEPSG(cogr_srs, int(val))
                     else:
-                        params.append("+%s=%s" % (k, v))
-                proj = " ".join(params)
-                proj_b = proj.encode()
-                proj_c = proj_b
-                ograpi.OSRImportFromProj4(cogr_srs, proj_c)
+                        collection.crs['wktext'] = True
+                        for k, v in collection.crs.items():
+                            if v is True or (k in ('no_defs', 'wktext') and v):
+                                params.append("+%s" % k)
+                            else:
+                                params.append("+%s=%s" % (k, v))
+                    proj = " ".join(params)
+                    log.debug("PROJ.4 to be imported: %r", proj)
+                    proj_b = proj.encode('utf-8')
+                    proj_c = proj_b
+                    ograpi.OSRImportFromProj4(cogr_srs, proj_c)
+                # Fall back for CRS strings like "EPSG:3857."
+                else:
+                    proj_b = collection.crs.encode('utf-8')
+                    proj_c = proj_b
+                    ograpi.OSRSetFromUserInput(cogr_srs, proj_c)
 
             # Figure out what encoding to use. The encoding parameter given
             # to the collection constructor takes highest precedence, then
