@@ -18,7 +18,7 @@ from fiona.fio.cli import cli
 from fiona.fio.cat import cat, dump
 
 
-FIELD_TYPES_MAP_REV = {v: k for k, v in fiona.FIELD_TYPES_MAP.items()}
+FIELD_TYPES_MAP_REV = dict([(v, k) for k, v in fiona.FIELD_TYPES_MAP.items()])
 
 warnings.simplefilter('default')
 
@@ -148,9 +148,9 @@ def load(ctx, output, driver, x_json_seq):
         # TODO: schema specified on command line?
         first = next(source)
         schema = {'geometry': first['geometry']['type']}
-        schema['properties'] = {
-            k: FIELD_TYPES_MAP_REV[type(v)]
-            for k, v in first['properties'].items()}
+        schema['properties'] = dict([
+            (k, FIELD_TYPES_MAP_REV[type(v)])
+            for k, v in first['properties'].items()])
 
         with fiona.drivers(CPL_DEBUG=verbosity>2):
             with fiona.open(
