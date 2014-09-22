@@ -18,16 +18,10 @@ def create_tarfile(tarfilename):
 def create_jsonfile(jsonfilename):
     import json
     import fiona
-    from fiona.crs import from_string
-    from fiona.tool import crs_uri
     with fiona.open(os.path.join(DATADIR, FILES[0]), 'r') as source:
         features = [feat for feat in source]
-        crs = ' '.join('+%s=%s' % (k,v) for k,v in source.crs.items())
     my_layer = {'type': 'FeatureCollection',
-                'features': features,
-                'crs': { 'type': 'name',
-                         'properties': {
-                         'name':crs_uri(from_string(crs))}}}
+                'features': features}
     with open(jsonfilename, 'w') as f:
         f.write(json.dumps(my_layer))
 
