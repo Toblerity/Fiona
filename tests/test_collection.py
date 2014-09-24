@@ -154,8 +154,7 @@ class ReadingTest(unittest.TestCase):
 
     def test_crs(self):
         crs = self.c.crs
-        self.failUnlessEqual(crs['datum'], 'WGS84')
-        self.failUnless(crs['no_defs'])
+        self.failUnlessEqual(crs['init'], 'epsg:4326')
 
     def test_closed_crs(self):
         # Crs is lazy too, never computed in this case. TODO?
@@ -167,7 +166,7 @@ class ReadingTest(unittest.TestCase):
         self.c.close()
         self.failUnlessEqual(
             sorted(self.c.crs.keys()),
-            ['datum', 'no_defs', 'proj'])
+            ['init'])
 
     def test_meta(self):
         self.failUnlessEqual(
@@ -307,7 +306,7 @@ class PointWritingTest(unittest.TestCase):
             schema={
                 'geometry': 'Point',
                 'properties': [('title', 'str'), ('date', 'date')]},
-            crs={'init': "epsg:4326", 'no_defs': True},
+            crs='epsg:4326',
             encoding='utf-8')
 
     def tearDown(self):

@@ -44,8 +44,8 @@ class Collection(object):
             raise TypeError("invalid driver: %r" % driver)
         if schema and not hasattr(schema, 'get'):
             raise TypeError("invalid schema: %r" % schema)
-        if crs and not hasattr(crs, 'get'):
-            raise TypeError("invalid schema: %r" % crs)
+        if crs and not isinstance(crs, (dict,) + string_types):
+            raise TypeError("invalid crs: %r" % crs)
         if encoding and not isinstance(encoding, string_types):
             raise TypeError("invalid encoding: %r" % encoding)
         if layer and not isinstance(layer, tuple(list(string_types) + [int])):
@@ -105,7 +105,7 @@ class Collection(object):
             self._schema = schema
 
             if crs:
-                if 'init' in crs or 'proj' in crs:
+                if 'init' in crs or 'proj' in crs or 'epsg' in crs.lower():
                     self._crs = crs
                 else:
                     raise CRSError("crs lacks init or proj parameter")
