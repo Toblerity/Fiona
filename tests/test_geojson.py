@@ -14,10 +14,10 @@ logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 
 class ReadingTest(unittest.TestCase):
-    
+
     def setUp(self):
         self.c = fiona.open('docs/data/test_uk.json', 'r')
-    
+
     def tearDown(self):
         self.c.close()
 
@@ -34,8 +34,8 @@ class WritingTest(unittest.TestCase):
 
     def test_json(self):
         path = os.path.join(self.tempdir, 'foo.json')
-        with fiona.open(path, 'w', 
-                driver='GeoJSON', 
+        with fiona.open(path, 'w',
+                driver='GeoJSON',
                 schema={'geometry': 'Unknown', 'properties': [('title', 'str')]}) as c:
             c.writerecords([{
                 'geometry': {'type': 'Point', 'coordinates': [0.0, 0.0]},

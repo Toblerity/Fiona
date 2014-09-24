@@ -1,4 +1,4 @@
 try:
     from collections import OrderedDict
-except ImportError:    
+except ImportError:
     from ordereddict import OrderedDict

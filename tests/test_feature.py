@@ -23,7 +23,7 @@ class PointRoundTripTest(unittest.TestCase):
         self.c.close()
         shutil.rmtree(self.tempdir)
     def test_geometry(self):
-        f = { 'id': '1', 
+        f = { 'id': '1',
               'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
               'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
@@ -31,7 +31,7 @@ class PointRoundTripTest(unittest.TestCase):
             sorted(g['geometry'].items()),
             [('coordinates', (0.0, 0.0)), ('type', 'Point')])
     def test_properties(self):
-        f = { 'id': '1', 
+        f = { 'id': '1',
               'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
               'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
@@ -53,14 +53,14 @@ class LineStringRoundTripTest(unittest.TestCase):
         self.c.close()
         shutil.rmtree(self.tempdir)
     def test_geometry(self):
-        f = { 'id': '1', 
-              'geometry': { 'type': 'LineString', 
+        f = { 'id': '1',
+              'geometry': { 'type': 'LineString',
                             'coordinates': [(0.0, 0.0), (1.0, 1.0)] },
               'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
         self.failUnlessEqual(
             sorted(g['geometry'].items()),
-            [('coordinates', [(0.0, 0.0), (1.0, 1.0)]), 
+            [('coordinates', [(0.0, 0.0), (1.0, 1.0)]),
              ('type', 'LineString')])
     def test_properties(self):
         f = { 'id': '1',
@@ -79,32 +79,32 @@ class PolygonRoundTripTest(unittest.TestCase):
         self.c.close()
         shutil.rmtree(self.tempdir)
     def test_geometry(self):
-        f = { 'id': '1', 
-              'geometry': { 'type': 'Polygon', 
-                            'coordinates': 
-                                [[(0.0, 0.0), 
-                                  (0.0, 1.0), 
-                                  (1.0, 1.0), 
-                                  (1.0, 0.0), 
+        f = { 'id': '1',
+              'geometry': { 'type': 'Polygon',
+                            'coordinates':
+                                [[(0.0, 0.0),
+                                  (0.0, 1.0),
+                                  (1.0, 1.0),
+                                  (1.0, 0.0),
                                   (0.0, 0.0)]] },
               'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
         self.failUnlessEqual(
             sorted(g['geometry'].items()),
-            [('coordinates', [[(0.0, 0.0), 
-                                  (0.0, 1.0), 
-                                  (1.0, 1.0), 
-                                  (1.0, 0.0), 
-                                  (0.0, 0.0)]]), 
+            [('coordinates', [[(0.0, 0.0),
+                                  (0.0, 1.0),
+                                  (1.0, 1.0),
+                                  (1.0, 0.0),
+                                  (0.0, 0.0)]]),
              ('type', 'Polygon')])
     def test_properties(self):
-        f = { 'id': '1', 
-              'geometry': { 'type': 'Polygon', 
-                            'coordinates': 
-                                [[(0.0, 0.0), 
-                                  (0.0, 1.0), 
-                                  (1.0, 1.0), 
-                                  (1.0, 0.0), 
+        f = { 'id': '1',
+              'geometry': { 'type': 'Polygon',
+                            'coordinates':
+                                [[(0.0, 0.0),
+                                  (0.0, 1.0),
+                                  (1.0, 1.0),
+                                  (1.0, 0.0),
                                   (0.0, 0.0)]] },
               'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)

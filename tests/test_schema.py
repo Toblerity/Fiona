@@ -17,7 +17,7 @@ class SchemaOrder(unittest.TestCase):
         with fiona.open(os.path.join(self.tempdir, 'test_schema.shp'), 'w',
                 driver="ESRI Shapefile",
                 schema={
-                    'geometry': 'LineString', 
+                    'geometry': 'LineString',
                     'properties': items }) as c:
             self.assertEqual(list(c.schema['properties'].items()), items)
         with fiona.open(os.path.join(self.tempdir, 'test_schema.shp')) as c:
@@ -56,7 +56,7 @@ class ShapefileSchema(unittest.TestCase):
         with fiona.open(os.path.join(self.tempdir, 'test_schema.shp'), 'w',
                 driver="ESRI Shapefile",
                 schema={
-                    'geometry': 'Polygon', 
+                    'geometry': 'Polygon',
                     'properties': items }) as c:
             self.assertEqual(list(c.schema['properties'].items()), items)
             c.write(
@@ -100,26 +100,26 @@ class ShapefileSchema(unittest.TestCase):
             self.assertEqual(len(c), 1)
         with fiona.open(os.path.join(self.tempdir, 'test_schema.shp')) as c:
             self.assertEqual(
-                list(c.schema['properties'].items()), 
-                sorted([('AWATER10', 'float:24.15'), 
-                 ('CLASSFP10', 'str:80'), 
-                 ('ZipCodeTyp', 'str:80'), 
-                 ('EstimatedP', 'float:24.15'), 
-                 ('LocationTy', 'str:80'), 
-                 ('ALAND10', 'float:24.15'), 
-                 ('INTPTLAT10', 'str:80'), 
-                 ('FUNCSTAT10', 'str:80'), 
-                 ('Long', 'float:24.15'), 
-                 ('City', 'str:80'), 
-                 ('TaxReturns', 'float:24.15'), 
-                 ('State', 'str:80'), 
-                 ('Location', 'str:80'), 
-                 ('GSrchCnt', 'float:24.15'), 
-                 ('TotalWages', 'float:24.15'), 
-                 ('Lat', 'float:24.15'), 
-                 ('MTFCC10', 'str:80'), 
-                 ('INTPTLON10', 'str:80'), 
-                 ('GEOID10', 'str:80'), 
+                list(c.schema['properties'].items()),
+                sorted([('AWATER10', 'float:24.15'),
+                 ('CLASSFP10', 'str:80'),
+                 ('ZipCodeTyp', 'str:80'),
+                 ('EstimatedP', 'float:24.15'),
+                 ('LocationTy', 'str:80'),
+                 ('ALAND10', 'float:24.15'),
+                 ('INTPTLAT10', 'str:80'),
+                 ('FUNCSTAT10', 'str:80'),
+                 ('Long', 'float:24.15'),
+                 ('City', 'str:80'),
+                 ('TaxReturns', 'float:24.15'),
+                 ('State', 'str:80'),
+                 ('Location', 'str:80'),
+                 ('GSrchCnt', 'float:24.15'),
+                 ('TotalWages', 'float:24.15'),
+                 ('Lat', 'float:24.15'),
+                 ('MTFCC10', 'str:80'),
+                 ('INTPTLON10', 'str:80'),
+                 ('GEOID10', 'str:80'),
                  ('Decommisio', 'str:80')]) )
             f = next(c)
             self.assertEqual(f['properties']['EstimatedP'], 27773.0)

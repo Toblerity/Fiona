@@ -20,7 +20,7 @@ class DateParseTest(unittest.TestCase):
         self.assertRaises(ValueError, parse_date, ("xxx"))
 
 class TimeParseTest(unittest.TestCase):
-    
+
     def test_hhmmss(self):
         self.failUnlessEqual(
             parse_time("10:11:12"), (0, 0, 0, 10, 11, 12, 0.0))
@@ -31,7 +31,7 @@ class TimeParseTest(unittest.TestCase):
 
     def test_hhmmssff(self):
         self.failUnlessEqual(
-            parse_time("10:11:12.42"), 
+            parse_time("10:11:12.42"),
             (0, 0, 0, 10, 11, 12, 0.42*1000000.0))
 
     def test_hhmmssz(self):
@@ -46,10 +46,10 @@ class TimeParseTest(unittest.TestCase):
         self.assertRaises(ValueError, parse_time, ("xxx"))
 
 class DatetimeParseTest(unittest.TestCase):
-    
+
     def test_yyyymmdd(self):
         self.failUnlessEqual(
-            parse_datetime("2012-01-29T10:11:12"), 
+            parse_datetime("2012-01-29T10:11:12"),
             (2012, 1, 29, 10, 11, 12, 0.0))
 
     def test_error(self):

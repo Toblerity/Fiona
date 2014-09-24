@@ -16,10 +16,10 @@ def test_index_selection():
         assert len(c) == 48
 
 class FileReadingTest(ReadingTest):
-    
+
     def setUp(self):
         self.c = fiona.open('docs/data/test_uk.shp', 'r', layer='test_uk')
-    
+
     def tearDown(self):
         self.c.close()
 
@@ -40,10 +40,10 @@ class FileReadingTest(ReadingTest):
         self.failUnlessEqual(self.c.name, 'test_uk')
 
 class DirReadingTest(ReadingTest):
-    
+
     def setUp(self):
         self.c = fiona.open("docs/data", "r", layer="test_uk")
-    
+
     def tearDown(self):
         self.c.close()
 

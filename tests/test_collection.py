@@ -36,27 +36,27 @@ class CollectionArgsTest(unittest.TestCase):
         self.assertRaises(TypeError, Collection, ("foo"), mode='w', driver=1)
     def test_schema(self):
         self.assertRaises(
-            TypeError, Collection, ("foo"), mode='w', 
+            TypeError, Collection, ("foo"), mode='w',
             driver="ESRI Shapefile", schema=1)
     def test_crs(self):
         self.assertRaises(
-            TypeError, Collection, ("foo"), mode='w', 
+            TypeError, Collection, ("foo"), mode='w',
             driver="ESRI Shapefile", schema=0, crs=1)
     def test_encoding(self):
         self.assertRaises(
-            TypeError, Collection, ("foo"), mode='r', 
+            TypeError, Collection, ("foo"), mode='r',
             encoding=1)
     def test_layer(self):
         self.assertRaises(
-            TypeError, Collection, ("foo"), mode='r', 
+            TypeError, Collection, ("foo"), mode='r',
             layer=0.5)
     def test_vsi(self):
         self.assertRaises(
-            TypeError, Collection, ("foo"), mode='r', 
+            TypeError, Collection, ("foo"), mode='r',
             vsi='git')
     def test_archive(self):
         self.assertRaises(
-            TypeError, Collection, ("foo"), mode='r', 
+            TypeError, Collection, ("foo"), mode='r',
             archive=1)
     def test_write_numeric_layer(self):
         self.assertRaises(ValueError, Collection, ("foo"), mode='w', layer=1)
@@ -70,10 +70,10 @@ class OpenExceptionTest(unittest.TestCase):
         self.assertRaises(IOError, fiona.open, ("/"), mode='r', vfs="zip:///foo.zip")
 
 class ReadingTest(unittest.TestCase):
-    
+
     def setUp(self):
         self.c = fiona.open("docs/data/test_uk.shp", "r")
-    
+
     def tearDown(self):
         self.c.close()
 
@@ -95,7 +95,7 @@ class ReadingTest(unittest.TestCase):
 
     def test_name(self):
         self.failUnlessEqual(self.c.name, 'test_uk')
-    
+
     def test_mode(self):
         self.failUnlessEqual(self.c.mode, 'r')
 
@@ -104,14 +104,14 @@ class ReadingTest(unittest.TestCase):
 
     def test_iter(self):
         self.failUnless(iter(self.c))
-    
+
     def test_closed_no_iter(self):
         self.c.close()
         self.assertRaises(ValueError, iter, self.c)
 
     def test_len(self):
         self.failUnlessEqual(len(self.c), 48)
-    
+
     def test_closed_len(self):
         # Len is lazy, it's never computed in this case. TODO?
         self.c.close()
@@ -122,10 +122,10 @@ class ReadingTest(unittest.TestCase):
         len(self.c)
         self.c.close()
         self.failUnlessEqual(len(self.c), 48)
-    
+
     def test_driver(self):
         self.failUnlessEqual(self.c.driver, "ESRI Shapefile")
-    
+
     def test_closed_driver(self):
         self.c.close()
         self.failUnlessEqual(self.c.driver, None)
@@ -134,7 +134,7 @@ class ReadingTest(unittest.TestCase):
         self.c.driver
         self.c.close()
         self.failUnlessEqual(self.c.driver, "ESRI Shapefile")
-    
+
     def test_schema(self):
         s = self.c.schema['properties']
         self.failUnlessEqual(s['CAT'], "float:16")
@@ -170,7 +170,7 @@ class ReadingTest(unittest.TestCase):
 
     def test_meta(self):
         self.failUnlessEqual(
-            sorted(self.c.meta.keys()), 
+            sorted(self.c.meta.keys()),
             ['crs', 'driver', 'schema'])
 
     def test_bounds(self):
@@ -251,20 +251,20 @@ class FilterReadingTest(unittest.TestCase):
         self.failUnlessEqual(len(results), 41)
         results = list(self.c.filter())
         self.failUnlessEqual(len(results), 48)
-        
+
     def test_filter_mask(self):
         mask = {'type': 'Polygon', 'coordinates': (((-2.0, 60.0), (-2.0, 60.0), (0.0, 61.0), (0.0, 60.0), (-2.0, 60.0)),)}
         results = list(self.c.filter(mask=mask))
         self.failUnlessEqual(len(results), 1)
 
 class UnsupportedDriverTest(unittest.TestCase):
-    
+
     def test_immediate_fail_driver(self):
         schema = {
-            'geometry': 'Point', 
+            'geometry': 'Point',
             'properties': {'label': 'str', u'verit\xe9': 'int'} }
         self.assertRaises(
-            DriverError, 
+            DriverError,
             fiona.open, os.path.join(TEMPDIR, "foo"), "w", "Bogus", schema=schema)
 
 class GenericWritingTest(unittest.TestCase):
@@ -272,12 +272,12 @@ class GenericWritingTest(unittest.TestCase):
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
         schema = {
-            'geometry': 'Point', 
+            'geometry': 'Point',
             'properties': [('label', 'str'), (u'verit\xe9', 'int')] }
         self.c = fiona.open(
                 os.path.join(self.tempdir, "test-no-iter.shp"),
-                "w", 
-                "ESRI Shapefile", 
+                "w",
+                "ESRI Shapefile",
                 schema=schema,
                 encoding='Windows-1252')
 
@@ -304,7 +304,7 @@ class PointWritingTest(unittest.TestCase):
             "w",
             driver="ESRI Shapefile",
             schema={
-                'geometry': 'Point', 
+                'geometry': 'Point',
                 'properties': [('title', 'str'), ('date', 'date')]},
             crs='epsg:4326',
             encoding='utf-8')
@@ -376,19 +376,19 @@ class LineWritingTest(unittest.TestCase):
             "w",
             driver="ESRI Shapefile",
             schema={
-                'geometry': 'LineString', 
+                'geometry': 'LineString',
                 'properties': [('title', 'str'), ('date', 'date')]},
             crs={'init': "epsg:4326", 'no_defs': True})
 
     def tearDown(self):
         self.sink.close()
         shutil.rmtree(self.tempdir)
-    
+
     def test_write_one(self):
         self.failUnlessEqual(len(self.sink), 0)
         self.failUnlessEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
         f = {
-            'geometry': {'type': 'LineString', 
+            'geometry': {'type': 'LineString',
                          'coordinates': [(0.0, 0.1), (0.0, 0.2)]},
             'properties': {'title': 'line one', 'date': "2012-01-29"}}
         self.sink.writerecords([f])
@@ -399,13 +399,13 @@ class LineWritingTest(unittest.TestCase):
         self.failUnlessEqual(len(self.sink), 0)
         self.failUnlessEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
         f1 = {
-            'geometry': {'type': 'LineString', 
+            'geometry': {'type': 'LineString',
                          'coordinates': [(0.0, 0.1), (0.0, 0.2)]},
             'properties': {'title': 'line one', 'date': "2012-01-29"}}
         f2 = {
-            'geometry': {'type': 'MultiLineString', 
+            'geometry': {'type': 'MultiLineString',
                          'coordinates': [
-                            [(0.0, 0.0), (0.0, -0.1)], 
+                            [(0.0, 0.0), (0.0, -0.1)],
                             [(0.0, -0.1), (0.0, -0.2)] ]},
             'properties': {'title': 'line two', 'date': "2012-01-29"}}
         self.sink.writerecords([f1, f2])
@@ -436,10 +436,10 @@ class PointAppendTest(unittest.TestCase):
         with fiona.open(os.path.join(self.tempdir, "test_append_point.shp"), "a") as c:
             self.assertEqual(c.schema['geometry'], '3D Point')
             c.write({'geometry': {'type': 'Point', 'coordinates': (0.0, 45.0)},
-                     'properties': { 'FIPS_CNTRY': 'UK', 
-                                     'AREA': 0.0, 
-                                     'CAT': 1.0, 
-                                     'POP_CNTRY': 0, 
+                     'properties': { 'FIPS_CNTRY': 'UK',
+                                     'AREA': 0.0,
+                                     'CAT': 1.0,
+                                     'POP_CNTRY': 0,
                                      'CNTRY_NAME': u'Foo'} })
             self.assertEqual(len(c), 8)
 
@@ -452,10 +452,10 @@ class LineAppendTest(unittest.TestCase):
                 "w",
                 driver="ESRI Shapefile",
                 schema={
-                    'geometry': 'MultiLineString', 
+                    'geometry': 'MultiLineString',
                     'properties': {'title': 'str', 'date': 'date'}},
                 crs={'init': "epsg:4326", 'no_defs': True}) as output:
-            f = {'geometry': {'type': 'MultiLineString', 
+            f = {'geometry': {'type': 'MultiLineString',
                               'coordinates': [[(0.0, 0.1), (0.0, 0.2)]]},
                 'properties': {'title': 'line one', 'date': "2012-01-29"}}
             output.writerecords([f])
@@ -467,13 +467,13 @@ class LineAppendTest(unittest.TestCase):
         with fiona.open(os.path.join(self.tempdir, "test_append_line.shp"), "a") as c:
             self.assertEqual(c.schema['geometry'], 'LineString')
             f1 = {
-                'geometry': {'type': 'LineString', 
+                'geometry': {'type': 'LineString',
                              'coordinates': [(0.0, 0.1), (0.0, 0.2)]},
                 'properties': {'title': 'line one', 'date': "2012-01-29"}}
             f2 = {
-                'geometry': {'type': 'MultiLineString', 
+                'geometry': {'type': 'MultiLineString',
                              'coordinates': [
-                                [(0.0, 0.0), (0.0, -0.1)], 
+                                [(0.0, 0.0), (0.0, -0.1)],
                                 [(0.0, -0.1), (0.0, -0.2)] ]},
                 'properties': {'title': 'line two', 'date': "2012-01-29"}}
             c.writerecords([f1, f2])
@@ -481,7 +481,7 @@ class LineAppendTest(unittest.TestCase):
             self.failUnlessEqual(c.bounds, (0.0, -0.2, 0.0, 0.2))
 
 class ShapefileFieldWidthTest(unittest.TestCase):
-    
+
     def test_text(self):
         self.tempdir = tempfile.mkdtemp()
         with fiona.open(os.path.join(self.tempdir, "textfield.shp"), "w",
@@ -529,7 +529,7 @@ class GeoJSONCRSWritingTest(unittest.TestCase):
             "w",
             driver="GeoJSON",
             schema={
-                'geometry': 'Point', 
+                'geometry': 'Point',
                 'properties': [('title', 'str'), ('date', 'date')]},
             crs={'a': 6370997, 'lon_0': -100, 'y_0': 0, 'no_defs': True, 'proj': 'laea', 'x_0': 0, 'units': 'm', 'b': 6370997, 'lat_0': 45})
 

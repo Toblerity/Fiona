@@ -30,7 +30,7 @@ warnings.simplefilter('default')
 # One or more files.
 @click.argument('input', type=click.Path(exists=True))
 
-@click.option('--indent', default=None, type=int, 
+@click.option('--indent', default=None, type=int,
               help="Indentation level for pretty printed output.")
 
 # Options to pick out a single metadata item and print it as
