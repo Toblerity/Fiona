@@ -872,7 +872,7 @@ cdef class Session:
             if cogr_feature == NULL:
                 return None
             feature = FeatureBuilder().build(
-                        cogr_feature, self.collection.encoding)
+                        cogr_feature, self.get_internalencoding())
             _deleteOgrFeature(cogr_feature)
             return feature
 
