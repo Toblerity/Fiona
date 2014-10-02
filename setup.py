@@ -20,7 +20,7 @@ logging.basicConfig()
 log = logging.getLogger()
 
 # Parse the version from the fiona module.
-with open('src/fiona/__init__.py', 'r') as f:
+with open('fiona/__init__.py', 'r') as f:
     for line in f:
         if line.find("__version__") >= 0:
             version = line.split("=")[1].strip()
@@ -91,15 +91,15 @@ if os.path.exists("MANIFEST.in"):
             "Cython is required to build from a repo.")
         sys.exit(1)
     ext_modules = cythonize([
-        Extension('fiona._drivers', ['src/fiona/_drivers.pyx'], **ext_options),
-        Extension('fiona._err', ['src/fiona/_err.pyx'], **ext_options),
-        Extension('fiona.ogrext', ['src/fiona/ogrext.pyx'], **ext_options)])
+        Extension('fiona._drivers', ['fiona/_drivers.pyx'], **ext_options),
+        Extension('fiona._err', ['fiona/_err.pyx'], **ext_options),
+        Extension('fiona.ogrext', ['fiona/ogrext.pyx'], **ext_options)])
 # If there's no manifest template, as in an sdist, we just specify .c files.
 else:
     ext_modules = [
-        Extension('fiona._drivers', ['src/fiona/_drivers.c'], **ext_options),
-        Extension('fiona._err', ['src/fiona/_err.c'], **ext_options),
-        Extension('fiona.ogrext', ['src/fiona/ogrext.c'], **ext_options)]
+        Extension('fiona._drivers', ['fiona/_drivers.c'], **ext_options),
+        Extension('fiona._err', ['fiona/_err.c'], **ext_options),
+        Extension('fiona.ogrext', ['fiona/ogrext.c'], **ext_options)]
 
 requirements = ['click', 'six']
 if sys.version_info < (2, 7):
@@ -121,9 +121,12 @@ setup(
     maintainer_email='sean.gillies@gmail.com',
     url='http://github.com/Toblerity/Fiona',
     long_description=readme + "\n" + changes + "\n" + credits,
-    package_dir={'': 'src'},
-    packages=['fiona'],
-    scripts = ['src/bin/dumpgj', 'src/bin/fiona.insp', 'src/bin/fio'],
+    package_dir={'': '.'},
+    packages=['fiona', 'fiona.fio'],
+    entry_points='''
+        [console_scripts]
+        fio=fiona.fio.fio:cli
+        ''',
     install_requires=requirements,
     tests_require=['nose'],
     test_suite='nose.collector',
@@ -139,4 +142,3 @@ setup(
         'Topic :: Scientific/Engineering :: GIS',
     ],
 )
-

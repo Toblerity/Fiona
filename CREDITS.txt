@@ -8,13 +8,14 @@ Fiona is written by:
 With contributions by:
 
 * Joshua Arnott (https://github.com/snorfalorpagus)
+* René Buffat (https://github.com/rbuffat)
 * Michele Citterio (https://github.com/citterio)
 * Stefano Costa (https://github.com/steko)
 * Ludovic Delauné (https://github.com/ldgeo)
 * Kelsey Jordahl (https://github.com/kjordahl)
 * Frédéric Junod (https://github.com/fredj)
 * jwass (https://github.com/jwass)
-* Brandon Liu (https://github.com.bdon)
+* Brandon Liu (https://github.com/bdon)
 * lordi (https://github.com/lordi)
 * Ariel Núñez (https://github.com/ingenieroariel)
 * Oliver Tonnhofer (https://github.com/olt)

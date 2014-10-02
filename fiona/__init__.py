@@ -63,7 +63,7 @@ writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
 __all__ = ['bounds', 'listlayers', 'open', 'prop_type', 'prop_width']
-__version__ = "1.1.7"
+__version__ = "1.4.1"
 
 import logging
 import os
@@ -133,7 +133,7 @@ def open(
         if archive:
             if not os.path.exists(archive):
                 raise IOError("no such archive file: %r" % archive)
-        elif not os.path.exists(path):
+        elif path != '-' and not os.path.exists(path):
             raise IOError("no such file or directory: %r" % path)
         c = Collection(path, mode, 
                 encoding=encoding, layer=layer, vsi=vsi, archive=archive)

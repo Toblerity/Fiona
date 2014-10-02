@@ -44,8 +44,8 @@ class Collection(object):
             raise TypeError("invalid driver: %r" % driver)
         if schema and not hasattr(schema, 'get'):
             raise TypeError("invalid schema: %r" % schema)
-        if crs and not hasattr(crs, 'get'):
-            raise TypeError("invalid schema: %r" % crs)
+        if crs and not isinstance(crs, (dict,) + string_types):
+            raise TypeError("invalid crs: %r" % crs)
         if encoding and not isinstance(encoding, string_types):
             raise TypeError("invalid encoding: %r" % encoding)
         if layer and not isinstance(layer, tuple(list(string_types) + [int])):
@@ -105,7 +105,7 @@ class Collection(object):
             self._schema = schema
             
             if crs:
-                if 'init' in crs or 'proj' in crs:
+                if 'init' in crs or 'proj' in crs or 'epsg' in crs.lower():
                     self._crs = crs
                 else:
                     raise CRSError("crs lacks init or proj parameter")
@@ -183,37 +183,87 @@ class Collection(object):
             'schema': self.schema, 
             'crs': self.crs }
 
-    def filter(self, stop=None, start=None, step=None, bbox=None, mask=None):
+    def filter(self, *args, **kwds):
         """Returns an iterator over records, but filtered by a test for
         spatial intersection with the provided ``bbox``, a (minx, miny,
-        maxx, maxy) tuple or a geometry ``mask``."""
+        maxx, maxy) tuple or a geometry ``mask``.
+        
+        Positional arguments ``stop`` or ``start, stop[, step]`` allows
+        iteration to skip over items or stop at a specific item.
+        """
         if self.closed:
             raise ValueError("I/O operation on closed collection")
         elif self.mode != 'r':
             raise IOError("collection not open for reading")
-        self.iterator = Iterator(self, stop, start, step, bbox, mask)
+        if args:
+            s = slice(*args)
+            start = s.start
+            stop = s.stop
+            step = s.step
+        else:
+            start = stop = step = None
+        bbox = kwds.get('bbox')
+        mask = kwds.get('mask')
+        if bbox and mask:
+            raise ValueError("mask and bbox can not be set together")
+        self.iterator = Iterator(
+            self, start, stop, step, bbox, mask)
         return self.iterator
 
-    def items(self, stop=None, start=None, step=None, bbox=None, mask=None):
+    def items(self, *args, **kwds):
         """Returns an iterator over FID, record pairs, optionally 
         filtered by a test for spatial intersection with the provided
-        ``bbox``, a (minx, miny, maxx, maxy) tuple or a geometry ``mask``."""
+        ``bbox``, a (minx, miny, maxx, maxy) tuple or a geometry
+        ``mask``.
+        
+        Positional arguments ``stop`` or ``start, stop[, step]`` allows
+        iteration to skip over items or stop at a specific item.
+        """
         if self.closed:
             raise ValueError("I/O operation on closed collection")
         elif self.mode != 'r':
             raise IOError("collection not open for reading")
-        self.iterator = ItemsIterator(self, stop, start, step, bbox, mask)
+        if args:
+            s = slice(*args)
+            start = s.start
+            stop = s.stop
+            step = s.step
+        else:
+            start = stop = step = None
+        bbox = kwds.get('bbox')
+        mask = kwds.get('mask')
+        if bbox and mask:
+            raise ValueError("mask and bbox can not be set together")
+        self.iterator = ItemsIterator(
+            self, start, stop, step, bbox, mask)
         return self.iterator
 
-    def keys(self, stop=None, start=None, step=None, bbox=None, mask=None):
+    def keys(self, *args, **kwds):
         """Returns an iterator over FIDs, optionally 
         filtered by a test for spatial intersection with the provided
-        ``bbox``, a (minx, miny, maxx, maxy) tuple or a geometry ``mask``."""
+        ``bbox``, a (minx, miny, maxx, maxy) tuple or a geometry 
+        ``mask``.
+
+        Positional arguments ``stop`` or ``start, stop[, step]`` allows
+        iteration to skip over items or stop at a specific item.
+        """
         if self.closed:
             raise ValueError("I/O operation on closed collection")
         elif self.mode != 'r':
             raise IOError("collection not open for reading")
-        self.iterator = KeysIterator(self, stop, start, step, bbox, mask)
+        if args:
+            s = slice(*args)
+            start = s.start
+            stop = s.stop
+            step = s.step
+        else:
+            start = stop = step = None
+        bbox = kwds.get('bbox')
+        mask = kwds.get('mask')
+        if bbox and mask:
+            raise ValueError("mask and bbox can not be set together")
+        self.iterator = KeysIterator(
+            self, start, stop, step, bbox, mask)
         return self.iterator
 
     def __contains__(self, fid):

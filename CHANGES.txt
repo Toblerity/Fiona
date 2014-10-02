@@ -1,10 +1,32 @@
 Changes
 =======
 
-Next
-----
+1.4.1 (2014-09-30)
+------------------
+- Fix encoding bug in collection's __getitem__ (#153).
+
+1.4.0 (2014-09-22)
+------------------
+- Add fio cat and fio collect commands (#150).
+- Return of Python 2.6 compatibility (#148).
+- Improved CRS support (#149).
+
+1.3.0 (2014-09-17)
+------------------
+- Add single metadata item accessors to fio inf (#142).
+- Move fio to setuptools entry point (#142).
+- Add fio dump and load commands (#143).
+- Remove fio translate command.
+
+1.2.0 (2014-09-02)
+------------------
 - Always show property width and precision in schema (#123).
 - Write datetime properties of features (#125).
+- Reset spatial filtering in filter() (#129).
+- Accept datetime.date objects as feature properties (#130).
+- Add slicing to collection iterators (#132).
+- Add geometry object masks to collection iterators (#136).
+- Change source layout to match Shapely and Rasterio (#138).
 
 1.1.6 (2014-07-23)
 ------------------
