@@ -388,6 +388,8 @@ supported_drivers = dict([
 # multi-layers
 #   ("Geoconcept", "raw"),
 #Geomedia .mdb 	Geomedia 	No 	No 	No, needs ODBC library
+#GeoPackage	GPKG	Yes	Yes	No, needs libsqlite3
+    ("GPKG", "rw"),
 #GeoRSS 	GeoRSS 	Yes 	Yes 	Yes (read support needs libexpat)
 #Google Fusion Tables 	GFT 	Yes 	Yes 	No, needs libcurl
 #GML 	GML 	Yes 	Yes 	Yes (read support needs Xerces or libexpat)
