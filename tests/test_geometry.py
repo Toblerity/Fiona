@@ -4,7 +4,7 @@ import logging
 import sys
 import unittest
 
-from fiona.ogrext import GeomBuilder, geometryRT
+from fiona._geometry import GeomBuilder, geometryRT
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
