@@ -113,39 +113,6 @@ def _bounds(geometry):
         return None
 
 
-cdef void *_osr_from_crs(object crs):
-    cdef char *proj_c = NULL
-    cdef void *osr
-    osr = ograpi.OSRNewSpatialReference(NULL)
-    params = []
-    # Normally, we expect a CRS dict.
-    if isinstance(crs, dict):
-        # EPSG is a special case.
-        init = crs.get('init')
-        if init:
-            auth, val = init.split(':')
-            if auth.upper() == 'EPSG':
-                ograpi.OSRImportFromEPSG(osr, int(val))
-        else:
-            crs['wktext'] = True
-            for k, v in crs.items():
-                if v is True or (k in ('no_defs', 'wktext') and v):
-                    params.append("+%s" % k)
-                else:
-                    params.append("+%s=%s" % (k, v))
-            proj = " ".join(params)
-            log.debug("PROJ.4 to be imported: %r", proj)
-            proj_b = proj.encode('utf-8')
-            proj_c = proj_b
-            ograpi.OSRImportFromProj4(osr, proj_c)
-    # Fall back for CRS strings like "EPSG:3857."
-    else:
-        proj_b = crs.encode('utf-8')
-        proj_c = proj_b
-        ograpi.OSRSetFromUserInput(osr, proj_c)
-    return osr
-
-
 # Feature extension classes and functions follow.
 
 cdef class FeatureBuilder:
@@ -729,6 +696,9 @@ cdef class WritingSession(Session):
 
             # Set the spatial reference system from the given crs.
             if collection.crs:
+                cogr_srs = ograpi.OSRNewSpatialReference(NULL)
+                if cogr_srs == NULL:
+                    raise ValueError("NULL spatial reference")
                 params = []
                 if isinstance(collection.crs, dict):
                     # EPSG is a special case.
@@ -754,6 +724,8 @@ cdef class WritingSession(Session):
                     proj_b = collection.crs.encode('utf-8')
                     proj_c = proj_b
                     ograpi.OSRSetFromUserInput(cogr_srs, proj_c)
+                # Fixup, export to WKT, and set the GDAL dataset's projection.
+                ograpi.OSRFixup(cogr_srs)
 
             # Figure out what encoding to use. The encoding parameter given
             # to the collection constructor takes highest precedence, then
@@ -801,7 +773,10 @@ cdef class WritingSession(Session):
                     v == collection.schema.get('geometry', 'Unknown')][0],
                 options
                 )
-            if options:
+
+            if cogr_srs != NULL:
+                ograpi.OSRDestroySpatialReference(cogr_srs)
+            if options != NULL:
                 ograpi.CSLDestroy(options)
 
             if self.cogr_layer == NULL:

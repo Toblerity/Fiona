@@ -1,3 +1,4 @@
+from functools import partial
 import json
 import logging
 import sys
@@ -5,12 +6,13 @@ import sys
 import click
 
 import fiona
+from fiona.transform import transform_geom
 from fiona.fio.cli import cli
 
 
 def make_ld_context(context_items):
-    """Returns a JSON-LD Context object. 
-    
+    """Returns a JSON-LD Context object.
+
     See http://json-ld.org/spec/latest/json-ld."""
     ctx = {
       "@context": {
@@ -101,32 +103,26 @@ def round_rec(rec, precision=None):
 
 # Cat command
 @cli.command(short_help="Concatenate and print the features of datasets")
-
 # One or more files.
 @click.argument('input', nargs=-1, type=click.Path(exists=True))
-
 # Coordinate precision option.
 @click.option('--precision', type=int, default=-1,
               help="Decimal precision of coordinates.")
-
-@click.option('--indent', default=None, type=int, 
+@click.option('--indent', default=None, type=int,
               help="Indentation level for pretty printed output.")
-
 @click.option('--compact/--no-compact', default=False,
               help="Use compact separators (',', ':').")
-
 @click.option('--ignore-errors/--no-ignore-errors', default=False,
               help="log errors but do not stop serialization.")
-
+@click.option('--dst_crs', default=None, help="Destination CRS.")
 # Use ASCII RS control code to signal a sequence item (False is default).
 # See http://tools.ietf.org/html/draft-ietf-json-text-sequence-05.
 # Experimental.
 @click.option('--x-json-seq-rs/--x-json-seq-no-rs', default=True,
         help="Use RS as text separator instead of LF. Experimental.")
-
 @click.pass_context
-
-def cat(ctx, input, precision, indent, compact, ignore_errors, x_json_seq_rs):
+def cat(ctx, input, precision, indent, compact, ignore_errors, dst_crs,
+        x_json_seq_rs):
     """Concatenate and print the features of input datasets as a
     sequence of GeoJSON features."""
     verbosity = ctx.obj['verbosity']
@@ -138,7 +134,6 @@ def cat(ctx, input, precision, indent, compact, ignore_errors, x_json_seq_rs):
         dump_kwds['indent'] = indent
     if compact:
         dump_kwds['separators'] = (',', ':')
-
     item_sep = compact and ',' or ', '
 
     try:
@@ -146,8 +141,12 @@ def cat(ctx, input, precision, indent, compact, ignore_errors, x_json_seq_rs):
             for path in input:
                 with fiona.open(path) as src:
                     for feat in src:
-                        if precision >= 0:
-                            feat = round_rec(feat, precision)
+                        if dst_crs:
+                            g = transform_geom(
+                                    src.crs, dst_crs, feat['geometry'],
+                                    antimeridian_cutting=True,
+                                    precision=precision)
+                            feat['geometry'] = g
                         if x_json_seq_rs:
                             sink.write(u'\u001e')
                         json.dump(feat, sink, **dump_kwds)
@@ -160,34 +159,26 @@ def cat(ctx, input, precision, indent, compact, ignore_errors, x_json_seq_rs):
 
 # Collect command
 @cli.command(short_help="Collect a sequence of features.")
-
 # Coordinate precision option.
 @click.option('--precision', type=int, default=-1,
               help="Decimal precision of coordinates.")
-
-@click.option('--indent', default=None, type=int, 
+@click.option('--indent', default=None, type=int,
               help="Indentation level for pretty printed output.")
-
 @click.option('--compact/--no-compact', default=False,
               help="Use compact separators (',', ':').")
-
 @click.option('--record-buffered/--no-record-buffered', default=False,
     help="Economical buffering of writes at record, not collection "
          "(default), level.")
-
 @click.option('--ignore-errors/--no-ignore-errors', default=False,
               help="log errors but do not stop serialization.")
-
+@click.option('--src_crs', default=None, help="Source CRS.")
 @click.option('--with-ld-context/--without-ld-context', default=False,
         help="add a JSON-LD context to JSON output.")
-
 @click.option('--add-ld-context-item', multiple=True,
         help="map a term to a URI and add it to the output's JSON LD context.")
-
 @click.pass_context
-
 def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
-            with_ld_context, add_ld_context_item):
+            src_crs, with_ld_context, add_ld_context_item):
     """Make a GeoJSON feature collection from a sequence of GeoJSON
     features and print it."""
     verbosity = ctx.obj['verbosity']
@@ -200,8 +191,13 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
         dump_kwds['indent'] = indent
     if compact:
         dump_kwds['separators'] = (',', ':')
-
     item_sep = compact and ',' or ', '
+
+    if src_crs:
+        transformer = partial(transform_geom, src_crs, 'EPSG:4326',
+                              antimeridian_cutting=True, precision=precision)
+    else:
+        transformer = lambda x: x
 
     first_line = next(stdin)
 
@@ -212,17 +208,23 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
             for line in stdin:
                 if line.startswith(u'\x1e'):
                     if buffer:
-                        yield json.loads(buffer)
+                        feat = json.loads(buffer)
+                        feat['geometry'] = transformer(feat['geometry'])
+                        yield feat
                     buffer = line.strip(u'\x1e')
                 else:
                     buffer += line
             else:
-                yield json.loads(buffer)
+                feat = json.loads(buffer)
+                feat['geometry'] = transformer(feat['geometry'])
+                yield feat
     else:
         def feature_gen():
             yield json.loads(first_line)
             for line in stdin:
-                yield json.loads(line)
+                feat = json.loads(line)
+                feat['geometry'] = transformer(feat['geometry'])
+                yield feat
 
     try:
         source = feature_gen()
@@ -234,17 +236,17 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
             rec_indent = "\n" + " " * (2 * (indent or 0))
 
             collection = {
-                'type': 'FeatureCollection',  
+                'type': 'FeatureCollection',
                 'features': [] }
             if with_ld_context:
                 collection['@context'] = make_ld_context(
                     add_ld_context_item)
-            
+
             head, tail = json.dumps(collection, **dump_kwds).split('[]')
-            
+
             sink.write(head)
             sink.write("[")
-            
+
             # Try the first record.
             try:
                 i, first = 0, next(source)
@@ -278,7 +280,7 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
                     if indented:
                         sink.write("\n")
                     raise
-            
+
             # Because trailing commas aren't valid in JSON arrays
             # we'll write the item separator before each of the
             # remaining features.
@@ -310,7 +312,7 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
                         if indented:
                             sink.write("\n")
                         raise
-            
+
             # Close up the GeoJSON after writing all features.
             sink.write("]")
             sink.write(tail)
@@ -356,7 +358,7 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
 @click.option('--precision', type=int, default=-1,
               help="Decimal precision of coordinates.")
 
-@click.option('--indent', default=None, type=int, 
+@click.option('--indent', default=None, type=int,
               help="Indentation level for pretty printed output.")
 
 @click.option('--compact/--no-compact', default=False,
@@ -430,21 +432,21 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                     rec_indent = "\n" + " " * (2 * (indent or 0))
 
                     collection = {
-                        'type': 'FeatureCollection',  
-                        'fiona:schema': meta['schema'], 
+                        'type': 'FeatureCollection',
+                        'fiona:schema': meta['schema'],
                         'fiona:crs': meta['crs'],
                         'features': [] }
                     if with_ld_context:
                         collection['@context'] = make_ld_context(
                             add_ld_context_item)
-                    
+
                     head, tail = json.dumps(collection, **dump_kwds).split('[]')
-                    
+
                     sink.write(head)
                     sink.write("[")
-                    
+
                     itr = iter(source)
-                    
+
                     # Try the first record.
                     try:
                         i, first = 0, next(itr)
@@ -478,7 +480,7 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                             if indented:
                                 sink.write("\n")
                             raise
-                    
+
                     # Because trailing commas aren't valid in JSON arrays
                     # we'll write the item separator before each of the
                     # remaining features.
@@ -510,7 +512,7 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                                 if indented:
                                     sink.write("\n")
                                 raise
-                    
+
                     # Close up the GeoJSON after writing all features.
                     sink.write("]")
                     sink.write(tail)
@@ -520,8 +522,8 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                 else:
                     # Buffer GeoJSON data at the collection level. The default.
                     collection = {
-                        'type': 'FeatureCollection', 
-                        'fiona:schema': meta['schema'], 
+                        'type': 'FeatureCollection',
+                        'fiona:schema': meta['schema'],
                         'fiona:crs': meta['crs']}
                     if with_ld_context:
                         collection['@context'] = make_ld_context(

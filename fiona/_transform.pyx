@@ -31,8 +31,10 @@ log.addHandler(NullHandler())
 
 cdef void *_osr_from_crs(object crs):
     cdef char *proj_c = NULL
-    cdef void *osr
+    cdef void *osr = NULL
     osr = ograpi.OSRNewSpatialReference(NULL)
+    if osr == NULL:
+        raise ValueError("NULL spatial reference")
     params = []
     # Normally, we expect a CRS dict.
     if isinstance(crs, dict):
