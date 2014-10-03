@@ -91,12 +91,16 @@ if os.path.exists("MANIFEST.in"):
             "Cython is required to build from a repo.")
         sys.exit(1)
     ext_modules = cythonize([
+        Extension('fiona._geometry', ['fiona/_geometry.pyx'], **ext_options),
+        Extension('fiona._transform', ['fiona/_transform.pyx'], **ext_options),
         Extension('fiona._drivers', ['fiona/_drivers.pyx'], **ext_options),
         Extension('fiona._err', ['fiona/_err.pyx'], **ext_options),
         Extension('fiona.ogrext', ['fiona/ogrext.pyx'], **ext_options)])
 # If there's no manifest template, as in an sdist, we just specify .c files.
 else:
     ext_modules = [
+        Extension('fiona._transform', ['fiona/_transform.cpp'], **ext_options),
+        Extension('fiona._geometry', ['fiona/_geometry.c'], **ext_options),
         Extension('fiona._drivers', ['fiona/_drivers.c'], **ext_options),
         Extension('fiona._err', ['fiona/_err.c'], **ext_options),
         Extension('fiona.ogrext', ['fiona/ogrext.c'], **ext_options)]
