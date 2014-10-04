@@ -21,7 +21,7 @@ class ReadingTest(unittest.TestCase):
     def tearDown(self):
         self.c.close()
 
-    def test_json(self):
+    def test_gpkg_read(self):
         self.assertEquals(len(self.c), 48)
 
 
@@ -33,7 +33,7 @@ class WritingTest(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tempdir)
 
-    def test_gpkg(self):
+    def test_gpkg_write(self):
         schema = {'geometry': 'Point',
                   'properties': [('title', 'str')]}
         crs = {
@@ -62,3 +62,5 @@ class WritingTest(unittest.TestCase):
             self.assertEquals(c.schema['geometry'], 'Point')
             self.assertEquals(len(c), 2)
 
+if __name__ == "__main__":
+    unittest.main()

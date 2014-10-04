@@ -6,6 +6,7 @@ import sys
 
 from fiona.ogrext import Iterator, ItemsIterator, KeysIterator
 from fiona.ogrext import Session, WritingSession
+from fiona.ogrext import calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name
 from fiona.errors import DriverError, SchemaError, CRSError
 from fiona._drivers import driver_count, GDALEnv
 from six import string_types
@@ -36,6 +37,7 @@ class Collection(object):
         In 'w' mode, kwargs will be mapped to OGR layer creation
         options.
         """
+
         if not isinstance(path, string_types):
             raise TypeError("invalid path: %r" % path)
         if not isinstance(mode, string_types) or mode not in ('r', 'w', 'a'):
@@ -55,6 +57,11 @@ class Collection(object):
                 raise TypeError("invalid vsi: %r" % vsi)
         if archive and not isinstance(archive, string_types):
             raise TypeError("invalid archive: %r" % archive)
+
+        # Check GDAL version against drivers
+        if driver == "GPKG" and get_gdal_version_num() < calc_gdal_version_num(1, 11, 0):
+            raise DriverError(
+                    "GPKG driver requires GDAL 1.11.0, fiona was compiled against: {}".format(get_gdal_release_name()))
 
         self.session = None
         self.iterator = None

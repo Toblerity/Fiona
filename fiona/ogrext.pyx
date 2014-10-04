@@ -112,6 +112,18 @@ def _bounds(geometry):
     except (KeyError, TypeError):
         return None
 
+def calc_gdal_version_num(maj, min, rev):
+    """Calculates the internal gdal version number based on major, minor and revision"""
+    return int(ograpi.GDAL_COMPUTE_VERSION(maj, min, rev))
+
+def get_gdal_version_num():
+    """Return current internal version number of gdal"""
+    return int(ograpi.GDALVersionInfo("VERSION_NUM"))
+
+def get_gdal_release_name():
+    """Return release name of gdal"""
+    return ograpi.GDALVersionInfo("RELEASE_NAME")
+
 
 # Feature extension classes and functions follow.
 
