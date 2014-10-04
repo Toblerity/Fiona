@@ -75,6 +75,3 @@ class WritingTest(unittest.TestCase):
             with fiona.open(path) as c:
                 self.assertEquals(c.schema['geometry'], 'Point')
                 self.assertEquals(len(c), 2)
-
-if __name__ == "__main__":
-    unittest.main()
