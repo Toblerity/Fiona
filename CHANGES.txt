@@ -1,6 +1,10 @@
 Changes
 =======
 
+1.4.2 (2014-10-03)
+------------------
+- --dst-crs and --src-crs options for fio cat and collect (#159).
+
 1.4.1 (2014-09-30)
 ------------------
 - Fix encoding bug in collection's __getitem__ (#153).

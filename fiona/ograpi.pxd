@@ -3,9 +3,10 @@
 # See ../LICENSE.txt
 
 cdef extern from "cpl_conv.h":
+    void *  CPLMalloc (size_t)
     void    CPLFree (void *ptr)
     void    CPLSetThreadLocalConfigOption (char *key, char *val)
-    const char * CPLGetConfigOption ( const char *key, const char *default)
+    const char *CPLGetConfigOption (char *, char *)
 
 cdef extern from "cpl_string.h":
     char ** CSLSetNameValue (char **list, char *name, char *value)
@@ -125,5 +126,3 @@ cdef extern from "ogr_api.h":
     void *  OGROpenShared (char *path, int mode, void *x)
     int     OGRReleaseDataSource (void *datasource)
     OGRErr  OGR_L_SetNextByIndex (void *layer, long nIndex)
-
-

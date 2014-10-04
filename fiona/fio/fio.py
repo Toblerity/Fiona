@@ -3,6 +3,7 @@
 """Fiona command line interface"""
 
 import code
+from functools import partial
 import json
 import logging
 import pprint
@@ -14,6 +15,7 @@ import six.moves
 
 import fiona
 import fiona.crs
+from fiona.transform import transform_geom
 from fiona.fio.cli import cli
 from fiona.fio.cat import cat, dump
 
@@ -97,17 +99,15 @@ def insp(ctx, src_path):
 
 # Load command.
 @cli.command(short_help="Load GeoJSON to a dataset in another format.")
-
 @click.argument('output', type=click.Path(), required=True)
-
 @click.option('--driver', required=True, help="Output format driver name.")
-
+@click.option('--src_crs', default=None, help="Source CRS.")
+@click.option('--dst_crs', default=None, help="Destination CRS.")
 @click.option('--x-json-seq/--x-json-obj', default=False,
     help="Read a LF-delimited JSON sequence (default is object). Experimental.")
-
 @click.pass_context
 
-def load(ctx, output, driver, x_json_seq):
+def load(ctx, output, driver, src_crs, dst_crs, x_json_seq):
     """Load features from JSON to a file in another format.
 
     The input is a GeoJSON feature collection or optionally a sequence of
@@ -115,6 +115,12 @@ def load(ctx, output, driver, x_json_seq):
     verbosity = ctx.obj['verbosity']
     logger = logging.getLogger('fio')
     stdin = click.get_text_stream('stdin')
+
+    if src_crs and dst_crs:
+        transformer = partial(transform_geom, src_crs, dst_crs,
+                              antimeridian_cutting=True, precision=precision)
+    else:
+        transformer = lambda x: x
 
     first_line = next(stdin)
 
@@ -125,20 +131,27 @@ def load(ctx, output, driver, x_json_seq):
             for line in stdin:
                 if line.startswith(u'\x1e'):
                     if buffer:
-                        yield json.loads(buffer)
+                        feat = json.loads(buffer)
+                        feat['geometry'] = transformer(feat['geometry'])
+                        yield feat
                     buffer = line.strip(u'\x1e')
                 else:
                     buffer += line
             else:
-                yield json.loads(buffer)
+                feat = json.loads(buffer)
+                feat['geometry'] = transformer(feat['geometry'])
+                yield feat
     elif x_json_seq:
         def feature_gen():
             yield json.loads(first_line)
             for line in stdin:
-                yield json.loads(line)
+                feat = json.loads(line)
+                feat['geometry'] = transformer(feat['geometry'])
+                yield feat
     else:
         def feature_gen():
             for feat in json.load(input)['features']:
+                feat['geometry'] = transformer(feat['geometry'])
                 yield feat
 
     try:
@@ -156,7 +169,7 @@ def load(ctx, output, driver, x_json_seq):
             with fiona.open(
                     output, 'w',
                     driver=driver,
-                    crs={'init': 'epsg:4326'},
+                    crs=dst_crs,
                     schema=schema) as dst:
                 dst.write(first)
                 dst.writerecords(source)
