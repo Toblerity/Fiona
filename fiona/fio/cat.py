@@ -99,7 +99,7 @@ def cat(ctx, input, precision, indent, compact, ignore_errors, dst_crs,
             for path in input:
                 with fiona.open(path) as src:
                     for feat in src:
-                        if dst_crs:
+                        if dst_crs or precision > 0:
                             g = transform_geom(
                                     src.crs, dst_crs, feat['geometry'],
                                     antimeridian_cutting=True,

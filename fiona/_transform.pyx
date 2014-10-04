@@ -116,33 +116,35 @@ def _transform_geom(
     cdef void *dst_ogr_geom
     cdef int i
 
-    src = _osr_from_crs(src_crs)
-    dst = _osr_from_crs(dst_crs)
-    transform = ograpi.OCTNewCoordinateTransformation(src, dst)
+    if src_crs and dst_crs:
+        src = _osr_from_crs(src_crs)
+        dst = _osr_from_crs(dst_crs)
+        transform = ograpi.OCTNewCoordinateTransformation(src, dst)
 
-    # Transform options.
-    options = ograpi.CSLSetNameValue(
-                options, "DATELINEOFFSET", 
-                str(antimeridian_offset).encode('utf-8'))
-    if antimeridian_cutting:
-        options = ograpi.CSLSetNameValue(options, "WRAPDATELINE", "YES")
+        # Transform options.
+        options = ograpi.CSLSetNameValue(
+                    options, "DATELINEOFFSET", 
+                    str(antimeridian_offset).encode('utf-8'))
+        if antimeridian_cutting:
+            options = ograpi.CSLSetNameValue(options, "WRAPDATELINE", "YES")
 
-    factory = new OGRGeometryFactory()
-    src_ogr_geom = _geometry.OGRGeomBuilder().build(geom)
-    dst_ogr_geom = factory.transformWithOptions(
-                    <const OGRGeometry *>src_ogr_geom,
-                    <OGRCoordinateTransformation *>transform,
-                    options)
-    g = _geometry.GeomBuilder().build(dst_ogr_geom)
+        factory = new OGRGeometryFactory()
+        src_ogr_geom = _geometry.OGRGeomBuilder().build(geom)
+        dst_ogr_geom = factory.transformWithOptions(
+                        <const OGRGeometry *>src_ogr_geom,
+                        <OGRCoordinateTransformation *>transform,
+                        options)
+        g = _geometry.GeomBuilder().build(dst_ogr_geom)
 
-    ograpi.OGR_G_DestroyGeometry(dst_ogr_geom)
-    ograpi.OGR_G_DestroyGeometry(src_ogr_geom)
-    ograpi.OCTDestroyCoordinateTransformation(transform)
-    if options != NULL:
-        ograpi.CSLDestroy(options)
-    ograpi.OSRDestroySpatialReference(src)
-    ograpi.OSRDestroySpatialReference(dst)
-
+        ograpi.OGR_G_DestroyGeometry(dst_ogr_geom)
+        ograpi.OGR_G_DestroyGeometry(src_ogr_geom)
+        ograpi.OCTDestroyCoordinateTransformation(transform)
+        if options != NULL:
+            ograpi.CSLDestroy(options)
+        ograpi.OSRDestroySpatialReference(src)
+        ograpi.OSRDestroySpatialReference(dst)
+    else:
+        g = geom
     if precision >= 0:
         if g['type'] == 'Point':
             x, y = g['coordinates']
