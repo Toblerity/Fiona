@@ -40,7 +40,7 @@ concatenated datasets.
 .. code-block:: console
 
     $ fio cat docs/data/test_uk.shp docs/data/test_uk.shp \
-    > | fio load /tmp/double.shp --driver "ESRI Shapefile"
+    > | fio load /tmp/double.shp --driver Shapefile
     $ fio info /tmp/double.shp --count
     96
     $ fio info docs/data/test_uk.shp --count
@@ -150,7 +150,7 @@ dataset using another format.
 .. code-block:: console
 
     $ fio dump docs/data/test_uk.shp \
-    > | fio load /tmp/test.shp --driver "ESRI Shapefile"
+    > | fio load /tmp/test.shp --driver Shapefile
 
 This command also supports GeoJSON text sequences. RS-separated sequences will
 be detected. If you want to load LF-separated sequences, you must specfiy
@@ -158,7 +158,7 @@ be detected. If you want to load LF-separated sequences, you must specfiy
 
 .. code-block:: console
 
-    $ fio cat docs/data/test_uk.shp | fio load /tmp/foo.shp --driver "ESRI Shapefile"
+    $ fio cat docs/data/test_uk.shp | fio load /tmp/foo.shp --driver Shapefile
     $ fio info /tmp/foo.shp --indent 2
     {
       "count": 48,
@@ -190,7 +190,7 @@ collection into a feature sequence.
     $ fio dump docs/data/test_uk.shp \
     > | underscore process \
     > 'each(data.features,function(o){console.log(JSON.stringify(o))})' \
-    > | fio load /tmp/test-seq.shp --x-json-seq --driver "ESRI Shapefile"
+    > | fio load /tmp/test-seq.shp --x-json-seq --driver Shapefile
 
 
 Coordinate Reference System Transformations
@@ -201,20 +201,21 @@ coordinate reference system specified with ``--dst_crs``. The ``fio collect``
 command can optionally transform from a coordinate reference system specified
 with ``--src_crs`` to the default WGS84 GeoJSON CRS. Like collect, ``fio load``
 can accept non-WGS84 features, but as it can write files in formats other than
-GeoJSON, you can optionally specify a ``--dst_crs``. For example,
+GeoJSON, you can optionally specify a ``--dst_crs``. For example, the WGS84
+features read from docs/data/test_uk.shp,
 
 .. code-block:: console
 
-     fio cat docs/data/test_uk.shp --dst_crs EPSG:3857 \
+     $ fio cat docs/data/test_uk.shp --dst_crs EPSG:3857 \
      > | fio collect --src_crs EPSG:3857 > /tmp/foo.json
 
-makes a (superfluous) trip through EPSG:3857 (Web Mercator) and writes a WGS84
-GeoJSON file. The following,
+make a detour through EPSG:3857 (Web Mercator) and are transformed back to WGS84
+by fio cat. The following,
 
 .. code-block:: console
 
     $ fio cat docs/data/test_uk.shp --dst_crs EPSG:3857 \
-    > | fio load --src_crs EPSG:3857 --dst_crs EPSG:4326 --driver "ESRI Shapefile" \
+    > | fio load --src_crs EPSG:3857 --dst_crs EPSG:4326 --driver Shapefile \
     > /tmp/foo.shp
 
 does the same thing, but for ESRI Shapefile output.

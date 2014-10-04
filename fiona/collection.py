@@ -86,6 +86,8 @@ class Collection(object):
         self.mode = mode
         
         if self.mode == 'w':
+            if driver == 'Shapefile':
+                driver = 'ESRI Shapefile'
             if not driver:
                 raise DriverError("no driver")
             elif driver not in supported_drivers:
