@@ -59,48 +59,6 @@ def id_record(rec):
     return rec
 
 
-def round_rec(rec, precision=None):
-    """Round coordinates of a geometric object to given precision."""
-    if precision is None:
-        return rec
-    geom = rec['geometry']
-    if geom['type'] == 'Point':
-        x, y = geom['coordinates']
-        xp, yp = [x], [y]
-        if precision is not None:
-            xp = [round(v, precision) for v in xp]
-            yp = [round(v, precision) for v in yp]
-        new_coords = tuple(zip(xp, yp))[0]
-    if geom['type'] in ['LineString', 'MultiPoint']:
-        xp, yp = zip(*geom['coordinates'])
-        if precision is not None:
-            xp = [round(v, precision) for v in xp]
-            yp = [round(v, precision) for v in yp]
-        new_coords = tuple(zip(xp, yp))
-    elif geom['type'] in ['Polygon', 'MultiLineString']:
-        new_coords = []
-        for piece in geom['coordinates']:
-            xp, yp = zip(*piece)
-            if precision is not None:
-                xp = [round(v, precision) for v in xp]
-                yp = [round(v, precision) for v in yp]
-            new_coords.append(tuple(zip(xp, yp)))
-    elif geom['type'] == 'MultiPolygon':
-        parts = geom['coordinates']
-        new_coords = []
-        for part in parts:
-            inner_coords = []
-            for ring in part:
-                xp, yp = zip(*ring)
-                if precision is not None:
-                    xp = [round(v, precision) for v in xp]
-                    yp = [round(v, precision) for v in yp]
-                inner_coords.append(tuple(zip(xp, yp)))
-            new_coords.append(inner_coords)
-    rec['geometry'] = {'type': geom['type'], 'coordinates': new_coords}
-    return rec
-
-
 # Cat command
 @cli.command(short_help="Concatenate and print the features of datasets")
 # One or more files.
@@ -254,8 +212,6 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
                     first = id_record(first)
                 if indented:
                     sink.write(rec_indent)
-                if precision >= 0:
-                    first = round_rec(first, precision)
                 sink.write(
                     json.dumps(first, **dump_kwds
                         ).replace("\n", rec_indent))
@@ -285,8 +241,6 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
             # we'll write the item separator before each of the
             # remaining features.
             for i, rec in enumerate(source, 1):
-                if precision >= 0:
-                    rec = round_rec(rec, precision)
                 try:
                     if with_ld_context:
                         rec = id_record(rec)
@@ -325,19 +279,10 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
             if with_ld_context:
                 collection['@context'] = make_ld_context(
                     add_ld_context_item)
-                if precision >= 0:
-                    collection['features'] = [
-                        id_record(round_rec(rec, precision))
-                        for rec in source]
-                else:
-                    collection['features'] = [
-                        id_record(rec) for rec in source]
+                collection['features'] = [
+                    id_record(rec) for rec in source]
             else:
-                if precision >= 0:
-                    collection['features'] = [
-                        round_rec(rec, precision) for rec in source]
-                else:
-                    collection['features'] = list(source)
+                collection['features'] = list(source)
             json.dump(collection, sink, **dump_kwds)
             sink.write("\n")
 
@@ -349,46 +294,34 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
 
 # Dump command
 @cli.command(short_help="Dump a dataset to GeoJSON.")
-
 @click.argument('input', type=click.Path(), required=True)
-
 @click.option('--encoding', help="Specify encoding of the input file.")
-
 # Coordinate precision option.
 @click.option('--precision', type=int, default=-1,
               help="Decimal precision of coordinates.")
-
 @click.option('--indent', default=None, type=int,
               help="Indentation level for pretty printed output.")
-
 @click.option('--compact/--no-compact', default=False,
               help="Use compact separators (',', ':').")
-
 @click.option('--record-buffered/--no-record-buffered', default=False,
     help="Economical buffering of writes at record, not collection "
          "(default), level.")
-
 @click.option('--ignore-errors/--no-ignore-errors', default=False,
               help="log errors but do not stop serialization.")
-
 @click.option('--with-ld-context/--without-ld-context', default=False,
         help="add a JSON-LD context to JSON output.")
 
 @click.option('--add-ld-context-item', multiple=True,
         help="map a term to a URI and add it to the output's JSON LD context.")
-
 @click.option('--x-json-seq/--x-json-obj', default=False,
     help="Write a LF-delimited JSON sequence (default is object). "
          "Experimental.")
-
 # Use ASCII RS control code to signal a sequence item (False is default).
 # See http://tools.ietf.org/html/draft-ietf-json-text-sequence-05.
 # Experimental.
 @click.option('--x-json-seq-rs/--x-json-seq-no-rs', default=True,
         help="Use RS as text separator. Experimental.")
-
 @click.pass_context
-
 def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
          ignore_errors, with_ld_context, add_ld_context_item,
          x_json_seq, x_json_seq_rs):
@@ -403,12 +336,17 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
         dump_kwds['indent'] = indent
     if compact:
         dump_kwds['separators'] = (',', ':')
-
     item_sep = compact and ',' or ', '
 
     open_kwds = {}
     if encoding:
         open_kwds['encoding'] = encoding
+
+    def transformer(feat):
+        tg = partial(transform_geom, src_crs, 'EPSG:4326',
+                     antimeridian_cutting=True, precision=precision)
+        feat['geometry'] = tg(feat['geometry'])
+        return feat
 
     try:
         with fiona.drivers(CPL_DEBUG=verbosity>2):
@@ -418,8 +356,7 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
 
                 if x_json_seq:
                     for feat in source:
-                        if precision >= 0:
-                            feat = round_rec(feat, precision)
+                        feat = transformer(feat)
                         if x_json_seq_rs:
                             sink.write(u'\u001e')
                         json.dump(feat, sink, **dump_kwds)
@@ -450,12 +387,11 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                     # Try the first record.
                     try:
                         i, first = 0, next(itr)
+                        first = transformer(first)
                         if with_ld_context:
                             first = id_record(first)
                         if indented:
                             sink.write(rec_indent)
-                        if precision >= 0:
-                            first = round_rec(first, precision)
                         sink.write(
                             json.dumps(first, **dump_kwds
                                 ).replace("\n", rec_indent))
@@ -485,8 +421,7 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                     # we'll write the item separator before each of the
                     # remaining features.
                     for i, rec in enumerate(itr, 1):
-                        if precision >= 0:
-                            rec = round_rec(rec, precision)
+                        rec = transformer(rec)
                         try:
                             if with_ld_context:
                                 rec = id_record(rec)
@@ -528,25 +463,13 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                     if with_ld_context:
                         collection['@context'] = make_ld_context(
                             add_ld_context_item)
-                        if precision >= 0:
-                            collection['features'] = [
-                                id_record(round_rec(rec, precision))
-                                for rec in source]
-                        else:
-                            collection['features'] = [
-                                id_record(rec) for rec in source]
+                        collection['features'] = [
+                            id_record(transformer(rec)) for rec in source]
                     else:
-                        if precision >= 0:
-                            collection['features'] = [
-                                round_rec(rec, precision) for rec in source]
-                        else:
-                            collection['features'] = list(source)
+                        collection['features'] = [transformer(rec) for rec in source]
                     json.dump(collection, sink, **dump_kwds)
 
         sys.exit(0)
     except Exception:
         logger.exception("Failed. Exception caught")
         sys.exit(1)
-
-
-
