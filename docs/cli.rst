@@ -191,3 +191,32 @@ collection into a feature sequence.
     > | underscore process \
     > 'each(data.features,function(o){console.log(JSON.stringify(o))})' \
     > | fio load /tmp/test-seq.shp --x-json-seq --driver "ESRI Shapefile"
+
+
+Coordinate Reference System Transformations
+-------------------------------------------
+
+The ``fio cat`` command can optionally transform feature geometries to a new
+coordinate reference system specified with ``--dst_crs``. The ``fio collect``
+command can optionally transform from a coordinate reference system specified
+with ``--src_crs`` to the default WGS84 GeoJSON CRS. Like collect, ``fio load``
+can accept non-WGS84 features, but as it can write files in formats other than
+GeoJSON, you can optionally specify a ``--dst_crs``. For example,
+
+.. code-block:: console
+
+     fio cat docs/data/test_uk.shp --dst_crs EPSG:3857 \
+     > | fio collect --src_crs EPSG:3857 > /tmp/foo.json
+
+makes a (superfluous) trip through EPSG:3857 (Web Mercator) and writes a WGS84
+GeoJSON file. The following,
+
+.. code-block:: console
+
+    $ fio cat docs/data/test_uk.shp --dst_crs EPSG:3857 \
+    > | fio load --src_crs EPSG:3857 --dst_crs EPSG:4326 --driver "ESRI Shapefile" \
+    > /tmp/foo.shp
+
+does the same thing, but for ESRI Shapefile output.
+
+New in 1.4.2.

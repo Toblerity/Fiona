@@ -118,7 +118,7 @@ def load(ctx, output, driver, src_crs, dst_crs, x_json_seq):
 
     if src_crs and dst_crs:
         transformer = partial(transform_geom, src_crs, dst_crs,
-                              antimeridian_cutting=True, precision=precision)
+                              antimeridian_cutting=True, precision=-1)
     else:
         transformer = lambda x: x
 
