@@ -2,6 +2,12 @@
 # All rights reserved.
 # See ../LICENSE.txt
 
+cdef extern from "gdal.h":
+    char * GDALVersionInfo (char *pszRequest)
+
+cdef extern from "gdal_version.h":
+    int    GDAL_COMPUTE_VERSION(int maj, int min, int rev)
+
 cdef extern from "cpl_conv.h":
     void *  CPLMalloc (size_t)
     void    CPLFree (void *ptr)
