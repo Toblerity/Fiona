@@ -18,10 +18,13 @@ cdef extern from "gdal.h":
     void GDALDestroyDriverManager()
     int GDALGetDriverCount()
 
+
 cdef extern from "ogr_api.h":
     void OGRRegisterAll()
     void OGRCleanupAll()
     int OGRGetDriverCount()
+    void * OGRGetDriver(int i)
+    void * OGRGetDriverByName(const char *pszName)
 
 log = logging.getLogger('Fiona')
 class NullHandler(logging.Handler):
@@ -80,4 +83,3 @@ cdef class GDALEnv(object):
             key_c = key_b
             CPLSetThreadLocalConfigOption(key_c, NULL)
         CPLSetErrorHandler(NULL)
-

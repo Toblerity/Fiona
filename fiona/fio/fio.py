@@ -26,26 +26,41 @@ warnings.simplefilter('default')
 
 # Commands are below.
 
+@cli.command(short_help="Print information about the rio environment.")
+@click.option('--formats', 'key', flag_value='formats', default=True,
+              help="Enumerate the available formats.")
+@click.pass_context
+def env(ctx, key):
+    """Print information about the Rasterio environment: available
+    formats, etc.
+    """
+    verbosity = (ctx.obj and ctx.obj.get('verbosity')) or 1
+    logger = logging.getLogger('fio')
+    stdout = click.get_text_stream('stdout')
+    with fiona.drivers(CPL_DEBUG=(verbosity > 2)) as env:
+        if key == 'formats':
+            for k, v in sorted(fiona.supported_drivers.items()):
+                modes = ', '.join("'" + m + "'" for m in v)
+                stdout.write("%s (modes %s)\n" % (k, modes))
+            stdout.write('\n')
+
+
 # Info command.
 @cli.command(short_help="Print information about a dataset.")
-
 # One or more files.
 @click.argument('input', type=click.Path(exists=True))
-
 @click.option('--indent', default=None, type=int, 
               help="Indentation level for pretty printed output.")
-
 # Options to pick out a single metadata item and print it as
 # a string.
 @click.option('--count', 'meta_member', flag_value='count',
               help="Print the count of features.")
-@click.option('--driver', 'meta_member', flag_value='driver',
+@click.option('-f', '--format', '--driver', 'meta_member', flag_value='driver',
               help="Print the format driver.")
 @click.option('--crs', 'meta_member', flag_value='crs',
               help="Print the CRS as a PROJ.4 string.")
 @click.option('--bounds', 'meta_member', flag_value='bounds',
               help="Print the nodata value.")
-
 @click.pass_context
 def info(ctx, input, indent, meta_member):
     verbosity = ctx.obj['verbosity']
@@ -100,11 +115,12 @@ def insp(ctx, src_path):
 # Load command.
 @cli.command(short_help="Load GeoJSON to a dataset in another format.")
 @click.argument('output', type=click.Path(), required=True)
-@click.option('--driver', required=True, help="Output format driver name.")
+@click.option('-f', '--format', '--driver', required=True,
+              help="Output format driver name.")
 @click.option('--src_crs', default=None, help="Source CRS.")
 @click.option('--dst_crs', default=None, help="Destination CRS.")
 @click.option('--x-json-seq/--x-json-obj', default=False,
-    help="Read a LF-delimited JSON sequence (default is object). Experimental.")
+              help="Read a LF-delimited JSON sequence (default is object). Experimental.")
 @click.pass_context
 
 def load(ctx, output, driver, src_crs, dst_crs, x_json_seq):
