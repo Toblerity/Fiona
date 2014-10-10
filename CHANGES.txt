@@ -1,6 +1,12 @@
 Changes
 =======
 
+1.4.3 (2014-10-10)
+------------------
+- Add support for geopackage format (#160).
+- Add -f and --format aliases for --driver in CLI (#162).
+- Add --version option and env command to CLI.
+
 1.4.2 (2014-10-03)
 ------------------
 - --dst-crs and --src-crs options for fio cat and collect (#159).
