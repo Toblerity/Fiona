@@ -1,6 +1,10 @@
 Changes
 =======
 
+1.4.4 (2014-10-13)
+------------------
+- Fix accidental requirement on GDAL 1.10 introduced in 1.4.3 (#164).
+
 1.4.3 (2014-10-10)
 ------------------
 - Add support for geopackage format (#160).
