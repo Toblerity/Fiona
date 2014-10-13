@@ -114,7 +114,7 @@ def _bounds(geometry):
 
 def calc_gdal_version_num(maj, min, rev):
     """Calculates the internal gdal version number based on major, minor and revision"""
-    return int(ograpi.GDAL_COMPUTE_VERSION(maj, min, rev))
+    return int(maj * 1000000 + min * 10000 + rev*100)
 
 def get_gdal_version_num():
     """Return current internal version number of gdal"""
