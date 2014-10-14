@@ -1,15 +1,20 @@
 
 import logging
 import os
+import os.path
 import shutil
 import sys
 import tempfile
 import unittest
 
+import pytest
+
 import fiona
 from fiona.collection import supported_drivers
 from fiona.errors import FionaValueError, DriverError, SchemaError, CRSError
 from fiona.ogrext import calc_gdal_version_num, get_gdal_version_num
+
+
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 
@@ -21,6 +26,8 @@ class ReadingTest(unittest.TestCase):
     def tearDown(self):
         pass
 
+    @pytest.mark.skipif(not os.path.exists('docs/data/test_uk.gpkg'),
+                        reason="Requires geopackage fixture")
     def test_gpkg(self):
         if get_gdal_version_num() < calc_gdal_version_num(1, 11, 0):
             self.assertRaises(DriverError, fiona.open, 'docs/data/test_uk.gpkg', 'r', driver="GPKG")
@@ -37,6 +44,8 @@ class WritingTest(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tempdir)
 
+    @pytest.mark.skipif(not os.path.exists('docs/data/test_uk.gpkg'),
+                        reason="Requires geopackage fixture")
     def test_gpkg(self):
         schema = {'geometry': 'Point',
                   'properties': [('title', 'str')]}
