@@ -15,14 +15,41 @@ Fiona's new command line interface is a program named "fio".
       --help         Show this message and exit.
 
     Commands:
+      bounds   Print the extent of GeoJSON objects
       cat      Concatenate and print the features of datasets
       collect  Collect a sequence of features.
       dump     Dump a dataset to GeoJSON.
+      env      Print information about the rio environment.
       info     Print information about a dataset.
       insp     Open a dataset and start an interpreter.
       load     Load GeoJSON to a dataset in another format.
 
 It is developed using the ``click`` package and is new in 1.1.6.
+
+bounds
+------
+
+New in 1.4.5.
+
+Fio-bounds reads LF or RS-delimited GeoJSON texts, either features or
+collections, from stdin and prints their bounds with or without other data to
+stdout.
+
+With no options, it works like this:
+
+.. code-block:: console
+
+    $ fio cat docs/data/test_uk.shp | head -n 1 \
+    > | fio bounds
+    [0.735, 51.357216, 0.947778, 51.444717]
+
+Using ``--with-id`` gives you
+
+.. code-block:: console
+
+    $ fio cat docs/data/test_uk.shp | head -n 1 \
+    > | fio bounds --with-id
+    {"id": "0", "bbox": [0.735, 51.357216, 0.947778, 51.444717]}
 
 cat
 ---

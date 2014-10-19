@@ -17,7 +17,8 @@ import fiona
 import fiona.crs
 from fiona.transform import transform_geom
 from fiona.fio.cli import cli
-from fiona.fio.cat import cat, dump
+from fiona.fio.cat import cat, collect, dump, distrib
+from fiona.fio.bounds import bounds
 
 
 FIELD_TYPES_MAP_REV = dict([(v, k) for k, v in fiona.FIELD_TYPES_MAP.items()])

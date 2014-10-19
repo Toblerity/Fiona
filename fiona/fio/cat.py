@@ -7,7 +7,7 @@ import click
 
 import fiona
 from fiona.transform import transform_geom
-from fiona.fio.cli import cli
+from fiona.fio.cli import cli, obj_gen
 
 
 def make_ld_context(context_items):
@@ -64,26 +64,29 @@ def id_record(rec):
 # One or more files.
 @click.argument('input', nargs=-1, type=click.Path(exists=True))
 # Coordinate precision option.
-@click.option('--precision', type=int, default=-1,
+@click.option('--precision', type=int, default=-1, metavar="N",
               help="Decimal precision of coordinates.")
-@click.option('--indent', default=None, type=int,
+@click.option('--indent', default=None, type=int, metavar="N",
               help="Indentation level for pretty printed output.")
 @click.option('--compact/--no-compact', default=False,
               help="Use compact separators (',', ':').")
 @click.option('--ignore-errors/--no-ignore-errors', default=False,
               help="log errors but do not stop serialization.")
-@click.option('--dst_crs', default=None, help="Destination CRS.")
+@click.option('--dst_crs', default=None, metavar="EPSG:NNNN",
+              help="Destination CRS.")
 # Use ASCII RS control code to signal a sequence item (False is default).
 # See http://tools.ietf.org/html/draft-ietf-json-text-sequence-05.
 # Experimental.
 @click.option('--x-json-seq-rs/--x-json-seq-no-rs', default=True,
         help="Use RS as text separator instead of LF. Experimental.")
+@click.option('--bbox', default=None, metavar="w,s,e,n",
+              help="filter for features intersecting a bounding box")
 @click.pass_context
 def cat(ctx, input, precision, indent, compact, ignore_errors, dst_crs,
-        x_json_seq_rs):
+        x_json_seq_rs, bbox):
     """Concatenate and print the features of input datasets as a
     sequence of GeoJSON features."""
-    verbosity = ctx.obj['verbosity']
+    verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
     logger = logging.getLogger('fio')
     sink = click.get_text_stream('stdout')
 
@@ -98,13 +101,16 @@ def cat(ctx, input, precision, indent, compact, ignore_errors, dst_crs,
         with fiona.drivers(CPL_DEBUG=verbosity>2):
             for path in input:
                 with fiona.open(path) as src:
-                    for feat in src:
+                    if bbox:
+                        bbox = tuple(map(float, bbox.split(',')))
+                    for i, feat in src.items(bbox=bbox):
                         if dst_crs or precision > 0:
                             g = transform_geom(
                                     src.crs, dst_crs, feat['geometry'],
                                     antimeridian_cutting=True,
                                     precision=precision)
                             feat['geometry'] = g
+                            feat['bbox'] = fiona.bounds(g)
                         if x_json_seq_rs:
                             sink.write(u'\u001e')
                         json.dump(feat, sink, **dump_kwds)
@@ -118,28 +124,29 @@ def cat(ctx, input, precision, indent, compact, ignore_errors, dst_crs,
 # Collect command
 @cli.command(short_help="Collect a sequence of features.")
 # Coordinate precision option.
-@click.option('--precision', type=int, default=-1,
+@click.option('--precision', type=int, default=-1, metavar="N",
               help="Decimal precision of coordinates.")
-@click.option('--indent', default=None, type=int,
+@click.option('--indent', default=None, type=int, metavar="N",
               help="Indentation level for pretty printed output.")
 @click.option('--compact/--no-compact', default=False,
               help="Use compact separators (',', ':').")
 @click.option('--record-buffered/--no-record-buffered', default=False,
-    help="Economical buffering of writes at record, not collection "
-         "(default), level.")
+              help="Economical buffering of writes at record, not collection "
+              "(default), level.")
 @click.option('--ignore-errors/--no-ignore-errors', default=False,
               help="log errors but do not stop serialization.")
-@click.option('--src_crs', default=None, help="Source CRS.")
+@click.option('--src_crs', default=None, metavar="EPSG:NNNN",
+              help="Source CRS.")
 @click.option('--with-ld-context/--without-ld-context', default=False,
-        help="add a JSON-LD context to JSON output.")
+              help="add a JSON-LD context to JSON output.")
 @click.option('--add-ld-context-item', multiple=True,
-        help="map a term to a URI and add it to the output's JSON LD context.")
+              help="map a term to a URI and add it to the output's JSON LD context.")
 @click.pass_context
 def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
             src_crs, with_ld_context, add_ld_context_item):
     """Make a GeoJSON feature collection from a sequence of GeoJSON
     features and print it."""
-    verbosity = ctx.obj['verbosity']
+    verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
     logger = logging.getLogger('fio')
     stdin = click.get_text_stream('stdin')
     sink = click.get_text_stream('stdout')
@@ -178,7 +185,9 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
                 yield feat
     else:
         def feature_gen():
-            yield json.loads(first_line)
+            feat = json.loads(first_line)
+            feat['geometry'] = transformer(feat['geometry'])
+            yield feat
             for line in stdin:
                 feat = json.loads(line)
                 feat['geometry'] = transformer(feat['geometry'])
@@ -292,6 +301,37 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
         sys.exit(1)
 
 
+# Distribute command
+@cli.command(short_help="Distribute features from a collection")
+@click.option('--x-json-seq-rs/--x-json-seq-no-rs', default=False,
+              help="Use RS as text separator instead of LF. "
+                   "Experimental (default: no).")
+@click.pass_context
+def distrib(ctx, x_json_seq_rs):
+    """Print the features of GeoJSON objects read from stdin.
+    """
+    verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
+    logger = logging.getLogger('fio')
+    stdin = click.get_text_stream('stdin')
+    stdout = click.get_text_stream('stdout')
+    try:
+        source = obj_gen(stdin)
+        for i, obj in enumerate(source):
+            obj_id = obj.get('id', 'collection:' + str(i))
+            features = obj.get('features') or [obj]
+            for j, feat in enumerate(features):
+                if obj.get('type') == 'FeatureCollection':
+                    feat['parent'] = obj_id
+                feat_id = feat.get('id', 'feature:' + str(i))
+                feat['id'] = feat_id
+                stdout.write(json.dumps(feat))
+                stdout.write('\n')
+        sys.exit(0)
+    except Exception:
+        logger.exception("Failed. Exception caught")
+        sys.exit(1)
+
+
 # Dump command
 @cli.command(short_help="Dump a dataset to GeoJSON.")
 @click.argument('input', type=click.Path(), required=True)
@@ -327,7 +367,7 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
          x_json_seq, x_json_seq_rs):
     """Dump a dataset either as a GeoJSON feature collection (the default)
     or a sequence of GeoJSON features."""
-    verbosity = ctx.obj['verbosity']
+    verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
     logger = logging.getLogger('fio')
     sink = click.get_text_stream('stdout')
 
@@ -342,8 +382,8 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
     if encoding:
         open_kwds['encoding'] = encoding
 
-    def transformer(feat):
-        tg = partial(transform_geom, src_crs, 'EPSG:4326',
+    def transformer(crs, feat):
+        tg = partial(transform_geom, crs, 'EPSG:4326',
                      antimeridian_cutting=True, precision=precision)
         feat['geometry'] = tg(feat['geometry'])
         return feat
@@ -356,7 +396,7 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
 
                 if x_json_seq:
                     for feat in source:
-                        feat = transformer(feat)
+                        feat = transformer(source.crs, feat)
                         if x_json_seq_rs:
                             sink.write(u'\u001e')
                         json.dump(feat, sink, **dump_kwds)
@@ -466,7 +506,7 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                         collection['features'] = [
                             id_record(transformer(rec)) for rec in source]
                     else:
-                        collection['features'] = [transformer(rec) for rec in source]
+                        collection['features'] = [transformer(source.crs, rec) for rec in source]
                     json.dump(collection, sink, **dump_kwds)
 
         sys.exit(0)
