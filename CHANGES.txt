@@ -1,9 +1,16 @@
 Changes
 =======
 
+1.4.5 (2014-10-18)
+------------------
+- Add --bbox option to fio-cat (#163).
+- Skip geopackage tests if run from an sdist (#167).
+- Add fio-bounds and fio-distrib.
+- Restore fio-dump to working order.
+
 1.4.4 (2014-10-13)
 ------------------
-- Fix accidental requirement on GDAL 1.10 introduced in 1.4.3 (#164).
+- Fix accidental requirement on GDAL 1.11 introduced in 1.4.3 (#164).
 
 1.4.3 (2014-10-10)
 ------------------
