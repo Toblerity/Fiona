@@ -124,3 +124,23 @@ class ShapefileSchema(unittest.TestCase):
             f = next(c)
             self.assertEqual(f['properties']['EstimatedP'], 27773.0)
 
+def test_issue177(tmpdir):
+    name = str(tmpdir.join("output.shp"))
+
+    kwargs = {
+        'driver': 'ESRI Shapefile',
+        'crs': 'EPSG:4326',
+        'schema': {
+            'geometry': 'Point',
+            'properties': [('a_fieldname', 'float')]}}
+
+    with fiona.open(name, 'w', **kwargs) as dst:
+        rec = {}
+        rec['geometry'] = {'type': 'Point', 'coordinates': (0, 0)}
+        rec['properties'] = {'a_fieldname': 3.0}
+        dst.write(rec)
+
+    with fiona.open(name) as src:
+        first = next(src)
+        assert first['geometry'] == {'type': 'Point', 'coordinates': (0, 0)}
+        assert first['properties']['a_fieldnam'] == 3.0
