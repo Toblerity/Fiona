@@ -13,3 +13,7 @@ def test_bounds():
                                                          51.357216,
                                                          0.947778,
                                                          51.444717)
+
+def test_bounds_z():
+    g = {'type': 'Point', 'coordinates': [10,10,10]}
+    assert fiona.bounds(g) == (10, 10, 10, 10)

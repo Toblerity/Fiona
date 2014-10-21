@@ -107,8 +107,8 @@ def _explode(coords):
 def _bounds(geometry):
     """Bounding box of a GeoJSON geometry"""
     try:
-        x, y = zip(*list(_explode(geometry['coordinates'])))
-        return min(x), min(y), max(x), max(y)
+        xyz = zip(*list(_explode(geometry['coordinates'])))
+        return min(xyz[0]), min(xyz[1]), max(xyz[0]), max(xyz[1])
     except (KeyError, TypeError):
         return None
 
