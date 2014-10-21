@@ -27,12 +27,12 @@ warnings.simplefilter('default')
 
 # Commands are below.
 
-@cli.command(short_help="Print information about the rio environment.")
+@cli.command(short_help="Print information about the fio environment.")
 @click.option('--formats', 'key', flag_value='formats', default=True,
               help="Enumerate the available formats.")
 @click.pass_context
 def env(ctx, key):
-    """Print information about the Rasterio environment: available
+    """Print information about the Fiona environment: available
     formats, etc.
     """
     verbosity = (ctx.obj and ctx.obj.get('verbosity')) or 1
