@@ -1,6 +1,10 @@
 Changes
 =======
 
+1.4.6 (2014-10-21)
+------------------
+- Handle 3D coordinates in bounds() #178.
+
 1.4.5 (2014-10-18)
 ------------------
 - Add --bbox option to fio-cat (#163).
