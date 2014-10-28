@@ -711,31 +711,36 @@ cdef class WritingSession(Session):
                 cogr_srs = ograpi.OSRNewSpatialReference(NULL)
                 if cogr_srs == NULL:
                     raise ValueError("NULL spatial reference")
-                params = []
-                if isinstance(collection.crs, dict):
+                # First, check for CRS strings like "EPSG:3857".
+                if isinstance(collection.crs, string_types):
+                    proj_b = collection.crs.encode('utf-8')
+                    proj_c = proj_b
+                    ograpi.OSRSetFromUserInput(cogr_srs, proj_c)
+                elif isinstance(collection.crs, dict):
                     # EPSG is a special case.
                     init = collection.crs.get('init')
                     if init:
+                        log.debug("Init: %s", init)
                         auth, val = init.split(':')
                         if auth.upper() == 'EPSG':
+                            log.debug("Setting EPSG: %s", val)
                             ograpi.OSRImportFromEPSG(cogr_srs, int(val))
                     else:
+                        params = []
                         collection.crs['wktext'] = True
                         for k, v in collection.crs.items():
                             if v is True or (k in ('no_defs', 'wktext') and v):
                                 params.append("+%s" % k)
                             else:
                                 params.append("+%s=%s" % (k, v))
-                    proj = " ".join(params)
-                    log.debug("PROJ.4 to be imported: %r", proj)
-                    proj_b = proj.encode('utf-8')
-                    proj_c = proj_b
-                    ograpi.OSRImportFromProj4(cogr_srs, proj_c)
-                # Fall back for CRS strings like "EPSG:3857."
+                        proj = " ".join(params)
+                        log.debug("PROJ.4 to be imported: %r", proj)
+                        proj_b = proj.encode('utf-8')
+                        proj_c = proj_b
+                        ograpi.OSRImportFromProj4(cogr_srs, proj_c)
                 else:
-                    proj_b = collection.crs.encode('utf-8')
-                    proj_c = proj_b
-                    ograpi.OSRSetFromUserInput(cogr_srs, proj_c)
+                    raise ValueError("Invalid CRS")
+
                 # Fixup, export to WKT, and set the GDAL dataset's projection.
                 ograpi.OSRFixup(cogr_srs)
 

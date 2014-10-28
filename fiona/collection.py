@@ -59,9 +59,11 @@ class Collection(object):
             raise TypeError("invalid archive: %r" % archive)
 
         # Check GDAL version against drivers
-        if driver == "GPKG" and get_gdal_version_num() < calc_gdal_version_num(1, 11, 0):
+        if (driver == "GPKG" and
+                get_gdal_version_num() < calc_gdal_version_num(1, 11, 0)):
             raise DriverError(
-                    "GPKG driver requires GDAL 1.11.0, fiona was compiled against: {}".format(get_gdal_release_name()))
+                    "GPKG driver requires GDAL 1.11.0, "
+                    "fiona was compiled against: {}".format(get_gdal_release_name()))
 
         self.session = None
         self.iterator = None
