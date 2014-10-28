@@ -1,6 +1,10 @@
 Changes
 =======
 
+1.4.7 (2014-10-28)
+------------------
+- Fix setting of CRS from EPSG codes (#149).
+
 1.4.6 (2014-10-21)
 ------------------
 - Handle 3D coordinates in bounds() #178.
