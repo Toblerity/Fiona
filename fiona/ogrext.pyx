@@ -541,6 +541,21 @@ cdef class Session:
             log.debug("Projection not found (cogr_crs was NULL)")
         return crs
 
+    def get_crs_wkt(self):
+        cdef char *proj_c = NULL
+        if self.cogr_layer == NULL:
+            raise ValueError("Null layer")
+        cogr_crs = ograpi.OGR_L_GetSpatialRef(self.cogr_layer)
+        if cogr_crs is not NULL:
+            log.debug("Got coordinate system")
+        ograpi.OSRExportToWkt(cogr_crs, &proj_c)
+        if proj_c == NULL:
+            raise ValueError("Null projection")
+        proj_b = proj_c
+        crs_wkt = proj_b.decode('utf-8')
+        ograpi.CPLFree(proj_c)
+        return crs_wkt
+
     def get_extent(self):
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
