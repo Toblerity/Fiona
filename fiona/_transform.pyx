@@ -122,9 +122,10 @@ def _transform_geom(
         transform = ograpi.OCTNewCoordinateTransformation(src, dst)
 
         # Transform options.
+        antimeridian_offset_str = str(antimeridian_offset).encode('utf-8')
         options = ograpi.CSLSetNameValue(
                     options, "DATELINEOFFSET", 
-                    str(antimeridian_offset).encode('utf-8'))
+                    antimeridian_offset_str)
         if antimeridian_cutting:
             options = ograpi.CSLSetNameValue(options, "WRAPDATELINE", "YES")
 
