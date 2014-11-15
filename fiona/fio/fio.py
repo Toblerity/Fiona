@@ -4,6 +4,7 @@
 
 import code
 from functools import partial
+import itertools
 import json
 import logging
 import pprint
@@ -95,7 +96,7 @@ def info(ctx, input, indent, meta_member):
 @click.argument('src_path', type=click.Path(exists=True))
 @click.pass_context
 def insp(ctx, src_path):
-    verbosity = ctx.obj['verbosity']
+    verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
     logger = logging.getLogger('fio')
     try:
         with fiona.drivers(CPL_DEBUG=verbosity>2):
@@ -129,7 +130,7 @@ def load(ctx, output, driver, src_crs, dst_crs, x_json_seq):
 
     The input is a GeoJSON feature collection or optionally a sequence of
     GeoJSON feature objects."""
-    verbosity = ctx.obj['verbosity']
+    verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
     logger = logging.getLogger('fio')
     stdin = click.get_text_stream('stdin')
 
@@ -167,7 +168,8 @@ def load(ctx, output, driver, src_crs, dst_crs, x_json_seq):
                 yield feat
     else:
         def feature_gen():
-            for feat in json.load(input)['features']:
+            text = "".join(itertools.chain([first_line], stdin))
+            for feat in json.loads(text)['features']:
                 feat['geometry'] = transformer(feat['geometry'])
                 yield feat
 
