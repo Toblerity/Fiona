@@ -541,6 +541,21 @@ cdef class Session:
             log.debug("Projection not found (cogr_crs was NULL)")
         return crs
 
+    def get_crs_wkt(self):
+        cdef char *proj_c = NULL
+        if self.cogr_layer == NULL:
+            raise ValueError("Null layer")
+        cogr_crs = ograpi.OGR_L_GetSpatialRef(self.cogr_layer)
+        if cogr_crs is not NULL:
+            log.debug("Got coordinate system")
+        ograpi.OSRExportToWkt(cogr_crs, &proj_c)
+        if proj_c == NULL:
+            raise ValueError("Null projection")
+        proj_b = proj_c
+        crs_wkt = proj_b.decode('utf-8')
+        ograpi.CPLFree(proj_c)
+        return crs_wkt
+
     def get_extent(self):
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
@@ -711,31 +726,36 @@ cdef class WritingSession(Session):
                 cogr_srs = ograpi.OSRNewSpatialReference(NULL)
                 if cogr_srs == NULL:
                     raise ValueError("NULL spatial reference")
-                params = []
-                if isinstance(collection.crs, dict):
+                # First, check for CRS strings like "EPSG:3857".
+                if isinstance(collection.crs, string_types):
+                    proj_b = collection.crs.encode('utf-8')
+                    proj_c = proj_b
+                    ograpi.OSRSetFromUserInput(cogr_srs, proj_c)
+                elif isinstance(collection.crs, dict):
                     # EPSG is a special case.
                     init = collection.crs.get('init')
                     if init:
+                        log.debug("Init: %s", init)
                         auth, val = init.split(':')
                         if auth.upper() == 'EPSG':
+                            log.debug("Setting EPSG: %s", val)
                             ograpi.OSRImportFromEPSG(cogr_srs, int(val))
                     else:
+                        params = []
                         collection.crs['wktext'] = True
                         for k, v in collection.crs.items():
                             if v is True or (k in ('no_defs', 'wktext') and v):
                                 params.append("+%s" % k)
                             else:
                                 params.append("+%s=%s" % (k, v))
-                    proj = " ".join(params)
-                    log.debug("PROJ.4 to be imported: %r", proj)
-                    proj_b = proj.encode('utf-8')
-                    proj_c = proj_b
-                    ograpi.OSRImportFromProj4(cogr_srs, proj_c)
-                # Fall back for CRS strings like "EPSG:3857."
+                        proj = " ".join(params)
+                        log.debug("PROJ.4 to be imported: %r", proj)
+                        proj_b = proj.encode('utf-8')
+                        proj_c = proj_b
+                        ograpi.OSRImportFromProj4(cogr_srs, proj_c)
                 else:
-                    proj_b = collection.crs.encode('utf-8')
-                    proj_c = proj_b
-                    ograpi.OSRSetFromUserInput(cogr_srs, proj_c)
+                    raise ValueError("Invalid CRS")
+
                 # Fixup, export to WKT, and set the GDAL dataset's projection.
                 ograpi.OSRFixup(cogr_srs)
 

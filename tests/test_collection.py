@@ -156,6 +156,10 @@ class ReadingTest(unittest.TestCase):
         crs = self.c.crs
         self.failUnlessEqual(crs['init'], 'epsg:4326')
 
+    def test_crs_wkt(self):
+        crs = self.c.crs_wkt
+        self.failUnless(crs.startswith('GEOGCS["GCS_WGS_1984"'))
+
     def test_closed_crs(self):
         # Crs is lazy too, never computed in this case. TODO?
         self.c.close()

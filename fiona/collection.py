@@ -59,9 +59,11 @@ class Collection(object):
             raise TypeError("invalid archive: %r" % archive)
 
         # Check GDAL version against drivers
-        if driver == "GPKG" and get_gdal_version_num() < calc_gdal_version_num(1, 11, 0):
+        if (driver == "GPKG" and
+                get_gdal_version_num() < calc_gdal_version_num(1, 11, 0)):
             raise DriverError(
-                    "GPKG driver requires GDAL 1.11.0, fiona was compiled against: {}".format(get_gdal_release_name()))
+                    "GPKG driver requires GDAL 1.11.0, "
+                    "fiona was compiled against: {}".format(get_gdal_release_name()))
 
         self.session = None
         self.iterator = None
@@ -70,6 +72,7 @@ class Collection(object):
         self._driver = None
         self._schema = None
         self._crs = None
+        self._crs_wkt = None
         self.env = None
         
         self.path = vsi_path(path, vsi, archive)
@@ -183,6 +186,13 @@ class Collection(object):
         if self._crs is None and self.mode in ("a", "r") and self.session:
             self._crs = self.session.get_crs()
         return self._crs
+
+    @property
+    def crs_wkt(self):
+        """Returns a WKT string."""
+        if self._crs_wkt is None and self.mode in ("a", "r") and self.session:
+            self._crs_wkt = self.session.get_crs_wkt()
+        return self._crs_wkt
 
     @property
     def meta(self):
