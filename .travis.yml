@@ -13,7 +13,7 @@ install:
   - "pip install coveralls"
   - "pip install -e ."
 script: 
-  - nosetests --exclude test_filter_vsi
-  - coverage run --source=fiona --omit='*.pxd,*.pyx,*/tests/*,*/docs/*,*/examples/*,*/benchmarks/*' -m nose --exclude test_filter_vsi
+  - nosetests --exclude test_filter_vsi --exclude test_geopackage
+  - coverage run --source=fiona --omit='*.pxd,*.pyx,*/tests/*,*/docs/*,*/examples/*,*/benchmarks/*' -m nose --exclude test_filter_vsi --exclude test_geopackage
 after_success:
   - coveralls
