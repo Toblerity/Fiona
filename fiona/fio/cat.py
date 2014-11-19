@@ -328,8 +328,9 @@ def distrib(ctx, x_json_seq_rs):
                 stdout.write('\n')
         sys.exit(0)
     except Exception:
-        logger.exception("Failed. Exception caught")
-        sys.exit(1)
+        raise
+        #logger.exception("Failed. Exception caught")
+        #sys.exit(1)
 
 
 # Dump command

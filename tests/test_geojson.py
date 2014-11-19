@@ -16,13 +16,13 @@ logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 class ReadingTest(unittest.TestCase):
     
     def setUp(self):
-        self.c = fiona.open('docs/data/test_uk.json', 'r')
+        self.c = fiona.open('tests/data/coutwildrnp.json', 'r')
     
     def tearDown(self):
         self.c.close()
 
     def test_json(self):
-        self.assertEquals(len(self.c), 48)
+        self.assertEquals(len(self.c), 67)
 
 class WritingTest(unittest.TestCase):
 

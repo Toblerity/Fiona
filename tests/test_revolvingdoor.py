@@ -23,7 +23,7 @@ class RevolvingDoorTest(unittest.TestCase):
 
     def test_write_revolving_door(self):
 
-        with fiona.open('docs/data/test_uk.shp') as src:
+        with fiona.open('tests/data/coutwildrnp.shp') as src:
             meta = src.meta
             features = list(src)
 
@@ -34,4 +34,3 @@ class RevolvingDoorTest(unittest.TestCase):
 
         with fiona.open(shpname) as src:
             pass
-
