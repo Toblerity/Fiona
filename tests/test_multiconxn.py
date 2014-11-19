@@ -15,19 +15,19 @@ class ReadAccess(unittest.TestCase):
     # in a single file.
     
     def setUp(self):
-        self.c = fiona.open("docs/data/test_uk.shp", "r", layer="test_uk")
+        self.c = fiona.open("tests/data/coutwildrnp.shp", "r", layer="coutwildrnp")
     
     def tearDown(self):
         self.c.close()
 
     def test_meta(self):
-        with fiona.open("docs/data/test_uk.shp", "r", layer="test_uk") as c2:
+        with fiona.open("tests/data/coutwildrnp.shp", "r", layer="coutwildrnp") as c2:
             self.assertEqual(len(self.c), len(c2))
             self.assertEqual(sorted(self.c.schema.items()), sorted(c2.schema.items()))
 
     def test_meta(self):
         f1 = next(self.c)
-        with fiona.open("docs/data/test_uk.shp", "r", layer="test_uk") as c2:
+        with fiona.open("tests/data/coutwildrnp.shp", "r", layer="coutwildrnp") as c2:
             f2 = next(c2)
             self.assertEqual(f1, f2)
 
@@ -121,4 +121,3 @@ class LayerCreation(unittest.TestCase):
         f2 = next(c2)
         del f2['id']
         self.assertEqual(self.f, f2)
-

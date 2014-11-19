@@ -12,13 +12,13 @@ logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 from .test_collection import ReadingTest
 
 def test_index_selection():
-    with fiona.open('docs/data/test_uk.shp', 'r', layer=0) as c:
-        assert len(c) == 48
+    with fiona.open('tests/data/coutwildrnp.shp', 'r', layer=0) as c:
+        assert len(c) == 67
 
 class FileReadingTest(ReadingTest):
     
     def setUp(self):
-        self.c = fiona.open('docs/data/test_uk.shp', 'r', layer='test_uk')
+        self.c = fiona.open('tests/data/coutwildrnp.shp', 'r', layer='coutwildrnp')
     
     def tearDown(self):
         self.c.close()
@@ -26,23 +26,23 @@ class FileReadingTest(ReadingTest):
     def test_open_repr(self):
         self.failUnlessEqual(
             repr(self.c),
-            ("<open Collection 'docs/data/test_uk.shp:test_uk', mode 'r' "
+            ("<open Collection 'tests/data/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_closed_repr(self):
         self.c.close()
         self.failUnlessEqual(
             repr(self.c),
-            ("<closed Collection 'docs/data/test_uk.shp:test_uk', mode 'r' "
+            ("<closed Collection 'tests/data/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_name(self):
-        self.failUnlessEqual(self.c.name, 'test_uk')
+        self.failUnlessEqual(self.c.name, 'coutwildrnp')
 
 class DirReadingTest(ReadingTest):
     
     def setUp(self):
-        self.c = fiona.open("docs/data", "r", layer="test_uk")
+        self.c = fiona.open("tests/data", "r", layer="coutwildrnp")
     
     def tearDown(self):
         self.c.close()
@@ -50,26 +50,26 @@ class DirReadingTest(ReadingTest):
     def test_open_repr(self):
         self.failUnlessEqual(
             repr(self.c),
-            ("<open Collection 'docs/data:test_uk', mode 'r' "
+            ("<open Collection 'tests/data:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_closed_repr(self):
         self.c.close()
         self.failUnlessEqual(
             repr(self.c),
-            ("<closed Collection 'docs/data:test_uk', mode 'r' "
+            ("<closed Collection 'tests/data:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_name(self):
-        self.failUnlessEqual(self.c.name, 'test_uk')
+        self.failUnlessEqual(self.c.name, 'coutwildrnp')
 
     def test_path(self):
-        self.failUnlessEqual(self.c.path, "docs/data")
+        self.failUnlessEqual(self.c.path, "tests/data")
 
 class InvalidLayerTest(unittest.TestCase):
 
     def test_invalid(self):
-        self.assertRaises(ValueError, fiona.open, ("docs/data/test_uk.shp"), layer="foo")
+        self.assertRaises(ValueError, fiona.open, ("tests/data/coutwildrnp.shp"), layer="foo")
 
     def test_write_numeric_layer(self):
         self.assertRaises(ValueError, fiona.open,

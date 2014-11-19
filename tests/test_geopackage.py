@@ -26,13 +26,13 @@ class ReadingTest(unittest.TestCase):
     def tearDown(self):
         pass
 
-    @pytest.mark.skipif(not os.path.exists('docs/data/test_uk.gpkg'),
+    @pytest.mark.skipif(not os.path.exists('tests/data/coutwildrnp.gpkg'),
                         reason="Requires geopackage fixture")
     def test_gpkg(self):
         if get_gdal_version_num() < calc_gdal_version_num(1, 11, 0):
-            self.assertRaises(DriverError, fiona.open, 'docs/data/test_uk.gpkg', 'r', driver="GPKG")
+            self.assertRaises(DriverError, fiona.open, 'tests/data/coutwildrnp.gpkg', 'r', driver="GPKG")
         else:
-            with fiona.open('docs/data/test_uk.gpkg', 'r', driver="GPKG") as c:
+            with fiona.open('tests/data/coutwildrnp.gpkg', 'r', driver="GPKG") as c:
                 self.assertEquals(len(c), 48)
 
 
@@ -44,7 +44,7 @@ class WritingTest(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tempdir)
 
-    @pytest.mark.skipif(not os.path.exists('docs/data/test_uk.gpkg'),
+    @pytest.mark.skipif(not os.path.exists('tests/data/coutwildrnp.gpkg'),
                         reason="Requires geopackage fixture")
     def test_gpkg(self):
         schema = {'geometry': 'Point',

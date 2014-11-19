@@ -20,16 +20,16 @@ class VsiReadingTest(ReadingTest):
     # from the test runner at run time.
 
     def test_filter_vsi(self):
-        results = list(self.c.filter(bbox=(-15.0, 35.0, 15.0, 65.0)))
-        self.failUnlessEqual(len(results), 48)
+        results = list(self.c.filter(bbox=(-114.0, 35.0, -104, 45.0)))
+        self.failUnlessEqual(len(results), 67)
         f = results[0]
         self.failUnlessEqual(f['id'], "0")
-        self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
+        self.failUnlessEqual(f['properties']['STATE'], 'UT')
 
 class ZipReadingTest(VsiReadingTest):
     
     def setUp(self):
-        self.c = fiona.open("zip://docs/data/test_uk.zip", "r")
+        self.c = fiona.open("zip://tests/data/coutwildrnp.zip", "r")
     
     def tearDown(self):
         self.c.close()
@@ -37,23 +37,23 @@ class ZipReadingTest(VsiReadingTest):
     def test_open_repr(self):
         self.failUnlessEqual(
             repr(self.c),
-            ("<open Collection '/vsizip/docs/data/test_uk.zip:test_uk', mode 'r' "
+            ("<open Collection '/vsizip/tests/data/coutwildrnp.zip:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_closed_repr(self):
         self.c.close()
         self.failUnlessEqual(
             repr(self.c),
-            ("<closed Collection '/vsizip/docs/data/test_uk.zip:test_uk', mode 'r' "
+            ("<closed Collection '/vsizip/tests/data/coutwildrnp.zip:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_path(self):
-        self.failUnlessEqual(self.c.path, '/vsizip/docs/data/test_uk.zip')
+        self.failUnlessEqual(self.c.path, '/vsizip/tests/data/coutwildrnp.zip')
 
 class ZipArchiveReadingTest(VsiReadingTest):
     
     def setUp(self):
-        self.c = fiona.open("/test_uk.shp", "r", vfs="zip://docs/data/test_uk.zip")
+        self.c = fiona.open("/coutwildrnp.shp", "r", vfs="zip://tests/data/coutwildrnp.zip")
     
     def tearDown(self):
         self.c.close()
@@ -61,23 +61,23 @@ class ZipArchiveReadingTest(VsiReadingTest):
     def test_open_repr(self):
         self.failUnlessEqual(
             repr(self.c),
-            ("<open Collection '/vsizip/docs/data/test_uk.zip/test_uk.shp:test_uk', mode 'r' "
+            ("<open Collection '/vsizip/tests/data/coutwildrnp.zip/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_closed_repr(self):
         self.c.close()
         self.failUnlessEqual(
             repr(self.c),
-            ("<closed Collection '/vsizip/docs/data/test_uk.zip/test_uk.shp:test_uk', mode 'r' "
+            ("<closed Collection '/vsizip/tests/data/coutwildrnp.zip/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_path(self):
-        self.failUnlessEqual(self.c.path, '/vsizip/docs/data/test_uk.zip/test_uk.shp')
+        self.failUnlessEqual(self.c.path, '/vsizip/tests/data/coutwildrnp.zip/coutwildrnp.shp')
 
 class TarArchiveReadingTest(VsiReadingTest):
     
     def setUp(self):
-        self.c = fiona.open("/testing/test_uk.shp", "r", vfs="tar://docs/data/test_uk.tar")
+        self.c = fiona.open("/testing/coutwildrnp.shp", "r", vfs="tar://tests/data/coutwildrnp.tar")
     
     def tearDown(self):
         self.c.close()
@@ -85,16 +85,16 @@ class TarArchiveReadingTest(VsiReadingTest):
     def test_open_repr(self):
         self.failUnlessEqual(
             repr(self.c),
-            ("<open Collection '/vsitar/docs/data/test_uk.tar/testing/test_uk.shp:test_uk', mode 'r' "
+            ("<open Collection '/vsitar/tests/data/coutwildrnp.tar/testing/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_closed_repr(self):
         self.c.close()
         self.failUnlessEqual(
             repr(self.c),
-            ("<closed Collection '/vsitar/docs/data/test_uk.tar/testing/test_uk.shp:test_uk', mode 'r' "
+            ("<closed Collection '/vsitar/tests/data/coutwildrnp.tar/testing/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_path(self):
-        self.failUnlessEqual(self.c.path, '/vsitar/docs/data/test_uk.tar/testing/test_uk.shp')
+        self.failUnlessEqual(self.c.path, '/vsitar/tests/data/coutwildrnp.tar/testing/coutwildrnp.shp')
 

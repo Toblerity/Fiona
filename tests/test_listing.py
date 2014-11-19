@@ -11,22 +11,22 @@ logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 def test_single_file_private():
     with fiona.drivers():
-        assert fiona.ogrext._listlayers('docs/data/test_uk.shp') == ['test_uk']
+        assert fiona.ogrext._listlayers('tests/data/coutwildrnp.shp') == ['coutwildrnp']
 
 def test_single_file():
-    assert fiona.listlayers('docs/data/test_uk.shp') == ['test_uk']
+    assert fiona.listlayers('tests/data/coutwildrnp.shp') == ['coutwildrnp']
 
 def test_directory():
-    assert fiona.listlayers('docs/data') == ['test_uk']
+    assert fiona.listlayers('tests/data') == ['coutwildrnp']
 
 def test_directory_trailing_slash():
-    assert fiona.listlayers('docs/data/') == ['test_uk']
+    assert fiona.listlayers('tests/data/') == ['coutwildrnp']
 
 def test_zip_path():
-    assert fiona.listlayers('zip://docs/data/test_uk.zip') == ['test_uk']
+    assert fiona.listlayers('zip://tests/data/coutwildrnp.zip') == ['coutwildrnp']
 
 def test_zip_path_arch():
-    assert fiona.listlayers('/test_uk.shp', vfs='zip://docs/data/test_uk.zip') == ['test_uk']
+    assert fiona.listlayers('/coutwildrnp.shp', vfs='zip://tests/data/coutwildrnp.zip') == ['coutwildrnp']
 
 class ListLayersArgsTest(unittest.TestCase):
     def test_path(self):

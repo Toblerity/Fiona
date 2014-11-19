@@ -13,9 +13,13 @@ import fiona
 from fiona.collection import Collection, supported_drivers
 from fiona.errors import FionaValueError, DriverError, SchemaError, CRSError
 
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+
+WILDSHP = 'tests/data/coutwildrnp.shp'
+
+#logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 TEMPDIR = tempfile.gettempdir()
+
 
 class SupportedDriversTest(unittest.TestCase):
     def test_shapefile(self):
@@ -26,6 +30,7 @@ class SupportedDriversTest(unittest.TestCase):
         self.failUnless("MapInfo File" in supported_drivers)
         self.failUnlessEqual(
             set(supported_drivers["MapInfo File"]), set("raw") )
+
 
 class CollectionArgsTest(unittest.TestCase):
     def test_path(self):
@@ -65,14 +70,16 @@ class CollectionArgsTest(unittest.TestCase):
     def test_append_geojson(self):
         self.assertRaises(ValueError, Collection, ("foo"), mode='w', driver='ARCGEN')
 
+
 class OpenExceptionTest(unittest.TestCase):
     def test_no_archive(self):
         self.assertRaises(IOError, fiona.open, ("/"), mode='r', vfs="zip:///foo.zip")
 
+
 class ReadingTest(unittest.TestCase):
     
     def setUp(self):
-        self.c = fiona.open("docs/data/test_uk.shp", "r")
+        self.c = fiona.open(WILDSHP, "r")
     
     def tearDown(self):
         self.c.close()
@@ -80,21 +87,21 @@ class ReadingTest(unittest.TestCase):
     def test_open_repr(self):
         self.failUnlessEqual(
             repr(self.c),
-            ("<open Collection 'docs/data/test_uk.shp:test_uk', mode 'r' "
+            ("<open Collection 'tests/data/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_closed_repr(self):
         self.c.close()
         self.failUnlessEqual(
             repr(self.c),
-            ("<closed Collection 'docs/data/test_uk.shp:test_uk', mode 'r' "
+            ("<closed Collection 'tests/data/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_path(self):
-        self.failUnlessEqual(self.c.path, 'docs/data/test_uk.shp')
+        self.failUnlessEqual(self.c.path, WILDSHP)
 
     def test_name(self):
-        self.failUnlessEqual(self.c.name, 'test_uk')
+        self.failUnlessEqual(self.c.name, 'coutwildrnp')
     
     def test_mode(self):
         self.failUnlessEqual(self.c.mode, 'r')
@@ -110,7 +117,7 @@ class ReadingTest(unittest.TestCase):
         self.assertRaises(ValueError, iter, self.c)
 
     def test_len(self):
-        self.failUnlessEqual(len(self.c), 48)
+        self.failUnlessEqual(len(self.c), 67)
     
     def test_closed_len(self):
         # Len is lazy, it's never computed in this case. TODO?
@@ -121,7 +128,7 @@ class ReadingTest(unittest.TestCase):
         # Lazy len is computed in this case and sticks.
         len(self.c)
         self.c.close()
-        self.failUnlessEqual(len(self.c), 48)
+        self.failUnlessEqual(len(self.c), 67)
     
     def test_driver(self):
         self.failUnlessEqual(self.c.driver, "ESRI Shapefile")
@@ -137,8 +144,11 @@ class ReadingTest(unittest.TestCase):
     
     def test_schema(self):
         s = self.c.schema['properties']
-        self.failUnlessEqual(s['CAT'], "float:16")
-        self.failUnlessEqual(s['FIPS_CNTRY'], "str:80")
+        self.failUnlessEqual(s['PERIMETER'], "float:24.15")
+        self.failUnlessEqual(s['NAME'], "str:80")
+        self.failUnlessEqual(s['URL'], "str:101")
+        self.failUnlessEqual(s['STATE_FIPS'], "str:80")
+        self.failUnlessEqual(s['WILDRNP020'], "int:10")
 
     def test_closed_schema(self):
         # Schema is lazy too, never computed in this case. TODO?
@@ -178,38 +188,38 @@ class ReadingTest(unittest.TestCase):
             ['crs', 'driver', 'schema'])
 
     def test_bounds(self):
-        self.failUnlessAlmostEqual(self.c.bounds[0], -8.621389, 6)
-        self.failUnlessAlmostEqual(self.c.bounds[1], 49.911659, 6)
-        self.failUnlessAlmostEqual(self.c.bounds[2], 1.749444, 6)
-        self.failUnlessAlmostEqual(self.c.bounds[3], 60.844444, 6)
+        self.failUnlessAlmostEqual(self.c.bounds[0], -113.564247, 6)
+        self.failUnlessAlmostEqual(self.c.bounds[1], 37.068981, 6)
+        self.failUnlessAlmostEqual(self.c.bounds[2], -104.970871, 6)
+        self.failUnlessAlmostEqual(self.c.bounds[3], 41.996277, 6)
 
     def test_context(self):
-        with fiona.open("docs/data/test_uk.shp", "r") as c:
-            self.failUnlessEqual(c.name, 'test_uk')
-            self.failUnlessEqual(len(c), 48)
+        with fiona.open(WILDSHP, "r") as c:
+            self.failUnlessEqual(c.name, 'coutwildrnp')
+            self.failUnlessEqual(len(c), 67)
         self.failUnlessEqual(c.closed, True)
 
     def test_iter_one(self):
         itr = iter(self.c)
         f = next(itr)
         self.failUnlessEqual(f['id'], "0")
-        self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
+        self.failUnlessEqual(f['properties']['STATE'], 'UT')
 
     def test_iter_list(self):
         f = list(self.c)[0]
         self.failUnlessEqual(f['id'], "0")
-        self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
+        self.failUnlessEqual(f['properties']['STATE'], 'UT')
 
     def test_re_iter_list(self):
         f = list(self.c)[0] # Run through iterator
         f = list(self.c)[0] # Run through a new, reset iterator
         self.failUnlessEqual(f['id'], "0")
-        self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
+        self.failUnlessEqual(f['properties']['STATE'], 'UT')
 
     def test_getitem_one(self):
         f = self.c[0]
         self.failUnlessEqual(f['id'], "0")
-        self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
+        self.failUnlessEqual(f['properties']['STATE'], 'UT')
 
     def test_getitem_iter_combo(self):
         i = iter(self.c)
@@ -228,7 +238,7 @@ class ReadingTest(unittest.TestCase):
         i, f = list(self.c.items())[0]
         self.failUnlessEqual(i, 0)
         self.failUnlessEqual(f['id'], "0")
-        self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
+        self.failUnlessEqual(f['properties']['STATE'], 'UT')
 
     def test_iter_keys_list(self):
         i = list(self.c.keys())[0]
@@ -240,26 +250,34 @@ class ReadingTest(unittest.TestCase):
 
 
 class FilterReadingTest(unittest.TestCase):
+
     def setUp(self):
-        self.c = fiona.open("docs/data/test_uk.shp", "r")
+        self.c = fiona.open(WILDSHP, "r")
+
     def tearDown(self):
         self.c.close()
+
     def test_filter_1(self):
-        results = list(self.c.filter(bbox=(-15.0, 35.0, 15.0, 65.0)))
-        self.failUnlessEqual(len(results), 48)
+        results = list(self.c.filter(bbox=(-120.0, 30.0, -100.0, 50.0)))
+        self.failUnlessEqual(len(results), 67)
         f = results[0]
         self.failUnlessEqual(f['id'], "0")
-        self.failUnlessEqual(f['properties']['FIPS_CNTRY'], 'UK')
+        self.failUnlessEqual(f['properties']['STATE'], 'UT')
+
     def test_filter_reset(self):
-        results = list(self.c.filter(bbox=(-15.0, 55.0, 15.0, 65.0)))
-        self.failUnlessEqual(len(results), 41)
+        results = list(self.c.filter(bbox=(-112.0, 38.0, -106.0, 40.0)))
+        self.failUnlessEqual(len(results), 26)
         results = list(self.c.filter())
-        self.failUnlessEqual(len(results), 48)
+        self.failUnlessEqual(len(results), 67)
         
     def test_filter_mask(self):
-        mask = {'type': 'Polygon', 'coordinates': (((-2.0, 60.0), (-2.0, 60.0), (0.0, 61.0), (0.0, 60.0), (-2.0, 60.0)),)}
+        mask = {
+            'type': 'Polygon',
+            'coordinates': (
+                ((-112, 38), (-112, 40), (-106, 40), (-106, 38), (-112, 38)),)}
         results = list(self.c.filter(mask=mask))
-        self.failUnlessEqual(len(results), 1)
+        self.failUnlessEqual(len(results), 26)
+
 
 class UnsupportedDriverTest(unittest.TestCase):
     
@@ -270,6 +288,7 @@ class UnsupportedDriverTest(unittest.TestCase):
         self.assertRaises(
             DriverError, 
             fiona.open, os.path.join(TEMPDIR, "foo"), "w", "Bogus", schema=schema)
+
 
 class GenericWritingTest(unittest.TestCase):
 
@@ -298,6 +317,7 @@ class GenericWritingTest(unittest.TestCase):
     def test_no_filter(self):
         self.assertRaises(IOError, self.c.filter)
 
+
 class PointWritingTest(unittest.TestCase):
 
     def setUp(self):
@@ -320,7 +340,10 @@ class PointWritingTest(unittest.TestCase):
     def test_cpg(self):
         """Requires GDAL 1.9"""
         self.sink.close()
-        self.failUnless(open(os.path.join(self.tempdir, "point_writing_test.cpg")).readline() == 'UTF-8')
+        self.failUnless(
+            open(
+                os.path.join(self.tempdir, "point_writing_test.cpg")
+                ).readline() == 'UTF-8')
 
     def test_write_one(self):
         self.failUnlessEqual(len(self.sink), 0)
@@ -371,6 +394,7 @@ class PointWritingTest(unittest.TestCase):
         self.assertTrue(self.sink.validate_record(fvalid))
         self.assertFalse(self.sink.validate_record(finvalid))
 
+
 class LineWritingTest(unittest.TestCase):
 
     def setUp(self):
@@ -416,18 +440,19 @@ class LineWritingTest(unittest.TestCase):
         self.failUnlessEqual(len(self.sink), 2)
         self.failUnlessEqual(self.sink.bounds, (0.0, -0.2, 0.0, 0.2))
 
+
 class PointAppendTest(unittest.TestCase):
     # Tests 3D shapefiles too
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
-        with fiona.open("docs/data/test_uk.shp", "r") as input:
+        with fiona.open(WILDSHP, "r") as input:
             output_schema = input.schema.copy()
             output_schema['geometry'] = '3D Point'
             with fiona.open(
                     os.path.join(self.tempdir, "test_append_point.shp"),
                     "w", crs=None, driver="ESRI Shapefile", schema=output_schema
                     ) as output:
-                for f in input.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
+                for f in input:
                     f['geometry'] = {
                         'type': 'Point',
                         'coordinates': f['geometry']['coordinates'][0][0] }
@@ -440,12 +465,18 @@ class PointAppendTest(unittest.TestCase):
         with fiona.open(os.path.join(self.tempdir, "test_append_point.shp"), "a") as c:
             self.assertEqual(c.schema['geometry'], '3D Point')
             c.write({'geometry': {'type': 'Point', 'coordinates': (0.0, 45.0)},
-                     'properties': { 'FIPS_CNTRY': 'UK', 
-                                     'AREA': 0.0, 
-                                     'CAT': 1.0, 
-                                     'POP_CNTRY': 0, 
-                                     'CNTRY_NAME': u'Foo'} })
-            self.assertEqual(len(c), 8)
+                     'properties': { 'PERIMETER': 1.0,
+                                     'FEATURE2': None,
+                                     'NAME': 'Foo',
+                                     'FEATURE1': None,
+                                     'URL': 'http://example.com',
+                                     'AGBUR': 'BAR',
+                                     'AREA': 0.0,
+                                     'STATE_FIPS': 1,
+                                     'WILDRNP020': 1,
+                                     'STATE': 'XL' } })
+            self.assertEqual(len(c), 68)
+
 
 class LineAppendTest(unittest.TestCase):
 
@@ -484,6 +515,7 @@ class LineAppendTest(unittest.TestCase):
             self.failUnlessEqual(len(c), 3)
             self.failUnlessEqual(c.bounds, (0.0, -0.2, 0.0, 0.2))
 
+
 class ShapefileFieldWidthTest(unittest.TestCase):
     
     def test_text(self):
@@ -504,6 +536,7 @@ class ShapefileFieldWidthTest(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tempdir)
 
+
 class CollectionTest(unittest.TestCase):
 
     def test_invalid_mode(self):
@@ -522,6 +555,7 @@ class CollectionTest(unittest.TestCase):
 
     def test_no_read_directory(self):
         self.assertRaises(ValueError, fiona.open, "/dev/null", "r")
+
 
 class GeoJSONCRSWritingTest(unittest.TestCase):
 
@@ -550,7 +584,9 @@ class GeoJSONCRSWritingTest(unittest.TestCase):
             'GEOGCS["WGS 84' in info.decode('utf-8'),
             info)
 
+
 class DateTimeTest(unittest.TestCase):
+
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
 

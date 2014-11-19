@@ -1,7 +1,7 @@
 import os
 
-DATADIR = os.path.abspath('docs/data')
-FILES = ['test_uk.shp', 'test_uk.shx', 'test_uk.dbf', 'test_uk.prj']
+DATADIR = os.path.abspath('tests/data')
+FILES = ['coutwildrnp.shp', 'coutwildrnp.shx', 'coutwildrnp.dbf', 'coutwildrnp.prj']
 
 def create_zipfile(zipfilename):
     import zipfile
@@ -28,9 +28,9 @@ def create_jsonfile(jsonfilename):
 def setup():
     """Setup function for nosetests to create test files if they do not exist
     """
-    zipfile = os.path.join(DATADIR, 'test_uk.zip')
-    tarfile = os.path.join(DATADIR, 'test_uk.tar')
-    jsonfile = os.path.join(DATADIR, 'test_uk.json')
+    zipfile = os.path.join(DATADIR, 'coutwildrnp.zip')
+    tarfile = os.path.join(DATADIR, 'coutwildrnp.tar')
+    jsonfile = os.path.join(DATADIR, 'coutwildrnp.json')
     if not os.path.exists(zipfile):
         create_zipfile(zipfile)
     if not os.path.exists(tarfile):

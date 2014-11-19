@@ -1,4 +1,3 @@
-
 import logging
 import os.path
 import shutil
@@ -6,6 +5,7 @@ import sys
 import tempfile
 
 import fiona
+
 
 def test_options(tmpdir=None):
     """Test that setting CPL_DEBUG=ON works"""
@@ -21,7 +21,7 @@ def test_options(tmpdir=None):
     logger.addHandler(fh)
 
     with fiona.drivers(CPL_DEBUG=True):
-        c = fiona.open("docs/data/test_uk.shp")
+        c = fiona.open("tests/data/coutwildrnp.shp")
         c.close()
         log = open(logfile).read()
         assert "Option CPL_DEBUG" in log

@@ -65,7 +65,7 @@ def env(ctx, key):
               help="Print the nodata value.")
 @click.pass_context
 def info(ctx, input, indent, meta_member):
-    verbosity = ctx.obj['verbosity']
+    verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
     logger = logging.getLogger('rio')
 
     stdout = click.get_text_stream('stdout')
@@ -80,9 +80,9 @@ def info(ctx, input, indent, meta_member):
                 info['crs'] = proj4
                 if meta_member:
                     if isinstance(info[meta_member], (list, tuple)):
-                        print(" ".join(map(str, info[meta_member])))
+                        click.echo(" ".join(map(str, info[meta_member])))
                     else:
-                        print(info[meta_member])
+                        click.echo(info[meta_member])
                 else:
                     stdout.write(json.dumps(info, indent=indent))
                     stdout.write("\n")
@@ -181,7 +181,7 @@ def load(ctx, output, driver, src_crs, dst_crs, x_json_seq):
         first = next(source)
         schema = {'geometry': first['geometry']['type']}
         schema['properties'] = dict([
-            (k, FIELD_TYPES_MAP_REV[type(v)])
+            (k, FIELD_TYPES_MAP_REV.get(type(v)) or 'str')
             for k, v in first['properties'].items()])
 
         with fiona.drivers(CPL_DEBUG=verbosity>2):
