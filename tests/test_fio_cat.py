@@ -5,7 +5,7 @@ from click.testing import CliRunner
 
 from fiona.fio import cat
 
-from fixtures import (
+from .fixtures import (
     feature_collection, feature_collection_pp, feature_seq, feature_seq_pp_rs)
 
 
