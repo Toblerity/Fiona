@@ -23,7 +23,7 @@ class NonCountingLayerTest(unittest.TestCase):
         feature = self.c[2]
 
     def test_fail_getitem_negative_index(self):
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(IndexError):
             self.c[-1]
 
     def test_slice(self):
@@ -31,5 +31,5 @@ class NonCountingLayerTest(unittest.TestCase):
         self.assertEquals(len(features), 3)
 
     def test_fail_slice_negative_index(self):
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(IndexError):
             self.c[2:-4]
