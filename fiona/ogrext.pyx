@@ -607,7 +607,7 @@ cdef class Session:
             if index < 0:
                 ftcount = ograpi.OGR_L_GetFeatureCount(self.cogr_layer, 0)
                 if ftcount == -1:
-                    raise RuntimeError("Layer does not support counting")
+                    raise IndexError("Layer does not support counting")
                 index += ftcount
             cogr_feature = ograpi.OGR_L_GetFeature(self.cogr_layer, index)
             if cogr_feature == NULL:
@@ -972,8 +972,9 @@ cdef class Iterator:
             session.cogr_layer, OLC_FASTSETNEXTBYINDEX)
 
         ftcount = ograpi.OGR_L_GetFeatureCount(session.cogr_layer, 0)
-        if ftcount == -1:
-            raise RuntimeError("Layer does not support counting")
+        if ftcount == -1 and ((start is not None and start < 0) or
+                              (stop is not None and stop < 0)):
+            raise IndexError("Layer does not support counting")
 
         if stop is not None and stop < 0:
             stop += ftcount

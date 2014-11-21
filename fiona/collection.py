@@ -351,6 +351,10 @@ class Collection(object):
     def __len__(self):
         if self._len <= 0 and self.session is not None:
             self._len = self.session.get_length()
+        if self._len < 0:
+            # Raise TypeError when we don't know the length so that Python
+            # will treat Collection as a generator
+            raise TypeError("Layer does not support counting")
         return self._len
 
     @property
