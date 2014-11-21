@@ -1,6 +1,10 @@
 Changes
 =======
 
+Next
+----
+- Fix for reading of datasets that don't support feature counting (#190).
+
 1.4.8 (2014-11-02)
 ------------------
 - Add missing crs_wkt property as in Rasterio (#182).
