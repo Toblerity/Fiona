@@ -156,7 +156,7 @@ cdef class FeatureBuilder:
             if key_c == NULL:
                 raise ValueError("Null field name reference")
             key_b = key_c
-            key = key_b.decode('utf-8')
+            key = key_b.decode(encoding)
             fieldtypename = FIELD_TYPES[ograpi.OGR_Fld_GetType(fdefn)]
             if not fieldtypename:
                 log.warn(
@@ -445,7 +445,7 @@ cdef class Session:
             key_b = key_c
             if not bool(key_b):
                 raise ValueError("Invalid field name ref: %s" % key)
-            key = key_b.decode('utf-8')
+            key = key_b.decode(self.get_internalencoding())
             fieldtypename = FIELD_TYPES[ograpi.OGR_Fld_GetType(cogr_fielddefn)]
             if not fieldtypename:
                 log.warn(
