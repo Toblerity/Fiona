@@ -328,14 +328,12 @@ cdef class Session:
     cdef object _fileencoding
     cdef object _encoding
     cdef object collection
-    cdef int _read_ts
 
     def __cinit__(self):
         self.cogr_ds = NULL
         self.cogr_layer = NULL
         self._fileencoding = None
         self._encoding = None
-        self._read_ts = 0
 
     def __dealloc__(self):
         self.stop()
@@ -411,7 +409,6 @@ cdef class Session:
     def get_length(self):
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
-        self._read_ts += 1
         return ograpi.OGR_L_GetFeatureCount(self.cogr_layer, 0)
 
     def get_driver(self):
@@ -560,7 +557,6 @@ cdef class Session:
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
         cdef ograpi.OGREnvelope extent
-        self._read_ts += 1
         result = ograpi.OGR_L_GetExtent(self.cogr_layer, &extent, 1)
         return (extent.MinX, extent.MinY, extent.MaxX, extent.MaxY)
 
@@ -571,7 +567,6 @@ cdef class Session:
         """
         cdef void * cogr_feature
         fid = int(fid)
-        self._read_ts += 1
         cogr_feature = ograpi.OGR_L_GetFeature(self.cogr_layer, fid)
         if cogr_feature != NULL:
             _deleteOgrFeature(cogr_feature)
@@ -586,7 +581,6 @@ cdef class Session:
         """
         cdef void * cogr_feature
         fid = int(fid)
-        self._read_ts += 1
         cogr_feature = ograpi.OGR_L_GetFeature(self.cogr_layer, fid)
         if cogr_feature != NULL:
             _deleteOgrFeature(cogr_feature)
@@ -929,7 +923,6 @@ cdef class Iterator:
     # Reference to its Collection
     cdef collection
     cdef encoding
-    cdef int _read_ts
     cdef int next_index
     cdef stop
     cdef start
@@ -965,9 +958,6 @@ cdef class Iterator:
             ograpi.OGR_L_SetSpatialFilter(
                 cogr_layer, NULL)
         self.encoding = session.get_internalencoding()
-
-        session._read_ts += 1
-        self._read_ts = session._read_ts
 
         self.fastindex = ograpi.OGR_L_TestCapability(
             session.cogr_layer, OLC_FASTSETNEXTBYINDEX)
@@ -1014,11 +1004,6 @@ cdef class Iterator:
 
         cdef Session session
         session = self.collection.session
-
-        if session._read_ts > self._read_ts:
-            warnings.warn("Read cursor may be altered. This can" \
-                         " lead to side effects", RuntimeWarning)
-
 
         # Check if next_index is valid
         if self.next_index < 0:
@@ -1082,10 +1067,6 @@ cdef class ItemsIterator(Iterator):
         cdef Session session
         session = self.collection.session
 
-        if session._read_ts > self._read_ts:
-            warnings.warn("Read cursor may be altered. This can" \
-                         " lead to side effects", RuntimeWarning)
-
         #Update read cursor
         self._next()
 
@@ -1110,9 +1091,6 @@ cdef class KeysIterator(Iterator):
         cdef Session session
         session = self.collection.session
 
-        if session._read_ts > self._read_ts:
-            warnings.warn("Read cursor may be altered. This can" \
-                         " lead to side effects", RuntimeWarning)
         #Update read cursor
         self._next()
 
