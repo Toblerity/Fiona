@@ -1,14 +1,10 @@
 import logging
 import os
+import shutil
 import subprocess
 import sys
-
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
-# Have to do this after importing setuptools, which monkey patches distutils.
-from distutils.extension import Extension
+from setuptools import setup
+from setuptools.extension import Extension
 
 # Use Cython if available.
 try:
@@ -18,6 +14,10 @@ except ImportError:
 
 logging.basicConfig()
 log = logging.getLogger()
+
+# python -W all setup.py ...
+if 'all' in sys.warnoptions:
+    log.level = logging.DEBUG
 
 # Parse the version from the fiona module.
 with open('fiona/__init__.py', 'r') as f:
@@ -54,13 +54,15 @@ libraries = []
 extra_link_args = []
 
 try:
-    gdal_config = "gdal-config"
+    gdal_config = os.environ.get('GDAL_CONFIG', 'gdal-config')
     with open("gdal-config.txt", "w") as gcfg:
         subprocess.call([gdal_config, "--cflags"], stdout=gcfg)
         subprocess.call([gdal_config, "--libs"], stdout=gcfg)
+        subprocess.call([gdal_config, "--datadir"], stdout=gcfg)
     with open("gdal-config.txt", "r") as gcfg:
         cflags = gcfg.readline().strip()
         libs = gcfg.readline().strip()
+        datadir = gcfg.readline().strip()
     for item in cflags.split():
         if item.startswith("-I"):
             include_dirs.extend(item[2:].split(":"))
@@ -73,8 +75,27 @@ try:
             # e.g. -framework GDAL
             extra_link_args.append(item)
 
+    # Conditionally copy the GDAL data. To be used in conjunction with
+    # the bdist_wheel command to make self-contained binary wheels.
+    if os.environ.get('PACKAGE_DATA'):
+        try:
+            shutil.rmtree('fiona/gdal_data')
+        except OSError:
+            pass
+        shutil.copytree(datadir, 'fiona/gdal_data')
+
 except Exception as e:
     log.warning("Failed to get options via gdal-config: %s", str(e))
+
+# Conditionally copy PROJ.4 data.
+if os.environ.get('PACKAGE_DATA'):
+    projdatadir = os.environ.get('PROJ_LIB', '/usr/local/share/proj')
+    if os.path.exists(projdatadir):
+        try:
+            shutil.rmtree('fiona/proj_data')
+        except OSError:
+            pass
+        shutil.copytree(projdatadir, 'fiona/proj_data')
 
 ext_options = dict(
     include_dirs=include_dirs,
@@ -110,7 +131,7 @@ if sys.version_info < (2, 7):
     requirements.append('argparse')
     requirements.append('ordereddict')
 
-setup(
+setup_args = dict(
     metadata_version='1.2',
     name='Fiona',
     version=version,
@@ -144,5 +165,9 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 3',
         'Topic :: Scientific/Engineering :: GIS',
-    ],
-)
+    ])
+
+if os.environ.get('PACKAGE_DATA'):
+    setup_args['package_data'] = {'fiona': ['gdal_data/*', 'proj_data/*']}
+
+setup(**setup_args)
