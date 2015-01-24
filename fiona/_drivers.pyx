@@ -32,6 +32,9 @@ cdef extern from "ogr_api.h":
     void OGRRegisterAll()
     void OGRCleanupAll()
     int OGRGetDriverCount()
+    void * OGRGetDriver(int i)
+    void * OGRGetDriverByName(const char *pszName)
+    const char * OGR_Dr_GetName(void *driver)
 
 
 log = logging.getLogger('Fiona')
@@ -62,8 +65,10 @@ code_map = {
     10: 'CPLE_ObjectNull'
 }
 
+
 cdef void * errorHandler(int eErrClass, int err_no, char *msg):
     log.log(level_map[eErrClass], "%s in %s", code_map[err_no], msg)
+
 
 def driver_count():
     return GDALGetDriverCount() + OGRGetDriverCount()
@@ -133,11 +138,11 @@ cdef class GDALEnv(object):
         cdef char *val = NULL
         cdef int i
         result = {}
-        for i in range(GDALGetDriverCount()):
-            drv = GDALGetDriver(i)
-            key = GDALGetDriverShortName(drv)
+        for i in range(OGRGetDriverCount()):
+            drv = OGRGetDriver(i)
+            key = OGR_Dr_GetName(drv)
             key_b = key
-            val = GDALGetDriverLongName(drv)
+            val = OGR_Dr_GetName(drv)
             val_b = val
             result[key_b.decode('utf-8')] = val_b.decode('utf-8')
         return result

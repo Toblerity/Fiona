@@ -28,3 +28,8 @@ def test_options(tmpdir=None):
 
     if tempdir and tmpdir is None:
         shutil.rmtree(tempdir)
+
+
+def test_env_drivers():
+    with fiona.drivers() as env:
+        assert 'ESRI Shapefile' in env.drivers()
