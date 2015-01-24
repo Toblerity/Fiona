@@ -58,10 +58,11 @@ try:
     with open("gdal-config.txt", "w") as gcfg:
         subprocess.call([gdal_config, "--cflags"], stdout=gcfg)
         subprocess.call([gdal_config, "--libs"], stdout=gcfg)
+        subprocess.call([gdal_config, "--dep-libs"], stdout=gcfg)
         subprocess.call([gdal_config, "--datadir"], stdout=gcfg)
     with open("gdal-config.txt", "r") as gcfg:
         cflags = gcfg.readline().strip()
-        libs = gcfg.readline().strip()
+        libs = gcfg.readline().strip() + " " + gcfg.readline().strip()
         datadir = gcfg.readline().strip()
     for item in cflags.split():
         if item.startswith("-I"):
