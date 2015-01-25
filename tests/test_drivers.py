@@ -7,6 +7,8 @@ import tempfile
 import fiona
 
 
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+
 def test_options(tmpdir=None):
     """Test that setting CPL_DEBUG=ON works"""
     if tmpdir is None:

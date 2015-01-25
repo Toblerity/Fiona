@@ -14,7 +14,7 @@ from fiona cimport ograpi
 from fiona._geometry cimport GeomBuilder, OGRGeomBuilder
 from fiona._err import cpl_errs
 from fiona._geometry import GEOMETRY_TYPES
-from fiona.errors import DriverError, SchemaError, CRSError
+from fiona.errors import DriverError, SchemaError, CRSError, FionaValueError
 from fiona.odict import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -339,9 +339,11 @@ cdef class Session:
         self.stop()
 
     def start(self, collection):
-        cdef char *path_c
-        cdef char *name_c
-        
+        cdef const char *path_c = NULL
+        cdef const char *name_c = NULL
+        cdef void *drv = NULL
+        cdef void *ds = NULL
+
         if collection.path == '-':
             path = '/vsistdin/'
         else:
@@ -354,10 +356,31 @@ cdef class Session:
         path_c = path_b
         
         with cpl_errs:
-            self.cogr_ds = ograpi.OGROpen(path_c, 0, NULL)
+            drivers = []
+            if collection._driver:
+                drivers = [collection._driver]
+            elif collection.enabled_drivers:
+                drivers = collection.enabled_drivers
+            if drivers:
+                for name in drivers:
+                    name_b = name.encode()
+                    name_c = name_b
+                    log.debug("Trying driver: %s", name)
+                    drv = ograpi.OGRGetDriverByName(name_c)
+                    if drv != NULL:
+                        ds = ograpi.OGR_Dr_Open(drv, path_c, 0)
+                    if ds != NULL:
+                        self.cogr_ds = ds
+                        collection._driver = name
+                        break
+            else:
+                self.cogr_ds = ograpi.OGROpen(path_c, 0, NULL)
+
         if self.cogr_ds == NULL:
-            raise ValueError(
-                "No data available at path '%s'" % collection.path)
+            raise FionaValueError(
+                "No dataset found at path '%s' using drivers: %s" % (
+                    collection.path,
+                    drivers or '*'))
         
         if isinstance(collection.name, string_types):
             name_b = collection.name.encode('utf-8')
