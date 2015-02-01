@@ -4,6 +4,7 @@ import sys
 import warnings
 
 import click
+from cligj import verbose_opt, quiet_opt
 
 from fiona import __version__ as fio_version
 
@@ -24,8 +25,8 @@ def print_version(ctx, param, value):
 
 # The CLI command group.
 @click.group(help="Fiona command line interface.")
-@click.option('--verbose', '-v', count=True, help="Increase verbosity.")
-@click.option('--quiet', '-q', count=True, help="Decrease verbosity.")
+@verbose_opt
+@quiet_opt
 @click.option('--version', is_flag=True, callback=print_version,
               expose_value=False, is_eager=True,
               help="Print Fiona version.")

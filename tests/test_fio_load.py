@@ -65,6 +65,6 @@ def test_seq_no_rs(tmpdir=None):
         tmpfile = str(tmpdir.join('test.shp'))
     runner = CliRunner()
     result = runner.invoke(
-        fio.load, ['-f', 'Shapefile', '--x-json-seq', tmpfile], feature_seq)
+        fio.load, ['-f', 'Shapefile', '--sequence', tmpfile], feature_seq)
     assert result.exit_code == 0
     assert len(fiona.open(tmpfile)) == 2

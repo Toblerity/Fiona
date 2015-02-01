@@ -3,6 +3,7 @@ import logging
 import sys
 
 import click
+from cligj import precision_opt, use_rs_opt
 
 import fiona
 from fiona.fio.cli import cli, obj_gen
@@ -10,8 +11,7 @@ from fiona.fio.cli import cli, obj_gen
 
 # Bounds command
 @cli.command(short_help="Print the extent of GeoJSON objects")
-@click.option('--precision', type=int, default=-1, metavar="N",
-              help="Decimal precision of coordinates.")
+@precision_opt
 @click.option('--explode/--no-explode', default=False,
               help="Explode collections into features (default: no).")
 @click.option('--with-id/--without-id', default=False,
@@ -20,11 +20,9 @@ from fiona.fio.cli import cli, obj_gen
 @click.option('--with-obj/--without-obj', default=False,
               help="Print GeoJSON objects and bounding boxes together "
                    "(default: without).")
-@click.option('--x-json-seq-rs/--x-json-seq-no-rs', default=False,
-              help="Use RS as text separator instead of LF. "
-                   "Experimental (default: no).")
+@use_rs_opt
 @click.pass_context
-def bounds(ctx, precision, explode, with_id, with_obj, x_json_seq_rs):
+def bounds(ctx, precision, explode, with_id, with_obj, use_rs):
     """Print the bounding boxes of GeoJSON objects read from stdin.
     
     Optionally explode collections and print the bounds of their
@@ -62,8 +60,9 @@ def bounds(ctx, precision, explode, with_id, with_obj, x_json_seq_rs):
                         rec = feat
                     else:
                         rec = (w, s, e, n)
-                    stdout.write(json.dumps(rec))
-                    stdout.write('\n')
+                    if use_rs:
+                        click.echo(u'\u001e', nl=False)
+                    click.echo(json.dumps(rec))
                 else:
                     xs.extend([w, e])
                     ys.extend([s, n])
@@ -76,8 +75,9 @@ def bounds(ctx, precision, explode, with_id, with_obj, x_json_seq_rs):
                     rec = obj
                 else:
                     rec = (w, s, e, n)
-                stdout.write(json.dumps(rec))
-                stdout.write('\n')
+                if use_rs:
+                    click.echo(u'\u001e', nl=False)
+                click.echo(json.dumps(rec))
 
         sys.exit(0)
     except Exception:

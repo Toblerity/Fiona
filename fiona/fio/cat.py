@@ -4,6 +4,8 @@ import logging
 import sys
 
 import click
+from cligj import files_in_arg
+from cligj import precision_opt, indent_opt, compact_opt, use_rs_opt
 
 import fiona
 from fiona.transform import transform_geom
@@ -61,34 +63,24 @@ def id_record(rec):
 
 # Cat command
 @cli.command(short_help="Concatenate and print the features of datasets")
-# One or more files.
-@click.argument('input', nargs=-1, type=click.Path(exists=True))
-# Coordinate precision option.
-@click.option('--precision', type=int, default=-1, metavar="N",
-              help="Decimal precision of coordinates.")
-@click.option('--indent', default=None, type=int, metavar="N",
-              help="Indentation level for pretty printed output.")
-@click.option('--compact/--no-compact', default=False,
-              help="Use compact separators (',', ':').")
+@files_in_arg
+@precision_opt
+@indent_opt
+@compact_opt
 @click.option('--ignore-errors/--no-ignore-errors', default=False,
               help="log errors but do not stop serialization.")
 @click.option('--dst_crs', default=None, metavar="EPSG:NNNN",
               help="Destination CRS.")
-# Use ASCII RS control code to signal a sequence item (False is default).
-# See http://tools.ietf.org/html/draft-ietf-json-text-sequence-05.
-# Experimental.
-@click.option('--x-json-seq-rs/--x-json-seq-no-rs', default=True,
-        help="Use RS as text separator instead of LF. Experimental.")
+@use_rs_opt
 @click.option('--bbox', default=None, metavar="w,s,e,n",
               help="filter for features intersecting a bounding box")
 @click.pass_context
-def cat(ctx, input, precision, indent, compact, ignore_errors, dst_crs,
-        x_json_seq_rs, bbox):
+def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
+        use_rs, bbox):
     """Concatenate and print the features of input datasets as a
     sequence of GeoJSON features."""
     verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
     logger = logging.getLogger('fio')
-    sink = click.get_text_stream('stdout')
 
     dump_kwds = {'sort_keys': True}
     if indent:
@@ -99,7 +91,7 @@ def cat(ctx, input, precision, indent, compact, ignore_errors, dst_crs,
 
     try:
         with fiona.drivers(CPL_DEBUG=verbosity>2):
-            for path in input:
+            for path in files:
                 with fiona.open(path) as src:
                     if bbox:
                         try:
@@ -114,10 +106,9 @@ def cat(ctx, input, precision, indent, compact, ignore_errors, dst_crs,
                                     precision=precision)
                             feat['geometry'] = g
                             feat['bbox'] = fiona.bounds(g)
-                        if x_json_seq_rs:
-                            sink.write(u'\u001e')
-                        json.dump(feat, sink, **dump_kwds)
-                        sink.write("\n")
+                        if use_rs:
+                            click.echo(u'\u001e', nl=False)
+                        click.echo(json.dumps(feat, **dump_kwds))
         sys.exit(0)
     except Exception:
         logger.exception("Failed. Exception caught")
@@ -126,13 +117,9 @@ def cat(ctx, input, precision, indent, compact, ignore_errors, dst_crs,
 
 # Collect command
 @cli.command(short_help="Collect a sequence of features.")
-# Coordinate precision option.
-@click.option('--precision', type=int, default=-1, metavar="N",
-              help="Decimal precision of coordinates.")
-@click.option('--indent', default=None, type=int, metavar="N",
-              help="Indentation level for pretty printed output.")
-@click.option('--compact/--no-compact', default=False,
-              help="Use compact separators (',', ':').")
+@precision_opt
+@indent_opt
+@compact_opt
 @click.option('--record-buffered/--no-record-buffered', default=False,
               help="Economical buffering of writes at record, not collection "
               "(default), level.")
@@ -306,17 +293,14 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
 
 # Distribute command
 @cli.command(short_help="Distribute features from a collection")
-@click.option('--x-json-seq-rs/--x-json-seq-no-rs', default=False,
-              help="Use RS as text separator instead of LF. "
-                   "Experimental (default: no).")
+@use_rs_opt
 @click.pass_context
-def distrib(ctx, x_json_seq_rs):
+def distrib(ctx, use_rs):
     """Print the features of GeoJSON objects read from stdin.
     """
     verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
     logger = logging.getLogger('fio')
     stdin = click.get_text_stream('stdin')
-    stdout = click.get_text_stream('stdout')
     try:
         source = obj_gen(stdin)
         for i, obj in enumerate(source):
@@ -327,26 +311,21 @@ def distrib(ctx, x_json_seq_rs):
                     feat['parent'] = obj_id
                 feat_id = feat.get('id', 'feature:' + str(i))
                 feat['id'] = feat_id
-                stdout.write(json.dumps(feat))
-                stdout.write('\n')
+                if use_rs:
+                    click.echo(u'\u001e', nl=False)
+                click.echo(json.dumps(feat))
         sys.exit(0)
     except Exception:
         raise
-        #logger.exception("Failed. Exception caught")
-        #sys.exit(1)
 
 
 # Dump command
 @cli.command(short_help="Dump a dataset to GeoJSON.")
 @click.argument('input', type=click.Path(), required=True)
 @click.option('--encoding', help="Specify encoding of the input file.")
-# Coordinate precision option.
-@click.option('--precision', type=int, default=-1,
-              help="Decimal precision of coordinates.")
-@click.option('--indent', default=None, type=int,
-              help="Indentation level for pretty printed output.")
-@click.option('--compact/--no-compact', default=False,
-              help="Use compact separators (',', ':').")
+@precision_opt
+@indent_opt
+@compact_opt
 @click.option('--record-buffered/--no-record-buffered', default=False,
     help="Economical buffering of writes at record, not collection "
          "(default), level.")
@@ -357,18 +336,9 @@ def distrib(ctx, x_json_seq_rs):
 
 @click.option('--add-ld-context-item', multiple=True,
         help="map a term to a URI and add it to the output's JSON LD context.")
-@click.option('--x-json-seq/--x-json-obj', default=False,
-    help="Write a LF-delimited JSON sequence (default is object). "
-         "Experimental.")
-# Use ASCII RS control code to signal a sequence item (False is default).
-# See http://tools.ietf.org/html/draft-ietf-json-text-sequence-05.
-# Experimental.
-@click.option('--x-json-seq-rs/--x-json-seq-no-rs', default=True,
-        help="Use RS as text separator. Experimental.")
 @click.pass_context
 def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
-         ignore_errors, with_ld_context, add_ld_context_item,
-         x_json_seq, x_json_seq_rs):
+         ignore_errors, with_ld_context, add_ld_context_item):
     """Dump a dataset either as a GeoJSON feature collection (the default)
     or a sequence of GeoJSON features."""
     verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
@@ -398,15 +368,7 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                 meta = source.meta
                 meta['fields'] = dict(source.schema['properties'].items())
 
-                if x_json_seq:
-                    for feat in source:
-                        feat = transformer(source.crs, feat)
-                        if x_json_seq_rs:
-                            sink.write(u'\u001e')
-                        json.dump(feat, sink, **dump_kwds)
-                        sink.write("\n")
-
-                elif record_buffered:
+                if record_buffered:
                     # Buffer GeoJSON data at the feature level for smaller
                     # memory footprint.
                     indented = bool(indent)

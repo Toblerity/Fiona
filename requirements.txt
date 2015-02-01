@@ -1,4 +1,4 @@
 argparse
-click
+cligj
 six
 ordereddict
