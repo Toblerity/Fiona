@@ -49,8 +49,9 @@ cdef extern from "ogr_srs_api.h":
 
 cdef extern from "ogr_api.h":
     char *  OGR_Dr_GetName (void *driver)
-    void *  OGR_Dr_CreateDataSource (void *driver, char *path, char **options)
+    void *  OGR_Dr_CreateDataSource (void *driver, const char *path, char **options)
     int     OGR_Dr_DeleteDataSource (void *driver, char *)
+    void *  OGR_Dr_Open (void *driver, const char *path, int bupdate)
     int     OGR_DS_DeleteLayer (void *datasource, int n)
     void *  OGR_DS_CreateLayer (void *datasource, char *name, void *crs, int geomType, char **options)
     void *  OGR_DS_ExecuteSQL (void *datasource, char *name, void *filter, char *dialext)

@@ -9,3 +9,6 @@ class SchemaError(FionaValueError):
 
 class CRSError(FionaValueError):
     """When a crs mapping has neither init or proj items."""
+
+class DataIOError(IOError):
+    """IO errors involving driver registration or availability"""

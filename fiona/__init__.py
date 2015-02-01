@@ -69,8 +69,8 @@ import logging
 import os
 from six import string_types
 
-from fiona.collection import Collection, supported_drivers, vsi_path
-from fiona._drivers import driver_count, GDALEnv
+from fiona.collection import Collection, vsi_path
+from fiona._drivers import driver_count, GDALEnv, supported_drivers
 from fiona.odict import OrderedDict
 from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP
 
@@ -90,7 +90,8 @@ def open(
         crs=None,
         encoding=None,
         layer=None,
-        vfs=None ):
+        vfs=None,
+        enabled_drivers=None):
     
     """Open file at ``path`` in ``mode`` "r" (read), "a" (append), or
     "w" (write) and return a ``Collection`` object.
@@ -126,6 +127,19 @@ def open(
     "tar://"". In this case, the ``path`` must be an absolute path
     within that container.
 
+    The drivers enabled for opening datasets may be restricted to those
+    listed in the ``enabled_drivers`` parameter. This and the ``driver``
+    parameter afford much control over opening of files.
+
+      # Trying only the GeoJSON driver when opening to read, the
+      # following raises ``DataIOError``:
+      fiona.open('example.shp', driver='GeoJSON')
+
+      # Trying first the GeoJSON driver, then the Shapefile driver,
+      # the following succeeds:
+      fiona.open(
+          'example.shp', enabled_drivers=['GeoJSON', 'ESRI Shapefile'])
+
     """
     # Parse the vfs into a vsi and an archive path.
     path, vsi, archive = parse_paths(path, vfs)
@@ -135,8 +149,9 @@ def open(
                 raise IOError("no such archive file: %r" % archive)
         elif path != '-' and not os.path.exists(path):
             raise IOError("no such file or directory: %r" % path)
-        c = Collection(path, mode, 
-                encoding=encoding, layer=layer, vsi=vsi, archive=archive)
+        c = Collection(path, mode, driver=driver,
+                encoding=encoding, layer=layer, vsi=vsi, archive=archive,
+                enabled_drivers=enabled_drivers)
     elif mode == 'w':
         if schema:
             # Make an ordered dict of schema properties.
@@ -146,7 +161,8 @@ def open(
             this_schema = None
         c = Collection(path, mode, 
                 crs=crs, driver=driver, schema=this_schema, 
-                encoding=encoding, layer=layer, vsi=vsi, archive=archive)
+                encoding=encoding, layer=layer, vsi=vsi, archive=archive,
+                enabled_drivers=enabled_drivers)
     else:
         raise ValueError(
             "mode string must be one of 'r', 'w', or 'a', not %s" % mode)
@@ -220,14 +236,16 @@ def prop_type(text):
     key = text.split(':')[0]
     return FIELD_TYPES_MAP[key]
 
+
 def drivers(*args, **kwargs):
     """Returns a context manager with registered drivers."""
     if driver_count == 0:
         log.debug("Creating a chief GDALEnv in drivers()")
-        return GDALEnv(True, **kwargs)
+        return GDALEnv(**kwargs)
     else:
         log.debug("Creating a not-responsible GDALEnv in drivers()")
-        return GDALEnv(False, **kwargs)
+        return GDALEnv(**kwargs)
+
 
 def bounds(ob):
     """Returns a (minx, miny, maxx, maxy) bounding box.
