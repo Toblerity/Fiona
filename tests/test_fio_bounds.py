@@ -84,3 +84,12 @@ def test_bounds_explode_with_obj():
         bounds.bounds, ['--explode', '--with-obj'], feature_collection)
     assert result.exit_code == 0
     assert result.output.count('geometry') == result.output.count('bbox') == 2
+
+
+def test_explode_output_rs():
+    runner = CliRunner()
+    result = runner.invoke(bounds.bounds, ['--explode', '--rs'], feature_collection)
+    assert result.exit_code == 0
+    assert result.output.count(u'\u001e') == 2
+    assert result.output.count('[') == result.output.count(']') == 2
+    assert len(re.findall(r'\d*\.\d*', result.output)) == 8

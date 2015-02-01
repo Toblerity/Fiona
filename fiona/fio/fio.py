@@ -12,6 +12,7 @@ import sys
 import warnings
 
 import click
+from cligj import indent_opt, sequence_opt
 import six.moves
 
 import fiona
@@ -51,8 +52,7 @@ def env(ctx, key):
 @cli.command(short_help="Print information about a dataset.")
 # One or more files.
 @click.argument('input', type=click.Path(exists=True))
-@click.option('--indent', default=None, type=int, 
-              help="Indentation level for pretty printed output.")
+@indent_opt
 # Options to pick out a single metadata item and print it as
 # a string.
 @click.option('--count', 'meta_member', flag_value='count',
@@ -67,8 +67,6 @@ def env(ctx, key):
 def info(ctx, input, indent, meta_member):
     verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
     logger = logging.getLogger('rio')
-
-    stdout = click.get_text_stream('stdout')
     try:
         with fiona.drivers(CPL_DEBUG=verbosity>2):
             with fiona.open(input) as src:
@@ -84,8 +82,7 @@ def info(ctx, input, indent, meta_member):
                     else:
                         click.echo(info[meta_member])
                 else:
-                    stdout.write(json.dumps(info, indent=indent))
-                    stdout.write("\n")
+                    click.echo(json.dumps(info, indent=indent))
         sys.exit(0)
     except Exception:
         logger.exception("Failed. Exception caught")
@@ -121,11 +118,10 @@ def insp(ctx, src_path):
               help="Output format driver name.")
 @click.option('--src_crs', default=None, help="Source CRS.")
 @click.option('--dst_crs', default=None, help="Destination CRS.")
-@click.option('--x-json-seq/--x-json-obj', default=False,
-              help="Read a LF-delimited JSON sequence (default is object). Experimental.")
+@sequence_opt
 @click.pass_context
 
-def load(ctx, output, driver, src_crs, dst_crs, x_json_seq):
+def load(ctx, output, driver, src_crs, dst_crs, sequence):
     """Load features from JSON to a file in another format.
 
     The input is a GeoJSON feature collection or optionally a sequence of
@@ -159,7 +155,7 @@ def load(ctx, output, driver, src_crs, dst_crs, x_json_seq):
                 feat = json.loads(buffer)
                 feat['geometry'] = transformer(feat['geometry'])
                 yield feat
-    elif x_json_seq:
+    elif sequence:
         def feature_gen():
             yield json.loads(first_line)
             for line in stdin:
