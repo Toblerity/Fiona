@@ -102,7 +102,10 @@ def cat(ctx, input, precision, indent, compact, ignore_errors, dst_crs,
             for path in input:
                 with fiona.open(path) as src:
                     if bbox:
-                        bbox = tuple(map(float, bbox.split(',')))
+                        try:
+                            bbox = tuple(map(float, bbox.split(',')))
+                        except ValueError:
+                            bbox = json.loads(bbox)
                     for i, feat in src.items(bbox=bbox):
                         if dst_crs or precision > 0:
                             g = transform_geom(
