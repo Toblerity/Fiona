@@ -234,16 +234,18 @@ To build from a repository copy, you will also need Cython to build C sources
 from the project's .pyx files. See the project's requirements-dev.txt file for
 guidance.
 
-The popular `Kyngchaos GDAL frameworks
+The `Kyngchaos GDAL frameworks
 <http://www.kyngchaos.com/software/frameworks#gdal_complete>`__ will satisfy
-the GDAL/OGR dependency for OS X. Fiona's author uses Homebrew (``brew install
-gdal``) on OS X.
+the GDAL/OGR dependency for OS X, as will Homebrew's GDAL Formula (``brew install
+gdal``).
 
 Python Requirements
 -------------------
 
-Fiona depends on the modules ``six`` and ``cligj``. Pip will fetch these requirements for you, but
-users installing Fiona from a Windows installer must get them separately.
+Fiona depends on the modules ``six``, ``cligj``, ``argparse``, and
+``ordereddict`` (the two latter modules are standard in Python 2.7+). Pip will
+fetch these requirements for you, but users installing Fiona from a Windows
+installer must get them separately.
 
 Unix-like systems
 -----------------
@@ -251,7 +253,9 @@ Unix-like systems
 Assuming you're using a virtualenv (if not, skip to the 4th command) and
 GDAL/OGR libraries, headers, and `gdal-config`_ program are installed to well
 known locations on your system via your system's package manager (``brew
-install gdal`` using Homebrew on OS X), installation is this simple::
+install gdal`` using Homebrew on OS X), installation is this simple.
+
+.. code-block:: console
 
   $ mkdir fiona_env
   $ virtualenv fiona_env
@@ -261,11 +265,20 @@ install gdal`` using Homebrew on OS X), installation is this simple::
 If gdal-config is not available or if GDAL/OGR headers and libs aren't
 installed to a well known location, you must set include dirs, library dirs,
 and libraries options via the setup.cfg file or setup command line as shown
-below (using ``git``)::
+below (using ``git``).
+
+.. code-block:: console
 
   (fiona_env)$ git clone git://github.com/Toblerity/Fiona.git
   (fiona_env)$ cd Fiona
   (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal install
+
+Or specify that build options should be provided by a particular
+gdal-config program.
+
+.. code-block:: console
+
+  (fiona_env)$ GDAL_CONFIG=/path/to/gdal-config pip install .
 
 Windows
 -------
@@ -282,7 +295,7 @@ locations on your system (via your system's package manager), you can do this::
 
   (fiona_env)$ git clone git://github.com/Toblerity/Fiona.git
   (fiona_env)$ cd Fiona
-  (fiona_env)$ python setup.py develop
+  (fiona_env)$ pip install -e .
   (fiona_env)$ nosetests
 
 If you have a non-standard environment, you'll need to specify the include and
@@ -296,4 +309,3 @@ lib dirs and GDAL library on the command line::
 .. _Rtree: http://pypi.python.org/pypi/Rtree/
 .. _Shapely: http://pypi.python.org/pypi/Shapely/
 .. _gdal-config: http://www.gdal.org/gdal-config.html
-
