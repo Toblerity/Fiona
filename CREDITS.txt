@@ -22,6 +22,7 @@ With contributions by:
 * Brendan Wards (https://github.com/brendan-ward)
 * Michael Weisman (https://github.com/mweisman)
 * Andy Wilson (https://github.com/wilsaj)
+* Martijn Visser (https://github.com/visr)
 
 Fiona would not be possible without the great work of Frank Warmerdam and other
 GDAL/OGR developers.

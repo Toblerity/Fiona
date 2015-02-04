@@ -1,9 +1,17 @@
 Changes
 =======
 
-Next
-----
+1.5.0 (2015-02-02)
+------------------
+- Finalize GeoJSON feature sequence options (#174).
 - Fix for reading of datasets that don't support feature counting (#190).
+- New test dataset (#188).
+- Fix for encoding error (#191).
+- Remove confusing warning (#195).
+- Add data files for binary wheels (#196).
+- Add control over drivers enabled when reading datasets (#203).
+- Use cligj for CLI options involving GeoJSON (#204).
+- Fix fio-info --bounds help (#206).
 
 1.4.8 (2014-11-02)
 ------------------
