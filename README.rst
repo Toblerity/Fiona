@@ -46,7 +46,7 @@ file, change their geometry attributes, and write them to a new data file.
 
         # Open a file for reading. We'll call this the "source."
         
-        with fiona.open('docs/data/test_uk.shp') as source:
+        with fiona.open('tests/data/coutwildrnp.shp') as source:
 
             # The file we'll write to, the "sink", must be initialized
             # with a coordinate system, a format driver name, and
@@ -64,7 +64,7 @@ file, change their geometry attributes, and write them to a new data file.
             with fiona.open('test_write.shp', 'w', **meta) as sink:
 
                 # Process only the records intersecting a box.
-                for f in source.filter(bbox=(-5.0, 55.0, 0.0, 60.0)):
+                for f in source.filter(bbox=(-107.0, 37.0, -105.0, 39.0)):
           
                     # Get a point on the boundary of the record's
                     # geometry.
@@ -102,12 +102,12 @@ provides an index ordered list of layer names.
 
     with fiona.drivers():
 
-        for layername in fiona.listlayers('docs/data'):
-            with fiona.open('docs/data', layer=layername) as c:
-                print(layername, len(c))
+        for layername in fiona.listlayers('tests/data'):
+            with fiona.open('tests/data', layer=layername) as src:
+                print(layername, len(src))
     
     # Output:
-    # test_uk 48
+    # (u'coutwildrnp', 67)
 
 Layer can also be specified by index. In this case, ``layer=0`` and
 ``layer='test_uk'`` specify the same layer in the data file or directory.
@@ -116,12 +116,12 @@ Layer can also be specified by index. In this case, ``layer=0`` and
 
     with fiona.drivers():
 
-        for i, layername in enumerate(fiona.listlayers('docs/data')):
-            with fiona.open('docs/data', layer=i) as c:
-                print(i, layername, len(c))
+        for i, layername in enumerate(fiona.listlayers('tests/data')):
+            with fiona.open('tests/data', layer=i) as src:
+                print(i, layername, len(src))
     
     # Output:
-    # 0 test_uk 48
+    # (0, u'coutwildrnp', 67)
 
 Writing Multilayer data
 -----------------------
@@ -133,27 +133,26 @@ writing.
     
     with fiona.drivers():
 
-        with open('docs/data/test_uk.shp') as c:
-            meta = c.meta
-            f = next(c)
+        with open('tests/data/cowildrnp.shp') as src:
+            meta = src.meta
+            f = next(src)
     
-        with fiona.open('/tmp/foo', 'w', layer='bar', **meta) as c:
-            c.write(f)
+        with fiona.open('/tmp/foo', 'w', layer='bar', **meta) as dst:
+            dst.write(f)
     
         print(fiona.listlayers('/tmp/foo'))
-        # Output: ['bar']
-    
-        with fiona.open('/tmp/foo', layer='bar') as c:
-            print(len(c))
-            f = next(c)
+
+        with fiona.open('/tmp/foo', layer='bar') as src:
+            print(len(src))
+            f = next(src)
             print(f['geometry']['type'])
             print(f['properties'])
     
         # Output:
+        # [u'bar']
         # 1
         # Polygon
-        # {'FIPS_CNTRY': 'UK', 'POP_CNTRY': 60270708.0, 'CAT': 232.0, 
-        #  'AREA': 244820.0, 'CNTRY_NAME': 'United Kingdom'}
+        # OrderedDict([(u'PERIMETER', 1.22107), (u'FEATURE2', None), (u'NAME', u'Mount Naomi Wilderness'), (u'FEATURE1', u'Wilderness'), (u'URL', u'http://www.wilderness.net/index.cfm?fuse=NWPS&sec=wildView&wname=Mount%20Naomi'), (u'AGBUR', u'FS'), (u'AREA', 0.0179264), (u'STATE_FIPS', u'49'), (u'WILDRNP020', 332), (u'STATE', u'UT')])
 
 A view of the /tmp/foo directory will confirm the creation of the new files.
 
@@ -176,15 +175,15 @@ and write zipped Shapefiles.
         for i, layername in enumerate(
                 fiona.listlayers(
                     '/', 
-                    vfs='zip://docs/data/test_uk.zip')):
+                    vfs='zip://tests/data/coutwildrnp.zip')):
             with fiona.open(
                     '/', 
-                    vfs='zip://docs/data/test_uk.zip', 
-                    layer=i) as c:
-                print(i, layername, len(c))
+                    vfs='zip://tests/data/coutwildrnp.zip', 
+                    layer=i) as src:
+                print(i, layername, len(src))
     
     # Output:
-    # 0 test_uk 48
+    # (0, u'coutwildrnp', 67)
 
 Fiona CLI
 =========
@@ -195,13 +194,33 @@ info`` pretty prints information about a data file.
 
 .. code-block:: console
 
-    $ fio info docs/data/test_uk.shp
-    { 'bbox': (-8.621389, 49.911659, 1.749444, 60.844444),
-      'count': 48,
-      'crs': { u'datum': u'WGS84', u'no_defs': True, u'proj': u'longlat'},
-      'driver': u'ESRI Shapefile',
-      'schema': { 'geometry': 'Polygon',
-                  'properties': OrderedDict([(u'CAT', 'float:16'), (u'FIPS_CNTRY', 'str:80'), (u'CNTRY_NAME', 'str:80'), (u'AREA', 'float:15.2'), (u'POP_CNTRY', 'float:15.2')])}}
+    $ fio info --indent 2 tests/data/coutwildrnp.shp
+    {
+      "count": 67,
+      "crs": "EPSG:4326",
+      "driver": "ESRI Shapefile",
+      "bounds": [
+        -113.56424713134766,
+        37.0689811706543,
+        -104.97087097167969,
+        41.99627685546875
+      ],
+      "schema": {
+        "geometry": "Polygon",
+        "properties": {
+          "PERIMETER": "float:24.15",
+          "FEATURE2": "str:80",
+          "NAME": "str:80",
+          "FEATURE1": "str:80",
+          "URL": "str:101",
+          "AGBUR": "str:80",
+          "AREA": "float:24.15",
+          "STATE_FIPS": "str:80",
+          "WILDRNP020": "int:10",
+          "STATE": "str:80"
+        }
+      }
+    }
 
 Installation
 ============
@@ -223,8 +242,7 @@ gdal``) on OS X.
 Python Requirements
 -------------------
 
-Fiona depends on the modules ``six`` and ``argparse``. The latter is standard
-in Python 2.7+. Easy_install and pip will fetch these requirements for you, but
+Fiona depends on the modules ``six`` and ``cligj``. Pip will fetch these requirements for you, but
 users installing Fiona from a Windows installer must get them separately.
 
 Unix-like systems
