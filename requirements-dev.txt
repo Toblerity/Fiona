@@ -1,4 +1,4 @@
-Cython>=0.21
+cython==0.21.2
 nose
 pytest
 setuptools
