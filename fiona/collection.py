@@ -8,6 +8,7 @@ from fiona.ogrext import Iterator, ItemsIterator, KeysIterator
 from fiona.ogrext import Session, WritingSession
 from fiona.ogrext import (
     calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name)
+from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file
 from fiona.errors import DriverError, SchemaError, CRSError
 from fiona._drivers import driver_count, GDALEnv, supported_drivers
 from six import string_types
@@ -404,6 +405,33 @@ class Collection(object):
         # Note: you can't count on this being called. Call close() explicitly
         # or use the context manager protocol ("with").
         self.__exit__(None, None, None)
+
+
+class BytesCollection(Collection):
+    """BytesCollection takes a string buffer of bytes and maps that to
+    a virtual file that can then be opened by fiona.
+    """
+    def __init__(self, buffer):
+        """Takes string buffer whose contents is something we'd like
+        to open with Fiona and maps it to a virtual file.
+        """
+        # Hold a reference to the buffer, as bad things will happen if
+        # it is garbage collected while in use.
+        self.buffer = buffer
+
+        # Map the buffer to a file.
+        self.virtual_file = buffer_to_virtual_file(self.buffer)
+
+        # Instantiate the parent class.
+        super(BytesCollection, self).__init__(self.virtual_file)
+
+    def close(self):
+        """Removes the virtual file associated with the class."""
+        super(BytesCollection, self).close()
+        if self.virtual_file:
+            remove_virtual_file(self.virtual_file)
+            self.virtual_file = None
+            self.buffer = None
 
 
 def vsi_path(path, vsi=None, archive=None):
