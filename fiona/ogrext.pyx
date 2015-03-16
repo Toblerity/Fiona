@@ -1176,11 +1176,9 @@ def buffer_to_virtual_file(buffer):
     if ograpi.VSIFCloseL(vsi_handle) != 0:
         raise RuntimeError('Failed to close mapped file handle')
 
-    print("Opened {}".format(vsi_filename))
     return vsi_filename
 
 def remove_virtual_file(vsi_filename):
-    print("Closed {}".format(vsi_filename))
     return ograpi.VSIUnlink(vsi_filename)
 
 

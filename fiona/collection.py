@@ -411,16 +411,16 @@ class BytesCollection(Collection):
     """BytesCollection takes a string buffer of bytes and maps that to
     a virtual file that can then be opened by fiona.
     """
-    def __init__(self, buffer):
+    def __init__(self, strbuf):
         """Takes string buffer whose contents is something we'd like
         to open with Fiona and maps it to a virtual file.
         """
         # Hold a reference to the buffer, as bad things will happen if
         # it is garbage collected while in use.
-        self.buffer = buffer
+        self.strbuf = strbuf
 
         # Map the buffer to a file.
-        self.virtual_file = buffer_to_virtual_file(self.buffer)
+        self.virtual_file = buffer_to_virtual_file(self.strbuf)
 
         # Instantiate the parent class.
         super(BytesCollection, self).__init__(self.virtual_file)
@@ -431,7 +431,14 @@ class BytesCollection(Collection):
         if self.virtual_file:
             remove_virtual_file(self.virtual_file)
             self.virtual_file = None
-            self.buffer = None
+            self.strbuf = None
+
+    def __repr__(self):
+        return "<%s BytesCollection '%s', mode '%s' at %s>" % (
+            self.closed and "closed" or "open",
+            self.path + ":" + str(self.name),
+            self.mode,
+            hex(id(self)))
 
 
 def vsi_path(path, vsi=None, archive=None):
