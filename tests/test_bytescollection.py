@@ -7,7 +7,7 @@ class ReadingTest(unittest.TestCase):
 
     def setUp(self):
         with open('tests/data/coutwildrnp.json') as src:
-            strbuf = src.read()
+            strbuf = src.read().encode('utf-8')
         self.c = fiona.BytesCollection(strbuf)
 
     def tearDown(self):
@@ -183,7 +183,7 @@ class FilterReadingTest(unittest.TestCase):
 
     def setUp(self):
         with open('tests/data/coutwildrnp.json') as src:
-            strbuf = src.read()
+            strbuf = src.read().encode('utf-8')
         self.c = fiona.BytesCollection(strbuf)
 
     def tearDown(self):
