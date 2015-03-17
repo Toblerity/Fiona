@@ -1182,6 +1182,6 @@ def buffer_to_virtual_file(strbuf):
 
 def remove_virtual_file(vsi_filename):
     vsi_cfilename = vsi_filename if not isinstance(vsi_filename, string_types) else vsi_filename.encode('utf-8')
-    return ograpi.VSIUnlink(vsi_cfilename.encode())
+    return ograpi.VSIUnlink(vsi_cfilename)
 
 
