@@ -1,17 +1,25 @@
 # Testing BytesCollection
 import unittest
 
+import six
+
 import fiona
 
 class ReadingTest(unittest.TestCase):
 
     def setUp(self):
         with open('tests/data/coutwildrnp.json') as src:
-            strbuf = src.read().encode('utf-8')
-        self.c = fiona.BytesCollection(strbuf)
+            bytesbuf = src.read().encode('utf-8')
+        self.c = fiona.BytesCollection(bytesbuf)
 
     def tearDown(self):
         self.c.close()
+
+    @unittest.skipIf(six.PY2, 'string are bytes in Python 2')
+    def test_construct_with_str(self):
+        with open('tests/data/coutwildrnp.json') as src:
+            strbuf = src.read()
+        self.assertRaises(ValueError, fiona.BytesCollection, strbuf)
 
     def test_open_repr(self):
         # I'm skipping checking the name of the virtual file as it produced by uuid.
@@ -35,7 +43,7 @@ class ReadingTest(unittest.TestCase):
 
     def test_closed_buf(self):
         self.c.close()
-        self.failUnless(self.c.strbuf is None)
+        self.failUnless(self.c.bytesbuf is None)
 
     def test_name(self):
         self.failUnlessEqual(self.c.name, 'OGRGeoJSON')
@@ -173,8 +181,8 @@ class FilterReadingTest(unittest.TestCase):
 
     def setUp(self):
         with open('tests/data/coutwildrnp.json') as src:
-            strbuf = src.read().encode('utf-8')
-        self.c = fiona.BytesCollection(strbuf)
+            bytesbuf = src.read().encode('utf-8')
+        self.c = fiona.BytesCollection(bytesbuf)
 
     def tearDown(self):
         self.c.close()

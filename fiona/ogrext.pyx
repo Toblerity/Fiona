@@ -1166,17 +1166,17 @@ def _listlayers(path):
 
     return layer_names
 
-def buffer_to_virtual_file(strbuf):
-    """Maps a string buffer to a virtual file.
+def buffer_to_virtual_file(bytesbuf):
+    """Maps a bytes buffer to a virtual file.
     """
     vsi_filename = os.path.join('/vsimem', uuid.uuid4().hex)
     vsi_cfilename = vsi_filename if not isinstance(vsi_filename, string_types) else vsi_filename.encode('utf-8')
 
-    vsi_handle = ograpi.VSIFileFromMemBuffer(vsi_cfilename, strbuf, len(strbuf), 0)
-    if vsi_handle is NULL:
-        raise RuntimeError('Failed to map buffer to file')
+    vsi_handle = ograpi.VSIFileFromMemBuffer(vsi_cfilename, bytesbuf, len(bytesbuf), 0)
+    if vsi_handle == NULL:
+        raise OSError('failed to map buffer to file')
     if ograpi.VSIFCloseL(vsi_handle) != 0:
-        raise RuntimeError('Failed to close mapped file handle')
+        raise OSError('failed to close mapped file handle')
 
     return vsi_filename
 

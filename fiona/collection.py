@@ -11,7 +11,7 @@ from fiona.ogrext import (
 from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file
 from fiona.errors import DriverError, SchemaError, CRSError
 from fiona._drivers import driver_count, GDALEnv, supported_drivers
-from six import string_types
+from six import string_types, binary_type
 
 class Collection(object):
 
@@ -408,19 +408,22 @@ class Collection(object):
 
 
 class BytesCollection(Collection):
-    """BytesCollection takes a string buffer of bytes and maps that to
+    """BytesCollection takes a buffer of bytes and maps that to
     a virtual file that can then be opened by fiona.
     """
-    def __init__(self, strbuf):
-        """Takes string buffer whose contents is something we'd like
+    def __init__(self, bytesbuf):
+        """Takes buffer of bytes whose contents is something we'd like
         to open with Fiona and maps it to a virtual file.
         """
+        if not isinstance(bytesbuf, binary_type):
+            raise ValueError("input buffer must be bytes")
+
         # Hold a reference to the buffer, as bad things will happen if
         # it is garbage collected while in use.
-        self.strbuf = strbuf
+        self.bytesbuf = bytesbuf
 
         # Map the buffer to a file.
-        self.virtual_file = buffer_to_virtual_file(self.strbuf)
+        self.virtual_file = buffer_to_virtual_file(self.bytesbuf)
 
         # Instantiate the parent class.
         super(BytesCollection, self).__init__(self.virtual_file)
@@ -431,7 +434,7 @@ class BytesCollection(Collection):
         if self.virtual_file:
             remove_virtual_file(self.virtual_file)
             self.virtual_file = None
-            self.strbuf = None
+            self.bytesbuf = None
 
     def __repr__(self):
         return "<%s BytesCollection '%s', mode '%s' at %s>" % (
