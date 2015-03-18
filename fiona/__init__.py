@@ -63,7 +63,7 @@ writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
 __all__ = ['bounds', 'listlayers', 'open', 'prop_type', 'prop_width']
-__version__ = "1.5.0"
+__version__ = "1.6.0pre0"
 
 import logging
 import os
