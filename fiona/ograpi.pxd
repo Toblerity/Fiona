@@ -18,6 +18,16 @@ cdef extern from "cpl_string.h":
     char ** CSLSetNameValue (char **list, char *name, char *value)
     void    CSLDestroy (char **list)
 
+cdef extern from "cpl_vsi.h":
+    ctypedef struct VSILFILE:
+        pass
+    int VSIFCloseL (VSILFILE *)
+    VSILFILE * VSIFileFromMemBuffer (const char * filename,
+                                     unsigned char * data,
+                                     int data_len,
+                                     int take_ownership)
+    int VSIUnlink (const char * pathname)
+
 ctypedef int OGRErr
 ctypedef struct OGREnvelope:
     double MinX

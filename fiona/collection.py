@@ -8,9 +8,10 @@ from fiona.ogrext import Iterator, ItemsIterator, KeysIterator
 from fiona.ogrext import Session, WritingSession
 from fiona.ogrext import (
     calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name)
+from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file
 from fiona.errors import DriverError, SchemaError, CRSError
 from fiona._drivers import driver_count, GDALEnv, supported_drivers
-from six import string_types
+from six import string_types, binary_type
 
 class Collection(object):
 
@@ -404,6 +405,43 @@ class Collection(object):
         # Note: you can't count on this being called. Call close() explicitly
         # or use the context manager protocol ("with").
         self.__exit__(None, None, None)
+
+
+class BytesCollection(Collection):
+    """BytesCollection takes a buffer of bytes and maps that to
+    a virtual file that can then be opened by fiona.
+    """
+    def __init__(self, bytesbuf):
+        """Takes buffer of bytes whose contents is something we'd like
+        to open with Fiona and maps it to a virtual file.
+        """
+        if not isinstance(bytesbuf, binary_type):
+            raise ValueError("input buffer must be bytes")
+
+        # Hold a reference to the buffer, as bad things will happen if
+        # it is garbage collected while in use.
+        self.bytesbuf = bytesbuf
+
+        # Map the buffer to a file.
+        self.virtual_file = buffer_to_virtual_file(self.bytesbuf)
+
+        # Instantiate the parent class.
+        super(BytesCollection, self).__init__(self.virtual_file)
+
+    def close(self):
+        """Removes the virtual file associated with the class."""
+        super(BytesCollection, self).close()
+        if self.virtual_file:
+            remove_virtual_file(self.virtual_file)
+            self.virtual_file = None
+            self.bytesbuf = None
+
+    def __repr__(self):
+        return "<%s BytesCollection '%s', mode '%s' at %s>" % (
+            self.closed and "closed" or "open",
+            self.path + ":" + str(self.name),
+            self.mode,
+            hex(id(self)))
 
 
 def vsi_path(path, vsi=None, archive=None):

@@ -7,6 +7,7 @@ import os
 import sys
 import warnings
 import math
+import uuid
 
 from six import integer_types, string_types, text_type
 
@@ -1164,4 +1165,23 @@ def _listlayers(path):
     cogr_ds = NULL
 
     return layer_names
+
+def buffer_to_virtual_file(bytesbuf):
+    """Maps a bytes buffer to a virtual file.
+    """
+    vsi_filename = os.path.join('/vsimem', uuid.uuid4().hex)
+    vsi_cfilename = vsi_filename if not isinstance(vsi_filename, string_types) else vsi_filename.encode('utf-8')
+
+    vsi_handle = ograpi.VSIFileFromMemBuffer(vsi_cfilename, bytesbuf, len(bytesbuf), 0)
+    if vsi_handle == NULL:
+        raise OSError('failed to map buffer to file')
+    if ograpi.VSIFCloseL(vsi_handle) != 0:
+        raise OSError('failed to close mapped file handle')
+
+    return vsi_filename
+
+def remove_virtual_file(vsi_filename):
+    vsi_cfilename = vsi_filename if not isinstance(vsi_filename, string_types) else vsi_filename.encode('utf-8')
+    return ograpi.VSIUnlink(vsi_cfilename)
+
 
