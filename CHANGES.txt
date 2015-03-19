@@ -1,6 +1,10 @@
 Changes
 =======
 
+1.5.1 (2015-03-19)
+------------------
+- Restore test data to sdists by fixing MANIFEST.in (#216).
+
 1.5.0 (2015-02-02)
 ------------------
 - Finalize GeoJSON feature sequence options (#174).
