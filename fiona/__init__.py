@@ -74,6 +74,10 @@ from fiona._drivers import driver_count, GDALEnv, supported_drivers
 from fiona.odict import OrderedDict
 from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP
 
+# These modules are imported by fiona.ogrext, but are also import here to
+# help tools like cx_Freeze find them automatically
+from fiona import _geometry, _err, rfc3339
+import uuid
 
 log = logging.getLogger('Fiona')
 class NullHandler(logging.Handler):
