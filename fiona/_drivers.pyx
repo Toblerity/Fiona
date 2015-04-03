@@ -186,6 +186,7 @@ supported_drivers = dict([
 #ESRI FileGDB 	FileGDB 	Yes 	Yes 	No, needs FileGDB API library
 # multi-layer
     ("FileGDB", "raw"),
+    ("OpenFileGDB", "r"),
 #ESRI Personal GeoDatabase 	PGeo 	No 	Yes 	No, needs ODBC library
 #ESRI ArcSDE 	SDE 	No 	Yes 	No, needs ESRI SDE
 #ESRI Shapefile 	ESRI Shapefile 	Yes 	Yes 	Yes
