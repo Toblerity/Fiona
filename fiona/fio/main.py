@@ -2,13 +2,9 @@
 # main: loader of all the command entry points.
 
 
-import logging
 from pkg_resources import iter_entry_points
 
 from fiona.fio.cli import cli
-
-
-log = logging.getLogger("Fiona")
 
 
 # Find and load all entry points in the fiona.rio_commands group.
