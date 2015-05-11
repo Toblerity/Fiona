@@ -25,7 +25,4 @@ log = logging.getLogger("Fiona")
 #       ...
 
 for entry_point in iter_entry_points('fiona.fio_commands'):
-    try:
-        entry_point.load()
-    except ImportError:
-        log.exception('Encountered import error when loading entry point: %s' % entry_point)
+    entry_point.load()
