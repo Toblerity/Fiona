@@ -150,7 +150,18 @@ setup_args = dict(
     packages=['fiona', 'fiona.fio'],
     entry_points='''
         [console_scripts]
-        fio=fiona.fio.fio:cli
+        fio=fiona.fio.main:cli
+
+        [fiona.fio_commands]
+        bounds=fiona.fio.fio:bounds
+        cat=fiona.fio.fio:cat
+        collect=fiona.fio.fio:collect
+        distrib=fiona.fio.fio:distrib
+        dump=fiona.fio.fio:dump
+        env=fiona.fio.fio:env
+        info=fiona.fio.fio:info
+        insp=fiona.fio.fio:insp
+        load=fiona.fio.fio:load
         ''',
     install_requires=requirements,
     tests_require=['nose'],
