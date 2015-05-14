@@ -12,14 +12,15 @@ logger = logging.getLogger('fiona.inspector')
 
 def main(srcfile):
     
-    with fiona.drivers(), fiona.open(srcfile) as src:
+    with fiona.drivers():
+        with fiona.open(srcfile) as src:
             
-        code.interact(
-            'Fiona %s Interactive Inspector (Python %s)\n'
-            'Type "src.schema", "next(src)", or "help(src)" '
-            'for more information.' %  (
-                fiona.__version__, '.'.join(map(str, sys.version_info[:3]))),
-            local=locals())
+            code.interact(
+                'Fiona %s Interactive Inspector (Python %s)\n'
+                'Type "src.schema", "next(src)", or "help(src)" '
+                'for more information.' %  (
+                    fiona.__version__, '.'.join(map(str, sys.version_info[:3]))),
+                local=locals())
 
     return 1
 
