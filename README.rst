@@ -286,6 +286,25 @@ Windows
 Binary installers are available at
 http://www.lfd.uci.edu/~gohlke/pythonlibs/#fiona and coming eventually to PyPI.
 
+You can download a binary distribution of GDAL from `here
+<http://www.gisinternals.com/release.php>`_.  You will also need to download
+the compiled libraries and headers (include files).
+
+When building from source on Windows, it is important to know that setup.py
+cannot rely on gdal-config, which is only present on UNIX systems, to discover 
+the locations of header files and libraries that Fiona needs to compile its 
+C extensions. On Windows, these paths need to be provided by the user. 
+You will need to find the include files and the library files for gdal and 
+use setup.py as follows.
+
+.. code-block:: console
+
+    $ python setup.py build_ext -I<path to gdal include files> -lgdal_i -L<path to gdal library>
+    $ python setup.py install
+
+Note: The GDAL dll (gdal111.dll) and gdal-data directory need to be in your 
+Windows PATH otherwise Fiona will fail to work.
+
 Development and testing
 =======================
 
