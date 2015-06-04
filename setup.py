@@ -98,8 +98,7 @@ except Exception as e:
     else:
         log.warning("Failed to get options via gdal-config: %s", str(e))
 
-
-# Conditionally copy the GDAL data. To be used in conjunction with
+    # Conditionally copy the GDAL data. To be used in conjunction with
     # the bdist_wheel command to make self-contained binary wheels.
     if os.environ.get('PACKAGE_DATA'):
         try:
@@ -178,18 +177,18 @@ setup_args = dict(
     packages=['fiona', 'fiona.fio'],
     entry_points='''
         [console_scripts]
-        fio=fiona.fio.main:cli
+        fio=fiona.fio.main:main_group
 
         [fiona.fio_commands]
-        bounds=fiona.fio.fio:bounds
-        cat=fiona.fio.fio:cat
-        collect=fiona.fio.fio:collect
-        distrib=fiona.fio.fio:distrib
-        dump=fiona.fio.fio:dump
-        env=fiona.fio.fio:env
-        info=fiona.fio.fio:info
-        insp=fiona.fio.fio:insp
-        load=fiona.fio.fio:load
+        bounds=fiona.fio.bounds:bounds
+        cat=fiona.fio.cat:cat
+        collect=fiona.fio.cat:collect
+        distrib=fiona.fio.cat:distrib
+        dump=fiona.fio.cat:dump
+        env=fiona.fio.info:env
+        info=fiona.fio.info:info
+        insp=fiona.fio.info:insp
+        load=fiona.fio.cat:load
         ''',
     install_requires=requirements,
     tests_require=['nose'],

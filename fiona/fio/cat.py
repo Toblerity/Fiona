@@ -1,15 +1,23 @@
 from functools import partial
+import itertools
 import json
 import logging
 import sys
+import warnings
 
 import click
-from cligj import files_in_arg
-from cligj import precision_opt, indent_opt, compact_opt, use_rs_opt
+from cligj import (
+    compact_opt, files_in_arg, indent_opt,
+    sequence_opt, precision_opt, use_rs_opt)
 
 import fiona
 from fiona.transform import transform_geom
-from fiona.fio.cli import cli, obj_gen
+from .helpers import obj_gen
+
+
+FIELD_TYPES_MAP_REV = dict([(v, k) for k, v in fiona.FIELD_TYPES_MAP.items()])
+
+warnings.simplefilter('default')
 
 
 def make_ld_context(context_items):
@@ -62,7 +70,7 @@ def id_record(rec):
 
 
 # Cat command
-@cli.command(short_help="Concatenate and print the features of datasets")
+@click.command(short_help="Concatenate and print the features of datasets")
 @files_in_arg
 @precision_opt
 @indent_opt
@@ -116,7 +124,7 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
 
 
 # Collect command
-@cli.command(short_help="Collect a sequence of features.")
+@click.command(short_help="Collect a sequence of features.")
 @precision_opt
 @indent_opt
 @compact_opt
@@ -292,7 +300,7 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
 
 
 # Distribute command
-@cli.command(short_help="Distribute features from a collection")
+@click.command(short_help="Distribute features from a collection")
 @use_rs_opt
 @click.pass_context
 def distrib(ctx, use_rs):
@@ -320,7 +328,7 @@ def distrib(ctx, use_rs):
 
 
 # Dump command
-@cli.command(short_help="Dump a dataset to GeoJSON.")
+@click.command(short_help="Dump a dataset to GeoJSON.")
 @click.argument('input', type=click.Path(), required=True)
 @click.option('--encoding', help="Specify encoding of the input file.")
 @precision_opt
@@ -475,6 +483,92 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                         collection['features'] = [transformer(source.crs, rec) for rec in source]
                     json.dump(collection, sink, **dump_kwds)
 
+        sys.exit(0)
+    except Exception:
+        logger.exception("Failed. Exception caught")
+        sys.exit(1)
+
+
+# Load command.
+@click.command(short_help="Load GeoJSON to a dataset in another format.")
+@click.argument('output', type=click.Path(), required=True)
+@click.option('-f', '--format', '--driver', required=True,
+              help="Output format driver name.")
+@click.option('--src_crs', default=None, help="Source CRS.")
+@click.option('--dst_crs', default=None, help="Destination CRS.")
+@sequence_opt
+@click.pass_context
+
+def load(ctx, output, driver, src_crs, dst_crs, sequence):
+    """Load features from JSON to a file in another format.
+
+    The input is a GeoJSON feature collection or optionally a sequence of
+    GeoJSON feature objects."""
+    verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
+    logger = logging.getLogger('fio')
+    stdin = click.get_text_stream('stdin')
+
+    if src_crs and dst_crs:
+        transformer = partial(transform_geom, src_crs, dst_crs,
+                              antimeridian_cutting=True, precision=-1)
+    else:
+        transformer = lambda x: x
+
+    first_line = next(stdin)
+
+    # If input is RS-delimited JSON sequence.
+    if first_line.startswith(u'\x1e'):
+        def feature_gen():
+            buffer = first_line.strip(u'\x1e')
+            for line in stdin:
+                if line.startswith(u'\x1e'):
+                    if buffer:
+                        feat = json.loads(buffer)
+                        feat['geometry'] = transformer(feat['geometry'])
+                        yield feat
+                    buffer = line.strip(u'\x1e')
+                else:
+                    buffer += line
+            else:
+                feat = json.loads(buffer)
+                feat['geometry'] = transformer(feat['geometry'])
+                yield feat
+    elif sequence:
+        def feature_gen():
+            yield json.loads(first_line)
+            for line in stdin:
+                feat = json.loads(line)
+                feat['geometry'] = transformer(feat['geometry'])
+                yield feat
+    else:
+        def feature_gen():
+            text = "".join(itertools.chain([first_line], stdin))
+            for feat in json.loads(text)['features']:
+                feat['geometry'] = transformer(feat['geometry'])
+                yield feat
+
+    try:
+        source = feature_gen()
+
+        # Use schema of first feature as a template.
+        # TODO: schema specified on command line?
+        first = next(source)
+        schema = {'geometry': first['geometry']['type']}
+        schema['properties'] = dict([
+            (k, FIELD_TYPES_MAP_REV.get(type(v)) or 'str')
+            for k, v in first['properties'].items()])
+
+        with fiona.drivers(CPL_DEBUG=verbosity>2):
+            with fiona.open(
+                    output, 'w',
+                    driver=driver,
+                    crs=dst_crs,
+                    schema=schema) as dst:
+                dst.write(first)
+                dst.writerecords(source)
+        sys.exit(0)
+    except IOError:
+        logger.info("IOError caught")
         sys.exit(0)
     except Exception:
         logger.exception("Failed. Exception caught")

@@ -1,31 +1,36 @@
-#!/usr/bin/env python
-# main: loader of all the command entry points.
+"""
+Main click group for the CLI.  Needs to be isolated for entry-point loading.
+"""
 
 
+import logging
 from pkg_resources import iter_entry_points
+import warnings
+import sys
 
-from fiona.fio.cli import BrokenCommand, cli
+import click
+from cligj import verbose_opt, quiet_opt
+import cligj.plugins
+
+from fiona import __version__ as fio_version
 
 
-# Find and load all entry points in the fiona.rio_commands group.
-# This includes the standard commands included with Fiona as well
-# as commands provided by other packages.
-#
-# At a mimimum, commands must use the fiona.fio.cli.cli command
-# group decorator like so:
-#
-#   from fiona.fio.cli import cli
-#
-#   @cli.command()
-#   def foo(...):
-#       ...
+def configure_logging(verbosity):
+    log_level = max(10, 30 - 10*verbosity)
+    logging.basicConfig(stream=sys.stderr, level=log_level)
 
-for entry_point in iter_entry_points('fiona.fio_commands'):
-    try:
-        entry_point.load()
-    except Exception:
-        # Catch this so a busted plugin doesn't take down the CLI.
-        # Handled by registering a dummy command that does nothing
-        # other than explain the error.
-        cli.add_command(
-            BrokenCommand(entry_point.name))
+
+@cligj.plugins.group(plugins=(
+        ep for ep in list(iter_entry_points('fiona.fio_commands')) +
+                     list(iter_entry_points('fiona.fio_plugins'))))
+@verbose_opt
+@quiet_opt
+@click.version_option(fio_version)
+@click.pass_context
+def main_group(ctx, verbose, quiet):
+
+    """Fiona command line interface."""
+
+    verbosity = verbose - quiet
+    configure_logging(verbosity)
+    ctx.obj = {'verbosity': verbosity}
