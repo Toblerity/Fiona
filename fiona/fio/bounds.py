@@ -6,11 +6,11 @@ import click
 from cligj import precision_opt, use_rs_opt
 
 import fiona
-from fiona.fio.cli import cli, obj_gen
+from .helpers import obj_gen
 
 
 # Bounds command
-@cli.command(short_help="Print the extent of GeoJSON objects")
+@click.command(short_help="Print the extent of GeoJSON objects")
 @precision_opt
 @click.option('--explode/--no-explode', default=False,
               help="Explode collections into features (default: no).")
