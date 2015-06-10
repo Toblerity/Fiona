@@ -79,7 +79,6 @@ def bounds(ctx, precision, explode, with_id, with_obj, use_rs):
                     click.echo(u'\u001e', nl=False)
                 click.echo(json.dumps(rec))
 
-        sys.exit(0)
     except Exception:
-        logger.exception("Failed. Exception caught")
-        sys.exit(1)
+        logger.exception("Exception caught during processing")
+        raise click.Abort()

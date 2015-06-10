@@ -117,10 +117,10 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
                         if use_rs:
                             click.echo(u'\u001e', nl=False)
                         click.echo(json.dumps(feat, **dump_kwds))
-        sys.exit(0)
+
     except Exception:
-        logger.exception("Failed. Exception caught")
-        sys.exit(1)
+        logger.exception("Exception caught during processing")
+        raise click.Abort()
 
 
 # Collect command
@@ -293,10 +293,9 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
             json.dump(collection, sink, **dump_kwds)
             sink.write("\n")
 
-        sys.exit(0)
     except Exception:
-        logger.exception("Failed. Exception caught")
-        sys.exit(1)
+        logger.exception("Exception caught during processing")
+        raise click.Abort()
 
 
 # Distribute command
@@ -322,9 +321,9 @@ def distrib(ctx, use_rs):
                 if use_rs:
                     click.echo(u'\u001e', nl=False)
                 click.echo(json.dumps(feat))
-        sys.exit(0)
     except Exception:
-        raise
+        logger.exception("Exception caught during processing")
+        raise click.Abort()
 
 
 # Dump command
@@ -483,10 +482,9 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                         collection['features'] = [transformer(source.crs, rec) for rec in source]
                     json.dump(collection, sink, **dump_kwds)
 
-        sys.exit(0)
     except Exception:
-        logger.exception("Failed. Exception caught")
-        sys.exit(1)
+        logger.exception("Exception caught during processing")
+        raise click.Abort()
 
 
 # Load command.
@@ -566,10 +564,7 @@ def load(ctx, output, driver, src_crs, dst_crs, sequence):
                     schema=schema) as dst:
                 dst.write(first)
                 dst.writerecords(source)
-        sys.exit(0)
-    except IOError:
-        logger.info("IOError caught")
-        sys.exit(0)
+
     except Exception:
-        logger.exception("Failed. Exception caught")
-        sys.exit(1)
+        logger.exception("Exception caught during processing")
+        raise click.Abort()
