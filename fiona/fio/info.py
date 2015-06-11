@@ -69,10 +69,10 @@ def info(ctx, input, indent, meta_member):
                         click.echo(info[meta_member])
                 else:
                     click.echo(json.dumps(info, indent=indent))
-        sys.exit(0)
+
     except Exception:
-        logger.exception("Failed. Exception caught")
-        sys.exit(1)
+        logger.exception("Exception caught during processing")
+        raise click.Abort()
 
 
 # Insp command.
@@ -92,7 +92,7 @@ def insp(ctx, src_path):
                         fiona.__version__, '.'.join(
                             map(str, sys.version_info[:3]))),
                     local=locals())
-            sys.exit(0)
+
     except Exception:
-        logger.exception("Failed. Exception caught")
-        sys.exit(1)
+        logger.exception("Exception caught during processing")
+        raise click.Abort()
