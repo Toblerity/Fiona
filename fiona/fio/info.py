@@ -12,6 +12,7 @@ import click
 from cligj import indent_opt
 
 import fiona
+import fiona.crs
 
 
 @click.command(short_help="Print information about the fio environment.")
