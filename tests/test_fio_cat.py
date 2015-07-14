@@ -60,7 +60,7 @@ def test_collect_rs():
     runner = CliRunner()
     result = runner.invoke(
         cat.collect,
-        ['--src_crs', 'EPSG:3857'],
+        ['--src-crs', 'EPSG:3857'],
         feature_seq_pp_rs,
         catch_exceptions=False)
     assert result.exit_code == 0
@@ -71,7 +71,7 @@ def test_collect_no_rs():
     runner = CliRunner()
     result = runner.invoke(
         cat.collect,
-        ['--src_crs', 'EPSG:3857'],
+        ['--src-crs', 'EPSG:3857'],
         feature_seq,
         catch_exceptions=False)
     assert result.exit_code == 0

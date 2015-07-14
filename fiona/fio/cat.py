@@ -13,6 +13,7 @@ from cligj import (
 import fiona
 from fiona.transform import transform_geom
 from .helpers import obj_gen
+from . import options
 
 
 FIELD_TYPES_MAP_REV = dict([(v, k) for k, v in fiona.FIELD_TYPES_MAP.items()])
@@ -77,8 +78,7 @@ def id_record(rec):
 @compact_opt
 @click.option('--ignore-errors/--no-ignore-errors', default=False,
               help="log errors but do not stop serialization.")
-@click.option('--dst_crs', default=None, metavar="EPSG:NNNN",
-              help="Destination CRS.")
+@options.dst_crs_opt
 @use_rs_opt
 @click.option('--bbox', default=None, metavar="w,s,e,n",
               help="filter for features intersecting a bounding box")
@@ -133,8 +133,7 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
               "(default), level.")
 @click.option('--ignore-errors/--no-ignore-errors', default=False,
               help="log errors but do not stop serialization.")
-@click.option('--src_crs', default=None, metavar="EPSG:NNNN",
-              help="Source CRS.")
+@options.src_crs_opt
 @click.option('--with-ld-context/--without-ld-context', default=False,
               help="add a JSON-LD context to JSON output.")
 @click.option('--add-ld-context-item', multiple=True,
@@ -492,11 +491,15 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
 @click.argument('output', type=click.Path(), required=True)
 @click.option('-f', '--format', '--driver', required=True,
               help="Output format driver name.")
-@click.option('--src_crs', default=None, help="Source CRS.")
-@click.option('--dst_crs', default=None, help="Destination CRS.")
-@sequence_opt
+@options.src_crs_opt
+@click.option(
+    '--dst-crs', '--dst_crs',
+    help="Destination CRS.  Defaults to --src-crs when not given.")
+@click.option(
+    '--sequence / --no-sequence', default=False,
+    help="Specify whether the input stream is a LF-delimited sequence of GeoJSON "
+         "features (the default) or a single GeoJSON feature collection.")
 @click.pass_context
-
 def load(ctx, output, driver, src_crs, dst_crs, sequence):
     """Load features from JSON to a file in another format.
 
@@ -506,7 +509,9 @@ def load(ctx, output, driver, src_crs, dst_crs, sequence):
     logger = logging.getLogger('fio')
     stdin = click.get_text_stream('stdin')
 
-    if src_crs and dst_crs:
+    dst_crs = dst_crs or src_crs
+
+    if src_crs and dst_crs and src_crs != dst_crs:
         transformer = partial(transform_geom, src_crs, dst_crs,
                               antimeridian_cutting=True, precision=-1)
     else:
