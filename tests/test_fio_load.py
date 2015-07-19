@@ -66,3 +66,56 @@ def test_seq_no_rs(tmpdir=None):
         main_group, ['load', '-f', 'Shapefile', '--sequence', tmpfile], feature_seq)
     assert result.exit_code == 0
     assert len(fiona.open(tmpfile)) == 2
+
+
+def test_dst_crs_default_to_src_crs(tmpdir=None):
+    # When --dst-crs is not given default to --src-crs.
+    if tmpdir is None:
+        tmpdir = tempfile.mkdtemp()
+        tmpfile = os.path.join(tmpdir, 'test.shp')
+    else:
+        tmpfile = str(tmpdir.join('test.shp'))
+    runner = CliRunner()
+    result = runner.invoke(
+        main_group, [
+            'load', '--src-crs', 'EPSG:32617', '-f', 'Shapefile', '--sequence', tmpfile
+        ], feature_seq)
+    assert result.exit_code == 0
+    with fiona.open(tmpfile) as src:
+        assert src.crs == {'init': 'epsg:32617'}
+        assert len(src) == len(feature_seq.splitlines())
+
+
+def test_different_crs(tmpdir=None):
+    if tmpdir is None:
+        tmpdir = tempfile.mkdtemp()
+        tmpfile = os.path.join(tmpdir, 'test.shp')
+    else:
+        tmpfile = str(tmpdir.join('test.shp'))
+    runner = CliRunner()
+    result = runner.invoke(
+        main_group, [
+            'load', '--src-crs', 'EPSG:32617', '--dst-crs', 'EPSG:32610',
+            '-f', 'Shapefile', '--sequence', tmpfile
+        ], feature_seq)
+    assert result.exit_code == 0
+    with fiona.open(tmpfile) as src:
+        assert src.crs == {'init': 'epsg:32610'}
+        assert len(src) == len(feature_seq.splitlines())
+
+
+def test_dst_crs_no_src(tmpdir=None):
+    if tmpdir is None:
+        tmpdir = tempfile.mkdtemp()
+        tmpfile = os.path.join(tmpdir, 'test.shp')
+    else:
+        tmpfile = str(tmpdir.join('test.shp'))
+    runner = CliRunner()
+    result = runner.invoke(
+        main_group, [
+            'load', '--dst-crs', 'EPSG:32610', '-f', 'Shapefile', '--sequence', tmpfile
+        ], feature_seq)
+    assert result.exit_code == 0
+    with fiona.open(tmpfile) as src:
+        assert src.crs == {'init': 'epsg:32610'}
+        assert len(src) == len(feature_seq.splitlines())
