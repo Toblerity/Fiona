@@ -1,9 +1,14 @@
 Changes
 =======
 
-1.6.0 (?)
----------
+1.6.0 (2015-07-21)
+------------------
+- Upgrade Cython requirement to 0.22 (#214).
 - New BytesCollection class (#215).
+- Add GDAL's OpenFileGDB driver to registered drivers (#221).
+- Implement CLI commands as plugins (#228).
+- Raise click.abort instead of calling sys.exit, preventing suprising exits
+  (#236).
 
 1.5.1 (2015-03-19)
 ------------------
