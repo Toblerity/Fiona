@@ -108,9 +108,9 @@ except Exception as e:
         shutil.copytree(datadir, 'fiona/gdal_data')
 if os.environ.get('PACKAGE_DATA'):
     destdir = 'fiona/gdal_data'
-    if gdal_ouput[2]:
-        log.info("Copying gdal data from %s" % gdal_ouput[2])
-        copy_data_tree(gdal_ouput[2], destdir)
+    if gdal_output[2]:
+        log.info("Copying gdal data from %s" % gdal_output[2])
+        copy_data_tree(gdal_output[2], destdir)
     else:
         # check to see if GDAL_DATA is defined
         gdal_data = os.environ.get('GDAL_DATA', None)
