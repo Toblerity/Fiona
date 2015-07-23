@@ -1,5 +1,7 @@
 import json
+import os.path
 from six import text_type
+import tempfile
 
 import fiona
 from fiona import prop_type, prop_width
@@ -25,7 +27,7 @@ def test_types():
     assert prop_type('date') == FionaDateType
 
 
-def test_read_json_object_properties(tmpdir):
+def test_read_json_object_properties():
     """JSON object properties are properly serialized"""
     data = """
 {
@@ -71,7 +73,8 @@ def test_read_json_object_properties(tmpdir):
   ]
 }
 """
-    filename = str(tmpdir.join('test.json'))
+    tmpdir = tempfile.mkdtemp()
+    filename = os.path.join(tmpdir, 'test.json')
 
     with open(filename, 'w') as f:
         f.write(data)
@@ -84,7 +87,7 @@ def test_read_json_object_properties(tmpdir):
         assert props['tricky'] == "{gotcha"
 
 
-def test_write_json_object_properties(tmpdir):
+def test_write_json_object_properties():
     """Python object properties are properly serialized"""
     data = """
 {
@@ -131,7 +134,8 @@ def test_write_json_object_properties(tmpdir):
 }
 """
     data = json.loads(data)['features'][0]
-    filename = str(tmpdir.join('test.json'))
+    tmpdir = tempfile.mkdtemp()
+    filename = os.path.join(tmpdir, 'test.json')
     with fiona.open(
             filename, 'w',
             driver='GeoJSON',
