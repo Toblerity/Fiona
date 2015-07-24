@@ -9,8 +9,8 @@ import warnings
 import sys
 
 import click
+from click_plugins import with_plugins
 from cligj import verbose_opt, quiet_opt
-import cligj.plugins
 
 from fiona import __version__ as fio_version
 
@@ -20,9 +20,9 @@ def configure_logging(verbosity):
     logging.basicConfig(stream=sys.stderr, level=log_level)
 
 
-@cligj.plugins.group(plugins=(
-        ep for ep in list(iter_entry_points('fiona.fio_commands')) +
-                     list(iter_entry_points('fiona.fio_plugins'))))
+@with_plugins(ep for ep in list(iter_entry_points('fiona.fio_commands')) +
+              list(iter_entry_points('fiona.fio_plugins')))
+@click.group()
 @verbose_opt
 @quiet_opt
 @click.version_option(fio_version)
