@@ -153,7 +153,11 @@ else:
         Extension('fiona._err', ['fiona/_err.c'], **ext_options),
         Extension('fiona.ogrext', ['fiona/ogrext.c'], **ext_options)]
 
-requirements = ['cligj', 'six']
+requirements = [
+    'cligj',
+    'click-plugins',
+    'six'
+]
 if sys.version_info < (2, 7):
     requirements.append('argparse')
     requirements.append('ordereddict')
