@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # Collections provide file-like access to feature data
 
+
+import json
 import os
 import sys
 
@@ -12,6 +14,7 @@ from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file
 from fiona.errors import DriverError, SchemaError, CRSError
 from fiona._drivers import driver_count, GDALEnv, supported_drivers
 from six import string_types, binary_type
+
 
 class Collection(object):
 
@@ -442,6 +445,111 @@ class BytesCollection(Collection):
             self.path + ":" + str(self.name),
             self.mode,
             hex(id(self)))
+
+
+class FeatureStream(object):
+
+    """
+    A file-like interface for operating on a stream of GeoJSON features.
+    """
+
+    def __init__(self, path, mode='r', use_rs=False):
+
+        """
+        """
+
+        if mode not in ('r', 'w', 'a'):
+            raise ValueError(
+                "mode string must be one of 'r', 'w', or 'a', not %s" % mode)
+
+        if path == '-' and mode == 'r':
+            self._file = sys.stdin
+        elif path == '-' and mode in ('a', 'w'):
+            self._file = sys.stdout
+        elif isinstance(path, string_types):
+            self._file = open(path, mode)
+        # Assume ``path`` is already a file-like object
+        else:
+            self._file = path
+
+        self._mode = mode
+        self._use_rs = use_rs
+
+        if self._mode == 'r':
+            self._first_line = next(self._file)
+            if self._first_line.startswith(u'\x1e'):
+                self._use_rs = True
+
+    def __repr__(self):
+        return "<%s FeatureStream '%s', mode '%s' at %s>" % (
+            self.closed and "closed" or "open",
+            str(self.name), self.mode, hex(id(self)))
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        """Returns the next feature from the underlying file."""
+
+        if self.closed:
+            raise ValueError("I/O operation on closed collection")
+        elif self.mode != 'r':
+            raise IOError("collection not open for reading")
+
+        if self._first_line:
+            line = self._first_line
+            self._first_line = None
+        else:
+            line = next(self._file)
+
+        if self._use_rs:
+            line = line.strip(u'\x1e')
+
+        return json.loads(line)
+
+    def __getattr__(self, item):
+        return getattr(self._file, item)
+
+    next = __next__
+
+    @property
+    def mode(self):
+        return self._mode
+
+    def writerecords(self, records, **kwargs):
+        """Stages multiple records for writing to disk."""
+        for rec in records:
+            self.write(rec, **kwargs)
+
+    def write(self, feature, **dump_kwds):
+        """Stages a record for writing to disk."""
+        if self.closed:
+            raise ValueError("I/O operation on closed collection")
+        if self.mode not in ('a', 'w'):
+            raise IOError("collection not open for writing")
+
+        if self._use_rs:
+            self._file.write(u'\u001e')
+        self._file.write(json.dumps(feature, **dump_kwds) + os.linesep)
+
+    def close(self):
+        self._file.close()
+
+    @property
+    def closed(self):
+        """``False`` if data can be accessed, otherwise ``True``."""
+        return self._file.closed
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
+
+    def __del__(self):
+        # Note: you can't count on this being called. Call close() explicitly
+        # or use the context manager protocol ("with").
+        self.__exit__(None, None, None)
 
 
 def vsi_path(path, vsi=None, archive=None):
