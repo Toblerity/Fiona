@@ -69,7 +69,7 @@ import logging
 import os
 from six import string_types
 
-from fiona.collection import Collection, BytesCollection, vsi_path
+from fiona.collection import Collection, BytesCollection, FeatureStream, vsi_path
 from fiona._drivers import driver_count, GDALEnv, supported_drivers
 from fiona.odict import OrderedDict
 from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP
@@ -95,7 +95,9 @@ def open(
         encoding=None,
         layer=None,
         vfs=None,
-        enabled_drivers=None):
+        enabled_drivers=None,
+        sequence=False,
+        use_rs=False):
     
     """Open file at ``path`` in ``mode`` "r" (read), "a" (append), or
     "w" (write) and return a ``Collection`` object.
@@ -145,6 +147,10 @@ def open(
           'example.shp', enabled_drivers=['GeoJSON', 'ESRI Shapefile'])
 
     """
+
+    if sequence:
+        return FeatureStream(path, mode=mode, use_rs=use_rs)
+
     # Parse the vfs into a vsi and an archive path.
     path, vsi, archive = parse_paths(path, vfs)
     if mode in ('a', 'r'):
@@ -257,4 +263,3 @@ def bounds(ob):
     The ``ob`` may be a feature record or geometry."""
     geom = ob.get('geometry') or ob
     return _bounds(geom)
-
