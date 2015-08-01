@@ -53,7 +53,7 @@ def env(ctx, key):
 @click.pass_context
 def info(ctx, input, indent, meta_member):
     verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
-    logger = logging.getLogger('rio')
+    logger = logging.getLogger('fio')
     try:
         with fiona.drivers(CPL_DEBUG=verbosity>2):
             with fiona.open(input) as src:
