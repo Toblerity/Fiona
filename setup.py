@@ -122,7 +122,7 @@ if os.environ.get('PACKAGE_DATA'):
     projdatadir = os.environ.get('PROJ_LIB', '/usr/local/share/proj')
     if os.path.exists(projdatadir):
         log.info("Copying proj data from %s" % projdatadir)
-        copy_data_tree(projdatadir, 'finoa/proj_data')
+        copy_data_tree(projdatadir, 'fiona/proj_data')
 
 ext_options = dict(
     include_dirs=include_dirs,
