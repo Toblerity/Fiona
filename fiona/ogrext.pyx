@@ -1,6 +1,7 @@
 # These are extension functions and classes using the OGR C API.
 
 import datetime
+import json
 import locale
 import logging
 import os
@@ -165,6 +166,7 @@ cdef class FeatureBuilder:
                     key,
                     ograpi.OGR_Fld_GetType(fdefn))
                 continue
+
             # TODO: other types
             fieldtype = FIELD_TYPES_MAP[fieldtypename]
             if not ograpi.OGR_F_IsFieldSet(feature, i):
@@ -173,14 +175,26 @@ cdef class FeatureBuilder:
                 props[key] = ograpi.OGR_F_GetFieldAsInteger(feature, i)
             elif fieldtype is float:
                 props[key] = ograpi.OGR_F_GetFieldAsDouble(feature, i)
+
             elif fieldtype is text_type:
                 try:
                     val = ograpi.OGR_F_GetFieldAsString(feature, i)
-                    props[key] = val.decode(encoding)
+                    val = val.decode(encoding)
                 except UnicodeDecodeError:
                     log.warn(
                         "Failed to decode %s using %s codec", val, encoding)
-                    props[key] = val
+
+                # Does the text contain a JSON object? Let's check.
+                # Let's check as cheaply as we can.
+                if val.startswith('{'):
+                    try:
+                        val = json.loads(val)
+                    except ValueError as err:
+                        log.warn(str(err))
+
+                # Now add to the properties object.
+                props[key] = val
+
             elif fieldtype in (FionaDateType, FionaTimeType, FionaDateTimeType):
                 retval = ograpi.OGR_F_GetFieldAsDateTime(
                     feature, i, &y, &m, &d, &hh, &mm, &ss, &tz)
@@ -253,6 +267,12 @@ cdef class OGRFeatureBuilder:
             i = ograpi.OGR_F_GetFieldIndex(cogr_feature, key_c)
             if i < 0:
                 continue
+
+            # Special case: serialize dicts to assist OGR.
+            if isinstance(value, dict):
+                value = json.dumps(value)
+
+            # Continue over the standard OGR types.
             if isinstance(value, integer_types):
                 ograpi.OGR_F_SetFieldInteger(cogr_feature, i, value)
             elif isinstance(value, float):
