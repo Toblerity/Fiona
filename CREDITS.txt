@@ -3,30 +3,30 @@ Credits
 
 Fiona is written by:
 
-* Sean Gillies <sean.gillies@gmail.com>
-* Rene Buffat <buffat@gmail.com>
-* Kevin Wurster <wursterk@gmail.com>
-* Kelsey Jordahl <kjordahl@enthought.com>
-* Patrick Young <patrick.mckendree.young@gmail.com>
-* Hannes Gräuler <graeuler@geoplex.de>
-* Ryan Grout <rgrout@continuum.io>
-* Michael Weisman <mweisman@gmail.com>
-* Joshua Arnott <josh@snorfalorpagus.net>
-* Jacob Wasserman <jwasserman@gmail.com>
-* Miro Hrončok <miro@hroncok.cz>
-* Michele Citterio <michele@citterio.net>
-* Johan Van de Wauw <johan.vandewauw@gmail.com>
-* fredj <frederic.junod@camptocamp.com>
-* Brendan Ward <bcward@consbio.org>
-* wilsaj <wilson.andrew.j+github@gmail.com>
-* Stefano Costa <steko@iosa.it>
-* Oliver Tonnhofer <olt@bogosoft.com>
-* Martijn Visser <mgvisser@gmail.com>
-* Ludovic Delauné <ludotux@gmail.com>
-* Hannes Gräuler <hgraeule@uos.de>
-* dimlev <dimlev@gmail.com>
-* Brandon Liu <bdon@bdon.org>
-* Ariel Nunez <ingenieroariel@gmail.com>
+- Sean Gillies <sean.gillies@gmail.com>
+- Kevin Wurster <wursterk@gmail.com>
+- René Buffat <buffat@gmail.com>
+- Kelsey Jordahl <kjordahl@enthought.com>
+- Patrick Young <patrick.young@digitalglobe.com>
+- Hannes Gräuler <graeuler@geoplex.de>
+- Johan Van de Wauw <johan.vandewauw@gmail.com>
+- Jacob Wasserman <jwasserman@gmail.com>
+- Joshua Arnott <josh@snorfalorpagus.net>
+- Ryan Grout <rgrout@continuum.io>
+- Michael Weisman <mweisman@gmail.com>
+- Brendan Ward <bcward@consbio.org>
+- Michele Citterio <michele@citterio.net>
+- Miro Hrončok <miro@hroncok.cz>
+- fredj <frederic.junod@camptocamp.com>
+- wilsaj <wilson.andrew.j+github@gmail.com>
+- Brandon Liu <bdon@bdon.org>
+- Hannes Gräuler <hgraeule@uos.de>
+- Ludovic Delauné <ludotux@gmail.com>
+- Martijn Visser <mgvisser@gmail.com>
+- Oliver Tonnhofer <olt@bogosoft.com>
+- Stefano Costa <steko@iosa.it>
+- dimlev <dimlev@gmail.com>
+- Ariel Nunez <ingenieroariel@gmail.com>
 
 Fiona would not be possible without the great work of Frank Warmerdam and other
 GDAL/OGR developers.

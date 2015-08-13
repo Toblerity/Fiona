@@ -1,6 +1,15 @@
 Changes
 =======
 
+All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
+
+1.6.1 (2015-08-12)
+------------------
+- Bug fix: Fiona now deserializes JSON-encoded string properties provided by
+  the OGR GeoJSON driver (#244, #245, #246).
+- Bug fix: proj4 data was not copied properly into binary distributions due to
+  a typo (#254).
+
 1.6.0 (2015-07-21)
 ------------------
 - Upgrade Cython requirement to 0.22 (#214).
