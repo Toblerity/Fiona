@@ -15,8 +15,12 @@ from six import string_types, binary_type
 
 class Collection(object):
 
-    """A file-like interface to features in the form of GeoJSON-like
-    mappings."""
+    """A file-like interface to features of a vector dataset
+    
+    Python text file objects are iterators over lines of a file. Fiona
+    Collections are similar iterators (not lists!) over features
+    represented as GeoJSON-like mappings.
+    """
 
     def __init__(
             self, path, mode='r', 
