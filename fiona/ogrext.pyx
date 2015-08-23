@@ -430,7 +430,7 @@ cdef class Session:
             self._fileencoding = (
                 ograpi.OGR_L_TestCapability(
                     self.cogr_layer, OLC_STRINGSASUTF8) and
-                OGR_DETECTED_ENCODING) or (
+                'utf-8') or (
                 self.get_driver() == "ESRI Shapefile" and
                 'ISO-8859-1') or locale.getpreferredencoding().upper()
 
@@ -718,7 +718,7 @@ cdef class WritingSession(Session):
             userencoding = self.collection.encoding
             self._fileencoding = (userencoding or (
                 ograpi.OGR_L_TestCapability(self.cogr_layer, OLC_STRINGSASUTF8) and
-                OGR_DETECTED_ENCODING) or (
+                'utf-8') or (
                 self.get_driver() == "ESRI Shapefile" and
                 'ISO-8859-1') or locale.getpreferredencoding()).upper()
 
