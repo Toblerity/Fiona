@@ -147,4 +147,5 @@ cdef extern from "ogr_api.h":
 
 cdef extern from "cpl_error.h":
     void CPLErrorReset()
+    char * CPLGetLastErrorMsg()
 
