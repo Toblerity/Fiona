@@ -47,6 +47,8 @@ FIELD_TYPES = [
     'date',         # OFTDate, Date
     'time',         # OFTTime, Time
     'datetime',     # OFTDateTime, Date and Time
+    'int',          # OFTInteger64, Single 64bit integer
+    None,           # OFTInteger64List, List of 64bit integers
     ]
 
 # Mapping of Fiona field type names to Python types.
