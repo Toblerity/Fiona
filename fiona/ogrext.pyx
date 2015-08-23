@@ -956,6 +956,7 @@ cdef class WritingSession(Session):
         if cogr_ds == NULL:
             raise ValueError("Null data source")
         log.debug("Syncing OGR to disk")
+        ograpi.CPLErrorReset()
         retval = ograpi.OGR_DS_SyncToDisk(cogr_ds)
         if retval != OGRERR_NONE:
             raise RuntimeError("Failed to sync to disk")
