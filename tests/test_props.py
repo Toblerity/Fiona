@@ -151,3 +151,46 @@ def test_write_json_object_properties():
         assert props['upperLeftCoordinate']['latitude'] == 45.66894
         assert props['upperLeftCoordinate']['longitude'] == 87.91166
         assert props['tricky'] == "{gotcha"
+
+
+def test_json_prop_decode_non_geojson_driver():
+    feature = {
+        "type": "Feature",
+        "properties": {
+            "ulc": {
+                "latitude": 45.66894,
+                "longitude": 87.91166
+            },
+            "tricky": "{gotcha"
+        },
+        "geometry": {
+            "type": "Point",
+            "coordinates": [10, 15]
+        }
+    }
+
+    meta = {
+        'crs': 'EPSG:4326',
+        'driver': 'ESRI Shapefile',
+        'schema': {
+            'geometry': 'Point',
+            'properties': {
+                'ulc': 'str:255',
+                'tricky': 'str:255'
+            }
+        }
+    }
+
+    tmpdir = tempfile.mkdtemp()
+    filename = os.path.join(tmpdir, 'test.json')
+    with fiona.open(filename, 'w', **meta) as dst:
+        dst.write(feature)
+
+    with fiona.open(filename) as src:
+        actual = next(src)
+
+    assert isinstance(actual['properties']['ulc'], text_type)
+    a = json.loads(actual['properties']['ulc'])
+    e = json.loads(actual['properties']['ulc'])
+    assert e == a
+    assert actual['properties']['tricky'].startswith('{')

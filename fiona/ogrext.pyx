@@ -136,7 +136,7 @@ cdef class FeatureBuilder:
     argument is not destroyed.
     """
 
-    cdef build(self, void *feature, encoding='utf-8', bbox=False):
+    cdef build(self, void *feature, encoding='utf-8', bbox=False, driver=None):
         # The only method anyone ever needs to call
         cdef void *fdefn
         cdef int i
@@ -186,7 +186,7 @@ cdef class FeatureBuilder:
 
                 # Does the text contain a JSON object? Let's check.
                 # Let's check as cheaply as we can.
-                if val.startswith('{'):
+                if driver == 'GeoJSON' and val.startswith('{'):
                     try:
                         val = json.loads(val)
                     except ValueError as err:
@@ -335,7 +335,12 @@ def featureRT(feature, collection):
         raise ValueError("Null geometry")
     log.debug("Geometry: %s" % ograpi.OGR_G_ExportToJson(cogr_geometry))
     encoding = collection.encoding or 'utf-8'
-    result = FeatureBuilder().build(cogr_feature, encoding)
+    result = FeatureBuilder().build(
+        cogr_feature,
+        bbox=False,
+        encoding=encoding,
+        driver=collection.driver
+    )
     _deleteOgrFeature(cogr_feature)
     return result
 
@@ -652,7 +657,11 @@ cdef class Session:
             if cogr_feature == NULL:
                 return None
             feature = FeatureBuilder().build(
-                        cogr_feature, self.get_internalencoding())
+                cogr_feature,
+                bbox=False,
+                encoding=self.get_internalencoding(),
+                driver=self.collection.driver
+            )
             _deleteOgrFeature(cogr_feature)
             return feature
 
@@ -1097,7 +1106,12 @@ cdef class Iterator:
         if cogr_feature == NULL:
             raise StopIteration
 
-        feature = FeatureBuilder().build(cogr_feature, self.encoding)
+        feature = FeatureBuilder().build(
+            cogr_feature,
+            bbox=False,
+            encoding=self.encoding,
+            driver=self.collection.driver
+        )
         _deleteOgrFeature(cogr_feature)
         return feature
 
@@ -1121,7 +1135,12 @@ cdef class ItemsIterator(Iterator):
 
 
         fid = ograpi.OGR_F_GetFID(cogr_feature)
-        feature = FeatureBuilder().build(cogr_feature, self.encoding)
+        feature = FeatureBuilder().build(
+            cogr_feature,
+            bbox=False,
+            encoding=self.encoding,
+            driver=self.collection.driver
+        )
         _deleteOgrFeature(cogr_feature)
 
         return fid, feature
