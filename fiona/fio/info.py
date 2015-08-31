@@ -13,6 +13,7 @@ from cligj import indent_opt
 
 import fiona
 import fiona.crs
+from fiona.fio import options
 
 
 @click.command(short_help="Print information about the fio environment.")
@@ -37,7 +38,7 @@ def env(ctx, key):
 # Info command.
 @click.command(short_help="Print information about a dataset.")
 # One or more files.
-@click.argument('input', type=click.Path(exists=True))
+@options.input_path_arg
 @indent_opt
 # Options to pick out a single metadata item and print it as
 # a string.
@@ -50,13 +51,17 @@ def env(ctx, key):
 @click.option('--bounds', 'meta_member', flag_value='bounds',
               help="Print the boundary coordinates "
                    "(left, bottom, right, top).")
+@options.vfs_opt
 @click.pass_context
-def info(ctx, input, indent, meta_member):
+def info(ctx, input, indent, meta_member, vfs):
     verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
     logger = logging.getLogger('fio')
+    open_opts = {}
+    if vfs:
+        open_opts['vfs'] = vfs
     try:
         with fiona.drivers(CPL_DEBUG=verbosity>2):
-            with fiona.open(input) as src:
+            with fiona.open(input, **open_opts) as src:
                 info = src.meta
                 info.update(bounds=src.bounds, count=len(src))
                 proj4 = fiona.crs.to_string(src.crs)
