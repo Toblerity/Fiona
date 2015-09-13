@@ -21,7 +21,7 @@ after_success:
 env:
   - GDALVERSION="1.9.2"
   - GDALVERSION="1.11.2"
-  - GDALVERSION="2.0.0"
+#  - GDALVERSION="2.0.0"
 cache:
   directories:
     - $HOME/gdalbuild/gdal-1.9.2
