@@ -14,5 +14,5 @@ if [ "$GDALVERSION" = "1.11.2" ]; then
       tar -xzvf gdal-1.11.2.tar.gz
     fi
     cd gdal-1.11.2
-    ./configure --prefix=/usr && make && sudo make install
+    ./configure --prefix=/usr --without-ogdi && make -j 2 && sudo make install
 fi
