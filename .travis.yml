@@ -2,8 +2,8 @@ language: python
 
 python:
   - "2.7"
-  - "3.3"
-  - "3.4"
+#  - "3.3"
+#  - "3.4"
 
 sudo: false
 
@@ -32,5 +32,5 @@ after_success:
 
 env:
   - GDALVERSION="1.9.2"
-  - GDALVERSION="1.11.2"
+#  - GDALVERSION="1.11.2"
 #  - GDALVERSION="2.0.0"
