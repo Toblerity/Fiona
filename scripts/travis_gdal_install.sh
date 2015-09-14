@@ -2,7 +2,7 @@
 set -ex
 GDALDIR="${HOME}/gdalbuild"
 
-GDALOPTS="--prefix=/usr --with-ogr \
+GDALOPTS="--prefix=$HOME/gdal --with-ogr \
             --with-geos \
             --with-expat \
             --without-libtool \
@@ -59,7 +59,7 @@ if [ "$GDALVERSION" = "1.9.2" ]; then
       tar -xzvf gdal-1.9.2.tar.gz
     fi
     cd gdal-1.9.2
-    ./configure $GDALOPTS && make -j 2 && sudo make install
+    ./configure $GDALOPTS && make -j 2 && make install
 elif [ "$GDALVERSION" = "1.11.2" ]; then
     cd $GDALDIR
     if [ ! -d "$GDALDIR/gdal-1.11.2" ]; then
@@ -67,7 +67,7 @@ elif [ "$GDALVERSION" = "1.11.2" ]; then
       tar -xzvf gdal-1.11.2.tar.gz
     fi
     cd gdal-1.11.2
-    ./configure $GDALOPTS && make -j 2 && sudo make install
+    ./configure $GDALOPTS && make -j 2 && make install
 elif [ "$GDALVERSION" = "2.0.0" ]; then
     cd $GDALDIR
     if [ ! -d "$GDALDIR/gdal-2.0.0" ]; then
@@ -75,7 +75,7 @@ elif [ "$GDALVERSION" = "2.0.0" ]; then
       tar -xzvf gdal-2.0.0.tar.gz
     fi
     cd gdal-2.0.0
-    ./configure $GDALOPTS && make -j 2 && sudo make install
+    ./configure $GDALOPTS && make -j 2 && make install
 fi
 
 # change back to travis build dir
