@@ -9,9 +9,8 @@ sudo: false
 
 cache:
   directories:
-    - $HOME/gdalbuild/gdal-1.9.2
-    - $HOME/gdalbuild/gdal-1.11.2
-    - $HOME/gdalbuild/gdal-2.0.0
+    - $HOME/gdalbuild
+    - $HOME/.cache/pip
 
 before_install:
   - . ./scripts/travis_gdal_install.sh
