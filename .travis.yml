@@ -8,6 +8,8 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get build-dep gdal
   - . ./scripts/travis_gdal_install.sh
+  - export PATH=$HOME/gdal/bin:$PATH
+  - export LD_LIBRARY_PATH=$HOME/gdal/lib:$LD_LIBRARY_PATH
 install:
   - "pip install -r requirements-dev.txt"
   - "pip install pytest"
