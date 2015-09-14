@@ -4,6 +4,7 @@ GDALDIR="${HOME}/gdalbuild"
 
 GDALOPTS="--prefix=/usr --with-ogr \
             --with-geos \
+            --with-expat \
             --without-libtool \
             --with-libz=internal \
             --with-libtiff=internal \
@@ -32,7 +33,6 @@ GDALOPTS="--prefix=/usr --with-ogr \
             --without-mysql \
             --without-ingres \
             --without-xerces \
-            --without-expat \
             --without-odbc \
             --without-curl \
             --without-sqlite3 \
