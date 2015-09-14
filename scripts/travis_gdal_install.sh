@@ -37,14 +37,12 @@ GDALOPTS="--prefix=$HOME/gdal --with-ogr \
             --without-curl \
             --without-sqlite3 \
             --without-dwgdirect \
-            --without-panorama \
             --without-idb \
             --without-sde \
             --without-perl \
             --without-php \
             --without-ruby \
-            --without-python \
-            --without-ogpython"
+            --without-python"
 
 # Create build dir if not exists
 if [ ! -d "$GDALDIR" ]; then
@@ -59,7 +57,7 @@ if [ "$GDALVERSION" = "1.9.2" ]; then
       tar -xzvf gdal-1.9.2.tar.gz
     fi
     cd gdal-1.9.2
-    ./configure $GDALOPTS && make && make install
+    ./configure $GDALOPTS --without-jpeg12 && make && make install
 elif [ "$GDALVERSION" = "1.11.2" ]; then
     cd $GDALDIR
     if [ ! -a "$GDALDIR/gdal-1.11.2/configure" ]; then
