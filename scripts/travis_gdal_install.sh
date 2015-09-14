@@ -17,7 +17,7 @@ GDALOPTS="--prefix=$HOME/gdal --with-ogr \
             --without-pcraster \
             --without-netcdf \
             --without-png \
-            --without-jpeg \
+            --with-jpeg=internal \
             --without-gif \
             --without-ogdi \
             --without-fme \
@@ -57,7 +57,7 @@ if [ "$GDALVERSION" = "1.9.2" ]; then
       tar -xzvf gdal-1.9.2.tar.gz
     fi
     cd gdal-1.9.2
-    ./configure $GDALOPTS --without-jpeg12 && make && make install
+    ./configure $GDALOPTS && make && make install
 elif [ "$GDALVERSION" = "1.11.2" ]; then
     cd $GDALDIR
     if [ ! -a "$GDALDIR/gdal-1.11.2/configure" ]; then
