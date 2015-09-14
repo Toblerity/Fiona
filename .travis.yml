@@ -6,10 +6,13 @@ python:
 
 sudo: false
 
+cache:
+  directories:
+    - $HOME/gdalbuild/gdal-1.9.2
+    - $HOME/gdalbuild/gdal-1.11.2
+    - $HOME/gdalbuild/gdal-2.0.0
+
 before_install:
-#  - sudo add-apt-repository -y ppa:ubuntugis/ppa
-#  - sudo apt-get update -qq
-#  - sudo apt-get build-dep gdal
   - . ./scripts/travis_gdal_install.sh
   - export PATH=$HOME/gdal/bin:$PATH
   - export LD_LIBRARY_PATH=$HOME/gdal/lib:$LD_LIBRARY_PATH
@@ -27,8 +30,3 @@ env:
 #  - GDALVERSION="1.9.2"
   - GDALVERSION="1.11.2"
 #  - GDALVERSION="2.0.0"
-#cache:
-#  directories:
-#    - $HOME/gdalbuild/gdal-1.9.2
-#    - $HOME/gdalbuild/gdal-1.11.2
-#    - $HOME/gdalbuild/gdal-2.0.0
