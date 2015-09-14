@@ -1,4 +1,5 @@
 language: python
+
 python:
   - "2.7"
 #  - "3.3"
@@ -16,16 +17,20 @@ before_install:
   - . ./scripts/travis_gdal_install.sh
   - export PATH=$HOME/gdal/bin:$PATH
   - export LD_LIBRARY_PATH=$HOME/gdal/lib:$LD_LIBRARY_PATH
+
 install:
   - "pip install -r requirements-dev.txt"
   - "pip install pytest"
   - "pip install coveralls"
   - "pip install --global-option=build_ext --global-option='-I$HOME/gdal/include' --global-option='-L$HOME/gdal/lib' --global-option='-lgdal' -e ."
+
 script: 
   - nosetests --exclude test_filter_vsi --exclude test_geopackage
   - coverage run --source=fiona --omit='*.pxd,*.pyx,*/tests/*,*/docs/*,*/examples/*,*/benchmarks/*' -m nose --exclude test_filter_vsi --exclude test_geopackage
+
 after_success:
   - coveralls
+
 env:
 #  - GDALVERSION="1.9.2"
   - GDALVERSION="1.11.2"
