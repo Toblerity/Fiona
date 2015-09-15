@@ -63,7 +63,7 @@ writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
 __all__ = ['bounds', 'listlayers', 'open', 'prop_type', 'prop_width']
-__version__ = "1.6.1"
+__version__ = "1.6.2"
 
 import logging
 import os
@@ -87,15 +87,16 @@ log.addHandler(NullHandler())
 
 
 def open(
-        path, 
-        mode='r', 
-        driver=None, 
-        schema=None, 
+        path,
+        mode='r',
+        driver=None,
+        schema=None,
         crs=None,
         encoding=None,
         layer=None,
         vfs=None,
-        enabled_drivers=None):
+        enabled_drivers=None,
+        crs_wkt=None):
     
     """Open file at ``path`` in ``mode`` "r" (read), "a" (append), or
     "w" (write) and return a ``Collection`` object.
@@ -118,7 +119,13 @@ def open(
     
       {'proj': 'longlat', 'ellps': 'WGS84', 'datum': 'WGS84', 
        'no_defs': True}
-    
+
+    short hand strings like
+
+      EPSG:4326
+
+    or WKT representations of coordinate reference systems.
+
     The drivers used by Fiona will try to detect the encoding of data
     files. If they fail, you may provide the proper ``encoding``, such
     as 'Windows-1252' for the Natural Earth datasets.
@@ -163,16 +170,17 @@ def open(
             this_schema['properties'] = OrderedDict(schema['properties'])
         else:
             this_schema = None
-        c = Collection(path, mode, 
-                crs=crs, driver=driver, schema=this_schema, 
+        c = Collection(path, mode,
+                crs=crs, driver=driver, schema=this_schema,
                 encoding=encoding, layer=layer, vsi=vsi, archive=archive,
-                enabled_drivers=enabled_drivers)
+                enabled_drivers=enabled_drivers, crs_wkt=crs_wkt)
     else:
         raise ValueError(
             "mode string must be one of 'r', 'w', or 'a', not %s" % mode)
     return c
 
 collection = open
+
 
 def listlayers(path, vfs=None):
     """Returns a list of layer names in their index order.
@@ -257,4 +265,3 @@ def bounds(ob):
     The ``ob`` may be a feature record or geometry."""
     geom = ob.get('geometry') or ob
     return _bounds(geom)
-
