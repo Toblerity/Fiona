@@ -1,3 +1,6 @@
+import os
+import tempfile
+
 import fiona
 
 
@@ -6,8 +9,9 @@ def test_profile():
         assert src.meta['crs_wkt'] == 'GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295],AUTHORITY["EPSG","4326"]]'
 
 
-def test_profile_creation_wkt(tmpdir):
-    outfilename = str(tmpdir.join('test.shp'))
+def test_profile_creation_wkt():
+    tmpdir = tempfile.mkdtemp()
+    outfilename = os.path.join(tmpdir, 'test.shp')
     with fiona.open('tests/data/coutwildrnp.shp') as src:
         profile = src.meta
         profile['crs'] = 'bogus'
