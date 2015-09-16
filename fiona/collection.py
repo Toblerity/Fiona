@@ -132,7 +132,10 @@ class Collection(object):
             if crs_wkt:
                 self._crs_wkt = crs_wkt
             elif crs:
-                self._crs = crs
+                if 'init' in crs or 'proj' in crs or 'epsg' in crs.lower():
+                    self._crs = crs
+                else:
+                    raise CRSError("crs lacks init or proj parameter")
 
         if driver_count == 0:
             # create a local manager and enter
