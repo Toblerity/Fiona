@@ -9,19 +9,21 @@ sudo: false
 
 cache:
   directories:
-    - $HOME/gdalbuild
+    - $GDALINST
     - $HOME/.cache/pip
+    - $HOME/virtualenv/python$TRAVIS_PYTHON_VERSION/lib/python$TRAVIS_PYTHON_VERSION/site-packages/
+    - $HOME/virtualenv/python$TRAVIS_PYTHON_VERSION/bin/
 
 before_install:
   - . ./scripts/travis_gdal_install.sh
-  - export PATH=$HOME/gdal/bin:$PATH
-  - export LD_LIBRARY_PATH=$HOME/gdal/lib:$LD_LIBRARY_PATH
+  - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$PATH
+  - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$LD_LIBRARY_PATH
 
 install:
   - "pip install -r requirements-dev.txt"
   - "pip install pytest"
   - "pip install coveralls"
-  - "pip install --global-option=build_ext --global-option='-I$HOME/gdal/include' --global-option='-L$HOME/gdal/lib' --global-option='-lgdal' -e ."
+  - "pip install --upgrade --force-reinstall --global-option=build_ext --global-option='-I$GDALINST/gdal-$GDALVERSION/include' --global-option='-L$GDALINST/gdal-$GDALVERSION/lib' --global-option='-R$GDALINST/gdal-$GDALVERSION/lib' -e ."
 
 script: 
   - nosetests --exclude test_filter_vsi --exclude test_geopackage
@@ -31,6 +33,12 @@ after_success:
   - coveralls
 
 env:
-  - GDALVERSION="1.9.2"
-  - GDALVERSION="1.11.2"
-#  - GDALVERSION="2.0.0"
+  global:
+    - GDALINST=$HOME/gdalinstall
+    - GDALBUILD=$HOME/gdalbuild
+
+  matrix:
+    - GDALVERSION="1.9.2" 
+    - GDALVERSION="1.11.2"
+    - GDALVERSION="2.0.0"
+  
