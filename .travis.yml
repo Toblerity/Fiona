@@ -8,6 +8,7 @@ python:
 sudo: false
 
 cache:
+
   directories:
     - $GDALINST
     - $HOME/.cache/pip
@@ -33,6 +34,7 @@ after_success:
   - coveralls
 
 env:
+
   global:
     - GDALINST=$HOME/gdalinstall
     - GDALBUILD=$HOME/gdalbuild
