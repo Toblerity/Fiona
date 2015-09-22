@@ -20,6 +20,7 @@ Fiona's new command line interface is a program named "fio".
       collect  Collect a sequence of features.
       dump     Dump a dataset to GeoJSON.
       env      Print information about the rio environment.
+      filter   Filter GeoJSON features by python expression
       info     Print information about a dataset.
       insp     Open a dataset and start an interpreter.
       load     Load GeoJSON to a dataset in another format.
@@ -219,6 +220,26 @@ collection into a feature sequence.
     > 'each(data.features,function(o){console.log(JSON.stringify(o))})' \
     > | fio load /tmp/test-seq.shp --x-json-seq --driver Shapefile
 
+
+filter
+------
+The filter command reads GeoJSON features from stdin and writes the feature to 
+stdout *if* the provided expression evalutates to `True` for that feature. 
+
+The python expression is evaluated in a restricted namespace containing 3 functions 
+(`sum`, `min`, `max`), the `math` module, and an object `f` representing the
+feature to be evaluated. If the expression evaluates to a false-y value, the
+feature is not included in the output. Otherwise, the feature is printed
+verbatim. 
+
+For example 
+
+    fio cat data.shp \
+    | fio filter "f['properties']['area'] > 1000.0" \
+    | fio collect > large_polygons.geojson
+
+Would create a geojson file with only those features from `data.shp` where the
+area was over a given threshold.
 
 Coordinate Reference System Transformations
 -------------------------------------------
