@@ -592,14 +592,17 @@ cdef class Session:
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
         cogr_crs = ograpi.OGR_L_GetSpatialRef(self.cogr_layer)
+        crs_wkt = ""
         if cogr_crs is not NULL:
             log.debug("Got coordinate system")
-        ograpi.OSRExportToWkt(cogr_crs, &proj_c)
-        if proj_c == NULL:
-            raise ValueError("Null projection")
-        proj_b = proj_c
-        crs_wkt = proj_b.decode('utf-8')
-        ograpi.CPLFree(proj_c)
+            ograpi.OSRExportToWkt(cogr_crs, &proj_c)
+            if proj_c == NULL:
+                raise ValueError("Null projection")
+            proj_b = proj_c
+            crs_wkt = proj_b.decode('utf-8')
+            ograpi.CPLFree(proj_c)
+        else:
+            log.debug("Projection not found (cogr_crs was NULL)")
         return crs_wkt
 
     def get_extent(self):
@@ -769,19 +772,23 @@ cdef class WritingSession(Session):
             else:
                 self.cogr_ds = cogr_ds
 
-            # Set the spatial reference system from the given crs.
-            if collection.crs:
+            # Set the spatial reference system from the crs given to the
+            # collection constructor. We by-pass the crs_wkt and crs
+            # properties because they aren't accessible until the layer
+            # is constructed (later).
+            col_crs = collection._crs_wkt or collection._crs
+            if col_crs:
                 cogr_srs = ograpi.OSRNewSpatialReference(NULL)
                 if cogr_srs == NULL:
                     raise ValueError("NULL spatial reference")
                 # First, check for CRS strings like "EPSG:3857".
-                if isinstance(collection.crs, string_types):
-                    proj_b = collection.crs.encode('utf-8')
+                if isinstance(col_crs, string_types):
+                    proj_b = col_crs.encode('utf-8')
                     proj_c = proj_b
                     ograpi.OSRSetFromUserInput(cogr_srs, proj_c)
-                elif isinstance(collection.crs, dict):
+                elif isinstance(col_crs, dict):
                     # EPSG is a special case.
-                    init = collection.crs.get('init')
+                    init = col_crs.get('init')
                     if init:
                         log.debug("Init: %s", init)
                         auth, val = init.split(':')
@@ -790,8 +797,8 @@ cdef class WritingSession(Session):
                             ograpi.OSRImportFromEPSG(cogr_srs, int(val))
                     else:
                         params = []
-                        collection.crs['wktext'] = True
-                        for k, v in collection.crs.items():
+                        col_crs['wktext'] = True
+                        for k, v in col_crs.items():
                             if v is True or (k in ('no_defs', 'wktext') and v):
                                 params.append("+%s" % k)
                             else:
