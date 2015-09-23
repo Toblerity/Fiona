@@ -3,6 +3,15 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.6.2 (2015-09-18)
+------------------
+- Providing only PROJ4 representations in the dataset meta property resulted
+  in loss of CRS information when using the 
+  `fiona.open(..., **src.meta) as dst` pattern (#265). This bug has been 
+  addressed by adding a crs_wkt item to the meta property and extending the
+  `fiona.open()` and the collection constructor to look for and prioritize
+  this keyword argument.
+
 1.6.1 (2015-08-12)
 ------------------
 - Bug fix: Fiona now deserializes JSON-encoded string properties provided by

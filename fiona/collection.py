@@ -30,6 +30,7 @@ class Collection(object):
             vsi=None,
             archive=None,
             enabled_drivers=None,
+            crs_wkt=None,
             **kwargs):
         
         """The required ``path`` is the absolute or relative path to
@@ -39,7 +40,9 @@ class Collection(object):
         a file.
         
         In ``mode`` 'w', an OGR ``driver`` name and a ``schema`` are
-        required. A Proj4 ``crs`` string is recommended.
+        required. A Proj4 ``crs`` string is recommended. If both ``crs``
+        and ``crs_wkt`` keyword arguments are passed, the latter will 
+        trump the former.
         
         In 'w' mode, kwargs will be mapped to OGR layer creation
         options.
@@ -55,6 +58,8 @@ class Collection(object):
             raise TypeError("invalid schema: %r" % schema)
         if crs and not isinstance(crs, (dict,) + string_types):
             raise TypeError("invalid crs: %r" % crs)
+        if crs_wkt and not isinstance(crs_wkt, string_types):
+            raise TypeError("invalid crs_wkt: %r" % crs_wkt)
         if encoding and not isinstance(encoding, string_types):
             raise TypeError("invalid encoding: %r" % encoding)
         if layer and not isinstance(layer, tuple(list(string_types) + [int])):
@@ -123,13 +128,15 @@ class Collection(object):
             elif 'geometry' not in schema:
                 raise SchemaError("schema lacks: geometry")
             self._schema = schema
-            
-            if crs:
+
+            if crs_wkt:
+                self._crs_wkt = crs_wkt
+            elif crs:
                 if 'init' in crs or 'proj' in crs or 'epsg' in crs.lower():
                     self._crs = crs
                 else:
                     raise CRSError("crs lacks init or proj parameter")
-        
+
         if driver_count == 0:
             # create a local manager and enter
             self.env = GDALEnv()
@@ -193,24 +200,24 @@ class Collection(object):
     @property
     def crs(self):
         """Returns a Proj4 string."""
-        if self._crs is None and self.mode in ("a", "r") and self.session:
+        if self._crs is None and self.session:
             self._crs = self.session.get_crs()
         return self._crs
 
     @property
     def crs_wkt(self):
         """Returns a WKT string."""
-        if self._crs_wkt is None and self.mode in ("a", "r") and self.session:
+        if self._crs_wkt is None and self.session:
             self._crs_wkt = self.session.get_crs_wkt()
         return self._crs_wkt
 
     @property
     def meta(self):
-        """Returns a mapping with the driver, schema, and crs properties."""
+        """Returns a mapping with the driver, schema, crs, and additional
+        properties."""
         return {
-            'driver': self.driver, 
-            'schema': self.schema, 
-            'crs': self.crs }
+            'driver': self.driver, 'schema': self.schema, 'crs': self.crs,
+            'crs_wkt': self.crs_wkt}
 
     def filter(self, *args, **kwds):
         """Returns an iterator over records, but filtered by a test for
