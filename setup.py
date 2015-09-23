@@ -72,11 +72,11 @@ include_dirs = []
 library_dirs = []
 libraries = []
 extra_link_args = []
-gdal_output = [None]*3
+gdal_output = [None]*4
 
 try:
     gdal_config = os.environ.get('GDAL_CONFIG', 'gdal-config')
-    for i, flag in enumerate(("--cflags", "--libs", "--datadir")):
+    for i, flag in enumerate(("--cflags", "--libs", "--datadir", "--version")):
         gdal_output[i] = check_output([gdal_config, flag]).strip()
 
     for item in gdal_output[0].split():
@@ -138,6 +138,16 @@ if os.path.exists("MANIFEST.in"):
             "Cython.Build.cythonize not found. "
             "Cython is required to build from a repo.")
         sys.exit(1)
+
+    if gdal_output[3][0] == u'1':
+        log.info("Building Fiona for gdal 1.x: {}".format(gdal_output[3]))
+        shutil.copy('fiona/ogrext1.pyx', 'fiona/ogrext.pyx')
+        shutil.copy('fiona/ograpi1.pxd', 'fiona/ograpi.pxd')
+    else:
+        log.info("Building Fiona for gdal 2.x: {}".format(gdal_output[3]))
+        shutil.copy('fiona/ogrext2.pyx', 'fiona/ogrext.pyx')
+        shutil.copy('fiona/ograpi2.pxd', 'fiona/ograpi.pxd')
+
     ext_modules = cythonize([
         Extension('fiona._geometry', ['fiona/_geometry.pyx'], **ext_options),
         Extension('fiona._transform', ['fiona/_transform.pyx'], **ext_options),

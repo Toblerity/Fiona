@@ -42,4 +42,4 @@ env:
   matrix:
     - GDALVERSION="1.9.2" 
     - GDALVERSION="1.11.2"
-#    - GDALVERSION="2.0.0"
+    - GDALVERSION="2.0.0"
