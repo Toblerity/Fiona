@@ -47,6 +47,8 @@ FIELD_TYPES = [
     'date',         # OFTDate, Date
     'time',         # OFTTime, Time
     'datetime',     # OFTDateTime, Date and Time
+    'int',          # OFTInteger64, Single 64bit integer
+    None,           # OFTInteger64List, List of 64bit integers
     ]
 
 # Mapping of Fiona field type names to Python types.
@@ -433,7 +435,7 @@ cdef class Session:
             self._fileencoding = (
                 ograpi.OGR_L_TestCapability(
                     self.cogr_layer, OLC_STRINGSASUTF8) and
-                OGR_DETECTED_ENCODING) or (
+                'utf-8') or (
                 self.get_driver() == "ESRI Shapefile" and
                 'ISO-8859-1') or locale.getpreferredencoding().upper()
 
@@ -728,7 +730,7 @@ cdef class WritingSession(Session):
             userencoding = self.collection.encoding
             self._fileencoding = (userencoding or (
                 ograpi.OGR_L_TestCapability(self.cogr_layer, OLC_STRINGSASUTF8) and
-                OGR_DETECTED_ENCODING) or (
+                'utf-8') or (
                 self.get_driver() == "ESRI Shapefile" and
                 'ISO-8859-1') or locale.getpreferredencoding()).upper()
 
@@ -970,6 +972,7 @@ cdef class WritingSession(Session):
         if cogr_ds == NULL:
             raise ValueError("Null data source")
         log.debug("Syncing OGR to disk")
+        ograpi.CPLErrorReset()
         retval = ograpi.OGR_DS_SyncToDisk(cogr_ds)
         if retval != OGRERR_NONE:
             raise RuntimeError("Failed to sync to disk")

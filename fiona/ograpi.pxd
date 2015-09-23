@@ -5,6 +5,7 @@
 cdef extern from "gdal.h":
     char * GDALVersionInfo (char *pszRequest)
 
+
 cdef extern from "gdal_version.h":
     int    GDAL_COMPUTE_VERSION(int maj, int min, int rev)
 
@@ -143,3 +144,8 @@ cdef extern from "ogr_api.h":
     void *  OGROpenShared (char *path, int mode, void *x)
     int     OGRReleaseDataSource (void *datasource)
     OGRErr  OGR_L_SetNextByIndex (void *layer, long nIndex)
+
+cdef extern from "cpl_error.h":
+    void CPLErrorReset()
+    char * CPLGetLastErrorMsg()
+
