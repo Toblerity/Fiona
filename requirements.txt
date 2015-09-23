@@ -2,3 +2,4 @@ argparse
 cligj
 six
 ordereddict
+munch

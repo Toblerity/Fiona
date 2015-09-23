@@ -227,15 +227,17 @@ The filter command reads GeoJSON features from stdin and writes the feature to
 stdout *if* the provided expression evalutates to `True` for that feature. 
 
 The python expression is evaluated in a restricted namespace containing 3 functions 
-(`sum`, `min`, `max`), the `math` module, and an object `f` representing the
-feature to be evaluated. If the expression evaluates to a false-y value, the
-feature is not included in the output. Otherwise, the feature is printed
-verbatim. 
+(`sum`, `min`, `max`), the `math` module, the shapely `shape` function, 
+and an object `f` representing the feature to be evaluated. This `f` object allows
+access in javascript-style dot notation for convenience. 
+
+If the expression evaluates to a "truthy" value, the feature is printed verbatim.
+Otherwise, the feature is excluded from the output.
 
 For example 
 
     fio cat data.shp \
-    | fio filter "f['properties']['area'] > 1000.0" \
+    | fio filter "f.properties.area > 1000.0" \
     | fio collect > large_polygons.geojson
 
 Would create a geojson file with only those features from `data.shp` where the
