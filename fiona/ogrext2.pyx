@@ -93,9 +93,6 @@ OGRERR_FAILURE = 6
 OGRERR_UNSUPPORTED_SRS = 7
 OGRERR_INVALID_HANDLE = 8
 
-# Recent versions of OGR can sometimes detect file encoding, but don't
-# provide access yet to the detected encoding. Hence this variable.
-OGR_DETECTED_ENCODING = '-ogr-detected-encoding'
 
 cdef char ** string_list(list_str):
     """
@@ -468,7 +465,7 @@ cdef class Session:
             self._fileencoding = (
                 ograpi.OGR_L_TestCapability(
                     self.cogr_layer, OLC_STRINGSASUTF8) and
-                OGR_DETECTED_ENCODING) or (
+                'utf-8') or (
                 self.get_driver() == "ESRI Shapefile" and
                 'ISO-8859-1') or locale.getpreferredencoding().upper()
 
@@ -765,7 +762,7 @@ cdef class WritingSession(Session):
             userencoding = self.collection.encoding
             self._fileencoding = (userencoding or (
                 ograpi.OGR_L_TestCapability(self.cogr_layer, OLC_STRINGSASUTF8) and
-                OGR_DETECTED_ENCODING) or (
+                'utf-8') or (
                 self.get_driver() == "ESRI Shapefile" and
                 'ISO-8859-1') or locale.getpreferredencoding()).upper()
 
