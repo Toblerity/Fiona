@@ -43,19 +43,25 @@ class TestBigInt(unittest.TestCase):
             'schema': {
                 'geometry': 'Point',
                 'properties': [(fieldname, 'int:10')]}}
+        if get_gdal_version_num() < calc_gdal_version_num(2, 0, 0):
+            with self.assertRaises(OverflowError):
+                with fiona.open(name, 'w', **kwargs) as dst:
+                    rec = {}
+                    rec['geometry'] = {'type': 'Point', 'coordinates': (0, 0)}
+                    rec['properties'] = {fieldname: a_bigint}
+                    dst.write(rec)
+        else:
 
-        with fiona.open(name, 'w', **kwargs) as dst:
-            rec = {}
-            rec['geometry'] = {'type': 'Point', 'coordinates': (0, 0)}
-            rec['properties'] = {fieldname: a_bigint}
-            dst.write(rec)
+            with fiona.open(name, 'w', **kwargs) as dst:
+                rec = {}
+                rec['geometry'] = {'type': 'Point', 'coordinates': (0, 0)}
+                rec['properties'] = {fieldname: a_bigint}
+                dst.write(rec)
 
-        with fiona.open(name) as src:
-            first = next(src)
-            if get_gdal_version_num() < calc_gdal_version_num(2, 0, 0):
-                self.assertRaises(OverflowError)
-            else:
-                self.assertEqual(first['properties'][fieldname], a_bigint)
+            with fiona.open(name) as src:
+                if get_gdal_version_num() >= calc_gdal_version_num(2, 0, 0):
+                    first = next(src)
+                    self.assertEqual(first['properties'][fieldname], a_bigint)
 
 
 if __name__ == "__main__":
