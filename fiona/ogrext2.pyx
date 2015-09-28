@@ -23,7 +23,7 @@ from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
-
+from builtins import int
 
 log = logging.getLogger("Fiona")
 class NullHandler(logging.Handler):
@@ -186,7 +186,7 @@ cdef class FeatureBuilder:
             if not ograpi.OGR_F_IsFieldSet(feature, i):
                 props[key] = None
             elif fieldtype is int:
-                props[key] = ograpi.OGR_F_GetFieldAsInteger(feature, i)
+                props[key] = ograpi.OGR_F_GetFieldAsInteger64(feature, i)
             elif fieldtype is float:
                 props[key] = ograpi.OGR_F_GetFieldAsDouble(feature, i)
 
@@ -288,7 +288,7 @@ cdef class OGRFeatureBuilder:
 
             # Continue over the standard OGR types.
             if isinstance(value, integer_types):
-                ograpi.OGR_F_SetFieldInteger(cogr_feature, i, value)
+                ograpi.OGR_F_SetFieldInteger64(cogr_feature, i, value)
             elif isinstance(value, float):
                 ograpi.OGR_F_SetFieldDouble(cogr_feature, i, value)
             elif (isinstance(value, string_types) 
@@ -417,7 +417,6 @@ cdef class Session:
                                                drvs,
                                                NULL,
                                                NULL)
-#                         ds = ograpi.OGR_Dr_Open(drv, path_c, 0)
                     if ds != NULL:
                         self.cogr_ds = ds
                         collection._driver = name
@@ -432,7 +431,6 @@ cdef class Session:
                                                  NULL,
                                                  NULL,
                                                  NULL)
-#                 self.cogr_ds = ograpi.OGROpen(path_c, 0, NULL)
 
         if self.cogr_ds == NULL:
             raise FionaValueError(
@@ -945,7 +943,7 @@ cdef class WritingSession(Session):
                 # https://github.com/Toblerity/Fiona/issues/101.
                 if value == 'long':
                     value = 'int'
-                
+
                 # Is there a field width/precision?
                 width = precision = None
                 if ':' in value:
@@ -954,12 +952,18 @@ cdef class WritingSession(Session):
                         width, precision = map(int, fmt.split('.'))
                     else:
                         width = int(fmt)
-                
+
+                field_type = FIELD_TYPES.index(value)
+                # See https://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+                if value == 'int' and (width is not None and width >= 10):
+                    field_type = 12
+
                 encoding = self.get_internalencoding()
                 key_bytes = key.encode(encoding)
+
                 cogr_fielddefn = ograpi.OGR_Fld_Create(
-                    key_bytes, 
-                    FIELD_TYPES.index(value) )
+                    key_bytes,
+                    field_type)
                 if cogr_fielddefn == NULL:
                     raise ValueError("Null field definition")
                 if width:
@@ -1036,11 +1040,8 @@ cdef class WritingSession(Session):
         if cogr_ds == NULL:
             raise ValueError("Null data source")
         log.debug("Syncing OGR to disk")
-        # GDALFlushCache
+
         ograpi.GDALFlushCache(cogr_ds)
-#         retval = ograpi.OGR_DS_SyncToDisk(cogr_ds)
-#         if retval != OGRERR_NONE:
-#             raise RuntimeError("Failed to sync to disk")
 
 
 cdef class Iterator:
