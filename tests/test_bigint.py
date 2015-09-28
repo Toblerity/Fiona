@@ -3,6 +3,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from fiona.ogrext import calc_gdal_version_num, get_gdal_version_num
 
 """
 
@@ -51,7 +52,10 @@ class TestBigInt(unittest.TestCase):
 
         with fiona.open(name) as src:
             first = next(src)
-            self.assertEqual(first['properties'][fieldname], a_bigint)
+            if get_gdal_version_num() < calc_gdal_version_num(2, 0, 0):
+                self.assertRaises(OverflowError)
+            else:
+                self.assertEqual(first['properties'][fieldname], a_bigint)
 
 
 if __name__ == "__main__":
