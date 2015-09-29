@@ -22,10 +22,10 @@ class OGRBuilderExceptionsTest(unittest.TestCase):
 class RoundTripping(object):
     """Derive type specific classes from this."""
     def test_type(self):
-        self.failUnlessEqual(
+        self.assertEqual(
             geometryRT(self.geom)['type'], self.geom['type'])
     def test_coordinates(self):
-        self.failUnlessEqual(
+        self.assertEqual(
             geometryRT(self.geom)['coordinates'], self.geom['coordinates'])
 
 # All these get their tests from the RoundTripping class.
@@ -56,7 +56,7 @@ class PolygonRoundTripTest2(unittest.TestCase, RoundTripping):
             'coordinates': [
                 [(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0)]]}
     def test_coordinates(self):
-        self.failUnlessEqual(
+        self.assertEqual(
             [geometryRT(self.geom)['coordinates'][0][:-1]], 
             self.geom['coordinates'])
 
@@ -88,7 +88,7 @@ class MultiPolygonRoundTripTest2(unittest.TestCase, RoundTripping):
             'coordinates': 
                 [[[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0)]]]}
     def test_coordinates(self):
-        self.failUnlessEqual(
+        self.assertEqual(
             [[geometryRT(self.geom)['coordinates'][0][0][:-1]]], 
             self.geom['coordinates'])
 
@@ -102,10 +102,10 @@ class GeometryCollectionRoundTripTest(unittest.TestCase):
                     'coordinates': [(0.0, 0.0), (1.0, 1.0)]}]}
     def test_len(self):
         result = geometryRT(self.geom)
-        self.failUnlessEqual(len(result['geometries']), 2)
+        self.assertEqual(len(result['geometries']), 2)
     def test_type(self):
         result = geometryRT(self.geom)
-        self.failUnlessEqual(
+        self.assertEqual(
             [g['type'] for g in result['geometries']], 
             ['Point', 'LineString'])
 
@@ -117,8 +117,8 @@ class PointTest(unittest.TestCase):
         except:
             wkb = "010100000000000000000000000000000000000000".decode('hex')
         geom = geometry_wkb(wkb)
-        self.failUnlessEqual(geom['type'], "Point")
-        self.failUnlessEqual(geom['coordinates'], (0.0, 0.0))
+        self.assertEqual(geom['type'], "Point")
+        self.assertEqual(geom['coordinates'], (0.0, 0.0))
 
 class LineStringTest(unittest.TestCase):
     def test_line(self):
@@ -128,8 +128,8 @@ class LineStringTest(unittest.TestCase):
         except:
             wkb = "01020000000200000000000000000000000000000000000000000000000000f03f000000000000f03f".decode('hex')
         geom = geometry_wkb(wkb)
-        self.failUnlessEqual(geom['type'], "LineString")
-        self.failUnlessEqual(geom['coordinates'], [(0.0, 0.0), (1.0, 1.0)])
+        self.assertEqual(geom['type'], "LineString")
+        self.assertEqual(geom['coordinates'], [(0.0, 0.0), (1.0, 1.0)])
 
 class PolygonTest(unittest.TestCase):
     def test_polygon(self):
@@ -139,14 +139,14 @@ class PolygonTest(unittest.TestCase):
         except:
             wkb = "01030000000100000005000000000000000000f03f0000000000000000000000000000f03f000000000000f03f0000000000000000000000000000f03f00000000000000000000000000000000000000000000f03f0000000000000000".decode('hex')
         geom = geometry_wkb(wkb)
-        self.failUnlessEqual(geom['type'], "Polygon")
-        self.failUnlessEqual(len(geom['coordinates']), 1)
-        self.failUnlessEqual(len(geom['coordinates'][0]), 5)
+        self.assertEqual(geom['type'], "Polygon")
+        self.assertEqual(len(geom['coordinates']), 1)
+        self.assertEqual(len(geom['coordinates'][0]), 5)
         x, y = zip(*geom['coordinates'][0])
-        self.failUnlessEqual(min(x), 0.0)
-        self.failUnlessEqual(min(y), 0.0)
-        self.failUnlessEqual(max(x), 1.0)
-        self.failUnlessEqual(max(y), 1.0)
+        self.assertEqual(min(x), 0.0)
+        self.assertEqual(min(y), 0.0)
+        self.assertEqual(max(x), 1.0)
+        self.assertEqual(max(y), 1.0)
 
 class MultiPointTest(unittest.TestCase):
     def test_multipoint(self):
@@ -155,8 +155,8 @@ class MultiPointTest(unittest.TestCase):
         except:
             wkb = "0104000000020000000101000000000000000000000000000000000000000101000000000000000000f03f000000000000f03f".decode('hex')
         geom = geometry_wkb(wkb)
-        self.failUnlessEqual(geom['type'], "MultiPoint")
-        self.failUnlessEqual(geom['coordinates'], [(0.0, 0.0), (1.0, 1.0)])
+        self.assertEqual(geom['type'], "MultiPoint")
+        self.assertEqual(geom['coordinates'], [(0.0, 0.0), (1.0, 1.0)])
 
 class MultiLineStringTest(unittest.TestCase):
     def test_multilinestring(self):
@@ -166,10 +166,10 @@ class MultiLineStringTest(unittest.TestCase):
         except:
             wkb = "01050000000100000001020000000200000000000000000000000000000000000000000000000000f03f000000000000f03f".decode('hex')
         geom = geometry_wkb(wkb)
-        self.failUnlessEqual(geom['type'], "MultiLineString")
-        self.failUnlessEqual(len(geom['coordinates']), 1)
-        self.failUnlessEqual(len(geom['coordinates'][0]), 2)
-        self.failUnlessEqual(geom['coordinates'][0], [(0.0, 0.0), (1.0, 1.0)])
+        self.assertEqual(geom['type'], "MultiLineString")
+        self.assertEqual(len(geom['coordinates']), 1)
+        self.assertEqual(len(geom['coordinates'][0]), 2)
+        self.assertEqual(geom['coordinates'][0], [(0.0, 0.0), (1.0, 1.0)])
 
 class MultiPolygonTest(unittest.TestCase):
     def test_multipolygon(self):
@@ -179,13 +179,13 @@ class MultiPolygonTest(unittest.TestCase):
         except:
             wkb = "01060000000100000001030000000100000005000000000000000000f03f0000000000000000000000000000f03f000000000000f03f0000000000000000000000000000f03f00000000000000000000000000000000000000000000f03f0000000000000000".decode('hex')
         geom = geometry_wkb(wkb)
-        self.failUnlessEqual(geom['type'], "MultiPolygon")
-        self.failUnlessEqual(len(geom['coordinates']), 1)
-        self.failUnlessEqual(len(geom['coordinates'][0]), 1)
-        self.failUnlessEqual(len(geom['coordinates'][0][0]), 5)
+        self.assertEqual(geom['type'], "MultiPolygon")
+        self.assertEqual(len(geom['coordinates']), 1)
+        self.assertEqual(len(geom['coordinates'][0]), 1)
+        self.assertEqual(len(geom['coordinates'][0][0]), 5)
         x, y = zip(*geom['coordinates'][0][0])
-        self.failUnlessEqual(min(x), 0.0)
-        self.failUnlessEqual(min(y), 0.0)
-        self.failUnlessEqual(max(x), 1.0)
-        self.failUnlessEqual(max(y), 1.0)
+        self.assertEqual(min(x), 0.0)
+        self.assertEqual(min(y), 0.0)
+        self.assertEqual(max(x), 1.0)
+        self.assertEqual(max(y), 1.0)
 

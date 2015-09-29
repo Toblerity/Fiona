@@ -27,7 +27,7 @@ class PointRoundTripTest(unittest.TestCase):
               'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
               'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
-        self.failUnlessEqual(
+        self.assertEqual(
             sorted(g['geometry'].items()),
             [('coordinates', (0.0, 0.0)), ('type', 'Point')])
     def test_properties(self):
@@ -35,13 +35,13 @@ class PointRoundTripTest(unittest.TestCase):
               'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
               'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
-        self.failUnlessEqual(g['properties']['title'], 'foo')
+        self.assertEqual(g['properties']['title'], 'foo')
     def test_none_property(self):
         f = { 'id': '1',
               'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
               'properties': {'title': None} }
         g = featureRT(f, self.c)
-        self.failUnlessEqual(g['properties']['title'], None)
+        self.assertEqual(g['properties']['title'], None)
 
 class LineStringRoundTripTest(unittest.TestCase):
     def setUp(self):
@@ -58,7 +58,7 @@ class LineStringRoundTripTest(unittest.TestCase):
                             'coordinates': [(0.0, 0.0), (1.0, 1.0)] },
               'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
-        self.failUnlessEqual(
+        self.assertEqual(
             sorted(g['geometry'].items()),
             [('coordinates', [(0.0, 0.0), (1.0, 1.0)]), 
              ('type', 'LineString')])
@@ -67,7 +67,7 @@ class LineStringRoundTripTest(unittest.TestCase):
               'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
               'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
-        self.failUnlessEqual(g['properties']['title'], 'foo')
+        self.assertEqual(g['properties']['title'], 'foo')
 
 class PolygonRoundTripTest(unittest.TestCase):
     def setUp(self):
@@ -89,7 +89,7 @@ class PolygonRoundTripTest(unittest.TestCase):
                                   (0.0, 0.0)]] },
               'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
-        self.failUnlessEqual(
+        self.assertEqual(
             sorted(g['geometry'].items()),
             [('coordinates', [[(0.0, 0.0), 
                                   (0.0, 1.0), 
@@ -108,5 +108,5 @@ class PolygonRoundTripTest(unittest.TestCase):
                                   (0.0, 0.0)]] },
               'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
-        self.failUnlessEqual(g['properties']['title'], 'foo')
+        self.assertEqual(g['properties']['title'], 'foo')
 

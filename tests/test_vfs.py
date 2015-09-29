@@ -21,10 +21,10 @@ class VsiReadingTest(ReadingTest):
 
     def test_filter_vsi(self):
         results = list(self.c.filter(bbox=(-114.0, 35.0, -104, 45.0)))
-        self.failUnlessEqual(len(results), 67)
+        self.assertEqual(len(results), 67)
         f = results[0]
-        self.failUnlessEqual(f['id'], "0")
-        self.failUnlessEqual(f['properties']['STATE'], 'UT')
+        self.assertEqual(f['id'], "0")
+        self.assertEqual(f['properties']['STATE'], 'UT')
 
 class ZipReadingTest(VsiReadingTest):
     
@@ -35,20 +35,20 @@ class ZipReadingTest(VsiReadingTest):
         self.c.close()
 
     def test_open_repr(self):
-        self.failUnlessEqual(
+        self.assertEqual(
             repr(self.c),
             ("<open Collection '/vsizip/tests/data/coutwildrnp.zip:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_closed_repr(self):
         self.c.close()
-        self.failUnlessEqual(
+        self.assertEqual(
             repr(self.c),
             ("<closed Collection '/vsizip/tests/data/coutwildrnp.zip:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_path(self):
-        self.failUnlessEqual(self.c.path, '/vsizip/tests/data/coutwildrnp.zip')
+        self.assertEqual(self.c.path, '/vsizip/tests/data/coutwildrnp.zip')
 
 class ZipArchiveReadingTest(VsiReadingTest):
     
@@ -59,20 +59,20 @@ class ZipArchiveReadingTest(VsiReadingTest):
         self.c.close()
 
     def test_open_repr(self):
-        self.failUnlessEqual(
+        self.assertEqual(
             repr(self.c),
             ("<open Collection '/vsizip/tests/data/coutwildrnp.zip/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_closed_repr(self):
         self.c.close()
-        self.failUnlessEqual(
+        self.assertEqual(
             repr(self.c),
             ("<closed Collection '/vsizip/tests/data/coutwildrnp.zip/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_path(self):
-        self.failUnlessEqual(self.c.path, '/vsizip/tests/data/coutwildrnp.zip/coutwildrnp.shp')
+        self.assertEqual(self.c.path, '/vsizip/tests/data/coutwildrnp.zip/coutwildrnp.shp')
 
 class TarArchiveReadingTest(VsiReadingTest):
     
@@ -83,18 +83,18 @@ class TarArchiveReadingTest(VsiReadingTest):
         self.c.close()
 
     def test_open_repr(self):
-        self.failUnlessEqual(
+        self.assertEqual(
             repr(self.c),
             ("<open Collection '/vsitar/tests/data/coutwildrnp.tar/testing/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_closed_repr(self):
         self.c.close()
-        self.failUnlessEqual(
+        self.assertEqual(
             repr(self.c),
             ("<closed Collection '/vsitar/tests/data/coutwildrnp.tar/testing/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_path(self):
-        self.failUnlessEqual(self.c.path, '/vsitar/tests/data/coutwildrnp.tar/testing/coutwildrnp.shp')
+        self.assertEqual(self.c.path, '/vsitar/tests/data/coutwildrnp.tar/testing/coutwildrnp.shp')
 
