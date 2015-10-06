@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from fiona._drivers import GDALEnv
 
 
