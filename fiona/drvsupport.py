@@ -136,7 +136,7 @@ supported_drivers = dict([
 # OGR may not have optional libararies compiled or installed.
 def _filter_supported_drivers():
     global supported_drivers
-#    cdef GDALEnv gdalenv = GDALEnv()
+
     gdalenv = GDALEnv()
     ogrdrv_names = gdalenv.start().drivers().keys()
     supported_drivers_copy = supported_drivers.copy()
