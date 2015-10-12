@@ -156,7 +156,8 @@ else:
 requirements = [
     'cligj',
     'click-plugins',
-    'six'
+    'six',
+    'munch'
 ]
 if sys.version_info < (2, 7):
     requirements.append('argparse')
@@ -193,6 +194,7 @@ setup_args = dict(
         info=fiona.fio.info:info
         insp=fiona.fio.info:insp
         load=fiona.fio.cat:load
+        filter=fiona.fio.filter:filter
         ''',
     install_requires=requirements,
     tests_require=['nose'],
