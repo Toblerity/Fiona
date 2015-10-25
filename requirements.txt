@@ -2,5 +2,5 @@ argparse
 cligj
 six
 ordereddict
-future
+future>=0.7
 munch
