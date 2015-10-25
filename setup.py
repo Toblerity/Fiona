@@ -72,7 +72,13 @@ include_dirs = []
 library_dirs = []
 libraries = []
 extra_link_args = []
-gdal_output = [None]*4
+gdal_output = [None] * 4
+
+if '--gdalversion' in sys.argv:
+    index = sys.argv.index('--gdalversion')
+    sys.argv.pop(index)
+    gdalversion = sys.argv.pop(index)
+    gdal_output[3] = gdalversion
 
 try:
     gdal_config = os.environ.get('GDAL_CONFIG', 'gdal-config')
@@ -177,8 +183,8 @@ setup_args = dict(
     metadata_version='1.2',
     name='Fiona',
     version=version,
-    requires_python = '>=2.6',
-    requires_external = 'GDAL (>=1.8)',
+    requires_python='>=2.6',
+    requires_external='GDAL (>=1.8)',
     description="Fiona reads and writes spatial data files",
     license='BSD',
     keywords='gis vector feature data',
