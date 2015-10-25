@@ -66,6 +66,23 @@ with open('CREDITS.txt', **open_kwds) as f:
 with open('CHANGES.txt', **open_kwds) as f:
     changes = f.read()
 
+
+def copy_gdalapi(gdalversion):
+    if gdalversion[0] == u'1':
+        log.info("Building Fiona for gdal 1.x: {}".format(gdal_output[3]))
+        shutil.copy('fiona/ogrext1.pyx', 'fiona/ogrext.pyx')
+        shutil.copy('fiona/ograpi1.pxd', 'fiona/ograpi.pxd')
+    else:
+        log.info("Building Fiona for gdal 2.x: {}".format(gdal_output[3]))
+        shutil.copy('fiona/ogrext2.pyx', 'fiona/ogrext.pyx')
+        shutil.copy('fiona/ograpi2.pxd', 'fiona/ograpi.pxd')
+
+if '--gdalversion' in sys.argv:
+    index = sys.argv.index('--gdalversion')
+    sys.argv.pop(index)
+    gdalversion = sys.argv.pop(index)
+    copy_gdalapi(gdalversion)
+
 # By default we'll try to get options via gdal-config. On systems without,
 # options will need to be set in setup.cfg or on the setup command line.
 include_dirs = []
@@ -73,12 +90,6 @@ library_dirs = []
 libraries = []
 extra_link_args = []
 gdal_output = [None] * 4
-
-if '--gdalversion' in sys.argv:
-    index = sys.argv.index('--gdalversion')
-    sys.argv.pop(index)
-    gdalversion = sys.argv.pop(index)
-    gdal_output[3] = gdalversion
 
 try:
     gdal_config = os.environ.get('GDAL_CONFIG', 'gdal-config')
@@ -96,6 +107,8 @@ try:
         else:
             # e.g. -framework GDAL
             extra_link_args.append(item)
+
+    copy_gdalapi(gdal_output[3])
 
 except Exception as e:
     if os.name == "nt":
@@ -144,15 +157,6 @@ if os.path.exists("MANIFEST.in"):
             "Cython.Build.cythonize not found. "
             "Cython is required to build from a repo.")
         sys.exit(1)
-
-    if gdal_output[3][0] == u'1':
-        log.info("Building Fiona for gdal 1.x: {}".format(gdal_output[3]))
-        shutil.copy('fiona/ogrext1.pyx', 'fiona/ogrext.pyx')
-        shutil.copy('fiona/ograpi1.pxd', 'fiona/ograpi.pxd')
-    else:
-        log.info("Building Fiona for gdal 2.x: {}".format(gdal_output[3]))
-        shutil.copy('fiona/ogrext2.pyx', 'fiona/ogrext.pyx')
-        shutil.copy('fiona/ograpi2.pxd', 'fiona/ograpi.pxd')
 
     ext_modules = cythonize([
         Extension('fiona._geometry', ['fiona/_geometry.pyx'], **ext_options),
