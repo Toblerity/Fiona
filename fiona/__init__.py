@@ -73,7 +73,7 @@ from fiona.collection import Collection, BytesCollection, vsi_path
 from fiona._drivers import driver_count, GDALEnv
 from fiona.drvsupport import supported_drivers
 from fiona.odict import OrderedDict
-from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP
+from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove
 
 # These modules are imported by fiona.ogrext, but are also import here to
 # help tools like cx_Freeze find them automatically
@@ -181,6 +181,16 @@ def open(
     return c
 
 collection = open
+
+
+def remove(path, driver=None):
+    # collection was passed instead of path
+    if isinstance(path, Collection):
+        collection = path
+        path = collection.path
+        driver = collection.driver
+        collection.close()
+    _remove(path, driver)
 
 
 def listlayers(path, vfs=None):
