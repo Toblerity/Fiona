@@ -10,7 +10,8 @@ from fiona.ogrext import (
     calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name)
 from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file
 from fiona.errors import DriverError, SchemaError, CRSError
-from fiona._drivers import driver_count, GDALEnv, supported_drivers
+from fiona._drivers import driver_count, GDALEnv
+from fiona.drvsupport import supported_drivers
 from six import string_types, binary_type
 
 class Collection(object):

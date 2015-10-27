@@ -70,7 +70,8 @@ import os
 from six import string_types
 
 from fiona.collection import Collection, BytesCollection, vsi_path
-from fiona._drivers import driver_count, GDALEnv, supported_drivers
+from fiona._drivers import driver_count, GDALEnv
+from fiona.drvsupport import supported_drivers
 from fiona.odict import OrderedDict
 from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP
 
