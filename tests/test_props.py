@@ -6,7 +6,7 @@ import tempfile
 import fiona
 from fiona import prop_type, prop_width
 from fiona.rfc3339 import FionaDateType
-from builtins import int
+
 
 def test_width_str():
     assert prop_width('str:254') == 254

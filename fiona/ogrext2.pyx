@@ -10,6 +10,11 @@ import warnings
 import math
 import uuid
 
+if sys.version_info > (3,):
+    from builtins import int
+else:
+    from __builtin__ import int
+
 from six import integer_types, string_types, text_type
 
 from fiona cimport ograpi
@@ -23,7 +28,7 @@ from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
-from builtins import int
+
 
 log = logging.getLogger("Fiona")
 class NullHandler(logging.Handler):
