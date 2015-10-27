@@ -24,20 +24,20 @@ class FileReadingTest(ReadingTest):
         self.c.close()
 
     def test_open_repr(self):
-        self.failUnlessEqual(
+        self.assertEqual(
             repr(self.c),
             ("<open Collection 'tests/data/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_closed_repr(self):
         self.c.close()
-        self.failUnlessEqual(
+        self.assertEqual(
             repr(self.c),
             ("<closed Collection 'tests/data/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_name(self):
-        self.failUnlessEqual(self.c.name, 'coutwildrnp')
+        self.assertEqual(self.c.name, 'coutwildrnp')
 
 class DirReadingTest(ReadingTest):
     
@@ -48,23 +48,23 @@ class DirReadingTest(ReadingTest):
         self.c.close()
 
     def test_open_repr(self):
-        self.failUnlessEqual(
+        self.assertEqual(
             repr(self.c),
             ("<open Collection 'tests/data:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_closed_repr(self):
         self.c.close()
-        self.failUnlessEqual(
+        self.assertEqual(
             repr(self.c),
             ("<closed Collection 'tests/data:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_name(self):
-        self.failUnlessEqual(self.c.name, 'coutwildrnp')
+        self.assertEqual(self.c.name, 'coutwildrnp')
 
     def test_path(self):
-        self.failUnlessEqual(self.c.path, "tests/data")
+        self.assertEqual(self.c.path, "tests/data")
 
 class InvalidLayerTest(unittest.TestCase):
 

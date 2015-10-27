@@ -23,12 +23,12 @@ TEMPDIR = tempfile.gettempdir()
 
 class SupportedDriversTest(unittest.TestCase):
     def test_shapefile(self):
-        self.failUnless("ESRI Shapefile" in supported_drivers)
-        self.failUnlessEqual(
+        self.assertTrue("ESRI Shapefile" in supported_drivers)
+        self.assertEqual(
             set(supported_drivers["ESRI Shapefile"]), set("raw") )
     def test_map(self):
-        self.failUnless("MapInfo File" in supported_drivers)
-        self.failUnlessEqual(
+        self.assertTrue("MapInfo File" in supported_drivers)
+        self.assertEqual(
             set(supported_drivers["MapInfo File"]), set("raw") )
 
 
@@ -85,168 +85,168 @@ class ReadingTest(unittest.TestCase):
         self.c.close()
 
     def test_open_repr(self):
-        self.failUnlessEqual(
+        self.assertEqual(
             repr(self.c),
             ("<open Collection 'tests/data/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_closed_repr(self):
         self.c.close()
-        self.failUnlessEqual(
+        self.assertEqual(
             repr(self.c),
             ("<closed Collection 'tests/data/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at %s>" % hex(id(self.c))))
 
     def test_path(self):
-        self.failUnlessEqual(self.c.path, WILDSHP)
+        self.assertEqual(self.c.path, WILDSHP)
 
     def test_name(self):
-        self.failUnlessEqual(self.c.name, 'coutwildrnp')
+        self.assertEqual(self.c.name, 'coutwildrnp')
     
     def test_mode(self):
-        self.failUnlessEqual(self.c.mode, 'r')
+        self.assertEqual(self.c.mode, 'r')
 
     def test_collection(self):
-        self.failUnlessEqual(self.c.encoding, 'iso-8859-1')
+        self.assertEqual(self.c.encoding, 'iso-8859-1')
 
     def test_iter(self):
-        self.failUnless(iter(self.c))
+        self.assertTrue(iter(self.c))
     
     def test_closed_no_iter(self):
         self.c.close()
         self.assertRaises(ValueError, iter, self.c)
 
     def test_len(self):
-        self.failUnlessEqual(len(self.c), 67)
+        self.assertEqual(len(self.c), 67)
     
     def test_closed_len(self):
         # Len is lazy, it's never computed in this case. TODO?
         self.c.close()
-        self.failUnlessEqual(len(self.c), 0)
+        self.assertEqual(len(self.c), 0)
 
     def test_len_closed_len(self):
         # Lazy len is computed in this case and sticks.
         len(self.c)
         self.c.close()
-        self.failUnlessEqual(len(self.c), 67)
+        self.assertEqual(len(self.c), 67)
     
     def test_driver(self):
-        self.failUnlessEqual(self.c.driver, "ESRI Shapefile")
+        self.assertEqual(self.c.driver, "ESRI Shapefile")
     
     def test_closed_driver(self):
         self.c.close()
-        self.failUnlessEqual(self.c.driver, None)
+        self.assertEqual(self.c.driver, None)
 
     def test_driver_closed_driver(self):
         self.c.driver
         self.c.close()
-        self.failUnlessEqual(self.c.driver, "ESRI Shapefile")
+        self.assertEqual(self.c.driver, "ESRI Shapefile")
     
     def test_schema(self):
         s = self.c.schema['properties']
-        self.failUnlessEqual(s['PERIMETER'], "float:24.15")
-        self.failUnlessEqual(s['NAME'], "str:80")
-        self.failUnlessEqual(s['URL'], "str:101")
-        self.failUnlessEqual(s['STATE_FIPS'], "str:80")
-        self.failUnlessEqual(s['WILDRNP020'], "int:10")
+        self.assertEqual(s['PERIMETER'], "float:24.15")
+        self.assertEqual(s['NAME'], "str:80")
+        self.assertEqual(s['URL'], "str:101")
+        self.assertEqual(s['STATE_FIPS'], "str:80")
+        self.assertEqual(s['WILDRNP020'], "int:10")
 
     def test_closed_schema(self):
         # Schema is lazy too, never computed in this case. TODO?
         self.c.close()
-        self.failUnlessEqual(self.c.schema, None)
+        self.assertEqual(self.c.schema, None)
 
     def test_schema_closed_schema(self):
         self.c.schema
         self.c.close()
-        self.failUnlessEqual(
+        self.assertEqual(
             sorted(self.c.schema.keys()),
             ['geometry', 'properties'])
 
     def test_crs(self):
         crs = self.c.crs
-        self.failUnlessEqual(crs['init'], 'epsg:4326')
+        self.assertEqual(crs['init'], 'epsg:4326')
 
     def test_crs_wkt(self):
         crs = self.c.crs_wkt
-        self.failUnless(crs.startswith('GEOGCS["GCS_WGS_1984"'))
+        self.assertTrue(crs.startswith('GEOGCS["GCS_WGS_1984"'))
 
     def test_closed_crs(self):
         # Crs is lazy too, never computed in this case. TODO?
         self.c.close()
-        self.failUnlessEqual(self.c.crs, None)
+        self.assertEqual(self.c.crs, None)
 
     def test_crs_closed_crs(self):
         self.c.crs
         self.c.close()
-        self.failUnlessEqual(
+        self.assertEqual(
             sorted(self.c.crs.keys()),
             ['init'])
 
     def test_meta(self):
-        self.failUnlessEqual(
+        self.assertEqual(
             sorted(self.c.meta.keys()), 
             ['crs', 'crs_wkt', 'driver', 'schema'])
 
     def test_bounds(self):
-        self.failUnlessAlmostEqual(self.c.bounds[0], -113.564247, 6)
-        self.failUnlessAlmostEqual(self.c.bounds[1], 37.068981, 6)
-        self.failUnlessAlmostEqual(self.c.bounds[2], -104.970871, 6)
-        self.failUnlessAlmostEqual(self.c.bounds[3], 41.996277, 6)
+        self.assertAlmostEqual(self.c.bounds[0], -113.564247, 6)
+        self.assertAlmostEqual(self.c.bounds[1], 37.068981, 6)
+        self.assertAlmostEqual(self.c.bounds[2], -104.970871, 6)
+        self.assertAlmostEqual(self.c.bounds[3], 41.996277, 6)
 
     def test_context(self):
         with fiona.open(WILDSHP, "r") as c:
-            self.failUnlessEqual(c.name, 'coutwildrnp')
-            self.failUnlessEqual(len(c), 67)
-        self.failUnlessEqual(c.closed, True)
+            self.assertEqual(c.name, 'coutwildrnp')
+            self.assertEqual(len(c), 67)
+        self.assertEqual(c.closed, True)
 
     def test_iter_one(self):
         itr = iter(self.c)
         f = next(itr)
-        self.failUnlessEqual(f['id'], "0")
-        self.failUnlessEqual(f['properties']['STATE'], 'UT')
+        self.assertEqual(f['id'], "0")
+        self.assertEqual(f['properties']['STATE'], 'UT')
 
     def test_iter_list(self):
         f = list(self.c)[0]
-        self.failUnlessEqual(f['id'], "0")
-        self.failUnlessEqual(f['properties']['STATE'], 'UT')
+        self.assertEqual(f['id'], "0")
+        self.assertEqual(f['properties']['STATE'], 'UT')
 
     def test_re_iter_list(self):
         f = list(self.c)[0] # Run through iterator
         f = list(self.c)[0] # Run through a new, reset iterator
-        self.failUnlessEqual(f['id'], "0")
-        self.failUnlessEqual(f['properties']['STATE'], 'UT')
+        self.assertEqual(f['id'], "0")
+        self.assertEqual(f['properties']['STATE'], 'UT')
 
     def test_getitem_one(self):
         f = self.c[0]
-        self.failUnlessEqual(f['id'], "0")
-        self.failUnlessEqual(f['properties']['STATE'], 'UT')
+        self.assertEqual(f['id'], "0")
+        self.assertEqual(f['properties']['STATE'], 'UT')
 
     def test_getitem_iter_combo(self):
         i = iter(self.c)
         f = next(i)
         f = next(i)
-        self.failUnlessEqual(f['id'], "1")
+        self.assertEqual(f['id'], "1")
         f = self.c[0]
-        self.failUnlessEqual(f['id'], "0")
+        self.assertEqual(f['id'], "0")
         f = next(i)
-        self.failUnlessEqual(f['id'], "2")
+        self.assertEqual(f['id'], "2")
 
     def test_no_write(self):
         self.assertRaises(IOError, self.c.write, {})
 
     def test_iter_items_list(self):
         i, f = list(self.c.items())[0]
-        self.failUnlessEqual(i, 0)
-        self.failUnlessEqual(f['id'], "0")
-        self.failUnlessEqual(f['properties']['STATE'], 'UT')
+        self.assertEqual(i, 0)
+        self.assertEqual(f['id'], "0")
+        self.assertEqual(f['properties']['STATE'], 'UT')
 
     def test_iter_keys_list(self):
         i = list(self.c.keys())[0]
-        self.failUnlessEqual(i, 0)
+        self.assertEqual(i, 0)
 
     def test_in_keys(self):
-        self.failUnless(0 in self.c.keys())
-        self.failUnless(0 in self.c)
+        self.assertTrue(0 in self.c.keys())
+        self.assertTrue(0 in self.c)
 
 
 class FilterReadingTest(unittest.TestCase):
@@ -259,16 +259,16 @@ class FilterReadingTest(unittest.TestCase):
 
     def test_filter_1(self):
         results = list(self.c.filter(bbox=(-120.0, 30.0, -100.0, 50.0)))
-        self.failUnlessEqual(len(results), 67)
+        self.assertEqual(len(results), 67)
         f = results[0]
-        self.failUnlessEqual(f['id'], "0")
-        self.failUnlessEqual(f['properties']['STATE'], 'UT')
+        self.assertEqual(f['id'], "0")
+        self.assertEqual(f['properties']['STATE'], 'UT')
 
     def test_filter_reset(self):
         results = list(self.c.filter(bbox=(-112.0, 38.0, -106.0, 40.0)))
-        self.failUnlessEqual(len(results), 26)
+        self.assertEqual(len(results), 26)
         results = list(self.c.filter())
-        self.failUnlessEqual(len(results), 67)
+        self.assertEqual(len(results), 67)
         
     def test_filter_mask(self):
         mask = {
@@ -276,7 +276,7 @@ class FilterReadingTest(unittest.TestCase):
             'coordinates': (
                 ((-112, 38), (-112, 40), (-106, 40), (-106, 38), (-112, 38)),)}
         results = list(self.c.filter(mask=mask))
-        self.failUnlessEqual(len(results), 26)
+        self.assertEqual(len(results), 26)
 
 
 class UnsupportedDriverTest(unittest.TestCase):
@@ -340,20 +340,20 @@ class PointWritingTest(unittest.TestCase):
     def test_cpg(self):
         """Requires GDAL 1.9"""
         self.sink.close()
-        self.failUnless(
+        self.assertTrue(
             open(
                 os.path.join(self.tempdir, "point_writing_test.cpg")
                 ).readline() == 'UTF-8')
 
     def test_write_one(self):
-        self.failUnlessEqual(len(self.sink), 0)
-        self.failUnlessEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
+        self.assertEqual(len(self.sink), 0)
+        self.assertEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
         f = {
             'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
             'properties': {'title': 'point one', 'date': "2012-01-29"}}
         self.sink.writerecords([f])
-        self.failUnlessEqual(len(self.sink), 1)
-        self.failUnlessEqual(self.sink.bounds, (0.0, 0.1, 0.0, 0.1))
+        self.assertEqual(len(self.sink), 1)
+        self.assertEqual(self.sink.bounds, (0.0, 0.1, 0.0, 0.1))
         self.sink.close()
         info = subprocess.check_output(
             ["ogrinfo", self.filename, "point_writing_test"])
@@ -362,8 +362,8 @@ class PointWritingTest(unittest.TestCase):
             info)
 
     def test_write_two(self):
-        self.failUnlessEqual(len(self.sink), 0)
-        self.failUnlessEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
+        self.assertEqual(len(self.sink), 0)
+        self.assertEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
         f1 = {
             'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
             'properties': {'title': 'point one', 'date': "2012-01-29"}}
@@ -371,18 +371,18 @@ class PointWritingTest(unittest.TestCase):
             'geometry': {'type': 'Point', 'coordinates': (0.0, -0.1)},
             'properties': {'title': 'point two', 'date': "2012-01-29"}}
         self.sink.writerecords([f1, f2])
-        self.failUnlessEqual(len(self.sink), 2)
-        self.failUnlessEqual(self.sink.bounds, (0.0, -0.1, 0.0, 0.1))
+        self.assertEqual(len(self.sink), 2)
+        self.assertEqual(self.sink.bounds, (0.0, -0.1, 0.0, 0.1))
 
     def test_write_one_null_geom(self):
-        self.failUnlessEqual(len(self.sink), 0)
-        self.failUnlessEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
+        self.assertEqual(len(self.sink), 0)
+        self.assertEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
         f = {
             'geometry': None,
             'properties': {'title': 'point one', 'date': "2012-01-29"}}
         self.sink.writerecords([f])
-        self.failUnlessEqual(len(self.sink), 1)
-        self.failUnlessEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
+        self.assertEqual(len(self.sink), 1)
+        self.assertEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
 
     def test_validate_record(self):
         fvalid = {
@@ -413,19 +413,19 @@ class LineWritingTest(unittest.TestCase):
         shutil.rmtree(self.tempdir)
     
     def test_write_one(self):
-        self.failUnlessEqual(len(self.sink), 0)
-        self.failUnlessEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
+        self.assertEqual(len(self.sink), 0)
+        self.assertEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
         f = {
             'geometry': {'type': 'LineString', 
                          'coordinates': [(0.0, 0.1), (0.0, 0.2)]},
             'properties': {'title': 'line one', 'date': "2012-01-29"}}
         self.sink.writerecords([f])
-        self.failUnlessEqual(len(self.sink), 1)
-        self.failUnlessEqual(self.sink.bounds, (0.0, 0.1, 0.0, 0.2))
+        self.assertEqual(len(self.sink), 1)
+        self.assertEqual(self.sink.bounds, (0.0, 0.1, 0.0, 0.2))
 
     def test_write_two(self):
-        self.failUnlessEqual(len(self.sink), 0)
-        self.failUnlessEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
+        self.assertEqual(len(self.sink), 0)
+        self.assertEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
         f1 = {
             'geometry': {'type': 'LineString', 
                          'coordinates': [(0.0, 0.1), (0.0, 0.2)]},
@@ -437,8 +437,8 @@ class LineWritingTest(unittest.TestCase):
                             [(0.0, -0.1), (0.0, -0.2)] ]},
             'properties': {'title': 'line two', 'date': "2012-01-29"}}
         self.sink.writerecords([f1, f2])
-        self.failUnlessEqual(len(self.sink), 2)
-        self.failUnlessEqual(self.sink.bounds, (0.0, -0.2, 0.0, 0.2))
+        self.assertEqual(len(self.sink), 2)
+        self.assertEqual(self.sink.bounds, (0.0, -0.2, 0.0, 0.2))
 
 
 class PointAppendTest(unittest.TestCase):
@@ -512,8 +512,8 @@ class LineAppendTest(unittest.TestCase):
                                 [(0.0, -0.1), (0.0, -0.2)] ]},
                 'properties': {'title': 'line two', 'date': "2012-01-29"}}
             c.writerecords([f1, f2])
-            self.failUnlessEqual(len(c), 3)
-            self.failUnlessEqual(c.bounds, (0.0, -0.2, 0.0, 0.2))
+            self.assertEqual(len(c), 3)
+            self.assertEqual(c.bounds, (0.0, -0.2, 0.0, 0.2))
 
 
 class ShapefileFieldWidthTest(unittest.TestCase):
@@ -528,9 +528,9 @@ class ShapefileFieldWidthTest(unittest.TestCase):
                 {'geometry': {'type': 'Point', 'coordinates': (0.0, 45.0)},
                  'properties': { 'text': 'a' * 254 }})
         c = fiona.open(os.path.join(self.tempdir, "textfield.shp"), "r")
-        self.failUnlessEqual(c.schema['properties']['text'], 'str:254')
+        self.assertEqual(c.schema['properties']['text'], 'str:254')
         f = next(iter(c))
-        self.failUnlessEqual(f['properties']['text'], 'a' * 254)
+        self.assertEqual(f['properties']['text'], 'a' * 254)
         c.close()
 
     def tearDown(self):
@@ -611,14 +611,14 @@ class DateTimeTest(unittest.TestCase):
         }]
         self.sink.writerecords(recs)
         self.sink.close()
-        self.failUnlessEqual(len(self.sink), 2)
+        self.assertEqual(len(self.sink), 2)
 
         c = fiona.open(os.path.join(self.tempdir, "date_test.shp"), "r")
-        self.failUnlessEqual(len(c), 2)
+        self.assertEqual(len(c), 2)
 
         rf1, rf2 = list(c)
-        self.failUnlessEqual(rf1['properties']['date'], '2013-02-25')
-        self.failUnlessEqual(rf2['properties']['date'], '2014-02-03')
+        self.assertEqual(rf1['properties']['date'], '2013-02-25')
+        self.assertEqual(rf2['properties']['date'], '2014-02-03')
 
     def tearDown(self):
         shutil.rmtree(self.tempdir)
