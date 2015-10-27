@@ -21,6 +21,7 @@ before_install:
   - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$LD_LIBRARY_PATH
 
 install:
+  - "pip install -r requirements.txt"
   - "pip install -r requirements-dev.txt"
   - "pip install pytest"
   - "pip install coveralls"
@@ -41,5 +42,6 @@ env:
 
   matrix:
     - GDALVERSION="1.9.2" 
-    - GDALVERSION="1.11.2"
-#    - GDALVERSION="2.0.0"
+    - GDALVERSION="1.11.3"
+    - GDALVERSION="2.0.0"
+    - GDALVERSION="2.0.1"

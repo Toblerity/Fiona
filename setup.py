@@ -66,17 +66,34 @@ with open('CREDITS.txt', **open_kwds) as f:
 with open('CHANGES.txt', **open_kwds) as f:
     changes = f.read()
 
+
+def copy_gdalapi(gdalversion):
+    if gdalversion[0] == u'1':
+        log.info("Building Fiona for gdal 1.x: {}".format(gdal_output[3]))
+        shutil.copy('fiona/ogrext1.pyx', 'fiona/ogrext.pyx')
+        shutil.copy('fiona/ograpi1.pxd', 'fiona/ograpi.pxd')
+    else:
+        log.info("Building Fiona for gdal 2.x: {}".format(gdal_output[3]))
+        shutil.copy('fiona/ogrext2.pyx', 'fiona/ogrext.pyx')
+        shutil.copy('fiona/ograpi2.pxd', 'fiona/ograpi.pxd')
+
+if '--gdalversion' in sys.argv:
+    index = sys.argv.index('--gdalversion')
+    sys.argv.pop(index)
+    gdalversion = sys.argv.pop(index)
+    copy_gdalapi(gdalversion)
+
 # By default we'll try to get options via gdal-config. On systems without,
 # options will need to be set in setup.cfg or on the setup command line.
 include_dirs = []
 library_dirs = []
 libraries = []
 extra_link_args = []
-gdal_output = [None]*3
+gdal_output = [None] * 4
 
 try:
     gdal_config = os.environ.get('GDAL_CONFIG', 'gdal-config')
-    for i, flag in enumerate(("--cflags", "--libs", "--datadir")):
+    for i, flag in enumerate(("--cflags", "--libs", "--datadir", "--version")):
         gdal_output[i] = check_output([gdal_config, flag]).strip()
 
     for item in gdal_output[0].split():
@@ -90,6 +107,8 @@ try:
         else:
             # e.g. -framework GDAL
             extra_link_args.append(item)
+
+    copy_gdalapi(gdal_output[3])
 
 except Exception as e:
     if os.name == "nt":
@@ -131,13 +150,14 @@ ext_options = dict(
     extra_link_args=extra_link_args)
 
 # When building from a repo, Cython is required.
-if os.path.exists("MANIFEST.in"):
+if os.path.exists("MANIFEST.in") and "clean" not in sys.argv:
     log.info("MANIFEST.in found, presume a repo, cythonizing...")
     if not cythonize:
         log.critical(
             "Cython.Build.cythonize not found. "
             "Cython is required to build from a repo.")
         sys.exit(1)
+
     ext_modules = cythonize([
         Extension('fiona._geometry', ['fiona/_geometry.pyx'], **ext_options),
         Extension('fiona._transform', ['fiona/_transform.pyx'], **ext_options),
@@ -167,8 +187,8 @@ setup_args = dict(
     metadata_version='1.2',
     name='Fiona',
     version=version,
-    requires_python = '>=2.6',
-    requires_external = 'GDAL (>=1.8)',
+    requires_python='>=2.6',
+    requires_external='GDAL (>=1.8)',
     description="Fiona reads and writes spatial data files",
     license='BSD',
     keywords='gis vector feature data',

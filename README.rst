@@ -242,7 +242,7 @@ gdal``).
 Python Requirements
 -------------------
 
-Fiona depends on the modules ``six``, ``cligj``, ``argparse``, and
+Fiona depends on the modules ``six``, ``cligj``,  ``future``,  ``munch``, ``argparse``, and
 ``ordereddict`` (the two latter modules are standard in Python 2.7+). Pip will
 fetch these requirements for you, but users installing Fiona from a Windows
 installer must get them separately.
@@ -320,7 +320,7 @@ locations on your system (via your system's package manager), you can do this::
 If you have a non-standard environment, you'll need to specify the include and
 lib dirs and GDAL library on the command line::
 
-  (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal develop
+  (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal --gdalversion 2.0.1 develop
   (fiona_env)$ nosetests
 
 .. _OGR: http://www.gdal.org/ogr

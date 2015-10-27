@@ -21,6 +21,9 @@ from fiona.odict import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 
+from libc.stdlib cimport malloc, free
+from libc.string cimport strcmp
+from builtins import int
 
 log = logging.getLogger("Fiona")
 class NullHandler(logging.Handler):
@@ -47,6 +50,8 @@ FIELD_TYPES = [
     'date',         # OFTDate, Date
     'time',         # OFTTime, Time
     'datetime',     # OFTDateTime, Date and Time
+    'int',          # OFTInteger64, Single 64bit integer
+    None,           # OFTInteger64List, List of 64bit integers
     ]
 
 # Mapping of Fiona field type names to Python types.
@@ -88,10 +93,19 @@ OGRERR_FAILURE = 6
 OGRERR_UNSUPPORTED_SRS = 7
 OGRERR_INVALID_HANDLE = 8
 
-# Recent versions of OGR can sometimes detect file encoding, but don't
-# provide access yet to the detected encoding. Hence this variable.
-OGR_DETECTED_ENCODING = '-ogr-detected-encoding'
 
+cdef char ** string_list(list_str):
+    """
+    Function by Stackoverflow User falsetru
+    https://stackoverflow.com/questions/17511309/fast-string-array-cython
+    """
+    cdef char* s
+    cdef char **ret = <char **>malloc(len(list_str) * sizeof(char *))
+    for i in range(len(list_str)):
+        s = list_str[i]
+        ret[i] = s
+    ret[i + 1] = NULL
+    return ret
 
 def _explode(coords):
     """Explode a GeoJSON geometry's coordinates object and yield
@@ -172,7 +186,7 @@ cdef class FeatureBuilder:
             if not ograpi.OGR_F_IsFieldSet(feature, i):
                 props[key] = None
             elif fieldtype is int:
-                props[key] = ograpi.OGR_F_GetFieldAsInteger(feature, i)
+                props[key] = ograpi.OGR_F_GetFieldAsInteger64(feature, i)
             elif fieldtype is float:
                 props[key] = ograpi.OGR_F_GetFieldAsDouble(feature, i)
 
@@ -274,7 +288,7 @@ cdef class OGRFeatureBuilder:
 
             # Continue over the standard OGR types.
             if isinstance(value, integer_types):
-                ograpi.OGR_F_SetFieldInteger(cogr_feature, i, value)
+                ograpi.OGR_F_SetFieldInteger64(cogr_feature, i, value)
             elif isinstance(value, float):
                 ograpi.OGR_F_SetFieldDouble(cogr_feature, i, value)
             elif (isinstance(value, string_types) 
@@ -369,7 +383,7 @@ cdef class Session:
         cdef const char *name_c = NULL
         cdef void *drv = NULL
         cdef void *ds = NULL
-
+        cdef char ** drvs = NULL
         if collection.path == '-':
             path = '/vsistdin/'
         else:
@@ -392,15 +406,31 @@ cdef class Session:
                     name_b = name.encode()
                     name_c = name_b
                     log.debug("Trying driver: %s", name)
-                    drv = ograpi.OGRGetDriverByName(name_c)
+                    drv = ograpi.GDALGetDriverByName(name_c)
                     if drv != NULL:
-                        ds = ograpi.OGR_Dr_Open(drv, path_c, 0)
+                        drvs = string_list([name_b])
+
+                        flags = ograpi.GDAL_OF_VECTOR | ograpi.GDAL_OF_READONLY
+                        log.debug("GDALOpenEx({}, {}, {})".format(path_c, flags, [name_b]))
+                        ds = ograpi.GDALOpenEx(path_c,
+                                               flags,
+                                               drvs,
+                                               NULL,
+                                               NULL)
                     if ds != NULL:
                         self.cogr_ds = ds
                         collection._driver = name
+                        _driver = ograpi.GDALGetDatasetDriver(ds)
+                        drv_name = ograpi.GDALGetDriverShortName(_driver)
+                        log.debug("Driver: {} Success".format(drv_name))
+
                         break
             else:
-                self.cogr_ds = ograpi.OGROpen(path_c, 0, NULL)
+                self.cogr_ds = ograpi.GDALOpenEx(path_c,
+                                                 ograpi.GDAL_OF_VECTOR | ograpi.GDAL_OF_READONLY,
+                                                 NULL,
+                                                 NULL,
+                                                 NULL)
 
         if self.cogr_ds == NULL:
             raise FionaValueError(
@@ -411,10 +441,10 @@ cdef class Session:
         if isinstance(collection.name, string_types):
             name_b = collection.name.encode('utf-8')
             name_c = name_b
-            self.cogr_layer = ograpi.OGR_DS_GetLayerByName(
+            self.cogr_layer = ograpi.GDALDatasetGetLayerByName(
                                 self.cogr_ds, name_c)
         elif isinstance(collection.name, int):
-            self.cogr_layer = ograpi.OGR_DS_GetLayer(
+            self.cogr_layer = ograpi.GDALDatasetGetLayer(
                                 self.cogr_ds, collection.name)
             name_c = ograpi.OGR_L_GetName(self.cogr_layer)
             name_b = name_c
@@ -433,14 +463,14 @@ cdef class Session:
             self._fileencoding = (
                 ograpi.OGR_L_TestCapability(
                     self.cogr_layer, OLC_STRINGSASUTF8) and
-                OGR_DETECTED_ENCODING) or (
+                'utf-8') or (
                 self.get_driver() == "ESRI Shapefile" and
                 'ISO-8859-1') or locale.getpreferredencoding().upper()
 
     def stop(self):
         self.cogr_layer = NULL
         if self.cogr_ds is not NULL:
-            ograpi.OGR_DS_Destroy(self.cogr_ds)
+            ograpi.GDALClose(self.cogr_ds)
         self.cogr_ds = NULL
 
     def get_fileencoding(self):
@@ -461,7 +491,7 @@ cdef class Session:
         return ograpi.OGR_L_GetFeatureCount(self.cogr_layer, 0)
 
     def get_driver(self):
-        cdef void *cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
+        cdef void *cogr_driver = ograpi.GDALGetDatasetDriver(self.cogr_ds)
         if cogr_driver == NULL:
             raise ValueError("Null driver")
         cdef char *name = ograpi.OGR_Dr_GetName(cogr_driver)
@@ -602,7 +632,7 @@ cdef class Session:
             crs_wkt = proj_b.decode('utf-8')
             ograpi.CPLFree(proj_c)
         else:
-            log.debug("Projection not found (cogr_crs was NULL)")
+            log.debug("Projection not found (cogr_crs was NULL)")        
         return crs_wkt
 
     def get_extent(self):
@@ -703,20 +733,25 @@ cdef class WritingSession(Session):
                     path_b = path
                 path_c = path_b
                 with cpl_errs:
-                    self.cogr_ds = ograpi.OGROpen(path_c, 1, NULL)
+                    self.cogr_ds = ograpi.GDALOpenEx(path_c,
+                                                 ograpi.GDAL_OF_VECTOR | ograpi.GDAL_OF_UPDATE,
+                                                 NULL,
+                                                 NULL,
+                                                 NULL)
+#                     self.cogr_ds = ograpi.OGROpen(path_c, 1, NULL)
                 if self.cogr_ds == NULL:
                     raise RuntimeError("Failed to open %s" % path)
-                cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
+                cogr_driver = ograpi.GDALGetDatasetDriver(self.cogr_ds)
                 if cogr_driver == NULL:
                     raise ValueError("Null driver")
 
                 if isinstance(collection.name, string_types):
                     name_b = collection.name.encode()
                     name_c = name_b
-                    self.cogr_layer = ograpi.OGR_DS_GetLayerByName(
+                    self.cogr_layer = ograpi.GDALDatasetGetLayerByName(
                                         self.cogr_ds, name_c)
                 elif isinstance(collection.name, int):
-                    self.cogr_layer = ograpi.OGR_DS_GetLayer(
+                    self.cogr_layer = ograpi.GDALDatasetGetLayer(
                                         self.cogr_ds, collection.name)
 
                 if self.cogr_layer == NULL:
@@ -728,7 +763,7 @@ cdef class WritingSession(Session):
             userencoding = self.collection.encoding
             self._fileencoding = (userencoding or (
                 ograpi.OGR_L_TestCapability(self.cogr_layer, OLC_STRINGSASUTF8) and
-                OGR_DETECTED_ENCODING) or (
+                'utf-8') or (
                 self.get_driver() == "ESRI Shapefile" and
                 'ISO-8859-1') or locale.getpreferredencoding()).upper()
 
@@ -741,28 +776,57 @@ cdef class WritingSession(Session):
             driver_b = collection.driver.encode()
             driver_c = driver_b
 
-            cogr_driver = ograpi.OGRGetDriverByName(driver_c)
+            cogr_driver = ograpi.GDALGetDriverByName(driver_c)
             if cogr_driver == NULL:
                 raise ValueError("Null driver")
 
             if not os.path.exists(path):
-                cogr_ds = ograpi.OGR_Dr_CreateDataSource(
-                    cogr_driver, path_c, NULL)
+#                 cogr_ds = ograpi.OGR_Dr_CreateDataSource(
+#                     cogr_driver, path_c, NULL)
+                cogr_ds = ograpi.GDALCreate(
+                    cogr_driver,
+                    path_c,
+                    0,
+                    0,
+                    0,
+                    ograpi.GDT_Unknown,
+                    NULL)
+                pass
 
             else:
                 with cpl_errs:
-                    cogr_ds = ograpi.OGROpen(path_c, 1, NULL)
+                    cogr_ds = ograpi.GDALOpenEx(path_c,
+                                     ograpi.GDAL_OF_VECTOR | ograpi.GDAL_OF_UPDATE,
+                                     NULL,
+                                     NULL,
+                                     NULL)
+#                     cogr_ds = ograpi.OGROpen(path_c, 1, NULL)
                 if cogr_ds == NULL:
-                    cogr_ds = ograpi.OGR_Dr_CreateDataSource(
-                        cogr_driver, path_c, NULL)
+                    cogr_ds = ograpi.GDALCreate(
+                        cogr_driver,
+                        path_c,
+                        0,
+                        0,
+                        0,
+                        ograpi.GDT_Unknown,
+                        NULL)
+#                     cogr_ds = ograpi.OGR_Dr_CreateDataSource(
+#                         cogr_driver, path_c, NULL)
 
                 elif collection.name is None:
-                    ograpi.OGR_DS_Destroy(cogr_ds)
+                    ograpi.GDALClose(cogr_ds)
                     cogr_ds == NULL
                     log.debug("Deleted pre-existing data at %s", path)
-                    
-                    cogr_ds = ograpi.OGR_Dr_CreateDataSource(
-                        cogr_driver, path_c, NULL)
+                    cogr_ds = ograpi.GDALCreate(
+                        cogr_driver,
+                        path_c,
+                        0,
+                        0,
+                        0,
+                        ograpi.GDT_Unknown,
+                        NULL)
+#                     cogr_ds = ograpi.OGR_Dr_CreateDataSource(
+#                         cogr_driver, path_c, NULL)
 
                 else:
                     pass
@@ -830,10 +894,10 @@ cdef class WritingSession(Session):
                 options = ograpi.CSLSetNameValue(options, "ENCODING", fileencoding_c)
 
             # Does the layer exist already? If so, we delete it.
-            layer_count = ograpi.OGR_DS_GetLayerCount(self.cogr_ds)
+            layer_count = ograpi.GDALDatasetGetLayerCount(self.cogr_ds)
             layer_names = []
             for i in range(layer_count):
-                cogr_layer = ograpi.OGR_DS_GetLayer(cogr_ds, i)
+                cogr_layer = ograpi.GDALDatasetGetLayer(cogr_ds, i)
                 name_c = ograpi.OGR_L_GetName(cogr_layer)
                 name_b = name_c
                 layer_names.append(name_b.decode('utf-8'))
@@ -847,12 +911,12 @@ cdef class WritingSession(Session):
                     idx = collection.name
             if idx >= 0:
                 log.debug("Deleted pre-existing layer at %s", collection.name)
-                ograpi.OGR_DS_DeleteLayer(self.cogr_ds, idx)
+                ograpi.GDALDatasetDeleteLayer(self.cogr_ds, idx)
             
             # Create the named layer in the datasource.
             name_b = collection.name.encode('utf-8')
             name_c = name_b
-            self.cogr_layer = ograpi.OGR_DS_CreateLayer(
+            self.cogr_layer = ograpi.GDALDatasetCreateLayer(
                 self.cogr_ds, 
                 name_c,
                 cogr_srs,
@@ -879,7 +943,7 @@ cdef class WritingSession(Session):
                 # https://github.com/Toblerity/Fiona/issues/101.
                 if value == 'long':
                     value = 'int'
-                
+
                 # Is there a field width/precision?
                 width = precision = None
                 if ':' in value:
@@ -888,12 +952,18 @@ cdef class WritingSession(Session):
                         width, precision = map(int, fmt.split('.'))
                     else:
                         width = int(fmt)
-                
+
+                field_type = FIELD_TYPES.index(value)
+                # See https://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+                if value == 'int' and (width is not None and width >= 10):
+                    field_type = 12
+
                 encoding = self.get_internalencoding()
                 key_bytes = key.encode(encoding)
+
                 cogr_fielddefn = ograpi.OGR_Fld_Create(
-                    key_bytes, 
-                    FIELD_TYPES.index(value) )
+                    key_bytes,
+                    field_type)
                 if cogr_fielddefn == NULL:
                     raise ValueError("Null field definition")
                 if width:
@@ -923,7 +993,7 @@ cdef class WritingSession(Session):
             raise ValueError("Null layer")
     
         schema_geom_type = collection.schema['geometry']
-        cogr_driver = ograpi.OGR_DS_GetDriver(self.cogr_ds)
+        cogr_driver = ograpi.GDALGetDatasetDriver(self.cogr_ds)
         if ograpi.OGR_Dr_GetName(cogr_driver) == b"GeoJSON":
             def validate_geometry_type(rec):
                 return True
@@ -970,9 +1040,8 @@ cdef class WritingSession(Session):
         if cogr_ds == NULL:
             raise ValueError("Null data source")
         log.debug("Syncing OGR to disk")
-        retval = ograpi.OGR_DS_SyncToDisk(cogr_ds)
-        if retval != OGRERR_NONE:
-            raise RuntimeError("Failed to sync to disk")
+
+        ograpi.GDALFlushCache(cogr_ds)
 
 
 cdef class Iterator:
@@ -1192,22 +1261,27 @@ def _listlayers(path):
         path_b = path
     path_c = path_b
     with cpl_errs:
-        cogr_ds = ograpi.OGROpen(path_c, 0, NULL)
+        cogr_ds = ograpi.GDALOpenEx(path_c,
+             ograpi.GDAL_OF_VECTOR | ograpi.GDAL_OF_READONLY,
+             NULL,
+             NULL,
+             NULL)
+#         cogr_ds = ograpi.OGROpen(path_c, 0, NULL)
     if cogr_ds == NULL:
         raise ValueError("No data available at path '%s'" % path)
     
     # Loop over the layers to get their names.
-    layer_count = ograpi.OGR_DS_GetLayerCount(cogr_ds)
+    layer_count = ograpi.GDALDatasetGetLayerCount(cogr_ds)
     layer_names = []
     for i in range(layer_count):
-        cogr_layer = ograpi.OGR_DS_GetLayer(cogr_ds, i)
+        cogr_layer = ograpi.GDALDatasetGetLayer(cogr_ds, i)
         name_c = ograpi.OGR_L_GetName(cogr_layer)
         name_b = name_c
         layer_names.append(name_b.decode('utf-8'))
     
     # Close up data source.
     if cogr_ds is not NULL:
-        ograpi.OGR_DS_Destroy(cogr_ds)
+        ograpi.GDALClose(cogr_ds)
     cogr_ds = NULL
 
     return layer_names
