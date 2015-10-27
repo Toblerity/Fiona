@@ -10,11 +10,6 @@ import warnings
 import math
 import uuid
 
-if sys.version_info > (3,):
-    from builtins import int
-else:
-    from __builtin__ import int
-
 from six import integer_types, string_types, text_type
 
 from fiona cimport ograpi
