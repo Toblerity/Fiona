@@ -1,3 +1,4 @@
+-r requirements.txt
 cython>=0.21.2
 nose
 pytest

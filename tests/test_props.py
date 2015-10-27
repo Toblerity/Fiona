@@ -22,8 +22,8 @@ def test_width_other():
 def test_types():
     assert prop_type('str:254') == text_type
     assert prop_type('str') == text_type
-    assert prop_type('int') == type(0)
-    assert prop_type('float') == type(0.0)
+    assert isinstance(0, prop_type('int'))
+    assert isinstance(0.0, prop_type('float'))
     assert prop_type('date') == FionaDateType
 
 
