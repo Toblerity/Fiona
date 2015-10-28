@@ -63,3 +63,15 @@ def test_remove_collection(tmpdir=None):
     collection = fiona.open(filename_shp, 'r')
     fiona.remove(collection)
     assert(not os.path.exists(filename_shp))
+
+def test_remove_path_without_driver(tmpdir=None):
+    if tmpdir is None:
+        tmpdir = tempfile.mkdtemp()
+    filename_shp = os.path.join(tmpdir, 'test.shp')
+
+    create_sample_data(filename_shp, driver='ESRI Shapefile')
+
+    with pytest.raises(Exception):
+        fiona.remove(filename_shp)
+
+    assert(os.path.exists(filename_shp))

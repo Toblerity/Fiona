@@ -183,13 +183,30 @@ def open(
 collection = open
 
 
-def remove(path, driver=None):
-    # collection was passed instead of path
-    if isinstance(path, Collection):
-        collection = path
+def remove(path_or_collection, driver=None):
+    """Deletes an OGR data source
+
+    The required ``path`` argument may be an absolute or relative file path.
+    Alternatively, a Collection can be passed instead in which case the path
+    and driver are automatically determined. Otherwise the ``driver`` argument
+    must be specified.
+
+    Raises a ``RuntimeError`` if the data source cannot be deleted.
+
+    Example usage:
+
+      fiona.remove('test.shp', 'ESRI Shapefile')
+
+    """
+    if isinstance(path_or_collection, Collection):
+        collection = path_or_collection
         path = collection.path
         driver = collection.driver
         collection.close()
+    else:
+        path = path_or_collection
+        if driver is None:
+            raise ValueError("The driver argument is required when removing a path")
     _remove(path, driver)
 
 

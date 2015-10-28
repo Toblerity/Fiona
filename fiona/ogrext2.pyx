@@ -1244,6 +1244,24 @@ cdef class KeysIterator(Iterator):
         return fid
 
 
+def _remove(path, driver=None):
+    """Deletes an OGR data source
+    """
+    cdef void *cogr_driver
+    cdef int result
+
+    if driver is None:
+        driver = 'ESRI Shapefile'
+
+    cogr_driver = ograpi.OGRGetDriverByName(driver.encode('utf-8'))
+    if cogr_driver == NULL:
+        raise ValueError("Null driver")
+
+    result = ograpi.OGR_Dr_DeleteDataSource(cogr_driver, path.encode('utf-8'))
+    if result != OGRERR_NONE:
+        raise RuntimeError("Failed to remove data source {}".format(path))
+
+
 def _listlayers(path):
 
     """Provides a list of the layers in an OGR data source.
