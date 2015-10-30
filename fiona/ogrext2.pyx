@@ -1257,7 +1257,7 @@ def _remove(path, driver=None):
     if cogr_driver == NULL:
         raise ValueError("Null driver")
 
-    result = ograpi.OGR_Dr_DeleteDataSource(cogr_driver, path.encode('utf-8'))
+    result = ograpi.GDALDeleteDataset(cogr_driver, path.encode('utf-8'))
     if result != OGRERR_NONE:
         raise RuntimeError("Failed to remove data source {}".format(path))
 

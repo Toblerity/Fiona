@@ -36,6 +36,7 @@ cdef extern from "gdal.h":
     void GDALFlushCache(void * hDS)
     char * GDALGetDriverShortName(void * hDriver)
     char * GDALGetDatasetDriver (void * hDataset)
+    int GDALDeleteDataset(void * hDriver, const char * pszFilename)
 
 
     ctypedef enum GDALDataType:
