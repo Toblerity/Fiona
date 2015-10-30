@@ -111,6 +111,7 @@ cdef extern from "ogr_api.h":
     void *  OGR_Dr_CreateDataSource (void *driver, const char *path, char **options)
     int     OGR_Dr_DeleteDataSource (void *driver, char *)
     void *  OGR_Dr_Open (void *driver, const char *path, int bupdate)
+    int     OGR_Dr_TestCapability (void *driver, const char *)
     void *  OGR_F_Create (void *featuredefn)
     void    OGR_F_Destroy (void *feature)
     long    OGR_F_GetFID (void *feature)

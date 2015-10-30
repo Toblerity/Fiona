@@ -64,6 +64,10 @@ FIELD_TYPES_MAP = {
     'datetime': FionaDateTimeType
    }
 
+# OGR Driver capability
+ODrCCreateDataSource = b"CreateDataSource"
+ODrCDeleteDataSource = b"DeleteDataSource"
+
 # OGR Layer capability
 OLC_RANDOMREAD = b"RandomRead"
 OLC_SEQUENTIALWRITE = b"SequentialWrite"
@@ -1256,6 +1260,9 @@ def _remove(path, driver=None):
     cogr_driver = ograpi.OGRGetDriverByName(driver.encode('utf-8'))
     if cogr_driver == NULL:
         raise ValueError("Null driver")
+
+    if not ograpi.OGR_Dr_TestCapability(cogr_driver, ODrCDeleteDataSource):
+        raise RuntimeError("Driver does not support dataset removal operation")
 
     result = ograpi.GDALDeleteDataset(cogr_driver, path.encode('utf-8'))
     if result != OGRERR_NONE:
