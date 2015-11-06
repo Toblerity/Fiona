@@ -80,11 +80,13 @@ def id_record(rec):
               help="log errors but do not stop serialization.")
 @options.dst_crs_opt
 @use_rs_opt
+@click.option('--sort-keys/--no-sort-keys', is_flag=True, default=True,
+              show_default=True, help="Sort JSON keys when serializing.")
 @click.option('--bbox', default=None, metavar="w,s,e,n",
               help="filter for features intersecting a bounding box")
 @click.pass_context
 def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
-        use_rs, bbox):
+        use_rs, bbox, sort_keys):
     """Concatenate and print the features of input datasets as a
     sequence of GeoJSON features."""
     
@@ -92,12 +94,13 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
     verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
     logger = logging.getLogger('fio')
 
-    # dump_kwds = {'sort_keys': True}
     dump_kwds = {}
     if indent:
         dump_kwds['indent'] = indent
     if compact:
         dump_kwds['separators'] = (',', ':')
+    if sort_keys:
+        dump_kwds['sort_keys'] = True
     item_sep = compact and ',' or ', '
 
     try:
