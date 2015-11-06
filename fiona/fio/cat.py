@@ -87,10 +87,13 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
         use_rs, bbox):
     """Concatenate and print the features of input datasets as a
     sequence of GeoJSON features."""
+    
+    json_lib = ctx.obj['json_lib']
     verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
     logger = logging.getLogger('fio')
 
-    dump_kwds = {'sort_keys': True}
+    # dump_kwds = {'sort_keys': True}
+    dump_kwds = {}
     if indent:
         dump_kwds['indent'] = indent
     if compact:
@@ -105,7 +108,7 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
                         try:
                             bbox = tuple(map(float, bbox.split(',')))
                         except ValueError:
-                            bbox = json.loads(bbox)
+                            bbox = json_lib.loads(bbox)
                     for i, feat in src.items(bbox=bbox):
                         if dst_crs or precision > 0:
                             g = transform_geom(
@@ -116,7 +119,7 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
                             feat['bbox'] = fiona.bounds(g)
                         if use_rs:
                             click.echo(u'\u001e', nl=False)
-                        click.echo(json.dumps(feat, **dump_kwds))
+                        click.echo(json_lib.dumps(feat, **dump_kwds))
 
     except Exception:
         logger.exception("Exception caught during processing")

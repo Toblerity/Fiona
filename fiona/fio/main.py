@@ -20,17 +20,45 @@ def configure_logging(verbosity):
     logging.basicConfig(stream=sys.stderr, level=log_level)
 
 
-@with_plugins(ep for ep in list(iter_entry_points('fiona.fio_commands')) +
+def _cb_define(ctx, param, value):
+
+    """
+    Convert `name=val` arguments from the commandline to:
+
+        {
+            'name1': val,
+            'another': val2
+        }
+    """
+
+    out = {}
+    for pair in value:
+        try:
+            name, value = pair.split('=')
+            out[name] = value
+        except ValueError:
+            raise click.ClickException("Invalid syntax for 'name=val': {}".format(pair))
+    return out
+
+
+@with_plugins(list(iter_entry_points('fiona.fio_commands')) +
               list(iter_entry_points('fiona.fio_plugins')))
 @click.group()
+@click.option(
+    '-D', 'define', multiple=True, metavar='NAME=VAL', callback=_cb_define,
+    help="Define variables in the Fiona environment."
+)
 @verbose_opt
 @quiet_opt
 @click.version_option(fio_version)
 @click.pass_context
-def main_group(ctx, verbose, quiet):
+def main_group(ctx, verbose, quiet, define):
 
     """Fiona command line interface."""
 
     verbosity = verbose - quiet
     configure_logging(verbosity)
-    ctx.obj = {'verbosity': verbosity}
+    ctx.obj = {
+        'verbosity': verbosity,
+        'json_lib': __import__(define.get('json_lib', 'json'))
+    }

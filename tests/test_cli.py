@@ -1,6 +1,7 @@
 from pkg_resources import iter_entry_points
 import re
 
+import click
 from click.testing import CliRunner
 
 from fiona.fio.main import main_group
@@ -36,3 +37,14 @@ def test_all_registered():
     # Make sure all the subcommands are actually registered to the main CLI group
     for ep in iter_entry_points('fiona.fio_commands'):
         assert ep.name in main_group.commands
+
+
+def test_define_json_lib():
+    # Don't need to actually import another JSON library.  Just import
+    # something and make sure the correct variable is populated.
+    @main_group.command()
+    @click.pass_context
+    def cmd(ctx):
+        assert ctx.obj['json_lib'] == click
+    result = CliRunner().invoke(main_group, ['-D', 'json_lib=click', 'cmd'])
+    assert result.exit_code == 0
