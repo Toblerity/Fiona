@@ -80,7 +80,7 @@ def id_record(rec):
               help="log errors but do not stop serialization.")
 @options.dst_crs_opt
 @use_rs_opt
-@click.option('--sort-keys/--no-sort-keys', is_flag=True, default=True,
+@click.option('--sort-keys/--no-sort-keys', is_flag=True, default=False,
               show_default=True, help="Sort JSON keys when serializing.")
 @click.option('--bbox', default=None, metavar="w,s,e,n",
               help="filter for features intersecting a bounding box")
