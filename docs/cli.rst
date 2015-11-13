@@ -58,9 +58,8 @@ cat
 The cat command concatenates the features of one or more datasets and prints
 them as a `JSON text sequence
 <http://tools.ietf.org/html/draft-ietf-json-text-sequence-07>`__ of features.
-In other words: GeoJSON feature objects, possibly pretty printed, separated by
-ASCII RS (\x1e) chars. LF-separated sequences with no pretty printing are
-optionally available using ``--x-json-seq-no-rs``.
+In other words: GeoJSON feature objects, possibly pretty printed, optionally
+separated by ASCII RS (\x1e) chars using `--rs`.
 
 The output of ``fio cat`` can be piped to ``fio load`` to create new
 concatenated datasets.
