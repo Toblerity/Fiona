@@ -80,21 +80,27 @@ def id_record(rec):
               help="log errors but do not stop serialization.")
 @options.dst_crs_opt
 @use_rs_opt
+@click.option('--sort-keys/--no-sort-keys', is_flag=True, default=False,
+              show_default=True, help="Sort JSON keys when serializing.")
 @click.option('--bbox', default=None, metavar="w,s,e,n",
               help="filter for features intersecting a bounding box")
 @click.pass_context
 def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
-        use_rs, bbox):
+        use_rs, bbox, sort_keys):
     """Concatenate and print the features of input datasets as a
     sequence of GeoJSON features."""
+    
+    json_lib = ctx.obj['json_lib']
     verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
     logger = logging.getLogger('fio')
 
-    dump_kwds = {'sort_keys': True}
+    dump_kwds = {}
     if indent:
         dump_kwds['indent'] = indent
     if compact:
         dump_kwds['separators'] = (',', ':')
+    if sort_keys:
+        dump_kwds['sort_keys'] = True
     item_sep = compact and ',' or ', '
 
     try:
@@ -105,7 +111,7 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
                         try:
                             bbox = tuple(map(float, bbox.split(',')))
                         except ValueError:
-                            bbox = json.loads(bbox)
+                            bbox = json_lib.loads(bbox)
                     for i, feat in src.items(bbox=bbox):
                         if dst_crs or precision > 0:
                             g = transform_geom(
@@ -116,7 +122,7 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
                             feat['bbox'] = fiona.bounds(g)
                         if use_rs:
                             click.echo(u'\u001e', nl=False)
-                        click.echo(json.dumps(feat, **dump_kwds))
+                        click.echo(json_lib.dumps(feat, **dump_kwds))
 
     except Exception:
         logger.exception("Exception caught during processing")
