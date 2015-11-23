@@ -66,6 +66,13 @@ with open('CREDITS.txt', **open_kwds) as f:
 with open('CHANGES.txt', **open_kwds) as f:
     changes = f.read()
 
+# By default we'll try to get options via gdal-config. On systems without,
+# options will need to be set in setup.cfg or on the setup command line.
+include_dirs = []
+library_dirs = []
+libraries = []
+extra_link_args = []
+gdal_output = [None] * 4
 
 def copy_gdalapi(gdalversion):
     if gdalversion[0] == u'1':
@@ -82,14 +89,6 @@ if '--gdalversion' in sys.argv:
     sys.argv.pop(index)
     gdalversion = sys.argv.pop(index)
     copy_gdalapi(gdalversion)
-
-# By default we'll try to get options via gdal-config. On systems without,
-# options will need to be set in setup.cfg or on the setup command line.
-include_dirs = []
-library_dirs = []
-libraries = []
-extra_link_args = []
-gdal_output = [None] * 4
 
 try:
     gdal_config = os.environ.get('GDAL_CONFIG', 'gdal-config')
