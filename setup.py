@@ -69,11 +69,11 @@ with open('CHANGES.txt', **open_kwds) as f:
 
 def copy_gdalapi(gdalversion):
     if gdalversion[0] == u'1':
-        log.info("Building Fiona for gdal 1.x: {}".format(gdal_output[3]))
+        log.info("Building Fiona for gdal 1.x: {}".format(gdalversion))
         shutil.copy('fiona/ogrext1.pyx', 'fiona/ogrext.pyx')
         shutil.copy('fiona/ograpi1.pxd', 'fiona/ograpi.pxd')
     else:
-        log.info("Building Fiona for gdal 2.x: {}".format(gdal_output[3]))
+        log.info("Building Fiona for gdal 2.x: {}".format(gdalversion))
         shutil.copy('fiona/ogrext2.pyx', 'fiona/ogrext.pyx')
         shutil.copy('fiona/ograpi2.pxd', 'fiona/ograpi.pxd')
 
