@@ -309,14 +309,16 @@ class Collection(object):
     values = filter
 
     def __iter__(self):
-        """Returns an iterator over records."""
-        return self.filter()
+
+        """Returns an iterator over records, the content of which is dictated by
+        iteration method was used: `keys()`, `items()`, `filter()`, etc.
+        """
+
+        return self.iterator or self.filter()
 
     def __next__(self):
         """Returns next record from iterator."""
-        if not self.iterator:
-            iter(self)
-        return next(self.iterator)
+        return next(iter(self))
 
     next = __next__
 

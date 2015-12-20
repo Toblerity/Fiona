@@ -211,8 +211,8 @@ class ReadingTest(unittest.TestCase):
         self.assertEqual(f['properties']['STATE'], 'UT')
 
     def test_re_iter_list(self):
-        f = list(self.c)[0] # Run through iterator
-        f = list(self.c)[0] # Run through a new, reset iterator
+        f = list(self.c)[0]  # Run through iterator
+        f = list(self.c)[0]  # Run through a new, reset iterator
         self.assertEqual(f['id'], "0")
         self.assertEqual(f['properties']['STATE'], 'UT')
 
@@ -622,3 +622,22 @@ class DateTimeTest(unittest.TestCase):
 
     def tearDown(self):
         shutil.rmtree(self.tempdir)
+
+
+def test_iteration_consistency():
+
+    """
+    Ensure `fiona.Collection()` behaves like a normal Python iterator.
+    See https://github.com/Toblerity/Fiona/issues/301
+    """
+
+    with fiona.open('tests/data/coutwildrnp.shp') as src:
+        assert int(next(src)['id']) == 0
+        assert int(next(src)['id']) == 1
+        for feat in src:
+            assert int(feat['id']) == 2
+            break
+        assert int(next(src)['id']) == 3
+        for feat in src:
+            assert int(feat['id']) == 4
+            break
