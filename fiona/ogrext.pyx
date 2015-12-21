@@ -264,7 +264,7 @@ cdef class OGRFeatureBuilder:
 
             # Catch and re-raise unicode encoding errors.
             try:
-                key_bytes = ogr_key.encode(encoding) #'utf-8')
+                key_bytes = ogr_key.encode(encoding)
             except (UnicodeEncodeError, UnicodeEncodeError) as exc:
                 raise FieldNameEncodeError(
                     "Failed to encode {0} using {1} codec: {2}".format(
@@ -314,7 +314,7 @@ cdef class OGRFeatureBuilder:
                 
                 # Catch and re-raise string field value encoding errors.
                 try:
-                    value_bytes = value.encode(encoding) #'utf-8')
+                    value_bytes = value.encode(encoding)
                 except (UnicodeEncodeError, UnicodeDecodeError) as exc:
                     raise StringFieldEncodeError(
                         "Failed to encode {0} using {1} codec: {2}".format(
