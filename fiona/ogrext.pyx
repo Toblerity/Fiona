@@ -182,7 +182,7 @@ cdef class FeatureBuilder:
                 try:
                     val = ograpi.OGR_F_GetFieldAsString(feature, i)
                     val = val.decode(encoding)
-                except UnicodeDecodeError as exc:
+                except UnicodeError as exc:
                     raise StringFieldDecodeError(
                         "Failed to decode {0} using {1} codec: {2}".format(
                             val, encoding, str(exc)))
@@ -265,7 +265,7 @@ cdef class OGRFeatureBuilder:
             # Catch and re-raise unicode encoding errors.
             try:
                 key_bytes = ogr_key.encode(encoding)
-            except (UnicodeEncodeError, UnicodeEncodeError) as exc:
+            except UnicodeError as exc:
                 raise FieldNameEncodeError(
                     "Failed to encode {0} using {1} codec: {2}".format(
                         key, encoding, str(exc)))
@@ -315,7 +315,7 @@ cdef class OGRFeatureBuilder:
                 # Catch and re-raise string field value encoding errors.
                 try:
                     value_bytes = value.encode(encoding)
-                except (UnicodeEncodeError, UnicodeDecodeError) as exc:
+                except UnicodeError as exc:
                     raise StringFieldEncodeError(
                         "Failed to encode {0} using {1} codec: {2}".format(
                             value, encoding, str(exc)))
@@ -386,7 +386,7 @@ cdef class Session:
             path = collection.path
         try:
             path_b = path.encode('utf-8')
-        except UnicodeDecodeError:
+        except UnicodeError:
             # Presume already a UTF-8 encoded string
             path_b = path
         path_c = path_b
@@ -709,7 +709,7 @@ cdef class WritingSession(Session):
             if os.path.exists(path):
                 try:
                     path_b = path.encode('utf-8')
-                except UnicodeDecodeError:
+                except UnicodeError:
                     path_b = path
                 path_c = path_b
                 with cpl_errs:
@@ -745,7 +745,7 @@ cdef class WritingSession(Session):
         elif collection.mode == 'w':
             try:
                 path_b = path.encode('utf-8')
-            except UnicodeDecodeError:
+            except UnicodeError:
                 path_b = path
             path_c = path_b
             driver_b = collection.driver.encode()
@@ -1198,7 +1198,7 @@ def _listlayers(path):
     # Open OGR data source.
     try:
         path_b = path.encode('utf-8')
-    except UnicodeDecodeError:
+    except UnicodeError:
         path_b = path
     path_c = path_b
     with cpl_errs:
