@@ -12,14 +12,17 @@ Fiona's new command line interface is a program named "fio".
     Options:
       -v, --verbose  Increase verbosity.
       -q, --quiet    Decrease verbosity.
+      --version      Show the version and exit.
       --help         Show this message and exit.
 
     Commands:
       bounds   Print the extent of GeoJSON objects
+      buffer   Buffer geometries on all sides by a fixed distance.
       cat      Concatenate and print the features of datasets
       collect  Collect a sequence of features.
+      distrib  Distribute features from a collection
       dump     Dump a dataset to GeoJSON.
-      env      Print information about the rio environment.
+      env      Print information about the fio environment.
       filter   Filter GeoJSON features by python expression
       info     Print information about a dataset.
       insp     Open a dataset and start an interpreter.
@@ -87,6 +90,21 @@ as the output of ``fio cat`` and writes a GeoJSON feature collection.
     > | fio collect > /tmp/collected.json
     $ fio info /tmp/collected.json --count
     96
+
+New in 1.4.0.
+
+distrib
+-------
+
+The inverse of fio-collect, fio-distrib takes a GeoJSON feature collection
+and writes a JSON text sequence of GeoJSON feature objects.
+
+.. code-block:: console
+
+    $ fio info --count tests/data/coutwildrnp.shp
+    67
+    $ fio cat tests/data/coutwildrnp.shp | fio collect | fio distrib | wc -l
+    67
 
 New in 1.4.0.
 
