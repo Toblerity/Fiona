@@ -12,6 +12,7 @@ from cligj import (
 
 import fiona
 from fiona.transform import transform_geom
+from fiona._err import cpl_errs
 from .helpers import obj_gen
 from . import options
 
@@ -97,8 +98,8 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
         dump_kwds['separators'] = (',', ':')
     item_sep = compact and ',' or ', '
 
-    try:
-        with fiona.drivers(CPL_DEBUG=verbosity>2):
+    with fiona.drivers(CPL_DEBUG=verbosity>2), cpl_errs:
+        try:
             for path in files:
                 with fiona.open(path) as src:
                     if bbox:
@@ -120,12 +121,16 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
                             click.echo(json.dumps(feat, **dump_kwds))
                         except (UnicodeError, ValueError) as exc:
                             if ignore_errors:
-                                logger.error(
-                                    "failed to serialize record {0}: {1}.".format(
-                                        i, exc))
-    except Exception:
-        logger.exception("Exception caught during processing")
-        raise click.Abort()
+                                click.echo(
+                                    "failed to cat record {0}, path {1}:".format(
+                                    i, path), file=sys.stderr)
+                                click.echo(str(exc), file=sys.stderr)
+                                continue
+                            else:
+                                raise click.ClickException(str(exc))
+
+        except (IOError, ValueError) as exc:
+            raise click.UsageError(str(exc))
 
 
 # Collect command
