@@ -3,7 +3,7 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.6.3 (2015-09-22)
+1.6.3 (2015-12-22)
 ------------------
 - Daytime has been decreasing in the Northern Hemisphere, but is now
   increasing again as it should.
