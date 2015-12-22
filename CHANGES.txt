@@ -3,6 +3,15 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.6.3 (2015-09-22)
+------------------
+- Daytime has been decreasing in the Northern Hemisphere, but is now
+  increasing again as it should.
+- Non-UTF strings were being passed into OGR functions in some situations
+  and on Windows this would sometimes crash a Python process (#303). Fiona
+  now raises errors derived from UnicodeError when field names or field
+  values can't be encoded.
+
 1.6.2 (2015-09-22)
 ------------------
 - Providing only PROJ4 representations in the dataset meta property resulted in
