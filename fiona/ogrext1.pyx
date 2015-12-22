@@ -16,7 +16,9 @@ from fiona cimport ograpi
 from fiona._geometry cimport GeomBuilder, OGRGeomBuilder
 from fiona._err import cpl_errs
 from fiona._geometry import GEOMETRY_TYPES
-from fiona.errors import DriverError, SchemaError, CRSError, FionaValueError
+from fiona.errors import (
+    DriverError, SchemaError, CRSError, FionaValueError, FieldNameEncodeError,
+    StringFieldEncodeError, StringFieldDecodeError)
 from fiona.odict import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -180,9 +182,10 @@ cdef class FeatureBuilder:
                 try:
                     val = ograpi.OGR_F_GetFieldAsString(feature, i)
                     val = val.decode(encoding)
-                except UnicodeDecodeError:
-                    log.warn(
-                        "Failed to decode %s using %s codec", val, encoding)
+                except UnicodeError as exc:
+                    raise StringFieldDecodeError(
+                        "Failed to decode {0} using {1} codec: {2}".format(
+                            val, encoding, str(exc)))
 
                 # Does the text contain a JSON object? Let's check.
                 # Let's check as cheaply as we can.
@@ -258,11 +261,15 @@ cdef class OGRFeatureBuilder:
                 "Looking up %s in %s", key, repr(session._schema_mapping))
             ogr_key = session._schema_mapping[key]
             schema_type = collection.schema['properties'][key]
+
+            # Catch and re-raise unicode encoding errors.
             try:
                 key_bytes = ogr_key.encode(encoding)
-            except UnicodeDecodeError:
-                log.warn("Failed to encode %s using %s codec", key, encoding)
-                key_bytes = ogr_key
+            except UnicodeError as exc:
+                raise FieldNameEncodeError(
+                    "Failed to encode {0} using {1} codec: {2}".format(
+                        key, encoding, str(exc)))
+
             key_c = key_bytes
             i = ograpi.OGR_F_GetFieldIndex(cogr_feature, key_c)
             if i < 0:
@@ -304,12 +311,15 @@ cdef class OGRFeatureBuilder:
                 ograpi.OGR_F_SetFieldDateTime(
                     cogr_feature, i, 0, 0, 0, hh, mm, ss, 0)
             elif isinstance(value, string_types):
+                
+                # Catch and re-raise string field value encoding errors.
                 try:
                     value_bytes = value.encode(encoding)
-                except UnicodeDecodeError:
-                    log.warn(
-                        "Failed to encode %s using %s codec", value, encoding)
-                    value_bytes = value
+                except UnicodeError as exc:
+                    raise StringFieldEncodeError(
+                        "Failed to encode {0} using {1} codec: {2}".format(
+                            value, encoding, str(exc)))
+
                 string_c = value_bytes
                 ograpi.OGR_F_SetFieldString(cogr_feature, i, string_c)
             elif value is None:
@@ -376,7 +386,7 @@ cdef class Session:
             path = collection.path
         try:
             path_b = path.encode('utf-8')
-        except UnicodeDecodeError:
+        except UnicodeError:
             # Presume already a UTF-8 encoded string
             path_b = path
         path_c = path_b
@@ -699,7 +709,7 @@ cdef class WritingSession(Session):
             if os.path.exists(path):
                 try:
                     path_b = path.encode('utf-8')
-                except UnicodeDecodeError:
+                except UnicodeError:
                     path_b = path
                 path_c = path_b
                 with cpl_errs:
@@ -735,7 +745,7 @@ cdef class WritingSession(Session):
         elif collection.mode == 'w':
             try:
                 path_b = path.encode('utf-8')
-            except UnicodeDecodeError:
+            except UnicodeError:
                 path_b = path
             path_c = path_b
             driver_b = collection.driver.encode()
@@ -1209,7 +1219,7 @@ def _listlayers(path):
     # Open OGR data source.
     try:
         path_b = path.encode('utf-8')
-    except UnicodeDecodeError:
+    except UnicodeError:
         path_b = path
     path_c = path_b
     with cpl_errs:

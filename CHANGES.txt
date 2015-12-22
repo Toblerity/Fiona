@@ -3,14 +3,22 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.6.2 (2015-09-18)
+1.6.3 (2015-12-22)
 ------------------
-- Providing only PROJ4 representations in the dataset meta property resulted
-  in loss of CRS information when using the 
-  `fiona.open(..., **src.meta) as dst` pattern (#265). This bug has been 
-  addressed by adding a crs_wkt item to the meta property and extending the
-  `fiona.open()` and the collection constructor to look for and prioritize
-  this keyword argument.
+- Daytime has been decreasing in the Northern Hemisphere, but is now
+  increasing again as it should.
+- Non-UTF strings were being passed into OGR functions in some situations
+  and on Windows this would sometimes crash a Python process (#303). Fiona
+  now raises errors derived from UnicodeError when field names or field
+  values can't be encoded.
+
+1.6.2 (2015-09-22)
+------------------
+- Providing only PROJ4 representations in the dataset meta property resulted in
+  loss of CRS information when using the `fiona.open(..., **src.meta) as dst`
+  pattern (#265). This bug has been addressed by adding a crs_wkt item to the
+  meta property and extending the `fiona.open()` and the collection constructor
+  to look for and prioritize this keyword argument.
 
 1.6.1 (2015-08-12)
 ------------------
