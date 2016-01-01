@@ -61,9 +61,15 @@ target/
 venv/
 venv2/
 
-#fiona
+# fiona
+VERSION.txt
 fiona/ogrext.c
 fiona/_drivers.c
 fiona/_err.c
 fiona/_geometry.c
 fiona/_transform.cpp
+fiona/ograpi.pxd
+fiona/ogrext.pyx
+tests/data/coutwildrnp.json
+tests/data/coutwildrnp.tar
+tests/data/coutwildrnp.zip
