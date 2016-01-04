@@ -171,37 +171,37 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
     if parse:
         # If input is RS-delimited JSON sequence.
         if first_line.startswith(u'\x1e'):
-            def feature_gen():
+            def feature_text_gen():
                 buffer = first_line.strip(u'\x1e')
                 for line in stdin:
                     if line.startswith(u'\x1e'):
                         if buffer:
                             feat = json.loads(buffer)
                             feat['geometry'] = transformer(feat['geometry'])
-                            yield feat
+                            yield json.dumps(feat, **dump_kwds)
                         buffer = line.strip(u'\x1e')
                     else:
                         buffer += line
                 else:
                     feat = json.loads(buffer)
                     feat['geometry'] = transformer(feat['geometry'])
-                    yield feat
+                    yield json.dumps(feat, **dump_kwds)
         else:
-            def feature_gen():
+            def feature_text_gen():
                 feat = json.loads(first_line)
                 feat['geometry'] = transformer(feat['geometry'])
-                yield feat
+                yield json.dumps(feat, **dump_kwds)
 
                 for line in stdin:
                     feat = json.loads(line)
                     feat['geometry'] = transformer(feat['geometry'])
-                    yield feat
+                    yield json.dumps(feat, **dump_kwds)
 
     # If *not* parsing geojson
     else:
         # If input is RS-delimited JSON sequence.
         if first_line.startswith(u'\x1e'):
-            def feature_gen():
+            def feature_text_gen():
                 buffer = first_line.strip(u'\x1e')
                 for line in stdin:
                     if line.startswith(u'\x1e'):
@@ -213,13 +213,13 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
                 else:
                     yield buffer
         else:
-            def feature_gen():
+            def feature_text_gen():
                 yield first_line
                 for line in stdin:
                     yield line
 
     try:
-        source = feature_gen()
+        source = feature_text_gen()
 
         if record_buffered:
             # Buffer GeoJSON data at the feature level for smaller
@@ -246,12 +246,7 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
                     first = id_record(first)
                 if indented:
                     sink.write(rec_indent)
-                if parse:
-                    sink.write(
-                        json.dumps(first, **dump_kwds
-                            ).replace("\n", rec_indent))
-                else:
-                    sink.write(first.replace("\n", rec_indent))
+                sink.write(first.replace("\n", rec_indent))
             except StopIteration:
                 pass
             except Exception as exc:
@@ -284,12 +279,7 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
                     if indented:
                         sink.write(rec_indent)
                     sink.write(item_sep)
-                    if parse:
-                        sink.write(
-                            json.dumps(rec, **dump_kwds
-                                ).replace("\n", rec_indent))
-                    else:
-                        sink.write(rec.replace("\n", rec_indent))
+                    sink.write(rec.replace("\n", rec_indent))
                 except Exception as exc:
                     if ignore_errors:
                         logger.error(
@@ -315,31 +305,20 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
 
         else:
             # Buffer GeoJSON data at the collection level. The default.
-            if parse:
-                collection = {'type': 'FeatureCollection'}
-                if with_ld_context:
-                    collection['@context'] = make_ld_context(
-                        add_ld_context_item)
-                    collection['features'] = [
-                        id_record(rec) for rec in source]
-                else:
-                    collection['features'] = list(source)
-                json.dump(collection, sink, **dump_kwds)
-            else:
-                collection = {
-                    'type': 'FeatureCollection',
-                    'features': []}
-                if with_ld_context:
-                    collection['@context'] = make_ld_context(
-                        add_ld_context_item)
+            collection = {
+                'type': 'FeatureCollection',
+                'features': []}
+            if with_ld_context:
+                collection['@context'] = make_ld_context(
+                    add_ld_context_item)
 
-                head, tail = json.dumps(collection, **dump_kwds).split('[]')
-                sink.write(head)
-                sink.write("[")
-                sink.write(",".join(source))
-                sink.write("]")
-                sink.write(tail)
-                sink.write("\n")
+            head, tail = json.dumps(collection, **dump_kwds).split('[]')
+            sink.write(head)
+            sink.write("[")
+            sink.write(",".join(source))
+            sink.write("]")
+            sink.write(tail)
+            sink.write("\n")
 
     except Exception:
         logger.exception("Exception caught during processing")
