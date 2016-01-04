@@ -167,44 +167,55 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
 
     first_line = next(stdin)
 
-    # If input is RS-delimited JSON sequence.
-    if first_line.startswith(u'\x1e'):
-        def feature_gen():
-            buffer = first_line.strip(u'\x1e')
-            for line in stdin:
-                if line.startswith(u'\x1e'):
-                    if buffer:
-                        if parse:
+    # If parsing geojson
+    if parse:
+        # If input is RS-delimited JSON sequence.
+        if first_line.startswith(u'\x1e'):
+            def feature_gen():
+                buffer = first_line.strip(u'\x1e')
+                for line in stdin:
+                    if line.startswith(u'\x1e'):
+                        if buffer:
                             feat = json.loads(buffer)
                             feat['geometry'] = transformer(feat['geometry'])
                             yield feat
-                        else:
-                            yield buffer
-                    buffer = line.strip(u'\x1e')
+                        buffer = line.strip(u'\x1e')
+                    else:
+                        buffer += line
                 else:
-                    buffer += line
-            else:
-                if parse:
                     feat = json.loads(buffer)
                     feat['geometry'] = transformer(feat['geometry'])
                     yield feat
-                else:
-                    yield buffer
-    else:
-        def feature_gen():
-            if parse:
+        else:
+            def feature_gen():
                 feat = json.loads(first_line)
                 feat['geometry'] = transformer(feat['geometry'])
                 yield feat
-            else:
-                yield first_line
 
-            for line in stdin:
-                if parse:
+                for line in stdin:
                     feat = json.loads(line)
                     feat['geometry'] = transformer(feat['geometry'])
                     yield feat
+
+    # If *not* parsing geojson
+    else:
+        # If input is RS-delimited JSON sequence.
+        if first_line.startswith(u'\x1e'):
+            def feature_gen():
+                buffer = first_line.strip(u'\x1e')
+                for line in stdin:
+                    if line.startswith(u'\x1e'):
+                        if buffer:
+                            yield buffer
+                        buffer = line.strip(u'\x1e')
+                    else:
+                        buffer += line
                 else:
+                    yield buffer
+        else:
+            def feature_gen():
+                yield first_line
+                for line in stdin:
                     yield line
 
     try:
