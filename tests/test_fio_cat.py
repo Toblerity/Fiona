@@ -116,3 +116,49 @@ def test_dump():
     result = runner.invoke(cat.dump, [WILDSHP])
     assert result.exit_code == 0
     assert '"FeatureCollection"' in result.output
+
+
+def test_collect_noparse():
+    runner = CliRunner()
+    result = runner.invoke(
+        cat.collect,
+        ['--no-parse'],
+        feature_seq,
+        catch_exceptions=False)
+    assert result.exit_code == 0
+    assert result.output.count('"Feature"') == 2
+    assert len(json.loads(result.output)['features']) == 2
+
+
+def test_collect_noparse_records():
+    runner = CliRunner()
+    result = runner.invoke(
+        cat.collect,
+        ['--no-parse', '--record-buffered'],
+        feature_seq,
+        catch_exceptions=False)
+    assert result.exit_code == 0
+    assert result.output.count('"Feature"') == 2
+    assert len(json.loads(result.output)['features']) == 2
+
+
+def test_collect_src_crs():
+    runner = CliRunner()
+    result = runner.invoke(
+        cat.collect,
+        ['--no-parse', '--src-crs', 'epsg:4326'],
+        feature_seq,
+        catch_exceptions=False)
+    assert result.exit_code == 2
+
+
+def test_collect_noparse_rs():
+    runner = CliRunner()
+    result = runner.invoke(
+        cat.collect,
+        ['--no-parse'],
+        feature_seq_pp_rs,
+        catch_exceptions=False)
+    assert result.exit_code == 0
+    assert result.output.count('"Feature"') == 2
+    assert len(json.loads(result.output)['features']) == 2
