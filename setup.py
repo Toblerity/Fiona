@@ -77,7 +77,7 @@ def copy_gdalapi(gdalversion):
         shutil.copy('fiona/ogrext2.pyx', 'fiona/ogrext.pyx')
         shutil.copy('fiona/ograpi2.pxd', 'fiona/ograpi.pxd')
 
-if '--gdalversion' in sys.argv:
+if '--gdalversion' in sys.argv and 'clean' not in sys.argv:
     index = sys.argv.index('--gdalversion')
     sys.argv.pop(index)
     gdalversion = sys.argv.pop(index)
@@ -91,57 +91,58 @@ libraries = []
 extra_link_args = []
 gdal_output = [None] * 4
 
-try:
-    gdal_config = os.environ.get('GDAL_CONFIG', 'gdal-config')
-    for i, flag in enumerate(("--cflags", "--libs", "--datadir", "--version")):
-        gdal_output[i] = check_output([gdal_config, flag]).strip()
+if 'clean' not in sys.argv:
+    try:
+        gdal_config = os.environ.get('GDAL_CONFIG', 'gdal-config')
+        for i, flag in enumerate(("--cflags", "--libs", "--datadir", "--version")):
+            gdal_output[i] = check_output([gdal_config, flag]).strip()
 
-    for item in gdal_output[0].split():
-        if item.startswith("-I"):
-            include_dirs.extend(item[2:].split(":"))
-    for item in gdal_output[1].split():
-        if item.startswith("-L"):
-            library_dirs.extend(item[2:].split(":"))
-        elif item.startswith("-l"):
-            libraries.append(item[2:])
+        for item in gdal_output[0].split():
+            if item.startswith("-I"):
+                include_dirs.extend(item[2:].split(":"))
+        for item in gdal_output[1].split():
+            if item.startswith("-L"):
+                library_dirs.extend(item[2:].split(":"))
+            elif item.startswith("-l"):
+                libraries.append(item[2:])
+            else:
+                # e.g. -framework GDAL
+                extra_link_args.append(item)
+
+        copy_gdalapi(gdal_output[3])
+
+    except Exception as e:
+        if os.name == "nt":
+            log.info(("Building on Windows requires extra options to setup.py to locate needed GDAL files.\n"
+                       "More information is available in the README."))
         else:
-            # e.g. -framework GDAL
-            extra_link_args.append(item)
+            log.warning("Failed to get options via gdal-config: %s", str(e))
 
-    copy_gdalapi(gdal_output[3])
-
-except Exception as e:
-    if os.name == "nt":
-        log.info(("Building on Windows requires extra options to setup.py to locate needed GDAL files.\n"
-                   "More information is available in the README."))
-    else:
-        log.warning("Failed to get options via gdal-config: %s", str(e))
-
-    # Conditionally copy the GDAL data. To be used in conjunction with
-    # the bdist_wheel command to make self-contained binary wheels.
+        # Conditionally copy the GDAL data. To be used in conjunction with
+        # the bdist_wheel command to make self-contained binary wheels.
+        if os.environ.get('PACKAGE_DATA'):
+            try:
+                shutil.rmtree('fiona/gdal_data')
+            except OSError:
+                pass
+            shutil.copytree(datadir, 'fiona/gdal_data')
     if os.environ.get('PACKAGE_DATA'):
-        try:
-            shutil.rmtree('fiona/gdal_data')
-        except OSError:
-            pass
-        shutil.copytree(datadir, 'fiona/gdal_data')
-if os.environ.get('PACKAGE_DATA'):
-    destdir = 'fiona/gdal_data'
-    if gdal_output[2]:
-        log.info("Copying gdal data from %s" % gdal_output[2])
-        copy_data_tree(gdal_output[2], destdir)
-    else:
-        # check to see if GDAL_DATA is defined
-        gdal_data = os.environ.get('GDAL_DATA', None)
-        if gdal_data:
-            log.info("Copying gdal data from %s" % gdal_data)
-            copy_data_tree(gdal_data, destdir)
+        destdir = 'fiona/gdal_data'
+        if gdal_output[2]:
+            log.info("Copying gdal data from %s" % gdal_output[2])
+            copy_data_tree(gdal_output[2], destdir)
+        else:
+            # check to see if GDAL_DATA is defined
+            gdal_data = os.environ.get('GDAL_DATA', None)
+            if gdal_data:
+                log.info("Copying gdal data from %s" % gdal_data)
+                copy_data_tree(gdal_data, destdir)
 
-    # Conditionally copy PROJ.4 data. 
-    projdatadir = os.environ.get('PROJ_LIB', '/usr/local/share/proj')
-    if os.path.exists(projdatadir):
-        log.info("Copying proj data from %s" % projdatadir)
-        copy_data_tree(projdatadir, 'fiona/proj_data')
+        # Conditionally copy PROJ.4 data. 
+        projdatadir = os.environ.get('PROJ_LIB', '/usr/local/share/proj')
+        if os.path.exists(projdatadir):
+            log.info("Copying proj data from %s" % projdatadir)
+            copy_data_tree(projdatadir, 'fiona/proj_data')
 
 ext_options = dict(
     include_dirs=include_dirs,
