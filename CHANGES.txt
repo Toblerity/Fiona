@@ -3,6 +3,14 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.6.3.post1 (2016-03-27)
+------------------------
+- No changes to the library in this post-release version, but there is a
+  significant change to the distributions on PyPI: to help make Fiona more
+  compatible with Shapely on OS X, the GDAL shared library included in the
+  macosx (only) binary wheels now statically links the GEOS library. See
+  https://github.com/sgillies/frs-wheel-builds/issues/5.
+
 1.6.3 (2015-12-22)
 ------------------
 - Daytime has been decreasing in the Northern Hemisphere, but is now
@@ -16,7 +24,7 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 ------------------
 - Providing only PROJ4 representations in the dataset meta property resulted in
   loss of CRS information when using the `fiona.open(..., **src.meta) as dst`
-  pattern (#265). This bug has been addressed by adding a crs_wkt item to the
+  pattern (#265). This bug has been addressed by adding a crs_wkt item to the`
   meta property and extending the `fiona.open()` and the collection constructor
   to look for and prioritize this keyword argument.
 
