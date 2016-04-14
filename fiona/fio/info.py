@@ -51,6 +51,8 @@ def env(ctx, key):
 @click.option('--bounds', 'meta_member', flag_value='bounds',
               help="Print the boundary coordinates "
                    "(left, bottom, right, top).")
+@click.option('--name', 'meta_member', flag_value='name',
+              help="Print the datasource's name.")
 @click.pass_context
 def info(ctx, input, indent, meta_member):
     verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
@@ -59,7 +61,7 @@ def info(ctx, input, indent, meta_member):
         with fiona.drivers(CPL_DEBUG=verbosity>2):
             with fiona.open(input) as src:
                 info = src.meta
-                info.update(bounds=src.bounds)
+                info.update(bounds=src.bounds, name=src.name)
                 try:
                     info.update(count=len(src))
                 except TypeError as e:
