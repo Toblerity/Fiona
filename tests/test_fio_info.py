@@ -17,6 +17,7 @@ def test_info_json():
     assert '"count": 67' in result.output
     assert '"crs": "EPSG:4326"' in result.output
     assert '"driver": "ESRI Shapefile"' in result.output
+    assert '"name": "coutwildrnp"' in result.output
 
 
 def test_info_count():

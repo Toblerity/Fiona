@@ -14,9 +14,4 @@ def cb_layer(ctx, param, value):
     if value is None or not value.isdigit():
         return value
     else:
-        value = int(value)
-        if value < 0:
-            raise click.BadParameter(
-                "layer indexes must be >= 1, not {}".format(value))
-        else:
-            return value
+        return int(value)
