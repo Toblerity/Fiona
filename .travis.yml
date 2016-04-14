@@ -32,7 +32,7 @@ script:
   - coverage run --source=fiona --omit='*.pxd,*.pyx,*/tests/*,*/docs/*,*/examples/*,*/benchmarks/*' -m nose --exclude test_filter_vsi --exclude test_geopackage
 
 after_success:
-  - coveralls
+  - coveralls || echo "!! intermittent coveralls failure"
 
 env:
 
