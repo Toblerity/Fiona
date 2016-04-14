@@ -7,6 +7,7 @@ import code
 import logging
 import json
 import sys
+import warnings
 
 import click
 from cligj import indent_opt
@@ -58,7 +59,13 @@ def info(ctx, input, indent, meta_member):
         with fiona.drivers(CPL_DEBUG=verbosity>2):
             with fiona.open(input) as src:
                 info = src.meta
-                info.update(bounds=src.bounds, count=len(src))
+                info.update(bounds=src.bounds)
+                try:
+                    info.update(count=len(src))
+                except TypeError as e:
+                    info.update(count=None)
+                    msg = str(e) + "  Setting 'count' to 'null'"
+                    warnings.warn(msg, RuntimeWarning)
                 proj4 = fiona.crs.to_string(src.crs)
                 if proj4.startswith('+init=epsg'):
                     proj4 = proj4.split('=')[1].upper()
