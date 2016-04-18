@@ -46,7 +46,7 @@ with open('fiona/__init__.py', 'r') as f:
             version = line.split("=")[1].strip()
             version = version.strip('"')
             version = version.strip("'")
-            continue
+            break
 
 # Fiona's auxiliary files are UTF-8 encoded and we'll specify this when
 # reading with Python 3+
