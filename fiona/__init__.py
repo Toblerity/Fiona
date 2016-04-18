@@ -91,8 +91,8 @@ log.addHandler(NullHandler())
 
 # Warn user that they use fiona 1.x with gdal 2.0
 if get_gdal_version_num() >= calc_gdal_version_num(2, 0, 0):
-    warnings.warn("Fiona {} is not compatible with installed GDAL {}".format(__version__,
-                                                                             get_gdal_release_name()))            
+    msg = "Fiona {} is only compatible with GDAL 1.x (installed {})"
+    warnings.warn(msg.format(__version__, get_gdal_release_name()))            
 
 
 def open(
