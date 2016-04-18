@@ -7,7 +7,6 @@ import code
 import logging
 import json
 import sys
-import warnings
 
 import click
 from cligj import indent_opt
@@ -79,8 +78,8 @@ def info(ctx, input, indent, meta_member, layer):
                     info.update(count=len(src))
                 except TypeError as e:
                     info.update(count=None)
-                    msg = "{exc} Setting 'count' to 'null'".format(exc=str(e))
-                    warnings.warn(msg, RuntimeWarning)
+                    logger.debug("Setting 'count' to None/null - layer does "
+                                 "not support counting")
                 proj4 = fiona.crs.to_string(src.crs)
                 if proj4.startswith('+init=epsg'):
                     proj4 = proj4.split('=')[1].upper()
