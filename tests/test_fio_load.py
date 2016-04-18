@@ -1,4 +1,6 @@
+import json
 import os
+import shutil
 import tempfile
 
 from click.testing import CliRunner
@@ -119,3 +121,38 @@ def test_dst_crs_no_src(tmpdir=None):
     with fiona.open(tmpfile) as src:
         assert src.crs == {'init': 'epsg:32610'}
         assert len(src) == len(feature_seq.splitlines())
+
+
+def test_fio_load_layer():
+
+    tmpdir = tempfile.mkdtemp()
+    try:
+        feature = {
+            'type': 'Feature',
+            'properties': {'key': 'value'},
+            'geometry': {
+                'type': 'Point',
+                'coordinates': (5.0, 39.0)
+            }
+        }
+
+        sequence = os.linesep.join(map(json.dumps, [feature, feature]))
+
+        runner = CliRunner()
+        result = runner.invoke(main_group, [
+            'load',
+            tmpdir,
+            '--driver', 'ESRI Shapefile',
+            '--src-crs', 'EPSG:4236',
+            '--layer', 'test_layer',
+            '--sequence'],
+            input=sequence)
+        assert result.exit_code == 0
+
+        with fiona.open(tmpdir) as src:
+            assert len(src) == 2
+            assert src.name == 'test_layer'
+            assert src.schema['geometry'] == 'Point'
+
+    finally:
+        shutil.rmtree(tmpdir)

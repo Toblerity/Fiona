@@ -527,8 +527,11 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
     '--sequence / --no-sequence', default=False,
     help="Specify whether the input stream is a LF-delimited sequence of GeoJSON "
          "features (the default) or a single GeoJSON feature collection.")
+@click.option('--layer', metavar="INDEX|NAME", callback=options.cb_layer,
+              help="Load features into specified layer.  Layers use zero-based numbering when "
+                   "accessed by index.")
 @click.pass_context
-def load(ctx, output, driver, src_crs, dst_crs, sequence):
+def load(ctx, output, driver, src_crs, dst_crs, sequence, layer):
     """Load features from JSON to a file in another format.
 
     The input is a GeoJSON feature collection or optionally a sequence of
@@ -594,7 +597,8 @@ def load(ctx, output, driver, src_crs, dst_crs, sequence):
                     output, 'w',
                     driver=driver,
                     crs=dst_crs,
-                    schema=schema) as dst:
+                    schema=schema,
+                    layer=layer) as dst:
                 dst.write(first)
                 dst.writerecords(source)
 
