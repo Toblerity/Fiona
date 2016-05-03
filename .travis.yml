@@ -1,47 +1,50 @@
 language: python
-
+sudo: false
+cache:
+  directories:
+    - $GDALINST
+    - ~/.cache/pip
+env:
+  global:
+    - PIP_WHEEL_DIR=$HOME/.cache/pip/wheels
+    - PIP_FIND_LINKS=file://$HOME/.cache/pip/wheels
+    - GDALINST=$HOME/gdalinstall
+    - GDALBUILD=$HOME/gdalbuild
+  matrix:
+    - GDALVERSION="1.9.2"
+    - GDALVERSION="1.11.4"
+    - GDALVERSION="2.0.2"
+addons:
+  apt:
+    packages:
+    - libgdal1h
+    - gdal-bin
+    - libproj-dev
+    - libhdf5-serial-dev
+    - libpng-dev
+    - libgdal-dev
+    - libatlas-dev
+    - libatlas-base-dev
+    - gfortran
 python:
   - "2.7"
   - "3.3"
   - "3.4"
-
-sudo: false
-
-cache:
-
-  directories:
-    - $GDALINST
-    - $HOME/.cache/pip
-    - $HOME/virtualenv/python$TRAVIS_PYTHON_VERSION/lib/python$TRAVIS_PYTHON_VERSION/site-packages/
-    - $HOME/virtualenv/python$TRAVIS_PYTHON_VERSION/bin/
-
 before_install:
+  - pip install -U pip
+  - pip install wheel
   - . ./scripts/travis_gdal_install.sh
   - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$PATH
   - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$LD_LIBRARY_PATH
-
+  - gdal-config --version
 install:
-  - "pip install -r requirements.txt"
+  - "if [ $(gdal-config --version) == \"$GDALVERSION\" ]; then echo \"Using gdal $GDALVERSION\"; else echo \"NOT using gdal $GDALVERSION as expected; aborting\"; exit 1; fi"
+  - "pip wheel -r requirements-dev.txt"
   - "pip install -r requirements-dev.txt"
-  - "pip install pytest"
-  - "pip install coveralls"
-  - "pip install --upgrade --force-reinstall --global-option=build_ext --global-option='-I$GDALINST/gdal-$GDALVERSION/include' --global-option='-L$GDALINST/gdal-$GDALVERSION/lib' --global-option='-R$GDALINST/gdal-$GDALVERSION/lib' -e ."
-
+  - "pip install --upgrade --force-reinstall --global-option=build_ext --global-option='-I$GDALINST/gdal-$GDALVERSION/include' --global-option='-L$GDALINST/gdal-$GDALVERSION/lib' --global-option='-R$GDALINST/gdal-$GDALVERSION/lib' -e .[test]"
+  - "fio --version"
 script: 
   - nosetests --exclude test_filter_vsi --exclude test_geopackage
   - coverage run --source=fiona --omit='*.pxd,*.pyx,*/tests/*,*/docs/*,*/examples/*,*/benchmarks/*' -m nose --exclude test_filter_vsi --exclude test_geopackage
-
 after_success:
   - coveralls || echo "!! intermittent coveralls failure"
-
-env:
-
-  global:
-    - GDALINST=$HOME/gdalinstall
-    - GDALBUILD=$HOME/gdalbuild
-
-  matrix:
-    - GDALVERSION="1.9.2" 
-    - GDALVERSION="1.11.3"
-    - GDALVERSION="2.0.0"
-    - GDALVERSION="2.0.1"
