@@ -24,7 +24,7 @@ attribute table. For example:
    'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
    'properties': {'label': u'Null Island'} }
 
-is a Fiona feature with a point geometry and one property. 
+is a Fiona feature with a point geometry and one property.
 
 Features are read and written using objects returned by the
 ``collection`` function. These ``Collection`` objects are a lot like
@@ -62,9 +62,6 @@ Because Fiona collections are context managers, they are closed and (in
 writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
-__all__ = ['bounds', 'listlayers', 'open', 'prop_type', 'prop_width']
-__version__ = "1.7.0"
-
 import logging
 import os
 from six import string_types
@@ -74,18 +71,24 @@ from fiona._drivers import driver_count, GDALEnv
 from fiona.drvsupport import supported_drivers
 from fiona.odict import OrderedDict
 from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove
+from fiona.ogrext import (
+    calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name)
 
 # These modules are imported by fiona.ogrext, but are also import here to
 # help tools like cx_Freeze find them automatically
 from fiona import _geometry, _err, rfc3339
 import uuid
 
+
+__all__ = ['bounds', 'listlayers', 'open', 'prop_type', 'prop_width']
+__version__ = "1.7.0"
+__gdal_version__ = get_gdal_release_name().decode('utf-8')
+
 log = logging.getLogger('Fiona')
 class NullHandler(logging.Handler):
     def emit(self, record):
         pass
 log.addHandler(NullHandler())
-
 
 def open(
         path,
@@ -98,7 +101,6 @@ def open(
         vfs=None,
         enabled_drivers=None,
         crs_wkt=None):
-    
     """Open file at ``path`` in ``mode`` "r" (read), "a" (append), or
     "w" (write) and return a ``Collection`` object.
     
