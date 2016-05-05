@@ -24,7 +24,7 @@ attribute table. For example:
    'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
    'properties': {'label': u'Null Island'} }
 
-is a Fiona feature with a point geometry and one property. 
+is a Fiona feature with a point geometry and one property.
 
 Features are read and written using objects returned by the
 ``collection`` function. These ``Collection`` objects are a lot like
@@ -62,9 +62,6 @@ Because Fiona collections are context managers, they are closed and (in
 writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
-__all__ = ['bounds', 'listlayers', 'open', 'prop_type', 'prop_width']
-__version__ = "1.6.3.post1"
-
 import logging
 import os
 from six import string_types
@@ -82,18 +79,22 @@ import warnings
 from fiona import _geometry, _err, rfc3339
 import uuid
 
+
+__all__ = ['bounds', 'listlayers', 'open', 'prop_type', 'prop_width']
+__version__ = "1.6.4"
+__gdal_version__ = get_gdal_release_name().decode('utf-8')
+
+# Warn user that they use fiona 1.x with gdal 2.0
+if get_gdal_version_num() >= calc_gdal_version_num(2, 0, 0):
+    raise ImportError(
+        "Fiona {0} is only compatible with GDAL 1.x (installed: {1})".format(
+            __version__, __gdal_version__))
+
 log = logging.getLogger('Fiona')
 class NullHandler(logging.Handler):
     def emit(self, record):
         pass
 log.addHandler(NullHandler())
-
-
-# Warn user that they use fiona 1.x with gdal 2.0
-if get_gdal_version_num() >= calc_gdal_version_num(2, 0, 0):
-    msg = "Fiona {} is only compatible with GDAL 1.x (installed {})"
-    warnings.warn(msg.format(__version__, get_gdal_release_name()))            
-
 
 def open(
         path,
@@ -106,7 +107,6 @@ def open(
         vfs=None,
         enabled_drivers=None,
         crs_wkt=None):
-    
     """Open file at ``path`` in ``mode`` "r" (read), "a" (append), or
     "w" (write) and return a ``Collection`` object.
     
