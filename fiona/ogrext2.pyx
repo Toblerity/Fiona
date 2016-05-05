@@ -421,6 +421,7 @@ cdef class Session:
                                                drvs,
                                                NULL,
                                                NULL)
+                        free(drvs)
                     if ds != NULL:
                         self.cogr_ds = ds
                         collection._driver = name
