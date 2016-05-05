@@ -73,6 +73,9 @@ from fiona.collection import Collection, BytesCollection, vsi_path
 from fiona._drivers import driver_count, GDALEnv, supported_drivers
 from fiona.odict import OrderedDict
 from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP
+from fiona.ogrext import (
+    calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name)
+import warnings
 
 # These modules are imported by fiona.ogrext, but are also import here to
 # help tools like cx_Freeze find them automatically
@@ -84,6 +87,12 @@ class NullHandler(logging.Handler):
     def emit(self, record):
         pass
 log.addHandler(NullHandler())
+
+
+# Warn user that they use fiona 1.x with gdal 2.0
+if get_gdal_version_num() >= calc_gdal_version_num(2, 0, 0):
+    msg = "Fiona {} is only compatible with GDAL 1.x (installed {})"
+    warnings.warn(msg.format(__version__, get_gdal_release_name()))            
 
 
 def open(
