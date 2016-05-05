@@ -3,6 +3,12 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.6.4 (2016-05-06)
+------------------
+- Raise ImportError if the active GDAL library version is >= 2.0 instead of
+  failing unpredictably (#338, #341). Support for GDAL>=2.0 is coming in
+  Fiona 1.7.
+
 1.6.3.post1 (2016-03-27)
 ------------------------
 - No changes to the library in this post-release version, but there is a
