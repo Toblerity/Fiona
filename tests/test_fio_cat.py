@@ -1,12 +1,11 @@
 import json
 
-import click
 from click.testing import CliRunner
 
 from fiona.fio import cat
 
-from .fixtures import (
-    feature_collection, feature_collection_pp, feature_seq, feature_seq_pp_rs)
+from .fixtures import feature_seq
+from .fixtures import feature_seq_pp_rs
 
 
 WILDSHP = 'tests/data/coutwildrnp.shp'
@@ -54,111 +53,3 @@ def test_bbox_json_yes():
         catch_exceptions=False)
     assert result.exit_code == 0
     assert result.output.count('"Feature"') == 19
-
-
-def test_collect_rs():
-    runner = CliRunner()
-    result = runner.invoke(
-        cat.collect,
-        ['--src-crs', 'EPSG:3857'],
-        feature_seq_pp_rs,
-        catch_exceptions=False)
-    assert result.exit_code == 0
-    assert result.output.count('"Feature"') == 2
-
-
-def test_collect_no_rs():
-    runner = CliRunner()
-    result = runner.invoke(
-        cat.collect,
-        ['--src-crs', 'EPSG:3857'],
-        feature_seq,
-        catch_exceptions=False)
-    assert result.exit_code == 0
-    assert result.output.count('"Feature"') == 2
-
-
-def test_collect_ld():
-    runner = CliRunner()
-    result = runner.invoke(
-        cat.collect,
-        ['--with-ld-context', '--add-ld-context-item', 'foo=bar'],
-        feature_seq,
-        catch_exceptions=False)
-    assert result.exit_code == 0
-    assert '"@context": {' in result.output
-    assert '"foo": "bar"' in result.output
-
-
-def test_collect_rec_buffered():
-    runner = CliRunner()
-    result = runner.invoke(cat.collect, ['--record-buffered'], feature_seq)
-    assert result.exit_code == 0
-    assert '"FeatureCollection"' in result.output
-
-
-def test_distrib():
-    runner = CliRunner()
-    result = runner.invoke(cat.distrib, [], feature_collection_pp)
-    assert result.exit_code == 0
-    assert result.output.count('"Feature"') == 2
-
-
-def test_distrib_no_rs():
-    runner = CliRunner()
-    result = runner.invoke(cat.distrib, [], feature_collection)
-    assert result.exit_code == 0
-    assert result.output.count('"Feature"') == 2
-
-
-def test_dump():
-    runner = CliRunner()
-    result = runner.invoke(cat.dump, [WILDSHP])
-    assert result.exit_code == 0
-    assert '"FeatureCollection"' in result.output
-
-
-def test_collect_noparse():
-    runner = CliRunner()
-    result = runner.invoke(
-        cat.collect,
-        ['--no-parse'],
-        feature_seq,
-        catch_exceptions=False)
-    assert result.exit_code == 0
-    assert result.output.count('"Feature"') == 2
-    assert len(json.loads(result.output)['features']) == 2
-
-
-def test_collect_noparse_records():
-    runner = CliRunner()
-    result = runner.invoke(
-        cat.collect,
-        ['--no-parse', '--record-buffered'],
-        feature_seq,
-        catch_exceptions=False)
-    assert result.exit_code == 0
-    assert result.output.count('"Feature"') == 2
-    assert len(json.loads(result.output)['features']) == 2
-
-
-def test_collect_src_crs():
-    runner = CliRunner()
-    result = runner.invoke(
-        cat.collect,
-        ['--no-parse', '--src-crs', 'epsg:4326'],
-        feature_seq,
-        catch_exceptions=False)
-    assert result.exit_code == 2
-
-
-def test_collect_noparse_rs():
-    runner = CliRunner()
-    result = runner.invoke(
-        cat.collect,
-        ['--no-parse'],
-        feature_seq_pp_rs,
-        catch_exceptions=False)
-    assert result.exit_code == 0
-    assert result.output.count('"Feature"') == 2
-    assert len(json.loads(result.output)['features']) == 2
