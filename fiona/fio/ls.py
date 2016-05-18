@@ -1,9 +1,12 @@
-import json
+"""$ fiona ls"""
 
-import fiona
+
+import json
 
 import click
 from cligj import indent_opt
+
+import fiona
 
 
 @click.command()
