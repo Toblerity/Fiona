@@ -207,6 +207,7 @@ setup_args = dict(
 
         [fiona.fio_commands]
         bounds=fiona.fio.bounds:bounds
+        calc=fiona.fio.calc:calc
         cat=fiona.fio.cat:cat
         collect=fiona.fio.cat:collect
         distrib=fiona.fio.cat:distrib
