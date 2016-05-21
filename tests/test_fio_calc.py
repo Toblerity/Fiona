@@ -14,6 +14,16 @@ def test_fail():
     assert result.exit_code == 1
 
 
+def _load(output):
+    features = []
+    for x in output.splitlines():
+        try:
+            features.append(json.loads(x))
+        except:
+            pass  # nosetests puts some debugging garbage to stdout
+    return features
+
+
 def test_calc_seq():
     runner = CliRunner()
 
@@ -21,7 +31,8 @@ def test_calc_seq():
                            ["TEST", "f.properties.AREA / f.properties.PERIMETER"],
                            feature_seq)
     assert result.exit_code == 0
-    feats = [json.loads(x) for x in result.output.splitlines()]
+
+    feats = _load(result.output)
     assert len(feats) == 2
     for feat in feats:
         assert feat['properties']['TEST'] == \
@@ -35,7 +46,7 @@ def test_bool_seq():
                            ["TEST", "f.properties.AREA > 0.015"],
                            feature_seq)
     assert result.exit_code == 0
-    feats = [json.loads(x) for x in result.output.splitlines()]
+    feats = _load(result.output)
     assert len(feats) == 2
     assert feats[0]['properties']['TEST'] == True
     assert feats[1]['properties']['TEST'] == False
@@ -53,7 +64,7 @@ def test_existing_property():
                            ["--overwrite", "AREA", "f.properties.AREA * 2"],
                            feature_seq)
     assert result.exit_code == 0
-    feats = [json.loads(x) for x in result.output.splitlines()]
+    feats = _load(result.output)
     assert len(feats) == 2
     for feat in feats:
         assert 'AREA' in feat['properties']
