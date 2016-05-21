@@ -27,16 +27,18 @@ def calc(ctx, property_name, expression, overwrite, use_rs):
         - max
         - math (imported module)
         - shape (optional, imported from shape.geometry if available)
-        - f, (the feature in question,
-              allows item access via javascript-style dot notation using munch)
+        - f (the feature in question,
+             allows item access via javascript-style dot notation using munch)
 
-    The expression will be evaluated for each feature and the
-    return value of the expression will be added to the properties
+    The expression will be evaluated for each feature and its
+    return value will be added to the properties
     as the specified property_name. Existing properties will not
     be overwritten by default (an Exception is raised).
+
+    Example
+
     \b
-    e.g. fio cat data.shp \
-         | fio calc sumAB  "f.properties.A + f.properties.B"
+    $ fio cat data.shp | fio calc sumAB  "f.properties.A + f.properties.B"
     """
     logger = logging.getLogger('fio')
     stdin = click.get_text_stream('stdin')
