@@ -220,6 +220,8 @@ setup_args = dict(
         filter=fiona.fio.filter:filter
         ''',
     install_requires=requirements,
+    extras_require={
+        'calc': ['shapely']},
     tests_require=['nose'],
     test_suite='nose.collector',
     ext_modules=ext_modules,
