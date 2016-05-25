@@ -6,7 +6,7 @@
 
 A future version of pip will do this for us and we'll remove this script.
 
-This script installs Fiona in develop mode (``pip install -e .``).
+This script installs Fiona in develop mode (``pip install -e .[test]``).
 """
 
 import subprocess
@@ -27,7 +27,7 @@ def main():
         subprocess.call(['pip', 'install'] +  reqs)
 
     # Now install our package in editable mode.
-    subprocess.call(['pip', 'install', '-e', '.'] +  reqs)
+    subprocess.call(['pip', 'install', '-e', '.[test]'] +  reqs)
 
 
 if __name__ == '__main__':

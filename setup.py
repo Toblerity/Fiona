@@ -113,19 +113,12 @@ if 'clean' not in sys.argv:
 
     except Exception as e:
         if os.name == "nt":
-            log.info(("Building on Windows requires extra options to setup.py to locate needed GDAL files.\n"
-                       "More information is available in the README."))
+            log.info("Building on Windows requires extra options to setup.py "
+                     "to locate needed GDAL files.\nMore information is "
+                     "available in the README.")
         else:
             log.warning("Failed to get options via gdal-config: %s", str(e))
 
-        # Conditionally copy the GDAL data. To be used in conjunction with
-        # the bdist_wheel command to make self-contained binary wheels.
-        if os.environ.get('PACKAGE_DATA'):
-            try:
-                shutil.rmtree('fiona/gdal_data')
-            except OSError:
-                pass
-            shutil.copytree(datadir, 'fiona/gdal_data')
     if os.environ.get('PACKAGE_DATA'):
         destdir = 'fiona/gdal_data'
         if gdal_output[2]:
@@ -138,7 +131,7 @@ if 'clean' not in sys.argv:
                 log.info("Copying gdal data from %s" % gdal_data)
                 copy_data_tree(gdal_data, destdir)
 
-        # Conditionally copy PROJ.4 data. 
+        # Conditionally copy PROJ.4 data.
         projdatadir = os.environ.get('PROJ_LIB', '/usr/local/share/proj')
         if os.path.exists(projdatadir):
             log.info("Copying proj data from %s" % projdatadir)
@@ -219,6 +212,8 @@ setup_args = dict(
         filter=fiona.fio.filter:filter
         ''',
     install_requires=requirements,
+    extras_require={
+        'test': ['nose']},
     tests_require=['nose'],
     test_suite='nose.collector',
     ext_modules=ext_modules,
