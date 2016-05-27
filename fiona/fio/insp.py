@@ -3,6 +3,7 @@
 
 import code
 import logging
+import sys
 
 import click
 
