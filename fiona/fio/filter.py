@@ -1,3 +1,6 @@
+"""$ fio filter"""
+
+
 import json
 import logging
 import math
@@ -6,16 +9,19 @@ from munch import munchify
 import click
 from cligj import use_rs_opt
 
-from .helpers import obj_gen
+from fiona.fio.helpers import obj_gen
 
 
-@click.command(short_help="Filter GeoJSON features by python expression")
+@click.command()
 @click.argument('filter')
 @use_rs_opt
 @click.pass_context
 def filter(ctx, filter, use_rs):
+
     """
-    Filter GeoJSON objects read from stdin against the specified expression.
+    Filter GeoJSON features by python expression.
+
+    Features are read from stdin.
 
     The expression is evaluated in a restricted namespace containing:
         - sum
@@ -33,6 +39,7 @@ def filter(ctx, filter, use_rs):
          | fio filter "f.properties.area > 1000.0" \
          | fio collect > large_polygons.geojson
     """
+
     logger = logging.getLogger('fio')
     stdin = click.get_text_stream('stdin')
 

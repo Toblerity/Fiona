@@ -1,12 +1,8 @@
-"""
-Commands to get info about datasources and the Fiona environment
-"""
+"""$ fio info"""
 
 
-import code
 import logging
 import json
-import sys
 
 import click
 from cligj import indent_opt
@@ -16,33 +12,13 @@ import fiona.crs
 from fiona.fio import options
 
 
-@click.command(short_help="Print information about the fio environment.")
-@click.option('--formats', 'key', flag_value='formats', default=True,
-              help="Enumerate the available formats.")
-@click.pass_context
-def env(ctx, key):
-    """Print information about the Fiona environment: available
-    formats, etc.
-    """
-    verbosity = (ctx.obj and ctx.obj.get('verbosity')) or 1
-    logger = logging.getLogger('fio')
-    stdout = click.get_text_stream('stdout')
-    with fiona.drivers(CPL_DEBUG=(verbosity > 2)) as env:
-        if key == 'formats':
-            for k, v in sorted(fiona.supported_drivers.items()):
-                modes = ', '.join("'" + m + "'" for m in v)
-                stdout.write("%s (modes %s)\n" % (k, modes))
-            stdout.write('\n')
-
-
-# Info command.
 @click.command()
 # One or more files.
 @click.argument('input', type=click.Path(exists=True))
 @click.option('--layer', metavar="INDEX|NAME", callback=options.cb_layer,
-              help="Print information about a specific layer.  The first layer "
-                   "is used by default.  Layers use zero-based numbering when "
-                   "accessed by index.")
+              help="Print information about a specific layer.  The first "
+                   "layer is used by default.  Layers use zero-based "
+                   "numbering when accessed by index.")
 @indent_opt
 # Options to pick out a single metadata item and print it as
 # a string.
@@ -70,7 +46,7 @@ def info(ctx, input, indent, meta_member, layer):
     verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
     logger = logging.getLogger('fio')
     try:
-        with fiona.drivers(CPL_DEBUG=verbosity>2):
+        with fiona.drivers(CPL_DEBUG=verbosity > 2):
             with fiona.open(input, layer=layer) as src:
                 info = src.meta
                 info.update(bounds=src.bounds, name=src.name)
@@ -91,43 +67,6 @@ def info(ctx, input, indent, meta_member, layer):
                         click.echo(info[meta_member])
                 else:
                     click.echo(json.dumps(info, indent=indent))
-
-    except Exception:
-        logger.exception("Exception caught during processing")
-        raise click.Abort()
-
-
-# Insp command.
-@click.command(short_help="Open a dataset and start an interpreter.")
-@click.argument('src_path', type=click.Path(exists=True))
-@click.option('--ipython', 'interpreter', flag_value='ipython',
-              help="Use IPython as interpreter.")
-@click.pass_context
-def insp(ctx, src_path, interpreter):
-
-    verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
-    logger = logging.getLogger('fio')
-
-    banner = 'Fiona %s Interactive Inspector (Python %s)\n' \
-             'Type "src.schema", "next(src)", or "help(src)" ' \
-             'for more information.' \
-             % (fiona.__version__, '.'.join(map(str, sys.version_info[:3])))
-
-    try:
-        with fiona.drivers(CPL_DEBUG=verbosity > 2):
-            with fiona.open(src_path) as src:
-
-                scope = locals()
-
-                if not interpreter:
-                    code.interact(banner, local=scope)
-                elif interpreter == 'ipython':
-                    import IPython
-                    IPython.InteractiveShell.banner1 = banner
-                    IPython.start_ipython(argv=[], user_ns=scope)
-                else:
-                    raise click.ClickException('Interpreter %s is unsupported or missing '
-                                               'dependencies' % interpreter)
 
     except Exception:
         logger.exception("Exception caught during processing")

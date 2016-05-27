@@ -1,15 +1,16 @@
+"""$ fio bounds"""
+
+
 import json
 import logging
-import sys
 
 import click
 from cligj import precision_opt, use_rs_opt
 
 import fiona
-from .helpers import obj_gen
+from fiona.fio.helpers import obj_gen
 
 
-# Bounds command
 @click.command(short_help="Print the extent of GeoJSON objects")
 @precision_opt
 @click.option('--explode/--no-explode', default=False,
@@ -24,7 +25,7 @@ from .helpers import obj_gen
 @click.pass_context
 def bounds(ctx, precision, explode, with_id, with_obj, use_rs):
     """Print the bounding boxes of GeoJSON objects read from stdin.
-    
+
     Optionally explode collections and print the bounds of their
     features.
 
@@ -50,11 +51,14 @@ def bounds(ctx, precision, explode, with_id, with_obj, use_rs):
                 feat_id = feat.get('id', 'feature:' + str(i))
                 w, s, e, n = fiona.bounds(feat)
                 if precision > 0:
-                    w, s, e, n = (round(v, precision) 
+                    w, s, e, n = (round(v, precision)
                                   for v in (w, s, e, n))
                 if explode:
                     if with_id:
-                        rec = {'parent': obj_id, 'id': feat_id, 'bbox': (w, s, e, n)}
+                        rec = {
+                            'parent': obj_id,
+                            'id': feat_id,
+                            'bbox': (w, s, e, n)}
                     elif with_obj:
                         feat.update(parent=obj_id, bbox=(w, s, e, n))
                         rec = feat
