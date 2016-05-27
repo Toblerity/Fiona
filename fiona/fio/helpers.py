@@ -1,10 +1,12 @@
 """
 Helper objects needed by multiple CLI commands.
 """
-
-
+from functools import partial
 import json
+import math
 import warnings
+
+from munch import munchify
 
 
 warnings.simplefilter('default')
@@ -31,3 +33,32 @@ def obj_gen(lines):
             for line in lines:
                 yield json.loads(line)
     return gen()
+
+
+def nullable(val, cast):
+    if val is None:
+        return None
+    else:
+        return cast(val)
+
+
+def eval_feature_expression(feature, expression):
+    safe_dict = {'f': munchify(feature)}
+    safe_dict.update({
+        'sum': sum,
+        'pow': pow,
+        'min': min,
+        'max': max,
+        'math': math,
+        'bool': bool,
+        'int': partial(nullable, int),
+        'str': partial(nullable, str),
+        'float': partial(nullable, float),
+        'len': partial(nullable, len),
+    })
+    try:
+        from shapely.geometry import shape
+        safe_dict['shape'] = shape
+    except ImportError:
+        pass
+    return eval(expression, {"__builtins__": None}, safe_dict)

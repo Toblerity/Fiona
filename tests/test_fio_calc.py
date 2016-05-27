@@ -1,3 +1,4 @@
+from __future__ import division
 import json
 
 from click.testing import CliRunner
@@ -10,7 +11,7 @@ def test_fail():
     runner = CliRunner()
     result = runner.invoke(calc,
                            ["TEST", "f.properties.test > 5"],
-                           "{'type': 'no_properties'}")
+                           '{"type": "no_properties"}')
     assert result.exit_code == 1
 
 

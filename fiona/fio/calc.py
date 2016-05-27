@@ -1,18 +1,17 @@
+from __future__ import division
 import json
 import logging
-import math
-from munch import munchify
 
 import click
 from cligj import use_rs_opt
 
-from .helpers import obj_gen
+from .helpers import obj_gen, eval_feature_expression
 
 
 @click.command(short_help="Calculate GeoJSON property by Python expression")
 @click.argument('property_name')
 @click.argument('expression')
-@click.option('--overwrite', '-o', is_flag=True, default=False,
+@click.option('--overwrite', is_flag=True, default=False,
               help="Overwrite properties, default: False")
 @use_rs_opt
 @click.pass_context
@@ -22,12 +21,10 @@ def calc(ctx, property_name, expression, overwrite, use_rs):
 
     \b
     The expression is evaluated in a restricted namespace containing:
-        - sum
-        - min
-        - max
-        - math (imported module)
-        - shape (optional, imported from shape.geometry if available)
-        - f (the feature in question,
+        - sum, pow, min, max and the imported math module
+        - shape (optional, imported from shapely.geometry if available)
+        - bool, int, str, len, float type conversions
+        - f (the feature to be evaluated,
              allows item access via javascript-style dot notation using munch)
 
     The expression will be evaluated for each feature and its
@@ -43,20 +40,6 @@ def calc(ctx, property_name, expression, overwrite, use_rs):
     logger = logging.getLogger('fio')
     stdin = click.get_text_stream('stdin')
 
-    def calc_func(feature):
-        safe_dict = {'f': munchify(feature)}
-        safe_dict['sum'] = sum
-        safe_dict['pow'] = sum
-        safe_dict['min'] = min
-        safe_dict['max'] = max
-        safe_dict['math'] = math
-        try:
-            from shapely.geometry import shape
-            safe_dict['shape'] = shape
-        except ImportError:
-            pass
-        return eval(expression, {"__builtins__": None}, safe_dict)
-
     try:
         source = obj_gen(stdin)
         for i, obj in enumerate(source):
@@ -64,11 +47,12 @@ def calc(ctx, property_name, expression, overwrite, use_rs):
             for j, feat in enumerate(features):
 
                 if not overwrite and property_name in feat['properties']:
-                    raise ValueError(
+                    raise click.UsageError(
                         '{0} already exists in properties; '
                         'rename or use --overwrite'.format(property_name))
 
-                feat['properties'][property_name] = calc_func(feat)
+                feat['properties'][property_name] = eval_feature_expression(
+                    feat, expression)
 
                 if use_rs:
                     click.echo(u'\u001e', nl=False)
