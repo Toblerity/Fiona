@@ -314,8 +314,15 @@ locations on your system (via your system's package manager), you can do this::
 
   (fiona_env)$ git clone git://github.com/Toblerity/Fiona.git
   (fiona_env)$ cd Fiona
-  (fiona_env)$ pip install -e .
+  (fiona_env)$ pip install cython
+  (fiona_env)$ pip install -e .[test]
   (fiona_env)$ nosetests
+
+Or you can use the ``pep-518-install`` script::
+
+  (fiona_env)$ git clone git://github.com/Toblerity/Fiona.git
+  (fiona_env)$ cd Fiona
+  (fiona_env)$ ./pep-518-install
 
 If you have a non-standard environment, you'll need to specify the include and
 lib dirs and GDAL library on the command line::
