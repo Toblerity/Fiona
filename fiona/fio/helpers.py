@@ -62,3 +62,52 @@ def eval_feature_expression(feature, expression):
     except ImportError:
         pass
     return eval(expression, {"__builtins__": None}, safe_dict)
+
+
+def make_ld_context(context_items):
+    """Returns a JSON-LD Context object.
+
+    See http://json-ld.org/spec/latest/json-ld."""
+    ctx = {
+      "@context": {
+        "geojson": "http://ld.geojson.org/vocab#",
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+          "@container": "@list",
+          "@id": "geojson:bbox"
+        },
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "http://purl.org/dc/terms/description",
+        "features": {
+          "@container": "@set",
+          "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "id": "@id",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "http://purl.org/dc/terms/title",
+        "type": "@type",
+        "when": "geojson:when"
+      }
+    }
+    for item in context_items or []:
+        t, uri = item.split("=")
+        ctx[t.strip()] = uri.strip()
+    return ctx
+
+
+def id_record(rec):
+    """Converts a record's id to a blank node id and returns the record."""
+    rec['id'] = '_:f%s' % rec['id']
+    return rec
