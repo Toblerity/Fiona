@@ -200,6 +200,7 @@ setup_args = dict(
 
         [fiona.fio_commands]
         bounds=fiona.fio.bounds:bounds
+        calc=fiona.fio.calc:calc
         cat=fiona.fio.cat:cat
         collect=fiona.fio.collect:collect
         distrib=fiona.fio.distrib:distrib
@@ -213,6 +214,7 @@ setup_args = dict(
         ''',
     install_requires=requirements,
     extras_require={
+        'calc': ['shapely'],
         'test': ['nose']},
     tests_require=['nose'],
     test_suite='nose.collector',
