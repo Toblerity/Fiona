@@ -58,7 +58,7 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
         return feat
 
     try:
-        with fiona.drivers(CPL_DEBUG=verbosity>2):
+        with fiona.drivers(CPL_DEBUG=verbosity > 2):
             with fiona.open(input, **open_kwds) as source:
                 meta = source.meta
                 meta['fields'] = dict(source.schema['properties'].items())
@@ -73,12 +73,13 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                         'type': 'FeatureCollection',
                         'fiona:schema': meta['schema'],
                         'fiona:crs': meta['crs'],
-                        'features': [] }
+                        'features': []}
                     if with_ld_context:
                         collection['@context'] = helpers.make_ld_context(
                             add_ld_context_item)
 
-                    head, tail = json.dumps(collection, **dump_kwds).split('[]')
+                    head, tail = json.dumps(
+                        collection, **dump_kwds).split('[]')
 
                     sink.write(head)
                     sink.write("[")
@@ -128,9 +129,8 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                             if indented:
                                 sink.write(rec_indent)
                             sink.write(item_sep)
-                            sink.write(
-                                json.dumps(rec, **dump_kwds
-                                    ).replace("\n", rec_indent))
+                            sink.write(json.dumps(
+                                rec, **dump_kwds).replace("\n", rec_indent))
                         except Exception as exc:
                             if ignore_errors:
                                 logger.error(
@@ -164,9 +164,11 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                         collection['@context'] = helpers.make_ld_context(
                             add_ld_context_item)
                         collection['features'] = [
-                            helpers.id_record(transformer(rec)) for rec in source]
+                            helpers.id_record(transformer(rec))
+                            for rec in source]
                     else:
-                        collection['features'] = [transformer(source.crs, rec) for rec in source]
+                        collection['features'] = [
+                            transformer(source.crs, rec) for rec in source]
                     json.dump(collection, sink, **dump_kwds)
 
     except Exception:

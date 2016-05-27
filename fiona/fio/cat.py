@@ -44,7 +44,7 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
     item_sep = compact and ',' or ', '
 
     try:
-        with fiona.drivers(CPL_DEBUG=verbosity>2):
+        with fiona.drivers(CPL_DEBUG=verbosity > 2):
             for path in files:
                 with fiona.open(path) as src:
                     if bbox:

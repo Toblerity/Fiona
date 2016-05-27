@@ -92,7 +92,7 @@ def load(ctx, output, driver, src_crs, dst_crs, sequence, layer):
             (k, FIELD_TYPES_MAP_REV.get(type(v)) or 'str')
             for k, v in first['properties'].items()])
 
-        with fiona.drivers(CPL_DEBUG=verbosity>2):
+        with fiona.drivers(CPL_DEBUG=verbosity > 2):
             with fiona.open(
                     output, 'w',
                     driver=driver,

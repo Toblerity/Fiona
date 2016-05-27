@@ -10,12 +10,15 @@ import cligj
 from fiona.fio import helpers
 
 
-@click.command(short_help="Distribute features from a collection")
+@click.command()
 @cligj.use_rs_opt
 @click.pass_context
 def distrib(ctx, use_rs):
 
-    """Print the features of GeoJSON objects read from stdin."""
+    """Distribute features from a collection.
+
+    Print the features of GeoJSON objects read from stdin.
+    """
 
     verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
     logger = logging.getLogger('fio')

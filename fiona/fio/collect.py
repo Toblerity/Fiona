@@ -119,7 +119,7 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
 
             collection = {
                 'type': 'FeatureCollection',
-                'features': [] }
+                'features': []}
             if with_ld_context:
                 collection['@context'] = helpers.make_ld_context(
                     add_ld_context_item)

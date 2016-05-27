@@ -16,9 +16,9 @@ from fiona.fio import options
 # One or more files.
 @click.argument('input', type=click.Path(exists=True))
 @click.option('--layer', metavar="INDEX|NAME", callback=options.cb_layer,
-              help="Print information about a specific layer.  The first layer "
-                   "is used by default.  Layers use zero-based numbering when "
-                   "accessed by index.")
+              help="Print information about a specific layer.  The first "
+                   "layer is used by default.  Layers use zero-based "
+                   "numbering when accessed by index.")
 @indent_opt
 # Options to pick out a single metadata item and print it as
 # a string.
@@ -46,7 +46,7 @@ def info(ctx, input, indent, meta_member, layer):
     verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
     logger = logging.getLogger('fio')
     try:
-        with fiona.drivers(CPL_DEBUG=verbosity>2):
+        with fiona.drivers(CPL_DEBUG=verbosity > 2):
             with fiona.open(input, layer=layer) as src:
                 info = src.meta
                 info.update(bounds=src.bounds, name=src.name)
