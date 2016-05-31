@@ -865,7 +865,7 @@ cdef class WritingSession(Session):
             name_b = collection.name.encode('utf-8')
             name_c = name_b
             self.cogr_layer = ograpi.OGR_DS_CreateLayer(
-                self.cogr_ds, 
+                self.cogr_ds,
                 name_c,
                 cogr_srs,
                 <unsigned int>[k for k,v in GEOMETRY_TYPES.items() if 
