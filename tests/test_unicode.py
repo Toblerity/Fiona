@@ -70,5 +70,5 @@ class UnicodeStringFieldTest(unittest.TestCase):
 
         with fiona.open(os.path.join(self.tempdir)) as c:
             f = next(c)
-            self.assertEquals(f['properties']['label'], u'Ba\u2019kelalan')
-            self.assertEquals(f['properties'][u'verit\xe9'], 0)
+            self.assertEqual(f['properties']['label'], u'Ba\u2019kelalan')
+            self.assertEqual(f['properties'][u'verit\xe9'], 0)
