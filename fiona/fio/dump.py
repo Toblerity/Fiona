@@ -10,11 +10,16 @@ import cligj
 
 import fiona
 from fiona.fio import helpers
+from fiona.fio import options
 from fiona.transform import transform_geom
 
 
 @click.command(short_help="Dump a dataset to GeoJSON.")
 @click.argument('input', type=click.Path(), required=True)
+@click.option('--layer', metavar="INDEX|NAME", callback=options.cb_layer,
+              help="Print information about a specific layer.  The first "
+                   "layer is used by default.  Layers use zero-based "
+                   "numbering when accessed by index.")
 @click.option('--encoding', help="Specify encoding of the input file.")
 @cligj.precision_opt
 @cligj.indent_opt
@@ -31,7 +36,7 @@ from fiona.transform import transform_geom
                    "context.")
 @click.pass_context
 def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
-         ignore_errors, with_ld_context, add_ld_context_item):
+         ignore_errors, with_ld_context, add_ld_context_item, layer):
 
     """Dump a dataset either as a GeoJSON feature collection (the default)
     or a sequence of GeoJSON features."""
@@ -50,6 +55,8 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
     open_kwds = {}
     if encoding:
         open_kwds['encoding'] = encoding
+    if layer:
+        open_kwds['layer'] = layer
 
     def transformer(crs, feat):
         tg = partial(transform_geom, crs, 'EPSG:4326',
