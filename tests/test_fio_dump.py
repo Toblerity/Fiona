@@ -7,6 +7,7 @@ from fiona.fio import dump
 
 
 WILDSHP = 'tests/data/coutwildrnp.shp'
+TESTGPX = 'tests/data/test_gpx.gpx'
 
 
 def test_dump():
@@ -17,9 +18,8 @@ def test_dump():
 
 
 def test_dump_layer():
-    runner = CliRunner()
     for layer in ('routes', '1'):
         runner = CliRunner()
-        result = runner.invoke(dump.dump, [WILDSHP, '--layer ', layer])
+        result = runner.invoke(dump.dump, [TESTGPX, '--layer', layer])
         assert result.exit_code == 0
         assert '"FeatureCollection"' in result.output
