@@ -53,3 +53,12 @@ def test_bbox_json_yes():
         catch_exceptions=False)
     assert result.exit_code == 0
     assert result.output.count('"Feature"') == 19
+
+
+def test_multi_layer():
+    layerdef = "1.coutwildrnp,2.coutwildrnp"
+    runner = CliRunner()
+    result = runner.invoke(
+        cat.cat,
+        [WILDSHP, WILDSHP, '--layer', layerdef])
+    assert result.output.count('"Feature"') == 134

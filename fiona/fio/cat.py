@@ -19,6 +19,11 @@ warnings.simplefilter('default')
 # Cat command
 @click.command(short_help="Concatenate and print the features of datasets")
 @cligj.files_in_arg
+@click.option('--layer', default=None, multiple=True,
+              callback=options.cb_multi_layer,
+              help="Comma separated string of layer name(s) or index(es). The "
+                   "first layer is used by default. Layers use zero-based "
+                   "numbering when accessed by index.")
 @cligj.precision_opt
 @cligj.indent_opt
 @cligj.compact_opt
@@ -30,9 +35,16 @@ warnings.simplefilter('default')
               help="filter for features intersecting a bounding box")
 @click.pass_context
 def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
-        use_rs, bbox):
-    """Concatenate and print the features of input datasets as a
-    sequence of GeoJSON features."""
+        use_rs, bbox, layer):
+
+    """
+    Concatenate and print the features of input datasets as a sequence of
+    GeoJSON features.
+
+    When working with a multi-layer dataset the first layer is used by default.
+    Use the '--layer' option to select a different layer.
+    """
+
     verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
     logger = logging.getLogger('fio')
 
@@ -41,28 +53,32 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
         dump_kwds['indent'] = indent
     if compact:
         dump_kwds['separators'] = (',', ':')
+    # always use first layer as defualt
+    for i in range(1, len(files) + 1):
+        if str(i) not in layer.keys():
+            layer[str(i)] = [0]
     item_sep = compact and ',' or ', '
-
     try:
         with fiona.drivers(CPL_DEBUG=verbosity > 2):
-            for path in files:
-                with fiona.open(path) as src:
-                    if bbox:
-                        try:
-                            bbox = tuple(map(float, bbox.split(',')))
-                        except ValueError:
-                            bbox = json.loads(bbox)
-                    for i, feat in src.items(bbox=bbox):
-                        if dst_crs or precision > 0:
-                            g = transform_geom(
-                                    src.crs, dst_crs, feat['geometry'],
-                                    antimeridian_cutting=True,
-                                    precision=precision)
-                            feat['geometry'] = g
-                            feat['bbox'] = fiona.bounds(g)
-                        if use_rs:
-                            click.echo(u'\u001e', nl=False)
-                        click.echo(json.dumps(feat, **dump_kwds))
+            for i, path in enumerate(files, 1):
+                for lyr in layer[str(i)]:
+                    with fiona.open(path, layer=lyr) as src:
+                        if bbox:
+                            try:
+                                bbox = tuple(map(float, bbox.split(',')))
+                            except ValueError:
+                                bbox = json.loads(bbox)
+                        for i, feat in src.items(bbox=bbox):
+                            if dst_crs or precision > 0:
+                                g = transform_geom(
+                                        src.crs, dst_crs, feat['geometry'],
+                                        antimeridian_cutting=True,
+                                        precision=precision)
+                                feat['geometry'] = g
+                                feat['bbox'] = fiona.bounds(g)
+                            if use_rs:
+                                click.echo(u'\u001e', nl=False)
+                            click.echo(json.dumps(feat, **dump_kwds))
 
     except Exception:
         logger.exception("Exception caught during processing")
