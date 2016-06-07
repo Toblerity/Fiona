@@ -21,9 +21,9 @@ warnings.simplefilter('default')
 @cligj.files_in_arg
 @click.option('--layer', default=None, multiple=True,
               callback=options.cb_multi_layer,
-              help="Comma separated string of layer name(s) or index(es). The "
-                   "first layer is used by default. Layers use zero-based "
-                   "numbering when accessed by index.")
+              help="Input layer(s), specified as 'fileindex.layer` "
+                   "For example, '1.foo,2.bar' will concatenate layer foo "
+                   "from file 1 and layer bar from file 2")
 @cligj.precision_opt
 @cligj.indent_opt
 @cligj.compact_opt
