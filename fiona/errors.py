@@ -23,11 +23,3 @@ class DataIOError(IOError):
 
 class FieldNameEncodeError(UnicodeEncodeError):
     """Failure to encode a field name."""
-
-
-class StringFieldEncodeError(UnicodeEncodeError):
-    """Failure to encode a string field value."""
-
-
-class StringFieldDecodeError(UnicodeDecodeError):
-    """Failure to decode a string field value."""
