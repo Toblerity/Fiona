@@ -1,16 +1,17 @@
-# Coordinate reference systems and functions.
-#
-# PROJ.4 is the law of this land: http://proj.osgeo.org/. But whereas PROJ.4
-# coordinate reference systems are described by strings of parameters such as
-#
-#   +proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs
-#
-# here we use mappings:
-#
-#   {'proj': 'longlat', 'ellps': 'WGS84', 'datum': 'WGS84', 'no_defs': True}
-#
+"""Coordinate reference systems and functions
+
+PROJ.4 is the law of this land: http://proj.osgeo.org/. But whereas PROJ.4
+coordinate reference systems are described by strings of parameters such as
+
+    +proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs
+
+here we use mappings:
+
+    {'proj': 'longlat', 'ellps': 'WGS84', 'datum': 'WGS84', 'no_defs': True}
+"""
 
 from six import string_types
+
 
 def to_string(crs):
     """Turn a parameter mapping into a more conventional PROJ.4 string.
@@ -23,14 +24,15 @@ def to_string(crs):
     items = []
     for k, v in sorted(filter(
             lambda x: x[0] in all_proj_keys and x[1] is not False and (
-                isinstance(x[1], (bool, int, float)) or 
+                isinstance(x[1], (bool, int, float)) or
                 isinstance(x[1], string_types)),
-            crs.items() )):
+            crs.items())):
         items.append(
             "+" + "=".join(
                 map(str, filter(
-                    lambda y: (y or y == 0) and y is not True, (k, v)))) )
+                    lambda y: (y or y == 0) and y is not True, (k, v)))))
     return " ".join(items)
+
 
 def from_string(prjs):
     """Turn a PROJ.4 string into a mapping of parameters.
@@ -39,6 +41,7 @@ def from_string(prjs):
     are checked against the ``all_proj_keys`` list.
     """
     parts = [o.lstrip('+') for o in prjs.strip().split()]
+
     def parse(v):
         try:
             return int(v)
@@ -50,8 +53,9 @@ def from_string(prjs):
             return v
     items = map(
         lambda kv: len(kv) == 2 and (kv[0], parse(kv[1])) or (kv[0], True),
-        (p.split('=') for p in parts) )
-    return dict((k,v) for k, v in items if k in all_proj_keys)
+        (p.split('=') for p in parts))
+    return dict((k, v) for k, v in items if k in all_proj_keys)
+
 
 def from_epsg(code):
     """Given an integer code, returns an EPSG-like mapping.
@@ -173,10 +177,9 @@ _param_data = """
 +x_0       False easting
 +y_0       False northing
 +zone      UTM zone
++wktext    Marker
 """
 
 _lines = filter(lambda x: len(x) > 1, _param_data.split("\n"))
 all_proj_keys = list(
-    set(line.split()[0].lstrip("+").strip() for line in _lines) 
-    ) + ['no_mayo']
-
+    set(line.split()[0].lstrip("+").strip() for line in _lines)) + ['no_mayo']

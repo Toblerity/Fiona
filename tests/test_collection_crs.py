@@ -2,11 +2,13 @@ import os
 import tempfile
 
 import fiona
+import fiona.crs
 
 
 def test_collection_crs_wkt():
     with fiona.open('tests/data/coutwildrnp.shp') as src:
-        assert src.crs_wkt.startswith('GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_84"')
+        assert src.crs_wkt.startswith(
+            'GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_84"')
 
 
 def test_collection_no_crs_wkt():
