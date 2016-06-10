@@ -16,71 +16,86 @@ from fiona.errors import FionaValueError, DriverError, SchemaError, CRSError
 
 WILDSHP = 'tests/data/coutwildrnp.shp'
 
-#logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 TEMPDIR = tempfile.gettempdir()
 
 
 class SupportedDriversTest(unittest.TestCase):
+
     def test_shapefile(self):
         self.assertTrue("ESRI Shapefile" in supported_drivers)
         self.assertEqual(
-            set(supported_drivers["ESRI Shapefile"]), set("raw") )
+            set(supported_drivers["ESRI Shapefile"]), set("raw"))
+
     def test_map(self):
         self.assertTrue("MapInfo File" in supported_drivers)
         self.assertEqual(
-            set(supported_drivers["MapInfo File"]), set("raw") )
+            set(supported_drivers["MapInfo File"]), set("raw"))
 
 
 class CollectionArgsTest(unittest.TestCase):
+
     def test_path(self):
         self.assertRaises(TypeError, Collection, (0))
+
     def test_mode(self):
         self.assertRaises(TypeError, Collection, ("foo"), mode=0)
+
     def test_driver(self):
         self.assertRaises(TypeError, Collection, ("foo"), mode='w', driver=1)
+
     def test_schema(self):
         self.assertRaises(
-            TypeError, Collection, ("foo"), mode='w', 
+            TypeError, Collection, ("foo"), mode='w',
             driver="ESRI Shapefile", schema=1)
+
     def test_crs(self):
         self.assertRaises(
-            TypeError, Collection, ("foo"), mode='w', 
+            TypeError, Collection, ("foo"), mode='w',
             driver="ESRI Shapefile", schema=0, crs=1)
+
     def test_encoding(self):
         self.assertRaises(
-            TypeError, Collection, ("foo"), mode='r', 
+            TypeError, Collection, ("foo"), mode='r',
             encoding=1)
+
     def test_layer(self):
         self.assertRaises(
-            TypeError, Collection, ("foo"), mode='r', 
+            TypeError, Collection, ("foo"), mode='r',
             layer=0.5)
+
     def test_vsi(self):
         self.assertRaises(
-            TypeError, Collection, ("foo"), mode='r', 
+            TypeError, Collection, ("foo"), mode='r',
             vsi='git')
+
     def test_archive(self):
         self.assertRaises(
-            TypeError, Collection, ("foo"), mode='r', 
+            TypeError, Collection, ("foo"), mode='r',
             archive=1)
+
     def test_write_numeric_layer(self):
         self.assertRaises(ValueError, Collection, ("foo"), mode='w', layer=1)
+
     def test_write_geojson_layer(self):
         self.assertRaises(ValueError, Collection, ("foo"), mode='w', driver='GeoJSON', layer='foo')
+
     def test_append_geojson(self):
         self.assertRaises(ValueError, Collection, ("foo"), mode='w', driver='ARCGEN')
 
 
 class OpenExceptionTest(unittest.TestCase):
+
     def test_no_archive(self):
         self.assertRaises(IOError, fiona.open, ("/"), mode='r', vfs="zip:///foo.zip")
 
 
 class ReadingTest(unittest.TestCase):
-    
+
     def setUp(self):
         self.c = fiona.open(WILDSHP, "r")
-    
+
     def tearDown(self):
         self.c.close()
 
@@ -88,21 +103,21 @@ class ReadingTest(unittest.TestCase):
         self.assertEqual(
             repr(self.c),
             ("<open Collection 'tests/data/coutwildrnp.shp:coutwildrnp', mode 'r' "
-            "at %s>" % hex(id(self.c))))
+             "at %s>" % hex(id(self.c))))
 
     def test_closed_repr(self):
         self.c.close()
         self.assertEqual(
             repr(self.c),
             ("<closed Collection 'tests/data/coutwildrnp.shp:coutwildrnp', mode 'r' "
-            "at %s>" % hex(id(self.c))))
+             "at %s>" % hex(id(self.c))))
 
     def test_path(self):
         self.assertEqual(self.c.path, WILDSHP)
 
     def test_name(self):
         self.assertEqual(self.c.name, 'coutwildrnp')
-    
+
     def test_mode(self):
         self.assertEqual(self.c.mode, 'r')
 
@@ -111,14 +126,14 @@ class ReadingTest(unittest.TestCase):
 
     def test_iter(self):
         self.assertTrue(iter(self.c))
-    
+
     def test_closed_no_iter(self):
         self.c.close()
         self.assertRaises(ValueError, iter, self.c)
 
     def test_len(self):
         self.assertEqual(len(self.c), 67)
-    
+
     def test_closed_len(self):
         # Len is lazy, it's never computed in this case. TODO?
         self.c.close()
@@ -129,10 +144,10 @@ class ReadingTest(unittest.TestCase):
         len(self.c)
         self.c.close()
         self.assertEqual(len(self.c), 67)
-    
+
     def test_driver(self):
         self.assertEqual(self.c.driver, "ESRI Shapefile")
-    
+
     def test_closed_driver(self):
         self.c.close()
         self.assertEqual(self.c.driver, None)
@@ -141,7 +156,7 @@ class ReadingTest(unittest.TestCase):
         self.c.driver
         self.c.close()
         self.assertEqual(self.c.driver, "ESRI Shapefile")
-    
+
     def test_schema(self):
         s = self.c.schema['properties']
         self.assertEqual(s['PERIMETER'], "float:24.15")
@@ -184,7 +199,12 @@ class ReadingTest(unittest.TestCase):
 
     def test_meta(self):
         self.assertEqual(
-            sorted(self.c.meta.keys()), 
+            sorted(self.c.meta.keys()),
+            ['crs', 'crs_wkt', 'driver', 'schema'])
+
+    def test_profile(self):
+        self.assertEqual(
+            sorted(self.c.profile.keys()),
             ['crs', 'crs_wkt', 'driver', 'schema'])
 
     def test_bounds(self):
@@ -211,8 +231,8 @@ class ReadingTest(unittest.TestCase):
         self.assertEqual(f['properties']['STATE'], 'UT')
 
     def test_re_iter_list(self):
-        f = list(self.c)[0] # Run through iterator
-        f = list(self.c)[0] # Run through a new, reset iterator
+        f = list(self.c)[0]  # Run through iterator
+        f = list(self.c)[0]  # Run through a new, reset iterator
         self.assertEqual(f['id'], "0")
         self.assertEqual(f['properties']['STATE'], 'UT')
 
@@ -269,7 +289,7 @@ class FilterReadingTest(unittest.TestCase):
         self.assertEqual(len(results), 26)
         results = list(self.c.filter())
         self.assertEqual(len(results), 67)
-        
+
     def test_filter_mask(self):
         mask = {
             'type': 'Polygon',
@@ -280,13 +300,13 @@ class FilterReadingTest(unittest.TestCase):
 
 
 class UnsupportedDriverTest(unittest.TestCase):
-    
+
     def test_immediate_fail_driver(self):
         schema = {
-            'geometry': 'Point', 
-            'properties': {'label': 'str', u'verit\xe9': 'int'} }
+            'geometry': 'Point',
+            'properties': {'label': 'str', u'verit\xe9': 'int'}}
         self.assertRaises(
-            DriverError, 
+            DriverError,
             fiona.open, os.path.join(TEMPDIR, "foo"), "w", "Bogus", schema=schema)
 
 
@@ -295,14 +315,11 @@ class GenericWritingTest(unittest.TestCase):
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
         schema = {
-            'geometry': 'Point', 
-            'properties': [('label', 'str'), (u'verit\xe9', 'int')] }
-        self.c = fiona.open(
-                os.path.join(self.tempdir, "test-no-iter.shp"),
-                "w", 
-                "ESRI Shapefile", 
-                schema=schema,
-                encoding='Windows-1252')
+            'geometry': 'Point',
+            'properties': [('label', 'str'), (u'verit\xe9', 'int')]}
+        self.c = fiona.open(os.path.join(self.tempdir, "test-no-iter.shp"),
+                            'w', driver="ESRI Shapefile", schema=schema,
+                            encoding='Windows-1252')
 
     def tearDown(self):
         self.c.close()
@@ -328,7 +345,7 @@ class PointWritingTest(unittest.TestCase):
             "w",
             driver="ESRI Shapefile",
             schema={
-                'geometry': 'Point', 
+                'geometry': 'Point',
                 'properties': [('title', 'str'), ('date', 'date')]},
             crs='epsg:4326',
             encoding='utf-8')
@@ -340,10 +357,8 @@ class PointWritingTest(unittest.TestCase):
     def test_cpg(self):
         """Requires GDAL 1.9"""
         self.sink.close()
-        self.assertTrue(
-            open(
-                os.path.join(self.tempdir, "point_writing_test.cpg")
-                ).readline() == 'UTF-8')
+        self.assertTrue(open(os.path.join(
+            self.tempdir, "point_writing_test.cpg")).readline() == 'UTF-8')
 
     def test_write_one(self):
         self.assertEqual(len(self.sink), 0)
@@ -404,19 +419,19 @@ class LineWritingTest(unittest.TestCase):
             "w",
             driver="ESRI Shapefile",
             schema={
-                'geometry': 'LineString', 
+                'geometry': 'LineString',
                 'properties': [('title', 'str'), ('date', 'date')]},
             crs={'init': "epsg:4326", 'no_defs': True})
 
     def tearDown(self):
         self.sink.close()
         shutil.rmtree(self.tempdir)
-    
+
     def test_write_one(self):
         self.assertEqual(len(self.sink), 0)
         self.assertEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
         f = {
-            'geometry': {'type': 'LineString', 
+            'geometry': {'type': 'LineString',
                          'coordinates': [(0.0, 0.1), (0.0, 0.2)]},
             'properties': {'title': 'line one', 'date': "2012-01-29"}}
         self.sink.writerecords([f])
@@ -427,14 +442,13 @@ class LineWritingTest(unittest.TestCase):
         self.assertEqual(len(self.sink), 0)
         self.assertEqual(self.sink.bounds, (0.0, 0.0, 0.0, 0.0))
         f1 = {
-            'geometry': {'type': 'LineString', 
+            'geometry': {'type': 'LineString',
                          'coordinates': [(0.0, 0.1), (0.0, 0.2)]},
             'properties': {'title': 'line one', 'date': "2012-01-29"}}
         f2 = {
-            'geometry': {'type': 'MultiLineString', 
-                         'coordinates': [
-                            [(0.0, 0.0), (0.0, -0.1)], 
-                            [(0.0, -0.1), (0.0, -0.2)] ]},
+            'geometry': {'type': 'MultiLineString',
+                         'coordinates': [[(0.0, 0.0), (0.0, -0.1)],
+                                         [(0.0, -0.1), (0.0, -0.2)]]},
             'properties': {'title': 'line two', 'date': "2012-01-29"}}
         self.sink.writerecords([f1, f2])
         self.assertEqual(len(self.sink), 2)
@@ -450,12 +464,12 @@ class PointAppendTest(unittest.TestCase):
             output_schema['geometry'] = '3D Point'
             with fiona.open(
                     os.path.join(self.tempdir, "test_append_point.shp"),
-                    "w", crs=None, driver="ESRI Shapefile", schema=output_schema
-                    ) as output:
+                    'w', crs=None, driver="ESRI Shapefile",
+                    schema=output_schema) as output:
                 for f in input:
                     f['geometry'] = {
                         'type': 'Point',
-                        'coordinates': f['geometry']['coordinates'][0][0] }
+                        'coordinates': f['geometry']['coordinates'][0][0]}
                     output.write(f)
 
     def tearDown(self):
@@ -465,16 +479,16 @@ class PointAppendTest(unittest.TestCase):
         with fiona.open(os.path.join(self.tempdir, "test_append_point.shp"), "a") as c:
             self.assertEqual(c.schema['geometry'], '3D Point')
             c.write({'geometry': {'type': 'Point', 'coordinates': (0.0, 45.0)},
-                     'properties': { 'PERIMETER': 1.0,
-                                     'FEATURE2': None,
-                                     'NAME': 'Foo',
-                                     'FEATURE1': None,
-                                     'URL': 'http://example.com',
-                                     'AGBUR': 'BAR',
-                                     'AREA': 0.0,
-                                     'STATE_FIPS': 1,
-                                     'WILDRNP020': 1,
-                                     'STATE': 'XL' } })
+                     'properties': {'PERIMETER': 1.0,
+                                    'FEATURE2': None,
+                                    'NAME': 'Foo',
+                                    'FEATURE1': None,
+                                    'URL': 'http://example.com',
+                                    'AGBUR': 'BAR',
+                                    'AREA': 0.0,
+                                    'STATE_FIPS': 1,
+                                    'WILDRNP020': 1,
+                                    'STATE': 'XL'}})
             self.assertEqual(len(c), 68)
 
 
@@ -487,12 +501,12 @@ class LineAppendTest(unittest.TestCase):
                 "w",
                 driver="ESRI Shapefile",
                 schema={
-                    'geometry': 'MultiLineString', 
+                    'geometry': 'MultiLineString',
                     'properties': {'title': 'str', 'date': 'date'}},
                 crs={'init': "epsg:4326", 'no_defs': True}) as output:
-            f = {'geometry': {'type': 'MultiLineString', 
+            f = {'geometry': {'type': 'MultiLineString',
                               'coordinates': [[(0.0, 0.1), (0.0, 0.2)]]},
-                'properties': {'title': 'line one', 'date': "2012-01-29"}}
+                 'properties': {'title': 'line one', 'date': "2012-01-29"}}
             output.writerecords([f])
 
     def tearDown(self):
@@ -502,14 +516,13 @@ class LineAppendTest(unittest.TestCase):
         with fiona.open(os.path.join(self.tempdir, "test_append_line.shp"), "a") as c:
             self.assertEqual(c.schema['geometry'], 'LineString')
             f1 = {
-                'geometry': {'type': 'LineString', 
+                'geometry': {'type': 'LineString',
                              'coordinates': [(0.0, 0.1), (0.0, 0.2)]},
                 'properties': {'title': 'line one', 'date': "2012-01-29"}}
             f2 = {
-                'geometry': {'type': 'MultiLineString', 
-                             'coordinates': [
-                                [(0.0, 0.0), (0.0, -0.1)], 
-                                [(0.0, -0.1), (0.0, -0.2)] ]},
+                'geometry': {'type': 'MultiLineString',
+                             'coordinates': [[(0.0, 0.0), (0.0, -0.1)],
+                                             [(0.0, -0.1), (0.0, -0.2)]]},
                 'properties': {'title': 'line two', 'date': "2012-01-29"}}
             c.writerecords([f1, f2])
             self.assertEqual(len(c), 3)
@@ -517,16 +530,16 @@ class LineAppendTest(unittest.TestCase):
 
 
 class ShapefileFieldWidthTest(unittest.TestCase):
-    
+
     def test_text(self):
         self.tempdir = tempfile.mkdtemp()
-        with fiona.open(os.path.join(self.tempdir, "textfield.shp"), "w",
-                driver="ESRI Shapefile",
-                schema={'geometry': 'Point', 'properties': {'text': 'str:254'}}
-                ) as c:
+        with fiona.open(
+                os.path.join(self.tempdir, "textfield.shp"), 'w',
+                schema={'geometry': 'Point', 'properties': {'text': 'str:254'}},
+                driver="ESRI Shapefile") as c:
             c.write(
                 {'geometry': {'type': 'Point', 'coordinates': (0.0, 45.0)},
-                 'properties': { 'text': 'a' * 254 }})
+                 'properties': {'text': 'a' * 254}})
         c = fiona.open(os.path.join(self.tempdir, "textfield.shp"), "r")
         self.assertEqual(c.schema['properties']['text'], 'str:254')
         f = next(iter(c))
@@ -567,7 +580,7 @@ class GeoJSONCRSWritingTest(unittest.TestCase):
             "w",
             driver="GeoJSON",
             schema={
-                'geometry': 'Point', 
+                'geometry': 'Point',
                 'properties': [('title', 'str'), ('date', 'date')]},
             crs={'a': 6370997, 'lon_0': -100, 'y_0': 0, 'no_defs': True, 'proj': 'laea', 'x_0': 0, 'units': 'm', 'b': 6370997, 'lat_0': 45})
 

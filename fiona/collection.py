@@ -17,34 +17,27 @@ from six import string_types, binary_type
 class Collection(object):
 
     """A file-like interface to features of a vector dataset
-    
+
     Python text file objects are iterators over lines of a file. Fiona
     Collections are similar iterators (not lists!) over features
     represented as GeoJSON-like mappings.
     """
 
-    def __init__(
-            self, path, mode='r', 
-            driver=None, schema=None, crs=None, 
-            encoding=None,
-            layer=None,
-            vsi=None,
-            archive=None,
-            enabled_drivers=None,
-            crs_wkt=None,
-            **kwargs):
-        
+    def __init__(self, path, mode='r', driver=None, schema=None, crs=None,
+                 encoding=None, layer=None, vsi=None, archive=None,
+                 enabled_drivers=None, crs_wkt=None, **kwargs):
+
         """The required ``path`` is the absolute or relative path to
         a file, such as '/data/test_uk.shp'. In ``mode`` 'r', data can
         be read only. In ``mode`` 'a', data can be appended to a file.
         In ``mode`` 'w', data overwrites the existing contents of
         a file.
-        
+
         In ``mode`` 'w', an OGR ``driver`` name and a ``schema`` are
         required. A Proj4 ``crs`` string is recommended. If both ``crs``
-        and ``crs_wkt`` keyword arguments are passed, the latter will 
+        and ``crs_wkt`` keyword arguments are passed, the latter will
         trump the former.
-        
+
         In 'w' mode, kwargs will be mapped to OGR layer creation
         options.
         """
@@ -75,8 +68,8 @@ class Collection(object):
         if (driver == "GPKG" and
                 get_gdal_version_num() < calc_gdal_version_num(1, 11, 0)):
             raise DriverError(
-                    "GPKG driver requires GDAL 1.11.0, "
-                    "fiona was compiled against: {}".format(get_gdal_release_name()))
+                "GPKG driver requires GDAL 1.11.0, fiona was compiled "
+                "against: {}".format(get_gdal_release_name()))
 
         self.session = None
         self.iterator = None
@@ -88,9 +81,9 @@ class Collection(object):
         self._crs_wkt = None
         self.env = None
         self.enabled_drivers = enabled_drivers
-        
+
         self.path = vsi_path(path, vsi, archive)
-        
+
         if mode == 'w':
             if layer and not isinstance(layer, string_types):
                 raise ValueError("in 'r' mode, layer names must be strings")
@@ -106,9 +99,9 @@ class Collection(object):
                 self.name = 0
             else:
                 self.name = layer or os.path.basename(os.path.splitext(path)[0])
-        
+
         self.mode = mode
-        
+
         if self.mode == 'w':
             if driver == 'Shapefile':
                 driver = 'ESRI Shapefile'
@@ -121,7 +114,7 @@ class Collection(object):
                 raise DriverError(
                     "unsupported mode: %r" % self.mode)
             self._driver = driver
-            
+
             if not schema:
                 raise SchemaError("no schema")
             elif 'properties' not in schema:
@@ -150,7 +143,7 @@ class Collection(object):
             self.encoding = encoding
             self.session = Session()
             self.session.start(self)
-            
+
             # If encoding param is None, we'll use what the session
             # suggests.
             self.encoding = encoding or self.session.get_fileencoding().lower()
@@ -186,10 +179,10 @@ class Collection(object):
             self._driver = self.session.get_driver()
         return self._driver
 
-    @property 
+    @property
     def schema(self):
         """Returns a mapping describing the data schema.
-        
+
         The mapping has 'geometry' and 'properties' items. The former is a
         string such as 'Point' and the latter is an ordered mapping that
         follows the order of fields in the data file.
@@ -220,11 +213,13 @@ class Collection(object):
             'driver': self.driver, 'schema': self.schema, 'crs': self.crs,
             'crs_wkt': self.crs_wkt}
 
+    profile = meta
+
     def filter(self, *args, **kwds):
         """Returns an iterator over records, but filtered by a test for
         spatial intersection with the provided ``bbox``, a (minx, miny,
         maxx, maxy) tuple or a geometry ``mask``.
-        
+
         Positional arguments ``stop`` or ``start, stop[, step]`` allows
         iteration to skip over items or stop at a specific item.
         """
@@ -248,11 +243,11 @@ class Collection(object):
         return self.iterator
 
     def items(self, *args, **kwds):
-        """Returns an iterator over FID, record pairs, optionally 
+        """Returns an iterator over FID, record pairs, optionally
         filtered by a test for spatial intersection with the provided
         ``bbox``, a (minx, miny, maxx, maxy) tuple or a geometry
         ``mask``.
-        
+
         Positional arguments ``stop`` or ``start, stop[, step]`` allows
         iteration to skip over items or stop at a specific item.
         """
@@ -276,9 +271,9 @@ class Collection(object):
         return self.iterator
 
     def keys(self, *args, **kwds):
-        """Returns an iterator over FIDs, optionally 
+        """Returns an iterator over FIDs, optionally
         filtered by a test for spatial intersection with the provided
-        ``bbox``, a (minx, miny, maxx, maxy) tuple or a geometry 
+        ``bbox``, a (minx, miny, maxx, maxy) tuple or a geometry
         ``mask``.
 
         Positional arguments ``stop`` or ``start, stop[, step]`` allows
@@ -344,9 +339,10 @@ class Collection(object):
         """
         # Currently we only compare keys of properties, not the types of
         # values.
-        return set(record['properties'].keys()
-            ) == set(self.schema['properties'].keys()
-            ) and self.validate_record_geometry(record)
+        return (
+            set(record['properties'].keys()) ==
+            set(self.schema['properties'].keys()) and
+            self.validate_record_geometry(record))
 
     def validate_record_geometry(self, record):
         """Compares the record's geometry to the collection's schema.
@@ -355,15 +351,16 @@ class Collection(object):
         """
         # Shapefiles welcome mixes of line/multis and polygon/multis.
         # OGR reports these mixed files as type "Polygon" or "LineString"
-        # but will return either these or their multi counterparts when 
+        # but will return either these or their multi counterparts when
         # reading features.
-        if (self.driver == "ESRI Shapefile" and 
+        if (self.driver == "ESRI Shapefile" and
                 "Point" not in record['geometry']['type']):
             return record['geometry']['type'].lstrip(
                 "Multi") == self.schema['geometry'].lstrip("3D ").lstrip(
                     "Multi")
         else:
-            return (record['geometry']['type'] ==
+            return (
+                record['geometry']['type'] ==
                 self.schema['geometry'].lstrip("3D "))
 
     def __len__(self):
@@ -393,7 +390,7 @@ class Collection(object):
     def close(self):
         """In append or write mode, flushes data to disk, then ends
         access."""
-        if self.session is not None: 
+        if self.session is not None:
             if self.mode in ('a', 'w'):
                 self.flush()
             self.session.stop()
