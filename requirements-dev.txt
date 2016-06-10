@@ -1,4 +1,5 @@
 cython>=0.21.2
 nose
 pytest
+pytest-cov
 setuptools

@@ -9,11 +9,8 @@ before_install:
   - sudo apt-get install -y libgdal1h gdal-bin libgdal-dev
 install:
   - "pip install -r requirements-dev.txt"
-  - "pip install pytest"
-  - "pip install coveralls"
   - "pip install -e ."
 script: 
-  - nosetests --exclude test_filter_vsi --exclude test_geopackage
-  - coverage run --source=fiona --omit='*.pxd,*.pyx,*/tests/*,*/docs/*,*/examples/*,*/benchmarks/*' -m nose --exclude test_filter_vsi --exclude test_geopackage
+  - python -m pytest -k "not test_filter_vsi and not test_geopackage" --cov fiona --cov-report term-missing
 after_success:
-  - coveralls
+  - coveralls || echo "!! intermittent coveralls failure"
