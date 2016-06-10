@@ -42,10 +42,11 @@ install:
   - "if [ $(gdal-config --version) == \"$GDALVERSION\" ]; then echo \"Using gdal $GDALVERSION\"; else echo \"NOT using gdal $GDALVERSION as expected; aborting\"; exit 1; fi"
   - "pip wheel -r requirements-dev.txt"
   - "pip install -r requirements-dev.txt"
+<<<<<<< HEAD
   - "pip install --upgrade --force-reinstall --global-option=build_ext --global-option='-I$GDALINST/gdal-$GDALVERSION/include' --global-option='-L$GDALINST/gdal-$GDALVERSION/lib' --global-option='-R$GDALINST/gdal-$GDALVERSION/lib' -e .[test]"
   - "fio --version"
 script: 
-  - nosetests --exclude test_filter_vsi --exclude test_geopackage
-  - coverage run --source=fiona --omit='*.pxd,*.pyx,*/tests/*,*/docs/*,*/examples/*,*/benchmarks/*' -m nose --exclude test_filter_vsi --exclude test_geopackage
+  - nosetests --exclude test_filter_vsi --exclude test_geopackage --exclude test_write_mismatch
+  - coverage run --source=fiona --omit='*.pxd,*.pyx,*/tests/*,*/docs/*,*/examples/*,*/benchmarks/*' -m nose --exclude test_filter_vsi --exclude test_geopackage --exclude test_write_mismatch
 after_success:
   - coveralls || echo "!! intermittent coveralls failure"
