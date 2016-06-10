@@ -10,7 +10,8 @@ before_install:
 install:
   - "pip install -r requirements-dev.txt"
   - "pip install -e ."
-script: 
-  - python -m pytest -k "not test_filter_vsi and not test_geopackage" --cov fiona --cov-report term-missing
+script:
+  - nosetests --exclude test_filter_vsi --exclude test_geopackage --exclude test_write_mismatch
+  - coverage run --source=fiona --omit='*.pxd,*.pyx,*/tests/*,*/docs/*,*/examples/*,*/benchmarks/*' -m nose --exclude test_filter_vsi --exclude test_geopackage --exclude test_write_mismatch
 after_success:
   - coveralls || echo "!! intermittent coveralls failure"
