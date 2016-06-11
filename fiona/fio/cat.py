@@ -20,9 +20,9 @@ warnings.simplefilter('default')
 @click.command(short_help="Concatenate and print the features of datasets")
 @cligj.files_in_arg
 @click.option('--layer', default=None, multiple=True,
-              callback=options.cb_multi_layer,
-              help="Input layer(s), specified as 'fileindex.layer` "
-                   "For example, '1.foo,2.bar' will concatenate layer foo "
+              callback=options.cb_multilayer,
+              help="Input layer(s), specified as 'fileindex:layer` "
+                   "For example, '1:foo,2:bar' will concatenate layer foo "
                    "from file 1 and layer bar from file 2")
 @cligj.precision_opt
 @cligj.indent_opt
@@ -53,11 +53,15 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
         dump_kwds['indent'] = indent
     if compact:
         dump_kwds['separators'] = (',', ':')
-    # always use first layer as defualt
+    item_sep = compact and ',' or ', '
+    # Validate file idexes provided in --layer option
+    # (can't pass the files to option callback)
+    if layer:
+        options.validate_multilayer_file_index(files, layer)
+    # first layer is the default
     for i in range(1, len(files) + 1):
         if str(i) not in layer.keys():
             layer[str(i)] = [0]
-    item_sep = compact and ',' or ', '
     try:
         with fiona.drivers(CPL_DEBUG=verbosity > 2):
             for i, path in enumerate(files, 1):

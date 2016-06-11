@@ -18,9 +18,9 @@ def cb_layer(ctx, param, value):
         return int(value)
 
 
-def cb_multi_layer(ctx, param, value):
+def cb_multilayer(ctx, param, value):
     """
-    Transform layer options from strings ("1.a,1.b", "2.a,2.c,2.z") to
+    Transform layer options from strings ("1:a,1:b", "2:a,2:c,2:z") to
     {
     '1': ['a', 'b'],
     '2': ['a', 'c', 'z']
@@ -29,6 +29,17 @@ def cb_multi_layer(ctx, param, value):
     out = defaultdict(list)
     for raw in value:
         for v in raw.split(','):
-            ds, name = v.split('.')
+            ds, name = v.split(':')
             out[ds].append(name)
     return out
+
+
+def validate_multilayer_file_index(files, layerdict):
+    """
+    Ensure file indexes provided in the --layer option are valid
+    """
+    for key in layerdict.keys():
+        click.echo(key)
+        if key not in [str(k) for k in range(1, len(files) + 1)]:
+            layer = key+":"+layerdict[key][0]
+            raise click.BadParameter("Layer {} does not exist".format(layer))
