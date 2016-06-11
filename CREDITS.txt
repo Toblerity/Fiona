@@ -4,21 +4,24 @@ Credits
 Fiona is written by:
 
 - Sean Gillies <sean.gillies@gmail.com>
+- Rene Buffat <buffat@gmail.com>
 - Kevin Wurster <wursterk@gmail.com>
-- René Buffat <buffat@gmail.com>
+- Matthew Perry <perrygeo@gmail.com>
+- Joshua Arnott <josh@snorfalorpagus.net>
 - Kelsey Jordahl <kjordahl@enthought.com>
-- Patrick Young <patrick.young@digitalglobe.com>
+- Micah Cochran <micah@micahcochran.net>
+- Patrick Young <patrick.mckendree.young@gmail.com>
 - Hannes Gräuler <graeuler@geoplex.de>
 - Johan Van de Wauw <johan.vandewauw@gmail.com>
-- Jacob Wasserman <jwasserman@gmail.com>
-- Joshua Arnott <josh@snorfalorpagus.net>
-- Ryan Grout <rgrout@continuum.io>
 - Michael Weisman <mweisman@gmail.com>
-- Brendan Ward <bcward@consbio.org>
-- Michele Citterio <michele@citterio.net>
+- Ryan Grout <rgrout@continuum.io>
+- Jacob Wasserman <jwasserman@gmail.com>
 - Miro Hrončok <miro@hroncok.cz>
+- Michele Citterio <michele@citterio.net>
+- Brendan Ward <bcward@consbio.org>
 - fredj <frederic.junod@camptocamp.com>
 - wilsaj <wilson.andrew.j+github@gmail.com>
+- Bas Couwenberg <sebastic@xs4all.nl>
 - Brandon Liu <bdon@bdon.org>
 - Hannes Gräuler <hgraeule@uos.de>
 - Ludovic Delauné <ludotux@gmail.com>
@@ -35,4 +38,3 @@ Some portions of this work were supported by a grant (for Pleiades_) from the
 U.S. National Endowment for the Humanities (http://www.neh.gov).
 
 .. _Pleiades: http://pleiades.stoa.org
-
