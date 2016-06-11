@@ -17,8 +17,7 @@ from fiona._geometry cimport GeomBuilder, OGRGeomBuilder
 from fiona._err import cpl_errs
 from fiona._geometry import GEOMETRY_TYPES
 from fiona.errors import (
-    DriverError, SchemaError, CRSError, FionaValueError, FieldNameEncodeError,
-    StringFieldEncodeError, StringFieldDecodeError)
+    DriverError, SchemaError, CRSError, FionaValueError, FieldNameEncodeError)
 from fiona.odict import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -184,10 +183,10 @@ cdef class FeatureBuilder:
                 try:
                     val = ograpi.OGR_F_GetFieldAsString(feature, i)
                     val = val.decode(encoding)
-                except UnicodeError as exc:
-                    raise StringFieldDecodeError(
-                        "Failed to decode {0} using {1} codec: {2}".format(
-                            val, encoding, str(exc)))
+                except UnicodeError:
+                    log.error("Failed to decode property '%s' value '%s'",
+                              key, val)
+                    raise
 
                 # Does the text contain a JSON object? Let's check.
                 # Let's check as cheaply as we can.
@@ -267,10 +266,10 @@ cdef class OGRFeatureBuilder:
             # Catch and re-raise unicode encoding errors.
             try:
                 key_bytes = ogr_key.encode(encoding)
-            except UnicodeError as exc:
-                raise FieldNameEncodeError(
-                    "Failed to encode {0} using {1} codec: {2}".format(
-                        key, encoding, str(exc)))
+            except UnicodeError:
+                log.error("Failed to encode property '%s' value '%s'",
+                          key, value)
+                raise
 
             key_c = key_bytes
             i = ograpi.OGR_F_GetFieldIndex(cogr_feature, key_c)
@@ -313,15 +312,13 @@ cdef class OGRFeatureBuilder:
                 ograpi.OGR_F_SetFieldDateTime(
                     cogr_feature, i, 0, 0, 0, hh, mm, ss, 0)
             elif isinstance(value, string_types):
-                
-                # Catch and re-raise string field value encoding errors.
+                # Catch, log, and re-raise string field value encoding errors.
                 try:
                     value_bytes = value.encode(encoding)
-                except UnicodeError as exc:
-                    raise StringFieldEncodeError(
-                        "Failed to encode {0} using {1} codec: {2}".format(
-                            value, encoding, str(exc)))
-
+                except UnicodeError:
+                    log.error("Failed to encode property '%s' value '%s'",
+                              key, value)
+                    raise
                 string_c = value_bytes
                 ograpi.OGR_F_SetFieldString(cogr_feature, i, string_c)
             elif value is None:
@@ -837,9 +834,10 @@ cdef class WritingSession(Session):
 
             fileencoding = self.get_fileencoding()
             if fileencoding:
-                fileencoding_b = fileencoding.encode()
+                fileencoding_b = fileencoding.encode('utf-8')
                 fileencoding_c = fileencoding_b
                 options = ograpi.CSLSetNameValue(options, "ENCODING", fileencoding_c)
+                log.debug("Output file encoding: %s", fileencoding)
 
             # Does the layer exist already? If so, we delete it.
             layer_count = ograpi.OGR_DS_GetLayerCount(self.cogr_ds)
@@ -865,7 +863,7 @@ cdef class WritingSession(Session):
             name_b = collection.name.encode('utf-8')
             name_c = name_b
             self.cogr_layer = ograpi.OGR_DS_CreateLayer(
-                self.cogr_ds, 
+                self.cogr_ds,
                 name_c,
                 cogr_srs,
                 <unsigned int>[k for k,v in GEOMETRY_TYPES.items() if 

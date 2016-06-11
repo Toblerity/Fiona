@@ -7,9 +7,11 @@ import sys
 import tempfile
 import unittest
 
+import pytest
 import six
 
 import fiona
+
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
@@ -55,20 +57,71 @@ class UnicodeStringFieldTest(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tempdir)
 
-    def test_write(self):
+    @pytest.mark.xfail(reason="OGR silently fails to convert strings")
+    def test_write_mismatch(self):
+        """TOFIX: OGR silently fails to convert strings"""
+        # Details:
+        #
+        # If we tell OGR that we want a latin-1 encoded output file and
+        # give it a feature with a unicode property that can't be converted
+        # to latin-1, no error is raised and OGR just writes the utf-8
+        # encoded bytes to the output file.
+        #
+        # This might be shapefile specific.
+        #
+        # Consequences: no error on write, but there will be an error
+        # on reading the data and expecting latin-1.
+        schema = {
+            'geometry': 'Point',
+            'properties': {'label': 'str', 'num': 'int'}}
+
+        with fiona.open(os.path.join(self.tempdir, "test-write-fail.shp"),
+                        'w', driver="ESRI Shapefile", schema=schema,
+                        encoding='latin1') as c:
+            c.writerecords([{
+                'type': 'Feature',
+                'geometry': {'type': 'Point', 'coordinates': [0, 0]},
+                'properties': {
+                    'label': u'徐汇区',
+                    'num': 0}}])
+
+        with fiona.open(os.path.join(self.tempdir), encoding='latin1') as c:
+            f = next(c)
+            # Next assert fails.
+            self.assertEquals(f['properties']['label'], u'徐汇区')
+
+    def test_write_utf8(self):
         schema = {
             'geometry': 'Point',
             'properties': {'label': 'str', u'verit\xe9': 'int'}}
         with fiona.open(os.path.join(self.tempdir, "test-write.shp"),
                         "w", "ESRI Shapefile", schema=schema,
                         encoding='utf-8') as c:
-            c.writerecords([
-                {'type': 'Feature', 'geometry': {'type': 'Point',
-                                                 'coordinates': [0, 0]},
-                                    'properties': {'label': u'Ba\u2019kelalan',
-                                                   u'verit\xe9': 0}}])
+            c.writerecords([{
+                'type': 'Feature',
+                'geometry': {'type': 'Point', 'coordinates': [0, 0]},
+                'properties': {
+                    'label': u'Ba\u2019kelalan', u'verit\xe9': 0}}])
 
-        with fiona.open(os.path.join(self.tempdir)) as c:
+        with fiona.open(os.path.join(self.tempdir), encoding='utf-8') as c:
             f = next(c)
-            self.assertEqual(f['properties']['label'], u'Ba\u2019kelalan')
-            self.assertEqual(f['properties'][u'verit\xe9'], 0)
+            self.assertEquals(f['properties']['label'], u'Ba\u2019kelalan')
+            self.assertEquals(f['properties'][u'verit\xe9'], 0)
+
+    def test_write_gb18030(self):
+        """Can write a simplified Chinese shapefile"""
+        schema = {
+            'geometry': 'Point',
+            'properties': {'label': 'str', 'num': 'int'}}
+        with fiona.open(os.path.join(self.tempdir, "test-write-gb18030.shp"),
+                        'w', driver="ESRI Shapefile", schema=schema,
+                        encoding='gb18030') as c:
+            c.writerecords([{
+                'type': 'Feature',
+                'geometry': {'type': 'Point', 'coordinates': [0, 0]},
+                'properties': {'label': u'徐汇区', 'num': 0}}])
+
+        with fiona.open(os.path.join(self.tempdir), encoding='gb18030') as c:
+            f = next(c)
+            self.assertEquals(f['properties']['label'], u'徐汇区')
+            self.assertEquals(f['properties']['num'], 0)

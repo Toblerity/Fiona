@@ -12,6 +12,7 @@ cdef extern from "cpl_conv.h":
     void *  CPLMalloc (size_t)
     void    CPLFree (void *ptr)
     void    CPLSetThreadLocalConfigOption (char *key, char *val)
+    void    CPLSetConfigOption (char *key, char *val)
     const char *CPLGetConfigOption (char *, char *)
 
 cdef extern from "cpl_string.h":

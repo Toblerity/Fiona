@@ -155,6 +155,7 @@ if os.path.exists("MANIFEST.in") and "clean" not in sys.argv:
     ext_modules = cythonize([
         Extension('fiona._geometry', ['fiona/_geometry.pyx'], **ext_options),
         Extension('fiona._transform', ['fiona/_transform.pyx'], **ext_options),
+        Extension('fiona._crs', ['fiona/_crs.pyx'], **ext_options),
         Extension('fiona._drivers', ['fiona/_drivers.pyx'], **ext_options),
         Extension('fiona._err', ['fiona/_err.pyx'], **ext_options),
         Extension('fiona.ogrext', ['fiona/ogrext.pyx'], **ext_options)])
@@ -163,6 +164,7 @@ else:
     ext_modules = [
         Extension('fiona._transform', ['fiona/_transform.cpp'], **ext_options),
         Extension('fiona._geometry', ['fiona/_geometry.c'], **ext_options),
+        Extension('fiona._crs', ['fiona/_crs.c'], **ext_options),
         Extension('fiona._drivers', ['fiona/_drivers.c'], **ext_options),
         Extension('fiona._err', ['fiona/_err.c'], **ext_options),
         Extension('fiona.ogrext', ['fiona/ogrext.c'], **ext_options)]
