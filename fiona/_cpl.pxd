@@ -1,12 +1,10 @@
+# Cross-platform API functions.
+
 cdef extern from "cpl_conv.h":
     void *  CPLMalloc (size_t)
     void    CPLFree (void *ptr)
     void    CPLSetThreadLocalConfigOption (char *key, char *val)
     const char *CPLGetConfigOption (char *, char *)
-
-cdef extern from "cpl_string.h":
-    char ** CSLSetNameValue (char **list, char *name, char *value)
-    void    CSLDestroy (char **list)
 
 cdef extern from "cpl_vsi.h":
     ctypedef struct VSILFILE:

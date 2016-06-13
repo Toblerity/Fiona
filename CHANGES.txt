@@ -5,16 +5,24 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 1.7.0 (2016-06-13)
 ------------------
-- New feature: support for GDAL version 2+ (#259).
-- New feature: a new fio-calc CLI command (#273).
-- New feature: `--layer` options for fio-info (#316) and fio-load (#299).
-- New feature: a `--no-parse` option for fio-collect that lets a careful user
-  avoid extra JSON serialization and deserialization (#306).
+
+The C extension modules in this library can now be built and used with either
+a 1.x or 2.x release of the GDAL library. Big thanks to René Buffat for
+leading this effort.
+
+1.7b1 (2016-06-10)
+------------------
+
 - Bug fix: `+wktext` is now preserved when serializing CRS from WKT to PROJ.4
   dicts (#352).
 - Bug fix: a small memory leak when opening a collection has been fixed (#337).
 - Bug fix: internal unicode errors now result in a log message and a 
   `UnicodeError` exception, not a `TypeError` (#356).
+- New feature: support for GDAL version 2+ (#259).
+- New feature: a new fio-calc CLI command (#273).
+- New feature: `--layer` options for fio-info (#316) and fio-load (#299).
+- New feature: a `--no-parse` option for fio-collect that lets a careful user
+  avoid extra JSON serialization and deserialization (#306).
 
 1.6.4 (2016-05-06)
 ------------------
