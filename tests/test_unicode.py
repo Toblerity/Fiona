@@ -53,12 +53,10 @@ class UnicodePathTest(unittest.TestCase):
                  reason="FIXME on Windows. Please look into why these tests are not working. Note: test_write_utf8 works.")
 class UnicodeStringFieldTest(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(self):
+    def setUp(self):
         self.tempdir = tempfile.mkdtemp()
 
-    @classmethod
-    def tearDownClass(self):
+    def tearDown(self):
         shutil.rmtree(self.tempdir)
 
     @pytest.mark.xfail(reason="OGR silently fails to convert strings")
