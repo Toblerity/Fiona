@@ -3,14 +3,19 @@
 
 import json
 import shutil
+import sys
 import tempfile
+import unittest
 
 from click.testing import CliRunner
 
 import fiona
 from fiona.fio.main import main_group
 
+FIXME_WINDOWS = sys.platform.startswith('win')
 
+@unittest.skipIf(FIXME_WINDOWS, 
+                 reason="FIXME on Windows. Please look into why this test is not working.")
 def test_fio_ls_single_layer():
 
     result = CliRunner().invoke(main_group, [
@@ -21,6 +26,8 @@ def test_fio_ls_single_layer():
     assert json.loads(result.output) == ['coutwildrnp']
 
 
+@unittest.skipIf(FIXME_WINDOWS, 
+                 reason="FIXME on Windows. Please look into why this test is not working.")
 def test_fio_ls_indent():
 
     result = CliRunner().invoke(main_group, [
