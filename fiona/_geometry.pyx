@@ -2,15 +2,13 @@
 
 import logging
 
-from fiona cimport ograpi
 
-
-log = logging.getLogger("Fiona")
 class NullHandler(logging.Handler):
     def emit(self, record):
         pass
-log.addHandler(NullHandler())
 
+log = logging.getLogger("Fiona")
+log.addHandler(NullHandler())
 
 # Mapping of OGR integer geometry types to GeoJSON type names.
 GEOMETRY_TYPES = {
@@ -41,16 +39,16 @@ cdef void * _createOgrGeomFromWKB(object wkb) except NULL:
     """Make an OGR geometry from a WKB string"""
     wkbtype = bytearray(wkb)[1]
     cdef unsigned char *buffer = wkb
-    cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(wkbtype)
+    cdef void *cogr_geometry = OGR_G_CreateGeometry(wkbtype)
     if cogr_geometry is not NULL:
-        ograpi.OGR_G_ImportFromWkb(cogr_geometry, buffer, len(wkb))
+        OGR_G_ImportFromWkb(cogr_geometry, buffer, len(wkb))
     return cogr_geometry
 
 
 cdef _deleteOgrGeom(void *cogr_geometry):
     """Delete an OGR geometry"""
     if cogr_geometry is not NULL:
-        ograpi.OGR_G_DestroyGeometry(cogr_geometry)
+        OGR_G_DestroyGeometry(cogr_geometry)
     cogr_geometry = NULL
 
 
@@ -62,12 +60,12 @@ cdef class GeomBuilder:
         cdef int i
         if geom == NULL:
             raise ValueError("Null geom")
-        npoints = ograpi.OGR_G_GetPointCount(geom)
+        npoints = OGR_G_GetPointCount(geom)
         coords = []
         for i in range(npoints):
-            values = [ograpi.OGR_G_GetX(geom, i), ograpi.OGR_G_GetY(geom, i)]
+            values = [OGR_G_GetX(geom, i), OGR_G_GetY(geom, i)]
             if self.ndims > 2:
-                values.append(ograpi.OGR_G_GetZ(geom, i))
+                values.append(OGR_G_GetZ(geom, i))
             coords.append(tuple(values))
         return coords
     
@@ -86,8 +84,8 @@ cdef class GeomBuilder:
         if geom == NULL:
             raise ValueError("Null geom")
         parts = []
-        for j in range(ograpi.OGR_G_GetGeometryCount(geom)):
-            part = ograpi.OGR_G_GetGeometryRef(geom, j)
+        for j in range(OGR_G_GetGeometryCount(geom)):
+            part = OGR_G_GetGeometryRef(geom, j)
             parts.append(GeomBuilder().build(part))
         return parts
     
@@ -116,10 +114,10 @@ cdef class GeomBuilder:
         if geom == NULL:
             raise ValueError("Null geom")
         
-        cdef unsigned int etype = ograpi.OGR_G_GetGeometryType(geom)
+        cdef unsigned int etype = OGR_G_GetGeometryType(geom)
         self.code = etype
         self.geomtypename = GEOMETRY_TYPES[self.code & (~0x80000000)]
-        self.ndims = ograpi.OGR_G_GetCoordinateDimension(geom)
+        self.ndims = OGR_G_GetCoordinateDimension(geom)
         self.geom = geom
         return getattr(self, '_build' + self.geomtypename)()
     
@@ -136,7 +134,7 @@ cdef class OGRGeomBuilder:
     """Builds OGR geometries from Fiona geometries.
     """
     cdef void * _createOgrGeometry(self, int geom_type) except NULL:
-        cdef void *cogr_geometry = ograpi.OGR_G_CreateGeometry(geom_type)
+        cdef void *cogr_geometry = OGR_G_CreateGeometry(geom_type)
         if cogr_geometry == NULL:
             raise Exception("Could not create OGR Geometry of type: %i" % geom_type)
         return cogr_geometry
@@ -144,10 +142,10 @@ cdef class OGRGeomBuilder:
     cdef _addPointToGeometry(self, void *cogr_geometry, object coordinate):
         if len(coordinate) == 2:
             x, y = coordinate
-            ograpi.OGR_G_AddPoint_2D(cogr_geometry, x, y)
+            OGR_G_AddPoint_2D(cogr_geometry, x, y)
         else:
             x, y, z = coordinate[:3]
-            ograpi.OGR_G_AddPoint(cogr_geometry, x, y, z)
+            OGR_G_AddPoint(cogr_geometry, x, y, z)
 
     cdef void * _buildPoint(self, object coordinates) except NULL:
         cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['Point'])
@@ -167,7 +165,7 @@ cdef class OGRGeomBuilder:
             log.debug("Adding point %s", coordinate)
             self._addPointToGeometry(cogr_geometry, coordinate)
         log.debug("Closing ring")
-        ograpi.OGR_G_CloseRings(cogr_geometry)
+        OGR_G_CloseRings(cogr_geometry)
         return cogr_geometry
     
     cdef void * _buildPolygon(self, object coordinates) except NULL:
@@ -177,7 +175,7 @@ cdef class OGRGeomBuilder:
             log.debug("Adding ring %s", ring)
             cogr_ring = self._buildLinearRing(ring)
             log.debug("Built ring")
-            ograpi.OGR_G_AddGeometryDirectly(cogr_geometry, cogr_ring)
+            OGR_G_AddGeometryDirectly(cogr_geometry, cogr_ring)
             log.debug("Added ring %s", ring)
         return cogr_geometry
 
@@ -187,7 +185,7 @@ cdef class OGRGeomBuilder:
         for coordinate in coordinates:
             log.debug("Adding point %s", coordinate)
             cogr_part = self._buildPoint(coordinate)
-            ograpi.OGR_G_AddGeometryDirectly(cogr_geometry, cogr_part)
+            OGR_G_AddGeometryDirectly(cogr_geometry, cogr_part)
             log.debug("Added point %s", coordinate)
         return cogr_geometry
 
@@ -198,7 +196,7 @@ cdef class OGRGeomBuilder:
             log.debug("Adding line %s", line)
             cogr_part = self._buildLineString(line)
             log.debug("Built line")
-            ograpi.OGR_G_AddGeometryDirectly(cogr_geometry, cogr_part)
+            OGR_G_AddGeometryDirectly(cogr_geometry, cogr_part)
             log.debug("Added line %s", line)
         return cogr_geometry
 
@@ -209,7 +207,7 @@ cdef class OGRGeomBuilder:
             log.debug("Adding polygon %s", part)
             cogr_part = self._buildPolygon(part)
             log.debug("Built polygon")
-            ograpi.OGR_G_AddGeometryDirectly(cogr_geometry, cogr_part)
+            OGR_G_AddGeometryDirectly(cogr_geometry, cogr_part)
             log.debug("Added polygon %s", part)
         return cogr_geometry
 
@@ -220,7 +218,7 @@ cdef class OGRGeomBuilder:
             log.debug("Adding part %s", part)
             cogr_part = OGRGeomBuilder().build(part)
             log.debug("Built part")
-            ograpi.OGR_G_AddGeometryDirectly(cogr_geometry, cogr_part)
+            OGR_G_AddGeometryDirectly(cogr_geometry, cogr_part)
             log.debug("Added part %s", part)
         return cogr_geometry
 

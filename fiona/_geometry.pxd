@@ -1,3 +1,36 @@
+# Geometry API functions.
+
+ctypedef int OGRErr
+
+
+ctypedef struct OGREnvelope:
+    double MinX
+    double MaxX
+    double MinY
+    double MaxY
+
+
+cdef extern from "ogr_api.h":
+    OGRErr  OGR_G_AddGeometryDirectly (void *geometry, void *part)
+    void    OGR_G_AddPoint (void *geometry, double x, double y, double z)
+    void    OGR_G_AddPoint_2D (void *geometry, double x, double y)
+    void    OGR_G_CloseRings (void *geometry)
+    void *  OGR_G_CreateGeometry (int wkbtypecode)
+    void    OGR_G_DestroyGeometry (void *geometry)
+    unsigned char * OGR_G_ExportToJson (void *geometry)
+    void    OGR_G_ExportToWkb (void *geometry, int endianness, char *buffer)
+    int     OGR_G_GetCoordinateDimension (void *geometry)
+    int     OGR_G_GetGeometryCount (void *geometry)
+    unsigned char *  OGR_G_GetGeometryName (void *geometry)
+    int     OGR_G_GetGeometryType (void *geometry)
+    void *  OGR_G_GetGeometryRef (void *geometry, int n)
+    int     OGR_G_GetPointCount (void *geometry)
+    double  OGR_G_GetX (void *geometry, int n)
+    double  OGR_G_GetY (void *geometry, int n)
+    double  OGR_G_GetZ (void *geometry, int n)
+    void    OGR_G_ImportFromWkb (void *geometry, unsigned char *bytes, int nbytes)
+    int     OGR_G_WkbSize (void *geometry)
+
 
 cdef class GeomBuilder:
     cdef void *geom

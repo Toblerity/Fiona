@@ -7,7 +7,7 @@ import logging
 
 from six import string_types
 
-from fiona cimport _cpl, _crs
+cimport _cpl
 from fiona.errors import CRSError
 
 
@@ -20,7 +20,7 @@ def crs_to_wkt(crs):
     cdef void *cogr_srs = NULL
     cdef char *proj_c = NULL
 
-    cogr_srs = _crs.OSRNewSpatialReference(NULL)
+    cogr_srs = OSRNewSpatialReference(NULL)
     if cogr_srs == NULL:
         raise CRSError("NULL spatial reference")
 
@@ -28,7 +28,7 @@ def crs_to_wkt(crs):
     if isinstance(crs, string_types):
         proj_b = crs.encode('utf-8')
         proj_c = proj_b
-        _crs.OSRSetFromUserInput(cogr_srs, proj_c)
+        OSRSetFromUserInput(cogr_srs, proj_c)
     elif isinstance(crs, dict):
         # EPSG is a special case.
         init = crs.get('init')
@@ -37,7 +37,7 @@ def crs_to_wkt(crs):
             auth, val = init.split(':')
             if auth.upper() == 'EPSG':
                 logger.debug("Setting EPSG: %s", val)
-                _crs.OSRImportFromEPSG(cogr_srs, int(val))
+                OSRImportFromEPSG(cogr_srs, int(val))
         else:
             params = []
             crs['wktext'] = True
@@ -50,14 +50,14 @@ def crs_to_wkt(crs):
             logger.debug("PROJ.4 to be imported: %r", proj)
             proj_b = proj.encode('utf-8')
             proj_c = proj_b
-            _crs.OSRImportFromProj4(cogr_srs, proj_c)
+            OSRImportFromProj4(cogr_srs, proj_c)
     else:
         raise ValueError("Invalid CRS")
 
     # Fixup, export to WKT, and set the GDAL dataset's projection.
-    _crs.OSRFixup(cogr_srs)
+    OSRFixup(cogr_srs)
 
-    _crs.OSRExportToWkt(cogr_srs, &proj_c)
+    OSRExportToWkt(cogr_srs, &proj_c)
 
     if proj_c == NULL:
         raise CRSError("Null projection")

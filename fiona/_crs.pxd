@@ -1,3 +1,5 @@
+# Coordinate system and transform API functions.
+
 cdef extern from "ogr_srs_api.h":
     void    OSRCleanup ()
     void *  OSRClone (void *srs)

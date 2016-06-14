@@ -4,7 +4,10 @@
 
 import logging
 
-from fiona cimport ograpi, _geometry
+cimport _cpl
+cimport _crs
+cimport _csl
+cimport _geometry
 
 
 cdef extern from "ogr_geometry.h" nogil:
@@ -29,10 +32,10 @@ class NullHandler(logging.Handler):
 log.addHandler(NullHandler())
 
 
-cdef void *_osr_from_crs(object crs):
+cdef void *_crs_from_crs(object crs):
     cdef char *proj_c = NULL
     cdef void *osr = NULL
-    osr = ograpi.OSRNewSpatialReference(NULL)
+    osr = _crs.OSRNewSpatialReference(NULL)
     if osr == NULL:
         raise ValueError("NULL spatial reference")
     params = []
@@ -43,7 +46,7 @@ cdef void *_osr_from_crs(object crs):
         if init:
             auth, val = init.split(':')
             if auth.upper() == 'EPSG':
-                ograpi.OSRImportFromEPSG(osr, int(val))
+                _crs.OSRImportFromEPSG(osr, int(val))
         else:
             crs['wktext'] = True
             for k, v in crs.items():
@@ -55,12 +58,12 @@ cdef void *_osr_from_crs(object crs):
             log.debug("PROJ.4 to be imported: %r", proj)
             proj_b = proj.encode('utf-8')
             proj_c = proj_b
-            ograpi.OSRImportFromProj4(osr, proj_c)
+            _crs.OSRImportFromProj4(osr, proj_c)
     # Fall back for CRS strings like "EPSG:3857."
     else:
         proj_b = crs.encode('utf-8')
         proj_c = proj_b
-        ograpi.OSRSetFromUserInput(osr, proj_c)
+        _crs.OSRSetFromUserInput(osr, proj_c)
     return osr
 
 
@@ -73,18 +76,18 @@ def _transform(src_crs, dst_crs, xs, ys):
 
     assert len(xs) == len(ys)
 
-    src = _osr_from_crs(src_crs)
-    dst = _osr_from_crs(dst_crs)
+    src = _crs_from_crs(src_crs)
+    dst = _crs_from_crs(dst_crs)
 
     n = len(xs)
-    x = <double *>ograpi.CPLMalloc(n*sizeof(double))
-    y = <double *>ograpi.CPLMalloc(n*sizeof(double))
+    x = <double *>_cpl.CPLMalloc(n*sizeof(double))
+    y = <double *>_cpl.CPLMalloc(n*sizeof(double))
     for i in range(n):
         x[i] = xs[i]
         y[i] = ys[i]
 
-    transform = ograpi.OCTNewCoordinateTransformation(src, dst)
-    res = ograpi.OCTTransform(transform, n, x, y, NULL)
+    transform = _crs.OCTNewCoordinateTransformation(src, dst)
+    res = _crs.OCTTransform(transform, n, x, y, NULL)
 
     res_xs = [0]*n
     res_ys = [0]*n
@@ -93,11 +96,11 @@ def _transform(src_crs, dst_crs, xs, ys):
         res_xs[i] = x[i]
         res_ys[i] = y[i]
 
-    ograpi.CPLFree(x)
-    ograpi.CPLFree(y)
-    ograpi.OCTDestroyCoordinateTransformation(transform)
-    ograpi.OSRDestroySpatialReference(src)
-    ograpi.OSRDestroySpatialReference(dst)
+    _cpl.CPLFree(x)
+    _cpl.CPLFree(y)
+    _crs.OCTDestroyCoordinateTransformation(transform)
+    _crs.OSRDestroySpatialReference(src)
+    _crs.OSRDestroySpatialReference(dst)
     return res_xs, res_ys
 
 
@@ -117,16 +120,16 @@ def _transform_geom(
     cdef int i
 
     if src_crs and dst_crs:
-        src = _osr_from_crs(src_crs)
-        dst = _osr_from_crs(dst_crs)
-        transform = ograpi.OCTNewCoordinateTransformation(src, dst)
+        src = _crs_from_crs(src_crs)
+        dst = _crs_from_crs(dst_crs)
+        transform = _crs.OCTNewCoordinateTransformation(src, dst)
 
         # Transform options.
-        options = ograpi.CSLSetNameValue(
+        options = _csl.CSLSetNameValue(
                     options, "DATELINEOFFSET", 
                     str(antimeridian_offset).encode('utf-8'))
         if antimeridian_cutting:
-            options = ograpi.CSLSetNameValue(options, "WRAPDATELINE", "YES")
+            options = _csl.CSLSetNameValue(options, "WRAPDATELINE", "YES")
 
         factory = new OGRGeometryFactory()
         src_ogr_geom = _geometry.OGRGeomBuilder().build(geom)
@@ -136,13 +139,13 @@ def _transform_geom(
                         options)
         g = _geometry.GeomBuilder().build(dst_ogr_geom)
 
-        ograpi.OGR_G_DestroyGeometry(dst_ogr_geom)
-        ograpi.OGR_G_DestroyGeometry(src_ogr_geom)
-        ograpi.OCTDestroyCoordinateTransformation(transform)
+        _geometry.OGR_G_DestroyGeometry(dst_ogr_geom)
+        _geometry.OGR_G_DestroyGeometry(src_ogr_geom)
+        _crs.OCTDestroyCoordinateTransformation(transform)
         if options != NULL:
-            ograpi.CSLDestroy(options)
-        ograpi.OSRDestroySpatialReference(src)
-        ograpi.OSRDestroySpatialReference(dst)
+            _csl.CSLDestroy(options)
+        _crs.OSRDestroySpatialReference(src)
+        _crs.OSRDestroySpatialReference(dst)
     else:
         g = geom
     if precision >= 0:
