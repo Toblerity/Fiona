@@ -91,7 +91,7 @@ build_script:
 
   - "%CMD_IN_ENV% python setup.py build_ext -IC:\\gdal\\include -lgdal_i -LC:\\gdal\\lib --gdalversion 1.11.4"
   
-  - "%CMD_IN_ENV% python setup.py install"
+  - "%CMD_IN_ENV% python setup.py install --gdalversion 1.11.4"
   
   
 test_script:
