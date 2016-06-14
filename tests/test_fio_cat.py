@@ -62,3 +62,19 @@ def test_bbox_json_yes():
         catch_exceptions=False)
     assert result.exit_code == 0
     assert result.output.count('"Feature"') == 19
+
+
+def test_multi_layer():
+    layerdef = "1:coutwildrnp,1:coutwildrnp"
+    runner = CliRunner()
+    result = runner.invoke(
+        cat.cat, ['--layer', layerdef, 'tests/data/'])
+    assert result.output.count('"Feature"') == 134
+
+
+def test_multi_layer_fail():
+    runner = CliRunner()
+    result = runner.invoke(cat.cat, '--layer'
+                           '200000:coutlildrnp',
+                           'tests/data')
+    assert result.exit_code == 1
