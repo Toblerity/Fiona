@@ -8,6 +8,9 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 - New feature: support for GDAL version 2+ (#259).
 - New feature: a new fio-calc CLI command (#273).
 - New feature: `--layer` options for fio-info (#316) and fio-load (#299).
+- New feature: enhancement of the `--layer` option for fio-cat and fio-dump
+  to allow separate layers of one or more multi-layer input files to be
+  selected (#349).
 - New feature: a `--no-parse` option for fio-collect that lets a careful user
   avoid extra JSON serialization and deserialization (#306).
 - Bug fix: `+wktext` is now preserved when serializing CRS from WKT to PROJ.4

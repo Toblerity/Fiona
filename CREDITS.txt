@@ -10,6 +10,7 @@ Fiona is written by:
 - Joshua Arnott <josh@snorfalorpagus.net>
 - Kelsey Jordahl <kjordahl@enthought.com>
 - Micah Cochran <micah@micahcochran.net>
+- Simon Norris <snorris@hillcrestgeo.ca>
 - Patrick Young <patrick.mckendree.young@gmail.com>
 - Hannes Gräuler <graeuler@geoplex.de>
 - Johan Van de Wauw <johan.vandewauw@gmail.com>
