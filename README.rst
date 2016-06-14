@@ -260,25 +260,26 @@ install gdal`` using Homebrew on OS X), installation is this simple.
   $ mkdir fiona_env
   $ virtualenv fiona_env
   $ source fiona_env/bin/activate
-  (fiona_env)$ pip install Fiona
+  (fiona_env)$ pip install fiona
 
 If gdal-config is not available or if GDAL/OGR headers and libs aren't
 installed to a well known location, you must set include dirs, library dirs,
 and libraries options via the setup.cfg file or setup command line as shown
-below (using ``git``).
+below (using ``git``). You must also specify the major version of the GDAL API
+(1 or 2) on the setup command line.
 
 .. code-block:: console
 
   (fiona_env)$ git clone git://github.com/Toblerity/Fiona.git
   (fiona_env)$ cd Fiona
-  (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal install
+  (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal install --gdalversion 1
 
-Or specify that build options should be provided by a particular
-gdal-config program.
+Or specify that build options and GDAL API version should be provided by a
+particular gdal-config program.
 
 .. code-block:: console
 
-  (fiona_env)$ GDAL_CONFIG=/path/to/gdal-config pip install .
+  (fiona_env)$ GDAL_CONFIG=/path/to/gdal-config pip install fiona
 
 Windows
 -------
@@ -295,12 +296,12 @@ cannot rely on gdal-config, which is only present on UNIX systems, to discover
 the locations of header files and libraries that Fiona needs to compile its 
 C extensions. On Windows, these paths need to be provided by the user. 
 You will need to find the include files and the library files for gdal and 
-use setup.py as follows.
+use setup.py as follows. You must also specify the major version of the GDAL
+API (1 or 2) on the setup command line.
 
 .. code-block:: console
 
-    $ python setup.py build_ext -I<path to gdal include files> -lgdal_i -L<path to gdal library>
-    $ python setup.py install
+    $ python setup.py build_ext -I<path to gdal include files> -lgdal_i -L<path to gdal library> install --gdalversion 1
 
 Note: The GDAL dll (gdal111.dll) and gdal-data directory need to be in your 
 Windows PATH otherwise Fiona will fail to work.
@@ -327,7 +328,7 @@ Or you can use the ``pep-518-install`` script::
 If you have a non-standard environment, you'll need to specify the include and
 lib dirs and GDAL library on the command line::
 
-  (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal --gdalversion 2.0.1 develop
+  (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal --gdalversion 2 develop
   (fiona_env)$ nosetests
 
 .. _OGR: http://www.gdal.org/ogr

@@ -26,7 +26,6 @@ leading this effort.
   to allow separate layers of one or more multi-layer input files to be
   selected (#349).
 
-
 1.7b1 (2016-06-10)
 ------------------
 
