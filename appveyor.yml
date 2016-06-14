@@ -1,0 +1,101 @@
+# Based on appveyor.yml from https://github.com/PDAL/PDAL and https://github.com/ogrisel/python-appveyor-demo
+#
+
+platform: x64
+
+
+environment:
+
+    global:
+        # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
+        # /E:ON and /V:ON options are not enabled in the batch script intepreter
+        # See: http://stackoverflow.com/a/13751649/163740
+        CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_env.cmd"
+        GDAL_HOME: "C:\\gdal"
+
+    matrix:
+        # - PYTHON: "C:\\Python27.10-x64"
+        #  PYTHON_VERSION: "2.7.10"
+        #  PYTHON_ARCH: "64"
+
+        - PYTHON: "C:\\Python34-x64"
+          PYTHON_VERSION: "3.4.3"
+          PYTHON_ARCH: "64"
+
+install:
+
+  - ECHO "Filesystem root:"
+  - ps: "ls \"C:/\""
+
+  - ECHO "Installed SDKs:"
+  - ps: "ls \"C:/Program Files/Microsoft SDKs/Windows\""
+
+  # Install Python (from the official .msi of http://python.org) and pip when
+  # not already installed.
+  # - ps: if (-not(Test-Path($env:PYTHON))) { & appveyor\install.ps1 }
+
+  # Prepend newly installed Python to the PATH of this build (this cannot be
+  # done from inside the powershell script as it would require to restart
+  # the parent CMD process).
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - "SET PYTHONPATH=%PYTHON%\\Lib\\site-packages;%PYTHONPATH%"
+
+  # Check that we have the expected version and architecture for Python
+  - "python --version"
+  - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
+
+  
+  # https://code.google.com/p/pymat2/wiki/WindowsTips
+  #- ps: (Get-Content "%VS90COMNTOOLS%\..\..\VC\vcvarsall.bat) | ForEach-Object { $_ -replace "vcvarsamd64.bat", "vcvars64.bat" } | Set-Content "%VS90COMNTOOLS%\..\..\VC\vcvarsall.bat
+  # - '%CMD_IN_ENV% echo "conv env"'
+  # - ps: 'ls "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin"'
+  # - if "%platform%" == "x86" call "%VS90COMNTOOLS%\..\..\VC\vcvarsall.bat"
+  #- if "%platform%" == "x64" echo f | xcopy /f /y "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat" "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\amd64\vcvarsamd64.bat"
+  # - if "%platform%" == "x64" call "%VS90COMNTOOLS%\..\..\VC\vcvarsall.bat" amd64
+  # - if "%platform%" == "x64" set WIN64_ARG="WIN64=YES"
+
+
+  - ps: mkdir C:\build | out-null
+  - ps: mkdir C:\gdal | out-null
+  
+  - curl http://download.gisinternals.com/sdk/downloads/release-1600-x64-gdal-1-11-4-mapserver-6-4-3.zip --output gdalbin.zip
+  - 7z x gdalbin.zip -oC:\gdal
+  - curl http://download.gisinternals.com/sdk/downloads/release-1600-x64-gdal-1-11-4-mapserver-6-4-3-libs.zip --output gdallibs.zip  
+  - 7z x gdallibs.zip -oC:\gdal
+  - "SET PATH=C:\\gdal;C:\\gdal\\bin;C:\\gdal\\data;C:\\gdal\\bin\\gdal\\apps;%PATH%"
+  - "SET GDAL_DATA=C:\\gdal\\bin\\gdal-data"
+
+  - ECHO "Filesystem C:/GDAL:"
+  - ps: "ls \"C:/GDAL\""
+  
+  
+  - cd C:\projects\fiona
+  # Upgrade to the latest version of pip to avoid it displaying warnings
+  # about it being out of date.
+  # - "python -m pip install --disable-pip-version-check --user --upgrade pip"
+  
+  - pip --version
+ 
+  # Install the build dependencies of the project. If some dependencies contain
+  # compiled extensions and are not provided as pre-built wheel packages,
+  # pip will build them from source using the MSVC compiler matching the
+  # target Python version and architecture
+  - "%CMD_IN_ENV% pip install -r requirements-dev.txt"
+  
+
+build_script:
+  # Build the compiled extension
+  - cmd: echo %PATH%
+
+  - cmd: echo %PYTHONPATH%
+
+  - "%CMD_IN_ENV% python setup.py build_ext -IC:\\gdal\\include -lgdal_i -LC:\\gdal\\lib --gdalversion 1.11.4"
+  
+  - "%CMD_IN_ENV% python setup.py install"
+  
+  
+test_script:
+  # Run the project tests
+  - cmd: SET
+
+  - "%CMD_IN_ENV% nosetests --exclude test_filter_vsi --exclude test_geopackage"  

@@ -22,7 +22,7 @@ class ReadingTest(unittest.TestCase):
         self.c.close()
 
     def test_json(self):
-        self.assertEquals(len(self.c), 67)
+        self.assertEqual(len(self.c), 67)
 
 class WritingTest(unittest.TestCase):
 
@@ -44,5 +44,5 @@ class WritingTest(unittest.TestCase):
                 'geometry': {'type': 'MultiPoint', 'coordinates': [[0.0, 0.0]]},
                 'properties': {'title': 'Two'}}])
         with fiona.open(path) as c:
-            self.assertEquals(c.schema['geometry'], 'Unknown')
-            self.assertEquals(len(c), 2)
+            self.assertEqual(c.schema['geometry'], 'Unknown')
+            self.assertEqual(len(c), 2)
