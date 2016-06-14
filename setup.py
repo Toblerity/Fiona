@@ -22,6 +22,7 @@ log = logging.getLogger()
 if 'all' in sys.warnoptions:
     log.level = logging.DEBUG
 
+
 def check_output(cmd):
     # since subprocess.check_output doesn't exist in 2.6
     # we wrap it here.
@@ -34,6 +35,7 @@ def check_output(cmd):
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         out, err = p.communicate()
         return out
+
 
 def copy_data_tree(datadir, destdir):
     try:
@@ -93,15 +95,23 @@ def copy_gdalapi_c(gdalversion):
         print("Copied 'fiona/ogrext2.c' to 'fiona/ogrext.c'")
 
 
+if '--gdalversion' in sys.argv and 'clean' not in sys.argv:
+    index = sys.argv.index('--gdalversion')
+    sys.argv.pop(index)
+    gdalversion = sys.argv.pop(index)
+
+
 # Extend distutil's sdist command to generate C extension sources from
 # both `ogrext`.pyx` and `ogrext2.pyx` for GDAL 1.x and 2.x.
 class sdist_multi_gdal(sdist):
     def run(self):
         shutil.copy('fiona/ogrext1.pyx', 'fiona/ogrext.pyx')
-        _ = check_output(['cython', '-v', '-f', 'fiona/ogrext.pyx', '-o', 'fiona/ogrext1.c'])
+        _ = check_output(['cython', '-v', '-f', 'fiona/ogrext.pyx',
+                          '-o', 'fiona/ogrext1.c'])
         print(_)
         shutil.copy('fiona/ogrext2.pyx', 'fiona/ogrext.pyx')
-        _ = check_output(['cython', '-v', '-f', 'fiona/ogrext.pyx', '-o', 'fiona/ogrext2.c'])
+        _ = check_output(['cython', '-v', '-f', 'fiona/ogrext.pyx',
+                          '-o', 'fiona/ogrext2.c'])
         print(_)
         sdist.run(self)
 
@@ -117,7 +127,8 @@ gdal_output = [None] * 4
 if 'clean' not in sys.argv:
     try:
         gdal_config = os.environ.get('GDAL_CONFIG', 'gdal-config')
-        for i, flag in enumerate(("--cflags", "--libs", "--datadir", "--version")):
+        for i, flag in enumerate(
+                ["--cflags", "--libs", "--datadir", "--version"]):
             gdal_output[i] = check_output([gdal_config, flag]).strip()
 
         for item in gdal_output[0].split():
@@ -140,11 +151,6 @@ if 'clean' not in sys.argv:
                      "available in the README.")
         else:
             log.warning("Failed to get options via gdal-config: %s", str(e))
-
-    if '--gdalversion' in sys.argv:
-        index = sys.argv.index('--gdalversion')
-        sys.argv.pop(index)
-        gdalversion = sys.argv.pop(index)
 
     if os.environ.get('PACKAGE_DATA'):
         destdir = 'fiona/gdal_data'
