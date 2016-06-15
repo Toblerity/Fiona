@@ -3,6 +3,11 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.7.0post1 (2016-06-15)
+-----------------------
+
+Packaging: No files are copied for the 'clean' setup target (#361, #362).
+
 1.7.0 (2016-06-14)
 ------------------
 
@@ -10,12 +15,17 @@ The C extension modules in this library can now be built and used with either
 a 1.x or 2.x release of the GDAL library. Big thanks to René Buffat for
 leading this effort.
 
-- Refactoring: The `ogrext1.pyx` and `ogrext2.pyx` files now use separate
+Refactoring:
+
+- The `ogrext1.pyx` and `ogrext2.pyx` files now use separate
   C APIs defined in `ogrext1.pxd` and `ogrex2.pxd`. The other extension
   modules have been refactored so that they do not depend on either of these
   modules and use subsets of the GDAL/OGR API compatible with both GDAL 1.x and
   2.x (#359).
-- Packaging: Source distributions now contain two different sources for the
+
+Packaging:
+
+- Source distributions now contain two different sources for the
   `ogrext` extension module. The `ogrext1.c` file will be used with GDAL 1.x
   and the `ogrext2.c` file will be used with GDAL 2.x.
 
