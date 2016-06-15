@@ -154,9 +154,11 @@ ext_options = dict(
     libraries=libraries,
     extra_link_args=extra_link_args)
 
-# When building from a repo, Cython is required.
+# Define the extension modules.
 ext_modules = []
+
 if source_is_repo and "clean" not in sys.argv:
+    # When building from a repo, Cython is required.
     log.info("MANIFEST.in found, presume a repo, cythonizing...")
     if not cythonize:
         log.critical(

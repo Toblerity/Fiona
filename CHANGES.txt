@@ -3,6 +3,11 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.7.0post2 (2016-06-15)
+-----------------------
+
+Packaging: define extension modules for 'clean' and 'config' targets (#363).
+
 1.7.0post1 (2016-06-15)
 -----------------------
 
