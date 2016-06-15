@@ -74,32 +74,11 @@ with open('CHANGES.txt', **open_kwds) as f:
 # Set a flag for builds where the source directory is a repo checkout.
 source_is_repo = os.path.exists("MANIFEST.in")
 
-
-def copy_gdalapi_pyx(gdalversion):
-    if gdalversion[0] == u'1':
-        log.info("Building Fiona for gdal 1.x: {0}".format(gdalversion))
-        shutil.copy('fiona/ogrext1.pyx', 'fiona/ogrext.pyx')
-    else:
-        log.info("Building Fiona for gdal 2.x: {0}".format(gdalversion))
-        shutil.copy('fiona/ogrext2.pyx', 'fiona/ogrext.pyx')
-
-
-def copy_gdalapi_c(gdalversion):
-    if gdalversion[0] == u'1':
-        log.info("Building Fiona for gdal 1.x: {0}".format(gdalversion))
-        shutil.copy('fiona/ogrext1.c', 'fiona/ogrext.c')
-        print("Copied 'fiona/ogrext1.c' to'fiona/ogrext.c'")
-    else:
-        log.info("Building Fiona for gdal 2.x: {0}".format(gdalversion))
-        shutil.copy('fiona/ogrext2.c', 'fiona/ogrext.c')
-        print("Copied 'fiona/ogrext2.c' to 'fiona/ogrext.c'")
-
-
+# Get GDAL API version from the command line if specified there.
 if '--gdalversion' in sys.argv and 'clean' not in sys.argv:
     index = sys.argv.index('--gdalversion')
     sys.argv.pop(index)
     gdalversion = sys.argv.pop(index)
-
 
 # Extend distutil's sdist command to generate C extension sources from
 # both `ogrext`.pyx` and `ogrext2.pyx` for GDAL 1.x and 2.x.
@@ -114,7 +93,6 @@ class sdist_multi_gdal(sdist):
                           '-o', 'fiona/ogrext2.c'])
         print(_)
         sdist.run(self)
-
 
 # By default we'll try to get options via gdal-config. On systems without,
 # options will need to be set in setup.cfg or on the setup command line.
@@ -185,7 +163,13 @@ if source_is_repo and "clean" not in sys.argv:
             "Cython is required to build from a repo.")
         sys.exit(1)
 
-    copy_gdalapi_pyx(gdalversion)
+    if gdalversion.startswith("1"):
+        log.info("Building Fiona for gdal 1.x: {0}".format(gdalversion))
+        shutil.copy('fiona/ogrext1.pyx', 'fiona/ogrext.pyx')
+    else:
+        log.info("Building Fiona for gdal 2.x: {0}".format(gdalversion))
+        shutil.copy('fiona/ogrext2.pyx', 'fiona/ogrext.pyx')
+
     ext_modules = cythonize([
         Extension('fiona._geometry', ['fiona/_geometry.pyx'], **ext_options),
         Extension('fiona._transform', ['fiona/_transform.pyx'], **ext_options),
@@ -193,16 +177,24 @@ if source_is_repo and "clean" not in sys.argv:
         Extension('fiona._drivers', ['fiona/_drivers.pyx'], **ext_options),
         Extension('fiona._err', ['fiona/_err.pyx'], **ext_options),
         Extension('fiona.ogrext', ['fiona/ogrext.pyx'], **ext_options)])
+
 # If there's no manifest template, as in an sdist, we just specify .c files.
-else:
-    copy_gdalapi_c(gdalversion)
+elif "clean" not in sys.argv:
     ext_modules = [
         Extension('fiona._transform', ['fiona/_transform.cpp'], **ext_options),
         Extension('fiona._geometry', ['fiona/_geometry.c'], **ext_options),
         Extension('fiona._crs', ['fiona/_crs.c'], **ext_options),
         Extension('fiona._drivers', ['fiona/_drivers.c'], **ext_options),
-        Extension('fiona._err', ['fiona/_err.c'], **ext_options),
-        Extension('fiona.ogrext', ['fiona/ogrext.c'], **ext_options)]
+        Extension('fiona._err', ['fiona/_err.c'], **ext_options)]
+
+    if gdalversion.startswith("1"):
+        log.info("Building Fiona for gdal 1.x: {0}".format(gdalversion))
+        ext_modules.append(
+            Extension('fiona.ogrext', ['fiona/ogrext1.c'], **ext_options))
+    else:
+        log.info("Building Fiona for gdal 2.x: {0}".format(gdalversion))
+        ext_modules.append(
+            Extension('fiona.ogrext', ['fiona/ogrext2.c'], **ext_options))
 
 requirements = [
     'cligj',
