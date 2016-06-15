@@ -177,6 +177,7 @@ ext_options = dict(
     extra_link_args=extra_link_args)
 
 # When building from a repo, Cython is required.
+ext_modules = []
 if source_is_repo and "clean" not in sys.argv:
     log.info("MANIFEST.in found, presume a repo, cythonizing...")
     if not cythonize:
@@ -194,7 +195,7 @@ if source_is_repo and "clean" not in sys.argv:
         Extension('fiona._err', ['fiona/_err.pyx'], **ext_options),
         Extension('fiona.ogrext', ['fiona/ogrext.pyx'], **ext_options)])
 # If there's no manifest template, as in an sdist, we just specify .c files.
-else:
+elif "clean" not in sys.argv:
     copy_gdalapi_c(gdalversion)
     ext_modules = [
         Extension('fiona._transform', ['fiona/_transform.cpp'], **ext_options),
