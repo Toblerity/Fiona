@@ -1,0 +1,353 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Command Line Interface &mdash; Fiona 1.7.0.post2 documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.7.0.post2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Fiona 1.7.0.post2 documentation" href="index.html" />
+    <link rel="prev" title="1   The Fiona User Manual" href="manual.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="manual.html" title="1   The Fiona User Manual"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Fiona 1.7.0.post2 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Command Line Interface</a><ul>
+<li><a class="reference internal" href="#bounds">bounds</a></li>
+<li><a class="reference internal" href="#cat">cat</a></li>
+<li><a class="reference internal" href="#collect">collect</a></li>
+<li><a class="reference internal" href="#distrib">distrib</a></li>
+<li><a class="reference internal" href="#dump">dump</a></li>
+<li><a class="reference internal" href="#info">info</a></li>
+<li><a class="reference internal" href="#load">load</a></li>
+<li><a class="reference internal" href="#filter">filter</a></li>
+<li><a class="reference internal" href="#coordinate-reference-system-transformations">Coordinate Reference System Transformations</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="manual.html"
+                        title="previous chapter">1&nbsp;&nbsp;&nbsp;The Fiona User Manual</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/cli.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="command-line-interface">
+<h1>Command Line Interface<a class="headerlink" href="#command-line-interface" title="Permalink to this headline">¶</a></h1>
+<p>Fiona&#8217;s new command line interface is a program named &#8220;fio&#8221;.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">Usage: fio [OPTIONS] COMMAND [ARGS]...</span>
+
+<span class="go">  Fiona command line interface.</span>
+
+<span class="go">Options:</span>
+<span class="go">  -v, --verbose  Increase verbosity.</span>
+<span class="go">  -q, --quiet    Decrease verbosity.</span>
+<span class="go">  --version      Show the version and exit.</span>
+<span class="go">  --help         Show this message and exit.</span>
+
+<span class="go">Commands:</span>
+<span class="go">  bounds   Print the extent of GeoJSON objects</span>
+<span class="go">  buffer   Buffer geometries on all sides by a fixed distance.</span>
+<span class="go">  cat      Concatenate and print the features of datasets</span>
+<span class="go">  collect  Collect a sequence of features.</span>
+<span class="go">  distrib  Distribute features from a collection</span>
+<span class="go">  dump     Dump a dataset to GeoJSON.</span>
+<span class="go">  env      Print information about the fio environment.</span>
+<span class="go">  filter   Filter GeoJSON features by python expression</span>
+<span class="go">  info     Print information about a dataset.</span>
+<span class="go">  insp     Open a dataset and start an interpreter.</span>
+<span class="go">  load     Load GeoJSON to a dataset in another format.</span>
+</pre></div>
+</div>
+<p>It is developed using the <code class="docutils literal"><span class="pre">click</span></code> package and is new in 1.1.6.</p>
+<div class="section" id="bounds">
+<h2>bounds<a class="headerlink" href="#bounds" title="Permalink to this headline">¶</a></h2>
+<p>New in 1.4.5.</p>
+<p>Fio-bounds reads LF or RS-delimited GeoJSON texts, either features or
+collections, from stdin and prints their bounds with or without other data to
+stdout.</p>
+<p>With no options, it works like this:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> fio cat docs/data/test_uk.shp <span class="p">|</span> head -n <span class="m">1</span> <span class="se">\</span>
+<span class="gp">&gt;</span> <span class="p">|</span> fio bounds
+<span class="go">[0.735, 51.357216, 0.947778, 51.444717]</span>
+</pre></div>
+</div>
+<p>Using <code class="docutils literal"><span class="pre">--with-id</span></code> gives you</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> fio cat docs/data/test_uk.shp <span class="p">|</span> head -n <span class="m">1</span> <span class="se">\</span>
+<span class="gp">&gt;</span> <span class="p">|</span> fio bounds --with-id
+<span class="go">{&quot;id&quot;: &quot;0&quot;, &quot;bbox&quot;: [0.735, 51.357216, 0.947778, 51.444717]}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="cat">
+<h2>cat<a class="headerlink" href="#cat" title="Permalink to this headline">¶</a></h2>
+<p>The cat command concatenates the features of one or more datasets and prints
+them as a <a class="reference external" href="http://tools.ietf.org/html/draft-ietf-json-text-sequence-07">JSON text sequence</a> of features.
+In other words: GeoJSON feature objects, possibly pretty printed, optionally
+separated by ASCII RS (x1e) chars using <cite>&#8211;rs</cite>.</p>
+<p>The output of <code class="docutils literal"><span class="pre">fio</span> <span class="pre">cat</span></code> can be piped to <code class="docutils literal"><span class="pre">fio</span> <span class="pre">load</span></code> to create new
+concatenated datasets.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> fio cat docs/data/test_uk.shp docs/data/test_uk.shp <span class="se">\</span>
+<span class="gp">&gt;</span> <span class="p">|</span> fio load /tmp/double.shp --driver Shapefile
+<span class="gp">$</span> fio info /tmp/double.shp --count
+<span class="go">96</span>
+<span class="gp">$</span> fio info docs/data/test_uk.shp --count
+<span class="go">48</span>
+</pre></div>
+</div>
+<p>New in 1.4.0.</p>
+</div>
+<div class="section" id="collect">
+<h2>collect<a class="headerlink" href="#collect" title="Permalink to this headline">¶</a></h2>
+<p>The collect command takes a JSON text sequence of GeoJSON feature objects, such
+as the output of <code class="docutils literal"><span class="pre">fio</span> <span class="pre">cat</span></code> and writes a GeoJSON feature collection.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> fio cat docs/data/test_uk.shp docs/data/test_uk.shp <span class="se">\</span>
+<span class="gp">&gt;</span> <span class="p">|</span> fio collect &gt; /tmp/collected.json
+<span class="gp">$</span> fio info /tmp/collected.json --count
+<span class="go">96</span>
+</pre></div>
+</div>
+<p>New in 1.4.0.</p>
+</div>
+<div class="section" id="distrib">
+<h2>distrib<a class="headerlink" href="#distrib" title="Permalink to this headline">¶</a></h2>
+<p>The inverse of fio-collect, fio-distrib takes a GeoJSON feature collection
+and writes a JSON text sequence of GeoJSON feature objects.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> fio info --count tests/data/coutwildrnp.shp
+<span class="go">67</span>
+<span class="gp">$</span> fio cat tests/data/coutwildrnp.shp <span class="p">|</span> fio collect <span class="p">|</span> fio distrib <span class="p">|</span> wc -l
+<span class="go">67</span>
+</pre></div>
+</div>
+<p>New in 1.4.0.</p>
+</div>
+<div class="section" id="dump">
+<h2>dump<a class="headerlink" href="#dump" title="Permalink to this headline">¶</a></h2>
+<p>The dump command reads a vector dataset and writes a GeoJSON feature collection
+to stdout. Its output can be piped to <code class="docutils literal"><span class="pre">rio</span> <span class="pre">load</span></code> (see below).</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> fio dump docs/data/test_uk.shp --indent <span class="m">2</span> --precision <span class="m">2</span> <span class="p">|</span> head
+<span class="go">{</span>
+<span class="go">  &quot;features&quot;: [</span>
+<span class="go">    {</span>
+<span class="go">      &quot;geometry&quot;: {</span>
+<span class="go">        &quot;coordinates&quot;: [</span>
+<span class="go">          [</span>
+<span class="go">            [</span>
+<span class="go">              0.9,</span>
+<span class="go">              51.36</span>
+<span class="go">            ],</span>
+</pre></div>
+</div>
+<p>You can optionally dump out JSON text sequences using <code class="docutils literal"><span class="pre">--x-json-seq</span></code>. Since
+version 1.4.0, <code class="docutils literal"><span class="pre">fio</span> <span class="pre">cat</span></code> is the better tool for generating sequences.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> fio dump docs/data/test_uk.shp --precision <span class="m">2</span> --x-json-seq <span class="p">|</span> head -n 2
+<span class="go">{&quot;geometry&quot;: {&quot;coordinates&quot;: [[[0.9, 51.36], [0.89, 51.36], [0.79, 51.37], [0.78, 51.37], [0.77, 51.38], [0.76, 51.38], [0.75, 51.39], [0.74, 51.4], [0.73, 51.41], [0.74, 51.43], [0.75, 51.44], [0.76, 51.44], [0.79, 51.44], [0.89, 51.42], [0.9, 51.42], [0.91, 51.42], [0.93, 51.4], [0.94, 51.39], [0.94, 51.38], [0.95, 51.38], [0.95, 51.37], [0.95, 51.37], [0.94, 51.37], [0.9, 51.36], [0.9, 51.36]]], &quot;type&quot;: &quot;Polygon&quot;}, &quot;id&quot;: &quot;0&quot;, &quot;properties&quot;: {&quot;AREA&quot;: 244820.0, &quot;CAT&quot;: 232.0, &quot;CNTRY_NAME&quot;: &quot;United Kingdom&quot;, &quot;FIPS_CNTRY&quot;: &quot;UK&quot;, &quot;POP_CNTRY&quot;: 60270708.0}, &quot;type&quot;: &quot;Feature&quot;}</span>
+<span class="go">{&quot;geometry&quot;: {&quot;coordinates&quot;: [[[-4.66, 51.16], [-4.67, 51.16], [-4.67, 51.16], [-4.67, 51.17], [-4.67, 51.19], [-4.67, 51.19], [-4.67, 51.2], [-4.66, 51.2], [-4.66, 51.19], [-4.65, 51.16], [-4.65, 51.16], [-4.65, 51.16], [-4.66, 51.16]]], &quot;type&quot;: &quot;Polygon&quot;}, &quot;id&quot;: &quot;1&quot;, &quot;properties&quot;: {&quot;AREA&quot;: 244820.0, &quot;CAT&quot;: 232.0, &quot;CNTRY_NAME&quot;: &quot;United Kingdom&quot;, &quot;FIPS_CNTRY&quot;: &quot;UK&quot;, &quot;POP_CNTRY&quot;: 60270708.0}, &quot;type&quot;: &quot;Feature&quot;}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="info">
+<h2>info<a class="headerlink" href="#info" title="Permalink to this headline">¶</a></h2>
+<p>The info command prints information about a dataset as a JSON object.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> fio info docs/data/test_uk.shp --indent 2
+<span class="go">{</span>
+<span class="go">  &quot;count&quot;: 48,</span>
+<span class="go">  &quot;crs&quot;: &quot;+datum=WGS84 +no_defs +proj=longlat&quot;,</span>
+<span class="go">  &quot;driver&quot;: &quot;ESRI Shapefile&quot;,</span>
+<span class="go">  &quot;bounds&quot;: [</span>
+<span class="go">    -8.621389,</span>
+<span class="go">    49.911659,</span>
+<span class="go">    1.749444,</span>
+<span class="go">    60.844444</span>
+<span class="go">  ],</span>
+<span class="go">  &quot;schema&quot;: {</span>
+<span class="go">    &quot;geometry&quot;: &quot;Polygon&quot;,</span>
+<span class="go">    &quot;properties&quot;: {</span>
+<span class="go">      &quot;CAT&quot;: &quot;float:16&quot;,</span>
+<span class="go">      &quot;FIPS_CNTRY&quot;: &quot;str:80&quot;,</span>
+<span class="go">      &quot;CNTRY_NAME&quot;: &quot;str:80&quot;,</span>
+<span class="go">      &quot;AREA&quot;: &quot;float:15.2&quot;,</span>
+<span class="go">      &quot;POP_CNTRY&quot;: &quot;float:15.2&quot;</span>
+<span class="go">    }</span>
+<span class="go">  }</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p>You can process this JSON using, e.g.,
+<a class="reference external" href="https://github.com/ddopson/underscore-cli">underscore-cli</a>.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> fio info docs/data/test_uk.shp <span class="p">|</span> underscore extract count
+<span class="go">48</span>
+</pre></div>
+</div>
+<p>You can also optionally get single info items as plain text (not JSON)
+strings</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> fio info docs/data/test_uk.shp --count
+<span class="go">48</span>
+<span class="gp">$</span> fio info docs/data/test_uk.shp --bounds
+<span class="go">-8.621389 49.911659 1.749444 60.844444</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="load">
+<h2>load<a class="headerlink" href="#load" title="Permalink to this headline">¶</a></h2>
+<p>The load command reads GeoJSON features from stdin and writes them to a vector
+dataset using another format.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> fio dump docs/data/test_uk.shp <span class="se">\</span>
+<span class="gp">&gt;</span> <span class="p">|</span> fio load /tmp/test.shp --driver Shapefile
+</pre></div>
+</div>
+<p>This command also supports GeoJSON text sequences. RS-separated sequences will
+be detected. If you want to load LF-separated sequences, you must specfiy
+<code class="docutils literal"><span class="pre">--x-json-seq</span></code>.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> fio cat docs/data/test_uk.shp <span class="p">|</span> fio load /tmp/foo.shp --driver Shapefile
+<span class="gp">$</span> fio info /tmp/foo.shp --indent 2
+<span class="go">{</span>
+<span class="go">  &quot;count&quot;: 48,</span>
+<span class="go">  &quot;crs&quot;: &quot;+datum=WGS84 +no_defs +proj=longlat&quot;,</span>
+<span class="go">  &quot;driver&quot;: &quot;ESRI Shapefile&quot;,</span>
+<span class="go">  &quot;bounds&quot;: [</span>
+<span class="go">    -8.621389,</span>
+<span class="go">    49.911659,</span>
+<span class="go">    1.749444,</span>
+<span class="go">    60.844444</span>
+<span class="go">  ],</span>
+<span class="go">  &quot;schema&quot;: {</span>
+<span class="go">    &quot;geometry&quot;: &quot;Polygon&quot;,</span>
+<span class="go">    &quot;properties&quot;: {</span>
+<span class="go">      &quot;AREA&quot;: &quot;float:24.15&quot;,</span>
+<span class="go">      &quot;CNTRY_NAME&quot;: &quot;str:80&quot;,</span>
+<span class="go">      &quot;POP_CNTRY&quot;: &quot;float:24.15&quot;,</span>
+<span class="go">      &quot;FIPS_CNTRY&quot;: &quot;str:80&quot;,</span>
+<span class="go">      &quot;CAT&quot;: &quot;float:24.15&quot;</span>
+<span class="go">    }</span>
+<span class="go">  }</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p>The underscore-cli process command is another way of turning a GeoJSON feature
+collection into a feature sequence.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> fio dump docs/data/test_uk.shp <span class="se">\</span>
+<span class="gp">&gt;</span> <span class="p">|</span> underscore process <span class="se">\</span>
+<span class="gp">&gt;</span> <span class="s1">&#39;each(data.features,function(o){console.log(JSON.stringify(o))})&#39;</span> <span class="se">\</span>
+<span class="gp">&gt;</span> <span class="p">|</span> fio load /tmp/test-seq.shp --x-json-seq --driver Shapefile
+</pre></div>
+</div>
+</div>
+<div class="section" id="filter">
+<h2>filter<a class="headerlink" href="#filter" title="Permalink to this headline">¶</a></h2>
+<p>The filter command reads GeoJSON features from stdin and writes the feature to
+stdout <em>if</em> the provided expression evalutates to <cite>True</cite> for that feature.</p>
+<p>The python expression is evaluated in a restricted namespace containing 3 functions
+(<cite>sum</cite>, <cite>min</cite>, <cite>max</cite>), the <cite>math</cite> module, the shapely <cite>shape</cite> function,
+and an object <cite>f</cite> representing the feature to be evaluated. This <cite>f</cite> object allows
+access in javascript-style dot notation for convenience.</p>
+<p>If the expression evaluates to a &#8220;truthy&#8221; value, the feature is printed verbatim.
+Otherwise, the feature is excluded from the output.</p>
+<p>For example</p>
+<blockquote>
+<div>fio cat data.shp | fio filter &#8220;f.properties.area &gt; 1000.0&#8221; | fio collect &gt; large_polygons.geojson</div></blockquote>
+<p>Would create a geojson file with only those features from <cite>data.shp</cite> where the
+area was over a given threshold.</p>
+</div>
+<div class="section" id="coordinate-reference-system-transformations">
+<h2>Coordinate Reference System Transformations<a class="headerlink" href="#coordinate-reference-system-transformations" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal"><span class="pre">fio</span> <span class="pre">cat</span></code> command can optionally transform feature geometries to a new
+coordinate reference system specified with <code class="docutils literal"><span class="pre">--dst_crs</span></code>. The <code class="docutils literal"><span class="pre">fio</span> <span class="pre">collect</span></code>
+command can optionally transform from a coordinate reference system specified
+with <code class="docutils literal"><span class="pre">--src_crs</span></code> to the default WGS84 GeoJSON CRS. Like collect, <code class="docutils literal"><span class="pre">fio</span> <span class="pre">load</span></code>
+can accept non-WGS84 features, but as it can write files in formats other than
+GeoJSON, you can optionally specify a <code class="docutils literal"><span class="pre">--dst_crs</span></code>. For example, the WGS84
+features read from docs/data/test_uk.shp,</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> fio cat docs/data/test_uk.shp --dst_crs EPSG:3857 <span class="se">\</span>
+<span class="gp">&gt;</span> <span class="p">|</span> fio collect --src_crs EPSG:3857 &gt; /tmp/foo.json
+</pre></div>
+</div>
+<p>make a detour through EPSG:3857 (Web Mercator) and are transformed back to WGS84
+by fio cat. The following,</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> fio cat docs/data/test_uk.shp --dst_crs EPSG:3857 <span class="se">\</span>
+<span class="gp">&gt;</span> <span class="p">|</span> fio load --src_crs EPSG:3857 --dst_crs EPSG:4326 --driver Shapefile <span class="se">\</span>
+<span class="gp">&gt;</span> /tmp/foo.shp
+</pre></div>
+</div>
+<p>does the same thing, but for ESRI Shapefile output.</p>
+<p>New in 1.4.2.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="manual.html" title="1   The Fiona User Manual"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Fiona 1.7.0.post2 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2011, Sean Gillies.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

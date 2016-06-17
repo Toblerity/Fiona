@@ -1,0 +1,983 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Fiona &mdash; Fiona 1.7.0.post2 documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.7.0.post2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Fiona 1.7.0.post2 documentation" href="index.html" />
+    <link rel="next" title="1   The Fiona User Manual" href="manual.html" />
+    <link rel="prev" title="Fiona Documentation Contents" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="manual.html" title="1   The Fiona User Manual"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Fiona Documentation Contents"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Fiona 1.7.0.post2 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Fiona</a><ul>
+<li><a class="reference internal" href="#usage">Usage</a><ul>
+<li><a class="reference internal" href="#collections">Collections</a></li>
+<li><a class="reference internal" href="#reading-multilayer-data">Reading Multilayer data</a></li>
+<li><a class="reference internal" href="#writing-multilayer-data">Writing Multilayer data</a></li>
+<li><a class="reference internal" href="#collections-from-archives-and-virtual-file-systems">Collections from archives and virtual file systems</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#fiona-cli">Fiona CLI</a></li>
+<li><a class="reference internal" href="#installation">Installation</a><ul>
+<li><a class="reference internal" href="#python-requirements">Python Requirements</a></li>
+<li><a class="reference internal" href="#unix-like-systems">Unix-like systems</a></li>
+<li><a class="reference internal" href="#windows">Windows</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#development-and-testing">Development and testing</a></li>
+<li><a class="reference internal" href="#changes">Changes</a><ul>
+<li><a class="reference internal" href="#post2-2016-06-15">1.7.0post2 (2016-06-15)</a></li>
+<li><a class="reference internal" href="#post1-2016-06-15">1.7.0post1 (2016-06-15)</a></li>
+<li><a class="reference internal" href="#id1">1.7.0 (2016-06-14)</a></li>
+<li><a class="reference internal" href="#b2-2016-06-13">1.7b2 (2016-06-13)</a></li>
+<li><a class="reference internal" href="#b1-2016-06-10">1.7b1 (2016-06-10)</a></li>
+<li><a class="reference internal" href="#id2">1.6.4 (2016-05-06)</a></li>
+<li><a class="reference internal" href="#post1-2016-03-27">1.6.3.post1 (2016-03-27)</a></li>
+<li><a class="reference internal" href="#id3">1.6.3 (2015-12-22)</a></li>
+<li><a class="reference internal" href="#id4">1.6.2 (2015-09-22)</a></li>
+<li><a class="reference internal" href="#id5">1.6.1 (2015-08-12)</a></li>
+<li><a class="reference internal" href="#id6">1.6.0 (2015-07-21)</a></li>
+<li><a class="reference internal" href="#id7">1.5.1 (2015-03-19)</a></li>
+<li><a class="reference internal" href="#id8">1.5.0 (2015-02-02)</a></li>
+<li><a class="reference internal" href="#id9">1.4.8 (2014-11-02)</a></li>
+<li><a class="reference internal" href="#id10">1.4.7 (2014-10-28)</a></li>
+<li><a class="reference internal" href="#id11">1.4.6 (2014-10-21)</a></li>
+<li><a class="reference internal" href="#id12">1.4.5 (2014-10-18)</a></li>
+<li><a class="reference internal" href="#id13">1.4.4 (2014-10-13)</a></li>
+<li><a class="reference internal" href="#id14">1.4.3 (2014-10-10)</a></li>
+<li><a class="reference internal" href="#id15">1.4.2 (2014-10-03)</a></li>
+<li><a class="reference internal" href="#id16">1.4.1 (2014-09-30)</a></li>
+<li><a class="reference internal" href="#id17">1.4.0 (2014-09-22)</a></li>
+<li><a class="reference internal" href="#id18">1.3.0 (2014-09-17)</a></li>
+<li><a class="reference internal" href="#id19">1.2.0 (2014-09-02)</a></li>
+<li><a class="reference internal" href="#id20">1.1.6 (2014-07-23)</a></li>
+<li><a class="reference internal" href="#id21">1.1.5 (2014-05-21)</a></li>
+<li><a class="reference internal" href="#id22">1.1.4 (2014-04-03)</a></li>
+<li><a class="reference internal" href="#id23">1.1.3 (2014-03-23)</a></li>
+<li><a class="reference internal" href="#id24">1.1.2 (2014-02-14)</a></li>
+<li><a class="reference internal" href="#id25">1.1.1 (2014-02-02)</a></li>
+<li><a class="reference internal" href="#id26">1.1 (2014-01-22)</a></li>
+<li><a class="reference internal" href="#id27">1.0.3 (2014-01-21)</a></li>
+<li><a class="reference internal" href="#id28">1.0.2 (2013-09-09)</a></li>
+<li><a class="reference internal" href="#id29">1.0.1 (2013-08-16)</a></li>
+<li><a class="reference internal" href="#id30">1.0 (2013-07-30)</a></li>
+<li><a class="reference internal" href="#id31">0.16.1 (2013-07-02)</a></li>
+<li><a class="reference internal" href="#id32">0.16 (2013-06-24)</a></li>
+<li><a class="reference internal" href="#id33">0.15 (2013-06-06)</a></li>
+<li><a class="reference internal" href="#id34">0.14 (2013-05-04)</a></li>
+<li><a class="reference internal" href="#id35">0.13 (2013-04-30)</a></li>
+<li><a class="reference internal" href="#id36">0.12.1 (2013-04-16)</a></li>
+<li><a class="reference internal" href="#id37">0.12 (2013-04-15)</a></li>
+<li><a class="reference internal" href="#id38">0.11 (2013-04-14)</a></li>
+<li><a class="reference internal" href="#id39">0.10 (2013-03-23)</a></li>
+<li><a class="reference internal" href="#id40">0.9.1 (2013-03-07)</a></li>
+<li><a class="reference internal" href="#id41">0.9 (2013-03-06)</a></li>
+<li><a class="reference internal" href="#id42">0.8 (2012-02-21)</a></li>
+<li><a class="reference internal" href="#id43">0.7 (2012-01-29)</a></li>
+<li><a class="reference internal" href="#id44">0.6.2 (2012-01-10)</a></li>
+<li><a class="reference internal" href="#id45">0.6.1 (2012-01-06)</a></li>
+<li><a class="reference internal" href="#id46">0.6 (2012-01-05)</a></li>
+<li><a class="reference internal" href="#id47">0.5 (2011-12-19)</a></li>
+<li><a class="reference internal" href="#id48">0.2 (2011-09-16)</a></li>
+<li><a class="reference internal" href="#id49">0.1.1 (2008-12-04)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#credits">Credits</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Fiona Documentation Contents</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="manual.html"
+                        title="next chapter">1&nbsp;&nbsp;&nbsp;The Fiona User Manual</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/README.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="fiona">
+<h1>Fiona<a class="headerlink" href="#fiona" title="Permalink to this headline">¶</a></h1>
+<p>Fiona is OGR&#8217;s neat, nimble, no-nonsense API for Python programmers.</p>
+<a class="reference external image-reference" href="https://travis-ci.org/Toblerity/Fiona"><img alt="https://travis-ci.org/Toblerity/Fiona.png?branch=master" src="https://travis-ci.org/Toblerity/Fiona.png?branch=master" /></a>
+<a class="reference external image-reference" href="https://coveralls.io/r/Toblerity/Fiona"><img alt="https://coveralls.io/repos/Toblerity/Fiona/badge.png" src="https://coveralls.io/repos/Toblerity/Fiona/badge.png" /></a>
+<p>Fiona is designed to be simple and dependable. It focuses on reading and
+writing data in standard Python IO style and relies upon familiar Python types
+and protocols such as files, dictionaries, mappings, and iterators instead of
+classes specific to OGR. Fiona can read and write real-world data using
+multi-layered GIS formats and zipped virtual file systems and integrates
+readily with other Python GIS packages such as <a class="reference external" href="http://pypi.python.org/pypi/pyproj/">pyproj</a>, <a class="reference external" href="http://pypi.python.org/pypi/Rtree/">Rtree</a>, and <a class="reference external" href="http://pypi.python.org/pypi/Shapely/">Shapely</a>.</p>
+<p>For more details, see:</p>
+<ul class="simple">
+<li>Fiona <a class="reference external" href="https://github.com/Toblerity/Fiona">home page</a></li>
+<li>Fiona <a class="reference external" href="http://toblerity.github.com/fiona/">docs and manual</a></li>
+<li>Fiona <a class="reference external" href="https://github.com/Toblerity/Fiona/tree/master/examples">examples</a></li>
+</ul>
+<div class="section" id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="collections">
+<h3>Collections<a class="headerlink" href="#collections" title="Permalink to this headline">¶</a></h3>
+<p>Records are read from and written to <code class="docutils literal"><span class="pre">file</span></code>-like <cite>Collection</cite> objects
+returned from the <code class="docutils literal"><span class="pre">fiona.open()</span></code> function.  Records are mappings modeled on
+the GeoJSON format. They don&#8217;t have any spatial methods of their own, so if you
+want to do anything fancy with them you will probably need Shapely or something
+like it. Here is an example of using Fiona to read some records from one data
+file, change their geometry attributes, and write them to a new data file.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">fiona</span>
+
+<span class="c"># Register format drivers with a context manager</span>
+
+<span class="k">with</span> <span class="n">fiona</span><span class="o">.</span><span class="n">drivers</span><span class="p">():</span>
+
+    <span class="c"># Open a file for reading. We&#39;ll call this the &quot;source.&quot;</span>
+
+    <span class="k">with</span> <span class="n">fiona</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s">&#39;tests/data/coutwildrnp.shp&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">source</span><span class="p">:</span>
+
+        <span class="c"># The file we&#39;ll write to, the &quot;sink&quot;, must be initialized</span>
+        <span class="c"># with a coordinate system, a format driver name, and</span>
+        <span class="c"># a record schema.  We can get initial values from the open</span>
+        <span class="c"># collection&#39;s ``meta`` property and then modify them as</span>
+        <span class="c"># desired.</span>
+
+        <span class="n">meta</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">meta</span>
+        <span class="n">meta</span><span class="p">[</span><span class="s">&#39;schema&#39;</span><span class="p">][</span><span class="s">&#39;geometry&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Point&#39;</span>
+
+        <span class="c"># Open an output file, using the same format driver and</span>
+        <span class="c"># coordinate reference system as the source. The ``meta``</span>
+        <span class="c"># mapping fills in the keyword parameters of fiona.open().</span>
+
+        <span class="k">with</span> <span class="n">fiona</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s">&#39;test_write.shp&#39;</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">meta</span><span class="p">)</span> <span class="k">as</span> <span class="n">sink</span><span class="p">:</span>
+
+            <span class="c"># Process only the records intersecting a box.</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">source</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">bbox</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">107.0</span><span class="p">,</span> <span class="mf">37.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">105.0</span><span class="p">,</span> <span class="mf">39.0</span><span class="p">)):</span>
+
+                <span class="c"># Get a point on the boundary of the record&#39;s</span>
+                <span class="c"># geometry.</span>
+
+                <span class="n">f</span><span class="p">[</span><span class="s">&#39;geometry&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s">&#39;type&#39;</span><span class="p">:</span> <span class="s">&#39;Point&#39;</span><span class="p">,</span>
+                    <span class="s">&#39;coordinates&#39;</span><span class="p">:</span> <span class="n">f</span><span class="p">[</span><span class="s">&#39;geometry&#39;</span><span class="p">][</span><span class="s">&#39;coordinates&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]}</span>
+
+                <span class="c"># Write the record out.</span>
+
+                <span class="n">sink</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+    <span class="c"># The sink&#39;s contents are flushed to disk and the file is</span>
+    <span class="c"># closed when its ``with`` block ends. This effectively</span>
+    <span class="c"># executes ``sink.flush(); sink.close()``.</span>
+
+<span class="c"># At the end of the ``with fiona.drivers()`` block, context</span>
+<span class="c"># manager exits and all drivers are de-registered.</span>
+</pre></div>
+</div>
+<p>The fiona.drivers() function and context manager are new in 1.1. The
+example above shows the way to use it to register and de-register
+drivers in a deterministic and efficient way. Code written for Fiona 1.0
+will continue to work: opened collections may manage the global driver
+registry if no other manager is present.</p>
+</div>
+<div class="section" id="reading-multilayer-data">
+<h3>Reading Multilayer data<a class="headerlink" href="#reading-multilayer-data" title="Permalink to this headline">¶</a></h3>
+<p>Collections can also be made from single layers within multilayer files or
+directories of data. The target layer is specified by name or by its integer
+index within the file or directory. The <code class="docutils literal"><span class="pre">fiona.listlayers()</span></code> function
+provides an index ordered list of layer names.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">fiona</span><span class="o">.</span><span class="n">drivers</span><span class="p">():</span>
+
+    <span class="k">for</span> <span class="n">layername</span> <span class="ow">in</span> <span class="n">fiona</span><span class="o">.</span><span class="n">listlayers</span><span class="p">(</span><span class="s">&#39;tests/data&#39;</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">fiona</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s">&#39;tests/data&#39;</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">layername</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="n">layername</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="p">))</span>
+
+<span class="c"># Output:</span>
+<span class="c"># (u&#39;coutwildrnp&#39;, 67)</span>
+</pre></div>
+</div>
+<p>Layer can also be specified by index. In this case, <code class="docutils literal"><span class="pre">layer=0</span></code> and
+<code class="docutils literal"><span class="pre">layer='test_uk'</span></code> specify the same layer in the data file or directory.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">fiona</span><span class="o">.</span><span class="n">drivers</span><span class="p">():</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">layername</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fiona</span><span class="o">.</span><span class="n">listlayers</span><span class="p">(</span><span class="s">&#39;tests/data&#39;</span><span class="p">)):</span>
+        <span class="k">with</span> <span class="n">fiona</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s">&#39;tests/data&#39;</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">i</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">layername</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="p">))</span>
+
+<span class="c"># Output:</span>
+<span class="c"># (0, u&#39;coutwildrnp&#39;, 67)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="writing-multilayer-data">
+<h3>Writing Multilayer data<a class="headerlink" href="#writing-multilayer-data" title="Permalink to this headline">¶</a></h3>
+<p>Multilayer data can be written as well. Layers must be specified by name when
+writing.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">fiona</span><span class="o">.</span><span class="n">drivers</span><span class="p">():</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s">&#39;tests/data/cowildrnp.shp&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">meta</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">fiona</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s">&#39;/tmp/foo&#39;</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="s">&#39;bar&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">meta</span><span class="p">)</span> <span class="k">as</span> <span class="n">dst</span><span class="p">:</span>
+        <span class="n">dst</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+    <span class="k">print</span><span class="p">(</span><span class="n">fiona</span><span class="o">.</span><span class="n">listlayers</span><span class="p">(</span><span class="s">&#39;/tmp/foo&#39;</span><span class="p">))</span>
+
+    <span class="k">with</span> <span class="n">fiona</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s">&#39;/tmp/foo&#39;</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="s">&#39;bar&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="p">))</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="p">[</span><span class="s">&#39;geometry&#39;</span><span class="p">][</span><span class="s">&#39;type&#39;</span><span class="p">])</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="p">[</span><span class="s">&#39;properties&#39;</span><span class="p">])</span>
+
+    <span class="c"># Output:</span>
+    <span class="c"># [u&#39;bar&#39;]</span>
+    <span class="c"># 1</span>
+    <span class="c"># Polygon</span>
+    <span class="c"># OrderedDict([(u&#39;PERIMETER&#39;, 1.22107), (u&#39;FEATURE2&#39;, None), (u&#39;NAME&#39;, u&#39;Mount Naomi Wilderness&#39;), (u&#39;FEATURE1&#39;, u&#39;Wilderness&#39;), (u&#39;URL&#39;, u&#39;http://www.wilderness.net/index.cfm?fuse=NWPS&amp;sec=wildView&amp;wname=Mount%20Naomi&#39;), (u&#39;AGBUR&#39;, u&#39;FS&#39;), (u&#39;AREA&#39;, 0.0179264), (u&#39;STATE_FIPS&#39;, u&#39;49&#39;), (u&#39;WILDRNP020&#39;, 332), (u&#39;STATE&#39;, u&#39;UT&#39;)])</span>
+</pre></div>
+</div>
+<p>A view of the /tmp/foo directory will confirm the creation of the new files.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> ls /tmp/foo
+<span class="go">bar.cpg bar.dbf bar.prj bar.shp bar.shx</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="collections-from-archives-and-virtual-file-systems">
+<h3>Collections from archives and virtual file systems<a class="headerlink" href="#collections-from-archives-and-virtual-file-systems" title="Permalink to this headline">¶</a></h3>
+<p>Zip and Tar archives can be treated as virtual filesystems and Collections can
+be made from paths and layers within them. In other words, Fiona lets you read
+and write zipped Shapefiles.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">fiona</span><span class="o">.</span><span class="n">drivers</span><span class="p">():</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">layername</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+            <span class="n">fiona</span><span class="o">.</span><span class="n">listlayers</span><span class="p">(</span>
+                <span class="s">&#39;/&#39;</span><span class="p">,</span>
+                <span class="n">vfs</span><span class="o">=</span><span class="s">&#39;zip://tests/data/coutwildrnp.zip&#39;</span><span class="p">)):</span>
+        <span class="k">with</span> <span class="n">fiona</span><span class="o">.</span><span class="n">open</span><span class="p">(</span>
+                <span class="s">&#39;/&#39;</span><span class="p">,</span>
+                <span class="n">vfs</span><span class="o">=</span><span class="s">&#39;zip://tests/data/coutwildrnp.zip&#39;</span><span class="p">,</span>
+                <span class="n">layer</span><span class="o">=</span><span class="n">i</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">layername</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="p">))</span>
+
+<span class="c"># Output:</span>
+<span class="c"># (0, u&#39;coutwildrnp&#39;, 67)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="fiona-cli">
+<h2>Fiona CLI<a class="headerlink" href="#fiona-cli" title="Permalink to this headline">¶</a></h2>
+<p>Fiona&#8217;s command line interface, named &#8220;fio&#8221;, is documented at <a class="reference external" href="https://github.com/Toblerity/Fiona/blob/master/docs/cli.rst">docs/cli.rst</a>. Its <code class="docutils literal"><span class="pre">fio</span>
+<span class="pre">info</span></code> pretty prints information about a data file.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> fio info --indent <span class="m">2</span> tests/data/coutwildrnp.shp
+<span class="go">{</span>
+<span class="go">  &quot;count&quot;: 67,</span>
+<span class="go">  &quot;crs&quot;: &quot;EPSG:4326&quot;,</span>
+<span class="go">  &quot;driver&quot;: &quot;ESRI Shapefile&quot;,</span>
+<span class="go">  &quot;bounds&quot;: [</span>
+<span class="go">    -113.56424713134766,</span>
+<span class="go">    37.0689811706543,</span>
+<span class="go">    -104.97087097167969,</span>
+<span class="go">    41.99627685546875</span>
+<span class="go">  ],</span>
+<span class="go">  &quot;schema&quot;: {</span>
+<span class="go">    &quot;geometry&quot;: &quot;Polygon&quot;,</span>
+<span class="go">    &quot;properties&quot;: {</span>
+<span class="go">      &quot;PERIMETER&quot;: &quot;float:24.15&quot;,</span>
+<span class="go">      &quot;FEATURE2&quot;: &quot;str:80&quot;,</span>
+<span class="go">      &quot;NAME&quot;: &quot;str:80&quot;,</span>
+<span class="go">      &quot;FEATURE1&quot;: &quot;str:80&quot;,</span>
+<span class="go">      &quot;URL&quot;: &quot;str:101&quot;,</span>
+<span class="go">      &quot;AGBUR&quot;: &quot;str:80&quot;,</span>
+<span class="go">      &quot;AREA&quot;: &quot;float:24.15&quot;,</span>
+<span class="go">      &quot;STATE_FIPS&quot;: &quot;str:80&quot;,</span>
+<span class="go">      &quot;WILDRNP020&quot;: &quot;int:10&quot;,</span>
+<span class="go">      &quot;STATE&quot;: &quot;str:80&quot;</span>
+<span class="go">    }</span>
+<span class="go">  }</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>Fiona requires Python 2.6, 2.7, 3.3, or 3.4 and GDAL/OGR 1.8+. To build from
+a source distribution you will need a C compiler and GDAL and Python
+development headers and libraries (libgdal1-dev for Debian/Ubuntu, gdal-dev for
+CentOS/Fedora).</p>
+<p>To build from a repository copy, you will also need Cython to build C sources
+from the project&#8217;s .pyx files. See the project&#8217;s requirements-dev.txt file for
+guidance.</p>
+<p>The <a class="reference external" href="http://www.kyngchaos.com/software/frameworks#gdal_complete">Kyngchaos GDAL frameworks</a> will satisfy
+the GDAL/OGR dependency for OS X, as will Homebrew&#8217;s GDAL Formula (<code class="docutils literal"><span class="pre">brew</span> <span class="pre">install</span>
+<span class="pre">gdal</span></code>).</p>
+<div class="section" id="python-requirements">
+<h3>Python Requirements<a class="headerlink" href="#python-requirements" title="Permalink to this headline">¶</a></h3>
+<p>Fiona depends on the modules <code class="docutils literal"><span class="pre">six</span></code>, <code class="docutils literal"><span class="pre">cligj</span></code>,  <code class="docutils literal"><span class="pre">munch</span></code>, <code class="docutils literal"><span class="pre">argparse</span></code>, and
+<code class="docutils literal"><span class="pre">ordereddict</span></code> (the two latter modules are standard in Python 2.7+). Pip will
+fetch these requirements for you, but users installing Fiona from a Windows
+installer must get them separately.</p>
+</div>
+<div class="section" id="unix-like-systems">
+<h3>Unix-like systems<a class="headerlink" href="#unix-like-systems" title="Permalink to this headline">¶</a></h3>
+<p>Assuming you&#8217;re using a virtualenv (if not, skip to the 4th command) and
+GDAL/OGR libraries, headers, and <a class="reference external" href="http://www.gdal.org/gdal-config.html">gdal-config</a> program are installed to well
+known locations on your system via your system&#8217;s package manager (<code class="docutils literal"><span class="pre">brew</span>
+<span class="pre">install</span> <span class="pre">gdal</span></code> using Homebrew on OS X), installation is this simple.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> mkdir fiona_env
+<span class="gp">$</span> virtualenv fiona_env
+<span class="gp">$</span> <span class="nb">source </span>fiona_env/bin/activate
+<span class="gp">(fiona_env)$</span> pip install fiona
+</pre></div>
+</div>
+<p>If gdal-config is not available or if GDAL/OGR headers and libs aren&#8217;t
+installed to a well known location, you must set include dirs, library dirs,
+and libraries options via the setup.cfg file or setup command line as shown
+below (using <code class="docutils literal"><span class="pre">git</span></code>). You must also specify the major version of the GDAL API
+(1 or 2) on the setup command line.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">(fiona_env)$</span> git clone git://github.com/Toblerity/Fiona.git
+<span class="gp">(fiona_env)$</span> <span class="nb">cd </span>Fiona
+<span class="gp">(fiona_env)$</span> python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal install --gdalversion 1
+</pre></div>
+</div>
+<p>Or specify that build options and GDAL API version should be provided by a
+particular gdal-config program.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">(fiona_env)$</span> <span class="nv">GDAL_CONFIG</span><span class="o">=</span>/path/to/gdal-config pip install fiona
+</pre></div>
+</div>
+</div>
+<div class="section" id="windows">
+<h3>Windows<a class="headerlink" href="#windows" title="Permalink to this headline">¶</a></h3>
+<p>Binary installers are available at
+<a class="reference external" href="http://www.lfd.uci.edu/~gohlke/pythonlibs/#fiona">http://www.lfd.uci.edu/~gohlke/pythonlibs/#fiona</a> and coming eventually to PyPI.</p>
+<p>You can download a binary distribution of GDAL from <a class="reference external" href="http://www.gisinternals.com/release.php">here</a>.  You will also need to download
+the compiled libraries and headers (include files).</p>
+<p>When building from source on Windows, it is important to know that setup.py
+cannot rely on gdal-config, which is only present on UNIX systems, to discover
+the locations of header files and libraries that Fiona needs to compile its
+C extensions. On Windows, these paths need to be provided by the user.
+You will need to find the include files and the library files for gdal and
+use setup.py as follows. You must also specify the major version of the GDAL
+API (1 or 2) on the setup command line.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> python setup.py build_ext -I&lt;path to gdal include files&gt; -lgdal_i -L&lt;path to gdal library&gt; install --gdalversion 1
+</pre></div>
+</div>
+<p>Note: The GDAL dll (gdal111.dll) and gdal-data directory need to be in your
+Windows PATH otherwise Fiona will fail to work.</p>
+</div>
+</div>
+<div class="section" id="development-and-testing">
+<h2>Development and testing<a class="headerlink" href="#development-and-testing" title="Permalink to this headline">¶</a></h2>
+<p>Building from the source requires Cython. Tests require Nose. If the GDAL/OGR
+libraries, headers, and <a class="reference external" href="http://www.gdal.org/gdal-config.html">gdal-config</a> program are installed to well known
+locations on your system (via your system&#8217;s package manager), you can do this:</p>
+<div class="highlight-default"><div class="highlight"><pre>(fiona_env)$ git clone git://github.com/Toblerity/Fiona.git
+(fiona_env)$ cd Fiona
+(fiona_env)$ pip install cython
+(fiona_env)$ pip install -e .[test]
+(fiona_env)$ nosetests
+</pre></div>
+</div>
+<p>Or you can use the <code class="docutils literal"><span class="pre">pep-518-install</span></code> script:</p>
+<div class="highlight-default"><div class="highlight"><pre>(fiona_env)$ git clone git://github.com/Toblerity/Fiona.git
+(fiona_env)$ cd Fiona
+(fiona_env)$ ./pep-518-install
+</pre></div>
+</div>
+<p>If you have a non-standard environment, you&#8217;ll need to specify the include and
+lib dirs and GDAL library on the command line:</p>
+<div class="highlight-default"><div class="highlight"><pre>(fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal --gdalversion 2 develop
+(fiona_env)$ nosetests
+</pre></div>
+</div>
+</div>
+<div class="section" id="changes">
+<h2>Changes<a class="headerlink" href="#changes" title="Permalink to this headline">¶</a></h2>
+<p>All issue numbers are relative to <a class="reference external" href="https://github.com/Toblerity/Fiona/issues">https://github.com/Toblerity/Fiona/issues</a>.</p>
+<div class="section" id="post2-2016-06-15">
+<h3>1.7.0post2 (2016-06-15)<a class="headerlink" href="#post2-2016-06-15" title="Permalink to this headline">¶</a></h3>
+<p>Packaging: define extension modules for &#8216;clean&#8217; and &#8216;config&#8217; targets (#363).</p>
+</div>
+<div class="section" id="post1-2016-06-15">
+<h3>1.7.0post1 (2016-06-15)<a class="headerlink" href="#post1-2016-06-15" title="Permalink to this headline">¶</a></h3>
+<p>Packaging: No files are copied for the &#8216;clean&#8217; setup target (#361, #362).</p>
+</div>
+<div class="section" id="id1">
+<h3>1.7.0 (2016-06-14)<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>The C extension modules in this library can now be built and used with either
+a 1.x or 2.x release of the GDAL library. Big thanks to René Buffat for
+leading this effort.</p>
+<p>Refactoring:</p>
+<ul class="simple">
+<li>The <cite>ogrext1.pyx</cite> and <cite>ogrext2.pyx</cite> files now use separate
+C APIs defined in <cite>ogrext1.pxd</cite> and <cite>ogrex2.pxd</cite>. The other extension
+modules have been refactored so that they do not depend on either of these
+modules and use subsets of the GDAL/OGR API compatible with both GDAL 1.x and
+2.x (#359).</li>
+</ul>
+<p>Packaging:</p>
+<ul class="simple">
+<li>Source distributions now contain two different sources for the
+<cite>ogrext</cite> extension module. The <cite>ogrext1.c</cite> file will be used with GDAL 1.x
+and the <cite>ogrext2.c</cite> file will be used with GDAL 2.x.</li>
+</ul>
+</div>
+<div class="section" id="b2-2016-06-13">
+<h3>1.7b2 (2016-06-13)<a class="headerlink" href="#b2-2016-06-13" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>New feature: enhancement of the <cite>&#8211;layer</cite> option for fio-cat and fio-dump
+to allow separate layers of one or more multi-layer input files to be
+selected (#349).</li>
+</ul>
+</div>
+<div class="section" id="b1-2016-06-10">
+<h3>1.7b1 (2016-06-10)<a class="headerlink" href="#b1-2016-06-10" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>New feature: support for GDAL version 2+ (#259).</li>
+<li>New feature: a new fio-calc CLI command (#273).</li>
+<li>New feature: <cite>&#8211;layer</cite> options for fio-info (#316) and fio-load (#299).</li>
+<li>New feature: a <cite>&#8211;no-parse</cite> option for fio-collect that lets a careful user
+avoid extra JSON serialization and deserialization (#306).</li>
+<li>Bug fix: <cite>+wktext</cite> is now preserved when serializing CRS from WKT to PROJ.4
+dicts (#352).</li>
+<li>Bug fix: a small memory leak when opening a collection has been fixed (#337).</li>
+<li>Bug fix: internal unicode errors now result in a log message and a
+<cite>UnicodeError</cite> exception, not a <cite>TypeError</cite> (#356).</li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h3>1.6.4 (2016-05-06)<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Raise ImportError if the active GDAL library version is &gt;= 2.0 instead of
+failing unpredictably (#338, #341). Support for GDAL&gt;=2.0 is coming in
+Fiona 1.7.</li>
+</ul>
+</div>
+<div class="section" id="post1-2016-03-27">
+<h3>1.6.3.post1 (2016-03-27)<a class="headerlink" href="#post1-2016-03-27" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>No changes to the library in this post-release version, but there is a
+significant change to the distributions on PyPI: to help make Fiona more
+compatible with Shapely on OS X, the GDAL shared library included in the
+macosx (only) binary wheels now statically links the GEOS library. See
+<a class="reference external" href="https://github.com/sgillies/frs-wheel-builds/issues/5">https://github.com/sgillies/frs-wheel-builds/issues/5</a>.</li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h3>1.6.3 (2015-12-22)<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Daytime has been decreasing in the Northern Hemisphere, but is now
+increasing again as it should.</li>
+<li>Non-UTF strings were being passed into OGR functions in some situations
+and on Windows this would sometimes crash a Python process (#303). Fiona
+now raises errors derived from UnicodeError when field names or field
+values can&#8217;t be encoded.</li>
+</ul>
+</div>
+<div class="section" id="id4">
+<h3>1.6.2 (2015-09-22)<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Providing only PROJ4 representations in the dataset meta property resulted in
+loss of CRS information when using the <cite>fiona.open(..., **src.meta) as dst</cite>
+pattern (#265). This bug has been addressed by adding a crs_wkt item to the`
+meta property and extending the <cite>fiona.open()</cite> and the collection constructor
+to look for and prioritize this keyword argument.</li>
+</ul>
+</div>
+<div class="section" id="id5">
+<h3>1.6.1 (2015-08-12)<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Bug fix: Fiona now deserializes JSON-encoded string properties provided by
+the OGR GeoJSON driver (#244, #245, #246).</li>
+<li>Bug fix: proj4 data was not copied properly into binary distributions due to
+a typo (#254).</li>
+</ul>
+<p>Special thanks to WFMU DJ Liz Berg for the awesome playlist that&#8217;s fueling my
+release sprint. Check it out at <a class="reference external" href="http://wfmu.org/playlists/shows/62083">http://wfmu.org/playlists/shows/62083</a>. You
+can&#8217;t unhear Love Coffin.</p>
+</div>
+<div class="section" id="id6">
+<h3>1.6.0 (2015-07-21)<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Upgrade Cython requirement to 0.22 (#214).</li>
+<li>New BytesCollection class (#215).</li>
+<li>Add GDAL&#8217;s OpenFileGDB driver to registered drivers (#221).</li>
+<li>Implement CLI commands as plugins (#228).</li>
+<li>Raise click.abort instead of calling sys.exit, preventing suprising exits
+(#236).</li>
+</ul>
+</div>
+<div class="section" id="id7">
+<h3>1.5.1 (2015-03-19)<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Restore test data to sdists by fixing MANIFEST.in (#216).</li>
+</ul>
+</div>
+<div class="section" id="id8">
+<h3>1.5.0 (2015-02-02)<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Finalize GeoJSON feature sequence options (#174).</li>
+<li>Fix for reading of datasets that don&#8217;t support feature counting (#190).</li>
+<li>New test dataset (#188).</li>
+<li>Fix for encoding error (#191).</li>
+<li>Remove confusing warning (#195).</li>
+<li>Add data files for binary wheels (#196).</li>
+<li>Add control over drivers enabled when reading datasets (#203).</li>
+<li>Use cligj for CLI options involving GeoJSON (#204).</li>
+<li>Fix fio-info &#8211;bounds help (#206).</li>
+</ul>
+</div>
+<div class="section" id="id9">
+<h3>1.4.8 (2014-11-02)<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Add missing crs_wkt property as in Rasterio (#182).</li>
+</ul>
+</div>
+<div class="section" id="id10">
+<h3>1.4.7 (2014-10-28)<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Fix setting of CRS from EPSG codes (#149).</li>
+</ul>
+</div>
+<div class="section" id="id11">
+<h3>1.4.6 (2014-10-21)<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Handle 3D coordinates in bounds() #178.</li>
+</ul>
+</div>
+<div class="section" id="id12">
+<h3>1.4.5 (2014-10-18)<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Add &#8211;bbox option to fio-cat (#163).</li>
+<li>Skip geopackage tests if run from an sdist (#167).</li>
+<li>Add fio-bounds and fio-distrib.</li>
+<li>Restore fio-dump to working order.</li>
+</ul>
+</div>
+<div class="section" id="id13">
+<h3>1.4.4 (2014-10-13)<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Fix accidental requirement on GDAL 1.11 introduced in 1.4.3 (#164).</li>
+</ul>
+</div>
+<div class="section" id="id14">
+<h3>1.4.3 (2014-10-10)<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Add support for geopackage format (#160).</li>
+<li>Add -f and &#8211;format aliases for &#8211;driver in CLI (#162).</li>
+<li>Add &#8211;version option and env command to CLI.</li>
+</ul>
+</div>
+<div class="section" id="id15">
+<h3>1.4.2 (2014-10-03)<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>&#8211;dst-crs and &#8211;src-crs options for fio cat and collect (#159).</li>
+</ul>
+</div>
+<div class="section" id="id16">
+<h3>1.4.1 (2014-09-30)<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Fix encoding bug in collection&#8217;s __getitem__ (#153).</li>
+</ul>
+</div>
+<div class="section" id="id17">
+<h3>1.4.0 (2014-09-22)<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Add fio cat and fio collect commands (#150).</li>
+<li>Return of Python 2.6 compatibility (#148).</li>
+<li>Improved CRS support (#149).</li>
+</ul>
+</div>
+<div class="section" id="id18">
+<h3>1.3.0 (2014-09-17)<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Add single metadata item accessors to fio inf (#142).</li>
+<li>Move fio to setuptools entry point (#142).</li>
+<li>Add fio dump and load commands (#143).</li>
+<li>Remove fio translate command.</li>
+</ul>
+</div>
+<div class="section" id="id19">
+<h3>1.2.0 (2014-09-02)<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Always show property width and precision in schema (#123).</li>
+<li>Write datetime properties of features (#125).</li>
+<li>Reset spatial filtering in filter() (#129).</li>
+<li>Accept datetime.date objects as feature properties (#130).</li>
+<li>Add slicing to collection iterators (#132).</li>
+<li>Add geometry object masks to collection iterators (#136).</li>
+<li>Change source layout to match Shapely and Rasterio (#138).</li>
+</ul>
+</div>
+<div class="section" id="id20">
+<h3>1.1.6 (2014-07-23)<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Implement Collection __getitem__() (#112).</li>
+<li>Leave GDAL finalization to the DLL&#8217;s destructor (#113).</li>
+<li>Add Collection keys(), values(), items(), __contains__() (#114).</li>
+<li>CRS bug fix (#116).</li>
+<li>Add fio CLI program.</li>
+</ul>
+</div>
+<div class="section" id="id21">
+<h3>1.1.5 (2014-05-21)<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Addition of cpl_errs context manager (#108).</li>
+<li>Check for NULLs with &#8216;==&#8217; test instead of &#8216;is&#8217; (#109).</li>
+<li>Open auxiliary files with encoding=&#8217;utf-8&#8217; in setup for Python 3 (#110).</li>
+</ul>
+</div>
+<div class="section" id="id22">
+<h3>1.1.4 (2014-04-03)<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Convert &#8216;long&#8217; in schemas to &#8216;int&#8217; (#101).</li>
+<li>Carefully map Python schema to the possibly munged internal schema (#105).</li>
+<li>Allow writing of features with geometry: None (#71).</li>
+</ul>
+</div>
+<div class="section" id="id23">
+<h3>1.1.3 (2014-03-23)<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Always register all GDAL and OGR drivers when entering the DriverManager
+context (#80, #92).</li>
+<li>Skip unsupported field types with a warning (#91).</li>
+<li>Allow OGR config options to be passed to fiona.drivers() (#90, #93).</li>
+<li>Add a bounds() function (#100).</li>
+<li>Turn on GPX driver.</li>
+</ul>
+</div>
+<div class="section" id="id24">
+<h3>1.1.2 (2014-02-14)<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Remove collection slice left in dumpgj (#88).</li>
+</ul>
+</div>
+<div class="section" id="id25">
+<h3>1.1.1 (2014-02-02)<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Add an interactive file inspector like the one in rasterio.</li>
+<li>CRS to_string bug fix (#83).</li>
+</ul>
+</div>
+<div class="section" id="id26">
+<h3>1.1 (2014-01-22)<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Use a context manager to manage drivers (#78), a backwards compatible but
+big change. Fiona is now compatible with rasterio and plays better with the
+osgeo package.</li>
+</ul>
+</div>
+<div class="section" id="id27">
+<h3>1.0.3 (2014-01-21)<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Fix serialization of +init projections (#69).</li>
+</ul>
+</div>
+<div class="section" id="id28">
+<h3>1.0.2 (2013-09-09)<a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Smarter, better test setup (#65, #66, #67).</li>
+<li>Add type=&#8217;Feature&#8217; to records read from a Collection (#68).</li>
+<li>Skip geometry validation when using GeoJSON driver (#61).</li>
+<li>Dumpgj file description reports record properties as a list (as in
+dict.items()) instead of a dict.</li>
+</ul>
+</div>
+<div class="section" id="id29">
+<h3>1.0.1 (2013-08-16)<a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Allow ordering of written fields and preservation of field order when
+reading (#57).</li>
+</ul>
+</div>
+<div class="section" id="id30">
+<h3>1.0 (2013-07-30)<a class="headerlink" href="#id30" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Add prop_type() function.</li>
+<li>Allow UTF-8 encoded paths for Python 2 (#51). For Python 3, paths must
+always be str, never bytes.</li>
+<li>Remove encoding from collection.meta, it&#8217;s a file creation option only.</li>
+<li>Support for linking GDAL frameworks (#54).</li>
+</ul>
+</div>
+<div class="section" id="id31">
+<h3>0.16.1 (2013-07-02)<a class="headerlink" href="#id31" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Add listlayers, open, prop_width to __init__py:__all__.</li>
+<li>Reset reading of OGR layer whenever we ask for a collection iterator (#49).</li>
+</ul>
+</div>
+<div class="section" id="id32">
+<h3>0.16 (2013-06-24)<a class="headerlink" href="#id32" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Add support for writing layers to multi-layer files.</li>
+<li>Add tests to reach 100% Python code coverage.</li>
+</ul>
+</div>
+<div class="section" id="id33">
+<h3>0.15 (2013-06-06)<a class="headerlink" href="#id33" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Get and set numeric field widths (#42).</li>
+<li>Add support for multi-layer data sources (#17).</li>
+<li>Add support for zip and tar virtual filesystems (#45).</li>
+<li>Add listlayers() function.</li>
+<li>Add GeoJSON to list of supported formats (#47).</li>
+<li>Allow selection of layers by index or name.</li>
+</ul>
+</div>
+<div class="section" id="id34">
+<h3>0.14 (2013-05-04)<a class="headerlink" href="#id34" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Add option to add JSON-LD in the dumpgj program.</li>
+<li>Compare values to six.string_types in Collection constructor.</li>
+<li>Add encoding to Collection.meta.</li>
+<li>Document dumpgj in README.</li>
+</ul>
+</div>
+<div class="section" id="id35">
+<h3>0.13 (2013-04-30)<a class="headerlink" href="#id35" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Python 2/3 compatibility in a single package. Pythons 2.6, 2.7, 3.3 now supported.</li>
+</ul>
+</div>
+<div class="section" id="id36">
+<h3>0.12.1 (2013-04-16)<a class="headerlink" href="#id36" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Fix messed up linking of README in sdist (#39).</li>
+</ul>
+</div>
+<div class="section" id="id37">
+<h3>0.12 (2013-04-15)<a class="headerlink" href="#id37" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Fix broken installation of extension modules (#35).</li>
+<li>Log CPL errors at their matching Python log levels.</li>
+<li>Use upper case for encoding names within OGR, lower case in Python.</li>
+</ul>
+</div>
+<div class="section" id="id38">
+<h3>0.11 (2013-04-14)<a class="headerlink" href="#id38" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Cythonize .pyx files (#34).</li>
+<li>Work with or around OGR&#8217;s internal recoding of record data (#35).</li>
+<li>Fix bug in serialization of int/float PROJ.4 params.</li>
+</ul>
+</div>
+<div class="section" id="id39">
+<h3>0.10 (2013-03-23)<a class="headerlink" href="#id39" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Add function to get the width of str type properties.</li>
+<li>Handle validation and schema representation of 3D geometry types (#29).</li>
+<li>Return {&#8216;geometry&#8217;: None} in the case of a NULL geometry (#31).</li>
+</ul>
+</div>
+<div class="section" id="id40">
+<h3>0.9.1 (2013-03-07)<a class="headerlink" href="#id40" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Silence the logger in ogrext.so (can be overridden).</li>
+<li>Allow user specification of record field encoding (like &#8216;Windows-1252&#8217; for
+Natural Earth shapefiles) to help when OGR can&#8217;t detect it.</li>
+</ul>
+</div>
+<div class="section" id="id41">
+<h3>0.9 (2013-03-06)<a class="headerlink" href="#id41" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Accessing file metadata (crs, schema, bounds) on never inspected closed files
+returns None without exceptions.</li>
+<li>Add a dict of supported_drivers and their supported modes.</li>
+<li>Raise ValueError for unsupported drivers and modes.</li>
+<li>Remove asserts from ogrext.pyx.</li>
+<li>Add validate_record method to collections.</li>
+<li>Add helpful coordinate system functions to fiona.crs.</li>
+<li>Promote use of fiona.open over fiona.collection.</li>
+<li>Handle Shapefile&#8217;s mix of LineString/Polygon and multis (#18).</li>
+<li>Allow users to specify width of shapefile text fields (#20).</li>
+</ul>
+</div>
+<div class="section" id="id42">
+<h3>0.8 (2012-02-21)<a class="headerlink" href="#id42" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Replaced .opened attribute with .closed (product of collection() is always
+opened). Also a __del__() which will close a Collection, but still not to be
+depended upon.</li>
+<li>Added writerecords method.</li>
+<li>Added a record buffer and better counting of records in a collection.</li>
+<li>Manage one iterator per collection/session.</li>
+<li>Added a read-only bounds property.</li>
+</ul>
+</div>
+<div class="section" id="id43">
+<h3>0.7 (2012-01-29)<a class="headerlink" href="#id43" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Initial timezone-naive support for date, time, and datetime fields. Don&#8217;t use
+these field types if you can avoid them. RFC 3339 datetimes in a string field
+are much better.</li>
+</ul>
+</div>
+<div class="section" id="id44">
+<h3>0.6.2 (2012-01-10)<a class="headerlink" href="#id44" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Diagnose and set the driver property of collection in read mode.</li>
+<li>Fail if collection paths are not to files. Multi-collection workspaces are
+a (maybe) TODO.</li>
+</ul>
+</div>
+<div class="section" id="id45">
+<h3>0.6.1 (2012-01-06)<a class="headerlink" href="#id45" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Handle the case of undefined crs for disk collections.</li>
+</ul>
+</div>
+<div class="section" id="id46">
+<h3>0.6 (2012-01-05)<a class="headerlink" href="#id46" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Support for collection coordinate reference systems based on Proj4.</li>
+<li>Redirect OGR warnings and errors to the Fiona log.</li>
+<li>Assert that pointers returned from the ograpi functions are not NULL before
+using.</li>
+</ul>
+</div>
+<div class="section" id="id47">
+<h3>0.5 (2011-12-19)<a class="headerlink" href="#id47" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Support for reading and writing collections of any geometry type.</li>
+<li>Feature and Geometry classes replaced by mappings (dicts).</li>
+<li>Removal of Workspace class.</li>
+</ul>
+</div>
+<div class="section" id="id48">
+<h3>0.2 (2011-09-16)<a class="headerlink" href="#id48" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Rename WorldMill to Fiona.</li>
+</ul>
+</div>
+<div class="section" id="id49">
+<h3>0.1.1 (2008-12-04)<a class="headerlink" href="#id49" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Support for features with no geometry.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="credits">
+<h2>Credits<a class="headerlink" href="#credits" title="Permalink to this headline">¶</a></h2>
+<p>Fiona is written by:</p>
+<ul class="simple">
+<li>Sean Gillies &lt;<a class="reference external" href="mailto:sean&#46;gillies&#37;&#52;&#48;gmail&#46;com">sean<span>&#46;</span>gillies<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</li>
+<li>Rene Buffat &lt;<a class="reference external" href="mailto:buffat&#37;&#52;&#48;gmail&#46;com">buffat<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</li>
+<li>Kevin Wurster &lt;<a class="reference external" href="mailto:wursterk&#37;&#52;&#48;gmail&#46;com">wursterk<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</li>
+<li>Matthew Perry &lt;<a class="reference external" href="mailto:perrygeo&#37;&#52;&#48;gmail&#46;com">perrygeo<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</li>
+<li>Joshua Arnott &lt;<a class="reference external" href="mailto:josh&#37;&#52;&#48;snorfalorpagus&#46;net">josh<span>&#64;</span>snorfalorpagus<span>&#46;</span>net</a>&gt;</li>
+<li>Kelsey Jordahl &lt;<a class="reference external" href="mailto:kjordahl&#37;&#52;&#48;enthought&#46;com">kjordahl<span>&#64;</span>enthought<span>&#46;</span>com</a>&gt;</li>
+<li>Micah Cochran &lt;<a class="reference external" href="mailto:micah&#37;&#52;&#48;micahcochran&#46;net">micah<span>&#64;</span>micahcochran<span>&#46;</span>net</a>&gt;</li>
+<li>Simon Norris &lt;<a class="reference external" href="mailto:snorris&#37;&#52;&#48;hillcrestgeo&#46;ca">snorris<span>&#64;</span>hillcrestgeo<span>&#46;</span>ca</a>&gt;</li>
+<li>Patrick Young &lt;<a class="reference external" href="mailto:patrick&#46;mckendree&#46;young&#37;&#52;&#48;gmail&#46;com">patrick<span>&#46;</span>mckendree<span>&#46;</span>young<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</li>
+<li>Hannes Gräuler &lt;<a class="reference external" href="mailto:graeuler&#37;&#52;&#48;geoplex&#46;de">graeuler<span>&#64;</span>geoplex<span>&#46;</span>de</a>&gt;</li>
+<li>Johan Van de Wauw &lt;<a class="reference external" href="mailto:johan&#46;vandewauw&#37;&#52;&#48;gmail&#46;com">johan<span>&#46;</span>vandewauw<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</li>
+<li>Michael Weisman &lt;<a class="reference external" href="mailto:mweisman&#37;&#52;&#48;gmail&#46;com">mweisman<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</li>
+<li>Ryan Grout &lt;<a class="reference external" href="mailto:rgrout&#37;&#52;&#48;continuum&#46;io">rgrout<span>&#64;</span>continuum<span>&#46;</span>io</a>&gt;</li>
+<li>Jacob Wasserman &lt;<a class="reference external" href="mailto:jwasserman&#37;&#52;&#48;gmail&#46;com">jwasserman<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</li>
+<li>Miro Hrončok &lt;<a class="reference external" href="mailto:miro&#37;&#52;&#48;hroncok&#46;cz">miro<span>&#64;</span>hroncok<span>&#46;</span>cz</a>&gt;</li>
+<li>Michele Citterio &lt;<a class="reference external" href="mailto:michele&#37;&#52;&#48;citterio&#46;net">michele<span>&#64;</span>citterio<span>&#46;</span>net</a>&gt;</li>
+<li>Brendan Ward &lt;<a class="reference external" href="mailto:bcward&#37;&#52;&#48;consbio&#46;org">bcward<span>&#64;</span>consbio<span>&#46;</span>org</a>&gt;</li>
+<li>fredj &lt;<a class="reference external" href="mailto:frederic&#46;junod&#37;&#52;&#48;camptocamp&#46;com">frederic<span>&#46;</span>junod<span>&#64;</span>camptocamp<span>&#46;</span>com</a>&gt;</li>
+<li>wilsaj &lt;<a class="reference external" href="mailto:wilson&#46;andrew&#46;j+github&#37;&#52;&#48;gmail&#46;com">wilson<span>&#46;</span>andrew<span>&#46;</span>j+github<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</li>
+<li>Bas Couwenberg &lt;<a class="reference external" href="mailto:sebastic&#37;&#52;&#48;xs4all&#46;nl">sebastic<span>&#64;</span>xs4all<span>&#46;</span>nl</a>&gt;</li>
+<li>Brandon Liu &lt;<a class="reference external" href="mailto:bdon&#37;&#52;&#48;bdon&#46;org">bdon<span>&#64;</span>bdon<span>&#46;</span>org</a>&gt;</li>
+<li>Hannes Gräuler &lt;<a class="reference external" href="mailto:hgraeule&#37;&#52;&#48;uos&#46;de">hgraeule<span>&#64;</span>uos<span>&#46;</span>de</a>&gt;</li>
+<li>Ludovic Delauné &lt;<a class="reference external" href="mailto:ludotux&#37;&#52;&#48;gmail&#46;com">ludotux<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</li>
+<li>Martijn Visser &lt;<a class="reference external" href="mailto:mgvisser&#37;&#52;&#48;gmail&#46;com">mgvisser<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</li>
+<li>Oliver Tonnhofer &lt;<a class="reference external" href="mailto:olt&#37;&#52;&#48;bogosoft&#46;com">olt<span>&#64;</span>bogosoft<span>&#46;</span>com</a>&gt;</li>
+<li>Stefano Costa &lt;<a class="reference external" href="mailto:steko&#37;&#52;&#48;iosa&#46;it">steko<span>&#64;</span>iosa<span>&#46;</span>it</a>&gt;</li>
+<li>dimlev &lt;<a class="reference external" href="mailto:dimlev&#37;&#52;&#48;gmail&#46;com">dimlev<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</li>
+<li>Ariel Nunez &lt;<a class="reference external" href="mailto:ingenieroariel&#37;&#52;&#48;gmail&#46;com">ingenieroariel<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</li>
+</ul>
+<p>Fiona would not be possible without the great work of Frank Warmerdam and other
+GDAL/OGR developers.</p>
+<p>Some portions of this work were supported by a grant (for <a class="reference external" href="http://pleiades.stoa.org">Pleiades</a>) from the
+U.S. National Endowment for the Humanities (<a class="reference external" href="http://www.neh.gov">http://www.neh.gov</a>).</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="manual.html" title="1   The Fiona User Manual"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Fiona Documentation Contents"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Fiona 1.7.0.post2 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2011, Sean Gillies.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>
