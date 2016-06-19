@@ -11,6 +11,9 @@ import fiona
 @click.command(short_help="Print information about the fio environment.")
 @click.option('--formats', 'key', flag_value='formats', default=True,
               help="Enumerate the available formats.")
+@click.option('--gdalversion', 'key', flag_value='gdalversion',
+              help="Print GDAL Version")
+
 @click.pass_context
 def env(ctx, key):
 
@@ -27,3 +30,5 @@ def env(ctx, key):
                 modes = ', '.join("'" + m + "'" for m in v)
                 stdout.write("%s (modes %s)\n" % (k, modes))
             stdout.write('\n')
+        if key == 'gdalversion':
+            click.echo("GDAL Version is {0}".format(fiona.__gdal_version__))
