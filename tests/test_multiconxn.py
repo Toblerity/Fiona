@@ -6,7 +6,7 @@ import tempfile
 import unittest
 
 import fiona
-from fiona.odict import OrderedDict
+from fiona.compat import OrderedDict
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 

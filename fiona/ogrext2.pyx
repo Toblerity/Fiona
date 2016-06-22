@@ -1,7 +1,6 @@
 # These are extension functions and classes using the OGR C API.
 
 
-import collections
 import datetime
 import json
 import locale
@@ -17,8 +16,9 @@ cimport ogrext2
 from _geometry cimport GeomBuilder, OGRGeomBuilder
 from fiona._err import cpl_errs
 from fiona._geometry import GEOMETRY_TYPES
+from fiona import compat
 from fiona.errors import DriverError, SchemaError, CRSError, FionaValueError
-from fiona.odict import OrderedDict
+from fiona.compat import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 
@@ -856,7 +856,7 @@ cdef class WritingSession(Session):
                     proj_b = col_crs.encode('utf-8')
                     proj_c = proj_b
                     ogrext2.OSRSetFromUserInput(cogr_srs, proj_c)
-                elif isinstance(col_crs, dict):
+                elif isinstance(col_crs, compat.DICT_TYPES):
                     # EPSG is a special case.
                     init = col_crs.get('init')
                     if init:
