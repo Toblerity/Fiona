@@ -1,11 +1,12 @@
 # These are extension functions and classes using the OGR C API.
 
+
+import collections
 import datetime
 import json
 import locale
 import logging
 import os
-import sys
 import warnings
 import math
 import uuid

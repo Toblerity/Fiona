@@ -1,11 +1,12 @@
 # These are extension functions and classes using the OGR C API.
 
+
+import collections
 import datetime
 import json
 import locale
 import logging
 import os
-import sys
 import warnings
 import math
 import uuid
@@ -795,7 +796,7 @@ cdef class WritingSession(Session):
                     proj_b = col_crs.encode('utf-8')
                     proj_c = proj_b
                     ogrext1.OSRSetFromUserInput(cogr_srs, proj_c)
-                elif isinstance(col_crs, dict):
+                elif isinstance(col_crs, (dict, collections.UserDict)):
                     # EPSG is a special case.
                     init = col_crs.get('init')
                     if init:

@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 # Collections provide file-like access to feature data
 
+
+import collections
 import os
-import sys
 
 from fiona.ogrext import Iterator, ItemsIterator, KeysIterator
 from fiona.ogrext import Session, WritingSession
@@ -13,6 +14,7 @@ from fiona.errors import DriverError, SchemaError, CRSError
 from fiona._drivers import driver_count, GDALEnv
 from fiona.drvsupport import supported_drivers
 from six import string_types, binary_type
+
 
 class Collection(object):
 
@@ -50,7 +52,8 @@ class Collection(object):
             raise TypeError("invalid driver: %r" % driver)
         if schema and not hasattr(schema, 'get'):
             raise TypeError("invalid schema: %r" % schema)
-        if crs and not isinstance(crs, (dict,) + string_types):
+        if crs and not isinstance(
+                crs, (dict, collections.UserDict) + string_types):
             raise TypeError("invalid crs: %r" % crs)
         if crs_wkt and not isinstance(crs_wkt, string_types):
             raise TypeError("invalid crs_wkt: %r" % crs_wkt)
