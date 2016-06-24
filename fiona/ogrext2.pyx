@@ -298,9 +298,9 @@ cdef class OGRFeatureBuilder:
                 pass # keep field unset/null
             # Continue over the standard OGR types.
             elif schema_type == 'int':
-                ogrext1.OGR_F_SetFieldInteger(cogr_feature, i, schema_cast(value))
+                ogrext2.OGR_F_SetFieldInteger(cogr_feature, i, schema_cast(value))
             elif schema_type == 'float':
-                ogrext1.OGR_F_SetFieldDouble(cogr_feature, i, schema_cast(value))
+                ogrext2.OGR_F_SetFieldDouble(cogr_feature, i, schema_cast(value))
             elif (isinstance(value, string_types) and
                   schema_type in ['date', 'time', 'datetime']):
                 if schema_type == 'date':

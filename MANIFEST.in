@@ -9,5 +9,6 @@ recursive-include tests *.py
 recursive-include tests/data *
 include fiona/*.c fiona/*.cpp
 exclude fiona/ogrext.c
+exclude fiona/ogrext.pyx
 include CHANGES.txt CREDITS.txt LICENSE.txt VERSION.txt README.rst
 include benchmark.py setup.py requirements.txt
