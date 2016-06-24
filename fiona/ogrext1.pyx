@@ -313,7 +313,7 @@ cdef class OGRFeatureBuilder:
                 hh, mm, ss = value.hour, value.minute, value.second
                 ogrext1.OGR_F_SetFieldDateTime(
                     cogr_feature, i, 0, 0, 0, hh, mm, ss, 0)
-            elif schema_type == 'str': #isinstance(value, string_types):
+            elif schema_type == 'str':
                 value = schema_cast(value)
                 # Catch, log, and re-raise string field value encoding errors.
                 try:

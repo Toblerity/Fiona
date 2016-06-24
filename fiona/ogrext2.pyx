@@ -325,7 +325,7 @@ cdef class OGRFeatureBuilder:
                 hh, mm, ss = value.hour, value.minute, value.second
                 ogrext2.OGR_F_SetFieldDateTime(
                     cogr_feature, i, 0, 0, 0, hh, mm, ss, 0)
-            elif schema_type = 'str':
+            elif schema_type == 'str':
                 value = schema_cast(value)
                 try:
                     value_bytes = value.encode(encoding)
