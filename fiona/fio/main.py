@@ -12,6 +12,7 @@ import click
 from click_plugins import with_plugins
 from cligj import verbose_opt, quiet_opt
 
+import fiona
 from fiona import __version__ as fio_version
 
 
@@ -26,6 +27,9 @@ def configure_logging(verbosity):
 @verbose_opt
 @quiet_opt
 @click.version_option(fio_version)
+@click.version_option(fiona.__gdal_version__, '--gdal-version',
+    prog_name='GDAL')
+@click.version_option(sys.version, '--python-version', prog_name='Python')
 @click.pass_context
 def main_group(ctx, verbose, quiet):
 
