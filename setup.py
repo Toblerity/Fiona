@@ -1,4 +1,5 @@
 from distutils.command.sdist import sdist
+from distutils import log
 import logging
 import os
 import shutil
@@ -8,19 +9,12 @@ import sys
 from setuptools import setup
 from setuptools.extension import Extension
 
+
 # Use Cython if available.
 try:
     from Cython.Build import cythonize
 except ImportError:
     cythonize = None
-
-
-logging.basicConfig()
-log = logging.getLogger()
-
-# python -W all setup.py ...
-if 'all' in sys.warnoptions:
-    log.level = logging.DEBUG
 
 
 def check_output(cmd):
@@ -74,11 +68,6 @@ with open('CHANGES.txt', **open_kwds) as f:
 # Set a flag for builds where the source directory is a repo checkout.
 source_is_repo = os.path.exists("MANIFEST.in")
 
-# Get GDAL API version from the command line if specified there.
-if '--gdalversion' in sys.argv and 'clean' not in sys.argv:
-    index = sys.argv.index('--gdalversion')
-    sys.argv.pop(index)
-    gdalversion = sys.argv.pop(index)
 
 # Extend distutil's sdist command to generate C extension sources from
 # both `ogrext`.pyx` and `ogrext2.pyx` for GDAL 1.x and 2.x.
@@ -94,13 +83,23 @@ class sdist_multi_gdal(sdist):
         print(_)
         sdist.run(self)
 
-# By default we'll try to get options via gdal-config. On systems without,
-# options will need to be set in setup.cfg or on the setup command line.
+# Building Fiona requires options that can be obtained from GDAL's gdal-config
+# program or can be specified using setup arguments. The latter override the
+# former.
+#
+# A GDAL API version is strictly required. Without this the setup script
+# cannot know whether to use the GDAL version 1 or 2 source files. The GDAL
+# API version can be specified in 2 ways.
+#
+# 1. By the gdal-config program, optionally pointed to by GDAL_CONFIG
+# 2. By a GDAL_VERSION environment variable. This overrides number 1.
+
 include_dirs = []
 library_dirs = []
 libraries = []
 extra_link_args = []
-gdal_output = [None] * 4
+gdal_output = [None for i in range(4)]
+gdalversion = '2'
 
 if 'clean' not in sys.argv:
     try:
@@ -108,7 +107,6 @@ if 'clean' not in sys.argv:
         for i, flag in enumerate(
                 ["--cflags", "--libs", "--datadir", "--version"]):
             gdal_output[i] = check_output([gdal_config, flag]).strip()
-
         for item in gdal_output[0].split():
             if item.startswith("-I"):
                 include_dirs.extend(item[2:].split(":"))
@@ -121,6 +119,9 @@ if 'clean' not in sys.argv:
                 # e.g. -framework GDAL
                 extra_link_args.append(item)
         gdalversion = gdal_output[3]
+        if gdalversion:
+            log.info("GDAL API version obtained from gdal-config: %s",
+                     gdalversion)
 
     except Exception as e:
         if os.name == "nt":
@@ -128,7 +129,26 @@ if 'clean' not in sys.argv:
                      "to locate needed GDAL files.\nMore information is "
                      "available in the README.")
         else:
-            log.warning("Failed to get options via gdal-config: %s", str(e))
+            log.warn("Failed to get options via gdal-config: %s", str(e))
+
+    # Get GDAL API version from environment variable.
+    if 'GDAL_VERSION' in os.environ:
+        gdalversion = os.environ['GDAL_VERSION']
+        log.info("GDAL API version obtained from environment: %s", gdalversion)
+
+    # Get GDAL API version from the command line if specified there.
+    if '--gdalversion' in sys.argv:
+        index = sys.argv.index('--gdalversion')
+        sys.argv.pop(index)
+        gdalversion = sys.argv.pop(index)
+        log.info("GDAL API version obtained from command line option: %s",
+                 gdalversion)
+
+    if not gdalversion:
+        log.fatal("A GDAL API version must be specified. Provide a path "
+                  "to gdal-config using a GDAL_CONFIG environment variable "
+                  "or use a GDAL_VERSION environment variable.")
+        sys.exit(1)
 
     if os.environ.get('PACKAGE_DATA'):
         destdir = 'fiona/gdal_data'
@@ -161,9 +181,8 @@ if source_is_repo and "clean" not in sys.argv:
     # When building from a repo, Cython is required.
     log.info("MANIFEST.in found, presume a repo, cythonizing...")
     if not cythonize:
-        log.critical(
-            "Cython.Build.cythonize not found. "
-            "Cython is required to build from a repo.")
+        log.fatal("Cython.Build.cythonize not found. "
+                  "Cython is required to build from a repo.")
         sys.exit(1)
 
     if gdalversion.startswith("1"):
