@@ -132,10 +132,9 @@ if 'clean' not in sys.argv:
             log.warn("Failed to get options via gdal-config: %s", str(e))
 
     # Get GDAL API version from environment variable.
-    gdalversion = os.environ.get('GDAL_VERSION', gdalversion)
-    if gdalversion:
-        log.info("GDAL API version obtained from command line option: %s",
-                 gdalversion)
+    if 'GDAL_VERSION' in os.environ:
+        gdalversion = os.environ['GDAL_VERSION']
+        log.info("GDAL API version obtained from environment: %s", gdalversion)
 
     # Get GDAL API version from the command line if specified there.
     if '--gdalversion' in sys.argv:
