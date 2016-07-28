@@ -28,11 +28,12 @@ def filter(ctx, filter_expression, use_rs):
              allows item access via javascript-style dot notation using munch)
 
     The expression will be evaluated for each feature and, if true,
-    the feature will be included in the output.
+    the feature will be included in the output.  For example:
 
-    e.g. fio cat data.shp \
-         | fio filter "f.properties.area > 1000.0" \
-         | fio collect > large_polygons.geojson
+    \b
+        $ fio cat data.shp \\
+            | fio filter "f.properties.area > 1000.0" \\
+            | fio collect > large_polygons.geojson
     """
 
     logger = logging.getLogger('fio')
