@@ -17,7 +17,7 @@ FIELD_TYPES_MAP_REV = dict([(v, k) for k, v in fiona.FIELD_TYPES_MAP.items()])
 
 
 @click.command(short_help="Load GeoJSON to a dataset in another format.")
-@click.argument('output', type=click.Path(), required=True)
+@click.argument('output', required=True)
 @click.option('-f', '--format', '--driver', required=True,
               help="Output format driver name.")
 @options.src_crs_opt

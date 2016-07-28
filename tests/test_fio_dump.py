@@ -1,10 +1,13 @@
 """Unittests for $ fio dump"""
 
+
+import json
 import sys
 import unittest
 
 from click.testing import CliRunner
 
+import fiona
 from fiona.fio import dump
 
 
@@ -28,3 +31,13 @@ def test_dump_layer():
         result = runner.invoke(dump.dump, [TESTGPX, '--layer', layer])
         assert result.exit_code == 0
         assert '"FeatureCollection"' in result.output
+
+
+def test_dump_layer_vfs():
+    path = 'zip://tests/data/coutwildrnp.zip'
+    result = CliRunner().invoke(dump.dump, [path])
+    assert result.exit_code == 0
+    loaded = json.loads(result.output)
+    with fiona.open(path) as src:
+        assert len(loaded['features']) == len(src)
+        assert len(loaded['features']) > 0

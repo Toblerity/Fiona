@@ -82,3 +82,13 @@ def test_info_layer():
         lines = _filter_info_warning(result.output.splitlines())
         assert len(lines) == 1, "1st line is warning & 2nd is JSON - no more."
         assert json.loads(lines[0])['name'] == 'routes'
+
+
+def test_info_vfs():
+    runner = CliRunner()
+    zip_result = runner.invoke(main_group, [
+        'info', 'zip://tests/data/coutwildrnp.zip'])
+    shp_result = runner.invoke(main_group, [
+        'info', 'tests/data/coutwildrnp.shp'])
+    assert zip_result.exit_code == shp_result.exit_code == 0
+    assert zip_result.output == shp_result.output

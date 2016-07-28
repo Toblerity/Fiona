@@ -18,7 +18,7 @@ warnings.simplefilter('default')
 
 # Cat command
 @click.command(short_help="Concatenate and print the features of datasets")
-@cligj.files_in_arg
+@click.argument('files', nargs=-1, required=True, metavar="INPUTS...")
 @click.option('--layer', default=None, multiple=True,
               callback=options.cb_multilayer,
               help="Input layer(s), specified as 'fileindex:layer` "

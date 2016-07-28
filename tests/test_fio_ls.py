@@ -63,3 +63,13 @@ def test_fio_ls_multi_layer():
 
     finally:
         shutil.rmtree(outdir)
+
+
+def test_fio_ls_vfs():
+    runner = CliRunner()
+    result = runner.invoke(main_group, [
+        'ls', 'zip://tests/data/coutwildrnp.zip'])
+    assert result.exit_code == 0
+    loaded = json.loads(result.output)
+    assert len(loaded) == 1
+    assert loaded[0] == 'coutwildrnp'

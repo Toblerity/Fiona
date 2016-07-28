@@ -10,7 +10,7 @@ import fiona
 
 
 @click.command()
-@click.argument('input', type=click.Path(exists=True))
+@click.argument('input', required=True)
 @indent_opt
 @click.pass_context
 def ls(ctx, input, indent):
