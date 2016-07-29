@@ -194,7 +194,7 @@ class ReadingTest(unittest.TestCase):
         self.assertTrue(0 in self.c)
 
 
-@pytest.mark.usefixtures('uttc_coutwildrnp_json')
+@pytest.mark.usefixtures('uttc_path_coutwildrnp_json')
 class FilterReadingTest(unittest.TestCase):
 
     def setUp(self):
