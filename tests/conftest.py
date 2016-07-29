@@ -121,6 +121,13 @@ def uttc_path_coutwildrnp_tar(path_coutwildrnp_tar, request):
 
 
 @pytest.fixture(scope='class')
+def uttc_path_coutwildrnp_json(path_coutwildrnp_json, request):
+    """Make the ``path_coutwildrnp_json`` fixture work with a
+    ``unittest.TestCase()``.  ``uttc`` stands for unittest test case."""
+    request.cls.path_coutwildrnp_json = path_coutwildrnp_json
+
+
+@pytest.fixture(scope='class')
 def uttc_data_dir(data_dir, request):
     """Make the ``data_dir`` fixture work with a ``unittest.TestCase()``.
     ``uttc`` stands for unittest test case."""
