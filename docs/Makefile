@@ -41,7 +41,7 @@ help:
 clean:
 	-rm -rf $(BUILDDIR)/*
 
-html:
+html: apidocs
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
@@ -153,6 +153,6 @@ doctest:
 	      "results in $(BUILDDIR)/doctest/output.txt."
 
 apidocs:
-	sphinx-apidoc -f -o . ../src/fiona
+	sphinx-apidoc -f -o . ../fiona
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
