@@ -104,3 +104,24 @@ def feature_seq_pp_rs():
 def runner():
     """Returns a ```click.testing.CliRunner()`` instance."""
     return CliRunner()
+
+
+@pytest.fixture(scope='class')
+def uttc_path_coutwildrnp_zip(path_coutwildrnp_zip, request):
+    """Make the ``path_coutwildrnp_zip`` fixture work with a
+    ``unittest.TestCase()``.  ``uttc`` stands for unittest test case."""
+    request.cls.path_coutwildrnp_zip = path_coutwildrnp_zip
+
+
+@pytest.fixture(scope='class')
+def uttc_path_coutwildrnp_tar(path_coutwildrnp_tar, request):
+    """Make the ``path_coutwildrnp_tar`` fixture work with a
+    ``unittest.TestCase()``.  ``uttc`` stands for unittest test case."""
+    request.cls.path_coutwildrnp_tar = path_coutwildrnp_tar
+
+
+@pytest.fixture(scope='class')
+def uttc_data_dir(data_dir, request):
+    """Make the ``data_dir`` fixture work with a ``unittest.TestCase()``.
+    ``uttc`` stands for unittest test case."""
+    request.cls.data_dir = data_dir

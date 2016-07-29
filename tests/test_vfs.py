@@ -10,26 +10,6 @@ logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 from .test_collection import ReadingTest
 
 
-@pytest.fixture(scope='class')
-def uttc_path_coutwildrnp_zip(path_coutwildrnp_zip, request):
-    """Make the ``path_coutwildrnp_zip`` fixture work with a
-    ``unittest.TestCase()``."""
-    request.cls.path_coutwildrnp_zip = path_coutwildrnp_zip
-
-
-@pytest.fixture(scope='class')
-def uttc_path_coutwildrnp_tar(path_coutwildrnp_tar, request):
-    """Make the ``path_coutwildrnp_tar`` fixture work with a
-    ``unittest.TestCase()``."""
-    request.cls.path_coutwildrnp_tar = path_coutwildrnp_tar
-    
-    
-@pytest.fixture(scope='class')
-def uttc_data_dir(data_dir, request):
-    """Make the ``data_dir`` fixture work with a ``unittest.TestCase()``."""
-    request.cls.data_dir = data_dir
-
-
 class VsiReadingTest(ReadingTest):
     
     # There's a bug in GDAL 1.9.2 http://trac.osgeo.org/gdal/ticket/5093
@@ -46,8 +26,7 @@ class VsiReadingTest(ReadingTest):
         self.assertEqual(f['properties']['STATE'], 'UT')
 
 
-@pytest.mark.usefixtures('uttc_path_coutwildrnp_zip')
-@pytest.mark.usefixtures('uttc_data_dir')
+@pytest.mark.usefixtures('uttc_path_coutwildrnp_zip', 'uttc_data_dir')
 class ZipReadingTest(VsiReadingTest):
     
     def setUp(self):
@@ -113,8 +92,7 @@ class ZipArchiveReadingTest(VsiReadingTest):
                 data_dir=self.data_dir))
 
 
-@pytest.mark.usefixtures('uttc_path_coutwildrnp_tar')
-@pytest.mark.usefixtures('uttc_data_dir')
+@pytest.mark.usefixtures('uttc_path_coutwildrnp_tar', 'uttc_data_dir')
 class TarArchiveReadingTest(VsiReadingTest):
     
     def setUp(self):
