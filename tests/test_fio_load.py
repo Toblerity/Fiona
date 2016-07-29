@@ -5,7 +5,8 @@ import json
 import os
 import shutil
 import sys
-import unittest
+
+import pytest
 
 import fiona
 from fiona.fio.main import main_group
@@ -28,7 +29,7 @@ def test_exception(tmpdir, runner):
     assert result.exit_code == 1
 
 
-@unittest.skipIf(
+@pytest.mark.skipif(
     FIXME_WINDOWS,
     reason="FIXME on Windows. Please look into why this test is not working.")
 def test_collection(tmpdir, feature_collection, runner):
@@ -39,7 +40,7 @@ def test_collection(tmpdir, feature_collection, runner):
     assert len(fiona.open(tmpfile)) == 2
 
 
-@unittest.skipIf(
+@pytest.mark.skipif(
     FIXME_WINDOWS,
     reason="FIXME on Windows. Please look into why this test is not working.")
 def test_seq_rs(feature_seq_pp_rs, tmpdir, runner):
@@ -50,7 +51,7 @@ def test_seq_rs(feature_seq_pp_rs, tmpdir, runner):
     assert len(fiona.open(tmpfile)) == 2
 
 
-@unittest.skipIf(
+@pytest.mark.skipif(
     FIXME_WINDOWS,
     reason="FIXME on Windows. Please look into why this test is not working.")
 def test_seq_no_rs(tmpdir, runner, feature_seq):
@@ -61,7 +62,7 @@ def test_seq_no_rs(tmpdir, runner, feature_seq):
     assert len(fiona.open(tmpfile)) == 2
 
 
-@unittest.skipIf(
+@pytest.mark.skipif(
     FIXME_WINDOWS,
     reason="FIXME on Windows. Please look into why this test is not working.")
 def test_dst_crs_default_to_src_crs(tmpdir, runner, feature_seq):
@@ -80,7 +81,7 @@ def test_dst_crs_default_to_src_crs(tmpdir, runner, feature_seq):
         assert len(src) == len(feature_seq.splitlines())
 
 
-@unittest.skipIf(
+@pytest.mark.skipif(
     FIXME_WINDOWS,
     reason="FIXME on Windows. Please look into why this test is not working.")
 def test_different_crs(tmpdir, runner, feature_seq):
@@ -96,7 +97,7 @@ def test_different_crs(tmpdir, runner, feature_seq):
         assert len(src) == len(feature_seq.splitlines())
 
 
-@unittest.skipIf(
+@pytest.mark.skipif(
     FIXME_WINDOWS,
     reason="FIXME on Windows. Please look into why this test is not working.")
 def test_dst_crs_no_src(tmpdir, runner, feature_seq):
@@ -114,7 +115,7 @@ def test_dst_crs_no_src(tmpdir, runner, feature_seq):
         assert len(src) == len(feature_seq.splitlines())
 
 
-@unittest.skipIf(
+@pytest.mark.skipif(
     FIXME_WINDOWS,
     reason="FIXME on Windows. Please look into why this test is not working.")
 def test_fio_load_layer(tmpdir, runner):

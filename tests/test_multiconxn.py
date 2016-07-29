@@ -5,6 +5,8 @@ import sys
 import tempfile
 import unittest
 
+import pytest
+
 import fiona
 from fiona.compat import OrderedDict
 
@@ -33,7 +35,7 @@ class ReadAccess(unittest.TestCase):
             f2 = next(c2)
             self.assertEqual(f1, f2)
 
-@unittest.skipIf(FIXME_WINDOWS, 
+@pytest.mark.skipif(FIXME_WINDOWS, 
                  reason="FIXME on Windows. These tests raise PermissionErrors on Windows in Python 3.x (which doesn't exist in Python 2.7).  Please look into why this test isn't working.")
 class ReadWriteAccess(unittest.TestCase):
     # To check that we'll be able to read from a file that we're
@@ -79,7 +81,7 @@ class ReadWriteAccess(unittest.TestCase):
         del f2['id']
         self.assertEqual(self.f, f2)
 
-@unittest.skipIf(FIXME_WINDOWS, 
+@pytest.mark.skipif(FIXME_WINDOWS, 
                     reason="FIXME on Windows. These tests raise PermissionErrors on Windows in Python 3.x (which doesn't exist in Python 2.7).  Please look into why this test isn't working.")
 class LayerCreation(unittest.TestCase):
 

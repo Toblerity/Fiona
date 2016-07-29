@@ -9,9 +9,11 @@ import subprocess
 import tempfile
 import unittest
 
+import pytest
+
 import fiona
 from fiona.collection import Collection, supported_drivers
-from fiona.errors import FionaValueError, DriverError, SchemaError, CRSError
+from fiona.errors import FionaValueError, DriverError
 
 FIXME_WINDOWS = sys.platform.startswith('win')
 
@@ -310,7 +312,7 @@ class UnsupportedDriverTest(unittest.TestCase):
             DriverError,
             fiona.open, os.path.join(TEMPDIR, "foo"), "w", "Bogus", schema=schema)
 
-@unittest.skipIf(FIXME_WINDOWS, 
+@pytest.mark.skipif(FIXME_WINDOWS, 
                  reason="FIXME on Windows. Please look into why this test isn't working. There is a codepage issue regarding Windows-1252 and UTF-8. ")
 class GenericWritingTest(unittest.TestCase):
 
@@ -570,7 +572,7 @@ class CollectionTest(unittest.TestCase):
     def test_no_read_conn_str(self):
         self.assertRaises(IOError, fiona.open, "PG:dbname=databasename", "r")
 
-    @unittest.skipIf(sys.platform.startswith("win"),
+    @pytest.mark.skipif(sys.platform.startswith("win"),
                      reason="test only for *nix based system")
     def test_no_read_directory(self):
         self.assertRaises(ValueError, fiona.open, "/dev/null", "r")
@@ -604,7 +606,7 @@ class GeoJSONCRSWritingTest(unittest.TestCase):
             'GEOGCS["WGS 84' in info.decode('utf-8'),
             info)
 
-@unittest.skipIf(FIXME_WINDOWS, 
+@pytest.mark.skipif(FIXME_WINDOWS, 
                  reason="FIXME on Windows. Test raises PermissionError.  Please look into why this test isn't working.")
 class DateTimeTest(unittest.TestCase):
 

@@ -2,7 +2,6 @@ import logging
 import sys
 import os
 
-import tempfile
 import pytest
 
 import fiona
@@ -30,10 +29,9 @@ def create_sample_data(filename, driver):
     assert(os.path.exists(filename))
 
 
-def test_remove(tmpdir=None):
-    if tmpdir is None:
-        tmpdir = tempfile.mkdtemp()
-    filename_shp = os.path.join(tmpdir, 'test.shp')
+def test_remove(tmpdir):
+    outdir = str(tmpdir.mkdir('test_remove'))
+    filename_shp = os.path.join(outdir, 'test.shp')
     
     create_sample_data(filename_shp, driver='ESRI Shapefile')
     fiona.remove(filename_shp, driver='ESRI Shapefile')
@@ -42,11 +40,11 @@ def test_remove(tmpdir=None):
     with pytest.raises(RuntimeError):
         fiona.remove(filename_shp, driver='ESRI Shapefile')
 
-def test_remove_driver(tmpdir=None):
-    if tmpdir is None:
-        tmpdir = tempfile.mkdtemp()
-    filename_shp = os.path.join(tmpdir, 'test.shp')
-    filename_json = os.path.join(tmpdir, 'test.json')
+
+def test_remove_driver(tmpdir):
+    outdir = str(tmpdir.mkdir('test_remove_driver'))
+    filename_shp = os.path.join(outdir, 'test.shp')
+    filename_json = os.path.join(outdir, 'test.json')
         
     create_sample_data(filename_shp, driver='ESRI Shapefile')
     create_sample_data(filename_json, driver='GeoJSON')
@@ -54,20 +52,20 @@ def test_remove_driver(tmpdir=None):
     assert(not os.path.exists(filename_json))
     assert(os.path.exists(filename_shp))
 
-def test_remove_collection(tmpdir=None):
-    if tmpdir is None:
-        tmpdir = tempfile.mkdtemp()
-    filename_shp = os.path.join(tmpdir, 'test.shp')
+
+def test_remove_collection(tmpdir):
+    outdir = str(tmpdir.mkdir('test_remove_collection'))
+    filename_shp = os.path.join(outdir, 'test.shp')
     
     create_sample_data(filename_shp, driver='ESRI Shapefile')
     collection = fiona.open(filename_shp, 'r')
     fiona.remove(collection)
     assert(not os.path.exists(filename_shp))
 
-def test_remove_path_without_driver(tmpdir=None):
-    if tmpdir is None:
-        tmpdir = tempfile.mkdtemp()
-    filename_shp = os.path.join(tmpdir, 'test.shp')
+
+def test_remove_path_without_driver(tmpdir):
+    outdir = str(tmpdir.mkdir('test_remove_path_without_driver'))
+    filename_shp = os.path.join(outdir, 'test.shp')
 
     create_sample_data(filename_shp, driver='ESRI Shapefile')
 

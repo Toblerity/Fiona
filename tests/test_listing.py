@@ -4,6 +4,8 @@
 import sys
 import unittest
 
+import pytest
+
 import fiona
 import fiona.ogrext
 
@@ -24,7 +26,7 @@ def test_directory(data_dir):
     assert fiona.listlayers(data_dir) == ['coutwildrnp']
 
 
-@unittest.skipIf(
+@pytest.mark.skipif(
     FIXME_WINDOWS,
     reason="FIXME on Windows. ValueError raised. Please look into why this "
            "test isn't working.")

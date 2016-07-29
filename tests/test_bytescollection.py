@@ -26,7 +26,7 @@ def bytecol(path_coutwildrnp_json, request):
     return bc
 
 
-@unittest.skipIf(six.PY2, 'string are bytes in Python 2')
+@pytest.mark.skipif(six.PY2, reason='string are bytes in Python 2')
 def test_construct_with_str(path_coutwildrnp_json):
     with open(path_coutwildrnp_json) as src:
         strbuf = src.read()
@@ -34,7 +34,7 @@ def test_construct_with_str(path_coutwildrnp_json):
         fiona.BytesCollection(strbuf)
 
 
-@unittest.skipIf(
+@pytest.mark.skipif(
     FIXME_WINDOWS,
     reason="FIXME on Windows. Please look into why this test is not working.")
 def test_open_repr(bytecol):
@@ -43,7 +43,7 @@ def test_open_repr(bytecol):
     assert repr(bytecol).endswith(":OGRGeoJSON', mode 'r' at %s>" % hex(id(bytecol)))
 
 
-@unittest.skipIf(
+@pytest.mark.skipif(
     FIXME_WINDOWS,
     reason="FIXME on Windows. Please look into why this test is not working.")
 def test_closed_repr(bytecol):
@@ -75,7 +75,7 @@ def test_mode(bytecol):
     assert bytecol.mode == 'r'
 
 
-@unittest.skipIf(
+@pytest.mark.skipif(
     FIXME_WINDOWS,
     reason="FIXME on Windows. Please look into why this test is not working.")
 def test_collection(bytecol):

@@ -2,8 +2,8 @@
 
 
 import sys
-import unittest
 
+import pytest
 from click.testing import CliRunner
 
 from fiona.fio import cat
@@ -13,7 +13,7 @@ WILDSHP = 'tests/data/coutwildrnp.shp'
 FIXME_WINDOWS = sys.platform.startswith('win')
 
 
-@unittest.skipIf(
+@pytest.mark.skipif(
     FIXME_WINDOWS,
     reason="FIXME on Windows. Please look into why this test is not working.")
 def test_one():
@@ -23,7 +23,7 @@ def test_one():
     assert result.output.count('"Feature"') == 67
 
 
-@unittest.skipIf(
+@pytest.mark.skipif(
     FIXME_WINDOWS,
     reason="FIXME on Windows. Please look into why this test is not working.")
 def test_two():
@@ -33,7 +33,7 @@ def test_two():
     assert result.output.count('"Feature"') == 134
 
 
-@unittest.skipIf(
+@pytest.mark.skipif(
     FIXME_WINDOWS,
     reason="FIXME on Windows. Please look into why this test is not working.")
 def test_bbox_no():
@@ -46,7 +46,7 @@ def test_bbox_no():
     assert result.output == ""
 
 
-@unittest.skipIf(
+@pytest.mark.skipif(
     FIXME_WINDOWS,
     reason="FIXME on Windows. Please look into why this test is not working.")
 def test_bbox_yes():
@@ -59,7 +59,7 @@ def test_bbox_yes():
     assert result.output.count('"Feature"') == 19
 
 
-@unittest.skipIf(
+@pytest.mark.skipif(
     FIXME_WINDOWS,
     reason="FIXME on Windows. Please look into why this test is not working.")
 def test_bbox_json_yes():
