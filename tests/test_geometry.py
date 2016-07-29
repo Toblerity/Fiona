@@ -1,4 +1,4 @@
-# testing geometry extension, to be called by nosetests
+"""Tests for geometry objects."""
 
 import logging
 import sys

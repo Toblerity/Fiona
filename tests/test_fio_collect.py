@@ -1,4 +1,4 @@
-"""Unittests for $ fio collect"""
+"""Tests for `$ fio collect`."""
 
 
 import json
@@ -9,14 +9,12 @@ from click.testing import CliRunner
 
 from fiona.fio import collect
 
-from .fixtures import feature_seq
-from .fixtures import feature_seq_pp_rs
 
 FIXME_WINDOWS = sys.platform.startswith('win')
 
 @unittest.skipIf(FIXME_WINDOWS, 
                  reason="FIXME on Windows. Please look into why this test is not working.")
-def test_collect_rs():
+def test_collect_rs(feature_seq_pp_rs):
     runner = CliRunner()
     result = runner.invoke(
         collect.collect,
@@ -29,7 +27,7 @@ def test_collect_rs():
 
 @unittest.skipIf(FIXME_WINDOWS, 
                  reason="FIXME on Windows. Please look into why this test is not working.")
-def test_collect_no_rs():
+def test_collect_no_rs(feature_seq):
     runner = CliRunner()
     result = runner.invoke(
         collect.collect,
@@ -40,7 +38,7 @@ def test_collect_no_rs():
     assert result.output.count('"Feature"') == 2
 
 
-def test_collect_ld():
+def test_collect_ld(feature_seq):
     runner = CliRunner()
     result = runner.invoke(
         collect.collect,
@@ -52,14 +50,14 @@ def test_collect_ld():
     assert '"foo": "bar"' in result.output
 
 
-def test_collect_rec_buffered():
+def test_collect_rec_buffered(feature_seq):
     runner = CliRunner()
     result = runner.invoke(collect.collect, ['--record-buffered'], feature_seq)
     assert result.exit_code == 0
     assert '"FeatureCollection"' in result.output
 
 
-def test_collect_noparse():
+def test_collect_noparse(feature_seq):
     runner = CliRunner()
     result = runner.invoke(
         collect.collect,
@@ -71,7 +69,7 @@ def test_collect_noparse():
     assert len(json.loads(result.output)['features']) == 2
 
 
-def test_collect_noparse_records():
+def test_collect_noparse_records(feature_seq):
     runner = CliRunner()
     result = runner.invoke(
         collect.collect,
@@ -83,7 +81,7 @@ def test_collect_noparse_records():
     assert len(json.loads(result.output)['features']) == 2
 
 
-def test_collect_src_crs():
+def test_collect_src_crs(feature_seq):
     runner = CliRunner()
     result = runner.invoke(
         collect.collect,
@@ -93,7 +91,7 @@ def test_collect_src_crs():
     assert result.exit_code == 2
 
 
-def test_collect_noparse_rs():
+def test_collect_noparse_rs(feature_seq_pp_rs):
     runner = CliRunner()
     result = runner.invoke(
         collect.collect,

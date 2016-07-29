@@ -1,4 +1,5 @@
-# testing Fiona's RFC 3339 support, to be called by nosetests
+"""Tests for Fiona's RFC 3339 support."""
+
 
 import logging
 import re

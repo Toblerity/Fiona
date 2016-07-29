@@ -1,4 +1,4 @@
-# testing features, to be called by nosetests
+"""Tests for feature objects."""
 
 import logging
 import os

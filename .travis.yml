@@ -46,8 +46,7 @@ install:
   - "pip install --upgrade --force-reinstall --global-option=build_ext --global-option='-I$GDALINST/gdal-$GDALVERSION/include' --global-option='-L$GDALINST/gdal-$GDALVERSION/lib' --global-option='-R$GDALINST/gdal-$GDALVERSION/lib' dist/Fiona*"
   - "fio --version"
   - "cp -r tests /tmp"
-script: 
-  - "cd /tmp && nosetests --exclude test_filter_vsi --exclude test_geopackage --exclude test_write_mismatch tests"
-  - "cd /tmp && coverage run --source=fiona --omit='*.pxd,*.pyx,*/tests/*,*/docs/*,*/examples/*,*/benchmarks/*' -m nose --exclude test_filter_vsi --exclude test_geopackage --exclude test_write_mismatch tests"
+script:
+  - py.test --cov fiona --cov-report term-missing
 after_success:
   - coveralls || echo "!! intermittent coveralls failure"
