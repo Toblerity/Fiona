@@ -9,6 +9,7 @@ from click.testing import CliRunner
 
 import fiona
 from fiona.fio import dump
+from fiona.fio.main import main_group
 
 
 WILDSHP = 'tests/data/coutwildrnp.shp'
@@ -35,7 +36,7 @@ def test_dump_layer():
 
 def test_dump_layer_vfs():
     path = 'zip://tests/data/coutwildrnp.zip'
-    result = CliRunner().invoke(dump.dump, [path])
+    result = CliRunner().invoke(main_group, ['dump', path])
     assert result.exit_code == 0
     loaded = json.loads(result.output)
     with fiona.open(path) as src:
