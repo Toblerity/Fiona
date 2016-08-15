@@ -44,6 +44,8 @@ install:
   - "pip install --upgrade --force-reinstall --global-option=build_ext --global-option='-I$GDALINST/gdal-$GDALVERSION/include' --global-option='-L$GDALINST/gdal-$GDALVERSION/lib' --global-option='-R$GDALINST/gdal-$GDALVERSION/lib' -e ."
   - "pip install -e .[test]"
   - "fio --version"
+  - "gdal-config --version"
+  - "fio --gdal-version"
 script:
   - py.test --cov fiona --cov-report term-missing
 after_success:
