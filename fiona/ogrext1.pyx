@@ -25,6 +25,7 @@ from fiona.compat import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 
+from cpython cimport PyBytes_FromStringAndSize, PyBytes_AsString
 
 log = logging.getLogger("Fiona")
 class NullHandler(logging.Handler):
@@ -47,7 +48,7 @@ FIELD_TYPES = [
     None,           # OFTStringList, Array of strings
     None,           # OFTWideString, deprecated
     None,           # OFTWideStringList, deprecated
-    None,           # OFTBinary, Raw Binary data
+    'bytes',        # OFTBinary, Raw Binary data
     'date',         # OFTDate, Date
     'time',         # OFTTime, Time
     'datetime',     # OFTDateTime, Date and Time
@@ -62,7 +63,8 @@ FIELD_TYPES_MAP = {
     'str':      text_type,
     'date':     FionaDateType,
     'time':     FionaTimeType,
-    'datetime': FionaDateTimeType
+    'datetime': FionaDateTimeType,
+    'bytes':    bytes,
    }
 
 # OGR Driver capability
@@ -153,6 +155,8 @@ cdef class FeatureBuilder:
         cdef int mm = 0
         cdef int ss = 0
         cdef int tz = 0
+        cdef unsigned char *data
+        cdef int l
         cdef int retval
         cdef char *key_c
         props = OrderedDict()
@@ -216,6 +220,11 @@ cdef class FeatureBuilder:
                 except ValueError as err:
                     log.exception(err)
                     props[key] = None
+
+            elif fieldtype is bytes:
+                data = ogrext1.OGR_F_GetFieldAsBinary(feature, i, &l)
+                props[key] = PyBytes_FromStringAndSize(<char*>data, <Py_ssize_t>l)
+
             else:
                 log.debug("%s: None, fieldtype: %r, %r" % (key, fieldtype, fieldtype in string_types))
                 props[key] = None
@@ -328,6 +337,9 @@ cdef class OGRFeatureBuilder:
                     raise
                 string_c = value_bytes
                 ogrext1.OGR_F_SetFieldString(cogr_feature, i, string_c)
+            elif isinstance(value, bytes):
+                ogrext1.OGR_F_SetFieldBinary(cogr_feature, i, len(value),
+                    <unsigned char*>PyBytes_AsString(value))
             elif value is None:
                 pass # keep field unset/null
             else:

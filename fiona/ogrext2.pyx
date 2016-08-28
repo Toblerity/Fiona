@@ -50,7 +50,7 @@ FIELD_TYPES = [
     None,           # OFTStringList, Array of strings
     None,           # OFTWideString, deprecated
     None,           # OFTWideStringList, deprecated
-    'binary',           # OFTBinary, Raw Binary data
+    'bytes',        # OFTBinary, Raw Binary data
     'date',         # OFTDate, Date
     'time',         # OFTTime, Time
     'datetime',     # OFTDateTime, Date and Time
@@ -66,7 +66,7 @@ FIELD_TYPES_MAP = {
     'date':     FionaDateType,
     'time':     FionaTimeType,
     'datetime': FionaDateTimeType,
-    'binary':   bytes,
+    'bytes':    bytes,
    }
 
 # OGR Driver capability

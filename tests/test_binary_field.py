@@ -25,7 +25,7 @@ class TestBinaryField(unittest.TestCase):
                 "geometry": "Point",
                 "properties": OrderedDict([
                     ("name", "str"),
-                    ("data", "binary"),
+                    ("data", "bytes"),
                 ])
             }
         }
