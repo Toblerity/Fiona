@@ -267,7 +267,7 @@ setup_args = dict(
     install_requires=requirements,
     extras_require={
         'calc': ['shapely'],
-        'test': ['pytest', 'pytest-cov']},
+        'test': ['pytest>=3', 'pytest-cov']},
     ext_modules=ext_modules,
     classifiers=[
         'Development Status :: 5 - Production/Stable',

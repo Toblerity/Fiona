@@ -96,4 +96,4 @@ test_script:
   # Run the project tests
   - cmd: SET
 
-  - "%CMD_IN_ENV% py.test --cov fiona --cov-report term-missing"
+  - "%CMD_IN_ENV% pytest --cov fiona --cov-report term-missing"

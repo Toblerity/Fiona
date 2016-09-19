@@ -47,6 +47,6 @@ install:
   - "gdal-config --version"
   - "fio --gdal-version"
 script:
-  - py.test --cov fiona --cov-report term-missing
+  - pytest --cov fiona --cov-report term-missing
 after_success:
   - coveralls || echo "!! intermittent coveralls failure"
