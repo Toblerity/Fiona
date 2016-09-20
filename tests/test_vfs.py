@@ -18,6 +18,8 @@ class VsiReadingTest(ReadingTest):
     # passes and creating a new method in this class that we can exclude
     # from the test runner at run time.
 
+    @pytest.mark.xfail(reason="The number of features present in the archive "
+                              "differs based on the GDAL version.")
     def test_filter_vsi(self):
         results = list(self.c.filter(bbox=(-114.0, 35.0, -104, 45.0)))
         self.assertEqual(len(results), 67)
