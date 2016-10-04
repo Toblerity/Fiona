@@ -21,7 +21,7 @@ addons:
     - gdal-bin
     - libproj-dev
     - libhdf5-serial-dev
-    - libpng-dev
+    - libpng12-dev
     - libgdal-dev
     - libatlas-dev
     - libatlas-base-dev
