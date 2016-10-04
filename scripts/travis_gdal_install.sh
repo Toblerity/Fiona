@@ -54,7 +54,7 @@ fi
 
 ls -l $GDALINST
 
-if [ $GDALVERSION = "1.9.2" && ! -d $GDALINST/gdal-$GDALVERSION ]; then
+if [ "$GDALVERSION" -eq "1.9.2" -a ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
   cd $GDALBUILD
   wget http://download.osgeo.org/gdal/gdal-$GDALVERSION.tar.gz
   tar -xzf gdal-$GDALVERSION.tar.gz
@@ -66,7 +66,7 @@ fi
 
 
 # download and compile gdal version
-if [ $GDALVERSION != "1.9.2" && ! -d $GDALINST/gdal-$GDALVERSION ]; then
+if [ "$GDALVERSION" != "1.9.2" -a ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
   cd $GDALBUILD
   wget http://download.osgeo.org/$GDALVERSION/gdal-$GDALVERSION.tar.gz
   tar -xzf gdal-$GDALVERSION.tar.gz
