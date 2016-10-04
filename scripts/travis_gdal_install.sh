@@ -1,5 +1,5 @@
 #!/bin/sh
-set -ex
+set -e
 
 GDALOPTS="  --with-ogr \
             --with-geos \
@@ -65,27 +65,35 @@ if [ ! -d $GDALINST/gdal-1.9.2 ]; then
   make install
 fi
 
-if [ ! -d $GDALINST/gdal-1.11.4 ]; then
+if [ ! -d $GDALINST/gdal-1.11.5 ]; then
   cd $GDALBUILD
-  wget http://download.osgeo.org/gdal/1.11.4/gdal-1.11.4.tar.gz
-  tar -xzf gdal-1.11.4.tar.gz
-  cd gdal-1.11.4
-  ./configure --prefix=$GDALINST/gdal-1.11.4 $GDALOPTS
+  wget http://download.osgeo.org/gdal/1.11.5/gdal-1.11.5.tar.gz
+  tar -xzf gdal-1.11.5.tar.gz
+  cd gdal-1.11.5
+  ./configure --prefix=$GDALINST/gdal-1.11.5 $GDALOPTS
   make -s -j 2
   make install
 fi
 
-if [ ! -d $GDALINST/gdal-2.0.2 ]; then
+if [ ! -d $GDALINST/gdal-2.0.3 ]; then
   cd $GDALBUILD
-  wget http://download.osgeo.org/gdal/2.0.2/gdal-2.0.2.tar.gz
-  tar -xzf gdal-2.0.2.tar.gz
-  cd gdal-2.0.2
-  ./configure --prefix=$GDALINST/gdal-2.0.2 $GDALOPTS
+  wget http://download.osgeo.org/gdal/2.0.3/gdal-2.0.3.tar.gz
+  tar -xzf gdal-2.0.3.tar.gz
+  cd gdal-2.0.3
+  ./configure --prefix=$GDALINST/gdal-2.0.3 $GDALOPTS
+  make -s -j 2
+  make install
+fi
+
+if [ ! -d $GDALINST/gdal-2.1.1 ]; then
+  cd $GDALBUILD
+  wget http://download.osgeo.org/gdal/2.1.1/gdal-2.1.1.tar.gz
+  tar -xzf gdal-2.1.1.tar.gz
+  cd gdal-2.1.1
+  ./configure --prefix=$GDALINST/gdal-2.1.1 $GDALOPTS
   make -s -j 2
   make install
 fi
 
 # change back to travis build dir
 cd $TRAVIS_BUILD_DIR
-
-set +ex
