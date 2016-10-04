@@ -203,8 +203,6 @@ cdef class FeatureBuilder:
             elif fieldtype in (FionaDateType, FionaTimeType, FionaDateTimeType):
                 retval = ogrext1.OGR_F_GetFieldAsDateTime(
                     feature, i, &y, &m, &d, &hh, &mm, &ss, &tz)
-                if not y or not m or not d:
-                    log.warning("Invalid date")
                 try:
                     if fieldtype is FionaDateType:
                          props[key] = datetime.date(y, m, d).isoformat()
@@ -213,7 +211,8 @@ cdef class FeatureBuilder:
                     else:
                          props[key] = datetime.datetime(
                              y, m, d, hh, mm, ss).isoformat()
-                except ValueError:
+                except ValueError as err:
+                    log.exception(err)
                     props[key] = None
             else:
                 log.debug("%s: None, fieldtype: %r, %r" % (key, fieldtype, fieldtype in string_types))
