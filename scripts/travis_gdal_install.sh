@@ -87,3 +87,5 @@ fi
 
 # change back to travis build dir
 cd $TRAVIS_BUILD_DIR
+
+set +ex

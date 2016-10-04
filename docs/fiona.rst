@@ -59,6 +59,14 @@ fiona.inspector module
     :undoc-members:
     :show-inheritance:
 
+fiona.ogrext module
+-------------------
+
+.. automodule:: fiona.ogrext
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 fiona.ogrext1 module
 --------------------
 
