@@ -14,9 +14,9 @@ def test_width_str():
 
 
 def test_width_other():
-    assert prop_width('int') == None
-    assert prop_width('float') == None
-    assert prop_width('date') == None
+    assert prop_width('int') is None
+    assert prop_width('float') is None
+    assert prop_width('date') is None
 
 
 def test_types():

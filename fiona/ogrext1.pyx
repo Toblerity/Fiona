@@ -266,7 +266,8 @@ cdef class OGRFeatureBuilder:
             log.debug(
                 "Looking up %s in %s", key, repr(session._schema_mapping))
             ogr_key = session._schema_mapping[key]
-            schema_type = collection.schema['properties'][key]
+            schema_type = collection.schema['properties'][key].split(':')[0]
+            schema_cast = FIELD_TYPES_MAP[schema_type]
 
             # Catch and re-raise unicode encoding errors.
             try:
@@ -274,24 +275,26 @@ cdef class OGRFeatureBuilder:
             except UnicodeError:
                 log.error("Failed to encode property '%s' value '%s'",
                           key, value)
-                raise
-
+                key_bytes = ogr_key
             key_c = key_bytes
             i = ogrext1.OGR_F_GetFieldIndex(cogr_feature, key_c)
             if i < 0:
+                # TODO: instead of failing silently, raise an error.
                 continue
 
             # Special case: serialize dicts to assist OGR.
             if isinstance(value, dict):
                 value = json.dumps(value)
 
+            if value is None:
+                pass # keep field unset/null
             # Continue over the standard OGR types.
-            if isinstance(value, integer_types):
-                ogrext1.OGR_F_SetFieldInteger(cogr_feature, i, value)
-            elif isinstance(value, float):
-                ogrext1.OGR_F_SetFieldDouble(cogr_feature, i, value)
-            elif (isinstance(value, string_types) 
-            and schema_type in ['date', 'time', 'datetime']):
+            elif schema_type == 'int':
+                ogrext1.OGR_F_SetFieldInteger(cogr_feature, i, schema_cast(value))
+            elif schema_type == 'float':
+                ogrext1.OGR_F_SetFieldDouble(cogr_feature, i, schema_cast(value))
+            elif (isinstance(value, string_types) and
+                  schema_type in ['date', 'time', 'datetime']):
                 if schema_type == 'date':
                     y, m, d, hh, mm, ss, ff = parse_date(value)
                 elif schema_type == 'time':
@@ -300,23 +303,22 @@ cdef class OGRFeatureBuilder:
                     y, m, d, hh, mm, ss, ff = parse_datetime(value)
                 ogrext1.OGR_F_SetFieldDateTime(
                     cogr_feature, i, y, m, d, hh, mm, ss, 0)
-            elif (isinstance(value, datetime.date)
-            and schema_type == 'date'):
+            elif (isinstance(value, datetime.date) and schema_type == 'date'):
                 y, m, d = value.year, value.month, value.day
                 ogrext1.OGR_F_SetFieldDateTime(
                     cogr_feature, i, y, m, d, 0, 0, 0, 0)
-            elif (isinstance(value, datetime.datetime)
-            and schema_type == 'datetime'):
+            elif (isinstance(value, datetime.datetime) and
+                  schema_type == 'datetime'):
                 y, m, d = value.year, value.month, value.day
                 hh, mm, ss = value.hour, value.minute, value.second
                 ogrext1.OGR_F_SetFieldDateTime(
                     cogr_feature, i, y, m, d, hh, mm, ss, 0)
-            elif (isinstance(value, datetime.time)
-            and schema_type == 'time'):
+            elif (isinstance(value, datetime.time) and schema_type == 'time'):
                 hh, mm, ss = value.hour, value.minute, value.second
                 ogrext1.OGR_F_SetFieldDateTime(
                     cogr_feature, i, 0, 0, 0, hh, mm, ss, 0)
-            elif isinstance(value, string_types):
+            elif schema_type == 'str':
+                value = schema_cast(value)
                 # Catch, log, and re-raise string field value encoding errors.
                 try:
                     value_bytes = value.encode(encoding)
@@ -326,10 +328,8 @@ cdef class OGRFeatureBuilder:
                     raise
                 string_c = value_bytes
                 ogrext1.OGR_F_SetFieldString(cogr_feature, i, string_c)
-            elif value is None:
-                pass # keep field unset/null
             else:
-                raise ValueError("Invalid field type %s" % type(value))
+                raise ValueError("Invalid field. Type: {}, Value: {!r}".format(schema_type, value))
             log.debug("Set field %s: %s" % (key, value))
         return cogr_feature
 

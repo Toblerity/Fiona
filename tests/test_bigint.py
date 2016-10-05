@@ -1,12 +1,14 @@
-import fiona
 import os
 import shutil
 import tempfile
 import unittest
-from fiona.ogrext import calc_gdal_version_num, get_gdal_version_num
+
+import fiona
+from fiona.compat import long
+from fiona.ogrext import (
+    calc_gdal_version_num, get_gdal_version_num, featureRT)
 
 """
-
 OGR 54bit handling: https://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
 
 Shapefile: OFTInteger fields are created by default with a width of 9
@@ -21,8 +23,10 @@ and thus will be now read as OFTInteger64. An open option, DETECT_TYPE=YES, can
 be specified so as OGR does a full scan of the DBF file to see if integer
 fields of size 10 or 11 hold 32 bit or 64 bit values and adjust the type
 accordingly (and same for integer fields of size 19 or 20, in case of overflow
-of 64 bit integer, OFTReal is chosen)
+of 64 bit integer, OFTReal is chosen).
 """
+
+
 class TestBigInt(unittest.TestCase):
 
     def setUp(self):
@@ -37,33 +41,33 @@ class TestBigInt(unittest.TestCase):
         a_bigint = 10 ** 18 - 1
         fieldname = 'abigint'
 
-        kwargs = {
+        try:
+            long(a_bigint)
+        except OverflowError:
+            print("Integer overflows, skipping test.")
+            return True
+
+        if get_gdal_version_num() < calc_gdal_version_num(2, 0, 0):
+            print("GDAL version < 2.0, skipping test.")
+            return True
+
+        profile = {
             'driver': 'ESRI Shapefile',
             'crs': 'EPSG:4326',
             'schema': {
                 'geometry': 'Point',
-                'properties': [(fieldname, 'int:10')]}}
-        if get_gdal_version_num() < calc_gdal_version_num(2, 0, 0):
-            with self.assertRaises(OverflowError):
-                with fiona.open(name, 'w', **kwargs) as dst:
-                    rec = {}
-                    rec['geometry'] = {'type': 'Point', 'coordinates': (0, 0)}
-                    rec['properties'] = {fieldname: a_bigint}
-                    dst.write(rec)
-        else:
+                'properties': [(fieldname, 'int:18')]}}
 
-            with fiona.open(name, 'w', **kwargs) as dst:
-                rec = {}
-                rec['geometry'] = {'type': 'Point', 'coordinates': (0, 0)}
-                rec['properties'] = {fieldname: a_bigint}
-                dst.write(rec)
+        with fiona.open(name, 'w', **profile) as dst:
+            rec = {}
+            rec['geometry'] = {'type': 'Point', 'coordinates': (0, 0)}
+            rec['properties'] = {fieldname: a_bigint}
+            dst.write(rec)
 
-            with fiona.open(name) as src:
-                if get_gdal_version_num() >= calc_gdal_version_num(2, 0, 0):
-                    first = next(src)
-                    self.assertEqual(first['properties'][fieldname], a_bigint)
+        with fiona.open(name) as src:
+            first = next(src)
+            self.assertEqual(first['properties'][fieldname], a_bigint)
 
 
 if __name__ == "__main__":
-    # import sys;sys.argv = ['', 'Test.testName']
     unittest.main()
