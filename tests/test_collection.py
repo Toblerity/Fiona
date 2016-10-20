@@ -14,6 +14,10 @@ from fiona.collection import Collection, supported_drivers
 from fiona.errors import FionaValueError, DriverError, SchemaError, CRSError
 
 FIXME_WINDOWS = sys.platform.startswith('win')
+OGRINFO_TOOL = "ogrinfo"
+if FIXME_WINDOWS:
+    # Set extra path if in windows
+    OGRINFO_TOOL = 'gdal\\apps\\' + OGRINFO_TOOL
 
 WILDSHP = 'tests/data/coutwildrnp.shp'
 
@@ -310,9 +314,10 @@ class UnsupportedDriverTest(unittest.TestCase):
             DriverError,
             fiona.open, os.path.join(TEMPDIR, "foo"), "w", "Bogus", schema=schema)
 
-@unittest.skipIf(FIXME_WINDOWS, 
-                 reason="FIXME on Windows. Please look into why this test isn't working. There is a codepage issue regarding Windows-1252 and UTF-8. ")
+
 class GenericWritingTest(unittest.TestCase):
+    tempdir = None
+    c = None
 
     @classmethod
     def setUpClass(self):
@@ -374,8 +379,9 @@ class PointWritingTest(unittest.TestCase):
         self.assertEqual(len(self.sink), 1)
         self.assertEqual(self.sink.bounds, (0.0, 0.1, 0.0, 0.1))
         self.sink.close()
+        # Check information with ogrinfo tool
         info = subprocess.check_output(
-            ["ogrinfo", self.filename, "point_writing_test"])
+            [OGRINFO_TOOL, self.filename, "point_writing_test"])
         self.assertTrue(
             'date (Date) = 2012/01/29' in info.decode('utf-8'),
             info)
@@ -599,7 +605,7 @@ class GeoJSONCRSWritingTest(unittest.TestCase):
         """OGR's GeoJSON driver only deals in WGS84"""
         self.sink.close()
         info = subprocess.check_output(
-            ["ogrinfo", self.filename, "OGRGeoJSON"])
+            [OGRINFO_TOOL, self.filename, "OGRGeoJSON"])
         self.assertTrue(
             'GEOGCS["WGS 84' in info.decode('utf-8'),
             info)
