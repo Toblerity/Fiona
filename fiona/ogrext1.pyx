@@ -165,7 +165,7 @@ cdef class FeatureBuilder:
             key = key_b.decode(encoding)
             fieldtypename = FIELD_TYPES[ogrext1.OGR_Fld_GetType(fdefn)]
             if not fieldtypename:
-                log.warn(
+                log.warning(
                     "Skipping field %s: invalid type %s", 
                     key,
                     ogrext1.OGR_Fld_GetType(fdefn))
@@ -195,7 +195,7 @@ cdef class FeatureBuilder:
                     try:
                         val = json.loads(val)
                     except ValueError as err:
-                        log.warn(str(err))
+                        log.warning(str(err))
 
                 # Now add to the properties object.
                 props[key] = val
@@ -203,13 +203,17 @@ cdef class FeatureBuilder:
             elif fieldtype in (FionaDateType, FionaTimeType, FionaDateTimeType):
                 retval = ogrext1.OGR_F_GetFieldAsDateTime(
                     feature, i, &y, &m, &d, &hh, &mm, &ss, &tz)
-                if fieldtype is FionaDateType:
-                    props[key] = datetime.date(y, m, d).isoformat()
-                elif fieldtype is FionaTimeType:
-                    props[key] = datetime.time(hh, mm, ss).isoformat()
-                else:
-                    props[key] = datetime.datetime(
-                        y, m, d, hh, mm, ss).isoformat()
+                try:
+                    if fieldtype is FionaDateType:
+                         props[key] = datetime.date(y, m, d).isoformat()
+                    elif fieldtype is FionaTimeType:
+                         props[key] = datetime.time(hh, mm, ss).isoformat()
+                    else:
+                         props[key] = datetime.datetime(
+                             y, m, d, hh, mm, ss).isoformat()
+                except ValueError as err:
+                    log.exception(err)
+                    props[key] = None
             else:
                 log.debug("%s: None, fieldtype: %r, %r" % (key, fieldtype, fieldtype in string_types))
                 props[key] = None
@@ -504,7 +508,7 @@ cdef class Session:
             key = key_b.decode(self.get_internalencoding())
             fieldtypename = FIELD_TYPES[ogrext1.OGR_Fld_GetType(cogr_fielddefn)]
             if not fieldtypename:
-                log.warn(
+                log.warning(
                     "Skipping field %s: invalid type %s", 
                     key,
                     ogrext1.OGR_Fld_GetType(cogr_fielddefn))

@@ -1,0 +1,10 @@
+If you use Fiona for any published work, please cite it using the reference
+below:
+
+@Misc{,
+  author =    {Sean Gillies and others},
+  organization = {Toblerity},
+  title =     {Fiona is OGR's neat, nimble, no-nonsense API},
+  year =      {2011--},
+  url = "https://github.com/Toblerity/Fiona"
+}

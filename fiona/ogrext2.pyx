@@ -180,7 +180,7 @@ cdef class FeatureBuilder:
             key = key_b.decode(encoding)
             fieldtypename = FIELD_TYPES[ogrext2.OGR_Fld_GetType(fdefn)]
             if not fieldtypename:
-                log.warn(
+                log.warning(
                     "Skipping field %s: invalid type %s", 
                     key,
                     ogrext2.OGR_Fld_GetType(fdefn))
@@ -200,7 +200,7 @@ cdef class FeatureBuilder:
                     val = ogrext2.OGR_F_GetFieldAsString(feature, i)
                     val = val.decode(encoding)
                 except UnicodeDecodeError:
-                    log.warn(
+                    log.warning(
                         "Failed to decode %s using %s codec", val, encoding)
 
                 # Does the text contain a JSON object? Let's check.
@@ -209,7 +209,7 @@ cdef class FeatureBuilder:
                     try:
                         val = json.loads(val)
                     except ValueError as err:
-                        log.warn(str(err))
+                        log.warning(str(err))
 
                 # Now add to the properties object.
                 props[key] = val
@@ -217,13 +217,17 @@ cdef class FeatureBuilder:
             elif fieldtype in (FionaDateType, FionaTimeType, FionaDateTimeType):
                 retval = ogrext2.OGR_F_GetFieldAsDateTime(
                     feature, i, &y, &m, &d, &hh, &mm, &ss, &tz)
-                if fieldtype is FionaDateType:
-                    props[key] = datetime.date(y, m, d).isoformat()
-                elif fieldtype is FionaTimeType:
-                    props[key] = datetime.time(hh, mm, ss).isoformat()
-                else:
-                    props[key] = datetime.datetime(
-                        y, m, d, hh, mm, ss).isoformat()
+                try:
+                    if fieldtype is FionaDateType:
+                        props[key] = datetime.date(y, m, d).isoformat()
+                    elif fieldtype is FionaTimeType:
+                        props[key] = datetime.time(hh, mm, ss).isoformat()
+                    else:
+                        props[key] = datetime.datetime(
+                            y, m, d, hh, mm, ss).isoformat()
+                except ValueError as err:
+                    log.exception(err)
+                    props[key] = None
             else:
                 log.debug("%s: None, fieldtype: %r, %r" % (key, fieldtype, fieldtype in string_types))
                 props[key] = None
@@ -280,7 +284,7 @@ cdef class OGRFeatureBuilder:
             try:
                 key_bytes = ogr_key.encode(encoding)
             except UnicodeDecodeError:
-                log.warn("Failed to encode %s using %s codec", key, encoding)
+                log.warning("Failed to encode %s using %s codec", key, encoding)
                 key_bytes = ogr_key
             key_c = key_bytes
             i = ogrext2.OGR_F_GetFieldIndex(cogr_feature, key_c)
@@ -326,7 +330,7 @@ cdef class OGRFeatureBuilder:
                 try:
                     value_bytes = value.encode(encoding)
                 except UnicodeDecodeError:
-                    log.warn(
+                    log.warning(
                         "Failed to encode %s using %s codec", value, encoding)
                     value_bytes = value
                 string_c = value_bytes
@@ -530,7 +534,7 @@ cdef class Session:
             key = key_b.decode(self.get_internalencoding())
             fieldtypename = FIELD_TYPES[ogrext2.OGR_Fld_GetType(cogr_fielddefn)]
             if not fieldtypename:
-                log.warn(
+                log.warning(
                     "Skipping field %s: invalid type %s", 
                     key,
                     ogrext2.OGR_Fld_GetType(cogr_fielddefn))

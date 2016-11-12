@@ -12,24 +12,22 @@ env:
     - GDALBUILD=$HOME/gdalbuild
   matrix:
     - GDALVERSION="1.9.2"
-    - GDALVERSION="1.11.4"
-    - GDALVERSION="2.0.2"
+    - GDALVERSION="1.11.5"
+    - GDALVERSION="2.0.3"
+    - GDALVERSION="2.1.1"
 addons:
   apt:
     packages:
-    - libgdal1h
     - gdal-bin
     - libproj-dev
     - libhdf5-serial-dev
-    - libpng-dev
+    - libpng12-dev
     - libgdal-dev
     - libatlas-dev
     - libatlas-base-dev
     - gfortran
 python:
   - "2.7"
-  - "3.3"
-  - "3.4"
   - "3.5"
 before_install:
   - "pip install -U pip"
