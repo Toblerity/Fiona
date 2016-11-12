@@ -24,20 +24,20 @@ def _read_file(name):
 @pytest.fixture(scope='session')
 def data_dir():
     """Absolute file path to the directory containing test datasets."""
-    return os.path.abspath(os.path.join('tests', 'data'))
+    return os.path.abspath('tests/data')
 
 
 @pytest.fixture(scope='session')
 def path_coutwildrnp_shp():
     """Path to ```coutwildrnp.shp``"""
-    return os.path.abspath(os.path.join(data_dir()))
+    return '{}/coutwildrnp.shp'.format(data_dir())
 
 
 @pytest.fixture(scope='session')
 def path_coutwildrnp_zip():
     """Creates ``coutwildrnp.zip`` if it does not exist and returns the absolute
     file path."""
-    path = os.path.join(data_dir(), 'coutwildrnp.zip')
+    path = '{}/coutwildrnp.zip'.format(data_dir())
     if not os.path.exists(path):
         with zipfile.ZipFile(path, 'w') as zip:
             for filename in _COUTWILDRNP_FILES:
@@ -49,13 +49,13 @@ def path_coutwildrnp_zip():
 def path_coutwildrnp_tar():
     """Creates ``coutwildrnp.tar`` if it does not exist and returns the absolute
     file path."""
-    path = os.path.join(data_dir(), 'coutwildrnp.tar')
+    path = '{}/coutwildrnp.tar'.format(data_dir())
     if not os.path.exists(path):
         with tarfile.open(path, 'w') as tar:
             for filename in _COUTWILDRNP_FILES:
                 tar.add(
                     os.path.join(data_dir(), filename),
-                    arcname='testing/{}'.format(filename))
+                    arcname=os.path.join('testing', filename))
     return path
 
 
@@ -63,7 +63,7 @@ def path_coutwildrnp_tar():
 def path_coutwildrnp_json():
     """Creates ``coutwildrnp.json`` if it does not exist and returns the absolute
     file path."""
-    path = os.path.join(data_dir(), 'coutwildrnp.json')
+    path = '{}/coutwildrnp.json'.format(data_dir())
     if not os.path.exists(path):
         name = _COUTWILDRNP_FILES[0]
         with fiona.open(os.path.join(data_dir(), name), 'r') as source:
