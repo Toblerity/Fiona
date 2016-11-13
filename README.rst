@@ -309,7 +309,7 @@ Windows PATH otherwise Fiona will fail to work.
 Development and testing
 =======================
 
-Building from the source requires Cython. Tests require Nose. If the GDAL/OGR
+Building from the source requires Cython. Tests require `pytest <http://pytest.org>`_. If the GDAL/OGR
 libraries, headers, and `gdal-config`_ program are installed to well known
 locations on your system (via your system's package manager), you can do this::
 
@@ -317,7 +317,7 @@ locations on your system (via your system's package manager), you can do this::
   (fiona_env)$ cd Fiona
   (fiona_env)$ pip install cython
   (fiona_env)$ pip install -e .[test]
-  (fiona_env)$ nosetests
+  (fiona_env)$ py.test
 
 Or you can use the ``pep-518-install`` script::
 
@@ -329,7 +329,7 @@ If you have a non-standard environment, you'll need to specify the include and
 lib dirs and GDAL library on the command line::
 
   (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal --gdalversion 2 develop
-  (fiona_env)$ nosetests
+  (fiona_env)$ py.test
 
 .. _OGR: http://www.gdal.org/ogr
 .. _pyproj: http://pypi.python.org/pypi/pyproj/

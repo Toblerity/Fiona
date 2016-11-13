@@ -1,7 +1,6 @@
 -r requirements.txt
 coverage
 cython>=0.21.2
-nose
-pytest
+pytest>=3
 pytest-cov
 setuptools

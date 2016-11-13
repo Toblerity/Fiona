@@ -1,10 +1,12 @@
+"""Tests for `$ fio calc`."""
+
+
 from __future__ import division
 import json
 
 from click.testing import CliRunner
 
 from fiona.fio.calc import calc
-from .fixtures import feature_seq
 
 
 def test_fail():
@@ -21,16 +23,20 @@ def _load(output):
         try:
             features.append(json.loads(x))
         except:
-            pass  # nosetests puts some debugging garbage to stdout
+            # Click combines stdout and stderr and shapely dumps logs to
+            # stderr that are not JSON
+            # https://github.com/pallets/click/issues/371
+            pass
     return features
 
 
-def test_calc_seq():
+def test_calc_seq(feature_seq):
     runner = CliRunner()
 
-    result = runner.invoke(calc,
-                           ["TEST", "f.properties.AREA / f.properties.PERIMETER"],
-                           feature_seq)
+    result = runner.invoke(calc, [
+        "TEST",
+        "f.properties.AREA / f.properties.PERIMETER"],
+        feature_seq)
     assert result.exit_code == 0
 
     feats = _load(result.output)
@@ -40,22 +46,18 @@ def test_calc_seq():
             feat['properties']['AREA'] / feat['properties']['PERIMETER']
 
 
-def test_bool_seq():
-    runner = CliRunner()
-
+def test_bool_seq(feature_seq, runner):
     result = runner.invoke(calc,
                            ["TEST", "f.properties.AREA > 0.015"],
                            feature_seq)
     assert result.exit_code == 0
     feats = _load(result.output)
     assert len(feats) == 2
-    assert feats[0]['properties']['TEST'] == True
-    assert feats[1]['properties']['TEST'] == False
+    assert feats[0]['properties']['TEST']
+    assert not feats[1]['properties']['TEST']
 
 
-def test_existing_property():
-    runner = CliRunner()
-
+def test_existing_property(feature_seq, runner):
     result = runner.invoke(calc,
                            ["AREA", "f.properties.AREA * 2"],
                            feature_seq)

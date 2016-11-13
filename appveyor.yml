@@ -89,11 +89,11 @@ build_script:
 
   - cmd: echo %PYTHONPATH%
 
-  - "%CMD_IN_ENV% python setup.py build_ext -IC:\\gdal\\include -lgdal_i -LC:\\gdal\\lib install --gdalversion 1.11.4"
+  - "%CMD_IN_ENV% python setup.py build_ext -IC:\\gdal\\include -lgdal_i -LC:\\gdal\\lib develop --gdalversion 1.11.4"
 
 
 test_script:
   # Run the project tests
   - cmd: SET
 
-  - "%CMD_IN_ENV% nosetests --exclude test_filter_vsi --exclude test_geopackage"  
+  - "%CMD_IN_ENV% pytest --cov fiona --cov-report term-missing"

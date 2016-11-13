@@ -3,9 +3,9 @@
 
 import json
 import sys
-import unittest
 
 from click.testing import CliRunner
+import pytest
 
 import fiona
 from fiona.fio import dump
@@ -14,11 +14,12 @@ from fiona.fio.main import main_group
 
 WILDSHP = 'tests/data/coutwildrnp.shp'
 TESTGPX = 'tests/data/test_gpx.gpx'
-
 FIXME_WINDOWS = sys.platform.startswith('win')
 
-@unittest.skipIf(FIXME_WINDOWS, 
-                 reason="FIXME on Windows. Please look into why this test is not working.")
+
+@pytest.mark.skipif(
+    FIXME_WINDOWS,
+    reason="FIXME on Windows. Please look into why this test is not working.")
 def test_dump():
     runner = CliRunner()
     result = runner.invoke(dump.dump, [WILDSHP])

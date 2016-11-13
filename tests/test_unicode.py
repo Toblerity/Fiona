@@ -8,7 +8,6 @@ import tempfile
 import unittest
 
 import pytest
-import six
 
 import fiona
 
@@ -49,7 +48,7 @@ class UnicodePathTest(unittest.TestCase):
             with fiona.open(path) as c:
                 assert len(c) == 67
 
-@unittest.skipIf(FIXME_WINDOWS, 
+@pytest.mark.skipif(FIXME_WINDOWS, 
                  reason="FIXME on Windows. Please look into why these tests are not working. Note: test_write_utf8 works.")
 class UnicodeStringFieldTest(unittest.TestCase):
 
