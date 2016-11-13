@@ -1,38 +1,46 @@
-# Testing BytesCollection
+"""Tests for ``fiona.BytesCollection()``."""
+
+
 import sys
 import unittest
 
+import pytest
 import six
 
 import fiona
 
+
 FIXME_WINDOWS = sys.platform.startswith('win')
 
+
+@pytest.mark.usefixtures('uttc_path_coutwildrnp_json')
 class ReadingTest(unittest.TestCase):
 
     def setUp(self):
-        with open('tests/data/coutwildrnp.json') as src:
+        with open(self.path_coutwildrnp_json) as src:
             bytesbuf = src.read().encode('utf-8')
         self.c = fiona.BytesCollection(bytesbuf)
 
     def tearDown(self):
         self.c.close()
 
-    @unittest.skipIf(six.PY2, 'string are bytes in Python 2')
+    @pytest.mark.skipif(six.PY2, reason='string are bytes in Python 2')
     def test_construct_with_str(self):
-        with open('tests/data/coutwildrnp.json') as src:
+        with open(self.path_coutwildrnp_json) as src:
             strbuf = src.read()
         self.assertRaises(ValueError, fiona.BytesCollection, strbuf)
 
-    @unittest.skipIf(FIXME_WINDOWS, 
-                     reason="FIXME on Windows. Please look into why this test is not working.")
+    @pytest.mark.skipif(
+        FIXME_WINDOWS,
+        reason="FIXME on Windows. Please look into why this test is not working.")
     def test_open_repr(self):
         # I'm skipping checking the name of the virtual file as it produced by uuid.
         self.assertTrue(repr(self.c).startswith("<open BytesCollection '/vsimem/"))
         self.assertTrue(repr(self.c).endswith(":OGRGeoJSON', mode 'r' at %s>" % hex(id(self.c))))
 
-    @unittest.skipIf(FIXME_WINDOWS, 
-                     reason="FIXME on Windows. Please look into why this test is not working.")
+    @pytest.mark.skipif(
+        FIXME_WINDOWS,
+        reason="FIXME on Windows. Please look into why this test is not working.")
     def test_closed_repr(self):
         # I'm skipping checking the name of the virtual file as it produced by uuid.
         self.c.close()
@@ -56,8 +64,9 @@ class ReadingTest(unittest.TestCase):
     def test_mode(self):
         self.assertEqual(self.c.mode, 'r')
 
-    @unittest.skipIf(FIXME_WINDOWS, 
-                     reason="FIXME on Windows. Please look into why this test is not working.")
+    @pytest.mark.skipif(
+        FIXME_WINDOWS,
+        reason="FIXME on Windows. Please look into why this test is not working.")
     def test_collection(self):
         self.assertEqual(self.c.encoding, 'utf-8')
 
@@ -184,10 +193,12 @@ class ReadingTest(unittest.TestCase):
         self.assertTrue(0 in self.c.keys())
         self.assertTrue(0 in self.c)
 
+
+@pytest.mark.usefixtures('uttc_path_coutwildrnp_json')
 class FilterReadingTest(unittest.TestCase):
 
     def setUp(self):
-        with open('tests/data/coutwildrnp.json') as src:
+        with open(self.path_coutwildrnp_json) as src:
             bytesbuf = src.read().encode('utf-8')
         self.c = fiona.BytesCollection(bytesbuf)
 
@@ -214,6 +225,3 @@ class FilterReadingTest(unittest.TestCase):
                 ((-112, 38), (-112, 40), (-106, 40), (-106, 38), (-112, 38)),)}
         results = list(self.c.filter(mask=mask))
         self.assertEqual(len(results), 26)
-
-
-

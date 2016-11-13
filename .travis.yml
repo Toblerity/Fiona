@@ -30,21 +30,21 @@ python:
   - "2.7"
   - "3.5"
 before_install:
-  - pip install -U pip
-  - pip install wheel
+  - "pip install -U pip"
+  - "pip install wheel coveralls>=1.1 --upgrade"
   - . ./scripts/travis_gdal_install.sh
   - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$PATH
   - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$LD_LIBRARY_PATH
   - gdal-config --version
 install:
-  - "if [ $(gdal-config --version) == \"$GDALVERSION\" ]; then echo \"Using gdal $GDALVERSION\"; else echo \"NOT using gdal $GDALVERSION as expected; aborting\"; exit 1; fi"
-  - "pip wheel -r requirements-dev.txt"
   - "pip install -r requirements-dev.txt"
-  - "python setup.py sdist"
-  - "pip install --upgrade --force-reinstall --global-option=build_ext --global-option='-I$GDALINST/gdal-$GDALVERSION/include' --global-option='-L$GDALINST/gdal-$GDALVERSION/lib' --global-option='-R$GDALINST/gdal-$GDALVERSION/lib' dist/Fiona*"
+  - "if [ $(gdal-config --version) == \"$GDALVERSION\" ]; then echo \"Using gdal $GDALVERSION\"; else echo \"NOT using gdal $GDALVERSION as expected; aborting\"; exit 1; fi"
+  - "pip install --upgrade --force-reinstall --global-option=build_ext --global-option='-I$GDALINST/gdal-$GDALVERSION/include' --global-option='-L$GDALINST/gdal-$GDALVERSION/lib' --global-option='-R$GDALINST/gdal-$GDALVERSION/lib' -e ."
+  - "pip install -e .[test]"
   - "fio --version"
-  - "cp -r tests /tmp"
-script: 
-  - "cd /tmp && coverage run --source=fiona --omit='*.pxd,*.pyx,*/tests/*,*/docs/*,*/examples/*,*/benchmarks/*' -m nose --exclude test_filter_vsi --exclude test_geopackage --exclude test_write_mismatch tests"
+  - "gdal-config --version"
+  - "fio --gdal-version"
+script:
+  - pytest --cov fiona --cov-report term-missing
 after_success:
   - coveralls || echo "!! intermittent coveralls failure"
