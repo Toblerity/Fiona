@@ -23,3 +23,6 @@ class DataIOError(IOError):
 
 class FieldNameEncodeError(UnicodeEncodeError):
     """Failure to encode a field name."""
+
+class UnsupportedGeometryTypeError(KeyError):
+    """When a OGR geometry type isn't supported by Fiona."""
