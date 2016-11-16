@@ -6,31 +6,32 @@ Fiona is written by:
 - Sean Gillies <sean.gillies@gmail.com>
 - Rene Buffat <buffat@gmail.com>
 - Kevin Wurster <wursterk@gmail.com>
+- Micah Cochran <micah@micahcochran.net>
 - Matthew Perry <perrygeo@gmail.com>
 - Joshua Arnott <josh@snorfalorpagus.net>
 - Kelsey Jordahl <kjordahl@enthought.com>
-- Micah Cochran <micah@micahcochran.net>
-- Simon Norris <snorris@hillcrestgeo.ca>
 - Patrick Young <patrick.mckendree.young@gmail.com>
+- Simon Norris <snorris@hillcrestgeo.ca>
 - Hannes Gräuler <graeuler@geoplex.de>
 - Johan Van de Wauw <johan.vandewauw@gmail.com>
-- Michael Weisman <mweisman@gmail.com>
-- Ryan Grout <rgrout@continuum.io>
 - Jacob Wasserman <jwasserman@gmail.com>
-- Miro Hrončok <miro@hroncok.cz>
-- Michele Citterio <michele@citterio.net>
-- Brendan Ward <bcward@consbio.org>
+- Ryan Grout <rgrout@continuum.io>
+- Michael Weisman <mweisman@gmail.com>
 - fredj <frederic.junod@camptocamp.com>
-- wilsaj <wilson.andrew.j+github@gmail.com>
 - Bas Couwenberg <sebastic@xs4all.nl>
+- Brendan Ward <bcward@consbio.org>
+- Michele Citterio <michele@citterio.net>
+- Miro Hrončok <miro@hroncok.cz>
+- qinfeng <guo.qinfeng+github@gmail.com>
+- Michael Weisman <michael@urbanmapping.com>
 - Brandon Liu <bdon@bdon.org>
-- Hannes Gräuler <hgraeule@uos.de>
 - Ludovic Delauné <ludotux@gmail.com>
 - Martijn Visser <mgvisser@gmail.com>
+- Ariel Nunez <ingenieroariel@gmail.com>
 - Oliver Tonnhofer <olt@bogosoft.com>
 - Stefano Costa <steko@iosa.it>
 - dimlev <dimlev@gmail.com>
-- Ariel Nunez <ingenieroariel@gmail.com>
+- wilsaj <wilson.andrew.j+github@gmail.com>
 
 Fiona would not be possible without the great work of Frank Warmerdam and other
 GDAL/OGR developers.
