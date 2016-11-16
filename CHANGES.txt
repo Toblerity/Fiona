@@ -3,6 +3,26 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.7.1 (2016-11-16)
+------------------
+
+Bug Fixes:
+
+- Prevent Fiona from stumbling over '*Z', '*M', and '*ZM' geometry types
+  introduced in GDAL 2.1 (#384). Fiona 1.7.1 doesn't add explicit support for
+  these types, they are coerced to geometry types 1-7 ('Point', 'LineString',
+  etc.)
+- Raise an `UnsupportedGeometryTypeError` when a bogus or unsupported 
+  geometry type is encountered in a new collection's schema or elsewhere
+  (#340).
+- Enable `--precision 0` for fio-cat (#370).
+- Prevent datetime exceptions from unnecessarily stopping collection iteration
+  by yielding `None` (#385)
+- Replace log.warn calls with log.warning calls (#379).
+- Print an error message if neither gdal-config or `--gdalversion` indicate
+  a GDAL C API version when running `setup.py` (#364).
+- Let dict-like subclasses through CRS type checks (#367).
+
 1.7.0post2 (2016-06-15)
 -----------------------
 
