@@ -871,8 +871,6 @@ cdef class WritingSession(Session):
                 cogr_srs,
                 geometry_type_code(
                     collection.schema.get('geometry', 'Unknown')),
-                #<unsigned int>[k for k,v in GEOMETRY_TYPES.items() if 
-                #    v == collection.schema.get('geometry', 'Unknown')][0],
                 options)
 
             if cogr_srs != NULL:
