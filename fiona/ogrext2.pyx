@@ -13,7 +13,9 @@ import uuid
 from six import integer_types, string_types, text_type
 
 cimport ogrext2
-from _geometry cimport GeomBuilder, OGRGeomBuilder
+from _geometry cimport (
+    GeomBuilder, OGRGeomBuilder, geometry_type_code,
+    normalize_geometry_type_code)
 from fiona._err import cpl_errs
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
@@ -564,11 +566,12 @@ cdef class Session:
 
             props.append((key, val))
 
-        cdef unsigned int geom_type = ogrext2.OGR_FD_GetGeomType(
-            cogr_featuredefn)
+        code = normalize_geometry_type_code(
+            ogrext2.OGR_FD_GetGeomType(cogr_featuredefn))
+
         return {
-            'properties': OrderedDict(props), 
-            'geometry': GEOMETRY_TYPES[geom_type]}
+            'properties': OrderedDict(props),
+            'geometry': GEOMETRY_TYPES[code]}
 
     def get_crs(self):
         cdef char *proj_c = NULL
@@ -930,10 +933,9 @@ cdef class WritingSession(Session):
                 self.cogr_ds, 
                 name_c,
                 cogr_srs,
-                <unsigned int>[k for k,v in GEOMETRY_TYPES.items() if 
-                    v == collection.schema.get('geometry', 'Unknown')][0],
-                options
-                )
+                geometry_type_code(
+                    collection.schema.get('geometry', 'Unknown')),
+                options)
 
             if cogr_srs != NULL:
                 ogrext2.OSRDestroySpatialReference(cogr_srs)

@@ -2,6 +2,8 @@
 
 import logging
 
+from fiona.errors import UnsupportedGeometryTypeError
+
 
 class NullHandler(logging.Handler):
     def emit(self, record):
@@ -20,6 +22,17 @@ GEOMETRY_TYPES = {
     5: 'MultiLineString',
     6: 'MultiPolygon',
     7: 'GeometryCollection',
+    # Unsupported types.
+    #8: 'CircularString',
+    #9: 'CompoundCurve',
+    #10: 'CurvePolygon',
+    #11: 'MultiCurve',
+    #12: 'MultiSurface',
+    #13: 'Curve',
+    #14: 'Surface',
+    #15: 'PolyhedralSurface',
+    #16: 'TIN',
+    #17: 'Triangle',
     100: 'None',
     101: 'LinearRing',
     0x80000001: '3D Point',
@@ -32,6 +45,39 @@ GEOMETRY_TYPES = {
 
 # mapping of GeoJSON type names to OGR integer geometry types
 GEOJSON2OGR_GEOMETRY_TYPES = dict((v, k) for k, v in GEOMETRY_TYPES.iteritems())
+
+
+cdef unsigned int geometry_type_code(name):
+    """Map OGC geometry type names to integer codes."""
+    offset = 0
+    if name.endswith('ZM'):
+        offset = 3000
+    elif name.endswith('M'):
+        offset = 2000
+    elif name.endswith('Z'):
+        offset = 1000
+
+    normalized_name = name.rstrip('ZM')
+    if normalized_name not in GEOJSON2OGR_GEOMETRY_TYPES:
+        raise UnsupportedGeometryTypeError(name)
+
+    return offset + <unsigned int>GEOJSON2OGR_GEOMETRY_TYPES[normalized_name]
+
+
+cdef object normalize_geometry_type_code(unsigned int code):
+    """Normalize geometry type codes."""
+    # Remove 2.5D flag.
+    norm_code = code & (~0x80000000)
+
+    # Normalize Z, M, and ZM types. Fiona 1.x does not support M
+    # and doesn't treat OGC 'Z' variants as special types of their
+    # own.
+    norm_code = norm_code % 1000
+
+    if norm_code not in GEOMETRY_TYPES:
+        raise UnsupportedGeometryTypeError(norm_code)
+
+    return norm_code
 
 
 # Geometry related functions and classes follow.
@@ -113,14 +159,25 @@ cdef class GeomBuilder:
         # The only method anyone needs to call
         if geom == NULL:
             raise ValueError("Null geom")
-        
+
         cdef unsigned int etype = OGR_G_GetGeometryType(geom)
-        self.code = etype
-        self.geomtypename = GEOMETRY_TYPES[self.code & (~0x80000000)]
+
+        # Remove 2.5D flag.
+        self.code = etype & (~0x80000000)
+
+        # Normalize Z, M, and ZM types. Fiona 1.x does not support M
+        # and doesn't treat OGC 'Z' variants as special types of their
+        # own.
+        self.code = self.code % 1000
+
+        if self.code not in GEOMETRY_TYPES:
+            raise UnsupportedGeometryTypeError(self.code)
+
+        self.geomtypename = GEOMETRY_TYPES[self.code]
         self.ndims = OGR_G_GetCoordinateDimension(geom)
         self.geom = geom
         return getattr(self, '_build' + self.geomtypename)()
-    
+
     cpdef build_wkb(self, object wkb):
         # The only other method anyone needs to call
         cdef object data = wkb

@@ -13,12 +13,14 @@ import uuid
 from six import integer_types, string_types, text_type
 
 cimport ogrext1
-from _geometry cimport GeomBuilder, OGRGeomBuilder
+from _geometry cimport (
+    GeomBuilder, OGRGeomBuilder, geometry_type_code,
+    normalize_geometry_type_code)
 from fiona._err import cpl_errs
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
 from fiona.errors import (
-    DriverError, SchemaError, CRSError, FionaValueError, FieldNameEncodeError)
+    DriverError, SchemaError, CRSError, FionaValueError)
 from fiona.compat import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -538,11 +540,12 @@ cdef class Session:
 
             props.append((key, val))
 
-        cdef unsigned int geom_type = ogrext1.OGR_FD_GetGeomType(
-            cogr_featuredefn)
+        code = normalize_geometry_type_code(
+            ogrext1.OGR_FD_GetGeomType(cogr_featuredefn))
+
         return {
-            'properties': OrderedDict(props), 
-            'geometry': GEOMETRY_TYPES[geom_type]}
+            'properties': OrderedDict(props),
+            'geometry': GEOMETRY_TYPES[code]}
 
     def get_crs(self):
         cdef char *proj_c = NULL
@@ -871,10 +874,9 @@ cdef class WritingSession(Session):
                 self.cogr_ds,
                 name_c,
                 cogr_srs,
-                <unsigned int>[k for k,v in GEOMETRY_TYPES.items() if 
-                    v == collection.schema.get('geometry', 'Unknown')][0],
-                options
-                )
+                geometry_type_code(
+                    collection.schema.get('geometry', 'Unknown')),
+                options)
 
             if cogr_srs != NULL:
                 ogrext1.OSRDestroySpatialReference(cogr_srs)

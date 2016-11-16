@@ -472,7 +472,6 @@ class LineWritingTest(unittest.TestCase):
 
 
 class PointAppendTest(unittest.TestCase):
-    # Tests 3D shapefiles too
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
         with fiona.open(WILDSHP, "r") as input:
@@ -493,7 +492,7 @@ class PointAppendTest(unittest.TestCase):
 
     def test_append_point(self):
         with fiona.open(os.path.join(self.tempdir, "test_append_point.shp"), "a") as c:
-            self.assertEqual(c.schema['geometry'], '3D Point')
+            self.assertEqual(c.schema['geometry'], 'Point')
             c.write({'geometry': {'type': 'Point', 'coordinates': (0.0, 45.0)},
                      'properties': {'PERIMETER': 1.0,
                                     'FEATURE2': None,

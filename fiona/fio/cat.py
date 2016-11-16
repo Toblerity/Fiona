@@ -73,7 +73,7 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
                             except ValueError:
                                 bbox = json.loads(bbox)
                         for i, feat in src.items(bbox=bbox):
-                            if dst_crs or precision > 0:
+                            if dst_crs or precision >= 0:
                                 g = transform_geom(
                                         src.crs, dst_crs, feat['geometry'],
                                         antimeridian_cutting=True,
