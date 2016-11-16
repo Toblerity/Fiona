@@ -4,9 +4,12 @@ import logging
 import sys
 import unittest
 
-from fiona._geometry import GeomBuilder, geometryRT
+from fiona._geometry import (GeomBuilder, geometryRT)
+from fiona.errors import UnsupportedGeometryTypeError
+
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+
 
 def geometry_wkb(wkb):
     return GeomBuilder().build_wkb(wkb)
@@ -188,4 +191,3 @@ class MultiPolygonTest(unittest.TestCase):
         self.assertEqual(min(y), 0.0)
         self.assertEqual(max(x), 1.0)
         self.assertEqual(max(y), 1.0)
-
