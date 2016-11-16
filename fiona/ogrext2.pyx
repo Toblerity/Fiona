@@ -13,10 +13,11 @@ import uuid
 from six import integer_types, string_types, text_type
 
 cimport ogrext2
-from _geometry cimport GeomBuilder, OGRGeomBuilder
+from _geometry cimport (
+    GeomBuilder, OGRGeomBuilder, geometry_type_code,
+    normalize_geometry_type_code)
 from fiona._err import cpl_errs
-from fiona._geometry import (
-    GEOMETRY_TYPES, geometry_type_code, normalize_geometry_type_code)
+from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
 from fiona.errors import DriverError, SchemaError, CRSError, FionaValueError
 from fiona.compat import OrderedDict
