@@ -35,55 +35,6 @@ GEOMETRY_TYPES = {
     #17: 'Triangle',
     100: 'None',
     101: 'LinearRing',
-    # Unsupported types.
-    #1008: 'CircularString Z',
-    #1009: 'CompoundCurve Z',
-    #1010: 'CurvePolygon Z',
-    #1011: 'MultiCurve Z',
-    #1012: 'MultiSurface Z',
-    #1013: 'Curve Z',
-    #1014: 'Surface Z',
-    #1015: 'PolyhedralSurface Z',
-    #1016: 'TIN Z',
-    #1017: 'Triangle Z',
-    # Below are 'M' types that Fiona treats as ordinary geoms.
-    2001: 'Point',
-    2002: 'LineString',
-    2003: 'Polygon',
-    2004: 'MultiPoint',
-    2005: 'MultiLineString',
-    2006: 'MultiPolygon',
-    2007: 'GeometryCollection',
-    # Unsupported types.
-    #2008: 'CircularString M',
-    #2009: 'CompoundCurve M',
-    #2010: 'CurvePolygon M',
-    #2011: 'MultiCurve M',
-    #2012: 'MultiSurface M',
-    #2013: 'Curve M',
-    #2014: 'Surface M',
-    #2015: 'PolyhedralSurface M',
-    #2016: 'TIN M',
-    #2017: 'Triangle M',
-    # Below are 'ZM' types that Fiona treats as ordinary geoms.
-    3001: 'Point',
-    3002: 'LineString',
-    3003: 'Polygon',
-    3004: 'MultiPoint',
-    3005: 'MultiLineString',
-    3006: 'MultiPolygon',
-    3007: 'GeometryCollection',
-    # Unsupported types.
-    #3008: 'CircularString ZM',
-    #3009: 'CompoundCurve ZM',
-    #3010: 'CurvePolygon ZM',
-    #3011: 'MultiCurve ZM',
-    #3012: 'MultiSurface ZM',
-    #3013: 'Curve ZM',
-    #3014: 'Surface ZM',
-    #3015: 'PolyhedralSurface ZM',
-    #3016: 'TIN ZM',
-    #3017: 'Triangle ZM',
     0x80000001: '3D Point',
     0x80000002: '3D LineString',
     0x80000003: '3D Polygon',
@@ -177,12 +128,19 @@ cdef class GeomBuilder:
             raise ValueError("Null geom")
 
         cdef unsigned int etype = OGR_G_GetGeometryType(geom)
-        self.code = etype
 
-        if self.code & (~0x80000000) not in GEOMETRY_TYPES:
-            raise UnsupportedGeometryTypeError(self.code & (~0x80000000))
+        # Remove 2.5D flag.
+        self.code = etype & (~0x80000000)
 
-        self.geomtypename = GEOMETRY_TYPES[self.code & (~0x80000000)]
+        # Normalize Z, M, and ZM types. Fiona 1.x does not support M
+        # and doesn't treat OGC 'Z' variants as special types of their
+        # own.
+        self.code = self.code % 1000
+
+        if self.code not in GEOMETRY_TYPES:
+            raise UnsupportedGeometryTypeError(self.code)
+
+        self.geomtypename = GEOMETRY_TYPES[self.code]
         self.ndims = OGR_G_GetCoordinateDimension(geom)
         self.geom = geom
         return getattr(self, '_build' + self.geomtypename)()
