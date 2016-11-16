@@ -15,7 +15,8 @@ from six import integer_types, string_types, text_type
 cimport ogrext1
 from _geometry cimport GeomBuilder, OGRGeomBuilder
 from fiona._err import cpl_errs
-from fiona._geometry import GEOMETRY_TYPES
+from fiona._geometry import (
+    GEOMETRY_TYPES, geometry_type_code, normalize_geometry_type_code)
 from fiona import compat
 from fiona.errors import (
     DriverError, SchemaError, CRSError, FionaValueError, FieldNameEncodeError)
@@ -534,8 +535,9 @@ cdef class Session:
 
             props.append((key, val))
 
-        cdef unsigned int geom_type = ogrext1.OGR_FD_GetGeomType(
-            cogr_featuredefn)
+        geom_type = normalize_geometry_type_code(
+            ogrext1.OGR_FD_GetGeomType(cogr_featuredefn))
+
         return {
             'properties': OrderedDict(props), 
             'geometry': GEOMETRY_TYPES[geom_type]}
@@ -867,10 +869,11 @@ cdef class WritingSession(Session):
                 self.cogr_ds,
                 name_c,
                 cogr_srs,
-                <unsigned int>[k for k,v in GEOMETRY_TYPES.items() if 
-                    v == collection.schema.get('geometry', 'Unknown')][0],
-                options
-                )
+                geometry_type_code(
+                    collection.schema.get('geometry', 'Unknown')),
+                #<unsigned int>[k for k,v in GEOMETRY_TYPES.items() if 
+                #    v == collection.schema.get('geometry', 'Unknown')][0],
+                options)
 
             if cogr_srs != NULL:
                 ogrext1.OSRDestroySpatialReference(cogr_srs)

@@ -47,6 +47,39 @@ GEOMETRY_TYPES = {
 GEOJSON2OGR_GEOMETRY_TYPES = dict((v, k) for k, v in GEOMETRY_TYPES.iteritems())
 
 
+def geometry_type_code(name):
+    """Map OGC geometry type names to integer codes."""
+    offset = 0
+    if name.endswith('ZM'):
+        offset = 3000
+    elif name.endswith('M'):
+        offset = 2000
+    elif name.endswith('Z'):
+        offset = 1000
+
+    normalized_name = name.rstrip('ZM')
+    if normalized_name not in GEOJSON2OGR_GEOMETRY_TYPES:
+        raise UnsupportedGeometryTypeError(name)
+
+    return offset + GEOJSON2OGR_GEOMETRY_TYPES[normalized_name]
+
+
+def normalize_geometry_type_code(code):
+    """Normalize geometry type codes."""
+    # Remove 2.5D flag.
+    code = code & (~0x80000000)
+
+    # Normalize Z, M, and ZM types. Fiona 1.x does not support M
+    # and doesn't treat OGC 'Z' variants as special types of their
+    # own.
+    code = code % 1000
+
+    if code not in GEOMETRY_TYPES:
+        raise UnsupportedGeometryTypeError(code)
+
+    return code
+
+
 # Geometry related functions and classes follow.
 cdef void * _createOgrGeomFromWKB(object wkb) except NULL:
     """Make an OGR geometry from a WKB string"""

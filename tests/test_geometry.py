@@ -4,9 +4,16 @@ import logging
 import sys
 import unittest
 
-from fiona._geometry import GeomBuilder, geometryRT
+import pytest
+
+from fiona._geometry import (
+        GeomBuilder, geometryRT, geometry_type_code,
+        normalize_geometry_type_code)
+from fiona.errors import UnsupportedGeometryTypeError
+
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+
 
 def geometry_wkb(wkb):
     return GeomBuilder().build_wkb(wkb)
@@ -189,3 +196,21 @@ class MultiPolygonTest(unittest.TestCase):
         self.assertEqual(max(x), 1.0)
         self.assertEqual(max(y), 1.0)
 
+
+@pytest.mark.parametrize("name,code", [
+    ("Point", 1),
+    ("PointZ", 1001),
+    ("PointM", 2001),
+    ("PointZM", 3001)])
+def test_geometry_type_code(name, code):
+    assert geometry_type_code(name) == code
+
+
+def test_unsupported_geometry_code():
+    with pytest.raises(UnsupportedGeometryTypeError):
+        geometry_type_code('BOGUS')
+
+
+@pytest.mark.parametrize("code,normalized", [(3006, 6), (2, 2), (1005, 5)])
+def test_code_normalization(code, normalized):
+    assert normalize_geometry_type_code(code) == normalized

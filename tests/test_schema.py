@@ -2,7 +2,12 @@ import os
 import shutil
 import tempfile
 import unittest
+
+import pytest
+
 import fiona
+from fiona.errors import UnsupportedGeometryTypeError
+
 
 class SchemaOrder(unittest.TestCase):
 
@@ -153,3 +158,16 @@ class FieldTruncationTestCase(unittest.TestCase):
             first = next(src)
             assert first['geometry'] == {'type': 'Point', 'coordinates': (0, 0)}
             assert first['properties']['a_fieldnam'] == 3.0
+
+
+def test_unsupported_geometry_type(tmpdir):
+    tmpfile = str(tmpdir.join('test-test-geom.shp'))
+
+    profile = {
+        'driver': 'ESRI Shapefile',
+        'schema': {
+            'geometry': 'BOGUS',
+            'properties': {}}}
+
+    with pytest.raises(UnsupportedGeometryTypeError):
+        fiona.open(tmpfile, 'w', **profile)
