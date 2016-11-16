@@ -561,12 +561,12 @@ cdef class Session:
 
             props.append((key, val))
 
-        geom_type = normalize_geometry_type_code(
+        code = normalize_geometry_type_code(
             ogrext2.OGR_FD_GetGeomType(cogr_featuredefn))
 
         return {
-            'properties': OrderedDict(props), 
-            'geometry': GEOMETRY_TYPES[geom_type]}
+            'properties': OrderedDict(props),
+            'geometry': GEOMETRY_TYPES[code]}
 
     def get_crs(self):
         cdef char *proj_c = NULL
@@ -930,8 +930,7 @@ cdef class WritingSession(Session):
                 cogr_srs,
                 geometry_type_code(
                     collection.schema.get('geometry', 'Unknown')),
-                options
-                )
+                options)
 
             if cogr_srs != NULL:
                 ogrext2.OSRDestroySpatialReference(cogr_srs)

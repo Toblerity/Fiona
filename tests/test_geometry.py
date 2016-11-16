@@ -4,9 +4,7 @@ import logging
 import sys
 import unittest
 
-from fiona._geometry import (
-        GeomBuilder, geometryRT, geometry_type_code,
-        normalize_geometry_type_code)
+from fiona._geometry import (GeomBuilder, geometryRT)
 from fiona.errors import UnsupportedGeometryTypeError
 
 
@@ -193,23 +191,3 @@ class MultiPolygonTest(unittest.TestCase):
         self.assertEqual(min(y), 0.0)
         self.assertEqual(max(x), 1.0)
         self.assertEqual(max(y), 1.0)
-
-
-def test_geometry_type_code():
-    assert geometry_type_code('Point') == 1
-    assert geometry_type_code('PointZ') == 1001
-    assert geometry_type_code('PointM') == 2001
-    assert geometry_type_code('PointZM') == 3001
-
-
-def test_unsupported_geometry_code():
-    try:
-        geometry_type_code('BOGUS')
-    except UnsupportedGeometryTypeError:
-        assert True
-
-
-def test_code_normalization():
-    assert normalize_geometry_type_code(3006) == 6
-    assert normalize_geometry_type_code(2) == 2
-    assert normalize_geometry_type_code(1005) == 5

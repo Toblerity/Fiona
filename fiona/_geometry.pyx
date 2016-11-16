@@ -47,7 +47,7 @@ GEOMETRY_TYPES = {
 GEOJSON2OGR_GEOMETRY_TYPES = dict((v, k) for k, v in GEOMETRY_TYPES.iteritems())
 
 
-def geometry_type_code(name):
+cdef unsigned int geometry_type_code(name):
     """Map OGC geometry type names to integer codes."""
     offset = 0
     if name.endswith('ZM'):
@@ -61,23 +61,23 @@ def geometry_type_code(name):
     if normalized_name not in GEOJSON2OGR_GEOMETRY_TYPES:
         raise UnsupportedGeometryTypeError(name)
 
-    return offset + GEOJSON2OGR_GEOMETRY_TYPES[normalized_name]
+    return offset + <unsigned int>GEOJSON2OGR_GEOMETRY_TYPES[normalized_name]
 
 
-def normalize_geometry_type_code(code):
+cdef object normalize_geometry_type_code(unsigned int code):
     """Normalize geometry type codes."""
     # Remove 2.5D flag.
-    code = code & (~0x80000000)
+    norm_code = code & (~0x80000000)
 
     # Normalize Z, M, and ZM types. Fiona 1.x does not support M
     # and doesn't treat OGC 'Z' variants as special types of their
     # own.
-    code = code % 1000
+    norm_code = norm_code % 1000
 
-    if code not in GEOMETRY_TYPES:
-        raise UnsupportedGeometryTypeError(code)
+    if norm_code not in GEOMETRY_TYPES:
+        raise UnsupportedGeometryTypeError(norm_code)
 
-    return code
+    return norm_code
 
 
 # Geometry related functions and classes follow.

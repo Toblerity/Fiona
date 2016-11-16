@@ -13,10 +13,10 @@ import uuid
 from six import integer_types, string_types, text_type
 
 cimport ogrext1
-from _geometry cimport GeomBuilder, OGRGeomBuilder
+from _geometry cimport GeomBuilder, OGRGeomBuilder, geometry_type_code, normalize_geometry_type_code
 from fiona._err import cpl_errs
 from fiona._geometry import (
-    GEOMETRY_TYPES, geometry_type_code, normalize_geometry_type_code)
+    GEOMETRY_TYPES, )
 from fiona import compat
 from fiona.errors import (
     DriverError, SchemaError, CRSError, FionaValueError, FieldNameEncodeError)
@@ -535,12 +535,12 @@ cdef class Session:
 
             props.append((key, val))
 
-        geom_type = normalize_geometry_type_code(
+        code = normalize_geometry_type_code(
             ogrext1.OGR_FD_GetGeomType(cogr_featuredefn))
 
         return {
-            'properties': OrderedDict(props), 
-            'geometry': GEOMETRY_TYPES[geom_type]}
+            'properties': OrderedDict(props),
+            'geometry': GEOMETRY_TYPES[code]}
 
     def get_crs(self):
         cdef char *proj_c = NULL

@@ -464,7 +464,7 @@ class PointAppendTest(unittest.TestCase):
         self.tempdir = tempfile.mkdtemp()
         with fiona.open(WILDSHP, "r") as input:
             output_schema = input.schema.copy()
-            output_schema['geometry'] = 'Point'
+            output_schema['geometry'] = '3D Point'
             with fiona.open(
                     os.path.join(self.tempdir, "test_append_point.shp"),
                     'w', crs=None, driver="ESRI Shapefile",
