@@ -237,7 +237,7 @@ cdef class FeatureBuilder:
 
             elif fieldtype is bytes:
                 data = ogrext2.OGR_F_GetFieldAsBinary(feature, i, &l)
-                props[key] = PyBytes_FromStringAndSize(<char*>data, <Py_ssize_t>l)
+                props[key] = data[:l]
 
             else:
                 log.debug("%s: None, fieldtype: %r, %r" % (key, fieldtype, fieldtype in string_types))
@@ -347,8 +347,9 @@ cdef class OGRFeatureBuilder:
                 string_c = value_bytes
                 ogrext2.OGR_F_SetFieldString(cogr_feature, i, string_c)
             elif isinstance(value, bytes):
+                string_c = value
                 ogrext2.OGR_F_SetFieldBinary(cogr_feature, i, len(value),
-                    <unsigned char*>PyBytes_AsString(value))
+                    <unsigned char*>string_c)
             elif value is None:
                 pass # keep field unset/null
             else:
