@@ -8,7 +8,7 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Bug Fixes:
 
-- Prevent Fiona from stumbling over '*Z', '*M', and '*ZM' geometry types
+- Prevent Fiona from stumbling over 'Z', 'M', and 'ZM' geometry types
   introduced in GDAL 2.1 (#384). Fiona 1.7.1 doesn't add explicit support for
   these types, they are coerced to geometry types 1-7 ('Point', 'LineString',
   etc.)

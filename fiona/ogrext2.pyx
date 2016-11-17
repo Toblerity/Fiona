@@ -719,7 +719,7 @@ cdef class WritingSession(Session):
     
     cdef object _schema_mapping
 
-    def start(self, collection):
+    def start(self, collection, **kwargs):
         cdef void *cogr_fielddefn
         cdef void *cogr_driver
         cdef void *cogr_ds
@@ -747,9 +747,9 @@ cdef class WritingSession(Session):
                                                  NULL,
                                                  NULL,
                                                  NULL)
-#                     self.cogr_ds = ogrext2.OGROpen(path_c, 1, NULL)
                 if self.cogr_ds == NULL:
                     raise RuntimeError("Failed to open %s" % path)
+
                 cogr_driver = ogrext2.GDALGetDatasetDriver(self.cogr_ds)
                 if cogr_driver == NULL:
                     raise ValueError("Null driver")
@@ -785,22 +785,23 @@ cdef class WritingSession(Session):
             driver_b = collection.driver.encode()
             driver_c = driver_b
 
+            # Creation options
+            for k, v in kwargs.items():
+                k, v = k.upper(), str(v).upper()
+                key_b = k.encode('utf-8')
+                val_b = v.encode('utf-8')
+                key_c = key_b
+                val_c = val_b
+                options = ogrext2.CSLSetNameValue(options, key_c, val_c)
+                log.debug("Option %r=%r\n", k, v)
+
             cogr_driver = ogrext2.GDALGetDriverByName(driver_c)
             if cogr_driver == NULL:
                 raise ValueError("Null driver")
 
             if not os.path.exists(path):
-#                 cogr_ds = ogrext2.OGR_Dr_CreateDataSource(
-#                     cogr_driver, path_c, NULL)
                 cogr_ds = ogrext2.GDALCreate(
-                    cogr_driver,
-                    path_c,
-                    0,
-                    0,
-                    0,
-                    ogrext2.GDT_Unknown,
-                    NULL)
-                pass
+                    cogr_driver, path_c, 0, 0, 0, ogrext2.GDT_Unknown, NULL)
 
             else:
                 with cpl_errs:
@@ -809,7 +810,6 @@ cdef class WritingSession(Session):
                                      NULL,
                                      NULL,
                                      NULL)
-#                     cogr_ds = ogrext2.OGROpen(path_c, 1, NULL)
                 if cogr_ds == NULL:
                     cogr_ds = ogrext2.GDALCreate(
                         cogr_driver,
@@ -819,8 +819,6 @@ cdef class WritingSession(Session):
                         0,
                         ogrext2.GDT_Unknown,
                         NULL)
-#                     cogr_ds = ogrext2.OGR_Dr_CreateDataSource(
-#                         cogr_driver, path_c, NULL)
 
                 elif collection.name is None:
                     ogrext2.GDALClose(cogr_ds)
@@ -834,8 +832,6 @@ cdef class WritingSession(Session):
                         0,
                         ogrext2.GDT_Unknown,
                         NULL)
-#                     cogr_ds = ogrext2.OGR_Dr_CreateDataSource(
-#                         cogr_driver, path_c, NULL)
 
                 else:
                     pass
