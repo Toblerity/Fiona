@@ -2,9 +2,7 @@
 
 
 import json
-import shutil
 import sys
-import tempfile
 
 from click.testing import CliRunner
 import pytest
@@ -14,8 +12,9 @@ from fiona.fio.main import main_group
 
 FIXME_WINDOWS = sys.platform.startswith('win')
 
-@pytest.mark.skipif(FIXME_WINDOWS, 
-                 reason="FIXME on Windows. Please look into why this test is not working.")
+@pytest.mark.skipif(
+    FIXME_WINDOWS,
+    reason="FIXME on Windows. Please look into why this test is not working.")
 def test_fio_ls_single_layer():
 
     result = CliRunner().invoke(main_group, [
@@ -26,23 +25,23 @@ def test_fio_ls_single_layer():
     assert json.loads(result.output) == ['coutwildrnp']
 
 
-@pytest.mark.skipif(FIXME_WINDOWS, 
-                 reason="FIXME on Windows. Please look into why this test is not working.")
-def test_fio_ls_indent():
+@pytest.mark.skipif(
+    FIXME_WINDOWS,
+    reason="FIXME on Windows. Please look into why this test is not working.")
+def test_fio_ls_indent(path_coutwildrnp_shp):
 
     result = CliRunner().invoke(main_group, [
         'ls',
         '--indent', '4',
-        'tests/data/coutwildrnp.shp'])
+        path_coutwildrnp_shp])
     assert result.exit_code == 0
     assert len(result.output.strip().splitlines()) == 3
     assert json.loads(result.output) == ['coutwildrnp']
 
 
 def test_fio_ls_multi_layer(path_coutwildrnp_shp, tmpdir):
-
     outdir = str(tmpdir.mkdir('test_fio_ls_multi_layer'))
-        
+
     # Copy test shapefile into new directory
     # Shapefile driver treats a directory of shapefiles as a single
     # multi-layer datasource
@@ -58,3 +57,13 @@ def test_fio_ls_multi_layer(path_coutwildrnp_shp, tmpdir):
         'ls', outdir])
     assert result.exit_code == 0
     assert json.loads(result.output) == layer_names
+
+
+def test_fio_ls_vfs(path_coutwildrnp_zip):
+    runner = CliRunner()
+    result = runner.invoke(main_group, [
+        'ls', 'zip://{}'.format(path_coutwildrnp_zip)])
+    assert result.exit_code == 0
+    loaded = json.loads(result.output)
+    assert len(loaded) == 1
+    assert loaded[0] == 'coutwildrnp'

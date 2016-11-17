@@ -15,7 +15,7 @@ from fiona.transform import transform_geom
 
 
 @click.command(short_help="Dump a dataset to GeoJSON.")
-@click.argument('input', type=click.Path(), required=True)
+@click.argument('input', required=True)
 @click.option('--layer', metavar="INDEX|NAME", callback=options.cb_layer,
               help="Print information about a specific layer.  The first "
                    "layer is used by default.  Layers use zero-based "

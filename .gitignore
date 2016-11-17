@@ -74,3 +74,4 @@ fiona/ogrext.pyx
 tests/data/coutwildrnp.json
 tests/data/coutwildrnp.tar
 tests/data/coutwildrnp.zip
+

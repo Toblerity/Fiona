@@ -77,6 +77,11 @@ def path_coutwildrnp_json():
 
 
 @pytest.fixture(scope='session')
+def path_gpx(data_dir):
+    return os.path.join(data_dir, 'test_gpx.gpx')
+
+
+@pytest.fixture(scope='session')
 def feature_collection():
     """GeoJSON feature collection on a single line."""
     return _read_file('data/collection.txt')
@@ -132,3 +137,10 @@ def uttc_data_dir(data_dir, request):
     """Make the ``data_dir`` fixture work with a ``unittest.TestCase()``.
     ``uttc`` stands for unittest test case."""
     request.cls.data_dir = data_dir
+
+
+@pytest.fixture(scope='class')
+def uttc_path_gpx(path_gpx, request):
+    """Make the ``path_gpx`` fixture work with a ``unittest.TestCase()``.
+    ``uttc`` stands for unittest test case."""
+    request.cls.path_gpx = path_gpx

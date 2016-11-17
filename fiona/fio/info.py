@@ -14,7 +14,7 @@ from fiona.fio import options
 
 @click.command()
 # One or more files.
-@click.argument('input', type=click.Path(exists=True))
+@click.argument('input', required=True)
 @click.option('--layer', metavar="INDEX|NAME", callback=options.cb_layer,
               help="Print information about a specific layer.  The first "
                    "layer is used by default.  Layers use zero-based "

@@ -11,7 +11,7 @@ import fiona
 
 
 @click.command(short_help="Open a dataset and start an interpreter.")
-@click.argument('src_path', type=click.Path(exists=True))
+@click.argument('src_path', required=True)
 @click.option('--ipython', 'interpreter', flag_value='ipython',
               help="Use IPython as interpreter.")
 @click.pass_context

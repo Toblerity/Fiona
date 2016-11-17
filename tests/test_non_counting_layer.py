@@ -1,12 +1,14 @@
 import unittest
 
+import pytest
+
 import fiona
 
-GPX_FILE = 'tests/data/test_gpx.gpx'
 
+@pytest.mark.usefixtures('uttc_path_gpx')
 class NonCountingLayerTest(unittest.TestCase):
     def setUp(self):
-        self.c = fiona.open(GPX_FILE, "r", layer="track_points")
+        self.c = fiona.open(self.path_gpx, "r", layer="track_points")
     
     def tearDown(self):
         self.c.close()
