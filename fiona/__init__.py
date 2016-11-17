@@ -100,7 +100,8 @@ def open(
         layer=None,
         vfs=None,
         enabled_drivers=None,
-        crs_wkt=None):
+        crs_wkt=None,
+        **kwargs):
     """Open file at ``path`` in ``mode`` "r" (read), "a" (append), or
     "w" (write) and return a ``Collection`` object.
 
@@ -165,7 +166,7 @@ def open(
             raise IOError("no such file or directory: %r" % path)
         c = Collection(path, mode, driver=driver, encoding=encoding,
                        layer=layer, vsi=vsi, archive=archive,
-                       enabled_drivers=enabled_drivers)
+                       enabled_drivers=enabled_drivers, **kwargs)
     elif mode == 'w':
         if schema:
             # Make an ordered dict of schema properties.
@@ -175,7 +176,8 @@ def open(
             this_schema = None
         c = Collection(path, mode, crs=crs, driver=driver, schema=this_schema,
                        encoding=encoding, layer=layer, vsi=vsi, archive=archive,
-                       enabled_drivers=enabled_drivers, crs_wkt=crs_wkt)
+                       enabled_drivers=enabled_drivers, crs_wkt=crs_wkt,
+                       **kwargs)
     else:
         raise ValueError(
             "mode string must be one of 'r', 'w', or 'a', not %s" % mode)

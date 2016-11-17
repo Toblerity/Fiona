@@ -23,7 +23,7 @@ if FIXME_WINDOWS:
 
 WILDSHP = 'tests/data/coutwildrnp.shp'
 
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+#logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 TEMPDIR = tempfile.gettempdir()
 
@@ -652,6 +652,27 @@ class DateTimeTest(unittest.TestCase):
             self.assertEqual(rf1['properties']['date'], '2013-02-25')
             self.assertEqual(rf2['properties']['date'], '2014-02-03')
         
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+
+
+class OpenKeywordArgsTest(unittest.TestCase):
+
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+
+    def test_kwargs(self):
+        dstfile = os.path.join(self.tempdir, 'test.json')
+        with fiona.open('tests/data/coutwildrnp.shp') as src:
+            kwds = src.profile
+            kwds['driver'] = 'GeoJSON'
+            kwds['coordinate_precision'] = 2
+            with fiona.open(dstfile, 'w', **kwds) as dst:
+                dst.writerecords(ftr for ftr in src)
+
+        with open(dstfile) as f:
+            assert '"coordinates": [ [ [ -111.74, 42.0 ], [ -111.66, 42.0 ]' in f.read(2000)
 
     def tearDown(self):
         shutil.rmtree(self.tempdir)
