@@ -60,7 +60,7 @@ class TestBigInt(unittest.TestCase):
 
             with fiona.open(name) as src:
                 if get_gdal_version_num() >= calc_gdal_version_num(2, 0, 0):
-                    first = next(src)
+                    first = next(iter(src))
                     self.assertEqual(first['properties'][fieldname], a_bigint)
 
 

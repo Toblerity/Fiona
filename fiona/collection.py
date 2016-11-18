@@ -3,6 +3,7 @@
 
 
 import os
+import warnings
 
 from fiona import compat
 from fiona.ogrext import Iterator, ItemsIterator, KeysIterator
@@ -311,6 +312,9 @@ class Collection(object):
 
     def __next__(self):
         """Returns next record from iterator."""
+        warnings.warn("Collection.__next__() is buggy and will be removed in "
+                      "Fiona 2.0. Switch to `next(iter(collection))`.",
+                      DeprecationWarning, stacklevel=2)
         if not self.iterator:
             iter(self)
         return next(self.iterator)

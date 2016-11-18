@@ -80,7 +80,7 @@ def test_read_json_object_properties():
         f.write(data)
 
     with fiona.open(filename) as src:
-        ftr = next(src)
+        ftr = next(iter(src))
         props = ftr['properties']
         assert props['upperLeftCoordinate']['latitude'] == 45.66894
         assert props['upperLeftCoordinate']['longitude'] == 87.91166
@@ -146,7 +146,7 @@ def test_write_json_object_properties():
         dst.write(data)
 
     with fiona.open(filename) as src:
-        ftr = next(src)
+        ftr = next(iter(src))
         props = ftr['properties']
         assert props['upperLeftCoordinate']['latitude'] == 45.66894
         assert props['upperLeftCoordinate']['longitude'] == 87.91166
@@ -187,7 +187,7 @@ def test_json_prop_decode_non_geojson_driver():
         dst.write(feature)
 
     with fiona.open(filename) as src:
-        actual = next(src)
+        actual = next(iter(src))
 
     assert isinstance(actual['properties']['ulc'], text_type)
     a = json.loads(actual['properties']['ulc'])

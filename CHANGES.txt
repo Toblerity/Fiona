@@ -6,6 +6,15 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.7.1 (2016-11-16)
 ------------------
 
+Future Deprecation:
+
+- `Collection.__next__()` is buggy in that it can lead to duplication of 
+  features when used in combination with `Collection.filter()` or
+  `Collection.__iter__()`. It will be removed in Fiona 2.0. Please check for
+  usage of this deprecated feature by running your tests or programs with
+  `PYTHONWARNINGS="always:::fiona"` or `-W"always:::fiona"` and switch from
+  `next(collection)` to `next(iter(collection))` (#301).
+
 Bug Fixes:
 
 - Prevent Fiona from stumbling over '*Z', '*M', and '*ZM' geometry types
