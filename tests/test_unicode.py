@@ -88,7 +88,7 @@ class UnicodeStringFieldTest(unittest.TestCase):
                     'num': 0}}])
 
         with fiona.open(os.path.join(self.tempdir), encoding='latin1') as c:
-            f = next(c)
+            f = next(iter(c))
             # Next assert fails.
             self.assertEqual(f['properties']['label'], u'徐汇区')
 
@@ -106,7 +106,7 @@ class UnicodeStringFieldTest(unittest.TestCase):
                     'label': u'Ba\u2019kelalan', u'verit\xe9': 0}}])
 
         with fiona.open(os.path.join(self.tempdir), encoding='utf-8') as c:
-            f = next(c)
+            f = next(iter(c))
             self.assertEqual(f['properties']['label'], u'Ba\u2019kelalan')
             self.assertEqual(f['properties'][u'verit\xe9'], 0)
 
@@ -124,6 +124,6 @@ class UnicodeStringFieldTest(unittest.TestCase):
                 'properties': {'label': u'徐汇区', 'num': 0}}])
 
         with fiona.open(os.path.join(self.tempdir), encoding='gb18030') as c:
-            f = next(c)
+            f = next(iter(c))
             self.assertEqual(f['properties']['label'], u'徐汇区')
             self.assertEqual(f['properties']['num'], 0)
