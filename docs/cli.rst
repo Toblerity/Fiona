@@ -112,7 +112,7 @@ dump
 ----
 
 The dump command reads a vector dataset and writes a GeoJSON feature collection
-to stdout. Its output can be piped to ``rio load`` (see below).
+to stdout. Its output can be piped to ``fio load`` (see below).
 
 .. code-block:: console
 
