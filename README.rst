@@ -2,7 +2,7 @@
 Fiona
 =====
 
-Fiona is OGR's neat, nimble, no-nonsense API for Python programmers.
+Fiona is OGR's neat and nimble API for Python programmers.
 
 .. image:: https://travis-ci.org/Toblerity/Fiona.png?branch=master   
    :target: https://travis-ci.org/Toblerity/Fiona
