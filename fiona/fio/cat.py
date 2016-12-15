@@ -12,6 +12,7 @@ from cligj import (
 
 import fiona
 from fiona.transform import transform_geom
+from fiona._err import cpl_errs
 from .helpers import obj_gen
 from . import options
 
@@ -97,8 +98,8 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
         dump_kwds['separators'] = (',', ':')
     item_sep = compact and ',' or ', '
 
-    try:
-        with fiona.drivers(CPL_DEBUG=verbosity>2):
+    with fiona.drivers(CPL_DEBUG=verbosity>2), cpl_errs:
+        try:
             for path in files:
                 with fiona.open(path) as src:
                     if bbox:
@@ -107,20 +108,29 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
                         except ValueError:
                             bbox = json.loads(bbox)
                     for i, feat in src.items(bbox=bbox):
-                        if dst_crs or precision > 0:
-                            g = transform_geom(
+                        try:
+                            if dst_crs or precision > 0:
+                                g = transform_geom(
                                     src.crs, dst_crs, feat['geometry'],
                                     antimeridian_cutting=True,
                                     precision=precision)
-                            feat['geometry'] = g
-                            feat['bbox'] = fiona.bounds(g)
-                        if use_rs:
-                            click.echo(u'\u001e', nl=False)
-                        click.echo(json.dumps(feat, **dump_kwds))
+                                feat['geometry'] = g
+                                feat['bbox'] = fiona.bounds(g)
+                            if use_rs:
+                                click.echo(u'\u001e', nl=False)
+                            click.echo(json.dumps(feat, **dump_kwds))
+                        except (UnicodeError, ValueError) as exc:
+                            if ignore_errors:
+                                click.echo(
+                                    "failed to cat record {0}, path {1}:".format(
+                                    i, path), file=sys.stderr)
+                                click.echo(str(exc), file=sys.stderr)
+                                continue
+                            else:
+                                raise click.ClickException(str(exc))
 
-    except Exception:
-        logger.exception("Exception caught during processing")
-        raise click.Abort()
+        except (IOError, ValueError) as exc:
+            raise click.UsageError(str(exc))
 
 
 # Collect command
@@ -223,7 +233,7 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
                         ).replace("\n", rec_indent))
             except StopIteration:
                 pass
-            except Exception as exc:
+            except (UnicodeError, ValueError) as exc:
                 # Ignoring errors is *not* the default.
                 if ignore_errors:
                     logger.error(
@@ -256,7 +266,7 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
                     sink.write(
                         json.dumps(rec, **dump_kwds
                             ).replace("\n", rec_indent))
-                except Exception as exc:
+                except (UnicodeError, ValueError) as exc:
                     if ignore_errors:
                         logger.error(
                             "failed to serialize file record %d (%s), "
@@ -409,7 +419,7 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                                 ).replace("\n", rec_indent))
                     except StopIteration:
                         pass
-                    except Exception as exc:
+                    except (UnicodeError, ValueError) as exc:
                         # Ignoring errors is *not* the default.
                         if ignore_errors:
                             logger.error(
