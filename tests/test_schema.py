@@ -124,7 +124,7 @@ class ShapefileSchema(unittest.TestCase):
                  ('INTPTLON10', 'str:80'), 
                  ('GEOID10', 'str:80'), 
                  ('Decommisio', 'str:80')]) )
-            f = next(c)
+            f = next(iter(c))
             self.assertEqual(f['properties']['EstimatedP'], 27773.0)
 
 
@@ -153,7 +153,7 @@ class FieldTruncationTestCase(unittest.TestCase):
             dst.write(rec)
 
         with fiona.open(name) as src:
-            first = next(src)
+            first = next(iter(src))
             assert first['geometry'] == {'type': 'Point', 'coordinates': (0, 0)}
             assert first['properties']['a_fieldnam'] == 3.0
 
