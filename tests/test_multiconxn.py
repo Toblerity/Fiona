@@ -30,9 +30,9 @@ class ReadAccess(unittest.TestCase):
             self.assertEqual(sorted(self.c.schema.items()), sorted(c2.schema.items()))
 
     def test_meta(self):
-        f1 = next(self.c)
+        f1 = next(iter(self.c))
         with fiona.open("tests/data/coutwildrnp.shp", "r", layer="coutwildrnp") as c2:
-            f2 = next(c2)
+            f2 = next(iter(c2))
             self.assertEqual(f1, f2)
 
 @pytest.mark.skipif(FIXME_WINDOWS, 
@@ -70,14 +70,14 @@ class ReadWriteAccess(unittest.TestCase):
 
     def test_read(self):
         c2 = fiona.open(os.path.join(self.tempdir, "multi_write_test.shp"), "r")
-        f2 = next(c2)
+        f2 = next(iter(c2))
         del f2['id']
         self.assertEqual(self.f, f2)
 
     def test_read_after_close(self):
         c2 = fiona.open(os.path.join(self.tempdir, "multi_write_test.shp"), "r")
         self.c.close()
-        f2 = next(c2)
+        f2 = next(iter(c2))
         del f2['id']
         self.assertEqual(self.f, f2)
 
@@ -119,13 +119,13 @@ class LayerCreation(unittest.TestCase):
 
     def test_read(self):
         c2 = fiona.open(os.path.join(self.dir, "write_test.shp"), "r")
-        f2 = next(c2)
+        f2 = next(iter(c2))
         del f2['id']
         self.assertEqual(self.f, f2)
 
     def test_read_after_close(self):
         c2 = fiona.open(os.path.join(self.dir, "write_test.shp"), "r")
         self.c.close()
-        f2 = next(c2)
+        f2 = next(iter(c2))
         del f2['id']
         self.assertEqual(self.f, f2)
