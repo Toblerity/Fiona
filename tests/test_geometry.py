@@ -8,7 +8,7 @@ from fiona._geometry import (GeomBuilder, geometryRT)
 from fiona.errors import UnsupportedGeometryTypeError
 
 
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 
 def geometry_wkb(wkb):

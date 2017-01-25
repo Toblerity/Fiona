@@ -8,7 +8,7 @@ import unittest
 import fiona
 
 
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 FIXME_WINDOWS = sys.platform.startswith('win')
 
