@@ -478,9 +478,10 @@ def vsi_path(path, vsi=None, archive=None):
     # an OGR VSI path (see cpl_vsi.h).
     if vsi:
         if archive:
-            result = os.path.join('/', 'vsi{}'.format(vsi), archive.strip('/'), path.strip('/'))
+            result = '/'.join([
+                '/vsi{}'.format(vsi), archive.strip('/'), path.strip('/')])
         else:
-            result = os.path.join('/', 'vsi{}'.format(vsi), path.strip('/'))
+            result = '/'.join(['/vsi{}'.format(vsi), path.strip('/')])
     else:
         result = path
     return result
