@@ -9,7 +9,7 @@ import fiona.ogrext
 
 FIXME_WINDOWS = sys.platform.startswith("win")
 
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 def test_single_file_private():
     with fiona.drivers():

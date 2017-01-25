@@ -422,11 +422,21 @@ class Collection(object):
         self.__exit__(None, None, None)
 
 
+def get_filetype(bytesbuf):
+    """Detect compression type of bytesbuf.
+
+    ZIP only. TODO: add others relevant to GDAL/OGR."""
+    if bytesbuf[:4].startswith(b'PK\x03\x04'):
+        return 'zip'
+    else:
+        return ''
+
+
 class BytesCollection(Collection):
     """BytesCollection takes a buffer of bytes and maps that to
     a virtual file that can then be opened by fiona.
     """
-    def __init__(self, bytesbuf):
+    def __init__(self, bytesbuf, **kwds):
         """Takes buffer of bytes whose contents is something we'd like
         to open with Fiona and maps it to a virtual file.
         """
@@ -437,11 +447,15 @@ class BytesCollection(Collection):
         # it is garbage collected while in use.
         self.bytesbuf = bytesbuf
 
-        # Map the buffer to a file.
-        self.virtual_file = buffer_to_virtual_file(self.bytesbuf)
+        # Map the buffer to a file. If the buffer contains a zipfile we
+        # take extra steps in naming the buffer and in opening it.
+        filetype = get_filetype(self.bytesbuf)
+        ext = '.zip' if filetype == 'zip' else ''
+        self.virtual_file = buffer_to_virtual_file(self.bytesbuf, ext=ext)
 
         # Instantiate the parent class.
-        super(BytesCollection, self).__init__(self.virtual_file)
+        super(BytesCollection, self).__init__(self.virtual_file, vsi=filetype,
+                                              **kwds)
 
     def close(self):
         """Removes the virtual file associated with the class."""
@@ -464,9 +478,9 @@ def vsi_path(path, vsi=None, archive=None):
     # an OGR VSI path (see cpl_vsi.h).
     if vsi:
         if archive:
-            result = "/vsi%s/%s%s" % (vsi, archive, path)
+            result = os.path.join('/', 'vsi{}'.format(vsi), archive.strip('/'), path.strip('/'))
         else:
-            result = "/vsi%s/%s" % (vsi, path)
+            result = os.path.join('/', 'vsi{}'.format(vsi), path.strip('/'))
     else:
         result = path
     return result

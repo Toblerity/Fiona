@@ -17,7 +17,7 @@ FIXME_WINDOWS = sys.platform.startswith('win')
 
 WILDSHP = 'tests/data/coutwildrnp.shp'
 
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 TEMPDIR = tempfile.gettempdir()
 

@@ -2,6 +2,7 @@
 import sys
 import unittest
 
+import pytest
 import six
 
 import fiona
@@ -24,14 +25,14 @@ class ReadingTest(unittest.TestCase):
             strbuf = src.read()
         self.assertRaises(ValueError, fiona.BytesCollection, strbuf)
 
-    @unittest.skipIf(FIXME_WINDOWS, 
+    @unittest.skipIf(FIXME_WINDOWS,
                      reason="FIXME on Windows. Please look into why this test is not working.")
     def test_open_repr(self):
         # I'm skipping checking the name of the virtual file as it produced by uuid.
         self.assertTrue(repr(self.c).startswith("<open BytesCollection '/vsimem/"))
         self.assertTrue(repr(self.c).endswith(":OGRGeoJSON', mode 'r' at %s>" % hex(id(self.c))))
 
-    @unittest.skipIf(FIXME_WINDOWS, 
+    @unittest.skipIf(FIXME_WINDOWS,
                      reason="FIXME on Windows. Please look into why this test is not working.")
     def test_closed_repr(self):
         # I'm skipping checking the name of the virtual file as it produced by uuid.
@@ -56,7 +57,7 @@ class ReadingTest(unittest.TestCase):
     def test_mode(self):
         self.assertEqual(self.c.mode, 'r')
 
-    @unittest.skipIf(FIXME_WINDOWS, 
+    @unittest.skipIf(FIXME_WINDOWS,
                      reason="FIXME on Windows. Please look into why this test is not working.")
     def test_collection(self):
         self.assertEqual(self.c.encoding, 'utf-8')
@@ -157,8 +158,8 @@ class ReadingTest(unittest.TestCase):
         self.assertEqual(f['properties']['STATE'], 'UT')
 
     def test_re_iter_list(self):
-        f = list(self.c)[0] # Run through iterator
-        f = list(self.c)[0] # Run through a new, reset iterator
+        f = list(self.c)[0]  # Run through iterator
+        f = list(self.c)[0]  # Run through a new, reset iterator
         self.assertEqual(f['id'], "0")
         self.assertEqual(f['properties']['STATE'], 'UT')
 
@@ -216,4 +217,12 @@ class FilterReadingTest(unittest.TestCase):
         self.assertEqual(len(results), 26)
 
 
+@pytest.fixture(scope='function')
+def zip_file_bytes():
+    with open('tests/data/coutwildrnp.zip', 'rb') as src:
+        return src.read()
 
+
+def test_zipped_bytes_collection(zip_file_bytes):
+    with fiona.BytesCollection(zip_file_bytes, layer=0) as col:
+        assert col.name == 'coutwildrnp'

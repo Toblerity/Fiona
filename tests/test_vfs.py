@@ -6,7 +6,7 @@ import unittest
 
 import fiona
 
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 from .test_collection import ReadingTest
 

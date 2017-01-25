@@ -11,7 +11,7 @@ from fiona import collection
 from fiona.collection import Collection
 from fiona.ogrext import featureRT
 
-#logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+#logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 class PointRoundTripTest(unittest.TestCase):
     def setUp(self):

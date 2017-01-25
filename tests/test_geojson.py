@@ -10,7 +10,7 @@ import fiona
 from fiona.collection import supported_drivers
 from fiona.errors import FionaValueError, DriverError, SchemaError, CRSError
 
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 
 class ReadingTest(unittest.TestCase):
