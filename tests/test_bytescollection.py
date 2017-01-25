@@ -217,12 +217,9 @@ class FilterReadingTest(unittest.TestCase):
         self.assertEqual(len(results), 26)
 
 
-@pytest.fixture(scope='function')
-def zip_file_bytes():
+def test_zipped_bytes_collection():
     with open('tests/data/coutwildrnp.zip', 'rb') as src:
-        return src.read()
+        zip_file_bytes = src.read()
 
-
-def test_zipped_bytes_collection(zip_file_bytes):
     with fiona.BytesCollection(zip_file_bytes, layer=0) as col:
         assert col.name == 'coutwildrnp'
