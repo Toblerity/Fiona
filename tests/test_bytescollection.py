@@ -221,5 +221,5 @@ def test_zipped_bytes_collection():
     with open('tests/data/coutwildrnp.zip', 'rb') as src:
         zip_file_bytes = src.read()
 
-    with fiona.BytesCollection(zip_file_bytes, layer=0) as col:
+    with fiona.BytesCollection(zip_file_bytes) as col:
         assert col.name == 'coutwildrnp'
