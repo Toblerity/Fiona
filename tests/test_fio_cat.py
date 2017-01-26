@@ -2,7 +2,7 @@
 
 
 import sys
-
+import os
 import pytest
 from click.testing import CliRunner
 
@@ -74,9 +74,10 @@ def test_bbox_json_yes():
 
 def test_multi_layer():
     layerdef = "1:coutwildrnp,1:coutwildrnp"
+    print(os.getcwd())
     runner = CliRunner()
     result = runner.invoke(
-        cat.cat, ['--layer', layerdef, 'tests/data/'])
+        cat.cat, ['--layer', layerdef, os.path.join('tests', 'data')])
     assert result.output.count('"Feature"') == 134
 
 
