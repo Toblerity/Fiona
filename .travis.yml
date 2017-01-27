@@ -28,7 +28,7 @@ addons:
     - gfortran
 python:
   - "2.7"
-  - "3.5"
+  - "3.6"
 before_install:
   - "pip install -U pip"
   - "pip install wheel coveralls>=1.1 --upgrade"
