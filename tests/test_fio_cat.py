@@ -2,7 +2,7 @@
 
 
 import sys
-
+import os
 import pytest
 from click.testing import CliRunner
 
@@ -11,6 +11,7 @@ from fiona.fio import cat
 
 WILDSHP = 'tests/data/coutwildrnp.shp'
 FIXME_WINDOWS = sys.platform.startswith('win')
+DATA_DIR = os.path.join('tests', 'data')
 
 
 @pytest.mark.skipif(
@@ -76,7 +77,7 @@ def test_multi_layer():
     layerdef = "1:coutwildrnp,1:coutwildrnp"
     runner = CliRunner()
     result = runner.invoke(
-        cat.cat, ['--layer', layerdef, 'tests/data/'])
+        cat.cat, ['--layer', layerdef, DATA_DIR])
     assert result.output.count('"Feature"') == 134
 
 
@@ -84,7 +85,7 @@ def test_multi_layer_fail():
     runner = CliRunner()
     result = runner.invoke(cat.cat, '--layer'
                            '200000:coutlildrnp',
-                           'tests/data')
+                           DATA_DIR)
     assert result.exit_code == 1
 
 
