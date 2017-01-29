@@ -172,7 +172,7 @@ cdef class FeatureBuilder:
             fieldtypename = FIELD_TYPES[ogrext1.OGR_Fld_GetType(fdefn)]
             if not fieldtypename:
                 log.warning(
-                    "Skipping field %s: invalid type %s", 
+                    "Skipping field %s: invalid type %s",
                     key,
                     ogrext1.OGR_Fld_GetType(fdefn))
                 continue
@@ -242,13 +242,13 @@ cdef class FeatureBuilder:
 
 
 cdef class OGRFeatureBuilder:
-    
+
     """Builds an OGR Feature from a Fiona feature mapping.
 
     Allocates one OGR Feature which should be destroyed by the caller.
     Borrows a layer definition from the collection.
     """
-    
+
     cdef void * build(self, feature, collection) except NULL:
         cdef void *cogr_geometry = NULL
         cdef char *string_c
@@ -263,13 +263,13 @@ cdef class OGRFeatureBuilder:
         cdef void *cogr_feature = ogrext1.OGR_F_Create(cogr_featuredefn)
         if cogr_feature == NULL:
             raise ValueError("Null feature")
-        
+
         if feature['geometry'] is not None:
             cogr_geometry = OGRGeomBuilder().build(
                                 feature['geometry'])
         ogrext1.OGR_F_SetGeometryDirectly(cogr_feature, cogr_geometry)
-        
-        # OGR_F_SetFieldString takes UTF-8 encoded strings ('bytes' in 
+
+        # OGR_F_SetFieldString takes UTF-8 encoded strings ('bytes' in
         # Python 3).
         encoding = session.get_internalencoding()
 
@@ -301,7 +301,7 @@ cdef class OGRFeatureBuilder:
                 ogrext1.OGR_F_SetFieldInteger(cogr_feature, i, value)
             elif isinstance(value, float):
                 ogrext1.OGR_F_SetFieldDouble(cogr_feature, i, value)
-            elif (isinstance(value, string_types) 
+            elif (isinstance(value, string_types)
             and schema_type in ['date', 'time', 'datetime']):
                 if schema_type == 'date':
                     y, m, d, hh, mm, ss, ff = parse_date(value)
@@ -377,7 +377,7 @@ def featureRT(feature, collection):
 # Collection-related extension classes and functions
 
 cdef class Session:
-    
+
     cdef void *cogr_ds
     cdef void *cogr_layer
     cdef object _fileencoding
@@ -409,7 +409,7 @@ cdef class Session:
             # Presume already a UTF-8 encoded string
             path_b = path
         path_c = path_b
-        
+
         with cpl_errs:
             drivers = []
             if collection._driver:
@@ -436,7 +436,7 @@ cdef class Session:
                 "No dataset found at path '%s' using drivers: %s" % (
                     collection.path,
                     drivers or '*'))
-        
+
         if isinstance(collection.name, string_types):
             name_b = collection.name.encode('utf-8')
             name_c = name_b
@@ -451,9 +451,9 @@ cdef class Session:
 
         if self.cogr_layer == NULL:
             raise ValueError("Null layer: " + repr(collection.name))
-        
+
         self.collection = collection
-        
+
         userencoding = self.collection.encoding
         if userencoding:
             ogrext1.CPLSetThreadLocalConfigOption('SHAPE_ENCODING', '')
@@ -496,7 +496,7 @@ cdef class Session:
         cdef char *name = ogrext1.OGR_Dr_GetName(cogr_driver)
         driver_name = name
         return driver_name.decode()
- 
+
     def get_schema(self):
         cdef int i
         cdef int n
@@ -504,7 +504,7 @@ cdef class Session:
         cdef void *cogr_fielddefn
         cdef char *key_c
         props = []
-        
+
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
 
@@ -524,7 +524,7 @@ cdef class Session:
             fieldtypename = FIELD_TYPES[ogrext1.OGR_Fld_GetType(cogr_fielddefn)]
             if not fieldtypename:
                 log.warning(
-                    "Skipping field %s: invalid type %s", 
+                    "Skipping field %s: invalid type %s",
                     key,
                     ogrext1.OGR_Fld_GetType(cogr_fielddefn))
                 continue
@@ -575,7 +575,7 @@ cdef class Session:
             retval = ogrext1.OSRAutoIdentifyEPSG(cogr_crs)
             if retval > 0:
                 log.info("Failed to auto identify EPSG: %d", retval)
-            
+
             auth_key = ogrext1.OSRGetAuthorityName(cogr_crs, NULL)
             auth_val = ogrext1.OSRGetAuthorityCode(cogr_crs, NULL)
 
@@ -707,7 +707,7 @@ cdef class Session:
 
 
 cdef class WritingSession(Session):
-    
+
     cdef object _schema_mapping
 
     def start(self, collection, **kwargs):
@@ -800,7 +800,7 @@ cdef class WritingSession(Session):
                     ogrext1.OGR_DS_Destroy(cogr_ds)
                     cogr_ds == NULL
                     log.debug("Deleted pre-existing data at %s", path)
-                    
+
                     cogr_ds = ogrext1.OGR_Dr_CreateDataSource(
                         cogr_driver, path_c, NULL)
 
@@ -889,7 +889,7 @@ cdef class WritingSession(Session):
             if idx >= 0:
                 log.debug("Deleted pre-existing layer at %s", collection.name)
                 ogrext1.OGR_DS_DeleteLayer(self.cogr_ds, idx)
-            
+
             # Create the named layer in the datasource.
             name_b = collection.name.encode('utf-8')
             name_c = name_b
@@ -909,7 +909,7 @@ cdef class WritingSession(Session):
             if self.cogr_layer == NULL:
                 raise ValueError("Null layer")
             log.debug("Created layer")
-            
+
             # Next, make a layer definition from the given schema properties,
             # which are an ordered dict since Fiona 1.0.1.
             for key, value in collection.schema['properties'].items():
@@ -919,7 +919,7 @@ cdef class WritingSession(Session):
                 # https://github.com/Toblerity/Fiona/issues/101.
                 if value == 'long':
                     value = 'int'
-                
+
                 # Is there a field width/precision?
                 width = precision = None
                 if ':' in value:
@@ -928,11 +928,11 @@ cdef class WritingSession(Session):
                         width, precision = map(int, fmt.split('.'))
                     else:
                         width = int(fmt)
-                
+
                 encoding = self.get_internalencoding()
                 key_bytes = key.encode(encoding)
                 cogr_fielddefn = ogrext1.OGR_Fld_Create(
-                    key_bytes, 
+                    key_bytes,
                     FIELD_TYPES.index(value) )
                 if cogr_fielddefn == NULL:
                     raise ValueError("Null field definition")
@@ -944,11 +944,11 @@ cdef class WritingSession(Session):
                 ogrext1.OGR_Fld_Destroy(cogr_fielddefn)
             log.debug("Created fields")
 
-        # Mapping of the Python collection schema to the munged 
+        # Mapping of the Python collection schema to the munged
         # OGR schema.
         ogr_schema = self.get_schema()
         self._schema_mapping = dict(zip(
-            collection.schema['properties'].keys(), 
+            collection.schema['properties'].keys(),
             ogr_schema['properties'].keys() ))
 
         log.debug("Writing started")
@@ -961,7 +961,7 @@ cdef class WritingSession(Session):
         cdef void *cogr_layer = self.cogr_layer
         if cogr_layer == NULL:
             raise ValueError("Null layer")
-    
+
         schema_geom_type = collection.schema['geometry']
         cogr_driver = ogrext1.OGR_DS_GetDriver(self.cogr_ds)
         if ogrext1.OGR_Dr_GetName(cogr_driver) == b"GeoJSON":
@@ -988,7 +988,7 @@ cdef class WritingSession(Session):
             if set(record['properties'].keys()) != schema_props_keys:
                 raise ValueError(
                     "Record does not match collection schema: %r != %r" % (
-                        record['properties'].keys(), 
+                        record['properties'].keys(),
                         list(schema_props_keys) ))
             if not validate_geometry_type(record):
                 raise ValueError(
@@ -1042,10 +1042,10 @@ cdef class Iterator:
         if cogr_layer == NULL:
             raise ValueError("Null layer")
         ogrext1.OGR_L_ResetReading(cogr_layer)
-        
+
         if bbox and mask:
             raise ValueError("mask and bbox can not be set together")
-        
+
         if bbox:
             ogrext1.OGR_L_SetSpatialFilterRect(
                 cogr_layer, bbox[0], bbox[1], bbox[2], bbox[3])
@@ -1053,7 +1053,7 @@ cdef class Iterator:
             cogr_geometry = OGRGeomBuilder().build(mask)
             ogrext1.OGR_L_SetSpatialFilter(cogr_layer, cogr_geometry)
             ogrext1.OGR_G_DestroyGeometry(cogr_geometry)
-            
+
         else:
             ogrext1.OGR_L_SetSpatialFilter(
                 cogr_layer, NULL)
@@ -1108,7 +1108,7 @@ cdef class Iterator:
         # Check if next_index is valid
         if self.next_index < 0:
             raise StopIteration
-        
+
         if self.stepsign == 1:
             if self.next_index < self.start or (self.stop is not None and self.next_index >= self.stop):
                 raise StopIteration
@@ -1135,7 +1135,7 @@ cdef class Iterator:
             pass
         elif self.step < 0:
             ogrext1.OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
-            
+
         # set the next index
         self.next_index += self.step
 
@@ -1240,12 +1240,12 @@ def _listlayers(path):
 
     """Provides a list of the layers in an OGR data source.
     """
-    
+
     cdef void *cogr_ds
     cdef void *cogr_layer
     cdef char *path_c
     cdef char *name_c
-    
+
     # Open OGR data source.
     try:
         path_b = path.encode('utf-8')
@@ -1256,7 +1256,7 @@ def _listlayers(path):
         cogr_ds = ogrext1.OGROpen(path_c, 0, NULL)
     if cogr_ds == NULL:
         raise ValueError("No data available at path '%s'" % path)
-    
+
     # Loop over the layers to get their names.
     layer_count = ogrext1.OGR_DS_GetLayerCount(cogr_ds)
     layer_names = []
@@ -1265,7 +1265,7 @@ def _listlayers(path):
         name_c = ogrext1.OGR_L_GetName(cogr_layer)
         name_b = name_c
         layer_names.append(name_b.decode('utf-8'))
-    
+
     # Close up data source.
     if cogr_ds is not NULL:
         ogrext1.OGR_DS_Destroy(cogr_ds)
@@ -1276,7 +1276,7 @@ def _listlayers(path):
 def buffer_to_virtual_file(bytesbuf):
     """Maps a bytes buffer to a virtual file.
     """
-    vsi_filename = os.path.join('/vsimem', uuid.uuid4().hex)
+    vsi_filename = '/vsimem/{}'.format(uuid.uuid4().hex)
     vsi_cfilename = vsi_filename if not isinstance(vsi_filename, string_types) else vsi_filename.encode('utf-8')
 
     vsi_handle = ogrext1.VSIFileFromMemBuffer(vsi_cfilename, bytesbuf, len(bytesbuf), 0)
@@ -1290,5 +1290,3 @@ def buffer_to_virtual_file(bytesbuf):
 def remove_virtual_file(vsi_filename):
     vsi_cfilename = vsi_filename if not isinstance(vsi_filename, string_types) else vsi_filename.encode('utf-8')
     return ogrext1.VSIUnlink(vsi_cfilename)
-
-
