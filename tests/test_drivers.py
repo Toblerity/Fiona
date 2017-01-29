@@ -5,20 +5,13 @@ import logging
 import sys
 
 import pytest
-
+import os
 import fiona
 
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 
-FIXME_WINDOWS = sys.platform.startswith('win')
-
-
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Raises PermissionError Please look into why "
-           "this test isn't working.")
 def test_options(tmpdir):
     """Test that setting CPL_DEBUG=ON works"""
     logfile = str(tmpdir.mkdir('tests').join('test_options.log'))
@@ -29,7 +22,8 @@ def test_options(tmpdir):
     logger.addHandler(fh)
 
     with fiona.drivers(CPL_DEBUG=True):
-        c = fiona.open("tests/data/coutwildrnp.shp")
+        path = os.path.join("tests", "data", "coutwildrnp.shp")
+        c = fiona.open(path)
         c.close()
         log = open(logfile).read()
         assert "Option CPL_DEBUG" in log

@@ -11,12 +11,6 @@ import pytest
 from fiona.fio import collect
 
 
-FIXME_WINDOWS = sys.platform.startswith('win')
-
-
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Please look into why this test is not working.")
 def test_collect_rs(feature_seq_pp_rs):
     runner = CliRunner()
     result = runner.invoke(
@@ -28,9 +22,6 @@ def test_collect_rs(feature_seq_pp_rs):
     assert result.output.count('"Feature"') == 2
 
 
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Please look into why this test is not working.")
 def test_collect_no_rs(feature_seq):
     runner = CliRunner()
     result = runner.invoke(

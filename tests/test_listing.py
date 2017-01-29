@@ -10,9 +10,6 @@ import fiona
 import fiona.ogrext
 
 
-FIXME_WINDOWS = sys.platform.startswith("win")
-
-
 def test_single_file_private(path_coutwildrnp_shp):
     with fiona.drivers():
         assert fiona.ogrext._listlayers(path_coutwildrnp_shp) == ['coutwildrnp']
@@ -26,10 +23,6 @@ def test_directory(data_dir):
     assert fiona.listlayers(data_dir) == ['coutwildrnp']
 
 
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. ValueError raised. Please look into why this "
-           "test isn't working.")
 def test_directory_trailing_slash(data_dir):
     assert fiona.listlayers(data_dir) == ['coutwildrnp']
 

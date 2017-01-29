@@ -8,15 +8,10 @@ from click.testing import CliRunner
 
 from fiona.fio import cat
 
-
-WILDSHP = 'tests/data/coutwildrnp.shp'
-FIXME_WINDOWS = sys.platform.startswith('win')
 DATA_DIR = os.path.join('tests', 'data')
+WILDSHP = os.path.join(DATA_DIR, 'coutwildrnp.shp')
 
 
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Please look into why this test is not working.")
 def test_one():
     runner = CliRunner()
     result = runner.invoke(cat.cat, [WILDSHP])
@@ -24,9 +19,6 @@ def test_one():
     assert result.output.count('"Feature"') == 67
 
 
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Please look into why this test is not working.")
 def test_two():
     runner = CliRunner()
     result = runner.invoke(cat.cat, [WILDSHP, WILDSHP])
@@ -34,9 +26,6 @@ def test_two():
     assert result.output.count('"Feature"') == 134
 
 
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Please look into why this test is not working.")
 def test_bbox_no():
     runner = CliRunner()
     result = runner.invoke(
@@ -47,9 +36,7 @@ def test_bbox_no():
     assert result.output == ""
 
 
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Please look into why this test is not working.")
+
 def test_bbox_yes():
     runner = CliRunner()
     result = runner.invoke(
@@ -60,9 +47,6 @@ def test_bbox_yes():
     assert result.output.count('"Feature"') == 19
 
 
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Please look into why this test is not working.")
 def test_bbox_json_yes():
     runner = CliRunner()
     result = runner.invoke(

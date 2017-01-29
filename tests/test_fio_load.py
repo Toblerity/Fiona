@@ -12,9 +12,6 @@ import fiona
 from fiona.fio.main import main_group
 
 
-FIXME_WINDOWS = sys.platform.startswith('win')
-
-
 def test_err(runner):
     result = runner.invoke(
         main_group, ['load'], '', catch_exceptions=False)
@@ -29,9 +26,6 @@ def test_exception(tmpdir, runner):
     assert result.exit_code == 1
 
 
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Please look into why this test is not working.")
 def test_collection(tmpdir, feature_collection, runner):
     tmpfile = str(tmpdir.mkdir('tests').join('test_collection.shp'))
     result = runner.invoke(
@@ -40,9 +34,7 @@ def test_collection(tmpdir, feature_collection, runner):
     assert len(fiona.open(tmpfile)) == 2
 
 
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Please look into why this test is not working.")
+
 def test_seq_rs(feature_seq_pp_rs, tmpdir, runner):
     tmpfile = str(tmpdir.mkdir('tests').join('test_seq_rs.shp'))
     result = runner.invoke(
@@ -51,9 +43,6 @@ def test_seq_rs(feature_seq_pp_rs, tmpdir, runner):
     assert len(fiona.open(tmpfile)) == 2
 
 
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Please look into why this test is not working.")
 def test_seq_no_rs(tmpdir, runner, feature_seq):
     tmpfile = str(tmpdir.mkdir('tests').join('test_seq_no_rs.shp'))
     result = runner.invoke(main_group, [
@@ -62,9 +51,6 @@ def test_seq_no_rs(tmpdir, runner, feature_seq):
     assert len(fiona.open(tmpfile)) == 2
 
 
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Please look into why this test is not working.")
 def test_dst_crs_default_to_src_crs(tmpdir, runner, feature_seq):
     """When --dst-crs is not given default to --src-crs."""
     tmpfile = str(tmpdir.mkdir('tests').join('test_src_vs_dst_crs.shp'))
@@ -81,9 +67,6 @@ def test_dst_crs_default_to_src_crs(tmpdir, runner, feature_seq):
         assert len(src) == len(feature_seq.splitlines())
 
 
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Please look into why this test is not working.")
 def test_different_crs(tmpdir, runner, feature_seq):
     tmpfile = str(tmpdir.mkdir('tests').join('test_different_crs.shp'))
     result = runner.invoke(
@@ -97,9 +80,6 @@ def test_different_crs(tmpdir, runner, feature_seq):
         assert len(src) == len(feature_seq.splitlines())
 
 
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Please look into why this test is not working.")
 def test_dst_crs_no_src(tmpdir, runner, feature_seq):
     tmpfile = str(tmpdir.mkdir('tests').join('test_dst_crs_no_src.shp'))
     result = runner.invoke(main_group, [
@@ -115,9 +95,6 @@ def test_dst_crs_no_src(tmpdir, runner, feature_seq):
         assert len(src) == len(feature_seq.splitlines())
 
 
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Please look into why this test is not working.")
 def test_fio_load_layer(tmpdir, runner):
     outdir = str(tmpdir.mkdir('tests').mkdir('test_fio_load_layer'))
     try:

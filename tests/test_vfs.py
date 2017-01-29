@@ -1,6 +1,6 @@
 import logging
 import sys
-
+import os
 import pytest
 
 import fiona
@@ -33,6 +33,7 @@ class ZipReadingTest(VsiReadingTest):
     
     def setUp(self):
         self.c = fiona.open("zip://{}".format(self.path_coutwildrnp_zip, "r"))
+        self.path = os.path.join(self.data_dir, 'coutwildrnp.zip')
     
     def tearDown(self):
         self.c.close()
@@ -40,24 +41,24 @@ class ZipReadingTest(VsiReadingTest):
     def test_open_repr(self):
         self.assertEqual(
             repr(self.c),
-            ("<open Collection '/vsizip/{data_dir}/coutwildrnp.zip:coutwildrnp', mode 'r' "
+            ("<open Collection '/vsizip/{path}:coutwildrnp', mode 'r' "
             "at {id}>".format(
                 id=hex(id(self.c)),
-                data_dir=self.data_dir)))
+                path=self.path)))
 
     def test_closed_repr(self):
         self.c.close()
         self.assertEqual(
             repr(self.c),
-            ("<closed Collection '/vsizip/{data_dir}/coutwildrnp.zip:coutwildrnp', mode 'r' "
+            ("<closed Collection '/vsizip/{path}:coutwildrnp', mode 'r' "
             "at {id}>".format(
                 id=hex(id(self.c)),
-                data_dir=self.data_dir)))
+                path=self.path)))
 
     def test_path(self):
         self.assertEqual(
-            self.c.path, '/vsizip/{data_dir}/coutwildrnp.zip'.format(
-                data_dir=self.data_dir))
+            self.c.path, '/vsizip/{path}'.format(
+                path=self.path))
 
 
 @pytest.mark.usefixtures('uttc_path_coutwildrnp_zip')
@@ -66,6 +67,7 @@ class ZipArchiveReadingTest(VsiReadingTest):
     def setUp(self):
         vfs = 'zip://{}'.format(self.path_coutwildrnp_zip)
         self.c = fiona.open("/coutwildrnp.shp", "r", vfs=vfs)
+        self.path = os.path.join(self.data_dir, 'coutwildrnp.zip')
     
     def tearDown(self):
         self.c.close()
@@ -73,25 +75,25 @@ class ZipArchiveReadingTest(VsiReadingTest):
     def test_open_repr(self):
         self.assertEqual(
             repr(self.c),
-            ("<open Collection '/vsizip/{data_dir}/coutwildrnp.zip/coutwildrnp.shp:coutwildrnp', mode 'r' "
+            ("<open Collection '/vsizip/{path}/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at {id}>".format(
                 id=hex(id(self.c)),
-                data_dir=self.data_dir)))
+                path=self.path)))
 
     def test_closed_repr(self):
         self.c.close()
         self.assertEqual(
             repr(self.c),
-            ("<closed Collection '/vsizip/{data_dir}/coutwildrnp.zip/coutwildrnp.shp:coutwildrnp', mode 'r' "
+            ("<closed Collection '/vsizip/{path}/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at {id}>".format(
                 id=hex(id(self.c)),
-                data_dir=self.data_dir)))
+                path=self.path)))
 
     def test_path(self):
         self.assertEqual(
             self.c.path,
-            '/vsizip/{data_dir}/coutwildrnp.zip/coutwildrnp.shp'.format(
-                data_dir=self.data_dir))
+            '/vsizip/{path}/coutwildrnp.shp'.format(
+                path=self.path))
 
 
 @pytest.mark.usefixtures('uttc_path_coutwildrnp_tar', 'uttc_data_dir')
@@ -100,6 +102,7 @@ class TarArchiveReadingTest(VsiReadingTest):
     def setUp(self):
         vfs = "tar://{}".format(self.path_coutwildrnp_tar)
         self.c = fiona.open("/testing/coutwildrnp.shp", "r", vfs=vfs)
+        self.path = os.path.join(self.data_dir, 'coutwildrnp.tar')
     
     def tearDown(self):
         self.c.close()
@@ -107,22 +110,22 @@ class TarArchiveReadingTest(VsiReadingTest):
     def test_open_repr(self):
         self.assertEqual(
             repr(self.c),
-            ("<open Collection '/vsitar/{data_dir}/coutwildrnp.tar/testing/coutwildrnp.shp:coutwildrnp', mode 'r' "
+            ("<open Collection '/vsitar/{path}/testing/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at {id}>".format(
                 id=hex(id(self.c)),
-                data_dir=self.data_dir)))
+                path=self.path)))
 
     def test_closed_repr(self):
         self.c.close()
         self.assertEqual(
             repr(self.c),
-            ("<closed Collection '/vsitar/{data_dir}/coutwildrnp.tar/testing/coutwildrnp.shp:coutwildrnp', mode 'r' "
+            ("<closed Collection '/vsitar/{path}/testing/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at {id}>".format(
                 id=hex(id(self.c)),
-                data_dir=self.data_dir)))
+                path=self.path)))
 
     def test_path(self):
         self.assertEqual(
             self.c.path,
-            '/vsitar/{data_dir}/coutwildrnp.tar/testing/coutwildrnp.shp'.format(
-                data_dir=self.data_dir))
+            '/vsitar/{path}/testing/coutwildrnp.shp'.format(
+                path=self.path))

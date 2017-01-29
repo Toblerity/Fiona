@@ -15,13 +15,13 @@ import fiona
 from fiona.collection import Collection, supported_drivers
 from fiona.errors import FionaValueError, DriverError
 
-FIXME_WINDOWS = sys.platform.startswith('win')
+
 OGRINFO_TOOL = "ogrinfo"
-if FIXME_WINDOWS:
+if sys.platform.startswith('win'):
     # Set extra path if in windows
     OGRINFO_TOOL = 'gdal\\apps\\' + OGRINFO_TOOL
 
-WILDSHP = 'tests/data/coutwildrnp.shp'
+WILDSHP = os.path.join('tests', 'data','coutwildrnp.shp')
 
 #logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
@@ -109,15 +109,15 @@ class ReadingTest(unittest.TestCase):
     def test_open_repr(self):
         self.assertEqual(
             repr(self.c),
-            ("<open Collection 'tests/data/coutwildrnp.shp:coutwildrnp', mode 'r' "
-             "at %s>" % hex(id(self.c))))
+            ("<open Collection '{path}:coutwildrnp', mode 'r' "
+             "at {hexid}>".format(hexid=hex(id(self.c)), path=WILDSHP)))
 
     def test_closed_repr(self):
         self.c.close()
         self.assertEqual(
             repr(self.c),
-            ("<closed Collection 'tests/data/coutwildrnp.shp:coutwildrnp', mode 'r' "
-             "at %s>" % hex(id(self.c))))
+            ("<closed Collection '{path}:coutwildrnp', mode 'r' "
+             "at {hexid}>".format(hexid=hex(id(self.c)), path=WILDSHP)))
 
     def test_path(self):
         self.assertEqual(self.c.path, WILDSHP)
@@ -317,10 +317,6 @@ class UnsupportedDriverTest(unittest.TestCase):
             fiona.open, os.path.join(TEMPDIR, "foo"), "w", "Bogus", schema=schema)
 
 
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Please look into why this test isn't working. "
-           "There is a codepage issue regarding Windows-1252 and UTF-8. ")
 class GenericWritingTest(unittest.TestCase):
     tempdir = None
     c = None
@@ -600,7 +596,7 @@ class GeoJSONCRSWritingTest(unittest.TestCase):
                 'geometry': 'Point',
                 'properties': [('title', 'str'), ('date', 'date')]},
             crs={'a': 6370997, 'lon_0': -100, 'y_0': 0, 'no_defs': True, 'proj': 'laea', 'x_0': 0, 'units': 'm', 'b': 6370997, 'lat_0': 45})
-        
+
 
     def tearDown(self):
         self.sink.close()
@@ -615,8 +611,7 @@ class GeoJSONCRSWritingTest(unittest.TestCase):
             'GEOGCS["WGS 84' in info.decode('utf-8'),
             info)
 
-@pytest.mark.skipif(FIXME_WINDOWS, 
-                 reason="FIXME on Windows. Test raises PermissionError.  Please look into why this test isn't working.")
+
 class DateTimeTest(unittest.TestCase):
 
     def setUp(self):
@@ -651,7 +646,7 @@ class DateTimeTest(unittest.TestCase):
             rf1, rf2 = list(c)
             self.assertEqual(rf1['properties']['date'], '2013-02-25')
             self.assertEqual(rf2['properties']['date'], '2014-02-03')
-        
+
 
     def tearDown(self):
         shutil.rmtree(self.tempdir)
@@ -664,7 +659,7 @@ class OpenKeywordArgsTest(unittest.TestCase):
 
     def test_kwargs(self):
         dstfile = os.path.join(self.tempdir, 'test.json')
-        with fiona.open('tests/data/coutwildrnp.shp') as src:
+        with fiona.open(os.path.join('tests', 'data', 'coutwildrnp.shp')) as src:
             kwds = src.profile
             kwds['driver'] = 'GeoJSON'
             kwds['coordinate_precision'] = 2

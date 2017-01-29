@@ -14,8 +14,6 @@ import fiona
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
-FIXME_WINDOWS = sys.platform.startswith('win')
-
 class UnicodePathTest(unittest.TestCase):
 
     def setUp(self):
@@ -48,8 +46,6 @@ class UnicodePathTest(unittest.TestCase):
             with fiona.open(path) as c:
                 assert len(c) == 67
 
-@pytest.mark.skipif(FIXME_WINDOWS, 
-                 reason="FIXME on Windows. Please look into why these tests are not working. Note: test_write_utf8 works.")
 class UnicodeStringFieldTest(unittest.TestCase):
 
     def setUp(self):
