@@ -227,9 +227,8 @@ class FilterReadingTest(unittest.TestCase):
         self.assertEqual(len(results), 26)
 
 
-def test_zipped_bytes_collection():
-    with open('tests/data/coutwildrnp.zip', 'rb') as src:
-        zip_file_bytes = src.read()
-
-    with fiona.BytesCollection(zip_file_bytes) as col:
+def test_zipped_bytes_collection(bytes_coutwildrnp_zip):
+    """Open a zipped stream of bytes as a collection"""
+    with fiona.BytesCollection(bytes_coutwildrnp_zip) as col:
         assert col.name == 'coutwildrnp'
+        assert len(col) == 67

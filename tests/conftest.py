@@ -46,6 +46,13 @@ def path_coutwildrnp_zip():
 
 
 @pytest.fixture(scope='session')
+def bytes_coutwildrnp_zip(path_coutwildrnp_zip):
+    """The zip file's bytes"""
+    with open(path_coutwildrnp_zip, 'rb') as src:
+        return src.read()
+
+
+@pytest.fixture(scope='session')
 def path_coutwildrnp_tar():
     """Creates ``coutwildrnp.tar`` if it does not exist and returns the absolute
     file path."""
