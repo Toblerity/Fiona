@@ -241,6 +241,7 @@ def listlayers(path, vfs=None):
     with drivers():
         return _listlayers(vsi_path(path, vsi, archive))
 
+
 def parse_paths(path, vfs=None):
     archive = vsi = None
     if vfs:
@@ -252,6 +253,7 @@ def parse_paths(path, vfs=None):
         path = parts.pop() if parts else None
         vsi = parts.pop() if parts else None
     return path, vsi, archive
+
 
 def prop_width(val):
     """Returns the width of a str type property.
@@ -266,6 +268,7 @@ def prop_width(val):
     if val.startswith('str'):
         return int((val.split(":")[1:] or ["80"])[0])
     return None
+
 
 def prop_type(text):
     """Returns a schema property's proper Python type.
