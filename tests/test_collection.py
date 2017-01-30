@@ -21,11 +21,11 @@ if sys.platform.startswith('win'):
     # Set extra path if in windows
     OGRINFO_TOOL = 'gdal\\apps\\' + OGRINFO_TOOL
 
+
 WILDSHP = os.path.join('tests', 'data','coutwildrnp.shp')
-
-#logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-
 TEMPDIR = tempfile.gettempdir()
+
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 
 class SupportedDriversTest(unittest.TestCase):

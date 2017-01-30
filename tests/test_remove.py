@@ -7,7 +7,7 @@ import pytest
 import fiona
 
 
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 
 def create_sample_data(filename, driver):

@@ -10,7 +10,7 @@ import unittest
 
 import fiona
 
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 log = logging.getLogger('fiona.tests')
 
 class RevolvingDoorTest(unittest.TestCase):

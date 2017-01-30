@@ -9,7 +9,7 @@ import unittest
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import group_accessor, pattern_date
 
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 class DateParseTest(unittest.TestCase):
 
