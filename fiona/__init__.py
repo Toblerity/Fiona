@@ -90,6 +90,7 @@ class NullHandler(logging.Handler):
         pass
 log.addHandler(NullHandler())
 
+
 def open(
         path,
         mode='r',

@@ -15,7 +15,7 @@ from fiona.errors import FionaValueError, DriverError, SchemaError, CRSError
 from fiona.ogrext import calc_gdal_version_num, get_gdal_version_num
 
 
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 
 class ReadingTest(unittest.TestCase):

@@ -1328,10 +1328,12 @@ def _listlayers(path):
 
     return layer_names
 
-def buffer_to_virtual_file(bytesbuf):
+def buffer_to_virtual_file(bytesbuf, ext=''):
     """Maps a bytes buffer to a virtual file.
+
+    `ext` is empty or begins with a period and contains at most one period.
     """
-    vsi_filename = os.path.join('/vsimem', uuid.uuid4().hex)
+    vsi_filename = os.path.join('/vsimem', uuid.uuid4().hex + ext)
     vsi_cfilename = vsi_filename if not isinstance(vsi_filename, string_types) else vsi_filename.encode('utf-8')
 
     vsi_handle = ogrext2.VSIFileFromMemBuffer(vsi_cfilename, bytesbuf, len(bytesbuf), 0)
@@ -1345,5 +1347,3 @@ def buffer_to_virtual_file(bytesbuf):
 def remove_virtual_file(vsi_filename):
     vsi_cfilename = vsi_filename if not isinstance(vsi_filename, string_types) else vsi_filename.encode('utf-8')
     return ogrext2.VSIUnlink(vsi_cfilename)
-
-

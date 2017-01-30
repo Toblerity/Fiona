@@ -1,6 +1,6 @@
 """Test listing a datasource's layers."""
 
-
+import logging
 import sys
 import unittest
 
@@ -12,10 +12,13 @@ import fiona.ogrext
 
 FIXME_WINDOWS = sys.platform.startswith("win")
 
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+
 
 def test_single_file_private(path_coutwildrnp_shp):
     with fiona.drivers():
-        assert fiona.ogrext._listlayers(path_coutwildrnp_shp) == ['coutwildrnp']
+        assert fiona.ogrext._listlayers(
+            path_coutwildrnp_shp) == ['coutwildrnp']
 
 
 def test_single_file(path_coutwildrnp_shp):

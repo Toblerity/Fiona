@@ -22,10 +22,9 @@ if FIXME_WINDOWS:
     OGRINFO_TOOL = 'gdal\\apps\\' + OGRINFO_TOOL
 
 WILDSHP = 'tests/data/coutwildrnp.shp'
-
-#logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-
 TEMPDIR = tempfile.gettempdir()
+
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 
 class SupportedDriversTest(unittest.TestCase):
@@ -614,6 +613,7 @@ class GeoJSONCRSWritingTest(unittest.TestCase):
         self.assertTrue(
             'GEOGCS["WGS 84' in info.decode('utf-8'),
             info)
+
 
 @pytest.mark.skipif(FIXME_WINDOWS, 
                  reason="FIXME on Windows. Test raises PermissionError.  Please look into why this test isn't working.")

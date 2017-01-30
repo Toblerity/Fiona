@@ -166,8 +166,8 @@ class ReadingTest(unittest.TestCase):
         self.assertEqual(f['properties']['STATE'], 'UT')
 
     def test_re_iter_list(self):
-        f = list(self.c)[0] # Run through iterator
-        f = list(self.c)[0] # Run through a new, reset iterator
+        f = list(self.c)[0]  # Run through iterator
+        f = list(self.c)[0]  # Run through a new, reset iterator
         self.assertEqual(f['id'], "0")
         self.assertEqual(f['properties']['STATE'], 'UT')
 
@@ -225,3 +225,11 @@ class FilterReadingTest(unittest.TestCase):
                 ((-112, 38), (-112, 40), (-106, 40), (-106, 38), (-112, 38)),)}
         results = list(self.c.filter(mask=mask))
         self.assertEqual(len(results), 26)
+
+
+def test_zipped_bytes_collection():
+    with open('tests/data/coutwildrnp.zip', 'rb') as src:
+        zip_file_bytes = src.read()
+
+    with fiona.BytesCollection(zip_file_bytes) as col:
+        assert col.name == 'coutwildrnp'

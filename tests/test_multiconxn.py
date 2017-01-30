@@ -10,7 +10,7 @@ import pytest
 import fiona
 from fiona.compat import OrderedDict
 
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 FIXME_WINDOWS = sys.platform.startswith("win")
 
