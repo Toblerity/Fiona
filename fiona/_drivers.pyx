@@ -67,8 +67,13 @@ code_map = {
     10: 'CPLE_ObjectNull'
 }
 
-cdef void * errorHandler(int eErrClass, int err_no, char *msg):
-    log.log(level_map[eErrClass], "%s in %s", code_map[err_no], msg)
+
+IF UNAME_SYSNAME == "Windows":
+    cdef void * __stdcall errorHandler(int eErrClass, int err_no, char *msg):
+        log.log(level_map[eErrClass], "%s in %s", code_map[err_no], msg)
+ELSE:
+    cdef void * errorHandler(int eErrClass, int err_no, char *msg):
+        log.log(level_map[eErrClass], "%s in %s", code_map[err_no], msg)
 
 
 def driver_count():
