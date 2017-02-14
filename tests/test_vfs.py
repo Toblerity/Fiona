@@ -26,11 +26,12 @@ class VsiReadingTest(ReadingTest):
         self.assertEqual(f['id'], "0")
         self.assertEqual(f['properties']['STATE'], 'UT')
 
+
 class ZipReadingTest(VsiReadingTest):
     
     def setUp(self):
         self.c = fiona.open("zip://tests/data/coutwildrnp.zip", "r")
-    
+
     def tearDown(self):
         self.c.close()
 
@@ -49,6 +50,7 @@ class ZipReadingTest(VsiReadingTest):
 
     def test_path(self):
         self.assertEqual(self.c.path, '/vsizip/tests/data/coutwildrnp.zip')
+
 
 class ZipArchiveReadingTest(VsiReadingTest):
     
@@ -74,11 +76,29 @@ class ZipArchiveReadingTest(VsiReadingTest):
     def test_path(self):
         self.assertEqual(self.c.path, '/vsizip/tests/data/coutwildrnp.zip/coutwildrnp.shp')
 
+
+class ZipArchiveReadingTestAbsPath(ZipArchiveReadingTest):
+
+    def setUp(self):
+        self.c = fiona.open(
+                "/coutwildrnp.shp", "r",
+                vfs="zip://" + os.path.abspath("tests/data/coutwildrnp.zip"))
+
+    def test_open_repr(self):
+        self.assert_(repr(self.c).startswith("<open Collection '/vsizip//"))
+
+    def test_closed_repr(self):
+        self.c.close()
+        self.assert_(repr(self.c).startswith("<closed Collection '/vsizip//"))
+
+    def test_path(self):
+        self.assert_(self.c.path.startswith('/vsizip//'))
+
+
 class TarArchiveReadingTest(VsiReadingTest):
     
     def setUp(self):
         self.c = fiona.open("/testing/coutwildrnp.shp", "r", vfs="tar://tests/data/coutwildrnp.tar")
-    
     def tearDown(self):
         self.c.close()
 

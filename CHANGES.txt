@@ -3,6 +3,20 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.7.3 (2017-02-14)
+------------------
+
+Roses are red.
+Tan is a pug.
+Software regression's
+the most embarrassing bug.
+
+Bug fixes:
+
+- Turn on latent support for zip:// URLs in rio-cat and rio-info (#421).
+- The 1.7.2 release broke support for zip files with absolute paths (#418).
+  This regression has been fixed with tests to confirm.
+
 1.7.2 (2017-01-27)
 ------------------
 
