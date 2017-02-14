@@ -13,6 +13,7 @@ the most embarrassing bug.
 
 Bug fixes:
 
+- Use __stdcall for GDAL error handling callback on Windows as in Rasterio.
 - Turn on latent support for zip:// URLs in rio-cat and rio-info (#421).
 - The 1.7.2 release broke support for zip files with absolute paths (#418).
   This regression has been fixed with tests to confirm.
