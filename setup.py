@@ -1,6 +1,7 @@
 from distutils.command.sdist import sdist
 from distutils import log
 import logging
+import itertools as it
 import os
 import shutil
 import subprocess
@@ -228,6 +229,14 @@ if sys.version_info < (2, 7):
     requirements.append('argparse')
     requirements.append('ordereddict')
 
+
+extras_require = {
+    'calc': ['shapely'],
+    'test': ['pytest>=3', 'pytest-cov']
+}
+extras_require['all'] = list(set(it.chain(*extras_require.values())))
+
+
 setup_args = dict(
     cmdclass={'sdist': sdist_multi_gdal},
     metadata_version='1.2',
@@ -265,9 +274,7 @@ setup_args = dict(
         ls=fiona.fio.ls:ls
         ''',
     install_requires=requirements,
-    extras_require={
-        'calc': ['shapely'],
-        'test': ['pytest>=3', 'pytest-cov']},
+    extras_require=extras_require,
     ext_modules=ext_modules,
     classifiers=[
         'Development Status :: 5 - Production/Stable',
