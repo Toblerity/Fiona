@@ -74,7 +74,7 @@ def test_multi_layer():
 
 def test_multi_layer_fail():
     runner = CliRunner()
-    result = runner.invoke(cat.cat, '--layer'
+    result = runner.invoke(cat.cat, ['--layer',
                            '200000:coutlildrnp',
-                           'tests/data')
-    assert result.exit_code == 1
+                           'tests/data'])
+    assert result.exit_code != 0
