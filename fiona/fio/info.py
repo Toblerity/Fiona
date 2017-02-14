@@ -14,7 +14,7 @@ from fiona.fio import options
 
 @click.command()
 # One or more files.
-@click.argument('input', type=click.Path(exists=True))
+@click.argument('input', type=click.Path(exists=False))
 @click.option('--layer', metavar="INDEX|NAME", callback=options.cb_layer,
               help="Print information about a specific layer.  The first "
                    "layer is used by default.  Layers use zero-based "
@@ -52,7 +52,7 @@ def info(ctx, input, indent, meta_member, layer):
                 info.update(bounds=src.bounds, name=src.name)
                 try:
                     info.update(count=len(src))
-                except TypeError as e:
+                except TypeError:
                     info.update(count=None)
                     logger.debug("Setting 'count' to None/null - layer does "
                                  "not support counting")
