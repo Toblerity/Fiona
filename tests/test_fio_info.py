@@ -12,12 +12,6 @@ import pytest
 from fiona.fio.main import main_group
 
 
-FIXME_WINDOWS = sys.platform.startswith('win')
-
-
-@pytest.mark.skipif(
-    FIXME_WINDOWS, 
-    reason="FIXME on Windows. Please look into why this test is not working.")
 def test_info_json(path_coutwildrnp_shp):
     runner = CliRunner()
     result = runner.invoke(main_group, ['info', path_coutwildrnp_shp])
@@ -27,9 +21,7 @@ def test_info_json(path_coutwildrnp_shp):
     assert '"driver": "ESRI Shapefile"' in result.output
     assert '"name": "coutwildrnp"' in result.output
 
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Please look into why this test is not working.")
+
 def test_info_count(path_coutwildrnp_shp):
     runner = CliRunner()
     result = runner.invoke(
@@ -37,9 +29,7 @@ def test_info_count(path_coutwildrnp_shp):
     assert result.exit_code == 0
     assert result.output == "67\n"
 
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Please look into why this test is not working.")
+
 def test_info_bounds(path_coutwildrnp_shp):
     runner = CliRunner()
     result = runner.invoke(
@@ -62,9 +52,6 @@ def _filter_info_warning(lines):
     return lines
 
 
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Please look into why this test is not working.")
 def test_info_no_count(path_gpx):
     """Make sure we can still get a `$ fio info` report on datasources that do
     not support feature counting, AKA `len(collection)`.
@@ -77,9 +64,6 @@ def test_info_no_count(path_gpx):
     assert json.loads(lines[0])['count'] is None
 
 
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Please look into why this test is not working.")
 def test_info_layer(path_gpx):
     for layer in ('routes', '1'):
         runner = CliRunner()

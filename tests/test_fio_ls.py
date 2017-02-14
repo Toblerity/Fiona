@@ -3,31 +3,24 @@
 
 import json
 import sys
-
+import os
 from click.testing import CliRunner
 import pytest
-
 import fiona
 from fiona.fio.main import main_group
 
-FIXME_WINDOWS = sys.platform.startswith('win')
+DATA_DIR = os.path.join("tests", "data")
 
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Please look into why this test is not working.")
 def test_fio_ls_single_layer():
 
     result = CliRunner().invoke(main_group, [
         'ls',
-        'tests/data/'])
+        DATA_DIR])
     assert result.exit_code == 0
     assert len(result.output.splitlines()) == 1
     assert json.loads(result.output) == ['coutwildrnp']
 
 
-@pytest.mark.skipif(
-    FIXME_WINDOWS,
-    reason="FIXME on Windows. Please look into why this test is not working.")
 def test_fio_ls_indent(path_coutwildrnp_shp):
 
     result = CliRunner().invoke(main_group, [
