@@ -53,11 +53,12 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
         dump_kwds['indent'] = indent
     if compact:
         dump_kwds['separators'] = (',', ':')
-    item_sep = compact and ',' or ', '
+
     # Validate file idexes provided in --layer option
     # (can't pass the files to option callback)
     if layer:
         options.validate_multilayer_file_index(files, layer)
+
     # first layer is the default
     for i in range(1, len(files) + 1):
         if str(i) not in layer.keys():
@@ -75,9 +76,9 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
                         for i, feat in src.items(bbox=bbox):
                             if dst_crs or precision >= 0:
                                 g = transform_geom(
-                                        src.crs, dst_crs, feat['geometry'],
-                                        antimeridian_cutting=True,
-                                        precision=precision)
+                                    src.crs, dst_crs, feat['geometry'],
+                                    antimeridian_cutting=True,
+                                    precision=precision)
                                 feat['geometry'] = g
                                 feat['bbox'] = fiona.bounds(g)
                             if use_rs:

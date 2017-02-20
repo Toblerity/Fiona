@@ -36,7 +36,6 @@ def test_bbox_no():
     assert result.output == ""
 
 
-
 def test_bbox_yes():
     runner = CliRunner()
     result = runner.invoke(
@@ -67,10 +66,9 @@ def test_multi_layer():
 
 def test_multi_layer_fail():
     runner = CliRunner()
-    result = runner.invoke(cat.cat, '--layer'
-                           '200000:coutlildrnp',
-                           DATA_DIR)
-    assert result.exit_code == 1
+    result = runner.invoke(cat.cat, ['--layer', '200000:coutlildrnp',
+                           DATA_DIR])
+    assert result.exit_code != 0
 
 
 def test_vfs(path_coutwildrnp_zip):
@@ -79,3 +77,4 @@ def test_vfs(path_coutwildrnp_zip):
         'zip://{}'.format(path_coutwildrnp_zip)])
     assert result.exit_code == 0
     assert result.output.count('"Feature"') == 67
+    assert result.exit_code == 1

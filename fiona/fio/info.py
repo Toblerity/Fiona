@@ -52,7 +52,7 @@ def info(ctx, input, indent, meta_member, layer):
                 info.update(bounds=src.bounds, name=src.name)
                 try:
                     info.update(count=len(src))
-                except TypeError as e:
+                except TypeError:
                     info.update(count=None)
                     logger.debug("Setting 'count' to None/null - layer does "
                                  "not support counting")
