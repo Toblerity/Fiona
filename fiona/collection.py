@@ -447,16 +447,21 @@ class BytesCollection(Collection):
         # it is garbage collected while in use.
         self.bytesbuf = bytesbuf
 
-        # Map the buffer to a file. If the buffer contains a zipfile we
-        # take extra steps in naming the buffer and in opening it.
+        # Map the buffer to a file. If the buffer contains a zipfile
+        # we take extra steps in naming the buffer and in opening
+        # it. If the requested driver is for GeoJSON, we append an an
+        # appropriate extension to ensure the driver reads it.
         filetype = get_filetype(self.bytesbuf)
-        ext = '.zip' if filetype == 'zip' else ''
+        ext = ''
+        if filetype == 'zip':
+            ext = '.zip'
+        elif kwds.get('driver') == "GeoJSON":
+            ext = '.json'
         self.virtual_file = buffer_to_virtual_file(self.bytesbuf, ext=ext)
 
         # Instantiate the parent class.
         super(BytesCollection, self).__init__(self.virtual_file, vsi=filetype,
                                               encoding='utf-8', **kwds)
-
 
     def close(self):
         """Removes the virtual file associated with the class."""

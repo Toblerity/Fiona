@@ -3,6 +3,16 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.7.4 (2017-02-20)
+------------------
+
+Bug fixes:
+
+- OGR's EsriJSON detection fails when certain keys aren't found in the first
+  6000 bytes of data passed to `BytesCollection` (#422). A .json file extension
+  is now explicitly given to the in-memory file behind `BytesCollection` when
+  the `driver='GeoJSON'` keyword argument is given (#423). 
+
 1.7.3 (2017-02-14)
 ------------------
 

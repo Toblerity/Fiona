@@ -77,4 +77,3 @@ def test_vfs(path_coutwildrnp_zip):
         'zip://{}'.format(path_coutwildrnp_zip)])
     assert result.exit_code == 0
     assert result.output.count('"Feature"') == 67
-    assert result.exit_code == 1
