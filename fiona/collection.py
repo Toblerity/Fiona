@@ -454,15 +454,14 @@ class BytesCollection(Collection):
         filetype = get_filetype(self.bytesbuf)
         ext = ''
         if filetype == 'zip':
-            ext = '.zip' 
-        elif (kwds.get('driver') == "GeoJSON"):
+            ext = '.zip'
+        elif kwds.get('driver') == "GeoJSON":
             ext = '.json'
         self.virtual_file = buffer_to_virtual_file(self.bytesbuf, ext=ext)
 
         # Instantiate the parent class.
         super(BytesCollection, self).__init__(self.virtual_file, vsi=filetype,
                                               encoding='utf-8', **kwds)
-
 
     def close(self):
         """Removes the virtual file associated with the class."""
