@@ -66,7 +66,8 @@ import logging
 import os
 from six import string_types
 
-from fiona.collection import Collection, BytesCollection, vsi_path
+from fiona.collection import Collection, BytesCollection
+from fiona.vfs import vsi_path
 from fiona._drivers import driver_count, GDALEnv
 from fiona.drvsupport import supported_drivers
 from fiona.compat import OrderedDict

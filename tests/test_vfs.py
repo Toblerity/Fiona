@@ -4,6 +4,7 @@ import os
 import pytest
 
 import fiona
+from fiona.vfs import vsi_path
 
 from .test_collection import ReadingTest
 
@@ -146,4 +147,15 @@ class TarArchiveReadingTest(VsiReadingTest):
         self.assertEqual(
             self.c.path,
             '/vsitar/{path}/testing/coutwildrnp.shp'.format(
-                path=self.path))
+                path=self.path))    
+
+def test_collection_http():
+    ds = fiona.Collection('http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.shp', vsi='http')
+    assert ds.path == '/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.shp'
+    assert len(ds) == 10
+
+def test_collection_zip_http():
+    ds = fiona.Collection('http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip', vsi='zip+http')
+    assert ds.path == '/vsizip/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip'
+    assert len(ds) == 10
+    

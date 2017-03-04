@@ -5,7 +5,7 @@
 import os
 import warnings
 
-from fiona import compat
+from fiona import compat, vfs
 from fiona.ogrext import Iterator, ItemsIterator, KeysIterator
 from fiona.ogrext import Session, WritingSession
 from fiona.ogrext import (
@@ -62,7 +62,7 @@ class Collection(object):
         if layer and not isinstance(layer, tuple(list(string_types) + [int])):
             raise TypeError("invalid name: %r" % layer)
         if vsi:
-            if not isinstance(vsi, string_types) or vsi not in ('zip', 'tar', 'gzip'):
+            if not isinstance(vsi, string_types) or not vfs.valid_vsi(vsi):
                 raise TypeError("invalid vsi: %r" % vsi)
         if archive and not isinstance(archive, string_types):
             raise TypeError("invalid archive: %r" % archive)
@@ -85,7 +85,7 @@ class Collection(object):
         self.env = None
         self.enabled_drivers = enabled_drivers
 
-        self.path = vsi_path(path, vsi, archive)
+        self.path = vfs.vsi_path(path, vsi, archive)
 
         if mode == 'w':
             if layer and not isinstance(layer, string_types):
@@ -477,17 +477,3 @@ class BytesCollection(Collection):
             self.path + ":" + str(self.name),
             self.mode,
             hex(id(self)))
-
-
-def vsi_path(path, vsi=None, archive=None):
-    # If a VSF and archive file are specified, we convert the path to
-    # an OGR VSI path (see cpl_vsi.h).
-    if vsi:
-        if archive:
-            result = '/vsi{0}/{1}{2}'.format(vsi, archive, path)
-        else:
-            result = '/vsi{0}/{1}'.format(vsi, path)
-    else:
-        result = path
-
-    return result
