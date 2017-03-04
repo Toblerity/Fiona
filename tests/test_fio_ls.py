@@ -49,7 +49,6 @@ def test_fio_ls_multi_layer(path_coutwildrnp_shp, tmpdir):
     result = CliRunner().invoke(main_group, [
         'ls', outdir])
     assert result.exit_code == 0
-    
     json_result = json.loads(result.output)
     assert sorted(json_result)  == sorted(layer_names)
 
