@@ -223,16 +223,13 @@ def test_zipped_bytes_collection(bytes_coutwildrnp_zip):
         assert len(col) == 67
 
 
-def test_grenada_bytes_geojson():
+def test_grenada_bytes_geojson(bytes_grenada_geojson):
     """Read grenada.geojson as BytesCollection.
 
     grenada.geojson is an example of geojson that GDAL's GeoJSON
     driver will fail to read successfully unless the file's extension
     reflects its json'ness.
     """
-    with open('tests/data/grenada.geojson', 'rb') as src:
-        bytes_grenada_geojson = src.read()
-
     # We expect an exception if the GeoJSON driver isn't specified.
     with pytest.raises(fiona.errors.FionaValueError):
         with fiona.BytesCollection(bytes_grenada_geojson) as col:
