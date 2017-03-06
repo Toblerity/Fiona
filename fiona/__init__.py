@@ -67,7 +67,7 @@ import os
 from six import string_types
 
 from fiona.collection import Collection, BytesCollection
-from fiona.vfs import vsi_path
+from fiona.vfs import vsi_path, parse_paths, is_remote
 from fiona._drivers import driver_count, GDALEnv
 from fiona.drvsupport import supported_drivers
 from fiona.compat import OrderedDict
@@ -161,7 +161,9 @@ def open(
     # Parse the vfs into a vsi and an archive path.
     path, vsi, archive = parse_paths(path, vfs)
     if mode in ('a', 'r'):
-        if archive:
+        if is_remote(vsi):
+            pass
+        elif archive:
             if not os.path.exists(archive):
                 raise IOError("no such archive file: %r" % archive)
         elif path != '-' and not os.path.exists(path):
@@ -241,19 +243,6 @@ def listlayers(path, vfs=None):
 
     with drivers():
         return _listlayers(vsi_path(path, vsi, archive))
-
-
-def parse_paths(path, vfs=None):
-    archive = vsi = None
-    if vfs:
-        parts = vfs.split("://")
-        vsi = parts.pop(0) if parts else None
-        archive = parts.pop(0) if parts else None
-    else:
-        parts = path.split("://")
-        path = parts.pop() if parts else None
-        vsi = parts.pop() if parts else None
-    return path, vsi, archive
 
 
 def prop_width(val):

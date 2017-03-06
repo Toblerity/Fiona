@@ -2,8 +2,10 @@ import sys
 import collections
 
 if sys.version_info[0] >= 3:
+    from urllib.parse import urlparse
     from collections import UserDict, OrderedDict
-else:  
+else:
+    from urlparse import urlparse
     from UserDict import UserDict
     from ordereddict import OrderedDict
 

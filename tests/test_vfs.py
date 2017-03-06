@@ -4,7 +4,7 @@ import os
 import pytest
 
 import fiona
-from fiona.vfs import vsi_path
+from fiona.vfs import vsi_path, parse_paths
 
 from .test_collection import ReadingTest
 
@@ -149,13 +149,24 @@ class TarArchiveReadingTest(VsiReadingTest):
             '/vsitar/{path}/testing/coutwildrnp.shp'.format(
                 path=self.path))    
 
-def test_collection_http():
-    ds = fiona.Collection('http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.shp', vsi='http')
-    assert ds.path == '/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.shp'
+        
+def test_open_http():
+    ds = fiona.open('http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.shp')
     assert len(ds) == 10
 
-def test_collection_zip_http():
-    ds = fiona.Collection('http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip', vsi='zip+http')
-    assert ds.path == '/vsizip/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip'
-    assert len(ds) == 10
     
+def test_open_zip_http():
+    ds = fiona.open('zip+http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip')
+    assert len(ds) == 10
+
+    
+def test_parse_path():
+    assert parse_paths("zip://foo.zip") == ("foo.zip", "zip", None)
+
+
+def test_parse_path2():
+    assert parse_paths("foo") == ("foo", None, None)
+
+
+def test_parse_vfs():
+    assert parse_paths("/", "zip://foo.zip") == ("/", "zip", "foo.zip")

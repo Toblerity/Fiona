@@ -671,3 +671,16 @@ class OpenKeywordArgsTest(unittest.TestCase):
 
     def tearDown(self):
         shutil.rmtree(self.tempdir)
+
+
+def test_collection_http():
+    ds = fiona.Collection('http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.shp', vsi='http')
+    assert ds.path == '/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.shp'
+    assert len(ds) == 10
+
+    
+def test_collection_zip_http():
+    ds = fiona.Collection('http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip', vsi='zip+http')
+    assert ds.path == '/vsizip/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip'
+    assert len(ds) == 10
+        
