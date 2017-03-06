@@ -104,14 +104,14 @@ class ZipArchiveReadingTestAbsPath(ZipArchiveReadingTest):
         self.c = fiona.open("/coutwildrnp.shp", "r", vfs=vfs)
 
     def test_open_repr(self):
-        assert repr(self.c).startswith("<open Collection '/vsizip//")
+        assert repr(self.c).startswith("<open Collection '/vsizip/")
 
     def test_closed_repr(self):
         self.c.close()
-        assert repr(self.c).startswith("<closed Collection '/vsizip//")
+        assert repr(self.c).startswith("<closed Collection '/vsizip/")
 
     def test_path(self):
-        assert self.c.path.startswith('/vsizip//')
+        assert self.c.path.startswith('/vsizip/')
 
 
 @pytest.mark.usefixtures('uttc_path_coutwildrnp_tar', 'uttc_data_dir')
