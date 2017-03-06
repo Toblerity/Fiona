@@ -5,13 +5,13 @@ import pytest
 
 import fiona
 
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)
-
 from .test_collection import ReadingTest
 
 
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+
+
 class VsiReadingTest(ReadingTest):
-    
     # There's a bug in GDAL 1.9.2 http://trac.osgeo.org/gdal/ticket/5093
     # in which the VSI driver reports the wrong number of features.
     # I'm overriding ReadingTest's test_filter_1 with a function that
@@ -104,14 +104,14 @@ class ZipArchiveReadingTestAbsPath(ZipArchiveReadingTest):
         self.c = fiona.open("/coutwildrnp.shp", "r", vfs=vfs)
 
     def test_open_repr(self):
-        self.assert_(repr(self.c).startswith("<open Collection '/vsizip//"))
+        assert repr(self.c).startswith("<open Collection '/vsizip//")
 
     def test_closed_repr(self):
         self.c.close()
-        self.assert_(repr(self.c).startswith("<closed Collection '/vsizip//"))
+        assert repr(self.c).startswith("<closed Collection '/vsizip//")
 
     def test_path(self):
-        self.assert_(self.c.path.startswith('/vsizip//'))
+        assert self.c.path.startswith('/vsizip//')
 
 
 @pytest.mark.usefixtures('uttc_path_coutwildrnp_tar', 'uttc_data_dir')
