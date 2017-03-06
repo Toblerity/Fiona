@@ -49,7 +49,7 @@ def test_fio_ls_multi_layer(path_coutwildrnp_shp, tmpdir):
     result = CliRunner().invoke(main_group, [
         'ls', outdir])
     assert result.exit_code == 0
-    assert json.loads(result.output) == layer_names
+    assert sorted(json.loads(result.output)) == layer_names
 
 
 def test_fio_ls_vfs(path_coutwildrnp_zip):
