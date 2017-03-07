@@ -3,11 +3,11 @@
 Fiona contains extension modules and is thus susceptible to C library compatibility issues. If you are reporting an installation or module import issue, please note that this project only accepts reports about problems with packages downloaded from the Python Package Index. Conda users should take issues to one of the following trackers:
 
 - https://github.com/ContinuumIO/anaconda-issues/issues
-- https://github.com/conda-forge/shapely-feedstock
+- https://github.com/conda-forge/fiona-feedstock
 
 ## Expected behavior and actual behavior.
 
-(For example: the area of my geometry is `1.417` when it should be `1.414`.)
+(For example: I expected to read 10 features from a file and an exception occurred on the 3rd.)
 
 ## Steps to reproduce the problem.
 
@@ -17,6 +17,6 @@ Fiona contains extension modules and is thus susceptible to C library compatibil
 
 (For example, Mac OS X 10.12.3)
 
-## Shapely version and provenance
+## Fiona version and provenance
 
-(For example, 1.6b4 installed from PyPI using pip)
+(For example, the 1.7.4 manylinux1 wheel installed from PyPI using pip)
