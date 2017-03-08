@@ -13,7 +13,7 @@ from fiona.ogrext import (
 from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file
 from fiona.errors import DriverError, SchemaError, CRSError
 from fiona._drivers import driver_count, GDALEnv
-from fiona.drvsupport import supported_drivers
+from fiona.drvsupport import supported_drivers, AWSGDALEnv
 from six import string_types, binary_type
 
 
@@ -136,9 +136,9 @@ class Collection(object):
 
         if driver_count == 0:
             # create a local manager and enter
-            self.env = GDALEnv()
+            self.env = AWSGDALEnv()
         else:
-            self.env = GDALEnv()
+            self.env = AWSGDALEnv()
         self.env.__enter__()
 
         if self.mode == "r":
