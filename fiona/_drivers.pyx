@@ -128,7 +128,11 @@ cdef class GDALEnv(object):
                 val_b = ('ON' if val else 'OFF').encode('utf-8')
             val_c = val_b
             CPLSetThreadLocalConfigOption(key_c, val_c)
-            log.debug("Option %s=%s", key, CPLGetConfigOption(key_c, NULL))
+            val_d = CPLGetConfigOption(key_c, NULL)
+            if key.upper() in ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY',
+                               'AWS_SESSION_TOKEN']:
+                val_d = '******'
+            log.debug("Option %s=%s", key, val_d)
         return self
 
     def stop(self):
