@@ -155,10 +155,10 @@ def test_open_http():
     assert len(ds) == 10
 
     
-def test_open_zip_http():
-    ds = fiona.open('zip+http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip')
-    assert len(ds) == 10
-
+def test_open_zip_https():
+    ds = fiona.open('zip+https://s3.amazonaws.com/mapbox/rasterio/coutwildrnp.zip')
+    assert len(ds) == 67
+    
     
 def test_parse_path():
     assert parse_paths("zip://foo.zip") == ("foo.zip", "zip", None)
