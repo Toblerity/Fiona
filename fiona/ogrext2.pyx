@@ -107,12 +107,13 @@ cdef char ** string_list(list_str):
     https://stackoverflow.com/questions/17511309/fast-string-array-cython
     """
     cdef char* s
-    cdef char **ret = <char **>malloc(len(list_str) * sizeof(char *))
+    cdef char **ret = <char **>malloc((len(list_str) + 1) * sizeof(char *))
     for i in range(len(list_str)):
         s = list_str[i]
         ret[i] = s
     ret[i + 1] = NULL
     return ret
+
 
 def _explode(coords):
     """Explode a GeoJSON geometry's coordinates object and yield
