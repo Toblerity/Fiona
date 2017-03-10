@@ -85,14 +85,14 @@ class ZipArchiveReadingTestAbsPath(ZipArchiveReadingTest):
                 vfs="zip://" + os.path.abspath("tests/data/coutwildrnp.zip"))
 
     def test_open_repr(self):
-        self.assert_(repr(self.c).startswith("<open Collection '/vsizip//"))
+        self.assert_(repr(self.c).startswith("<open Collection '/vsizip/"))
 
     def test_closed_repr(self):
         self.c.close()
-        self.assert_(repr(self.c).startswith("<closed Collection '/vsizip//"))
+        self.assert_(repr(self.c).startswith("<closed Collection '/vsizip/"))
 
     def test_path(self):
-        self.assert_(self.c.path.startswith('/vsizip//'))
+        self.assert_(self.c.path.startswith('/vsizip/'))
 
 
 class TarArchiveReadingTest(VsiReadingTest):
