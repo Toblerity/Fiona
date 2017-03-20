@@ -103,19 +103,6 @@ OGRERR_UNSUPPORTED_SRS = 7
 OGRERR_INVALID_HANDLE = 8
 
 
-cdef char ** string_list(list_str):
-    """
-    Function by Stackoverflow User falsetru
-    https://stackoverflow.com/questions/17511309/fast-string-array-cython
-    """
-    cdef char* s
-    cdef char **ret = <char **>malloc(len(list_str) * sizeof(char *))
-    for i in range(len(list_str)):
-        s = list_str[i]
-        ret[i] = s
-    ret[i + 1] = NULL
-    return ret
-
 def _explode(coords):
     """Explode a GeoJSON geometry's coordinates object and yield
     coordinate tuples. As long as the input is conforming, the type of
@@ -407,7 +394,8 @@ cdef class Session:
         cdef const char *name_c = NULL
         cdef void *drv = NULL
         cdef void *ds = NULL
-        cdef char ** drvs = NULL
+        cdef char **drvs = NULL
+
         if collection.path == '-':
             path = '/vsistdin/'
         else:
@@ -419,12 +407,21 @@ cdef class Session:
             path_b = path
         path_c = path_b
 
+        # TODO: eliminate this context manager in 2.0 as we have done
+        # in Rasterio 1.0.
         with cpl_errs:
-            drivers = []
+
+            # We have two ways of specifying drivers to try. Resolve the
+            # values into a single set of driver short names.
             if collection._driver:
-                drivers = [collection._driver]
+                drivers = set([collection._driver])
             elif collection.enabled_drivers:
-                drivers = collection.enabled_drivers
+                drivers = set(collection.enabled_drivers)
+            else:
+                drivers = None
+
+            # If there are specified drivers, make a GDAL string list
+            # of their names.
             if drivers:
                 for name in drivers:
                     name_b = name.encode()
@@ -432,30 +429,14 @@ cdef class Session:
                     log.debug("Trying driver: %s", name)
                     drv = ogrext2.GDALGetDriverByName(name_c)
                     if drv != NULL:
-                        drvs = string_list([name_b])
+                        drvs = ogrext2.CSLAddString(drvs, name_c)
 
-                        flags = ogrext2.GDAL_OF_VECTOR | ogrext2.GDAL_OF_READONLY
-                        log.debug("GDALOpenEx({}, {}, {})".format(path_c, flags, [name_b]))
-                        ds = ogrext2.GDALOpenEx(path_c,
-                                               flags,
-                                               drvs,
-                                               NULL,
-                                               NULL)
-                        free(drvs)
-                    if ds != NULL:
-                        self.cogr_ds = ds
-                        collection._driver = name
-                        _driver = ogrext2.GDALGetDatasetDriver(ds)
-                        drv_name = ogrext2.GDALGetDriverShortName(_driver)
-                        log.debug("Driver: {} Success".format(drv_name))
-
-                        break
-            else:
-                self.cogr_ds = ogrext2.GDALOpenEx(path_c,
-                                                 ogrext2.GDAL_OF_VECTOR | ogrext2.GDAL_OF_READONLY,
-                                                 NULL,
-                                                 NULL,
-                                                 NULL)
+            flags = ogrext2.GDAL_OF_VECTOR | ogrext2.GDAL_OF_READONLY
+            try:
+                self.cogr_ds = ogrext2.GDALOpenEx(
+                    path_c, flags, drvs, NULL, NULL)
+            finally:
+                ogrext2.CSLDestroy(drvs)
 
         if self.cogr_ds == NULL:
             raise FionaValueError(
