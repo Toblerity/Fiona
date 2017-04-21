@@ -3,6 +3,15 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.7.6 (2017-04-20)
+------------------
+
+Bug fixes:
+
+- Replace every call to `OSRDestroySpatialReference()` with `OSRRelease()`,
+  fixing the GPKG driver crasher reported in #441.
+
+
 1.7.5 (2017-03-20)
 ------------------
 

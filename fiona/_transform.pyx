@@ -9,6 +9,8 @@ cimport _crs
 cimport _csl
 cimport _geometry
 
+from _crs cimport OGRSpatialReferenceH
+
 
 cdef extern from "ogr_geometry.h" nogil:
 
@@ -34,7 +36,7 @@ log.addHandler(NullHandler())
 
 cdef void *_crs_from_crs(object crs):
     cdef char *proj_c = NULL
-    cdef void *osr = NULL
+    cdef OGRSpatialReferenceH osr = NULL
     osr = _crs.OSRNewSpatialReference(NULL)
     if osr == NULL:
         raise ValueError("NULL spatial reference")
@@ -70,8 +72,9 @@ cdef void *_crs_from_crs(object crs):
 def _transform(src_crs, dst_crs, xs, ys):
     cdef double *x, *y
     cdef char *proj_c = NULL
-    cdef void *src, *dst
-    cdef void *transform
+    cdef OGRSpatialReferenceH src = NULL
+    cdef OGRSpatialReferenceH dst = NULL
+    cdef void *transform = NULL
     cdef int i
 
     assert len(xs) == len(ys)
@@ -99,8 +102,8 @@ def _transform(src_crs, dst_crs, xs, ys):
     _cpl.CPLFree(x)
     _cpl.CPLFree(y)
     _crs.OCTDestroyCoordinateTransformation(transform)
-    _crs.OSRDestroySpatialReference(src)
-    _crs.OSRDestroySpatialReference(dst)
+    _crs.OSRRelease(src)
+    _crs.OSRRelease(dst)
     return res_xs, res_ys
 
 
@@ -112,11 +115,12 @@ def _transform_geom(
     cdef char *key_c = NULL
     cdef char *val_c = NULL
     cdef char **options = NULL
-    cdef void *src, *dst
-    cdef void *transform
-    cdef OGRGeometryFactory *factory
-    cdef void *src_ogr_geom
-    cdef void *dst_ogr_geom
+    cdef OGRSpatialReferenceH src = NULL
+    cdef OGRSpatialReferenceH dst = NULL
+    cdef void *transform = NULL
+    cdef OGRGeometryFactory *factory = NULL
+    cdef void *src_ogr_geom = NULL
+    cdef void *dst_ogr_geom = NULL
     cdef int i
 
     if src_crs and dst_crs:
@@ -144,8 +148,8 @@ def _transform_geom(
         _crs.OCTDestroyCoordinateTransformation(transform)
         if options != NULL:
             _csl.CSLDestroy(options)
-        _crs.OSRDestroySpatialReference(src)
-        _crs.OSRDestroySpatialReference(dst)
+        _crs.OSRRelease(src)
+        _crs.OSRRelease(dst)
     else:
         g = geom
     if precision >= 0:
