@@ -3,6 +3,13 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.7.6 (2017-04-20)
+------------------
+
+Bug fixes:
+
+- Fall back to `share/proj` for PROJ_LIB (#440).
+
 1.7.5 (2017-03-20)
 ------------------
 
