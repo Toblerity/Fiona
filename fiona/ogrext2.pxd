@@ -80,25 +80,32 @@ cdef extern from "cpl_vsi.h":
                                      int take_ownership)
     int VSIUnlink (const char * pathname)
 
-ctypedef int OGRErr
-ctypedef struct OGREnvelope:
-    double MinX
-    double MaxX
-    double MinY
-    double MaxY
 
 cdef extern from "ogr_core.h":
+
+    ctypedef int OGRErr
+
+    ctypedef struct OGREnvelope:
+        double MinX
+        double MaxX
+        double MinY
+        double MaxY
+
     char *  OGRGeometryTypeToName(int)
 
+
 cdef extern from "ogr_srs_api.h":
+
+    ctypedef void * OGRSpatialReferenceH
+
     void    OSRCleanup ()
     void *  OSRClone (void *srs)
     void    OSRDestroySpatialReference (void *srs)
     int     OSRExportToProj4 (void *srs, char **params)
     int     OSRExportToWkt (void *srs, char **params)
-    int     OSRImportFromEPSG (void *srs, int code)
-    int     OSRImportFromProj4 (void *srs, char *proj)
-    int     OSRSetFromUserInput (void *srs, char *input)
+    int     OSRImportFromEPSG (OGRSpatialReferenceH, int code)
+    int     OSRImportFromProj4 (void *srs, const char *proj)
+    int     OSRSetFromUserInput (void *srs, const char *input)
     int     OSRAutoIdentifyEPSG (void *srs)
     int     OSRFixup(void *srs)
     const char * OSRGetAuthorityName (void *srs, const char *key)
@@ -110,6 +117,7 @@ cdef extern from "ogr_srs_api.h":
     int     OCTTransform (void *ct, int nCount, double *x, double *y, double *z)
 
 cdef extern from "ogr_api.h":
+
     char *  OGR_Dr_GetName (void *driver)
     void *  OGR_Dr_CreateDataSource (void *driver, const char *path, char **options)
     int     OGR_Dr_DeleteDataSource (void *driver, char *)

@@ -13,6 +13,7 @@ import uuid
 from six import integer_types, string_types, text_type
 
 cimport ogrext2
+from ogrext2 cimport OGREnvelope
 from _geometry cimport (
     GeomBuilder, OGRGeomBuilder, geometry_type_code,
     normalize_geometry_type_code)
@@ -156,7 +157,7 @@ cdef class FeatureBuilder:
         cdef int ss = 0
         cdef int tz = 0
         cdef int retval
-        cdef char *key_c
+        cdef const char *key_c = NULL
         props = OrderedDict()
         for i in range(ogrext2.OGR_F_GetFieldCount(feature)):
             fdefn = ogrext2.OGR_F_GetFieldDefnRef(feature, i)
@@ -239,7 +240,7 @@ cdef class OGRFeatureBuilder:
     
     cdef void * build(self, feature, collection) except NULL:
         cdef void *cogr_geometry = NULL
-        cdef char *string_c
+        cdef const char *string_c = NULL
         cdef WritingSession session
         session = collection.session
         cdef void *cogr_layer = session.cogr_layer
@@ -417,7 +418,7 @@ cdef class Session:
             flags = ogrext2.GDAL_OF_VECTOR | ogrext2.GDAL_OF_READONLY
             try:
                 self.cogr_ds = ogrext2.GDALOpenEx(
-                    path_c, flags, drvs, NULL, NULL)
+                    path_c, flags, <const char *const *>drvs, NULL, NULL)
             finally:
                 ogrext2.CSLDestroy(drvs)
 
@@ -458,7 +459,7 @@ cdef class Session:
 
     def stop(self):
         self.cogr_layer = NULL
-        if self.cogr_ds is not NULL:
+        if self.cogr_ds != NULL:
             ogrext2.GDALClose(self.cogr_ds)
         self.cogr_ds = NULL
 
@@ -483,7 +484,7 @@ cdef class Session:
         cdef void *cogr_driver = ogrext2.GDALGetDatasetDriver(self.cogr_ds)
         if cogr_driver == NULL:
             raise ValueError("Null driver")
-        cdef char *name = ogrext2.OGR_Dr_GetName(cogr_driver)
+        cdef const char *name = ogrext2.OGR_Dr_GetName(cogr_driver)
         driver_name = name
         return driver_name.decode()
  
@@ -492,7 +493,7 @@ cdef class Session:
         cdef int n
         cdef void *cogr_featuredefn
         cdef void *cogr_fielddefn
-        cdef char *key_c
+        cdef const char *key_c
         props = []
         
         if self.cogr_layer == NULL:
@@ -552,8 +553,8 @@ cdef class Session:
 
     def get_crs(self):
         cdef char *proj_c = NULL
-        cdef char *auth_key = NULL
-        cdef char *auth_val = NULL
+        cdef const char *auth_key = NULL
+        cdef const char *auth_val = NULL
         cdef void *cogr_crs = NULL
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
@@ -626,9 +627,11 @@ cdef class Session:
         return crs_wkt
 
     def get_extent(self):
+        cdef OGREnvelope extent
+
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
-        cdef ogrext2.OGREnvelope extent
+
         result = ogrext2.OGR_L_GetExtent(self.cogr_layer, &extent, 1)
         return (extent.MinX, extent.MinY, extent.MaxX, extent.MaxY)
 
@@ -701,18 +704,18 @@ cdef class WritingSession(Session):
     cdef object _schema_mapping
 
     def start(self, collection):
-        cdef void *cogr_fielddefn
-        cdef void *cogr_driver
-        cdef void *cogr_ds
-        cdef void *cogr_layer
+        cdef void *cogr_fielddefn = NULL
+        cdef void *cogr_driver = NULL
+        cdef void *cogr_ds = NULL
+        cdef void *cogr_layer = NULL
         cdef void *cogr_srs = NULL
         cdef char **options = NULL
         self.collection = collection
-        cdef char *path_c
-        cdef char *driver_c
-        cdef char *name_c
-        cdef char *proj_c
-        cdef char *fileencoding_c
+        cdef const char *path_c = NULL
+        cdef const char *driver_c = NULL
+        cdef const char *name_c = NULL
+        cdef const char *proj_c = NULL
+        cdef const char *fileencoding_c = NULL
         path = collection.path
 
         if collection.mode == 'a':
@@ -805,7 +808,7 @@ cdef class WritingSession(Session):
 
                 elif collection.name is None:
                     ogrext2.GDALClose(cogr_ds)
-                    cogr_ds == NULL
+                    cogr_ds = NULL
                     log.debug("Deleted pre-existing data at %s", path)
                     cogr_ds = ogrext2.GDALCreate(
                         cogr_driver,
@@ -877,11 +880,14 @@ cdef class WritingSession(Session):
                 collection.driver == "ESRI Shapefile" and
                 'ISO-8859-1') or sysencoding).upper()
 
+            # The ENCODING option makes no sense for some drivers and
+            # will result in a warning. Fixing is a TODO.
             fileencoding = self.get_fileencoding()
             if fileencoding:
                 fileencoding_b = fileencoding.encode()
                 fileencoding_c = fileencoding_b
-                options = ogrext2.CSLSetNameValue(options, "ENCODING", fileencoding_c)
+                with cpl_errs:
+                    options = ogrext2.CSLSetNameValue(options, "ENCODING", fileencoding_c)
 
             # Does the layer exist already? If so, we delete it.
             layer_count = ogrext2.GDALDatasetGetLayerCount(self.cogr_ds)
@@ -907,21 +913,26 @@ cdef class WritingSession(Session):
             name_b = collection.name.encode('utf-8')
             name_c = name_b
             self.cogr_layer = ogrext2.GDALDatasetCreateLayer(
-                self.cogr_ds, 
+                self.cogr_ds,
                 name_c,
                 cogr_srs,
                 geometry_type_code(
                     collection.schema.get('geometry', 'Unknown')),
                 options)
 
-            if cogr_srs != NULL:
-                ogrext2.OSRDestroySpatialReference(cogr_srs)
             if options != NULL:
                 ogrext2.CSLDestroy(options)
 
+            # XXX: Freeing the srs before closing the dataset causes
+            # sporadic crashes with the GPKG driver, no crashes with
+            # the Shapefile driver.
+            if cogr_srs != NULL:
+                ogrext2.OSRDestroySpatialReference(cogr_srs)
+
             if self.cogr_layer == NULL:
                 raise ValueError("Null layer")
-            log.debug("Created layer")
+
+            log.debug("Created layer %s", collection.name)
             
             # Next, make a layer definition from the given schema properties,
             # which are an ordered dict since Fiona 1.0.1.
@@ -1028,10 +1039,12 @@ cdef class WritingSession(Session):
         cdef void *cogr_layer = self.cogr_layer
         if cogr_ds == NULL:
             raise ValueError("Null data source")
-        log.debug("Syncing OGR to disk")
 
-        ogrext2.GDALFlushCache(cogr_ds)
 
+        with cpl_errs:
+            ogrext2.GDALFlushCache(cogr_ds)
+
+        log.debug("Flushed data source cache")
 
 cdef class Iterator:
 
@@ -1261,8 +1274,8 @@ def _listlayers(path):
     
     cdef void *cogr_ds
     cdef void *cogr_layer
-    cdef char *path_c
-    cdef char *name_c
+    cdef const char *path_c
+    cdef const char *name_c
     
     # Open OGR data source.
     try:
@@ -1290,7 +1303,7 @@ def _listlayers(path):
         layer_names.append(name_b.decode('utf-8'))
     
     # Close up data source.
-    if cogr_ds is not NULL:
+    if cogr_ds != NULL:
         ogrext2.GDALClose(cogr_ds)
     cogr_ds = NULL
 
