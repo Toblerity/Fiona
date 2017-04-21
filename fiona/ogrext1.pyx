@@ -217,7 +217,7 @@ cdef class FeatureBuilder:
                 props[key] = None
 
         cdef void *cogr_geometry = ogrext1.OGR_F_GetGeometryRef(feature)
-        if cogr_geometry is not NULL:
+        if cogr_geometry != NULL:
             geom = GeomBuilder().build(cogr_geometry)
         else:
             geom = None
@@ -334,7 +334,7 @@ cdef class OGRFeatureBuilder:
 
 cdef _deleteOgrFeature(void *cogr_feature):
     """Delete an OGR feature"""
-    if cogr_feature is not NULL:
+    if cogr_feature != NULL:
         ogrext1.OGR_F_Destroy(cogr_feature)
     cogr_feature = NULL
 
@@ -451,7 +451,7 @@ cdef class Session:
 
     def stop(self):
         self.cogr_layer = NULL
-        if self.cogr_ds is not NULL:
+        if self.cogr_ds != NULL:
             ogrext1.OGR_DS_Destroy(self.cogr_ds)
         self.cogr_ds = NULL
 
@@ -552,7 +552,7 @@ cdef class Session:
             raise ValueError("Null layer")
         cogr_crs = ogrext1.OGR_L_GetSpatialRef(self.cogr_layer)
         crs = {}
-        if cogr_crs is not NULL:
+        if cogr_crs != NULL:
             log.debug("Got coordinate system")
 
             retval = ogrext1.OSRAutoIdentifyEPSG(cogr_crs)
@@ -606,7 +606,7 @@ cdef class Session:
             raise ValueError("Null layer")
         cogr_crs = ogrext1.OGR_L_GetSpatialRef(self.cogr_layer)
         crs_wkt = ""
-        if cogr_crs is not NULL:
+        if cogr_crs != NULL:
             log.debug("Got coordinate system")
             ogrext1.OSRExportToWkt(cogr_crs, &proj_c)
             if proj_c == NULL:
@@ -771,9 +771,9 @@ cdef class WritingSession(Session):
 
                 elif collection.name is None:
                     ogrext1.OGR_DS_Destroy(cogr_ds)
-                    cogr_ds == NULL
+                    cogr_ds = NULL
                     log.debug("Deleted pre-existing data at %s", path)
-                    
+
                     cogr_ds = ogrext1.OGR_Dr_CreateDataSource(
                         cogr_driver, path_c, NULL)
 
@@ -874,8 +874,12 @@ cdef class WritingSession(Session):
                     collection.schema.get('geometry', 'Unknown')),
                 options)
 
+            # Shapefile layers make a copy of the passed srs. GPKG
+            # layers, on the other hand, increment its reference
+            # count. OSRRelease() is the safe way to release
+            # OGRSpatialReferenceH.
             if cogr_srs != NULL:
-                ogrext1.OSRDestroySpatialReference(cogr_srs)
+                ogrext1.OSRRelease(cogr_srs)
             if options != NULL:
                 ogrext1.CSLDestroy(options)
 
@@ -1240,7 +1244,7 @@ def _listlayers(path):
         layer_names.append(name_b.decode('utf-8'))
     
     # Close up data source.
-    if cogr_ds is not NULL:
+    if cogr_ds != NULL:
         ogrext1.OGR_DS_Destroy(cogr_ds)
     cogr_ds = NULL
 

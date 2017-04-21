@@ -923,11 +923,12 @@ cdef class WritingSession(Session):
             if options != NULL:
                 ogrext2.CSLDestroy(options)
 
-            # XXX: Freeing the srs before closing the dataset causes
-            # sporadic crashes with the GPKG driver, no crashes with
-            # the Shapefile driver.
+            # Shapefile layers make a copy of the passed srs. GPKG
+            # layers, on the other hand, increment its reference
+            # count. OSRRelease() is the safe way to release
+            # OGRSpatialReferenceH.
             if cogr_srs != NULL:
-                ogrext2.OSRDestroySpatialReference(cogr_srs)
+                ogrext2.OSRRelease(cogr_srs)
 
             if self.cogr_layer == NULL:
                 raise ValueError("Null layer")
