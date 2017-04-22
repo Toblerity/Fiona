@@ -70,7 +70,8 @@ cdef void *_crs_from_crs(object crs):
 
 
 def _transform(src_crs, dst_crs, xs, ys):
-    cdef double *x, *y
+    cdef double *x
+    cdef double *y
     cdef char *proj_c = NULL
     cdef OGRSpatialReferenceH src = NULL
     cdef OGRSpatialReferenceH dst = NULL

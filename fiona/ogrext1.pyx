@@ -66,25 +66,25 @@ FIELD_TYPES_MAP = {
    }
 
 # OGR Driver capability
-ODrCCreateDataSource = b"CreateDataSource"
-ODrCDeleteDataSource = b"DeleteDataSource"
+cdef const char * ODrCCreateDataSource = "CreateDataSource"
+cdef const char * ODrCDeleteDataSource = "DeleteDataSource"
 
 # OGR Layer capability
-OLC_RANDOMREAD = b"RandomRead"
-OLC_SEQUENTIALWRITE = b"SequentialWrite"
-OLC_RANDOMWRITE = b"RandomWrite"
-OLC_FASTSPATIALFILTER = b"FastSpatialFilter"
-OLC_FASTFEATURECOUNT = b"FastFeatureCount"
-OLC_FASTGETEXTENT = b"FastGetExtent"
-OLC_FASTSETNEXTBYINDEX = b"FastSetNextByIndex"
-OLC_CREATEFIELD = b"CreateField"
-OLC_CREATEGEOMFIELD = b"CreateGeomField"
-OLC_DELETEFIELD = b"DeleteField"
-OLC_REORDERFIELDS = b"ReorderFields"
-OLC_ALTERFIELDDEFN = b"AlterFieldDefn"
-OLC_DELETEFEATURE = b"DeleteFeature"
-OLC_STRINGSASUTF8 = b"StringsAsUTF8"
-OLC_TRANSACTIONS = b"Transactions"
+cdef const char * OLC_RANDOMREAD = "RandomRead"
+cdef const char * OLC_SEQUENTIALWRITE = "SequentialWrite"
+cdef const char * OLC_RANDOMWRITE = "RandomWrite"
+cdef const char * OLC_FASTSPATIALFILTER = "FastSpatialFilter"
+cdef const char * OLC_FASTFEATURECOUNT = "FastFeatureCount"
+cdef const char * OLC_FASTGETEXTENT = "FastGetExtent"
+cdef const char * OLC_FASTSETNEXTBYINDEX = "FastSetNextByIndex"
+cdef const char * OLC_CREATEFIELD = "CreateField"
+cdef const char * OLC_CREATEGEOMFIELD = "CreateGeomField"
+cdef const char * OLC_DELETEFIELD = "DeleteField"
+cdef const char * OLC_REORDERFIELDS = "ReorderFields"
+cdef const char * OLC_ALTERFIELDDEFN = "AlterFieldDefn"
+cdef const char * OLC_DELETEFEATURE = "DeleteFeature"
+cdef const char * OLC_STRINGSASUTF8 = "StringsAsUTF8"
+cdef const char * OLC_TRANSACTIONS = "Transactions"
 
 # OGR integer error types.
 

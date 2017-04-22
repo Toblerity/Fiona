@@ -19,7 +19,6 @@ cdef extern from "gdal.h":
     void * GDALDatasetGetLayer(void * hDS, int iLayer)
     void * GDALDatasetGetLayerByName(void * hDS, char * pszName)
     void GDALClose(void * hDS)
-    void * GDALGetDatasetDriver(void * hDataset)
     void * GDALCreate(void * hDriver,
                       const char * pszFilename,
                       int nXSize,
