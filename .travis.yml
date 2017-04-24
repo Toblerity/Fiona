@@ -10,8 +10,6 @@ env:
     - PIP_FIND_LINKS=file://$HOME/.cache/pip/wheels
     - GDALINST=$HOME/gdalinstall
     - GDALBUILD=$HOME/gdalbuild
-    - GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal
-    - PROJ_LIB=/usr/share/proj
   matrix:
     - GDALVERSION="1.9.2"
     - GDALVERSION="1.11.5"
@@ -37,6 +35,8 @@ before_install:
   - . ./scripts/travis_gdal_install.sh
   - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$PATH
   - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$LD_LIBRARY_PATH
+  - export GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal
+  - PROJ_LIB=/usr/share/proj
   - gdal-config --version
 install:
   - "if [ $(gdal-config --version) == \"$GDALVERSION\" ]; then echo \"Using gdal $GDALVERSION\"; else echo \"NOT using gdal $GDALVERSION as expected; aborting\"; exit 1; fi"
