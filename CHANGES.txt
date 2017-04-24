@@ -8,6 +8,7 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Bug fixes:
 
+- Fall back to `share/proj` for PROJ_LIB (#440).
 - Replace every call to `OSRDestroySpatialReference()` with `OSRRelease()`,
   fixing the GPKG driver crasher reported in #441 (#443).
 
