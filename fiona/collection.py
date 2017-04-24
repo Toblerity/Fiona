@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Collections provide file-like access to feature data
 
-
+import logging
 import os
 import warnings
 
@@ -15,6 +15,9 @@ from fiona.errors import DriverError, SchemaError, CRSError
 from fiona._drivers import driver_count, GDALEnv
 from fiona.drvsupport import supported_drivers
 from six import string_types, binary_type
+
+
+log = logging.getLogger(__name__)
 
 
 class Collection(object):
@@ -399,7 +402,9 @@ class Collection(object):
         if self.session is not None:
             if self.mode in ('a', 'w'):
                 self.flush()
+            log.debug("Flushed buffer")
             self.session.stop()
+            log.debug("Stopped session")
             self.session = None
             self.iterator = None
         if self.env:
