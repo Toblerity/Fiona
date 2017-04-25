@@ -16,6 +16,8 @@ cimport ogrext1
 from _geometry cimport (
     GeomBuilder, OGRGeomBuilder, geometry_type_code,
     normalize_geometry_type_code)
+from fiona._err cimport exc_wrap_pointer
+
 from fiona._err import cpl_errs
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
@@ -360,7 +362,7 @@ def featureRT(feature, collection):
 # Collection-related extension classes and functions
 
 cdef class Session:
-    
+
     cdef void *cogr_ds
     cdef void *cogr_layer
     cdef object _fileencoding
@@ -696,8 +698,8 @@ cdef class WritingSession(Session):
     def start(self, collection):
         cdef void *cogr_fielddefn
         cdef void *cogr_driver
-        cdef void *cogr_ds
-        cdef void *cogr_layer
+        cdef void *cogr_ds = NULL
+        cdef void *cogr_layer = NULL
         cdef void *cogr_srs = NULL
         cdef char **options = NULL
         self.collection = collection
@@ -763,11 +765,14 @@ cdef class WritingSession(Session):
                     cogr_driver, path_c, NULL)
 
             else:
-                with cpl_errs:
-                    cogr_ds = ogrext1.OGROpen(path_c, 1, NULL)
+                cogr_ds = ogrext1.OGROpen(path_c, 1, NULL)
                 if cogr_ds == NULL:
-                    cogr_ds = ogrext1.OGR_Dr_CreateDataSource(
-                        cogr_driver, path_c, NULL)
+                    try:
+                        cogr_ds = exc_wrap_pointer(
+                            ogrext1.OGR_Dr_CreateDataSource(
+                                cogr_driver, path_c, NULL))
+                    except Exception as exc:
+                        raise DriverError(str(exc))
 
                 elif collection.name is None:
                     ogrext1.OGR_DS_Destroy(cogr_ds)
@@ -866,21 +871,21 @@ cdef class WritingSession(Session):
             # Create the named layer in the datasource.
             name_b = collection.name.encode('utf-8')
             name_c = name_b
-            self.cogr_layer = ogrext1.OGR_DS_CreateLayer(
-                self.cogr_ds,
-                name_c,
-                cogr_srs,
-                geometry_type_code(
-                    collection.schema.get('geometry', 'Unknown')),
-                options)
+            try:
+                self.cogr_layer = exc_wrap_pointer(
+                    ogrext1.OGR_DS_CreateLayer(
+                        self.cogr_ds, name_c, cogr_srs,
+                        geometry_type_code(
+                            collection.schema.get('geometry', 'Unknown')),
+                        options))
+            except Exception as exc:
+                raise DriverError(str(exc))
+            finally:
+                if cogr_srs != NULL:
+                    ogrext1.OSRDestroySpatialReference(cogr_srs)
+                if options != NULL:
+                    ogrext1.CSLDestroy(options)
 
-            if cogr_srs != NULL:
-                ogrext1.OSRDestroySpatialReference(cogr_srs)
-            if options != NULL:
-                ogrext1.CSLDestroy(options)
-
-            if self.cogr_layer == NULL:
-                raise ValueError("Null layer")
             log.debug("Created layer")
             
             # Next, make a layer definition from the given schema properties,

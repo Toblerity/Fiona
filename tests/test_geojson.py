@@ -10,7 +10,9 @@ import fiona
 from fiona.collection import supported_drivers
 from fiona.errors import FionaValueError, DriverError, SchemaError, CRSError
 
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
+
+log = logging.getLogger(__name__)
 
 
 class ReadingTest(unittest.TestCase):
@@ -46,3 +48,25 @@ class WritingTest(unittest.TestCase):
         with fiona.open(path) as c:
             self.assertEqual(c.schema['geometry'], 'Unknown')
             self.assertEqual(len(c), 2)
+
+    def test_json_overwrite(self):
+        path = os.path.join(self.tempdir, 'foo.json')
+        with fiona.open(path, 'w', 
+                driver='GeoJSON', 
+                schema={'geometry': 'Unknown', 'properties': [('title', 'str')]}) as c:
+            c.writerecords([{
+                'geometry': {'type': 'Point', 'coordinates': [0.0, 0.0]},
+                'properties': {'title': 'One'}}])
+            c.writerecords([{
+                'geometry': {'type': 'MultiPoint', 'coordinates': [[0.0, 0.0]]},
+                'properties': {'title': 'Two'}}])
+
+        log.debug("Here goes nothing!")
+
+        # Overwrite
+        try:
+            with fiona.open(path, 'w', driver='GeoJSON', 
+                    schema={'geometry': 'Unknown', 'properties': [('title', 'str')]}) as c:
+                pass
+        except DriverError:
+            pass

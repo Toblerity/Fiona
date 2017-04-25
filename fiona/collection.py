@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Collections provide file-like access to feature data
 
-
+import logging
 import os
 import warnings
 
@@ -15,6 +15,9 @@ from fiona.errors import DriverError, SchemaError, CRSError
 from fiona._drivers import driver_count, GDALEnv
 from fiona.drvsupport import supported_drivers
 from six import string_types, binary_type
+
+
+log = logging.getLogger(__name__)
 
 
 class Collection(object):
@@ -419,7 +422,10 @@ class Collection(object):
     def __del__(self):
         # Note: you can't count on this being called. Call close() explicitly
         # or use the context manager protocol ("with").
-        self.__exit__(None, None, None)
+        try:
+            self.__exit__(None, None, None)
+        except:
+            log.exception("An exception occurred")
 
 
 def get_filetype(bytesbuf):
