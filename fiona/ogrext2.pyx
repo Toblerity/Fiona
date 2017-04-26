@@ -17,10 +17,13 @@ from ogrext2 cimport OGREnvelope
 from _geometry cimport (
     GeomBuilder, OGRGeomBuilder, geometry_type_code,
     normalize_geometry_type_code)
+from fiona._err cimport exc_wrap_pointer
+
 from fiona._err import cpl_errs
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
-from fiona.errors import DriverError, SchemaError, CRSError, FionaValueError
+from fiona.errors import (
+    DriverError, DriverIOError, SchemaError, CRSError, FionaValueError)
 from fiona.compat import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -30,11 +33,6 @@ from libc.string cimport strcmp
 
 
 log = logging.getLogger("Fiona")
-class NullHandler(logging.Handler):
-    def emit(self, record):
-        pass
-log.addHandler(NullHandler())
-
 
 # Mapping of OGR integer field types to Fiona field type names.
 #
@@ -725,15 +723,10 @@ cdef class WritingSession(Session):
                 except UnicodeDecodeError:
                     path_b = path
                 path_c = path_b
-                with cpl_errs:
-                    self.cogr_ds = ogrext2.GDALOpenEx(path_c,
-                                                 ogrext2.GDAL_OF_VECTOR | ogrext2.GDAL_OF_UPDATE,
-                                                 NULL,
-                                                 NULL,
-                                                 NULL)
-#                     self.cogr_ds = ogrext2.OGROpen(path_c, 1, NULL)
-                if self.cogr_ds == NULL:
-                    raise RuntimeError("Failed to open %s" % path)
+                self.cogr_ds = ogrext2.GDALOpenEx(path_c,
+                        ogrext2.GDAL_OF_VECTOR | ogrext2.GDAL_OF_UPDATE,
+                        NULL, NULL, NULL)
+
                 cogr_driver = ogrext2.GDALGetDatasetDriver(self.cogr_ds)
                 if cogr_driver == NULL:
                     raise ValueError("Null driver")
@@ -766,6 +759,7 @@ cdef class WritingSession(Session):
             except UnicodeDecodeError:
                 path_b = path
             path_c = path_b
+
             driver_b = collection.driver.encode()
             driver_c = driver_b
 
@@ -773,27 +767,32 @@ cdef class WritingSession(Session):
             if cogr_driver == NULL:
                 raise ValueError("Null driver")
 
+            # Our most common use case is the creation of a new data
+            # file and historically we've assumed that it's a file on
+            # the local filesystem and queryable via os.path.
+            #
+            # TODO: remove the assumption.
             if not os.path.exists(path):
-#                 cogr_ds = ogrext2.OGR_Dr_CreateDataSource(
-#                     cogr_driver, path_c, NULL)
-                cogr_ds = ogrext2.GDALCreate(
+                cogr_ds = exc_wrap_pointer(ogrext2.GDALCreate(
                     cogr_driver,
                     path_c,
                     0,
                     0,
                     0,
                     ogrext2.GDT_Unknown,
-                    NULL)
-                pass
+                    NULL))
 
+            # TODO: revisit the logic in the following blocks when we
+            # change the assumption above.
+            # TODO: use exc_wrap_pointer()
             else:
-                with cpl_errs:
-                    cogr_ds = ogrext2.GDALOpenEx(path_c,
-                                     ogrext2.GDAL_OF_VECTOR | ogrext2.GDAL_OF_UPDATE,
-                                     NULL,
-                                     NULL,
-                                     NULL)
-#                     cogr_ds = ogrext2.OGROpen(path_c, 1, NULL)
+                cogr_ds = ogrext2.GDALOpenEx(path_c,
+                                 ogrext2.GDAL_OF_VECTOR | ogrext2.GDAL_OF_UPDATE,
+                                 NULL,
+                                 NULL,
+                                 NULL)
+
+                # TODO: use exc_wrap_pointer()
                 if cogr_ds == NULL:
                     cogr_ds = ogrext2.GDALCreate(
                         cogr_driver,
@@ -803,8 +802,6 @@ cdef class WritingSession(Session):
                         0,
                         ogrext2.GDT_Unknown,
                         NULL)
-#                     cogr_ds = ogrext2.OGR_Dr_CreateDataSource(
-#                         cogr_driver, path_c, NULL)
 
                 elif collection.name is None:
                     ogrext2.GDALClose(cogr_ds)
@@ -818,8 +815,6 @@ cdef class WritingSession(Session):
                         0,
                         ogrext2.GDT_Unknown,
                         NULL)
-#                     cogr_ds = ogrext2.OGR_Dr_CreateDataSource(
-#                         cogr_driver, path_c, NULL)
 
                 else:
                     pass
@@ -912,23 +907,26 @@ cdef class WritingSession(Session):
             # Create the named layer in the datasource.
             name_b = collection.name.encode('utf-8')
             name_c = name_b
-            self.cogr_layer = ogrext2.GDALDatasetCreateLayer(
-                self.cogr_ds,
-                name_c,
-                cogr_srs,
-                geometry_type_code(
-                    collection.schema.get('geometry', 'Unknown')),
-                options)
 
-            if options != NULL:
-                ogrext2.CSLDestroy(options)
+            try:
+                self.cogr_layer = exc_wrap_pointer(
+                    ogrext2.GDALDatasetCreateLayer(
+                        self.cogr_ds, name_c, cogr_srs,
+                        geometry_type_code(
+                            collection.schema.get('geometry', 'Unknown')),
+                        options))
+            except Exception as exc:
+                raise DriverIOError(str(exc))
+            finally:
+                if options != NULL:
+                    ogrext2.CSLDestroy(options)
 
-            # Shapefile layers make a copy of the passed srs. GPKG
-            # layers, on the other hand, increment its reference
-            # count. OSRRelease() is the safe way to release
-            # OGRSpatialReferenceH.
-            if cogr_srs != NULL:
-                ogrext2.OSRRelease(cogr_srs)
+                # Shapefile layers make a copy of the passed srs. GPKG
+                # layers, on the other hand, increment its reference
+                # count. OSRRelease() is the safe way to release
+                # OGRSpatialReferenceH.
+                if cogr_srs != NULL:
+                    ogrext2.OSRRelease(cogr_srs)
 
             if self.cogr_layer == NULL:
                 raise ValueError("Null layer")

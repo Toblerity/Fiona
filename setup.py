@@ -222,11 +222,14 @@ requirements = [
     'cligj',
     'click-plugins',
     'six',
-    'munch'
-]
+    'munch']
+
 if sys.version_info < (2, 7):
     requirements.append('argparse')
     requirements.append('ordereddict')
+
+if sys.version_info < (3, 4):
+    requirements.append('enum34')
 
 setup_args = dict(
     cmdclass={'sdist': sdist_multi_gdal},

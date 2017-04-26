@@ -144,25 +144,24 @@ class Collection(object):
             self.env = GDALEnv()
         self.env.__enter__()
 
-        if self.mode == "r":
-            self._driver = driver
-            self.encoding = encoding
-            self.session = Session()
-            self.session.start(self)
+        self._driver = driver
+        self.encoding = encoding
 
-            # If encoding param is None, we'll use what the session
-            # suggests.
-            self.encoding = encoding or self.session.get_fileencoding().lower()
+        try:
+            if self.mode == 'r':
+                self.session = Session()
+                self.session.start(self)
+            elif self.mode in ('a', 'w'):
+                self.session = WritingSession()
+                self.session.start(self, **kwargs)
+        except IOError:
+            self.session = None
+            raise
 
-        elif self.mode in ("a", "w"):
-            self._driver = driver
-            self.encoding = encoding
-            self.session = WritingSession()
-            self.session.start(self, **kwargs)
-            self.encoding = encoding or self.session.get_fileencoding().lower()
-
-        if self.session:
+        if self.session is not None:
             self.guard_driver_mode()
+            if not self.encoding:
+                self.encoding = self.session.get_fileencoding().lower()
 
     def __repr__(self):
         return "<%s Collection '%s', mode '%s' at %s>" % (
@@ -424,7 +423,7 @@ class Collection(object):
     def __del__(self):
         # Note: you can't count on this being called. Call close() explicitly
         # or use the context manager protocol ("with").
-        self.__exit__(None, None, None)
+        self.close()
 
 
 def get_filetype(bytesbuf):
