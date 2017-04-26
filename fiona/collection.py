@@ -401,7 +401,9 @@ class Collection(object):
         if self.session is not None:
             if self.mode in ('a', 'w'):
                 self.flush()
+            log.debug("Flushed buffer")
             self.session.stop()
+            log.debug("Stopped session")
             self.session = None
             self.iterator = None
         if self.env:

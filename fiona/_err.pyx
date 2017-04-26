@@ -47,21 +47,6 @@ cdef extern from "cpl_error.h":
 
 from enum import IntEnum
 
-# Map GDAL error numbers to Python exceptions.
-#exception_map = {
-#    1: RuntimeError,        # CPLE_AppDefined
-#    2: MemoryError,         # CPLE_OutOfMemory
-#    3: IOError,             # CPLE_FileIO
-#    4: IOError,             # CPLE_OpenFailed
-#    5: TypeError,           # CPLE_IllegalArg
-#    6: ValueError,          # CPLE_NotSupported
-#    7: AssertionError,      # CPLE_AssertionFailed
-#    8: IOError,             # CPLE_NoWriteAccess
-#    9: KeyboardInterrupt,   # CPLE_UserInterrupt
-#    10: ValueError          # ObjectNull
-#    }
-
-
 # Python exceptions expressing the CPL error numbers.
 
 class CPLE_BaseError(Exception):
@@ -197,8 +182,6 @@ cdef class GDALErrCtxManager:
         if err_type >= 2:
             raise exception_map[err_no](msg)
 
-cpl_errs = GDALErrCtxManager()
-
 
 cdef inline object exc_check():
     """Checks GDAL error stack for fatal or non-fatal errors
@@ -244,3 +227,5 @@ cdef void *exc_wrap_pointer(void *ptr) except NULL:
             raise exc
             return NULL
     return ptr
+  
+cpl_errs = GDALErrCtxManager()
