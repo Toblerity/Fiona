@@ -22,7 +22,7 @@ from fiona._err import cpl_errs
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
 from fiona.errors import (
-    DriverError, SchemaError, CRSError, FionaValueError)
+    DriverError, DriverIOError, SchemaError, CRSError, FionaValueError)
 from fiona.compat import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -753,13 +753,21 @@ cdef class WritingSession(Session):
             except UnicodeError:
                 path_b = path
             path_c = path_b
+
             driver_b = collection.driver.encode()
             driver_c = driver_b
 
+            # TODO: use exc_wrap_pointer()
             cogr_driver = ogrext1.OGRGetDriverByName(driver_c)
             if cogr_driver == NULL:
                 raise ValueError("Null driver")
 
+            # Our most common use case is the creation of a new data
+            # file and historically we've assumed that it's a file on
+            # the local filesystem and queryable via os.path.
+            #
+            # TODO: remove the assumption.
+            # TODO: use exc_wrap_pointer().
             if not os.path.exists(path):
                 cogr_ds = ogrext1.OGR_Dr_CreateDataSource(
                     cogr_driver, path_c, NULL)
@@ -772,13 +780,13 @@ cdef class WritingSession(Session):
                             ogrext1.OGR_Dr_CreateDataSource(
                                 cogr_driver, path_c, NULL))
                     except Exception as exc:
-                        raise DriverError(str(exc))
+                        raise DriverIOError(str(exc))
 
                 elif collection.name is None:
                     ogrext1.OGR_DS_Destroy(cogr_ds)
                     cogr_ds == NULL
                     log.debug("Deleted pre-existing data at %s", path)
-                    
+
                     cogr_ds = ogrext1.OGR_Dr_CreateDataSource(
                         cogr_driver, path_c, NULL)
 

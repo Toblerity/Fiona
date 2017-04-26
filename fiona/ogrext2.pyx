@@ -21,7 +21,8 @@ from fiona._err cimport exc_wrap_pointer
 from fiona._err import cpl_errs
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
-from fiona.errors import DriverError, SchemaError, CRSError, FionaValueError
+from fiona.errors import (
+    DriverError, DriverIOError, SchemaError, CRSError, FionaValueError)
 from fiona.compat import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -31,11 +32,6 @@ from libc.string cimport strcmp
 
 
 log = logging.getLogger("Fiona")
-class NullHandler(logging.Handler):
-    def emit(self, record):
-        pass
-log.addHandler(NullHandler())
-
 
 # Mapping of OGR integer field types to Fiona field type names.
 #
@@ -760,6 +756,7 @@ cdef class WritingSession(Session):
             except UnicodeDecodeError:
                 path_b = path
             path_c = path_b
+
             driver_b = collection.driver.encode()
             driver_c = driver_b
 
@@ -767,6 +764,11 @@ cdef class WritingSession(Session):
             if cogr_driver == NULL:
                 raise ValueError("Null driver")
 
+            # Our most common use case is the creation of a new data
+            # file and historically we've assumed that it's a file on
+            # the local filesystem and queryable via os.path.
+            #
+            # TODO: remove the assumption.
             if not os.path.exists(path):
                 cogr_ds = exc_wrap_pointer(ogrext2.GDALCreate(
                     cogr_driver,
@@ -777,6 +779,9 @@ cdef class WritingSession(Session):
                     ogrext2.GDT_Unknown,
                     NULL))
 
+            # TODO: revisit the logic in the following blocks when we
+            # change the assumption above.
+            # TODO: use exc_wrap_pointer()
             else:
                 cogr_ds = ogrext2.GDALOpenEx(path_c,
                                  ogrext2.GDAL_OF_VECTOR | ogrext2.GDAL_OF_UPDATE,
@@ -784,6 +789,7 @@ cdef class WritingSession(Session):
                                  NULL,
                                  NULL)
 
+                # TODO: use exc_wrap_pointer()
                 if cogr_ds == NULL:
                     cogr_ds = ogrext2.GDALCreate(
                         cogr_driver,
@@ -903,7 +909,7 @@ cdef class WritingSession(Session):
                             collection.schema.get('geometry', 'Unknown')),
                         options))
             except Exception as exc:
-                raise DriverError(str(exc))
+                raise DriverIOError(str(exc))
             finally:
                 if cogr_srs != NULL:
                     ogrext2.OSRDestroySpatialReference(cogr_srs)

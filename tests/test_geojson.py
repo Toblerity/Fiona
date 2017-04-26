@@ -10,7 +10,8 @@ import fiona
 from fiona.collection import supported_drivers
 from fiona.errors import FionaValueError, DriverError, SchemaError, CRSError
 
-logging.basicConfig(level=logging.DEBUG)
+
+# logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 log = logging.getLogger(__name__)
 
@@ -51,7 +52,8 @@ class WritingTest(unittest.TestCase):
 
     def test_json_overwrite(self):
         path = os.path.join(self.tempdir, 'foo.json')
-        with fiona.open(path, 'w', 
+
+        with fiona.drivers(), fiona.open(path, 'w', 
                 driver='GeoJSON', 
                 schema={'geometry': 'Unknown', 'properties': [('title', 'str')]}) as c:
             c.writerecords([{
@@ -61,12 +63,10 @@ class WritingTest(unittest.TestCase):
                 'geometry': {'type': 'MultiPoint', 'coordinates': [[0.0, 0.0]]},
                 'properties': {'title': 'Two'}}])
 
-        log.debug("Here goes nothing!")
-
-        # Overwrite
+        # Overwrite should raise DriverIOError.
         try:
-            with fiona.open(path, 'w', driver='GeoJSON', 
+            with fiona.drivers(), fiona.open(path, 'w', driver='GeoJSON', 
                     schema={'geometry': 'Unknown', 'properties': [('title', 'str')]}) as c:
                 pass
-        except DriverError:
+        except IOError:
             pass
