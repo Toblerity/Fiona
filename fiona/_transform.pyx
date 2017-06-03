@@ -2,12 +2,11 @@
 #
 # Coordinate and geometry transformations.
 
+from __future__ import absolute_import
+
 import logging
 
-cimport _cpl
-cimport _crs
-cimport _csl
-cimport _geometry
+from fiona cimport _cpl, _crs, _csl, _geometry
 
 
 cdef extern from "ogr_geometry.h" nogil:
