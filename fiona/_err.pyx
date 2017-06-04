@@ -29,6 +29,8 @@ manager raises a more useful and informative error:
     ValueError: The PNG driver does not support update access to existing datasets.
 """
 
+from __future__ import absolute_import
+
 # CPL function declarations.
 cdef extern from "cpl_error.h":
 

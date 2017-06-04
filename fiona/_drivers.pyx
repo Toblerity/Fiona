@@ -1,6 +1,8 @@
 # The GDAL and OGR driver registry.
 # GDAL driver management.
 
+from __future__ import absolute_import
+
 import os
 import os.path
 import logging
@@ -119,7 +121,7 @@ cdef class GDALEnv(object):
                 os.environ['GDAL_DATA'] = share_datadir
                 log.debug("Set GDAL_DATA = %r", share_datadir)
             else:
-                log.warn("GDAL data files not located, GDAL_DATA not set")
+                log.warning("GDAL data files not located, GDAL_DATA not set")
 
         if 'PROJ_LIB' in os.environ:
             log.debug("PROJ_LIB: %s", os.environ['PROJ_LIB'])
@@ -134,7 +136,7 @@ cdef class GDALEnv(object):
                 os.environ['PROJ_LIB'] = share_datadir
                 log.debug("Set PROJ_LIB = %r", share_datadir)
             else:
-                log.warn("PROJ data files not located, PROJ_LIB not set")
+                log.warning("PROJ data files not located, PROJ_LIB not set")
 
         for key, val in self.options.items():
             key_b = key.upper().encode('utf-8')

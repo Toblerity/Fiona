@@ -3,11 +3,13 @@
 Calls methods from GDAL's OSR module.
 """
 
+from __future__ import absolute_import
+
 import logging
 
 from six import string_types
 
-cimport _cpl
+from fiona cimport _cpl
 from fiona.errors import CRSError
 
 

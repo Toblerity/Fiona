@@ -1,5 +1,6 @@
 # These are extension functions and classes using the OGR C API.
 
+from __future__ import absolute_import
 
 import datetime
 import json
@@ -12,8 +13,8 @@ import uuid
 
 from six import integer_types, string_types, text_type
 
-cimport ogrext1
-from _geometry cimport (
+from fiona cimport ogrext1
+from fiona._geometry cimport (
     GeomBuilder, OGRGeomBuilder, geometry_type_code,
     normalize_geometry_type_code)
 from fiona._err cimport exc_wrap_pointer
