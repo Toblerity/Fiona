@@ -3,6 +3,16 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+Next (2017-)
+------------------
+
+Bug fixes:
+
+- Switch logger `warn()` (deprecated) calls to `warning()`.
+- Replace all relative imports and cimports in Cython modules with absolute
+  imports (#450).
+- Avoid setting `PROJ_LIB` to a non-existent directory (#439).
+
 1.7.6 (2017-04-26)
 ------------------
 
