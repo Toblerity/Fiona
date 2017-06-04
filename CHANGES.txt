@@ -3,6 +3,30 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+Next (2017-)
+------------------
+
+Bug fixes:
+
+- Switch logger `warn()` (deprecated) calls to `warning()`.
+- Replace all relative imports and cimports in Cython modules with absolute
+  imports (#450).
+- Avoid setting `PROJ_LIB` to a non-existent directory (#439).
+
+1.7.6 (2017-04-26)
+------------------
+
+Bug fixes:
+
+- Fall back to `share/proj` for PROJ_LIB (#440).
+- Replace every call to `OSRDestroySpatialReference()` with `OSRRelease()`,
+  fixing the GPKG driver crasher reported in #441 (#443).
+- Add a `DriverIOError` derived from `IOError` to use for driver-specific
+  errors such as the GeoJSON driver's refusal to overwrite existing files.
+  Also we now ensure that when this error is raised by `fiona.open()` any
+  created read or write session is deleted, this eliminates spurious 
+  exceptions on teardown of broken `Collection` objects (#437, #444).
+
 1.7.5 (2017-03-20)
 ------------------
 

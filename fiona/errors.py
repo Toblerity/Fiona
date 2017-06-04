@@ -21,8 +21,13 @@ class DataIOError(IOError):
     """IO errors involving driver registration or availability."""
 
 
+class DriverIOError(IOError):
+    """A format specific driver error."""
+
+
 class FieldNameEncodeError(UnicodeEncodeError):
     """Failure to encode a field name."""
+
 
 class UnsupportedGeometryTypeError(KeyError):
     """When a OGR geometry type isn't supported by Fiona."""

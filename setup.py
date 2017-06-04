@@ -1,6 +1,5 @@
 from distutils.command.sdist import sdist
 from distutils import log
-import logging
 import itertools as it
 import os
 import shutil
@@ -223,17 +222,18 @@ requirements = [
     'cligj',
     'click-plugins',
     'six',
-    'munch'
-]
+    'munch']
+
 if sys.version_info < (2, 7):
     requirements.append('argparse')
     requirements.append('ordereddict')
 
+if sys.version_info < (3, 4):
+    requirements.append('enum34')
 
 extras_require = {
     'calc': ['shapely'],
-    'test': ['pytest>=3', 'pytest-cov']
-}
+    'test': ['pytest>=3', 'pytest-cov']}
 extras_require['all'] = list(set(it.chain(*extras_require.values())))
 
 

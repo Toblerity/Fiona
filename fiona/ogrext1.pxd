@@ -40,21 +40,23 @@ cdef extern from "ogr_core.h":
     char *  OGRGeometryTypeToName(int)
 
 cdef extern from "ogr_srs_api.h":
+
+    ctypedef void * OGRSpatialReferenceH
+
     void    OSRCleanup ()
-    void *  OSRClone (void *srs)
-    void    OSRDestroySpatialReference (void *srs)
-    int     OSRExportToProj4 (void *srs, char **params)
-    int     OSRExportToWkt (void *srs, char **params)
-    int     OSRImportFromEPSG (void *srs, int code)
-    int     OSRImportFromProj4 (void *srs, char *proj)
-    int     OSRSetFromUserInput (void *srs, char *input)
-    int     OSRAutoIdentifyEPSG (void *srs)
-    int     OSRFixup(void *srs)
-    const char * OSRGetAuthorityName (void *srs, const char *key)
-    const char * OSRGetAuthorityCode (void *srs, const char *key)
-    void *  OSRNewSpatialReference (char *wkt)
-    void    OSRRelease (void *srs)
-    void *  OCTNewCoordinateTransformation (void *source, void *dest)
+    OGRSpatialReferenceH  OSRClone (OGRSpatialReferenceH srs)
+    int     OSRExportToProj4 (OGRSpatialReferenceH srs, char **params)
+    int     OSRExportToWkt (OGRSpatialReferenceH srs, char **params)
+    int     OSRImportFromEPSG (OGRSpatialReferenceH, int code)
+    int     OSRImportFromProj4 (OGRSpatialReferenceH srs, const char *proj)
+    int     OSRSetFromUserInput (OGRSpatialReferenceH srs, const char *input)
+    int     OSRAutoIdentifyEPSG (OGRSpatialReferenceH srs)
+    int     OSRFixup(OGRSpatialReferenceH srs)
+    const char * OSRGetAuthorityName (OGRSpatialReferenceH srs, const char *key)
+    const char * OSRGetAuthorityCode (OGRSpatialReferenceH srs, const char *key)
+    OGRSpatialReferenceH  OSRNewSpatialReference (char *wkt)
+    void    OSRRelease (OGRSpatialReferenceH srs)
+    void *  OCTNewCoordinateTransformation (OGRSpatialReferenceH source, OGRSpatialReferenceH dest)
     void    OCTDestroyCoordinateTransformation (void *source)
     int     OCTTransform (void *ct, int nCount, double *x, double *y, double *z)
 

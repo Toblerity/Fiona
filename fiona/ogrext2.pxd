@@ -19,7 +19,6 @@ cdef extern from "gdal.h":
     void * GDALDatasetGetLayer(void * hDS, int iLayer)
     void * GDALDatasetGetLayerByName(void * hDS, char * pszName)
     void GDALClose(void * hDS)
-    void * GDALGetDatasetDriver(void * hDataset)
     void * GDALCreate(void * hDriver,
                       const char * pszFilename,
                       int nXSize,
@@ -80,36 +79,43 @@ cdef extern from "cpl_vsi.h":
                                      int take_ownership)
     int VSIUnlink (const char * pathname)
 
-ctypedef int OGRErr
-ctypedef struct OGREnvelope:
-    double MinX
-    double MaxX
-    double MinY
-    double MaxY
 
 cdef extern from "ogr_core.h":
+
+    ctypedef int OGRErr
+
+    ctypedef struct OGREnvelope:
+        double MinX
+        double MaxX
+        double MinY
+        double MaxY
+
     char *  OGRGeometryTypeToName(int)
 
+
 cdef extern from "ogr_srs_api.h":
+
+    ctypedef void * OGRSpatialReferenceH
+
     void    OSRCleanup ()
-    void *  OSRClone (void *srs)
-    void    OSRDestroySpatialReference (void *srs)
-    int     OSRExportToProj4 (void *srs, char **params)
-    int     OSRExportToWkt (void *srs, char **params)
-    int     OSRImportFromEPSG (void *srs, int code)
-    int     OSRImportFromProj4 (void *srs, char *proj)
-    int     OSRSetFromUserInput (void *srs, char *input)
-    int     OSRAutoIdentifyEPSG (void *srs)
-    int     OSRFixup(void *srs)
-    const char * OSRGetAuthorityName (void *srs, const char *key)
-    const char * OSRGetAuthorityCode (void *srs, const char *key)
-    void *  OSRNewSpatialReference (char *wkt)
-    void    OSRRelease (void *srs)
-    void *  OCTNewCoordinateTransformation (void *source, void *dest)
+    OGRSpatialReferenceH  OSRClone (OGRSpatialReferenceH srs)
+    int     OSRExportToProj4 (OGRSpatialReferenceH srs, char **params)
+    int     OSRExportToWkt (OGRSpatialReferenceH srs, char **params)
+    int     OSRImportFromEPSG (OGRSpatialReferenceH, int code)
+    int     OSRImportFromProj4 (OGRSpatialReferenceH srs, const char *proj)
+    int     OSRSetFromUserInput (OGRSpatialReferenceH srs, const char *input)
+    int     OSRAutoIdentifyEPSG (OGRSpatialReferenceH srs)
+    int     OSRFixup(OGRSpatialReferenceH srs)
+    const char * OSRGetAuthorityName (OGRSpatialReferenceH srs, const char *key)
+    const char * OSRGetAuthorityCode (OGRSpatialReferenceH srs, const char *key)
+    OGRSpatialReferenceH  OSRNewSpatialReference (char *wkt)
+    void    OSRRelease (OGRSpatialReferenceH srs)
+    void *  OCTNewCoordinateTransformation (OGRSpatialReferenceH source, OGRSpatialReferenceH dest)
     void    OCTDestroyCoordinateTransformation (void *source)
     int     OCTTransform (void *ct, int nCount, double *x, double *y, double *z)
 
 cdef extern from "ogr_api.h":
+
     char *  OGR_Dr_GetName (void *driver)
     void *  OGR_Dr_CreateDataSource (void *driver, const char *path, char **options)
     int     OGR_Dr_DeleteDataSource (void *driver, char *)
