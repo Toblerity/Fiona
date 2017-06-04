@@ -31,6 +31,7 @@ python:
   - "3.5"
 before_install:
   - pip install -U pip
+  - pip install setuptools==36.0.1
   - pip install wheel
   - . ./scripts/travis_gdal_install.sh
   - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$PATH
