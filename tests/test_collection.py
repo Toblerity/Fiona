@@ -602,15 +602,6 @@ class GeoJSONCRSWritingTest(unittest.TestCase):
         self.sink.close()
         shutil.rmtree(self.tempdir)
 
-    def test_crs(self):
-        """OGR's GeoJSON driver only deals in WGS84"""
-        self.sink.close()
-        info = subprocess.check_output(
-            [OGRINFO_TOOL, self.filename, "OGRGeoJSON"])
-        self.assertTrue(
-            'GEOGCS["WGS 84' in info.decode('utf-8'),
-            info)
-
 
 class DateTimeTest(unittest.TestCase):
 
