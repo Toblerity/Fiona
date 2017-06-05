@@ -11,7 +11,8 @@ import unittest
 
 import fiona
 from fiona.collection import Collection, supported_drivers
-from fiona.errors import FionaValueError, DriverError, SchemaError, CRSError
+from fiona.errors import FionaValueError, DriverError
+
 
 FIXME_WINDOWS = sys.platform.startswith('win')
 
@@ -594,14 +595,6 @@ class GeoJSONCRSWritingTest(unittest.TestCase):
         self.sink.close()
         shutil.rmtree(self.tempdir)
 
-    def test_crs(self):
-        """OGR's GeoJSON driver only deals in WGS84"""
-        self.sink.close()
-        info = subprocess.check_output(
-            ["ogrinfo", self.filename, "OGRGeoJSON"])
-        self.assertTrue(
-            'GEOGCS["WGS 84' in info.decode('utf-8'),
-            info)
 
 @unittest.skipIf(FIXME_WINDOWS, 
                  reason="FIXME on Windows. Test raises PermissionError.  Please look into why this test isn't working.")
