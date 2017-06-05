@@ -3,8 +3,8 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-Next (2017-06-05)
------------------
+1.7.7 (2017-06-05)
+------------------
 
 Bug fixes:
 
