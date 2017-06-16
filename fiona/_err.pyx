@@ -182,7 +182,7 @@ cdef class GDALErrCtxManager:
         cdef const char *msg = CPLGetLastErrorMsg()
         # TODO: warn for err_type 2?
         if err_type >= 2:
-            raise exception_map[err_no](msg)
+            raise exception_map[err_no](err_type, err_no, msg)
 
 
 cdef inline object exc_check():
