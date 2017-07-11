@@ -73,14 +73,14 @@ source_is_repo = os.path.exists("MANIFEST.in")
 # both `ogrext`.pyx` and `ogrext2.pyx` for GDAL 1.x and 2.x.
 class sdist_multi_gdal(sdist):
     def run(self):
-        shutil.copy('fiona/ogrext1.pyx', 'fiona/ogrext.pyx')
-        _ = check_output(['cython', '-v', '-f', 'fiona/ogrext.pyx',
-                          '-o', 'fiona/ogrext1.c'])
-        print(_)
-        shutil.copy('fiona/ogrext2.pyx', 'fiona/ogrext.pyx')
-        _ = check_output(['cython', '-v', '-f', 'fiona/ogrext.pyx',
-                          '-o', 'fiona/ogrext2.c'])
-        print(_)
+        # shutil.copy('fiona/ogrext1.pyx', 'fiona/ogrext.pyx')
+        # _ = check_output(['cython', '-v', '-f', 'fiona/ogrext.pyx',
+        #                   '-o', 'fiona/ogrext1.c'])
+        # print(_)
+        # shutil.copy('fiona/ogrext2.pyx', 'fiona/ogrext.pyx')
+        # _ = check_output(['cython', '-v', '-f', 'fiona/ogrext.pyx',
+        #                   '-o', 'fiona/ogrext2.c'])
+        # print(_)
         sdist.run(self)
 
 # Building Fiona requires options that can be obtained from GDAL's gdal-config
@@ -168,11 +168,16 @@ if 'clean' not in sys.argv:
             log.info("Copying proj data from %s" % projdatadir)
             copy_data_tree(projdatadir, 'fiona/proj_data')
 
+def calc_gdal_version_num(maj=1, min=0, rev=0):
+    return int(maj * 1000000 + min * 10000 + rev*100)
+GDAL_VERSION_NUM = calc_gdal_version_num(*[int(i) for i in gdalversion.split(".")])
+
 ext_options = dict(
     include_dirs=include_dirs,
     library_dirs=library_dirs,
     libraries=libraries,
-    extra_link_args=extra_link_args)
+    extra_link_args=extra_link_args,
+)
 
 # Define the extension modules.
 ext_modules = []
@@ -185,12 +190,12 @@ if source_is_repo and "clean" not in sys.argv:
                   "Cython is required to build from a repo.")
         sys.exit(1)
 
-    if gdalversion.startswith("1"):
-        log.info("Building Fiona for gdal 1.x: {0}".format(gdalversion))
-        shutil.copy('fiona/ogrext1.pyx', 'fiona/ogrext.pyx')
-    else:
-        log.info("Building Fiona for gdal 2.x: {0}".format(gdalversion))
-        shutil.copy('fiona/ogrext2.pyx', 'fiona/ogrext.pyx')
+    # if gdalversion.startswith("1"):
+    #     log.info("Building Fiona for gdal 1.x: {0}".format(gdalversion))
+    #     shutil.copy('fiona/ogrext2.pyx', 'fiona/ogrext.pyx')
+    # else:
+    #     log.info("Building Fiona for gdal 2.x: {0}".format(gdalversion))
+    #     shutil.copy('fiona/ogrext2.pyx', 'fiona/ogrext.pyx')
 
     ext_modules = cythonize([
         Extension('fiona._geometry', ['fiona/_geometry.pyx'], **ext_options),
@@ -198,7 +203,8 @@ if source_is_repo and "clean" not in sys.argv:
         Extension('fiona._crs', ['fiona/_crs.pyx'], **ext_options),
         Extension('fiona._drivers', ['fiona/_drivers.pyx'], **ext_options),
         Extension('fiona._err', ['fiona/_err.pyx'], **ext_options),
-        Extension('fiona.ogrext', ['fiona/ogrext.pyx'], **ext_options)])
+        Extension('fiona.ogrext', ['fiona/ogrext.pyx'], **ext_options)],
+        compile_time_env={"GDAL_VERSION_NUM": GDAL_VERSION_NUM},)
 
 # If there's no manifest template, as in an sdist, we just specify .c files.
 elif "clean" not in sys.argv:
@@ -209,14 +215,14 @@ elif "clean" not in sys.argv:
         Extension('fiona._drivers', ['fiona/_drivers.c'], **ext_options),
         Extension('fiona._err', ['fiona/_err.c'], **ext_options)]
 
-    if gdalversion.startswith("1"):
-        log.info("Building Fiona for gdal 1.x: {0}".format(gdalversion))
-        ext_modules.append(
-            Extension('fiona.ogrext', ['fiona/ogrext1.c'], **ext_options))
-    else:
-        log.info("Building Fiona for gdal 2.x: {0}".format(gdalversion))
-        ext_modules.append(
-            Extension('fiona.ogrext', ['fiona/ogrext2.c'], **ext_options))
+    # if gdalversion.startswith("1"):
+    #     log.info("Building Fiona for gdal 1.x: {0}".format(gdalversion))
+    #     ext_modules.append(
+    #         Extension('fiona.ogrext', ['fiona/ogrext1.c'], **ext_options))
+    # else:
+    #     log.info("Building Fiona for gdal 2.x: {0}".format(gdalversion))
+    #     ext_modules.append(
+    #         Extension('fiona.ogrext', ['fiona/ogrext2.c'], **ext_options))
 
 requirements = [
     'cligj',

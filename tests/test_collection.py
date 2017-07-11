@@ -368,8 +368,8 @@ class PointWritingTest(unittest.TestCase):
     def test_cpg(self):
         """Requires GDAL 1.9"""
         self.sink.close()
-        self.assertTrue(open(os.path.join(
-            self.tempdir, "point_writing_test.cpg")).readline() == 'UTF-8')
+        with open(os.path.join(self.tempdir, "point_writing_test.cpg")) as f:
+            self.assertTrue(f.readline() == 'UTF-8')
 
     def test_write_one(self):
         self.assertEqual(len(self.sink), 0)
@@ -602,6 +602,14 @@ class GeoJSONCRSWritingTest(unittest.TestCase):
         self.sink.close()
         shutil.rmtree(self.tempdir)
 
+    def test_crs(self):
+        """OGR's GeoJSON driver only deals in WGS84"""
+        self.sink.close()
+        info = subprocess.check_output(
+            [OGRINFO_TOOL, self.filename, "-al"])
+        self.assertTrue(
+            'GEOGCS["WGS 84' in info.decode('utf-8'),
+            info)
 
 class DateTimeTest(unittest.TestCase):
 
