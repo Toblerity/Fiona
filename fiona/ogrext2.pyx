@@ -35,6 +35,10 @@ from cpython cimport PyBytes_FromStringAndSize, PyBytes_AsString
 
 
 log = logging.getLogger("Fiona")
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+log.addHandler(NullHandler())
 
 # Mapping of OGR integer field types to Fiona field type names.
 #
@@ -136,6 +140,12 @@ def get_gdal_release_name():
     """Return release name of gdal"""
     return ogrext2.GDALVersionInfo("RELEASE_NAME")
 
+# check compiled version against runtime version
+# only compare the major and minor version number
+GDAL_RUNTIME_VERSION = get_gdal_version_num()
+if GDAL_VERSION_NUM // 1000 != GDAL_RUNTIME_VERSION // 1000:
+    log.warning("Fiona was compiled against GDAL {} but run with GDAL {}".format(GDAL_VERSION_NUM, GDAL_RUNTIME_VERSION))
+
 
 # Feature extension classes and functions follow.
 
@@ -161,6 +171,7 @@ cdef class FeatureBuilder:
         cdef int l
         cdef int retval
         cdef const char *key_c = NULL
+        cdef bint is_null
         props = OrderedDict()
         for i in range(ogrext2.OGR_F_GetFieldCount(feature)):
             fdefn = ogrext2.OGR_F_GetFieldDefnRef(feature, i)
@@ -181,8 +192,16 @@ cdef class FeatureBuilder:
 
             # TODO: other types
             fieldtype = FIELD_TYPES_MAP[fieldtypename]
+
+            is_null = False
+            IF GDAL_VERSION_NUM >= 2020000:
+                if ogrext2.OGR_F_IsFieldNull(feature, i):
+                    is_null = True
             if not ogrext2.OGR_F_IsFieldSet(feature, i):
+                is_null =True
+            if is_null:
                 props[key] = None
+
             elif fieldtype is int:
                 props[key] = ogrext2.OGR_F_GetFieldAsInteger64(feature, i)
             elif fieldtype is float:

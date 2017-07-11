@@ -49,9 +49,6 @@ class ReadingTest(unittest.TestCase):
         self.c.close()
         self.assertTrue(self.c.bytesbuf is None)
 
-    def test_name(self):
-        self.assertTrue(len(self.c.name) > 0)
-
     def test_mode(self):
         self.assertEqual(self.c.mode, 'r')
 
