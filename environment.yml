@@ -1,7 +1,7 @@
 name: fiona
 channels:
-- conda-forge
 - defaults
+- conda-forge
 dependencies:
 - python>=3.5
 - libgdal
