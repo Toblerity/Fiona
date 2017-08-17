@@ -362,8 +362,8 @@ class PointWritingTest(unittest.TestCase):
     def test_cpg(self):
         """Requires GDAL 1.9"""
         self.sink.close()
-        self.assertTrue(open(os.path.join(
-            self.tempdir, "point_writing_test.cpg")).readline() == 'UTF-8')
+        with open(os.path.join(self.tempdir, "point_writing_test.cpg")) as f:
+            self.assertTrue(f.readline() == 'UTF-8')
 
     def test_write_one(self):
         self.assertEqual(len(self.sink), 0)

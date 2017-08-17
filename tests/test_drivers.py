@@ -30,7 +30,8 @@ def test_options(tmpdir=None):
     with fiona.drivers(CPL_DEBUG=True):
         c = fiona.open("tests/data/coutwildrnp.shp")
         c.close()
-        log = open(logfile).read()
+        with open(logfile) as f:
+            log = f.read()
         assert "Option CPL_DEBUG" in log
 
     if tempdir and tmpdir is None:

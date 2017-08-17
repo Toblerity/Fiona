@@ -69,8 +69,11 @@ fiona/_drivers.c
 fiona/_err.c
 fiona/_geometry.c
 fiona/_transform.cpp
+fiona/_shim1.c
+fiona/_shim2.c
+fiona/_shim22.c
+fiona/_shim.pxd
 fiona/ograpi.pxd
-fiona/ogrext.pyx
 tests/data/coutwildrnp.json
 tests/data/coutwildrnp.tar
 tests/data/coutwildrnp.zip
