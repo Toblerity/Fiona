@@ -10,6 +10,8 @@ Bug fixes:
 
 - Acquire the GIL for GDAL error callback functions to prevent crashes when
   GDAL errors occur when the GIL has been released by user code.
+- Always sync and flush layers when closing whether or not we precisely know
+  the number of features (#467).
 
 1.7.8 (2017-06-20)
 ------------------
