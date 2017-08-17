@@ -3,6 +3,14 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+Next
+----
+
+Bug fixes:
+
+- Acquire the GIL for GDAL error callback functions to prevent crashes when
+  GDAL errors occur when the GIL has been released by user code.
+
 1.7.8 (2017-06-20)
 ------------------
 

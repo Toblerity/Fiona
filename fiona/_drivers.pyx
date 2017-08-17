@@ -71,10 +71,10 @@ code_map = {
 
 
 IF UNAME_SYSNAME == "Windows":
-    cdef void * __stdcall errorHandler(int eErrClass, int err_no, char *msg):
+    cdef void * __stdcall errorHandler(int eErrClass, int err_no, char *msg) with gil:
         log.log(level_map[eErrClass], "%s in %s", code_map[err_no], msg)
 ELSE:
-    cdef void * errorHandler(int eErrClass, int err_no, char *msg):
+    cdef void * errorHandler(int eErrClass, int err_no, char *msg) with gil:
         log.log(level_map[eErrClass], "%s in %s", code_map[err_no], msg)
 
 
