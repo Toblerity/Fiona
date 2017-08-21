@@ -3,6 +3,12 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.7.9.post1 (2017-08-21)
+------------------------
+
+This release introduces no changes in the Fiona package. It upgrades GDAL
+from 2.2.0 to 2.2.1 in wheels that we publish to the Python Package Index.
+
 1.7.9 (2017-08-17)
 ------------------
 
