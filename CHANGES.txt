@@ -3,6 +3,14 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.7.10 (2017-10-23)
+-------------------
+
+Bug fixes:
+
+- An extraneous printed line from the ``rio cat --layers`` validator has been
+  removed (#478).
+
 1.7.9 (2017-08-17)
 ------------------
 
