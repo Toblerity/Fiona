@@ -33,9 +33,11 @@ warnings.simplefilter('default')
 @cligj.use_rs_opt
 @click.option('--bbox', default=None, metavar="w,s,e,n",
               help="filter for features intersecting a bounding box")
+@click.option('--head', default=None, type=click.INT,
+              help="limit each input to given amount of features")
 @click.pass_context
 def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
-        use_rs, bbox, layer):
+        use_rs, bbox, layer, head):
 
     """
     Concatenate and print the features of input datasets as a sequence of
@@ -73,7 +75,7 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
                                 bbox = tuple(map(float, bbox.split(',')))
                             except ValueError:
                                 bbox = json.loads(bbox)
-                        for i, feat in src.items(bbox=bbox):
+                        for i, feat in src.items(head, bbox=bbox):
                             if dst_crs or precision >= 0:
                                 g = transform_geom(
                                     src.crs, dst_crs, feat['geometry'],

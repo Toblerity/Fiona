@@ -77,3 +77,10 @@ def test_vfs(path_coutwildrnp_zip):
         'zip://{}'.format(path_coutwildrnp_zip)])
     assert result.exit_code == 0
     assert result.output.count('"Feature"') == 67
+
+
+def test_head():
+    runner = CliRunner()
+    result = runner.invoke(cat.cat, [WILDSHP, '--head', '10'])
+    assert result.exit_code == 0
+    assert result.output.count('"Feature"') == 10
