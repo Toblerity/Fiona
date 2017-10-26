@@ -5,7 +5,6 @@ GDALOPTS="  --with-ogr \
             --with-geos \
             --with-expat \
             --without-libtool \
-            --with-libz=internal \
             --with-libtiff=internal \
             --with-geotiff=internal \
             --without-gif \

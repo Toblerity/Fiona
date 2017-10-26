@@ -17,9 +17,9 @@ from fiona.errors import FionaValueError, DriverError
 
 
 OGRINFO_TOOL = "ogrinfo"
-if sys.platform.startswith('win'):
-    # Set extra path if in windows
-    OGRINFO_TOOL = 'gdal\\apps\\' + OGRINFO_TOOL
+# if sys.platform.startswith('win'):
+#     # Set extra path if in windows
+#     OGRINFO_TOOL = 'gdal\\apps\\' + OGRINFO_TOOL
 
 
 WILDSHP = os.path.join('tests', 'data','coutwildrnp.shp')
