@@ -11,6 +11,12 @@ import pytest
 
 import fiona
 
+def pytest_report_header(config):
+    headers = []
+    gdal_release_name = fiona.get_gdal_release_name().decode("utf-8")
+    headers.append('GDAL: {}'.format(gdal_release_name))
+    return '\n'.join(headers)
+
 
 _COUTWILDRNP_FILES = [
     'coutwildrnp.shp', 'coutwildrnp.shx', 'coutwildrnp.dbf', 'coutwildrnp.prj']
