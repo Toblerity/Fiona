@@ -40,5 +40,5 @@ def validate_multilayer_file_index(files, layerdict):
     """
     for key in layerdict.keys():
         if key not in [str(k) for k in range(1, len(files) + 1)]:
-            layer = key+":"+layerdict[key][0]
+            layer = key + ":" + layerdict[key][0]
             raise click.BadParameter("Layer {} does not exist".format(layer))

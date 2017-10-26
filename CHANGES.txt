@@ -3,6 +3,25 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.7.10 (2017-10-26)
+-------------------
+
+Bug fixes:
+
+- An extraneous printed line from the ``rio cat --layers`` validator has been
+  removed (#478).
+
+Packaging:
+
+- Official OS X and Manylinux1 wheels (on PyPI) for this release will be
+  compatible with Shapely 1.6.2 and Rasterio 1.0a10 wheels.
+
+1.7.9.post1 (2017-08-21)
+------------------------
+
+This release introduces no changes in the Fiona package. It upgrades GDAL
+from 2.2.0 to 2.2.1 in wheels that we publish to the Python Package Index.
+
 1.7.9 (2017-08-17)
 ------------------
 
