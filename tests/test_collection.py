@@ -279,6 +279,35 @@ class ReadingTest(unittest.TestCase):
         self.assertTrue(0 in self.c)
 
 
+class IgnoreFieldsTest(unittest.TestCase):
+
+    def test_without_ignore(self):
+        collection = fiona.open(WILDSHP, "r")
+        assert("AREA" in collection.schema["properties"].keys())
+        feature = next(collection)
+        assert(feature["properties"]["AREA"] is not None)
+        assert(feature["properties"]["STATE"] is not None)
+        assert(feature["properties"]["NAME"] is not None)
+
+    def test_ignore_fields(self):
+        collection = fiona.open(WILDSHP, "r", ignore_fields=["AREA", "STATE"])
+        assert("AREA" in collection.schema["properties"].keys())
+        feature = next(collection)
+        assert(feature["properties"]["AREA"] is None)
+        assert(feature["properties"]["STATE"] is None)
+        assert(feature["properties"]["NAME"] is not None)
+
+    def test_ignore_invalid_field_missing(self):
+        collection = fiona.open(WILDSHP, "r", ignore_fields=["DOES_NOT_EXIST"])
+
+    def test_ignore_invalid_field_not_string(self):
+        self.assertRaises(
+            AttributeError,
+            fiona.open,
+            {"path": WILDSHP, "mode": "r", "ignore_fields": [42]}
+        )
+
+
 class FilterReadingTest(unittest.TestCase):
 
     def setUp(self):

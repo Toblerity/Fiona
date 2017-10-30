@@ -31,7 +31,8 @@ class Collection(object):
 
     def __init__(self, path, mode='r', driver=None, schema=None, crs=None,
                  encoding=None, layer=None, vsi=None, archive=None,
-                 enabled_drivers=None, crs_wkt=None, **kwargs):
+                 enabled_drivers=None, crs_wkt=None, ignore_fields=None,
+                 **kwargs):
 
         """The required ``path`` is the absolute or relative path to
         a file, such as '/data/test_uk.shp'. In ``mode`` 'r', data can
@@ -87,6 +88,7 @@ class Collection(object):
         self._crs_wkt = None
         self.env = None
         self.enabled_drivers = enabled_drivers
+        self.ignore_fields = ignore_fields
 
         self.path = vfs.vsi_path(path, vsi, archive)
 

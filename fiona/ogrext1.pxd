@@ -149,4 +149,5 @@ cdef extern from "ogr_api.h":
     void *  OGROpen (char *path, int mode, void *x)
     void *  OGROpenShared (char *path, int mode, void *x)
     int     OGRReleaseDataSource (void *datasource)
+    OGRErr  OGR_L_SetIgnoredFields (void *layer, const char **papszFields
     OGRErr  OGR_L_SetNextByIndex (void *layer, long nIndex)

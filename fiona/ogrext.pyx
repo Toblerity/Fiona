@@ -405,7 +405,7 @@ cdef class Session:
         cdef const char *name_c = NULL
         cdef void *drv = NULL
         cdef void *ds = NULL
-        cdef char **drvs = NULL
+        cdef char **ignore_fields = NULL
 
         if collection.path == '-':
             path = '/vsistdin/'
@@ -464,6 +464,17 @@ cdef class Session:
             'ISO-8859-1') or locale.getpreferredencoding().upper()
 
         self.collection = collection
+
+        if self.collection.ignore_fields:
+            ignore_fields = <char **>malloc((len(self.collection.ignore_fields)+1) * sizeof(char **))
+            ignore_fields_bytes = []
+            for n in range(len(self.collection.ignore_fields)):
+                ignore_fields_bytes.append(self.collection.ignore_fields[n].encode("utf-8"))
+                ignore_fields[n] = ignore_fields_bytes[n]
+            ignore_fields[n+1] = NULL  # array must be NULL-terminated
+            OGR_L_SetIgnoredFields(self.cogr_layer, ignore_fields)
+            free(ignore_fields)
+            del(ignore_fields_bytes)
 
     def stop(self):
         self.cogr_layer = NULL
