@@ -92,7 +92,7 @@ class Collection(object):
 
         if mode == 'w':
             if layer and not isinstance(layer, string_types):
-                raise ValueError("in 'r' mode, layer names must be strings")
+                raise ValueError("in 'w' mode, layer names must be strings")
             if driver == 'GeoJSON':
                 if layer is not None:
                     raise ValueError("the GeoJSON format does not have layers")
