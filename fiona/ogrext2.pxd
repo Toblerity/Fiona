@@ -2,6 +2,19 @@
 # All rights reserved.
 # See ../LICENSE.txt
 
+cdef extern from "ogr_core.h":
+
+    ctypedef int OGRErr
+
+    ctypedef struct OGREnvelope:
+        double MinX
+        double MaxX
+        double MinY
+        double MaxY
+
+    char *  OGRGeometryTypeToName(int)
+
+
 cdef extern from "gdal.h":
     char * GDALVersionInfo (char *pszRequest)
     void * GDALGetDriverByName(const char * pszName)
@@ -36,6 +49,9 @@ cdef extern from "gdal.h":
     char * GDALGetDriverShortName(void * hDriver)
     char * GDALGetDatasetDriver (void * hDataset)
     int GDALDeleteDataset(void * hDriver, const char * pszFilename)
+    OGRErr GDALDatasetStartTransaction (void * hDataset, int bForce)
+    OGRErr GDALDatasetCommitTransaction (void * hDataset)
+    OGRErr GDALDatasetRollbackTransaction (void * hDataset)
 
 
     ctypedef enum GDALDataType:
@@ -78,19 +94,6 @@ cdef extern from "cpl_vsi.h":
                                      int data_len,
                                      int take_ownership)
     int VSIUnlink (const char * pathname)
-
-
-cdef extern from "ogr_core.h":
-
-    ctypedef int OGRErr
-
-    ctypedef struct OGREnvelope:
-        double MinX
-        double MaxX
-        double MinY
-        double MaxY
-
-    char *  OGRGeometryTypeToName(int)
 
 
 cdef extern from "ogr_srs_api.h":

@@ -971,6 +971,7 @@ cdef class WritingSession(Session):
         """Writes buffered records to OGR."""
         cdef void *cogr_driver
         cdef void *cogr_feature
+        cdef int features_in_transaction = 0
 
         cdef void *cogr_layer = self.cogr_layer
         if cogr_layer == NULL:
@@ -995,6 +996,10 @@ cdef class WritingSession(Session):
                 return rec['geometry'] is None or \
                        rec['geometry']['type'].lstrip("3D ") == schema_geom_type
 
+        result = gdal_start_transaction(self.cogr_ds, 0)
+        if result == OGRERR_FAILURE:
+            raise RuntimeError("Failed to start transaction")
+
         schema_props_keys = set(collection.schema['properties'].keys())
         for record in records:
             log.debug("Creating feature in layer: %s" % record)
@@ -1016,6 +1021,20 @@ cdef class WritingSession(Session):
             if result != OGRERR_NONE:
                 raise RuntimeError("Failed to write record: %s" % record)
             _deleteOgrFeature(cogr_feature)
+
+            features_in_transaction += 1
+            if features_in_transaction == 20000:  # TODO: this shouldn't be hard-coded
+                result = gdal_commit_transaction(self.cogr_ds)
+                if result == OGRERR_FAILURE:
+                    raise RuntimeError("Failed to commit transaction")
+                result = gdal_start_transaction(self.cogr_ds, 0)
+                if result == OGRERR_FAILURE:
+                    raise RuntimeError("Failed to start transaction")
+                features_in_transaction = 0
+
+        result = gdal_commit_transaction(self.cogr_ds)
+        if result == OGRERR_FAILURE:
+            raise RuntimeError("Failed to commit transaction")
 
     def sync(self, collection):
         """Syncs OGR to disk."""
