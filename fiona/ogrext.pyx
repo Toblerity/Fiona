@@ -24,7 +24,8 @@ from fiona._err import cpl_errs
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
 from fiona.errors import (
-    DriverError, DriverIOError, SchemaError, CRSError, FionaValueError)
+    DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
+    TransactionError)
 from fiona.compat import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -70,6 +71,8 @@ FIELD_TYPES_MAP = {
     'datetime': FionaDateTimeType,
     'bytes':    bytes,
    }
+
+DEFAULT_TRANSACTION_SIZE = 20000
 
 # OGR Driver capability
 cdef const char * ODrCCreateDataSource = "CreateDataSource"
@@ -996,9 +999,10 @@ cdef class WritingSession(Session):
                 return rec['geometry'] is None or \
                        rec['geometry']['type'].lstrip("3D ") == schema_geom_type
 
+        log.debug("Starting transaction (initial)")
         result = gdal_start_transaction(self.cogr_ds, 0)
         if result == OGRERR_FAILURE:
-            raise RuntimeError("Failed to start transaction")
+            raise TransactionError("Failed to start transaction")
 
         schema_props_keys = set(collection.schema['properties'].keys())
         for record in records:
@@ -1023,18 +1027,21 @@ cdef class WritingSession(Session):
             _deleteOgrFeature(cogr_feature)
 
             features_in_transaction += 1
-            if features_in_transaction == 20000:  # TODO: this shouldn't be hard-coded
+            if features_in_transaction == DEFAULT_TRANSACTION_SIZE:
+                log.debug("Comitting transaction (intermediate)")
                 result = gdal_commit_transaction(self.cogr_ds)
                 if result == OGRERR_FAILURE:
-                    raise RuntimeError("Failed to commit transaction")
+                    raise TransactionError("Failed to commit transaction")
+                log.debug("Starting transaction (intermediate)")
                 result = gdal_start_transaction(self.cogr_ds, 0)
                 if result == OGRERR_FAILURE:
-                    raise RuntimeError("Failed to start transaction")
+                    raise TransactionError("Failed to start transaction")
                 features_in_transaction = 0
 
+        log.debug("Comitting transaction (final)")
         result = gdal_commit_transaction(self.cogr_ds)
         if result == OGRERR_FAILURE:
-            raise RuntimeError("Failed to commit transaction")
+            raise TransactionError("Failed to commit transaction")
 
     def sync(self, collection):
         """Syncs OGR to disk."""
