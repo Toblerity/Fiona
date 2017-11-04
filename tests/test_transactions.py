@@ -1,9 +1,13 @@
+import os
 import fiona
 import fiona.ogrext
 import logging
 from random import uniform, randint
 from collections import defaultdict
 import pytest
+
+has_gpkg = "GPKG" in fiona.supported_drivers.keys()
+has_gdal2 = fiona.ogrext.get_gdal_version_num() >= 2000000
 
 def create_records(count):
     for n in range(count):
@@ -12,11 +16,6 @@ def create_records(count):
             "properties": {"value": randint(0, 1000)}
         }
         yield record
-
-schema = {
-    "geometry": "Point",
-    "properties": {"value": "int"}
-}
 
 class DebugHandler(logging.Handler):
     def __init__(self, pattern):
@@ -30,6 +29,7 @@ class DebugHandler(logging.Handler):
 
 log = logging.getLogger("Fiona")
 
+@pytest.mark.skipif(not (has_gpkg & has_gdal2), reason="Requires geopackage and GDAL 2.x")
 class TestTransaction:
     def setup_method(self):
         self.handler = DebugHandler(pattern="transaction")
@@ -43,7 +43,9 @@ class TestTransaction:
     def test_transaction(self, tmpdir):
         """
         Test transaction start/commit is called the expected number of times,
-        and that the default transaction size can be overloaded.
+        and that the default transaction size can be overloaded. The test uses
+        a custom logging handler to listen for the debug messages produced
+        when the transaction is started/comitted.
         """
         num_records = 250
         transaction_size = 100
@@ -55,6 +57,11 @@ class TestTransaction:
         path = str(tmpdir.join("output.gpkg"))
 
         feature = next(create_records(1))
+
+        schema = {
+            "geometry": "Point",
+            "properties": {"value": "int"}
+        }
 
         with fiona.open(path, "w", driver="GPKG", schema=schema) as dst:
             dst.writerecords(create_records(num_records))
