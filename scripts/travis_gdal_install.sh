@@ -53,19 +53,15 @@ fi
 
 ls -l $GDALINST
 
-if [ "$GDALVERSION" = "1.9.2" -a ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
-  cd $GDALBUILD
-  wget http://download.osgeo.org/gdal/gdal-$GDALVERSION.tar.gz
-  tar -xzf gdal-$GDALVERSION.tar.gz
-  cd gdal-$GDALVERSION
+if [ "$GDALVERSION" = "trunk" ]; then
+  # always rebuild trunk
+  svn checkout https://svn.osgeo.org/gdal/trunk/gdal $GDALBUILD/trunk
+  cd $GDALBUILD/trunk
   ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS
   make -s -j 2
   make install
-fi
-
-
-# download and compile gdal version
-if [ "$GDALVERSION" != "1.9.2" -a ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
+elif [ ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
+  # only build if not already installed
   cd $GDALBUILD
   wget http://download.osgeo.org/gdal/$GDALVERSION/gdal-$GDALVERSION.tar.gz
   tar -xzf gdal-$GDALVERSION.tar.gz
