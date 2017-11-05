@@ -7,7 +7,6 @@ from collections import defaultdict
 import pytest
 
 has_gpkg = "GPKG" in fiona.supported_drivers.keys()
-has_gdal2 = fiona.ogrext.get_gdal_version_num() >= 2000000
 
 def create_records(count):
     for n in range(count):
@@ -29,7 +28,7 @@ class DebugHandler(logging.Handler):
 
 log = logging.getLogger("Fiona")
 
-@pytest.mark.skipif(not (has_gpkg & has_gdal2), reason="Requires geopackage and GDAL 2.x")
+@pytest.mark.skipif(not has_gpkg, reason="Requires geopackage driver")
 class TestTransaction:
     def setup_method(self):
         self.handler = DebugHandler(pattern="transaction")
