@@ -5,6 +5,7 @@ import json
 import os.path
 import tarfile
 import zipfile
+import copy
 
 from click.testing import CliRunner
 import pytest
