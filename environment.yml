@@ -1,0 +1,8 @@
+name: _fiona
+channels:
+- defaults
+- conda-forge
+dependencies:
+- python>=3.5
+- cython
+- libgdal
