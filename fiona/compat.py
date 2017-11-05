@@ -1,6 +1,12 @@
 import sys
 import collections
 
+from six.moves import UserDict
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
+
 if sys.version_info[0] >= 3:
     from urllib.parse import urlparse
     from collections import UserDict, OrderedDict

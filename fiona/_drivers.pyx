@@ -1,6 +1,8 @@
 # The GDAL and OGR driver registry.
 # GDAL driver management.
 
+from __future__ import absolute_import
+
 import os
 import os.path
 import logging
@@ -69,10 +71,10 @@ code_map = {
 
 
 IF UNAME_SYSNAME == "Windows":
-    cdef void * __stdcall errorHandler(int eErrClass, int err_no, char *msg):
+    cdef void * __stdcall errorHandler(int eErrClass, int err_no, char *msg) with gil:
         log.log(level_map[eErrClass], "%s in %s", code_map[err_no], msg)
 ELSE:
-    cdef void * errorHandler(int eErrClass, int err_no, char *msg):
+    cdef void * errorHandler(int eErrClass, int err_no, char *msg) with gil:
         log.log(level_map[eErrClass], "%s in %s", code_map[err_no], msg)
 
 
@@ -106,18 +108,35 @@ cdef class GDALEnv(object):
         if OGRGetDriverCount() == 0:
             raise ValueError("Drivers not registered")
 
-        if 'GDAL_DATA' not in os.environ:
+        if 'GDAL_DATA' in os.environ:
+            log.debug("GDAL_DATA: %s", os.environ['GDAL_DATA'])
+        else:
             whl_datadir = os.path.abspath(
                 os.path.join(os.path.dirname(__file__), "gdal_data"))
             share_datadir = os.path.join(sys.prefix, 'share/gdal')
             if os.path.exists(os.path.join(whl_datadir, 'pcs.csv')):
                 os.environ['GDAL_DATA'] = whl_datadir
+                log.debug("Set GDAL_DATA = %r", whl_datadir)
             elif os.path.exists(os.path.join(share_datadir, 'pcs.csv')):
                 os.environ['GDAL_DATA'] = share_datadir
-        if 'PROJ_LIB' not in os.environ:
+                log.debug("Set GDAL_DATA = %r", share_datadir)
+            else:
+                log.warning("GDAL data files not located, GDAL_DATA not set")
+
+        if 'PROJ_LIB' in os.environ:
+            log.debug("PROJ_LIB: %s", os.environ['PROJ_LIB'])
+        else:
             whl_datadir = os.path.abspath(
                 os.path.join(os.path.dirname(__file__), "proj_data"))
-            os.environ['PROJ_LIB'] = whl_datadir
+            share_datadir = os.path.join(sys.prefix, 'share/proj')
+            if os.path.exists(whl_datadir):
+                os.environ['PROJ_LIB'] = whl_datadir
+                log.debug("Set PROJ_LIB = %r", whl_datadir)
+            elif os.path.exists(share_datadir):
+                os.environ['PROJ_LIB'] = share_datadir
+                log.debug("Set PROJ_LIB = %r", share_datadir)
+            else:
+                log.warning("PROJ data files not located, PROJ_LIB not set")
 
         for key, val in self.options.items():
             key_b = key.upper().encode('utf-8')
@@ -145,8 +164,8 @@ cdef class GDALEnv(object):
 
     def drivers(self):
         cdef void *drv = NULL
-        cdef char *key = NULL
-        cdef char *val = NULL
+        cdef const char *key = NULL
+        cdef const char *val = NULL
         cdef int i
         result = {}
         for i in range(OGRGetDriverCount()):

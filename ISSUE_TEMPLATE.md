@@ -1,9 +1,9 @@
-## Please note
+<!-- ## Please note
 
 Fiona contains extension modules and is thus susceptible to C library compatibility issues. If you are reporting an installation or module import issue, please note that this project only accepts reports about problems with packages downloaded from the Python Package Index. Conda users should take issues to one of the following trackers:
 
 - https://github.com/ContinuumIO/anaconda-issues/issues
-- https://github.com/conda-forge/fiona-feedstock
+- https://github.com/conda-forge/fiona-feedstock -->
 
 ## Expected behavior and actual behavior.
 

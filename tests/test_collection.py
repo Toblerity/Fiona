@@ -17,9 +17,9 @@ from fiona.errors import FionaValueError, DriverError
 
 
 OGRINFO_TOOL = "ogrinfo"
-if sys.platform.startswith('win'):
-    # Set extra path if in windows
-    OGRINFO_TOOL = 'gdal\\apps\\' + OGRINFO_TOOL
+# if sys.platform.startswith('win'):
+#     # Set extra path if in windows
+#     OGRINFO_TOOL = 'gdal\\apps\\' + OGRINFO_TOOL
 
 
 WILDSHP = os.path.join('tests', 'data','coutwildrnp.shp')
@@ -601,15 +601,6 @@ class GeoJSONCRSWritingTest(unittest.TestCase):
     def tearDown(self):
         self.sink.close()
         shutil.rmtree(self.tempdir)
-
-    def test_crs(self):
-        """OGR's GeoJSON driver only deals in WGS84"""
-        self.sink.close()
-        info = subprocess.check_output(
-            [OGRINFO_TOOL, self.filename, "OGRGeoJSON"])
-        self.assertTrue(
-            'GEOGCS["WGS 84' in info.decode('utf-8'),
-            info)
 
 
 class DateTimeTest(unittest.TestCase):

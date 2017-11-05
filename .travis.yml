@@ -4,6 +4,7 @@ cache:
   directories:
     - $GDALINST
     - ~/.cache/pip
+
 env:
   global:
     - PIP_WHEEL_DIR=$HOME/.cache/pip/wheels
@@ -11,40 +12,57 @@ env:
     - GDALINST=$HOME/gdalinstall
     - GDALBUILD=$HOME/gdalbuild
   matrix:
-    - GDALVERSION="1.9.2"
     - GDALVERSION="1.11.5"
     - GDALVERSION="2.0.3"
     - GDALVERSION="2.1.1"
+    - GDALVERSION="2.2.2"
+    - GDALVERSION="trunk"
+
+matrix:
+  allow_failures:
+    - env: GDALVERSION="trunk"
+
 addons:
   apt:
     packages:
     - gdal-bin
     - libproj-dev
     - libhdf5-serial-dev
-    - libpng12-dev
     - libgdal-dev
     - libatlas-dev
     - libatlas-base-dev
     - gfortran
+
 python:
   - "2.7"
   - "3.6"
+
 before_install:
-  - "pip install -U pip"
-  - "pip install wheel coveralls>=1.1 --upgrade"
+  - pip install -U pip
+  - pip install wheel coveralls>=1.1 --upgrade
+  - pip install setuptools==36.0.1
+  - pip install wheel
   - . ./scripts/travis_gdal_install.sh
   - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$PATH
   - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$LD_LIBRARY_PATH
+  - export GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal
+  - export PROJ_LIB=/usr/share/proj
   - gdal-config --version
+
 install:
-  - "pip install -r requirements-dev.txt"
-  - "if [ $(gdal-config --version) == \"$GDALVERSION\" ]; then echo \"Using gdal $GDALVERSION\"; else echo \"NOT using gdal $GDALVERSION as expected; aborting\"; exit 1; fi"
-  - "pip install --upgrade --force-reinstall --global-option=build_ext --global-option='-I$GDALINST/gdal-$GDALVERSION/include' --global-option='-L$GDALINST/gdal-$GDALVERSION/lib' --global-option='-R$GDALINST/gdal-$GDALVERSION/lib' -e ."
-  - "pip install -e .[test]"
-  - "fio --version"
-  - "gdal-config --version"
-  - "fio --gdal-version"
+  - pip install -r requirements-dev.txt
+  - if [ "$GDALVERSION" = "trunk" ]; then echo "Using gdal trunk"; elif [ $(gdal-config --version) == "$GDALVERSION" ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
+  - pip install --upgrade --force-reinstall --global-option=build_ext --global-option='-I$GDALINST/gdal-$GDALVERSION/include' --global-option='-L$GDALINST/gdal-$GDALVERSION/lib' --global-option='-R$GDALINST/gdal-$GDALVERSION/lib' -e .
+  - pip install -e .[test]
+  - fio --version
+  - gdal-config --version
+  - fio --gdal-version
+
 script:
   - pytest --cov fiona --cov-report term-missing
+
 after_success:
   - coveralls || echo "!! intermittent coveralls failure"
+
+before_cache:
+  - if [ "$GDALVERSION" = "trunk" ]; then rm -rf $GDALINST/gdal-$GDALVERSION; fi

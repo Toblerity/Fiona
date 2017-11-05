@@ -9,7 +9,7 @@ import os
 import fiona
 
 
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 
 def test_options(tmpdir):

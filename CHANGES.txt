@@ -3,6 +3,77 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.7.10 (2017-10-26)
+-------------------
+
+Bug fixes:
+
+- An extraneous printed line from the ``rio cat --layers`` validator has been
+  removed (#478).
+
+Packaging:
+
+- Official OS X and Manylinux1 wheels (on PyPI) for this release will be
+  compatible with Shapely 1.6.2 and Rasterio 1.0a10 wheels.
+
+1.7.9.post1 (2017-08-21)
+------------------------
+
+This release introduces no changes in the Fiona package. It upgrades GDAL
+from 2.2.0 to 2.2.1 in wheels that we publish to the Python Package Index.
+
+1.7.9 (2017-08-17)
+------------------
+
+Bug fixes:
+
+- Acquire the GIL for GDAL error callback functions to prevent crashes when
+  GDAL errors occur when the GIL has been released by user code.
+- Sync and flush layers when closing even when the number of features is not
+  precisely known (#467).
+
+1.7.8 (2017-06-20)
+------------------
+
+Bug fixes:
+
+- Provide all arguments needed by CPLError based exceptions (#456).
+
+1.7.7 (2017-06-05)
+------------------
+
+Bug fixes:
+
+- Switch logger `warn()` (deprecated) calls to `warning()`.
+- Replace all relative imports and cimports in Cython modules with absolute
+  imports (#450).
+- Avoid setting `PROJ_LIB` to a non-existent directory (#439).
+
+1.7.6 (2017-04-26)
+------------------
+
+Bug fixes:
+
+- Fall back to `share/proj` for PROJ_LIB (#440).
+- Replace every call to `OSRDestroySpatialReference()` with `OSRRelease()`,
+  fixing the GPKG driver crasher reported in #441 (#443).
+- Add a `DriverIOError` derived from `IOError` to use for driver-specific
+  errors such as the GeoJSON driver's refusal to overwrite existing files.
+  Also we now ensure that when this error is raised by `fiona.open()` any
+  created read or write session is deleted, this eliminates spurious 
+  exceptions on teardown of broken `Collection` objects (#437, #444).
+
+1.7.5 (2017-03-20)
+------------------
+
+Bug fixes:
+
+- Opening a data file in read (the default) mode with `fiona.open()` using the
+  the `driver` or `drivers` keyword arguments (to specify certain format 
+  drivers) would sometimes cause a crash on Windows due to improperly
+  terminated lists of strings (#428). The fix: Fiona's buggy `string_list()`
+  has been replaced by GDAL's `CSLAddString()`.
+
 1.7.4 (2017-02-20)
 ------------------
 

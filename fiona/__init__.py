@@ -82,14 +82,10 @@ import uuid
 
 
 __all__ = ['bounds', 'listlayers', 'open', 'prop_type', 'prop_width']
-__version__ = "1.7.4"
+__version__ = "1.7.10"
 __gdal_version__ = get_gdal_release_name().decode('utf-8')
 
-log = logging.getLogger('Fiona')
-class NullHandler(logging.Handler):
-    def emit(self, record):
-        pass
-log.addHandler(NullHandler())
+log = logging.getLogger(__name__)
 
 
 def open(
