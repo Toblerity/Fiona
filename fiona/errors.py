@@ -31,3 +31,7 @@ class FieldNameEncodeError(UnicodeEncodeError):
 
 class UnsupportedGeometryTypeError(KeyError):
     """When a OGR geometry type isn't supported by Fiona."""
+
+
+class TransactionError(RuntimeError):
+    """Failure relating to GDAL transactions"""

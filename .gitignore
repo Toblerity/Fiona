@@ -63,6 +63,7 @@ venv2/
 
 # fiona
 VERSION.txt
+fiona/_shim.c
 fiona/ogrext.c
 fiona/_crs.c
 fiona/_drivers.c
@@ -78,3 +79,4 @@ fiona/_shim.pyx
 tests/data/coutwildrnp.json
 tests/data/coutwildrnp.tar
 tests/data/coutwildrnp.zip
+tests/data/coutwildrnp.gpkg
