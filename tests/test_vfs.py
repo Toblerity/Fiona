@@ -149,12 +149,17 @@ class TarArchiveReadingTest(VsiReadingTest):
             '/vsitar/{path}/testing/coutwildrnp.shp'.format(
                 path=self.path))    
 
-        
+@pytest.mark.network        
 def test_open_http():
     ds = fiona.open('http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.shp')
     assert len(ds) == 10
 
+@pytest.mark.network        
+def test_open_s3():
+    ds = fiona.open('zip+s3://mapbox/rasterio/coutwildrnp.zip')
+    assert len(ds) == 67
     
+@pytest.mark.network    
 def test_open_zip_https():
     ds = fiona.open('zip+https://s3.amazonaws.com/mapbox/rasterio/coutwildrnp.zip')
     assert len(ds) == 67
