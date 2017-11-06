@@ -3,6 +3,12 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.7.10.post1 (2017-10-30)
+-------------------------
+
+- A post-release has been made to fix a problem with macosx wheels uploaded
+  to PyPI.
+
 1.7.10 (2017-10-26)
 -------------------
 
