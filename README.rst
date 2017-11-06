@@ -185,6 +185,17 @@ and write zipped Shapefiles.
     # Output:
     # (0, u'coutwildrnp', 67)
 
+Fiona can also read from more exotic file systems. For instance, a
+zipped shape file in S3 can be accessed like so:
+
+.. code-block:: python
+		
+   with fiona.open('zip+s3://mapbox/rasterio/coutwildrnp.zip') as src:
+       print(len(src))
+
+   # Output:
+   # 67
+
 Fiona CLI
 =========
 
