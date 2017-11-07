@@ -44,3 +44,12 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c) except *:
         0,
         GDT_Unknown,
     NULL)
+
+cdef OGRErr gdal_start_transaction(void* cogr_ds, int force):
+    return GDALDatasetStartTransaction(cogr_ds, force)
+
+cdef OGRErr gdal_commit_transaction(void* cogr_ds):
+    return GDALDatasetCommitTransaction(cogr_ds)
+
+cdef OGRErr gdal_rollback_transaction(void* cogr_ds):
+    return GDALDatasetRollbackTransaction(cogr_ds)

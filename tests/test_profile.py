@@ -1,20 +1,20 @@
 import os
-import tempfile
+import re
 
 import fiona
 
+from .conftest import WGS84PATTERN
 
-def test_profile():
-    with fiona.open('tests/data/coutwildrnp.shp') as src:
-        assert src.meta['crs_wkt'] == 'GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295],AUTHORITY["EPSG","4326"]]'
+def test_profile(path_coutwildrnp_shp):
+    with fiona.open(path_coutwildrnp_shp) as src:
+        assert re.match(WGS84PATTERN, src.crs_wkt)
 
 
-def test_profile_creation_wkt():
-    tmpdir = tempfile.mkdtemp()
-    outfilename = os.path.join(tmpdir, 'test.shp')
-    with fiona.open('tests/data/coutwildrnp.shp') as src:
+def test_profile_creation_wkt(tmpdir, path_coutwildrnp_shp):
+    outfilename = str(tmpdir.join("test.shp"))
+    with fiona.open(path_coutwildrnp_shp) as src:
         profile = src.meta
         profile['crs'] = 'bogus'
         with fiona.open(outfilename, 'w', **profile) as dst:
             assert dst.crs == {'init': 'epsg:4326'}
-            assert dst.crs_wkt == 'GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295],AUTHORITY["EPSG","4326"]]'
+            assert re.match(WGS84PATTERN, dst.crs_wkt)

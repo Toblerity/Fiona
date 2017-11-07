@@ -3,6 +3,28 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8a1 (2017-11-06)
+------------------
+
+New features:
+
+- Each call of ``writerecords()`` involves one or more transactions of up to
+  20,000 features each. This improves performance when writing GeoPackage files
+  as the previous transaction size was only 200 features (#476, #491).
+
+Packaging:
+
+- Fiona's Cython source files have been refactored so that there are no longer
+  separate extension modules for GDAL 1.x and GDAL 2.x. Instead there is a base
+  extension module based on GDAL 2.x and shim modules for installations that
+  use GDAL 1.x.
+
+1.7.10.post1 (2017-10-30)
+-------------------------
+
+- A post-release has been made to fix a problem with macosx wheels uploaded
+  to PyPI.
+
 1.7.10 (2017-10-26)
 -------------------
 

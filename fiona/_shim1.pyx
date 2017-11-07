@@ -46,3 +46,11 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c) except *:
     except Exception as exc:
         raise DriverIOError(str(exc))
     return cogr_ds
+
+# transactions are not supported in GDAL 1.x
+cdef OGRErr gdal_start_transaction(void* cogr_ds, int force):
+    return OGRERR_NONE
+cdef OGRErr gdal_commit_transaction(void* cogr_ds):
+    return OGRERR_NONE
+cdef OGRErr gdal_rollback_transaction(void* cogr_ds):
+    return OGRERR_NONE

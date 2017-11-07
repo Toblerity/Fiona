@@ -170,15 +170,9 @@ if 'clean' not in sys.argv:
             log.info("Copying proj data from %s" % projdatadir)
             copy_data_tree(projdatadir, 'fiona/proj_data')
 
-if not gdalversion:
-    log.fatal("A GDAL API version must be specified. Provide a path "
-              "to gdal-config using a GDAL_CONFIG environment variable "
-              "or use a GDAL_VERSION environment variable.")
-    sys.exit(1)
-
-gdal_version_parts = gdalversion.split('.')
-gdal_major_version = int(gdal_version_parts[0])
-gdal_minor_version = int(gdal_version_parts[1])
+    gdal_version_parts = gdalversion.split('.')
+    gdal_major_version = int(gdal_version_parts[0])
+    gdal_minor_version = int(gdal_version_parts[1])
 
 ext_options = dict(
     include_dirs=include_dirs,

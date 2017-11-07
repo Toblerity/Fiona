@@ -3,6 +3,7 @@ import json
 import os.path
 import tarfile
 import zipfile
+import copy
 
 from click.testing import CliRunner
 import pytest
@@ -11,8 +12,12 @@ import fiona
 
 def pytest_report_header(config):
     headers = []
+    # gdal version number
     gdal_release_name = fiona.get_gdal_release_name().decode("utf-8")
     headers.append('GDAL: {}'.format(gdal_release_name))
+    supported_drivers = ", ".join(sorted(list(fiona.supported_drivers.keys())))
+    # supported drivers
+    headers.append("Supported drivers: {}".format(supported_drivers))
     return '\n'.join(headers)
 
 
@@ -99,6 +104,25 @@ def bytes_grenada_geojson():
 
 
 @pytest.fixture(scope='session')
+def path_coutwildrnp_gpkg():
+    """Creates ``coutwildrnp.gpkg`` if it does not exist and returns the absolute
+    file path."""
+    has_gpkg = "GPKG" in fiona.supported_drivers.keys()
+    if not has_gpkg:
+        raise RuntimeError("GDAL has not been compiled with GPKG support")
+    path = os.path.join(data_dir(), 'coutwildrnp.gpkg')
+    if not os.path.exists(path):
+        filename_shp = _COUTWILDRNP_FILES[0]
+        path_shp = os.path.join(data_dir(), filename_shp)
+        with fiona.open(path_shp, "r") as src:
+            meta = copy.deepcopy(src.meta)
+            meta["driver"] = "GPKG"
+            with fiona.open(path, "w", **meta) as dst:
+                dst.writerecords(src)
+    return path
+
+
+@pytest.fixture(scope='session')
 def path_gpx(data_dir):
     return os.path.join(data_dir, 'test_gpx.gpx')
 
@@ -166,3 +190,9 @@ def uttc_path_gpx(path_gpx, request):
     """Make the ``path_gpx`` fixture work with a ``unittest.TestCase()``.
     ``uttc`` stands for unittest test case."""
     request.cls.path_gpx = path_gpx
+
+"""
+GDAL 2.3.x silently converts ESRI WKT to OGC WKT
+The regular expression below will match against either
+"""
+WGS84PATTERN = 'GEOGCS\["(?:GCS_WGS_1984|WGS 84)",DATUM\["WGS_1984",SPHEROID\["WGS_84"'

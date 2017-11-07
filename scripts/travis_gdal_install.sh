@@ -34,6 +34,8 @@ GDALOPTS="  --with-ogr \
             --without-odbc \
             --with-curl \
             --without-sqlite3 \
+            --with-curl \
+            --with-sqlite3 \
             --without-dwgdirect \
             --without-idb \
             --without-sde \

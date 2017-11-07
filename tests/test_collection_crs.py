@@ -1,21 +1,20 @@
 import os
-import tempfile
+import re
 
 import fiona
 import fiona.crs
 
+from .conftest import WGS84PATTERN
 
-def test_collection_crs_wkt():
-    with fiona.open('tests/data/coutwildrnp.shp') as src:
-        assert src.crs_wkt.startswith(
-            'GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_84"')
+def test_collection_crs_wkt(path_coutwildrnp_shp):
+    with fiona.open(path_coutwildrnp_shp) as src:
+        assert re.match(WGS84PATTERN, src.crs_wkt)
 
 
-def test_collection_no_crs_wkt():
+def test_collection_no_crs_wkt(tmpdir, path_coutwildrnp_shp):
     """crs members of a dataset with no crs can be accessed safely."""
-    tmpdir = tempfile.gettempdir()
-    filename = os.path.join(tmpdir, 'test.shp')
-    with fiona.open('tests/data/coutwildrnp.shp') as src:
+    filename = str(tmpdir.join("test.shp"))
+    with fiona.open(path_coutwildrnp_shp) as src:
         profile = src.meta
     del profile['crs']
     del profile['crs_wkt']

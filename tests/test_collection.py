@@ -8,12 +8,15 @@ import sys
 import subprocess
 import tempfile
 import unittest
+import re
 
 import pytest
 
 import fiona
 from fiona.collection import Collection, supported_drivers
 from fiona.errors import FionaValueError, DriverError
+
+from .conftest import WGS84PATTERN
 
 
 OGRINFO_TOOL = "ogrinfo"
@@ -190,7 +193,7 @@ class ReadingTest(unittest.TestCase):
 
     def test_crs_wkt(self):
         crs = self.c.crs_wkt
-        self.assertTrue(crs.startswith('GEOGCS["GCS_WGS_1984"'))
+        assert re.match(WGS84PATTERN, crs)
 
     def test_closed_crs(self):
         # Crs is lazy too, never computed in this case. TODO?
