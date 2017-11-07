@@ -1,7 +1,10 @@
 import logging
 import sys
 import os
+
 import pytest
+from packaging.version import parse
+import boto3
 
 import fiona
 from fiona.vfs import vsi_path, parse_paths
@@ -11,6 +14,14 @@ from .test_collection import ReadingTest
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
+# Custom markers (from rasterio)
+mingdalversion = pytest.mark.skipif(
+    parse(fiona.get_gdal_release_name().decode('utf-8')) < parse('2.1.0dev'),
+          reason="S3 raster access requires GDAL 2.1")
+
+credentials = pytest.mark.skipif(
+    not(boto3.Session()._session.get_credentials()),
+    reason="S3 raster access requires credentials")
 
 class VsiReadingTest(ReadingTest):
     # There's a bug in GDAL 1.9.2 http://trac.osgeo.org/gdal/ticket/5093
@@ -154,6 +165,8 @@ def test_open_http():
     ds = fiona.open('http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.shp')
     assert len(ds) == 10
 
+@credentials
+@mingdalversion
 @pytest.mark.network        
 def test_open_s3():
     ds = fiona.open('zip+s3://mapbox/rasterio/coutwildrnp.zip')

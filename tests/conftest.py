@@ -1,6 +1,4 @@
 """pytest fixtures and automatic test data generation."""
-
-
 import json
 import os.path
 import tarfile
