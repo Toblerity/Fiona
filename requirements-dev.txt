@@ -4,3 +4,5 @@ cython>=0.21.2
 pytest>=3
 pytest-cov
 setuptools
+packaging
+boto3>=1.2.4
