@@ -109,6 +109,7 @@ class Collection(object):
         self.mode = mode
 
         if self.mode == 'w':
+            import pdb; pdb.set_trace()
             if driver == 'Shapefile':
                 driver = 'ESRI Shapefile'
             if not driver:
