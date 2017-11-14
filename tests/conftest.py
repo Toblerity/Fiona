@@ -1,6 +1,4 @@
 """pytest fixtures and automatic test data generation."""
-
-
 import json
 import os.path
 import tarfile
@@ -55,6 +53,11 @@ def path_coutwildrnp_zip():
                 zip.write(os.path.join(data_dir(), filename), filename)
     return path
 
+@pytest.fixture(scope='session')
+def path_grenada_geojson():
+    """Path to ```grenada.geojson```"""
+    return os.path.join(data_dir(), 'grenada.geojson')
+
 
 @pytest.fixture(scope='session')
 def bytes_coutwildrnp_zip(path_coutwildrnp_zip):
@@ -92,6 +95,12 @@ def path_coutwildrnp_json():
         with open(path, 'w') as f:
             f.write(json.dumps(my_layer))
     return path
+
+@pytest.fixture(scope='session')
+def bytes_grenada_geojson():
+    """The geojson as bytes."""
+    with open(path_grenada_geojson(), 'rb') as src:
+        return src.read()
 
 
 @pytest.fixture(scope='session')

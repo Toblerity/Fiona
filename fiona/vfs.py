@@ -1,0 +1,61 @@
+"""Implementation of Apache VFS schemes and URLs."""
+
+import os
+from fiona.compat import urlparse
+
+# Supported URI schemes and their mapping to GDAL's VSI suffix. 
+SCHEMES = {'gzip': 'gzip', 'zip': 'zip', 'tar': 'tar', 'https': 'curl',
+           'http': 'curl', 's3': 's3'}
+REMOTESCHEMES = set(('https', 'http', 's3',))
+
+def valid_vsi(vsi):
+    """Ensures all parts of our vsi path are valid schemes."""
+    return all(p in SCHEMES for p in vsi.split('+'))
+
+def is_remote(scheme):
+    if scheme is None:
+        return False
+    return any(p in REMOTESCHEMES for p in scheme.split('+'))
+
+def vsi_path(path, vsi=None, archive=None):
+    # If a VSF and archive file are specified, we convert the path to
+    # an OGR VSI path (see cpl_vsi.h).
+    if vsi:
+        prefix = '/'.join('vsi{0}'.format(SCHEMES[p]) for p in vsi.split('+'))
+        if archive:
+            result = '/{0}/{1}{2}'.format(prefix, archive, path)
+        else:
+            result = '/{0}/{1}'.format(prefix, path)
+    else:
+        result = path
+
+    return result
+
+
+def parse_paths(uri, vfs=None):
+    """Parse a URI or Apache VFS URL into its parts
+
+    Returns: tuple
+        (path, scheme, archive)
+    """
+    archive = scheme = None
+    path = uri
+    if vfs:
+        parts = urlparse(vfs)
+        scheme = parts.scheme
+        archive = parts.path
+        if parts.netloc and parts.netloc != 'localhost':
+            archive = parts.netloc + archive
+    else:
+        parts = urlparse(path)
+        scheme = parts.scheme
+        path = parts.path
+        if parts.netloc and parts.netloc != 'localhost':
+            path = parts.netloc + path
+        if scheme in SCHEMES:
+            parts = path.split('!')
+            path = parts.pop() if parts else None
+            archive = parts.pop() if parts else None
+
+    scheme = None if not scheme else scheme
+    return path, scheme, archive

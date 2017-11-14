@@ -49,15 +49,3 @@ class ListLayersArgsTest(unittest.TestCase):
 
     def test_path_ioerror(self):
         self.assertRaises(IOError, fiona.listlayers, ("foobar"))
-
-
-def test_parse_path():
-    assert fiona.parse_paths("zip://foo.zip") == ("foo.zip", "zip", None)
-
-
-def test_parse_path2():
-    assert fiona.parse_paths("foo") == ("foo", None, None)
-
-
-def test_parse_vfs():
-    assert fiona.parse_paths("/", "zip://foo.zip") == ("/", "zip", "foo.zip")
