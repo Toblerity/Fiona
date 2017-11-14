@@ -147,7 +147,7 @@ cdef class GDALEnv(object):
                 val_b = ('ON' if val else 'OFF').encode('utf-8')
             val_c = val_b
             CPLSetThreadLocalConfigOption(key_c, val_c)
-            val_d = CPLGetConfigOption(key_c, NULL)
+            log.debug("Option %s=%s", key, CPLGetConfigOption(key_c, NULL))
         return self
 
     def stop(self):
