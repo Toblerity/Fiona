@@ -713,9 +713,10 @@ Features Access) installed, you can see this in by verifying the following.
 
    Some files may contain vectors that are :dfn:`invalid` from a simple
    features standpoint due to accident (inadequate quality control on the
-   producer's end) or intention ("dirty" vectors saved to a file for special
-   treatment). Fiona doesn't sniff for or attempt to clean dirty data, so make
-   sure you're getting yours from a clean source.
+   producer's end), intention ("dirty" vectors saved to a file for special
+   treatment) or discrepancies of the numeric precision models (Fiona can't
+   handle fixed precision models yet). Fiona doesn't sniff for or attempt to
+   clean dirty data, so make sure you're getting yours from a clean source.
 
 Writing Vector Data
 ===================
