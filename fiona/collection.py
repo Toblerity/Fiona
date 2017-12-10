@@ -137,11 +137,8 @@ class Collection(object):
                 else:
                     raise CRSError("crs lacks init or proj parameter")
 
-        if driver_count == 0:
-            # create a local manager and enter
-            self.env = AWSGDALEnv()
-        else:
-            self.env = AWSGDALEnv()
+        # create a local manager and enter
+        self.env = AWSGDALEnv()
         self.env.__enter__()
 
         self._driver = driver
