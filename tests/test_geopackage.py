@@ -33,7 +33,7 @@ class ReadingTest(unittest.TestCase):
             self.assertRaises(DriverError, fiona.open, 'tests/data/coutwildrnp.gpkg', 'r', driver="GPKG")
         else:
             with fiona.open('tests/data/coutwildrnp.gpkg', 'r', driver="GPKG") as c:
-                self.assertEquals(len(c), 48)
+                self.assertEquals(len(c), 67)
 
 
 class WritingTest(unittest.TestCase):

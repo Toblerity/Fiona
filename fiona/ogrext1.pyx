@@ -402,6 +402,8 @@ cdef class Session:
             val = self._fileencoding.encode('utf-8')
             ogrext1.CPLSetThreadLocalConfigOption('SHAPE_ENCODING', val)
             log.debug("SHAPE_ENCODING set to %r", val)
+        else:
+            ogrext1.CPLSetThreadLocalConfigOption('SHAPE_ENCODING', "")
 
         with cpl_errs:
             drivers = []
@@ -700,19 +702,27 @@ cdef class WritingSession(Session):
     cdef object _schema_mapping
 
     def start(self, collection):
-        cdef void *cogr_fielddefn
-        cdef void *cogr_driver
+        cdef void *cogr_fielddefn = NULL
+        cdef void *cogr_driver = NULL
         cdef void *cogr_ds = NULL
         cdef void *cogr_layer = NULL
         cdef void *cogr_srs = NULL
         cdef char **options = NULL
-        self.collection = collection
-        cdef char *path_c
-        cdef char *driver_c
-        cdef char *name_c
-        cdef char *proj_c
-        cdef char *fileencoding_c
+        cdef char *path_c = NULL
+        cdef char *driver_c = NULL
+        cdef char *name_c = NULL
+        cdef char *proj_c = NULL
+        cdef char *fileencoding_c = NULL
+
         path = collection.path
+        self.collection = collection
+
+        userencoding = collection.encoding
+        if userencoding:
+            self._fileencoding = userencoding.upper()
+            val = self._fileencoding.encode('utf-8')
+            ogrext1.CPLSetThreadLocalConfigOption('SHAPE_ENCODING', val)
+            log.debug("SHAPE_ENCODING set to %r", val)
 
         if collection.mode == 'a':
             if os.path.exists(path):

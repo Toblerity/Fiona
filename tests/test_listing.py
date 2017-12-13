@@ -19,12 +19,12 @@ def test_single_file():
     assert fiona.listlayers('tests/data/coutwildrnp.shp') == ['coutwildrnp']
 
 def test_directory():
-    assert fiona.listlayers('tests/data') == ['coutwildrnp']
+    assert fiona.listlayers('tests/data') == ['coutwildrnp', 'gre']
 
 @unittest.skipIf(FIXME_WINDOWS,
                  reason="FIXME on Windows. ValueError raised. Please look into why this test isn't working.")
 def test_directory_trailing_slash():
-    assert fiona.listlayers('tests/data/') == ['coutwildrnp']
+    assert fiona.listlayers('tests/data/') == ['coutwildrnp', 'gre']
 
 def test_zip_path():
     assert fiona.listlayers('zip://tests/data/coutwildrnp.zip') == ['coutwildrnp']

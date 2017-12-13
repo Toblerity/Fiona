@@ -23,7 +23,7 @@ def test_fio_ls_single_layer():
         'tests/data/'])
     assert result.exit_code == 0
     assert len(result.output.splitlines()) == 1
-    assert json.loads(result.output) == ['coutwildrnp']
+    assert json.loads(result.output) == ['coutwildrnp', 'gre']
 
 
 @unittest.skipIf(FIXME_WINDOWS, 

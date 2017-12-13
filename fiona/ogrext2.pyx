@@ -432,6 +432,7 @@ cdef class Session:
             finally:
                 ogrext2.CSLDestroy(drvs)
                 ogrext2.CSLDestroy(open_opts)
+                open_opts = NULL
 
         if self.cogr_ds == NULL:
             raise FionaValueError(
@@ -717,13 +718,24 @@ cdef class WritingSession(Session):
         cdef void *cogr_layer = NULL
         cdef void *cogr_srs = NULL
         cdef char **options = NULL
-        self.collection = collection
         cdef const char *path_c = NULL
         cdef const char *driver_c = NULL
         cdef const char *name_c = NULL
         cdef const char *proj_c = NULL
         cdef const char *fileencoding_c = NULL
+        cdef char **open_opts = NULL
+
         path = collection.path
+        self.collection = collection
+
+        userencoding = collection.encoding
+        log.debug("Userencoding: %r", userencoding)
+
+        if userencoding:
+            self._fileencoding = userencoding.upper()
+            val = self._fileencoding.encode('utf-8')
+            open_opts = ogrext2.CSLAddNameValue(open_opts, "ENCODING", val)
+            log.debug("ENCODING open option set to %r", val)
 
         if collection.mode == 'a':
             if os.path.exists(path):
@@ -734,10 +746,11 @@ cdef class WritingSession(Session):
                 path_c = path_b
                 self.cogr_ds = ogrext2.GDALOpenEx(path_c,
                         ogrext2.GDAL_OF_VECTOR | ogrext2.GDAL_OF_UPDATE,
-                        NULL, NULL, NULL)
+                        NULL, open_opts, NULL)
 
                 cogr_driver = ogrext2.GDALGetDatasetDriver(self.cogr_ds)
                 if cogr_driver == NULL:
+                    ogrext2.CSLDestroy(open_opts)
                     raise ValueError("Null driver")
 
                 if isinstance(collection.name, string_types):
@@ -750,9 +763,11 @@ cdef class WritingSession(Session):
                                         self.cogr_ds, collection.name)
 
                 if self.cogr_layer == NULL:
+                    ogrext2.CSLDestroy(open_opts)
                     raise RuntimeError(
                         "Failed to get layer %s" % collection.name)
             else:
+                ogrext2.CSLDestroy(open_opts)
                 raise OSError("No such file or directory %s" % path)
 
             userencoding = self.collection.encoding
@@ -774,6 +789,7 @@ cdef class WritingSession(Session):
 
             cogr_driver = ogrext2.GDALGetDriverByName(driver_c)
             if cogr_driver == NULL:
+                ogrext2.CSLDestroy(open_opts)
                 raise ValueError("Null driver")
 
             # Our most common use case is the creation of a new data
@@ -789,7 +805,7 @@ cdef class WritingSession(Session):
                     0,
                     0,
                     ogrext2.GDT_Unknown,
-                    NULL))
+                    open_opts))
 
             # TODO: revisit the logic in the following blocks when we
             # change the assumption above.
@@ -798,7 +814,7 @@ cdef class WritingSession(Session):
                 cogr_ds = ogrext2.GDALOpenEx(path_c,
                                  ogrext2.GDAL_OF_VECTOR | ogrext2.GDAL_OF_UPDATE,
                                  NULL,
-                                 NULL,
+                                 open_opts,
                                  NULL)
 
                 # TODO: use exc_wrap_pointer()
@@ -810,7 +826,7 @@ cdef class WritingSession(Session):
                         0,
                         0,
                         ogrext2.GDT_Unknown,
-                        NULL)
+                        open_opts)
 
                 elif collection.name is None:
                     ogrext2.GDALClose(cogr_ds)
@@ -823,10 +839,14 @@ cdef class WritingSession(Session):
                         0,
                         0,
                         ogrext2.GDT_Unknown,
-                        NULL)
+                        open_opts)
 
                 else:
                     pass
+
+                if open_opts != NULL:
+                    ogrext2.CSLDestroy(open_opts)
+                    open_opts = NULL
 
             if cogr_ds == NULL:
                 raise RuntimeError("Failed to open %s" % path)
