@@ -48,9 +48,9 @@ class BadCodePointTest(unittest.TestCase):
     def test_broken_encoding(self):
         """Reading as cp1252 mis-encodes a Russian name"""
         with fiona.open(self.shapefile) as src:
-            assert next(iter(src))['properties']['name_ru'] != 'Гренада'
+            self.assertNotEqual(next(iter(src))['properties']['name_ru'], u'Гренада')
 
     def test_override_encoding(self):
         """utf-8 override succeeds"""
         with fiona.open(self.shapefile, encoding='utf-8') as src:
-            assert next(iter(src))['properties']['name_ru'] == 'Гренада'
+            self.assertEqual(next(iter(src))['properties']['name_ru'], u'Гренада')
