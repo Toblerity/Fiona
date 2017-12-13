@@ -1,3 +1,4 @@
+# coding=utf-8
 """Encoding tests"""
 
 from glob import glob
