@@ -4,7 +4,6 @@ set -e
 GDALOPTS="  --with-ogr \
             --with-geos \
             --with-expat \
-            --with-iconv=system \
             --without-libtool \
             --with-libz=internal \
             --with-libtiff=internal \
