@@ -395,7 +395,7 @@ cdef class Session:
     def __dealloc__(self):
         self.stop()
 
-    def start(self, collection):
+    def start(self, collection, **kwargs):
         cdef const char *path_c = NULL
         cdef const char *name_c = NULL
         cdef void *drv = NULL
@@ -413,6 +413,8 @@ cdef class Session:
             path_b = path
         path_c = path_b
 
+        userencoding = kwargs.get('encoding')
+
         # TODO: eliminate this context manager in 2.0 as we have done
         # in Rasterio 1.0.
         with cpl_errs:
@@ -426,7 +428,7 @@ cdef class Session:
             else:
                 drivers = None
 
-            self.cogr_ds = gdal_open_vector(path_c, 0, drivers)
+            self.cogr_ds = gdal_open_vector(path_c, 0, drivers, kwargs)
 
         if self.cogr_ds == NULL:
             raise FionaValueError(
@@ -449,19 +451,14 @@ cdef class Session:
         if self.cogr_layer == NULL:
             raise ValueError("Null layer: " + repr(collection.name))
 
-        self.collection = collection
+        self._fileencoding = userencoding or (
+            OGR_L_TestCapability(
+                self.cogr_layer, OLC_STRINGSASUTF8) and
+            'utf-8') or (
+            self.get_driver() == "ESRI Shapefile" and
+            'ISO-8859-1') or locale.getpreferredencoding().upper()
 
-        userencoding = self.collection.encoding
-        if userencoding:
-            CPLSetThreadLocalConfigOption('SHAPE_ENCODING', '')
-            self._fileencoding = userencoding.upper()
-        else:
-            self._fileencoding = (
-                OGR_L_TestCapability(
-                    self.cogr_layer, OLC_STRINGSASUTF8) and
-                'utf-8') or (
-                self.get_driver() == "ESRI Shapefile" and
-                'ISO-8859-1') or locale.getpreferredencoding().upper()
+        self.collection = collection
 
     def stop(self):
         self.cogr_layer = NULL
@@ -712,13 +709,15 @@ cdef class WritingSession(Session):
     def start(self, collection, **kwargs):
         cdef void *cogr_srs = NULL
         cdef char **options = NULL
-        self.collection = collection
         cdef const char *path_c = NULL
         cdef const char *driver_c = NULL
         cdef const char *name_c = NULL
         cdef const char *proj_c = NULL
         cdef const char *fileencoding_c = NULL
         path = collection.path
+        self.collection = collection
+
+        userencoding = kwargs.get('encoding')
 
         if collection.mode == 'a':
             if os.path.exists(path):
@@ -727,7 +726,7 @@ cdef class WritingSession(Session):
                 except UnicodeDecodeError:
                     path_b = path
                 path_c = path_b
-                self.cogr_ds = gdal_open_vector(path_c, 1, None)
+                self.cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
 
                 cogr_driver = GDALGetDatasetDriver(self.cogr_ds)
                 if cogr_driver == NULL:
@@ -748,7 +747,6 @@ cdef class WritingSession(Session):
             else:
                 raise OSError("No such file or directory %s" % path)
 
-            userencoding = self.collection.encoding
             self._fileencoding = (userencoding or (
                 OGR_L_TestCapability(self.cogr_layer, OLC_STRINGSASUTF8) and
                 'utf-8') or (
@@ -765,15 +763,6 @@ cdef class WritingSession(Session):
             driver_b = collection.driver.encode()
             driver_c = driver_b
 
-            # Creation options
-            for k, v in kwargs.items():
-                k, v = k.upper(), str(v).upper()
-                key_b = k.encode('utf-8')
-                val_b = v.encode('utf-8')
-                key_c = key_b
-                val_c = val_b
-                options = CSLSetNameValue(options, key_c, val_c)
-                log.debug("Option %r=%r\n", k, v)
 
             cogr_driver = GDALGetDriverByName(driver_c)
             if cogr_driver == NULL:
@@ -785,23 +774,23 @@ cdef class WritingSession(Session):
             #
             # TODO: remove the assumption.
             if not os.path.exists(path):
-                cogr_ds = exc_wrap_pointer(gdal_create(cogr_driver, path_c))
+                cogr_ds = exc_wrap_pointer(gdal_create(cogr_driver, path_c, kwargs))
 
             # TODO: revisit the logic in the following blocks when we
             # change the assumption above.
             # TODO: use exc_wrap_pointer()
             else:
-                cogr_ds = gdal_open_vector(path_c, 1, None)
+                cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
 
                 # TODO: use exc_wrap_pointer()
                 if cogr_ds == NULL:
-                    cogr_ds = gdal_create(cogr_driver, path_c)
+                    cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
 
                 elif collection.name is None:
                     GDALClose(cogr_ds)
                     cogr_ds = NULL
                     log.debug("Deleted pre-existing data at %s", path)
-                    cogr_ds = gdal_create(cogr_driver, path_c)
+                    cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
 
                 else:
                     pass
@@ -857,7 +846,6 @@ cdef class WritingSession(Session):
             # to the collection constructor takes highest precedence, then
             # 'iso-8859-1', then the system's default encoding as last resort.
             sysencoding = locale.getpreferredencoding()
-            userencoding = collection.encoding
             self._fileencoding = (userencoding or (
                 collection.driver == "ESRI Shapefile" and
                 'ISO-8859-1') or sysencoding).upper()
@@ -866,7 +854,7 @@ cdef class WritingSession(Session):
             # will result in a warning. Fixing is a TODO.
             fileencoding = self.get_fileencoding()
             if fileencoding:
-                fileencoding_b = fileencoding.encode()
+                fileencoding_b = fileencoding.encode('utf-8')
                 fileencoding_c = fileencoding_b
                 with cpl_errs:
                     options = CSLSetNameValue(options, "ENCODING", fileencoding_c)
@@ -894,6 +882,15 @@ cdef class WritingSession(Session):
             # Create the named layer in the datasource.
             name_b = collection.name.encode('utf-8')
             name_c = name_b
+
+            for k, v in kwargs.items():
+                k = k.upper().encode('utf-8')
+                if isinstance(v, bool):
+                    v = ('ON' if v else 'OFF').encode('utf-8')
+                else:
+                    v = str(v).encode('utf-8')
+                log.debug("Set option %r: %r", k, v)
+                options = CSLAddNameValue(options, <const char *>k, <const char *>v)
 
             try:
                 self.cogr_layer = exc_wrap_pointer(
@@ -1275,7 +1272,7 @@ def _remove(path, driver=None):
         raise RuntimeError("Failed to remove data source {}".format(path))
 
 
-def _listlayers(path):
+def _listlayers(path, **kwargs):
 
     """Provides a list of the layers in an OGR data source.
     """
@@ -1292,7 +1289,7 @@ def _listlayers(path):
         path_b = path
     path_c = path_b
     with cpl_errs:
-        cogr_ds = gdal_open_vector(path_c, 0, None)
+        cogr_ds = gdal_open_vector(path_c, 0, None, kwargs)
     if cogr_ds == NULL:
         raise ValueError("No data available at path '%s'" % path)
 

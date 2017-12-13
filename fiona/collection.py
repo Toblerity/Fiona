@@ -145,12 +145,13 @@ class Collection(object):
         self.env.__enter__()
 
         self._driver = driver
+        kwargs.update(encoding=encoding or '')
         self.encoding = encoding
 
         try:
             if self.mode == 'r':
                 self.session = Session()
-                self.session.start(self)
+                self.session.start(self, **kwargs)
             elif self.mode in ('a', 'w'):
                 self.session = WritingSession()
                 self.session.start(self, **kwargs)
