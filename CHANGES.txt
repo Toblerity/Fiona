@@ -3,6 +3,16 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.7.11 (2017-12-13)
+-------------------
+
+- The ``encoding`` keyword argument for ``fiona.open()``, which is intended
+  to allow a caller to override a data source's own and possibly erroneous
+  encoding, has not been working (#510, #512). The problem is that we weren't
+  always setting GDAL open or config options before opening the data sources.
+  This bug is resolved by a number of commits in the maint-1.7 branch and
+  the fix is demonstrated in tests/test_encoding.py.
+
 1.7.10.post1 (2017-10-30)
 -------------------------
 
