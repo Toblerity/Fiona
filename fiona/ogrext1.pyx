@@ -427,7 +427,7 @@ cdef class Session:
         if userencoding:
             self._fileencoding = userencoding.upper()
             val = self._fileencoding.encode('utf-8')
-            ogrext2.CPLSetThreadLocalConfigOption('SHAPE_ENCODING', val)
+            ogrext1.CPLSetThreadLocalConfigOption('SHAPE_ENCODING', val)
             log.debug("SHAPE_ENCODING set to %r", val)
 
         if isinstance(collection.name, string_types):
