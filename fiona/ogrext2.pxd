@@ -60,11 +60,13 @@ cdef extern from "cpl_conv.h":
     void *  CPLMalloc (size_t)
     void    CPLFree (void *ptr)
     void    CPLSetThreadLocalConfigOption (char *key, char *val)
+    void    CPLSetConfigOption (char *key, char *val)
     const char *CPLGetConfigOption (char *, char *)
 
 
 cdef extern from "cpl_string.h":
     char ** CSLSetNameValue (char **list, const char *name, const char *value)
+    char ** CSLAddNameValue (char **list, const char *name, const char *value)
     void CSLDestroy (char **list)
     char ** CSLAddString(char **list, const char *string)
 

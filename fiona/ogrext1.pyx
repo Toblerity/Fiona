@@ -422,7 +422,14 @@ cdef class Session:
                 "No dataset found at path '%s' using drivers: %s" % (
                     collection.path,
                     drivers or '*'))
-        
+
+        userencoding = collection.encoding
+        if userencoding:
+            self._fileencoding = userencoding.upper()
+            val = self._fileencoding.encode('utf-8')
+            ogrext2.CPLSetThreadLocalConfigOption('SHAPE_ENCODING', val)
+            log.debug("SHAPE_ENCODING set to %r", val)
+
         if isinstance(collection.name, string_types):
             name_b = collection.name.encode('utf-8')
             name_c = name_b
@@ -437,20 +444,16 @@ cdef class Session:
 
         if self.cogr_layer == NULL:
             raise ValueError("Null layer: " + repr(collection.name))
-        
-        self.collection = collection
-        
-        userencoding = self.collection.encoding
-        if userencoding:
-            ogrext1.CPLSetThreadLocalConfigOption('SHAPE_ENCODING', '')
-            self._fileencoding = userencoding.upper()
-        else:
+
+        if not userencoding:
             self._fileencoding = (
                 ogrext1.OGR_L_TestCapability(
                     self.cogr_layer, OLC_STRINGSASUTF8) and
                 'utf-8') or (
                 self.get_driver() == "ESRI Shapefile" and
                 'ISO-8859-1') or locale.getpreferredencoding().upper()
+
+        self.collection = collection
 
     def stop(self):
         self.cogr_layer = NULL

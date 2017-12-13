@@ -378,6 +378,7 @@ cdef class Session:
         cdef void *drv = NULL
         cdef void *ds = NULL
         cdef char **drvs = NULL
+        cdef char **open_opts = NULL
 
         if collection.path == '-':
             path = '/vsistdin/'
@@ -389,6 +390,15 @@ cdef class Session:
             # Presume already a UTF-8 encoded string
             path_b = path
         path_c = path_b
+
+        userencoding = collection.encoding
+        log.debug("Userencoding: %r", userencoding)
+
+        if userencoding:
+            self._fileencoding = userencoding.upper()
+            val = self._fileencoding.encode('utf-8')
+            open_opts = ogrext2.CSLAddNameValue(open_opts, "ENCODING", val)
+            log.debug("ENCODING set to %r", val)
 
         # TODO: eliminate this context manager in 2.0 as we have done
         # in Rasterio 1.0.
@@ -414,19 +424,27 @@ cdef class Session:
                     if drv != NULL:
                         drvs = ogrext2.CSLAddString(drvs, name_c)
 
+
             flags = ogrext2.GDAL_OF_VECTOR | ogrext2.GDAL_OF_READONLY
             try:
                 self.cogr_ds = ogrext2.GDALOpenEx(
-                    path_c, flags, <const char *const *>drvs, NULL, NULL)
+                    path_c, flags, <const char *const *>drvs, open_opts, NULL)
             finally:
                 ogrext2.CSLDestroy(drvs)
+                ogrext2.CSLDestroy(open_opts)
 
         if self.cogr_ds == NULL:
             raise FionaValueError(
                 "No dataset found at path '%s' using drivers: %s" % (
                     collection.path,
                     drivers or '*'))
-        
+
+        if userencoding:
+            self._fileencoding = userencoding.upper()
+            val = self._fileencoding.encode('utf-8')
+            ogrext2.CPLSetThreadLocalConfigOption('SHAPE_ENCODING', val)
+            log.debug("SHAPE_ENCODING set to %r", val)
+
         if isinstance(collection.name, string_types):
             name_b = collection.name.encode('utf-8')
             name_c = name_b
@@ -441,20 +459,16 @@ cdef class Session:
 
         if self.cogr_layer == NULL:
             raise ValueError("Null layer: " + repr(collection.name))
-        
-        self.collection = collection
-        
-        userencoding = self.collection.encoding
-        if userencoding:
-            ogrext2.CPLSetThreadLocalConfigOption('SHAPE_ENCODING', '')
-            self._fileencoding = userencoding.upper()
-        else:
+
+        if not userencoding:
             self._fileencoding = (
                 ogrext2.OGR_L_TestCapability(
                     self.cogr_layer, OLC_STRINGSASUTF8) and
                 'utf-8') or (
                 self.get_driver() == "ESRI Shapefile" and
                 'ISO-8859-1') or locale.getpreferredencoding().upper()
+
+        self.collection = collection
 
     def stop(self):
         self.cogr_layer = NULL
