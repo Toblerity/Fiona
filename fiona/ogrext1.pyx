@@ -395,7 +395,14 @@ cdef class Session:
             # Presume already a UTF-8 encoded string
             path_b = path
         path_c = path_b
-        
+
+        userencoding = collection.encoding
+        if userencoding:
+            self._fileencoding = userencoding.upper()
+            val = self._fileencoding.encode('utf-8')
+            ogrext1.CPLSetThreadLocalConfigOption('SHAPE_ENCODING', val)
+            log.debug("SHAPE_ENCODING set to %r", val)
+
         with cpl_errs:
             drivers = []
             if collection._driver:
@@ -422,13 +429,6 @@ cdef class Session:
                 "No dataset found at path '%s' using drivers: %s" % (
                     collection.path,
                     drivers or '*'))
-
-        userencoding = collection.encoding
-        if userencoding:
-            self._fileencoding = userencoding.upper()
-            val = self._fileencoding.encode('utf-8')
-            ogrext1.CPLSetThreadLocalConfigOption('SHAPE_ENCODING', val)
-            log.debug("SHAPE_ENCODING set to %r", val)
 
         if isinstance(collection.name, string_types):
             name_b = collection.name.encode('utf-8')

@@ -398,7 +398,7 @@ cdef class Session:
             self._fileencoding = userencoding.upper()
             val = self._fileencoding.encode('utf-8')
             open_opts = ogrext2.CSLAddNameValue(open_opts, "ENCODING", val)
-            log.debug("ENCODING set to %r", val)
+            log.debug("ENCODING open option set to %r", val)
 
         # TODO: eliminate this context manager in 2.0 as we have done
         # in Rasterio 1.0.
@@ -438,12 +438,6 @@ cdef class Session:
                 "No dataset found at path '%s' using drivers: %s" % (
                     collection.path,
                     drivers or '*'))
-
-        if userencoding:
-            self._fileencoding = userencoding.upper()
-            val = self._fileencoding.encode('utf-8')
-            ogrext2.CPLSetThreadLocalConfigOption('SHAPE_ENCODING', val)
-            log.debug("SHAPE_ENCODING set to %r", val)
 
         if isinstance(collection.name, string_types):
             name_b = collection.name.encode('utf-8')
