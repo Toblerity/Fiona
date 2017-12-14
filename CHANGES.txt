@@ -3,7 +3,7 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.7.11 (2017-12-13)
+1.7.11 (2017-12-14)
 -------------------
 
 - The ``encoding`` keyword argument for ``fiona.open()``, which is intended
@@ -12,6 +12,8 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
   always setting GDAL open or config options before opening the data sources.
   This bug is resolved by a number of commits in the maint-1.7 branch and
   the fix is demonstrated in tests/test_encoding.py.
+- An ``--encoding`` option has been added to fio-load to enable creation of
+  encoded shapefiles with an accompanying .cpg file (#499, #517).
 
 1.7.10.post1 (2017-10-30)
 -------------------------
