@@ -17,10 +17,12 @@ cdef bint is_field_null(void *feature, int n):
     else:
         return False
 
+
 cdef void gdal_flush_cache(void *cogr_ds):
     retval = OGR_DS_SyncToDisk(cogr_ds)
     if retval != OGRERR_NONE:
         raise RuntimeError("Failed to sync to disk")
+
 
 cdef void* gdal_open_vector(const char *path_c, int mode, drivers, options):
     cdef void* cogr_ds = NULL
@@ -50,6 +52,7 @@ cdef void* gdal_open_vector(const char *path_c, int mode, drivers, options):
     else:
         cogr_ds = OGROpen(path_c, mode, NULL)
     return cogr_ds
+
 
 cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except *:
     cdef void* cogr_ds = NULL

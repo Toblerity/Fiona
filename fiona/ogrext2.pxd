@@ -80,6 +80,7 @@ cdef extern from "cpl_conv.h":
 
 
 cdef extern from "cpl_string.h":
+    char ** CSLAddNameValue (char **list, const char *name, const char *value)
     char ** CSLSetNameValue (char **list, const char *name, const char *value)
     void CSLDestroy (char **list)
     char ** CSLAddString(char **list, const char *string)
