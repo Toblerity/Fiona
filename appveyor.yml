@@ -21,6 +21,14 @@ environment:
         - PYTHON: "C:\\Python34-x64"
           PYTHON_VERSION: "3.4.3"
           PYTHON_ARCH: "64"
+          GIS_INTERNALS: "release-1600-x64-gdal-1-11-4-mapserver-6-4-3.zip"
+          GIS_INTERNALS_LIBS: "release-1600-x64-gdal-1-11-4-mapserver-6-4-3-libs.zip"
+          
+        - PYTHON: "C:\\Python34-x64"
+          PYTHON_VERSION: "3.4.3"
+          PYTHON_ARCH: "64"
+          GIS_INTERNALS: "release-1600-x64-gdal-2-2-1-mapserver-7-0-6.zip"
+          GIS_INTERNALS_LIBS: "release-1600-x64-gdal-2-2-1-mapserver-7-0-6-libs.zip"
 
 install:
 
@@ -58,9 +66,9 @@ install:
   - ps: mkdir C:\build | out-null
   - ps: mkdir C:\gdal | out-null
   
-  - curl http://download.gisinternals.com/sdk/downloads/release-1600-x64-gdal-1-11-4-mapserver-6-4-3.zip --output gdalbin.zip
+  - curl http://download.gisinternals.com/sdk/downloads/%GIS_INTERNALS% --output gdalbin.zip
   - 7z x gdalbin.zip -oC:\gdal
-  - curl http://download.gisinternals.com/sdk/downloads/release-1600-x64-gdal-1-11-4-mapserver-6-4-3-libs.zip --output gdallibs.zip  
+  - curl http://download.gisinternals.com/sdk/downloads/%GIS_INTERNALS_LIBS% --output gdallibs.zip  
   - 7z x gdallibs.zip -oC:\gdal
   - "SET PATH=C:\\gdal;C:\\gdal\\bin;C:\\gdal\\data;C:\\gdal\\bin\\gdal\\apps;%PATH%"
   - "SET GDAL_DATA=C:\\gdal\\bin\\gdal-data"
