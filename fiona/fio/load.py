@@ -30,8 +30,11 @@ FIELD_TYPES_MAP_REV = dict([(v, k) for k, v in fiona.FIELD_TYPES_MAP.items()])
 @click.option('--layer', metavar="INDEX|NAME", callback=options.cb_layer,
               help="Load features into specified layer.  Layers use "
                    "zero-based numbering when accessed by index.")
+@click.option('--encoding',
+              help="Output encoding. Defaults to latin1 for "
+                   "backward compatibility.")
 @click.pass_context
-def load(ctx, output, driver, src_crs, dst_crs, sequence, layer):
+def load(ctx, output, driver, src_crs, dst_crs, sequence, layer, encoding):
     """Load features from JSON to a file in another format.
 
     The input is a GeoJSON feature collection or optionally a sequence of
@@ -98,7 +101,8 @@ def load(ctx, output, driver, src_crs, dst_crs, sequence, layer):
                     driver=driver,
                     crs=dst_crs,
                     schema=schema,
-                    layer=layer) as dst:
+                    layer=layer,
+                    encoding=encoding) as dst:
                 dst.write(first)
                 dst.writerecords(source)
 
