@@ -805,7 +805,7 @@ cdef class WritingSession(Session):
                     0,
                     0,
                     ogrext2.GDT_Unknown,
-                    open_opts))
+                    NULL))
 
             # TODO: revisit the logic in the following blocks when we
             # change the assumption above.
@@ -826,7 +826,7 @@ cdef class WritingSession(Session):
                         0,
                         0,
                         ogrext2.GDT_Unknown,
-                        open_opts)
+                        NULL)
 
                 elif collection.name is None:
                     ogrext2.GDALClose(cogr_ds)
@@ -839,7 +839,7 @@ cdef class WritingSession(Session):
                         0,
                         0,
                         ogrext2.GDT_Unknown,
-                        open_opts)
+                        NULL)
 
                 else:
                     pass
