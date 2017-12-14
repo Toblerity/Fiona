@@ -33,6 +33,7 @@ Fiona is written by:
 - dimlev <dimlev@gmail.com>
 - wilsaj <wilson.andrew.j+github@gmail.com>
 - Jesse Crocker <jesse@gaiagps.com>
+- Arne Schlüter
 
 Fiona would not be possible without the great work of Frank Warmerdam and other
 GDAL/OGR developers.
