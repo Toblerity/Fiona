@@ -1,6 +1,8 @@
 """Implementation of Apache VFS schemes and URLs."""
 
 import os
+import sys
+import re
 from fiona.compat import urlparse
 
 # Supported URI schemes and their mapping to GDAL's VSI suffix. 
@@ -40,6 +42,10 @@ def parse_paths(uri, vfs=None):
     """
     archive = scheme = None
     path = uri
+    # Windows drive letters (e.g. "C:\") confuse `urlparse` as they look like
+    # URL schemes
+    if sys.platform == "win32" and re.match("^[a-zA-Z]\\:", path):
+        return path, None, None
     if vfs:
         parts = urlparse(vfs)
         scheme = parts.scheme
