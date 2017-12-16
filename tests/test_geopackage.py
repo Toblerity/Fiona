@@ -12,7 +12,7 @@ def test_read_gpkg(path_coutwildrnp_gpkg):
     """
     with fiona.open(path_coutwildrnp_gpkg, "r") as src:
         assert len(src) == 67
-        feature = next(src)
+        feature = next(iter(src))
         assert feature["geometry"]["type"] == "Polygon"
         assert feature["properties"]["NAME"] == "Mount Naomi Wilderness"
 
