@@ -21,12 +21,14 @@ environment:
         - PYTHON: "C:\\Python34-x64"
           PYTHON_VERSION: "3.4.3"
           PYTHON_ARCH: "64"
+          GDAL_VERSION: "1.11.4"
           GIS_INTERNALS: "release-1600-x64-gdal-1-11-4-mapserver-6-4-3.zip"
           GIS_INTERNALS_LIBS: "release-1600-x64-gdal-1-11-4-mapserver-6-4-3-libs.zip"
           
         - PYTHON: "C:\\Python34-x64"
           PYTHON_VERSION: "3.4.3"
           PYTHON_ARCH: "64"
+          GDAL_VERSION: "2.2.1"
           GIS_INTERNALS: "release-1600-x64-gdal-2-2-1-mapserver-7-0-6.zip"
           GIS_INTERNALS_LIBS: "release-1600-x64-gdal-2-2-1-mapserver-7-0-6-libs.zip"
 
@@ -97,7 +99,7 @@ build_script:
 
   - cmd: echo %PYTHONPATH%
 
-  - "%CMD_IN_ENV% python setup.py build_ext -IC:\\gdal\\include -lgdal_i -LC:\\gdal\\lib develop --gdalversion 1.11.4"
+  - "%CMD_IN_ENV% python setup.py build_ext -IC:\\gdal\\include -lgdal_i -LC:\\gdal\\lib develop --gdalversion %GDAL_VERSION%"
 
 
 test_script:
