@@ -195,4 +195,4 @@ def uttc_path_gpx(path_gpx, request):
 GDAL 2.3.x silently converts ESRI WKT to OGC WKT
 The regular expression below will match against either
 """
-WGS84PATTERN = 'GEOGCS\["(?:GCS_WGS_1984|WGS 84)",DATUM\["WGS_1984",SPHEROID\["WGS_84"'
+WGS84PATTERN = 'GEOGCS\["(?:GCS_WGS_1984|WGS 84)",DATUM\["WGS_1984",SPHEROID\["WGS[_ ]84"'
