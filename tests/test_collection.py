@@ -349,6 +349,76 @@ class GenericWritingTest(unittest.TestCase):
         self.assertRaises(IOError, self.c.filter)
 
 
+class PropertiesNumberFormattingTest(unittest.TestCase):
+
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+        self.filename = os.path.join(self.tempdir, "properties_number_formatting_test")
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+
+    def _write_collection(self, driver):
+        writing_schema = {
+            'geometry': 'Point',
+            'properties': [('integer', 'int'), ('one_digit', 'float:15.1')]
+        }
+
+        with fiona.open(
+                self.filename,
+                "w",
+                driver=driver,
+                schema=writing_schema,
+                crs='epsg:4326',
+                encoding='utf-8'
+        ) as c:
+            c.writerecords([
+                {
+                    'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
+                    'properties': {'integer': 12.22, 'one_digit': 12.22}
+                },
+                {
+                    'geometry': {'type': 'Point', 'coordinates': (0.0, 0.2)},
+                    'properties': {'integer': 12.88, 'one_digit': 12.88}
+                }
+            ])
+
+    def test_shape_file_properties_number_formatting(self):
+        driver = "ESRI Shapefile"
+        self._write_collection(driver)
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            self.assertEqual(len(c), 2)
+
+            rf1, rf2 = list(c)
+
+            # integers are truncated
+            self.assertEqual(rf1['properties']['integer'], 12)
+            self.assertEqual(rf2['properties']['integer'], 12)
+
+            # floats are rounded
+            self.assertEqual(rf1['properties']['one_digit'], 12.2)
+            self.assertEqual(rf2['properties']['one_digit'], 12.9)
+
+    def test_geojson_properties_number_formatting(self):
+        driver = "GeoJSON"
+        self._write_collection(driver)
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            self.assertEqual(len(c), 2)
+
+            rf1, rf2 = list(c)
+
+            # integers are truncated
+            self.assertEqual(rf1['properties']['integer'], 12)
+            self.assertEqual(rf2['properties']['integer'], 12)
+
+            # ****************************************
+            # FLOAT FORMATTING IS NOT RESPECTED...
+            self.assertEqual(rf1['properties']['one_digit'], 12.22)
+            self.assertEqual(rf2['properties']['one_digit'], 12.88)
+
+
 class PointWritingTest(unittest.TestCase):
 
     def setUp(self):
