@@ -91,3 +91,9 @@ cdef OGRErr gdal_commit_transaction(void* cogr_ds):
     return OGRERR_NONE
 cdef OGRErr gdal_rollback_transaction(void* cogr_ds):
     return OGRERR_NONE
+
+# field subtypes are not supported in GDAL 1.x
+cdef OGRFieldSubType get_field_subtype(void *fielddefn):
+    return OFSTNone
+cdef void set_field_subtype(void *fielddefn, OGRFieldSubType subtype):
+    pass

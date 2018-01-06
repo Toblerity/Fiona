@@ -166,6 +166,7 @@ cdef class FeatureBuilder:
         cdef unsigned char *data
         cdef int l
         cdef int retval
+        cdef int fieldsubtype
         cdef const char *key_c = NULL
         props = OrderedDict()
         for i in range(OGR_F_GetFieldCount(feature)):
@@ -178,6 +179,7 @@ cdef class FeatureBuilder:
             key_b = key_c
             key = key_b.decode(encoding)
             fieldtypename = FIELD_TYPES[OGR_Fld_GetType(fdefn)]
+            fieldsubtype = get_field_subtype(fdefn)
             if not fieldtypename:
                 log.warning(
                     "Skipping field %s: invalid type %s",
@@ -190,7 +192,10 @@ cdef class FeatureBuilder:
             if is_field_null(feature, i):
                 props[key] = None
             elif fieldtype is int:
-                props[key] = OGR_F_GetFieldAsInteger64(feature, i)
+                if fieldsubtype == OFSTBoolean:
+                    props[key] = bool(OGR_F_GetFieldAsInteger64(feature, i))
+                else:
+                    props[key] = OGR_F_GetFieldAsInteger64(feature, i)
             elif fieldtype is float:
                 props[key] = OGR_F_GetFieldAsDouble(feature, i)
 
@@ -714,6 +719,7 @@ cdef class WritingSession(Session):
         cdef const char *name_c = NULL
         cdef const char *proj_c = NULL
         cdef const char *fileencoding_c = NULL
+        cdef OGRFieldSubType field_subtype
         path = collection.path
         self.collection = collection
 
@@ -921,11 +927,17 @@ cdef class WritingSession(Session):
             # which are an ordered dict since Fiona 1.0.1.
             for key, value in collection.schema['properties'].items():
                 log.debug("Creating field: %s %s", key, value)
+                
+                field_subtype = OFSTNone
 
                 # Convert 'long' to 'int'. See
                 # https://github.com/Toblerity/Fiona/issues/101.
                 if value == 'long':
                     value = 'int'
+                
+                if value == 'bool':
+                    value = 'int'
+                    field_subtype = OFSTBoolean
 
                 # Is there a field width/precision?
                 width = precision = None
@@ -954,6 +966,9 @@ cdef class WritingSession(Session):
                     OGR_Fld_SetWidth(cogr_fielddefn, width)
                 if precision:
                     OGR_Fld_SetPrecision(cogr_fielddefn, precision)
+                if field_subtype != OFSTNone:
+                    # subtypes are new in GDAL 2.x, ignored in 1.x
+                    set_field_subtype(cogr_fielddefn, field_subtype)
                 OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1)
                 OGR_Fld_Destroy(cogr_fielddefn)
             log.debug("Created fields")
