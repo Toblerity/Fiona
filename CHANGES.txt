@@ -3,6 +3,11 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+Next
+----
+
+- Obsolete and derelict fiona.tool module has been removed.
+
 1.8a1 (2017-11-06)
 ------------------
 
