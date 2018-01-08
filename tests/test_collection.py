@@ -383,7 +383,7 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
                 }
             ])
 
-    def test_shape_file_properties_number_formatting(self):
+    def test_shape_driver_truncates_float_property_to_requested_int_format(self):
         driver = "ESRI Shapefile"
         self._write_collection(driver)
 
@@ -392,15 +392,22 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
 
             rf1, rf2 = list(c)
 
-            # integers are truncated
             self.assertEqual(rf1['properties']['integer'], 12)
             self.assertEqual(rf2['properties']['integer'], 12)
 
-            # floats are rounded
+    def test_shape_driver_rounds_float_property_to_requested_digits_number(self):
+        driver = "ESRI Shapefile"
+        self._write_collection(driver)
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            self.assertEqual(len(c), 2)
+
+            rf1, rf2 = list(c)
+
             self.assertEqual(rf1['properties']['one_digit'], 12.2)
             self.assertEqual(rf2['properties']['one_digit'], 12.9)
 
-    def test_geojson_properties_number_formatting(self):
+    def test_geojson_driver_truncates_float_property_to_requested_int_format(self):
         driver = "GeoJSON"
         self._write_collection(driver)
 
@@ -412,6 +419,15 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
             # integers are truncated
             self.assertEqual(rf1['properties']['integer'], 12)
             self.assertEqual(rf2['properties']['integer'], 12)
+
+    def test_geojson_driver_does_not_round_float_property_to_requested_digits_number(self):
+        driver = "GeoJSON"
+        self._write_collection(driver)
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            self.assertEqual(len(c), 2)
+
+            rf1, rf2 = list(c)
 
             # ****************************************
             # FLOAT FORMATTING IS NOT RESPECTED...
