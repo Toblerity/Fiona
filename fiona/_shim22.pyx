@@ -94,3 +94,9 @@ cdef OGRErr gdal_commit_transaction(void* cogr_ds):
 
 cdef OGRErr gdal_rollback_transaction(void* cogr_ds):
     return GDALDatasetRollbackTransaction(cogr_ds)
+    
+cdef OGRFieldSubType get_field_subtype(void *fielddefn):
+    return OGR_Fld_GetSubType(fielddefn)
+
+cdef void set_field_subtype(void *fielddefn, OGRFieldSubType subtype):
+    OGR_Fld_SetSubType(fielddefn, subtype)
