@@ -358,71 +358,83 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tempdir)
 
-    def _write_collection(self, driver):
-        writing_schema = {
-            'geometry': 'Point',
-            'properties': [('integer', 'int'), ('one_digit', 'float:15.1')]
+    _records_with_float_property1 = [
+        {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
+            'properties': {'property1': 12.22}
+        },
+        {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.2)},
+            'properties': {'property1': 12.88}
         }
+    ]
 
+    def _write_collection(self, records, schema, driver):
         with fiona.open(
                 self.filename,
                 "w",
                 driver=driver,
-                schema=writing_schema,
+                schema=schema,
                 crs='epsg:4326',
                 encoding='utf-8'
         ) as c:
-            c.writerecords([
-                {
-                    'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
-                    'properties': {'integer': 12.22, 'one_digit': 12.22}
-                },
-                {
-                    'geometry': {'type': 'Point', 'coordinates': (0.0, 0.2)},
-                    'properties': {'integer': 12.88, 'one_digit': 12.88}
-                }
-            ])
+            c.writerecords(records)
 
     def test_shape_driver_truncates_float_property_to_requested_int_format(self):
         driver = "ESRI Shapefile"
-        self._write_collection(driver)
+        self._write_collection(
+            self._records_with_float_property1,
+            {'geometry': 'Point', 'properties': [('property1', 'int')]},
+            driver
+        )
 
         with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
             self.assertEqual(len(c), 2)
 
             rf1, rf2 = list(c)
 
-            self.assertEqual(rf1['properties']['integer'], 12)
-            self.assertEqual(rf2['properties']['integer'], 12)
+            self.assertEqual(rf1['properties']['property1'], 12)
+            self.assertEqual(rf2['properties']['property1'], 12)
 
     def test_shape_driver_rounds_float_property_to_requested_digits_number(self):
         driver = "ESRI Shapefile"
-        self._write_collection(driver)
+        self._write_collection(
+            self._records_with_float_property1,
+            {'geometry': 'Point', 'properties': [('property1', 'float:15.1')]},
+            driver
+        )
 
         with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
             self.assertEqual(len(c), 2)
 
             rf1, rf2 = list(c)
 
-            self.assertEqual(rf1['properties']['one_digit'], 12.2)
-            self.assertEqual(rf2['properties']['one_digit'], 12.9)
+            self.assertEqual(rf1['properties']['property1'], 12.2)
+            self.assertEqual(rf2['properties']['property1'], 12.9)
 
     def test_geojson_driver_truncates_float_property_to_requested_int_format(self):
         driver = "GeoJSON"
-        self._write_collection(driver)
+        self._write_collection(
+            self._records_with_float_property1,
+            {'geometry': 'Point', 'properties': [('property1', 'int')]},
+            driver
+        )
 
         with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
             self.assertEqual(len(c), 2)
 
             rf1, rf2 = list(c)
 
-            # integers are truncated
-            self.assertEqual(rf1['properties']['integer'], 12)
-            self.assertEqual(rf2['properties']['integer'], 12)
+            self.assertEqual(rf1['properties']['property1'], 12)
+            self.assertEqual(rf2['properties']['property1'], 12)
 
     def test_geojson_driver_does_not_round_float_property_to_requested_digits_number(self):
         driver = "GeoJSON"
-        self._write_collection(driver)
+        self._write_collection(
+            self._records_with_float_property1,
+            {'geometry': 'Point', 'properties': [('property1', 'float:15.1')]},
+            driver
+        )
 
         with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
             self.assertEqual(len(c), 2)
@@ -431,8 +443,8 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
 
             # ****************************************
             # FLOAT FORMATTING IS NOT RESPECTED...
-            self.assertEqual(rf1['properties']['one_digit'], 12.22)
-            self.assertEqual(rf2['properties']['one_digit'], 12.88)
+            self.assertEqual(rf1['properties']['property1'], 12.22)
+            self.assertEqual(rf2['properties']['property1'], 12.88)
 
 
 class PointWritingTest(unittest.TestCase):
