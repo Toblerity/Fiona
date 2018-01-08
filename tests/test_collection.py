@@ -407,12 +407,12 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
         )
 
         with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
-            self.assertEqual(len(c), 2)
+            self.assertEqual(2, len(c))
 
             rf1, rf2 = list(c)
 
-            self.assertEqual(rf1['properties']['property1'], 12)
-            self.assertEqual(rf2['properties']['property1'], 12)
+            self.assertEqual(12, rf1['properties']['property1'])
+            self.assertEqual(12, rf2['properties']['property1'])
 
     def test_shape_driver_rounds_float_property_to_requested_digits_number(self):
         driver = "ESRI Shapefile"
@@ -423,12 +423,12 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
         )
 
         with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
-            self.assertEqual(len(c), 2)
+            self.assertEqual(2, len(c))
 
             rf1, rf2 = list(c)
 
-            self.assertEqual(rf1['properties']['property1'], 12.2)
-            self.assertEqual(rf2['properties']['property1'], 12.9)
+            self.assertEqual(12.2, rf1['properties']['property1'])
+            self.assertEqual(12.9, rf2['properties']['property1'])
 
     def test_string_is_converted_to_number_and_truncated_to_requested_int_by_shape_driver(self):
         driver = "ESRI Shapefile"
@@ -439,12 +439,12 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
         )
 
         with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
-            self.assertEqual(len(c), 2)
+            self.assertEqual(2, len(c))
 
             rf1, rf2 = list(c)
 
-            self.assertEqual(rf1['properties']['property1'], 12)
-            self.assertEqual(rf2['properties']['property1'], 12)
+            self.assertEqual(12, rf1['properties']['property1'])
+            self.assertEqual(12, rf2['properties']['property1'])
 
     def test_string_is_converted_to_number_and_rounded_to_requested_digits_number_by_shape_driver(self):
         driver = "ESRI Shapefile"
@@ -455,12 +455,12 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
         )
 
         with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
-            self.assertEqual(len(c), 2)
+            self.assertEqual(2, len(c))
 
             rf1, rf2 = list(c)
 
-            self.assertEqual(rf1['properties']['property1'], 12.2)
-            self.assertEqual(rf2['properties']['property1'], 12.9)
+            self.assertEqual(12.2, rf1['properties']['property1'])
+            self.assertEqual(12.9, rf2['properties']['property1'])
 
     def test_invalid_number_is_converted_to_0_and_written_by_shape_driver(self):
         driver = "ESRI Shapefile"
@@ -472,11 +472,11 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
         )
 
         with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
-            self.assertEqual(len(c), 1)
+            self.assertEqual(1, len(c))
 
             rf1 = c[0]
 
-            self.assertEqual(rf1['properties']['property1'], 0)
+            self.assertEqual(0, rf1['properties']['property1'])
 
     def test_geojson_driver_truncates_float_property_to_requested_int_format(self):
         driver = "GeoJSON"
@@ -487,12 +487,12 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
         )
 
         with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
-            self.assertEqual(len(c), 2)
+            self.assertEqual(2, len(c))
 
             rf1, rf2 = list(c)
 
-            self.assertEqual(rf1['properties']['property1'], 12)
-            self.assertEqual(rf2['properties']['property1'], 12)
+            self.assertEqual(12, rf1['properties']['property1'])
+            self.assertEqual(12, rf2['properties']['property1'])
 
     def test_geojson_driver_does_not_round_float_property_to_requested_digits_number(self):
         driver = "GeoJSON"
@@ -503,14 +503,14 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
         )
 
         with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
-            self.assertEqual(len(c), 2)
+            self.assertEqual(2, len(c))
 
             rf1, rf2 = list(c)
 
             # ****************************************
             # FLOAT FORMATTING IS NOT RESPECTED...
-            self.assertEqual(rf1['properties']['property1'], 12.22)
-            self.assertEqual(rf2['properties']['property1'], 12.88)
+            self.assertEqual(12.22, rf1['properties']['property1'])
+            self.assertEqual(12.88, rf2['properties']['property1'])
 
     def test_string_is_converted_to_number_and_truncated_to_requested_int_by_geojson_driver(self):
         driver = "GeoJSON"
@@ -521,12 +521,12 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
         )
 
         with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
-            self.assertEqual(len(c), 2)
+            self.assertEqual(2, len(c))
 
             rf1, rf2 = list(c)
 
-            self.assertEqual(rf1['properties']['property1'], 12)
-            self.assertEqual(rf2['properties']['property1'], 12)
+            self.assertEqual(12, rf1['properties']['property1'])
+            self.assertEqual(12, rf2['properties']['property1'])
 
     def test_string_is_converted_to_number_but_not_rounded_to_requested_digits_number_by_geojson_driver(self):
         driver = "GeoJSON"
@@ -537,14 +537,14 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
         )
 
         with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
-            self.assertEqual(len(c), 2)
+            self.assertEqual(2, len(c))
 
             rf1, rf2 = list(c)
 
             # ****************************************
             # FLOAT FORMATTING IS NOT RESPECTED...
-            self.assertEqual(rf1['properties']['property1'], 12.22)
-            self.assertEqual(rf2['properties']['property1'], 12.88)
+            self.assertEqual(12.22, rf1['properties']['property1'])
+            self.assertEqual(12.88, rf2['properties']['property1'])
 
     def test_invalid_number_is_converted_to_0_and_written_by_geojson_driver(self):
         driver = "GeoJSON"
@@ -556,11 +556,11 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
         )
 
         with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
-            self.assertEqual(len(c), 1)
+            self.assertEqual(1, len(c))
 
             rf1 = c[0]
 
-            self.assertEqual(rf1['properties']['property1'], 0)
+            self.assertEqual(0, rf1['properties']['property1'])
 
 
 class PointWritingTest(unittest.TestCase):
