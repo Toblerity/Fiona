@@ -369,6 +369,17 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
         }
     ]
 
+    _records_with_float_property1_as_string = [
+        {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
+            'properties': {'property1': '12.22'}
+        },
+        {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.2)},
+            'properties': {'property1': '12.88'}
+        }
+    ]
+
     def _write_collection(self, records, schema, driver):
         with fiona.open(
                 self.filename,
@@ -412,6 +423,38 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
             self.assertEqual(rf1['properties']['property1'], 12.2)
             self.assertEqual(rf2['properties']['property1'], 12.9)
 
+    def test_string_is_converted_to_number_and_truncated_to_requested_int_by_shape_driver(self):
+        driver = "ESRI Shapefile"
+        self._write_collection(
+            self._records_with_float_property1_as_string,
+            {'geometry': 'Point', 'properties': [('property1', 'int')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            self.assertEqual(len(c), 2)
+
+            rf1, rf2 = list(c)
+
+            self.assertEqual(rf1['properties']['property1'], 12)
+            self.assertEqual(rf2['properties']['property1'], 12)
+
+    def test_string_is_converted_to_number_and_rounded_to_requested_digits_number_by_shape_driver(self):
+        driver = "ESRI Shapefile"
+        self._write_collection(
+            self._records_with_float_property1_as_string,
+            {'geometry': 'Point', 'properties': [('property1', 'float:15.1')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            self.assertEqual(len(c), 2)
+
+            rf1, rf2 = list(c)
+
+            self.assertEqual(rf1['properties']['property1'], 12.2)
+            self.assertEqual(rf2['properties']['property1'], 12.9)
+
     def test_geojson_driver_truncates_float_property_to_requested_int_format(self):
         driver = "GeoJSON"
         self._write_collection(
@@ -432,6 +475,40 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
         driver = "GeoJSON"
         self._write_collection(
             self._records_with_float_property1,
+            {'geometry': 'Point', 'properties': [('property1', 'float:15.1')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            self.assertEqual(len(c), 2)
+
+            rf1, rf2 = list(c)
+
+            # ****************************************
+            # FLOAT FORMATTING IS NOT RESPECTED...
+            self.assertEqual(rf1['properties']['property1'], 12.22)
+            self.assertEqual(rf2['properties']['property1'], 12.88)
+
+    def test_string_is_converted_to_number_and_truncated_to_requested_int_by_geojson_driver(self):
+        driver = "GeoJSON"
+        self._write_collection(
+            self._records_with_float_property1_as_string,
+            {'geometry': 'Point', 'properties': [('property1', 'int')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            self.assertEqual(len(c), 2)
+
+            rf1, rf2 = list(c)
+
+            self.assertEqual(rf1['properties']['property1'], 12)
+            self.assertEqual(rf2['properties']['property1'], 12)
+
+    def test_string_is_converted_to_number_but_not_rounded_to_requested_digits_number_by_geojson_driver(self):
+        driver = "GeoJSON"
+        self._write_collection(
+            self._records_with_float_property1_as_string,
             {'geometry': 'Point', 'properties': [('property1', 'float:15.1')]},
             driver
         )
