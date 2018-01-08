@@ -106,4 +106,5 @@ test_script:
   # Run the project tests
   - cmd: SET
 
-  - "%CMD_IN_ENV% pytest --cov fiona --cov-report term-missing"
+  # TODO: return to running test_write_gb18030 when GDAL build is updated.
+  - "%CMD_IN_ENV% pytest -k "not test_write_gb18030" --cov fiona --cov-report term-missing"
