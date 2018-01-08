@@ -380,6 +380,13 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
         }
     ]
 
+    _records_with_invalid_number_property1 = [
+        {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.3)},
+            'properties': {'property1': 'invalid number'}
+        }
+    ]
+
     def _write_collection(self, records, schema, driver):
         with fiona.open(
                 self.filename,
@@ -455,6 +462,22 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
             self.assertEqual(rf1['properties']['property1'], 12.2)
             self.assertEqual(rf2['properties']['property1'], 12.9)
 
+    def test_invalid_number_is_converted_to_0_and_written_by_shape_driver(self):
+        driver = "ESRI Shapefile"
+        self._write_collection(
+            self._records_with_invalid_number_property1,
+            # {'geometry': 'Point', 'properties': [('property1', 'int')]},
+            {'geometry': 'Point', 'properties': [('property1', 'float:15.1')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            self.assertEqual(len(c), 1)
+
+            rf1 = c[0]
+
+            self.assertEqual(rf1['properties']['property1'], 0)
+
     def test_geojson_driver_truncates_float_property_to_requested_int_format(self):
         driver = "GeoJSON"
         self._write_collection(
@@ -522,6 +545,22 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
             # FLOAT FORMATTING IS NOT RESPECTED...
             self.assertEqual(rf1['properties']['property1'], 12.22)
             self.assertEqual(rf2['properties']['property1'], 12.88)
+
+    def test_invalid_number_is_converted_to_0_and_written_by_geojson_driver(self):
+        driver = "GeoJSON"
+        self._write_collection(
+            self._records_with_invalid_number_property1,
+            # {'geometry': 'Point', 'properties': [('property1', 'int')]},
+            {'geometry': 'Point', 'properties': [('property1', 'float:15.1')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            self.assertEqual(len(c), 1)
+
+            rf1 = c[0]
+
+            self.assertEqual(rf1['properties']['property1'], 0)
 
 
 class PointWritingTest(unittest.TestCase):
