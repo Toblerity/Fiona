@@ -29,11 +29,13 @@ cdef void* gdal_open_vector(char* path_c, int mode, drivers, options):
     cdef char **drvs = NULL
     cdef void* drv = NULL
     cdef char **open_opts = NULL
+    cdef unsigned int flags
 
+    flags = GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR
     if mode == 1:
-        mode = GDAL_OF_UPDATE
+        flags |= GDAL_OF_UPDATE
     else:
-        mode = GDAL_OF_READONLY
+        flags |= GDAL_OF_READONLY
 
     if drivers:
         for name in drivers:
@@ -55,13 +57,12 @@ cdef void* gdal_open_vector(char* path_c, int mode, drivers, options):
 
     open_opts = CSLAddNameValue(open_opts, "VALIDATE_OPEN_OPTIONS", "NO")
 
-    if mode == 1:
-        flags = GDAL_OF_VECTOR | GDAL_OF_UPDATE
-    else:
-        flags = GDAL_OF_VECTOR | GDAL_OF_READONLY
     try:
         cogr_ds = GDALOpenEx(
             path_c, flags, <const char *const *>drvs, open_opts, NULL)
+    except:
+        raise
+    else:
         return cogr_ds
     finally:
         CSLDestroy(drvs)

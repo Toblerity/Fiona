@@ -20,7 +20,7 @@ from fiona._geometry cimport (
     normalize_geometry_type_code)
 from fiona._err cimport exc_wrap_pointer
 
-from fiona._err import cpl_errs
+from fiona._err import cpl_errs, CPLE_OpenFailedError
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
 from fiona.errors import (
@@ -420,26 +420,30 @@ cdef class Session:
 
         userencoding = kwargs.get('encoding')
 
+        # We have two ways of specifying drivers to try. Resolve the
+        # values into a single set of driver short names.
+        if collection._driver:
+            drivers = set([collection._driver])
+        elif collection.enabled_drivers:
+            drivers = set(collection.enabled_drivers)
+        else:
+            drivers = None
+
         # TODO: eliminate this context manager in 2.0 as we have done
         # in Rasterio 1.0.
-        with cpl_errs:
-
-            # We have two ways of specifying drivers to try. Resolve the
-            # values into a single set of driver short names.
-            if collection._driver:
-                drivers = set([collection._driver])
-            elif collection.enabled_drivers:
-                drivers = set(collection.enabled_drivers)
-            else:
-                drivers = None
-
-            self.cogr_ds = gdal_open_vector(path_c, 0, drivers, kwargs)
+        message = None
+        try:
+            with cpl_errs:
+                self.cogr_ds = gdal_open_vector(path_c, 0, drivers, kwargs)
+        except CPLE_OpenFailedError as e:
+            message = e.errmsg.decode("utf-8")
 
         if self.cogr_ds == NULL:
+            if not message:
+                message = "No dataset found at path '{}'".format(collection.path)
+
             raise FionaValueError(
-                "No dataset found at path '%s' using drivers: %s" % (
-                    collection.path,
-                    drivers or '*'))
+                message + " using drivers {}".format(drivers or "*"))
 
         if isinstance(collection.name, string_types):
             name_b = collection.name.encode('utf-8')
