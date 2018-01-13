@@ -778,37 +778,17 @@ cdef class WritingSession(Session):
             if cogr_driver == NULL:
                 raise ValueError("Null driver")
 
-            # Our most common use case is the creation of a new data
-            # file and historically we've assumed that it's a file on
-            # the local filesystem and queryable via os.path.
-            #
-            # TODO: remove the assumption.
-            if not os.path.exists(path):
-                cogr_ds = exc_wrap_pointer(gdal_create(cogr_driver, path_c, kwargs))
-
-            # TODO: revisit the logic in the following blocks when we
-            # change the assumption above.
-            # TODO: use exc_wrap_pointer()
-            else:
+            try:
                 cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
-
-                # TODO: use exc_wrap_pointer()
-                if cogr_ds == NULL:
-                    cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
-
-                elif collection.name is None:
+            except DriverIOError:
+                cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
+            else:
+                capability = check_capability_create_layer(cogr_ds)
+                if not capability or collection.name is None:
                     GDALClose(cogr_ds)
-                    cogr_ds = NULL
                     log.debug("Deleted pre-existing data at %s", path)
                     cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
-
-                else:
-                    pass
-
-            if cogr_ds == NULL:
-                raise RuntimeError("Failed to open %s" % path)
-            else:
-                self.cogr_ds = cogr_ds
+            self.cogr_ds = cogr_ds
 
             # Set the spatial reference system from the crs given to the
             # collection constructor. We by-pass the crs_wkt and crs

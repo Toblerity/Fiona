@@ -16,6 +16,7 @@ cdef OGRErr gdal_commit_transaction(void *cogr_ds)
 cdef OGRErr gdal_rollback_transaction(void *cogr_ds)
 cdef OGRFieldSubType get_field_subtype(void *fielddefn)
 cdef void set_field_subtype(void *fielddefn, OGRFieldSubType subtype)
+cdef bint check_capability_create_layer(void *cogr_ds)
 
 from fiona._shim cimport OGR_F_GetFieldAsInteger as OGR_F_GetFieldAsInteger64
 from fiona._shim cimport OGR_F_SetFieldInteger as OGR_F_SetFieldInteger64

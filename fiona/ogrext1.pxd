@@ -40,6 +40,9 @@ ctypedef struct OGREnvelope:
 cdef extern from "ogr_core.h":
     char *  OGRGeometryTypeToName(int)
 
+    char * ODsCCreateLayer = "CreateLayer"
+    char * ODsCDeleteLayer = "DeleteLayer"
+
 cdef extern from "ogr_srs_api.h":
 
     ctypedef void * OGRSpatialReferenceH
@@ -77,6 +80,7 @@ cdef extern from "ogr_api.h":
     void *  OGR_DS_GetLayer (void *datasource, int n)
     void    OGR_DS_ReleaseResultSet (void *datasource, void *results)
     int     OGR_DS_SyncToDisk (void *datasource)
+    int     OGR_DS_TestCapability(void *datasource, char *capability)
     void *  OGR_F_Create (void *featuredefn)
     void    OGR_F_Destroy (void *feature)
     long    OGR_F_GetFID (void *feature)

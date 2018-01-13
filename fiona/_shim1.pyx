@@ -50,7 +50,10 @@ cdef void* gdal_open_vector(const char *path_c, int mode, drivers, options):
                 #collection._driver = name
                 break
     else:
-        cogr_ds = OGROpen(path_c, mode, NULL)
+        try:
+            cogr_ds = exc_wrap_pointer(OGROpen(path_c, mode, NULL))
+        except Exception as exc:
+            raise DriverIOError(str(exc))
     return cogr_ds
 
 
@@ -83,6 +86,11 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except *:
         raise DriverIOError(str(exc))
     finally:
         CSLDestroy(opts)
+
+
+cdef bint check_capability_create_layer(void *cogr_ds):
+    return OGR_DS_TestCapability(cogr_ds, ODsCCreateLayer)
+
 
 # transactions are not supported in GDAL 1.x
 cdef OGRErr gdal_start_transaction(void* cogr_ds, int force):

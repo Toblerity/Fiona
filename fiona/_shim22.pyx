@@ -2,7 +2,9 @@ cdef extern from "ogr_api.h":
     int OGR_F_IsFieldNull(void *feature, int n)
 
 from fiona.ogrext2 cimport *
+from fiona.errors import DriverIOError
 from fiona._err import cpl_errs
+from fiona._err cimport exc_wrap_pointer
 
 import logging
 
@@ -58,12 +60,10 @@ cdef void* gdal_open_vector(char* path_c, int mode, drivers, options):
     open_opts = CSLAddNameValue(open_opts, "VALIDATE_OPEN_OPTIONS", "NO")
 
     try:
-        cogr_ds = GDALOpenEx(
-            path_c, flags, <const char *const *>drvs, open_opts, NULL)
-    except:
-        raise
-    else:
-        return cogr_ds
+        return exc_wrap_pointer(GDALOpenEx(
+            path_c, flags, <const char *const *>drvs, open_opts, NULL))
+    except Exception as exc:
+        raise DriverIOError(str(exc))
     finally:
         CSLDestroy(drvs)
         CSLDestroy(open_opts)
@@ -82,9 +82,16 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except *:
         creation_opts = CSLAddNameValue(creation_opts, <const char *>k, <const char *>v)
 
     try:
-        return GDALCreate(cogr_driver, path_c, 0, 0, 0, GDT_Unknown, creation_opts)
+        return exc_wrap_pointer(
+            GDALCreate(cogr_driver, path_c, 0, 0, 0, GDT_Unknown, creation_opts))
+    except Exception as exc:
+        raise DriverIOError(str(exc))
     finally:
         CSLDestroy(creation_opts)
+
+
+cdef bint check_capability_create_layer(void *cogr_ds):
+    return GDALDatasetTestCapability(cogr_ds, ODsCCreateLayer)
 
 
 cdef OGRErr gdal_start_transaction(void* cogr_ds, int force):

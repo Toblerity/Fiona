@@ -1,10 +1,41 @@
 import os
 import pytest
 import fiona
+from .conftest import requires_gpkg
 
-has_gpkg = "GPKG" in fiona.supported_drivers.keys()
+example_schema = {
+    'geometry': 'Point',
+    'properties': [('title', 'str')],
+}
 
-@pytest.mark.skipif(not has_gpkg, reason="Requires geopackage driver")
+example_crs = {
+    'a': 6370997,
+    'lon_0': -100,
+    'y_0': 0,
+    'no_defs': True,
+    'proj': 'laea',
+    'x_0': 0,
+    'units': 'm',
+    'b': 6370997,
+    'lat_0': 45,
+}
+
+example_features = [
+    {
+        "geometry": {"type": "Point", "coordinates": [0.0, 0.0]},
+        "properties": {"title": "One"},
+    },
+    {
+        "geometry": {"type": "Point", "coordinates": [1.0, 2.0]},
+        "properties": {"title": "Two"},
+    },
+    {
+        "geometry": {"type": "Point", "coordinates": [3.0, 4.0]},
+        "properties": {"title": "Three"},
+    },
+]
+
+@requires_gpkg
 def test_read_gpkg(path_coutwildrnp_gpkg):
     """
     Implicitly tests writing gpkg as the fixture will create the data source on
@@ -16,40 +47,49 @@ def test_read_gpkg(path_coutwildrnp_gpkg):
         assert feature["geometry"]["type"] == "Polygon"
         assert feature["properties"]["NAME"] == "Mount Naomi Wilderness"
 
-@pytest.mark.skipif(not has_gpkg, reason="Requires geopackage driver")
+@requires_gpkg
 def test_write_gpkg(tmpdir):
-    schema = {
-        'geometry': 'Point',
-        'properties': [('title', 'str')],
-    }
-    crs = {
-        'a': 6370997,
-        'lon_0': -100,
-        'y_0': 0,
-        'no_defs': True,
-        'proj': 'laea',
-        'x_0': 0,
-        'units': 'm',
-        'b': 6370997,
-        'lat_0': 45,
-    }
-
     path = str(tmpdir.join('foo.gpkg'))
 
     with fiona.open(path, 'w',
                     driver='GPKG',
-                    schema=schema,
-                    crs=crs) as dst:
-        dst.writerecords([{
-            'geometry': {'type': 'Point', 'coordinates': [0.0, 0.0]},
-            'properties': {'title': 'One'}}])
-        dst.writerecords([{
-            'geometry': {'type': 'Point', 'coordinates': [2.0, 3.0]},
-            'properties': {'title': 'Two'}}])
-        dst.write({
-            'geometry': {'type': 'Point', 'coordinates': [20.0, 30.0]},
-            'properties': {'title': 'Three'}})
+                    schema=example_schema,
+                    crs=example_crs) as dst:
+        dst.writerecords(example_features)
+
     with fiona.open(path) as src:
         assert src.schema['geometry'] == 'Point'
-        assert src.crs == crs
+        assert src.crs == example_crs
         assert len(src) == 3
+
+@requires_gpkg
+def test_write_multilayer_gpkg(tmpdir):
+    """
+    Test that writing a second layer to an existing geopackage doesn't remove
+    and existing layer for the dataset.
+    """
+    path = str(tmpdir.join('foo.gpkg'))
+
+    with fiona.open(path, 'w',
+                    driver='GPKG',
+                    schema=example_schema,
+                    layer="layer1",
+                    crs=example_crs) as dst:
+        dst.writerecords(example_features[0:2])
+
+    with fiona.open(path, 'w',
+                    driver='GPKG',
+                    schema=example_schema,
+                    layer="layer2",
+                    crs=example_crs) as dst:
+        dst.writerecords(example_features[2:])
+
+    with fiona.open(path, layer="layer1") as src:
+        assert src.schema['geometry'] == 'Point'
+        assert src.crs == example_crs
+        assert len(src) == 2
+
+    with fiona.open(path, layer="layer2") as src:
+        assert src.schema['geometry'] == 'Point'
+        assert src.crs == example_crs
+        assert len(src) == 1
