@@ -789,6 +789,8 @@ cdef class WritingSession(Session):
                 if not capability or collection.name is None:
                     GDALClose(cogr_ds)
                     log.debug("Deleted pre-existing data at %s", path)
+                    if collection.driver == "GeoJSON" and os.path.exists(path):
+                        os.unlink(path)
                     cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
             self.cogr_ds = cogr_ds
 
