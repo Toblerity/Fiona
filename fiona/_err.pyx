@@ -227,7 +227,6 @@ cdef void *exc_wrap_pointer(void *ptr) except NULL:
         exc = exc_check()
         if exc:
             raise exc
-            return NULL
     return ptr
   
 cpl_errs = GDALErrCtxManager()
