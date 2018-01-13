@@ -39,6 +39,5 @@ def test_write_memoryfile(profile_first_coutwildrnp_shp):
         data = memfile.read()
 
     with MemoryFile(data) as memfile:
-        import pdb; pdb.set_trace()
         with memfile.open() as col:
             assert len(col) == 1

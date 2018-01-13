@@ -1424,7 +1424,11 @@ cdef class MemoryFileBase(object):
         -------
         int
         """
-        return self._len
+        cdef unsigned char *buff = NULL
+        cdef const char *cfilename = self.path
+        cdef vsi_l_offset buff_len = 0
+        buff = VSIGetMemFileBuffer(self.path, &buff_len, 0)
+        return int(buff_len)
 
     def close(self):
         """Close MemoryFile and release allocated memory."""
