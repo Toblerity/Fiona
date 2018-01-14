@@ -18,7 +18,7 @@ class UnicodePathTest(unittest.TestCase):
 
     def setUp(self):
         tempdir = tempfile.mkdtemp()
-        self.dir = os.path.join(tempdir, 'français')
+        self.dir = os.path.join(tempdir, u'français')
         shutil.copytree('tests/data/', self.dir)
 
     def tearDown(self):
@@ -26,17 +26,12 @@ class UnicodePathTest(unittest.TestCase):
 
     def test_unicode_path(self):
         path = self.dir + '/coutwildrnp.shp'
-        if sys.version_info < (3,):
-            path = path.decode('utf-8')
         with fiona.open(path) as c:
             assert len(c) == 67
 
     def test_unicode_path_layer(self):
         path = self.dir
         layer = 'coutwildrnp'
-        if sys.version_info < (3,):
-            path = path.decode('utf-8')
-            layer = layer.decode('utf-8')
         with fiona.open(path, layer=layer) as c:
             assert len(c) == 67
 
