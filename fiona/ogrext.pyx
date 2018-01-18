@@ -152,7 +152,7 @@ cdef class FeatureBuilder:
     argument is not destroyed.
     """
 
-    cdef build(self, void *feature, encoding='utf-8', bbox=False, driver=None):
+    cdef build(self, void *feature, encoding='utf-8', bbox=False, driver=None, ignore_geometry=False):
         # The only method anyone ever needs to call
         cdef void *fdefn
         cdef int i
@@ -242,7 +242,7 @@ cdef class FeatureBuilder:
                 props[key] = None
 
         cdef void *cogr_geometry = OGR_F_GetGeometryRef(feature)
-        if cogr_geometry is not NULL:
+        if cogr_geometry is not NULL and not ignore_geometry:
             geom = GeomBuilder().build(cogr_geometry)
         else:
             geom = None
@@ -703,7 +703,8 @@ cdef class Session:
                 cogr_feature,
                 bbox=False,
                 encoding=self.get_internalencoding(),
-                driver=self.collection.driver
+                driver=self.collection.driver,
+                ignore_geometry=self.collection.ignore_geometry,
             )
             _deleteOgrFeature(cogr_feature)
             return feature
@@ -1217,7 +1218,8 @@ cdef class Iterator:
             cogr_feature,
             bbox=False,
             encoding=self.encoding,
-            driver=self.collection.driver
+            driver=self.collection.driver,
+            ignore_geometry=self.collection.ignore_geometry,
         )
         _deleteOgrFeature(cogr_feature)
         return feature
@@ -1246,7 +1248,8 @@ cdef class ItemsIterator(Iterator):
             cogr_feature,
             bbox=False,
             encoding=self.encoding,
-            driver=self.collection.driver
+            driver=self.collection.driver,
+            ignore_geometry=self.collection.ignore_geometry,
         )
         _deleteOgrFeature(cogr_feature)
 

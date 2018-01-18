@@ -279,12 +279,12 @@ class ReadingTest(unittest.TestCase):
         self.assertTrue(0 in self.c)
 
 
-class IgnoreFieldsTest(unittest.TestCase):
+class IgnoreFieldsAndGeometryTest(unittest.TestCase):
 
     def test_without_ignore(self):
         with fiona.open(WILDSHP, "r") as collection:
             assert("AREA" in collection.schema["properties"].keys())
-            feature = next(collection)
+            feature = next(iter(collection))
             assert(feature["properties"]["AREA"] is not None)
             assert(feature["properties"]["STATE"] is not None)
             assert(feature["properties"]["NAME"] is not None)
@@ -292,7 +292,7 @@ class IgnoreFieldsTest(unittest.TestCase):
     def test_ignore_fields(self):
         with fiona.open(WILDSHP, "r", ignore_fields=["AREA", "STATE"]) as collection:
             assert("AREA" in collection.schema["properties"].keys())
-            feature = next(collection)
+            feature = next(iter(collection))
             assert(feature["properties"]["AREA"] is None)
             assert(feature["properties"]["STATE"] is None)
             assert(feature["properties"]["NAME"] is not None)
@@ -307,6 +307,11 @@ class IgnoreFieldsTest(unittest.TestCase):
             fiona.open,
             {"path": WILDSHP, "mode": "r", "ignore_fields": [42]}
         )
+
+    def test_ignore_geometry(self):
+        with fiona.open(WILDSHP, "r", ignore_geometry=True) as collection:
+            feature = next(iter(collection))
+            assert(feature["geometry"] is None)
 
 
 class FilterReadingTest(unittest.TestCase):
