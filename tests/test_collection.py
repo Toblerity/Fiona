@@ -302,11 +302,9 @@ class IgnoreFieldsAndGeometryTest(unittest.TestCase):
             pass
 
     def test_ignore_invalid_field_not_string(self):
-        self.assertRaises(
-            AttributeError,
-            fiona.open,
-            {"path": WILDSHP, "mode": "r", "ignore_fields": [42]}
-        )
+        with self.assertRaises(TypeError):
+            with fiona.open(WILDSHP, "r", ignore_fields=[42]) as collection:
+                pass
 
     def test_ignore_geometry(self):
         with fiona.open(WILDSHP, "r", ignore_geometry=True) as collection:

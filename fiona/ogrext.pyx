@@ -242,11 +242,12 @@ cdef class FeatureBuilder:
                 props[key] = None
 
         cdef void *cogr_geometry
-        if cogr_geometry is not NULL and not ignore_geometry:
+        geom = None
+        if not ignore_geometry:
             cogr_geometry = OGR_F_GetGeometryRef(feature)
-            geom = GeomBuilder().build(cogr_geometry)
-        else:
-            geom = None
+            if cogr_geometry is not NULL:
+                geom = GeomBuilder().build(cogr_geometry)
+
         return {
             'type': 'Feature',
             'id': str(OGR_F_GetFID(feature)),
@@ -467,7 +468,10 @@ cdef class Session:
         if collection.ignore_fields:
             try:
                 for name in collection.ignore_fields:
-                    name = name.encode(self._fileencoding)
+                    try:
+                        name = name.encode(self._fileencoding)
+                    except AttributeError:
+                        raise TypeError("Ignored field \"{}\" has type \"{}\", expected string".format(name, name.__class__.__name__))
                     ignore_fields = CSLAddString(ignore_fields, <const char *>name)
                 OGR_L_SetIgnoredFields(self.cogr_layer, ignore_fields)
             finally:
