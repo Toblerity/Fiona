@@ -241,8 +241,9 @@ cdef class FeatureBuilder:
                 log.debug("%s: None, fieldtype: %r, %r" % (key, fieldtype, fieldtype in string_types))
                 props[key] = None
 
-        cdef void *cogr_geometry = OGR_F_GetGeometryRef(feature)
+        cdef void *cogr_geometry
         if cogr_geometry is not NULL and not ignore_geometry:
+            cogr_geometry = OGR_F_GetGeometryRef(feature)
             geom = GeomBuilder().build(cogr_geometry)
         else:
             geom = None
