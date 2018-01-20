@@ -33,5 +33,9 @@ class UnsupportedGeometryTypeError(KeyError):
     """When a OGR geometry type isn't supported by Fiona."""
 
 
+class GeometryTypeValidationError(FionaValueError):
+    """Tried to write a geometry type not specified in the schema"""
+
+
 class TransactionError(RuntimeError):
     """Failure relating to GDAL transactions"""

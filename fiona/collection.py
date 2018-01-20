@@ -10,7 +10,7 @@ from fiona.ogrext import Iterator, ItemsIterator, KeysIterator
 from fiona.ogrext import Session, WritingSession
 from fiona.ogrext import (
     calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name)
-from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file
+from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file, GEOMETRY_TYPES
 from fiona.errors import DriverError, SchemaError, CRSError
 from fiona._drivers import driver_count, GDALEnv
 from fiona.drvsupport import supported_drivers, AWSGDALEnv
@@ -167,6 +167,9 @@ class Collection(object):
             self.guard_driver_mode()
             if not self.encoding:
                 self.encoding = self.session.get_fileencoding().lower()
+
+        if self.mode in ("a", "w"):
+            self._valid_geom_types = _get_valid_geom_types(self.schema, self.driver)
 
     def __repr__(self):
         return "<%s Collection '%s', mode '%s' at %s>" % (
@@ -429,6 +432,30 @@ class Collection(object):
         # Note: you can't count on this being called. Call close() explicitly
         # or use the context manager protocol ("with").
         self.close()
+
+
+def _get_valid_geom_types(schema, driver):
+    schema_geom_type = schema["geometry"]
+    if isinstance(schema_geom_type, string_types) or schema_geom_type is None:
+        schema_geom_type = (schema_geom_type,)
+    valid_types = set()
+    for geom_type in schema_geom_type:
+        valid_types.add(str(geom_type).lstrip("3D "))
+
+    if "Unknown" in valid_types:
+        ALL_GEOMETRY_TYPES = set([
+            geom_type for geom_type in GEOMETRY_TYPES.values()
+            if "3D " not in geom_type and geom_type != "None"])
+        valid_types.update(ALL_GEOMETRY_TYPES)
+        valid_types.remove("Unknown")
+
+    if driver == "ESRI Shapefile" and "Point" not in valid_types:
+        print("OMG")
+        for geom_type in list(valid_types):
+            if not geom_type.startswith("Multi"):
+                valid_types.add("Multi"+geom_type)
+
+    return valid_types
 
 
 def get_filetype(bytesbuf):
