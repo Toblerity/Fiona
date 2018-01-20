@@ -19,6 +19,7 @@ cdef extern from "cpl_string.h":
     char ** CSLAddNameValue (char **list, char *name, char *value)
     char ** CSLSetNameValue (char **list, char *name, char *value)
     void    CSLDestroy (char **list)
+    char ** CSLAddString(char **list, const char *string)
 
 cdef extern from "cpl_vsi.h":
     ctypedef struct VSILFILE:
