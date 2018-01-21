@@ -246,7 +246,6 @@ elif "clean" not in sys.argv:
     ]
     if has_numpy:
         ext_modules.append(Extension('fiona._vectorized', ['fiona/_vectorized.c'], **ext_options))
-    ext_modules = cythonize(ext_modules)
 
     if gdal_major_version == 1:
         log.info("Building Fiona for gdal 1.x: {0}".format(gdalversion))
