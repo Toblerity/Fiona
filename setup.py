@@ -9,6 +9,13 @@ import sys
 from setuptools import setup
 from setuptools.extension import Extension
 
+# NumPy is required for vectorized submodule
+try:
+    import numpy as np
+except ImportError:
+    has_numpy = False
+else:
+    has_numpy = True
 
 # Use Cython if available.
 try:
@@ -180,6 +187,9 @@ ext_options = dict(
     libraries=libraries,
     extra_link_args=extra_link_args)
 
+if has_numpy:
+    ext_options["include_dirs"] = [np.get_include()]
+
 ext_options_cpp = ext_options.copy()
 # GDAL 2.3+ requires C++11
 if sys.platform == "win32":
@@ -212,14 +222,17 @@ if source_is_repo and "clean" not in sys.argv:
             shutil.copy('fiona/_shim2.pyx', 'fiona/_shim.pyx')
             shutil.copy('fiona/_shim2.pxd', 'fiona/_shim.pxd')
 
-    ext_modules = cythonize([
+    ext_modules = [
         Extension('fiona._geometry', ['fiona/_geometry.pyx'], **ext_options),
         Extension('fiona._transform', ['fiona/_transform.pyx'], **ext_options_cpp),
         Extension('fiona._crs', ['fiona/_crs.pyx'], **ext_options),
         Extension('fiona._drivers', ['fiona/_drivers.pyx'], **ext_options),
         Extension('fiona._err', ['fiona/_err.pyx'], **ext_options),
         Extension('fiona._shim', ['fiona/_shim.pyx'], **ext_options),
-        Extension('fiona.ogrext', ['fiona/ogrext.pyx'], **ext_options)])
+        Extension('fiona.ogrext', ['fiona/ogrext.pyx'], **ext_options)]
+    if has_numpy:
+        ext_modules.append(Extension('fiona._vectorized', ['fiona/_vectorized.pyx'], **ext_options))
+    ext_modules = cythonize(ext_modules)
 
 # If there's no manifest template, as in an sdist, we just specify .c files.
 elif "clean" not in sys.argv:
@@ -231,6 +244,9 @@ elif "clean" not in sys.argv:
         Extension('fiona._err', ['fiona/_err.c'], **ext_options),
         Extension('fiona.ogrext', ['fiona/ogrext.c'], **ext_options),
     ]
+    if has_numpy:
+        ext_modules.append(Extension('fiona._vectorized', ['fiona/_vectorized.c'], **ext_options))
+    ext_modules = cythonize(ext_modules)
 
     if gdal_major_version == 1:
         log.info("Building Fiona for gdal 1.x: {0}".format(gdalversion))

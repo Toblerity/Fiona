@@ -397,13 +397,6 @@ def featureRT(feature, collection):
 # Collection-related extension classes and functions
 
 cdef class Session:
-
-    cdef void *cogr_ds
-    cdef void *cogr_layer
-    cdef object _fileencoding
-    cdef object _encoding
-    cdef object collection
-
     def __init__(self):
         self.cogr_ds = NULL
         self.cogr_layer = NULL
