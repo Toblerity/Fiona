@@ -20,7 +20,6 @@ def read_vectorized(collection):
     cdef int field_index
     cdef char * field_name_c
     cdef bytes field_name_bytes
-    cdef str field_name
     cdef int i
     cdef long long [:] arr_int
     cdef double [:] arr_double
