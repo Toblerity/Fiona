@@ -152,7 +152,8 @@ cdef class FeatureBuilder:
     argument is not destroyed.
     """
 
-    cdef build(self, void *feature, encoding='utf-8', bbox=False, driver=None, ignore_geometry=False):
+    cdef build(self, void *feature, encoding='utf-8', bbox=False, driver=None,
+               ignore_fields=None, ignore_geometry=False):
         # The only method anyone ever needs to call
         cdef void *fdefn
         cdef int i
@@ -168,7 +169,15 @@ cdef class FeatureBuilder:
         cdef int retval
         cdef int fieldsubtype
         cdef const char *key_c = NULL
+        fid = OGR_F_GetFID(feature)
         props = OrderedDict()
+        fiona_feature = {
+            "type": "Feature",
+            "id": str(fid),
+            "properties": props,
+        }
+        if not ignore_fields:
+            ignore_fields = set()
         for i in range(OGR_F_GetFieldCount(feature)):
             fdefn = OGR_F_GetFieldDefnRef(feature, i)
             if fdefn == NULL:
@@ -178,6 +187,10 @@ cdef class FeatureBuilder:
                 raise ValueError("Null field name reference")
             key_b = key_c
             key = key_b.decode(encoding)
+
+            if key in ignore_fields:
+                continue
+
             fieldtypename = FIELD_TYPES[OGR_Fld_GetType(fdefn)]
             fieldsubtype = get_field_subtype(fdefn)
             if not fieldtypename:
@@ -242,17 +255,13 @@ cdef class FeatureBuilder:
                 props[key] = None
 
         cdef void *cogr_geometry
-        geom = None
         if not ignore_geometry:
             cogr_geometry = OGR_F_GetGeometryRef(feature)
             if cogr_geometry is not NULL:
                 geom = GeomBuilder().build(cogr_geometry)
+                fiona_feature["geometry"] = geom
 
-        return {
-            'type': 'Feature',
-            'id': str(OGR_F_GetFID(feature)),
-            'geometry': geom,
-            'properties': props }
+        return fiona_feature
 
 
 cdef class OGRFeatureBuilder:
@@ -521,6 +530,11 @@ cdef class Session:
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
 
+        if self.collection.ignore_fields:
+            ignore_fields = self.collection.ignore_fields
+        else:
+            ignore_fields = set()
+
         cogr_featuredefn = OGR_L_GetLayerDefn(self.cogr_layer)
         if cogr_featuredefn == NULL:
             raise ValueError("Null feature definition")
@@ -534,6 +548,8 @@ cdef class Session:
             if not bool(key_b):
                 raise ValueError("Invalid field name ref: %s" % key)
             key = key_b.decode(self.get_internalencoding())
+            if key in ignore_fields:
+                continue
             fieldtypename = FIELD_TYPES[OGR_Fld_GetType(cogr_fielddefn)]
             if not fieldtypename:
                 log.warning(
@@ -566,12 +582,14 @@ cdef class Session:
 
             props.append((key, val))
 
-        code = normalize_geometry_type_code(
-            OGR_FD_GetGeomType(cogr_featuredefn))
+        ret = {"properties": OrderedDict(props)}
 
-        return {
-            'properties': OrderedDict(props),
-            'geometry': GEOMETRY_TYPES[code]}
+        if not self.collection.ignore_geometry:
+            code = normalize_geometry_type_code(
+                OGR_FD_GetGeomType(cogr_featuredefn))
+            ret["geometry"] = GEOMETRY_TYPES[code]
+
+        return ret
 
     def get_crs(self):
         cdef char *proj_c = NULL
@@ -709,6 +727,7 @@ cdef class Session:
                 bbox=False,
                 encoding=self.get_internalencoding(),
                 driver=self.collection.driver,
+                ignore_fields=self.collection.ignore_fields,
                 ignore_geometry=self.collection.ignore_geometry,
             )
             _deleteOgrFeature(cogr_feature)
@@ -1224,6 +1243,7 @@ cdef class Iterator:
             bbox=False,
             encoding=self.encoding,
             driver=self.collection.driver,
+            ignore_fields=self.collection.ignore_fields,
             ignore_geometry=self.collection.ignore_geometry,
         )
         _deleteOgrFeature(cogr_feature)
@@ -1254,6 +1274,7 @@ cdef class ItemsIterator(Iterator):
             bbox=False,
             encoding=self.encoding,
             driver=self.collection.driver,
+            ignore_fields=self.collection.ignore_fields,
             ignore_geometry=self.collection.ignore_geometry,
         )
         _deleteOgrFeature(cogr_feature)
