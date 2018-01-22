@@ -188,7 +188,7 @@ ext_options = dict(
     extra_link_args=extra_link_args)
 
 if has_numpy:
-    ext_options["include_dirs"] = [np.get_include()]
+    ext_options["include_dirs"].append(np.get_include())
 
 ext_options_cpp = ext_options.copy()
 # GDAL 2.3+ requires C++11
