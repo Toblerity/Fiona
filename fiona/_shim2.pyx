@@ -1,6 +1,6 @@
 from fiona.ogrext2 cimport *
 from fiona.errors import DriverIOError
-from fiona._err import cpl_errs
+from fiona._err import cpl_errs, CPLE_BaseError
 from fiona._err cimport exc_wrap_pointer
 
 import logging
@@ -56,7 +56,7 @@ cdef void* gdal_open_vector(char* path_c, int mode, drivers, options):
     try:
         return exc_wrap_pointer(GDALOpenEx(
             path_c, flags, <const char *const *>drvs, open_opts, NULL))
-    except Exception as exc:
+    except CPLE_BaseError as exc:
         raise DriverIOError(str(exc))
     finally:
         CSLDestroy(drvs)
@@ -78,7 +78,7 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except *:
     try:
         return exc_wrap_pointer(
             GDALCreate(cogr_driver, path_c, 0, 0, 0, GDT_Unknown, creation_opts))
-    except Exception as exc:
+    except CPLE_BaseError as exc:
         raise DriverIOError(str(exc))
     finally:
         CSLDestroy(creation_opts)

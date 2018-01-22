@@ -3,6 +3,7 @@ import logging
 from fiona.ogrext1 cimport *
 
 from fiona.errors import DriverIOError
+from fiona._err import CPLE_BaseError
 from fiona._err cimport exc_wrap_pointer
 
 
@@ -52,7 +53,7 @@ cdef void* gdal_open_vector(const char *path_c, int mode, drivers, options):
     else:
         try:
             cogr_ds = exc_wrap_pointer(OGROpen(path_c, mode, NULL))
-        except Exception as exc:
+        except CPLE_BaseError as exc:
             raise DriverIOError(str(exc))
     return cogr_ds
 
@@ -82,7 +83,7 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except *:
             OGR_Dr_CreateDataSource(
                 cogr_driver, path_c, opts))
         return cogr_ds
-    except Exception as exc:
+    except CPLE_BaseError as exc:
         raise DriverIOError(str(exc))
     finally:
         CSLDestroy(opts)
