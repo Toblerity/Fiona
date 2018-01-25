@@ -5,7 +5,7 @@ Tests related to the validation of feature geometry types against the schema.
 import fiona
 import pytest
 
-from fiona.errors import GeometryTypeValidationError
+from fiona.errors import GeometryTypeValidationError, UnsupportedGeometryTypeError
 
 @pytest.fixture
 def filename_shp(tmpdir):
@@ -84,15 +84,48 @@ def test_multi_type(filename_json):
             write_invalid(collection)
 
 def test_unknown(filename_json):
+    """Reading and writing layers with "Unknown" (i.e. any) geometry type"""
+    # write a layer with a mixture of geometry types
     schema = {"geometry": "Unknown", "properties": properties}
     with fiona.open(filename_json, "w", driver="GeoJSON", schema=schema) as collection:
         write_point(collection)
         write_linestring(collection)
         write_polygon(collection)
         write_geometrycollection(collection)
+        write_null(collection)
 
         with pytest.raises(GeometryTypeValidationError):
             write_invalid(collection)
+
+    # copy the features to a new layer, reusing the layers metadata
+    with fiona.open(filename_json, "r", driver="GeoJSON") as src:
+        filename_dst = filename_json.replace(".json", "_v2.json")
+        assert src.schema["geometry"] == "Unknown"
+        with fiona.open(filename_dst, "w", **src.meta) as dst:
+            dst.writerecords(src)
+
+def test_any(filename_json):
+    schema = {"geometry": "Any", "properties": properties}
+    with fiona.open(filename_json, "w", driver="GeoJSON", schema=schema) as collection:
+        write_point(collection)
+        write_linestring(collection)
+        write_polygon(collection)
+        write_geometrycollection(collection)
+        write_null(collection)
+
+        with pytest.raises(GeometryTypeValidationError):
+            write_invalid(collection)
+
+def test_broken(filename_json):
+    schema = {"geometry": "NOT_VALID", "properties": properties}
+    with pytest.raises(UnsupportedGeometryTypeError):
+        with fiona.open(filename_json, "w", driver="GeoJSON", schema=schema):
+            pass
+
+def test_broken_list(filename_json):
+    schema = {"geometry": ("Point", "LineString", "NOT_VALID"), "properties": properties}
+    with pytest.raises(UnsupportedGeometryTypeError):
+        collection = fiona.open(filename_json, "w", driver="GeoJSON", schema=schema)
 
 def test_invalid_schema(filename_shp):
     """Features match schema but geometries not supported by driver"""
@@ -134,4 +167,3 @@ def test_none_schema(filename_json):
             write_point(collection)
         with pytest.raises(GeometryTypeValidationError):
             write_linestring(collection)
-

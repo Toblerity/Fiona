@@ -49,7 +49,7 @@ GEOMETRY_TYPES = {
 GEOJSON2OGR_GEOMETRY_TYPES = dict((v, k) for k, v in GEOMETRY_TYPES.iteritems())
 
 
-cdef unsigned int geometry_type_code(name):
+cdef unsigned int geometry_type_code(name) except? 9999:
     """Map OGC geometry type names to integer codes."""
     offset = 0
     if name.endswith('ZM'):

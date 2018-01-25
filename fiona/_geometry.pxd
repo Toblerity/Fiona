@@ -65,5 +65,5 @@ cdef class OGRGeomBuilder:
     cdef void * build(self, object geom) except NULL
 
 
-cdef unsigned int geometry_type_code(object name)
+cdef unsigned int geometry_type_code(object name) except? 9999
 cdef object normalize_geometry_type_code(unsigned int code)

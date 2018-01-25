@@ -939,6 +939,8 @@ cdef class WritingSession(Session):
                     geometry_type = "Unknown"
                 else:
                     geometry_type = geometry_types.pop()
+            if geometry_type == "Any" or geometry_type is None:
+                geometry_type = "Unknown"
             geometry_code = geometry_type_code(geometry_type)
 
             try:

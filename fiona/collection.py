@@ -11,7 +11,7 @@ from fiona.ogrext import Session, WritingSession
 from fiona.ogrext import (
     calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name)
 from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file, GEOMETRY_TYPES
-from fiona.errors import DriverError, SchemaError, CRSError
+from fiona.errors import DriverError, SchemaError, CRSError, UnsupportedGeometryTypeError
 from fiona._drivers import driver_count, GDALEnv
 from fiona.drvsupport import supported_drivers, AWSGDALEnv
 from six import string_types, binary_type
@@ -406,7 +406,7 @@ class Collection(object):
     def close(self):
         """In append or write mode, flushes data to disk, then ends
         access."""
-        if self.session is not None:
+        if self.session is not None and self.session.isactive():
             if self.mode in ('a', 'w'):
                 self.flush()
             log.debug("Flushed buffer")
@@ -434,23 +434,29 @@ class Collection(object):
         self.close()
 
 
+ALL_GEOMETRY_TYPES = set([
+    geom_type for geom_type in GEOMETRY_TYPES.values()
+    if "3D " not in geom_type and geom_type != "None"])
+ALL_GEOMETRY_TYPES.add("None")
+
+
 def _get_valid_geom_types(schema, driver):
+    """Returns a set of geometry types the schema will accept"""
     schema_geom_type = schema["geometry"]
     if isinstance(schema_geom_type, string_types) or schema_geom_type is None:
         schema_geom_type = (schema_geom_type,)
     valid_types = set()
     for geom_type in schema_geom_type:
-        valid_types.add(str(geom_type).lstrip("3D "))
+        geom_type = str(geom_type).lstrip("3D ")
+        if geom_type == "Unknown" or geom_type == "Any":
+            valid_types.update(ALL_GEOMETRY_TYPES)
+        else:
+            if geom_type not in ALL_GEOMETRY_TYPES:
+                raise UnsupportedGeometryTypeError(geom_type)
+            valid_types.add(geom_type)
 
-    if "Unknown" in valid_types:
-        ALL_GEOMETRY_TYPES = set([
-            geom_type for geom_type in GEOMETRY_TYPES.values()
-            if "3D " not in geom_type and geom_type != "None"])
-        valid_types.update(ALL_GEOMETRY_TYPES)
-        valid_types.remove("Unknown")
-
+    # shapefiles don't differentiate between single/multi geometries, except points
     if driver == "ESRI Shapefile" and "Point" not in valid_types:
-        print("OMG")
         for geom_type in list(valid_types):
             if not geom_type.startswith("Multi"):
                 valid_types.add("Multi"+geom_type)
