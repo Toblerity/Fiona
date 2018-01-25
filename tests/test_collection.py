@@ -279,6 +279,57 @@ class ReadingTest(unittest.TestCase):
         self.assertTrue(0 in self.c)
 
 
+class IgnoreFieldsAndGeometryTest(unittest.TestCase):
+
+    def test_without_ignore(self):
+        with fiona.open(WILDSHP, "r") as collection:
+            assert("AREA" in collection.schema["properties"].keys())
+            assert("STATE" in collection.schema["properties"].keys())
+            assert("NAME" in collection.schema["properties"].keys())
+            assert("geometry" in collection.schema.keys())
+
+            feature = next(iter(collection))
+            assert(feature["properties"]["AREA"] is not None)
+            assert(feature["properties"]["STATE"] is not None)
+            assert(feature["properties"]["NAME"] is not None)
+            assert(feature["geometry"] is not None)
+
+    def test_ignore_fields(self):
+        with fiona.open(WILDSHP, "r", ignore_fields=["AREA", "STATE"]) as collection:
+            assert("AREA" not in collection.schema["properties"].keys())
+            assert("STATE" not in collection.schema["properties"].keys())
+            assert("NAME" in collection.schema["properties"].keys())
+            assert("geometry" in collection.schema.keys())
+
+            feature = next(iter(collection))
+            assert("AREA" not in feature["properties"].keys())
+            assert("STATE" not in feature["properties"].keys())
+            assert(feature["properties"]["NAME"] is not None)
+            assert(feature["geometry"] is not None)
+
+    def test_ignore_invalid_field_missing(self):
+        with fiona.open(WILDSHP, "r", ignore_fields=["DOES_NOT_EXIST"]) as collection:
+            pass
+
+    def test_ignore_invalid_field_not_string(self):
+        with self.assertRaises(TypeError):
+            with fiona.open(WILDSHP, "r", ignore_fields=[42]) as collection:
+                pass
+
+    def test_ignore_geometry(self):
+        with fiona.open(WILDSHP, "r", ignore_geometry=True) as collection:
+            assert("AREA" in collection.schema["properties"].keys())
+            assert("STATE" in collection.schema["properties"].keys())
+            assert("NAME" in collection.schema["properties"].keys())
+            assert("geometry" not in collection.schema.keys())
+
+            feature = next(iter(collection))
+            assert(feature["properties"]["AREA"] is not None)
+            assert(feature["properties"]["STATE"] is not None)
+            assert(feature["properties"]["NAME"] is not None)
+            assert("geometry" not in feature.keys())
+
+
 class FilterReadingTest(unittest.TestCase):
 
     def setUp(self):

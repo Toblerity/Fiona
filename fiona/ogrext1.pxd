@@ -19,6 +19,7 @@ cdef extern from "cpl_string.h":
     char ** CSLAddNameValue (char **list, char *name, char *value)
     char ** CSLSetNameValue (char **list, char *name, char *value)
     void    CSLDestroy (char **list)
+    char ** CSLAddString(char **list, const char *string)
 
 cdef extern from "cpl_vsi.h":
     ctypedef struct VSILFILE:
@@ -149,4 +150,5 @@ cdef extern from "ogr_api.h":
     void *  OGROpen (char *path, int mode, void *x)
     void *  OGROpenShared (char *path, int mode, void *x)
     int     OGRReleaseDataSource (void *datasource)
+    OGRErr  OGR_L_SetIgnoredFields (void *layer, const char **papszFields)
     OGRErr  OGR_L_SetNextByIndex (void *layer, long nIndex)
