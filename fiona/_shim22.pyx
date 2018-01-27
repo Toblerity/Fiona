@@ -26,7 +26,7 @@ cdef void gdal_flush_cache(void *cogr_ds):
         GDALFlushCache(cogr_ds)
 
 
-cdef void* gdal_open_vector(char* path_c, int mode, drivers, options):
+cdef void* gdal_open_vector(char* path_c, int mode, drivers, options) except NULL:
     cdef void* cogr_ds = NULL
     cdef char **drvs = NULL
     cdef void* drv = NULL
@@ -69,7 +69,7 @@ cdef void* gdal_open_vector(char* path_c, int mode, drivers, options):
         CSLDestroy(open_opts)
 
 
-cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except *:
+cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except NULL:
     cdef char **creation_opts = NULL
 
     for k, v in options.items():

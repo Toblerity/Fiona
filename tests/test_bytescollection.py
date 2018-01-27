@@ -230,7 +230,7 @@ def test_grenada_bytes_geojson(bytes_grenada_geojson):
     reflects its json'ness.
     """
     # We expect an exception if the GeoJSON driver isn't specified.
-    with pytest.raises(fiona.errors.FionaValueError):
+    with pytest.raises(fiona.errors.DriverIOError):
         with fiona.BytesCollection(bytes_grenada_geojson) as col:
             pass
 

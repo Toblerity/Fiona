@@ -4,15 +4,15 @@ import sys
 import pytest
 
 import fiona
-from fiona.errors import FionaValueError
+from fiona.errors import DriverIOError
 
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 def test_read_fail():
-    with pytest.raises(FionaValueError):
+    with pytest.raises(DriverIOError):
         fiona.open('tests/data/coutwildrnp.shp', driver='GeoJSON')
-    with pytest.raises(FionaValueError):
+    with pytest.raises(DriverIOError):
         fiona.open('tests/data/coutwildrnp.shp', enabled_drivers=['GeoJSON'])
 
 
