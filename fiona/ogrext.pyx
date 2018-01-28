@@ -20,7 +20,7 @@ from fiona._geometry cimport (
     normalize_geometry_type_code)
 from fiona._err cimport exc_wrap_pointer
 
-from fiona._err import cpl_errs, CPLE_OpenFailedError
+from fiona._err import cpl_errs, CPLE_BaseError, CPLE_OpenFailedError
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
 from fiona.errors import (
@@ -1288,10 +1288,10 @@ def _listlayers(path, **kwargs):
     except UnicodeDecodeError:
         path_b = path
     path_c = path_b
-    with cpl_errs:
-        cogr_ds = gdal_open_vector(path_c, 0, None, kwargs)
-    if cogr_ds == NULL:
-        raise ValueError("No data available at path '%s'" % path)
+    try:
+        cogr_ds = exc_wrap_pointer(gdal_open_vector(path_c, 0, None, kwargs))
+    except CPLE_BaseError:
+        raise DriverIOError("No data available at path '%s'" % path)
 
     # Loop over the layers to get their names.
     layer_count = GDALDatasetGetLayerCount(cogr_ds)
