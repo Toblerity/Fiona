@@ -89,3 +89,28 @@ class WritingTest(unittest.TestCase):
             self.assertEqual(len(c), 1)
             feature = next(iter(c))
             self.assertEqual(feature["properties"]["other"], "Three")
+
+    def test_json_overwrite_invalid(self):
+        """Overwrite an existing file that isn't a valid GeoJSON"""
+
+        path = os.path.join(self.tempdir, "foo.json")
+        with open(path, "w") as f:
+            f.write("This isn't a valid GeoJSON file!!!")
+
+        schema1 = {"geometry": "Unknown", "properties": [("title", "str")]}
+        features1 = [
+            {
+                "geometry": {"type": "Point", "coordinates": [0.0, 0.0]},
+                "properties": {"title": "One"},
+            },
+            {
+                "geometry": {"type": "MultiPoint", "coordinates": [[0.0, 0.0]]},
+                "properties": {"title": "Two"},
+            }
+        ]
+
+        with fiona.open(path, "w", driver="GeoJSON", schema=schema1) as dst:
+            dst.writerecords(features1)
+
+        with fiona.open(path, "r") as src:
+            self.assertEqual(len(src), 2)
