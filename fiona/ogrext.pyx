@@ -781,17 +781,14 @@ cdef class WritingSession(Session):
             try:
                 cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
             except DriverIOError:
-                cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
-            else:
                 capability = check_capability_create_layer(cogr_ds)
                 if GDAL_VERSION_NUM < 2000000 and collection.driver == "GeoJSON":
                     capability = False
                 if not capability or collection.name is None:
-                    GDALClose(cogr_ds)
                     log.debug("Deleted pre-existing data at %s", path)
                     if collection.driver == "GeoJSON" and os.path.exists(path):
                         os.unlink(path)
-                    cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
+                cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
             self.cogr_ds = cogr_ds
 
             # Set the spatial reference system from the crs given to the

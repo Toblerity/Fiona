@@ -51,10 +51,11 @@ cdef void* gdal_open_vector(const char *path_c, int mode, drivers, options) exce
                 #collection._driver = name
                 break
     else:
-        try:
-            cogr_ds = exc_wrap_pointer(OGROpen(path_c, mode, NULL))
-        except CPLE_BaseError as exc:
-            raise DriverIOError(str(exc))
+        cogr_ds = OGROpen(path_c, mode, NULL)
+
+    if cogr_ds == NULL:
+        raise DriverIOError("Failed to open dataset in mode {}: {}".format(mode, path_c.decode("utf-8")))
+
     return cogr_ds
 
 
