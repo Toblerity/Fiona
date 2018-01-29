@@ -68,18 +68,12 @@ cdef unsigned int geometry_type_code(name):
 
 cdef object normalize_geometry_type_code(unsigned int code):
     """Normalize geometry type codes."""
-    # Remove 2.5D flag.
-    norm_code = code & (~0x80000000)
+    # Previously, this function did away with the difference between
+    # 2D and 3D types. It not longer does that.
+    if code not in GEOMETRY_TYPES:
+        raise UnsupportedGeometryTypeError(code)
 
-    # Normalize Z, M, and ZM types. Fiona 1.x does not support M
-    # and doesn't treat OGC 'Z' variants as special types of their
-    # own.
-    norm_code = norm_code % 1000
-
-    if norm_code not in GEOMETRY_TYPES:
-        raise UnsupportedGeometryTypeError(norm_code)
-
-    return norm_code
+    return code
 
 
 # Geometry related functions and classes follow.
