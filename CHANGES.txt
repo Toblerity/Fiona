@@ -7,6 +7,8 @@ Next
 ----
 
 - Obsolete and derelict fiona.tool module has been removed.
+- Revert the change in 0a2bc7c that discards Z in geometry types when a
+  collection's schema is reported (#541).
 
 1.8a1 (2017-11-06)
 ------------------

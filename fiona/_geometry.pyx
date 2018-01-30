@@ -11,7 +11,7 @@ class NullHandler(logging.Handler):
     def emit(self, record):
         pass
 
-log = logging.getLogger("Fiona")
+log = logging.getLogger(__name__)
 log.addHandler(NullHandler())
 
 # Mapping of OGR integer geometry types to GeoJSON type names.
@@ -67,9 +67,11 @@ cdef unsigned int geometry_type_code(name):
 
 
 cdef object normalize_geometry_type_code(unsigned int code):
-    """Normalize geometry type codes."""
-    # Previously, this function did away with the difference between
-    # 2D and 3D types. It not longer does that.
+    """Normalize M geometry type codes."""
+    if 2000 < code < 3000:
+        code = code % 1000
+    elif 3000 < code < 4000:
+        code = (code % 1000) | 0x80000000
     if code not in GEOMETRY_TYPES:
         raise UnsupportedGeometryTypeError(code)
 
