@@ -1,5 +1,6 @@
 """Tests of MemoryFile and ZippedMemoryFile"""
 
+from io import BytesIO
 import pytest
 import uuid
 
@@ -37,6 +38,37 @@ def test_write_memoryfile(profile_first_coutwildrnp_shp):
             col.write(first)
         memfile.seek(0)
         data = memfile.read()
+
+    with MemoryFile(data) as memfile:
+        with memfile.open() as col:
+            assert len(col) == 1
+
+
+def test_memoryfile_bytesio(path_coutwildrnp_json):
+    """In-memory GeoJSON file can be read"""
+    data = open(path_coutwildrnp_json, 'rb').read()
+
+    with fiona.open(BytesIO(data)) as collection:
+        assert len(collection) == 67
+
+
+def test_memoryfile_fileobj(path_coutwildrnp_json):
+    """In-memory GeoJSON file can be read"""
+    with open(path_coutwildrnp_json, 'rb') as f:
+
+        with fiona.open(f) as collection:
+            assert len(collection) == 67
+
+
+def test_write_memoryfile_(profile_first_coutwildrnp_shp):
+    """In-memory Shapefile can be written"""
+    profile, first = profile_first_coutwildrnp_shp
+    profile['driver'] = 'GeoJSON'
+    with BytesIO() as fout:
+        with fiona.open(fout, 'w', **profile) as col:
+            col.write(first)
+        fout.seek(0)
+        data = fout.read()
 
     with MemoryFile(data) as memfile:
         with memfile.open() as col:

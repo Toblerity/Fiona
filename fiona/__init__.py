@@ -62,6 +62,7 @@ Because Fiona collections are context managers, they are closed and (in
 writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
+from contextlib import contextmanager
 import logging
 import os
 from six import string_types
@@ -70,6 +71,7 @@ from fiona.collection import Collection, BytesCollection, vsi_path
 from fiona._drivers import driver_count, GDALEnv
 from fiona.drvsupport import supported_drivers
 from fiona.compat import OrderedDict
+from fiona.io import MemoryFile
 from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove
 from fiona.ogrext import (
     calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name)
@@ -88,7 +90,7 @@ log = logging.getLogger(__name__)
 
 
 def open(
-        path,
+        fp,
         mode='r',
         driver=None,
         schema=None,
@@ -153,32 +155,65 @@ def open(
           'example.shp', enabled_drivers=['GeoJSON', 'ESRI Shapefile'])
 
     """
-    # Parse the vfs into a vsi and an archive path.
-    path, vsi, archive = parse_paths(path, vfs)
-    if mode in ('a', 'r'):
-        if archive:
-            if not os.path.exists(archive):
-                raise IOError("no such archive file: %r" % archive)
-        elif path != '-' and not os.path.exists(path):
-            raise IOError("no such file or directory: %r" % path)
-        c = Collection(path, mode, driver=driver, encoding=encoding,
-                       layer=layer, vsi=vsi, archive=archive,
-                       enabled_drivers=enabled_drivers, **kwargs)
-    elif mode == 'w':
-        if schema:
-            # Make an ordered dict of schema properties.
-            this_schema = schema.copy()
-            this_schema['properties'] = OrderedDict(schema['properties'])
-        else:
-            this_schema = None
-        c = Collection(path, mode, crs=crs, driver=driver, schema=this_schema,
-                       encoding=encoding, layer=layer, vsi=vsi, archive=archive,
-                       enabled_drivers=enabled_drivers, crs_wkt=crs_wkt,
-                       **kwargs)
+    # Special case for file object argument.
+    if mode == 'r' and hasattr(fp, 'read'):
+
+        @contextmanager
+        def fp_reader(fp):
+            memfile = MemoryFile(fp.read())
+            dataset = memfile.open()
+            try:
+                yield dataset
+            finally:
+                dataset.close()
+                memfile.close()
+
+        return fp_reader(fp)
+
+    elif mode == 'w' and hasattr(fp, 'write'):
+
+        @contextmanager
+        def fp_writer(fp):
+            memfile = MemoryFile()
+            dataset = memfile.open(
+                driver=driver, crs=crs, schema=schema, layer=layer, **kwargs)
+            try:
+                yield dataset
+            finally:
+                dataset.close()
+                memfile.seek(0)
+                fp.write(memfile.read())
+                memfile.close()
+
+        return fp_writer(fp)
+
     else:
-        raise ValueError(
-            "mode string must be one of 'r', 'w', or 'a', not %s" % mode)
-    return c
+        # Parse the vfs into a vsi and an archive path.
+        path, vsi, archive = parse_paths(fp, vfs)
+        if mode in ('a', 'r'):
+            if archive:
+                if not os.path.exists(archive):
+                    raise IOError("no such archive file: %r" % archive)
+            elif path != '-' and not os.path.exists(path):
+                raise IOError("no such file or directory: %r" % path)
+            c = Collection(path, mode, driver=driver, encoding=encoding,
+                           layer=layer, vsi=vsi, archive=archive,
+                           enabled_drivers=enabled_drivers, **kwargs)
+        elif mode == 'w':
+            if schema:
+                # Make an ordered dict of schema properties.
+                this_schema = schema.copy()
+                this_schema['properties'] = OrderedDict(schema['properties'])
+            else:
+                this_schema = None
+            c = Collection(path, mode, crs=crs, driver=driver, schema=this_schema,
+                           encoding=encoding, layer=layer, vsi=vsi, archive=archive,
+                           enabled_drivers=enabled_drivers, crs_wkt=crs_wkt,
+                           **kwargs)
+        else:
+            raise ValueError(
+                "mode string must be one of 'r', 'w', or 'a', not %s" % mode)
+        return c
 
 collection = open
 
