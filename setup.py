@@ -180,6 +180,14 @@ ext_options = dict(
     libraries=libraries,
     extra_link_args=extra_link_args)
 
+ext_options_cpp = ext_options.copy()
+# GDAL 2.3+ requires C++11
+if sys.platform == "win32":
+    ext_options_cpp["extra_compile_args"] = ["/std:c++11"]
+else:
+    ext_options_cpp["extra_compile_args"] = ["-std=c++11"]
+
+
 # Define the extension modules.
 ext_modules = []
 
@@ -206,7 +214,7 @@ if source_is_repo and "clean" not in sys.argv:
 
     ext_modules = cythonize([
         Extension('fiona._geometry', ['fiona/_geometry.pyx'], **ext_options),
-        Extension('fiona._transform', ['fiona/_transform.pyx'], **ext_options),
+        Extension('fiona._transform', ['fiona/_transform.pyx'], **ext_options_cpp),
         Extension('fiona._crs', ['fiona/_crs.pyx'], **ext_options),
         Extension('fiona._drivers', ['fiona/_drivers.pyx'], **ext_options),
         Extension('fiona._err', ['fiona/_err.pyx'], **ext_options),
@@ -216,7 +224,7 @@ if source_is_repo and "clean" not in sys.argv:
 # If there's no manifest template, as in an sdist, we just specify .c files.
 elif "clean" not in sys.argv:
     ext_modules = [
-        Extension('fiona._transform', ['fiona/_transform.cpp'], **ext_options),
+        Extension('fiona._transform', ['fiona/_transform.cpp'], **ext_options_cpp),
         Extension('fiona._geometry', ['fiona/_geometry.c'], **ext_options),
         Extension('fiona._crs', ['fiona/_crs.c'], **ext_options),
         Extension('fiona._drivers', ['fiona/_drivers.c'], **ext_options),
@@ -253,7 +261,10 @@ if sys.version_info < (3, 4):
 
 extras_require = {
     'calc': ['shapely'],
-    'test': ['pytest>=3', 'pytest-cov']}
+    's3': ['boto3>=1.2.4'],
+    'test': ['pytest>=3', 'pytest-cov', 'boto3>=1.2.4', 'packaging'],
+}
+    
 extras_require['all'] = list(set(it.chain(*extras_require.values())))
 
 

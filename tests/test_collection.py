@@ -279,6 +279,57 @@ class ReadingTest(unittest.TestCase):
         self.assertTrue(0 in self.c)
 
 
+class IgnoreFieldsAndGeometryTest(unittest.TestCase):
+
+    def test_without_ignore(self):
+        with fiona.open(WILDSHP, "r") as collection:
+            assert("AREA" in collection.schema["properties"].keys())
+            assert("STATE" in collection.schema["properties"].keys())
+            assert("NAME" in collection.schema["properties"].keys())
+            assert("geometry" in collection.schema.keys())
+
+            feature = next(iter(collection))
+            assert(feature["properties"]["AREA"] is not None)
+            assert(feature["properties"]["STATE"] is not None)
+            assert(feature["properties"]["NAME"] is not None)
+            assert(feature["geometry"] is not None)
+
+    def test_ignore_fields(self):
+        with fiona.open(WILDSHP, "r", ignore_fields=["AREA", "STATE"]) as collection:
+            assert("AREA" not in collection.schema["properties"].keys())
+            assert("STATE" not in collection.schema["properties"].keys())
+            assert("NAME" in collection.schema["properties"].keys())
+            assert("geometry" in collection.schema.keys())
+
+            feature = next(iter(collection))
+            assert("AREA" not in feature["properties"].keys())
+            assert("STATE" not in feature["properties"].keys())
+            assert(feature["properties"]["NAME"] is not None)
+            assert(feature["geometry"] is not None)
+
+    def test_ignore_invalid_field_missing(self):
+        with fiona.open(WILDSHP, "r", ignore_fields=["DOES_NOT_EXIST"]) as collection:
+            pass
+
+    def test_ignore_invalid_field_not_string(self):
+        with self.assertRaises(TypeError):
+            with fiona.open(WILDSHP, "r", ignore_fields=[42]) as collection:
+                pass
+
+    def test_ignore_geometry(self):
+        with fiona.open(WILDSHP, "r", ignore_geometry=True) as collection:
+            assert("AREA" in collection.schema["properties"].keys())
+            assert("STATE" in collection.schema["properties"].keys())
+            assert("NAME" in collection.schema["properties"].keys())
+            assert("geometry" not in collection.schema.keys())
+
+            feature = next(iter(collection))
+            assert(feature["properties"]["AREA"] is not None)
+            assert(feature["properties"]["STATE"] is not None)
+            assert(feature["properties"]["NAME"] is not None)
+            assert("geometry" not in feature.keys())
+
+
 class FilterReadingTest(unittest.TestCase):
 
     def setUp(self):
@@ -349,6 +400,220 @@ class GenericWritingTest(unittest.TestCase):
         self.assertRaises(IOError, self.c.filter)
 
 
+class PropertiesNumberFormattingTest(unittest.TestCase):
+
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+        self.filename = os.path.join(self.tempdir, "properties_number_formatting_test")
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+
+    _records_with_float_property1 = [
+        {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
+            'properties': {'property1': 12.22}
+        },
+        {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.2)},
+            'properties': {'property1': 12.88}
+        }
+    ]
+
+    _records_with_float_property1_as_string = [
+        {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
+            'properties': {'property1': '12.22'}
+        },
+        {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.2)},
+            'properties': {'property1': '12.88'}
+        }
+    ]
+
+    _records_with_invalid_number_property1 = [
+        {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.3)},
+            'properties': {'property1': 'invalid number'}
+        }
+    ]
+
+    def _write_collection(self, records, schema, driver):
+        with fiona.open(
+                self.filename,
+                "w",
+                driver=driver,
+                schema=schema,
+                crs='epsg:4326',
+                encoding='utf-8'
+        ) as c:
+            c.writerecords(records)
+
+    def test_shape_driver_truncates_float_property_to_requested_int_format(self):
+        driver = "ESRI Shapefile"
+        self._write_collection(
+            self._records_with_float_property1,
+            {'geometry': 'Point', 'properties': [('property1', 'int')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            self.assertEqual(2, len(c))
+
+            rf1, rf2 = list(c)
+
+            self.assertEqual(12, rf1['properties']['property1'])
+            self.assertEqual(12, rf2['properties']['property1'])
+
+    def test_shape_driver_rounds_float_property_to_requested_digits_number(self):
+        driver = "ESRI Shapefile"
+        self._write_collection(
+            self._records_with_float_property1,
+            {'geometry': 'Point', 'properties': [('property1', 'float:15.1')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            self.assertEqual(2, len(c))
+
+            rf1, rf2 = list(c)
+
+            self.assertEqual(12.2, rf1['properties']['property1'])
+            self.assertEqual(12.9, rf2['properties']['property1'])
+
+    def test_string_is_converted_to_number_and_truncated_to_requested_int_by_shape_driver(self):
+        driver = "ESRI Shapefile"
+        self._write_collection(
+            self._records_with_float_property1_as_string,
+            {'geometry': 'Point', 'properties': [('property1', 'int')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            self.assertEqual(2, len(c))
+
+            rf1, rf2 = list(c)
+
+            self.assertEqual(12, rf1['properties']['property1'])
+            self.assertEqual(12, rf2['properties']['property1'])
+
+    def test_string_is_converted_to_number_and_rounded_to_requested_digits_number_by_shape_driver(self):
+        driver = "ESRI Shapefile"
+        self._write_collection(
+            self._records_with_float_property1_as_string,
+            {'geometry': 'Point', 'properties': [('property1', 'float:15.1')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            self.assertEqual(2, len(c))
+
+            rf1, rf2 = list(c)
+
+            self.assertEqual(12.2, rf1['properties']['property1'])
+            self.assertEqual(12.9, rf2['properties']['property1'])
+
+    def test_invalid_number_is_converted_to_0_and_written_by_shape_driver(self):
+        driver = "ESRI Shapefile"
+        self._write_collection(
+            self._records_with_invalid_number_property1,
+            # {'geometry': 'Point', 'properties': [('property1', 'int')]},
+            {'geometry': 'Point', 'properties': [('property1', 'float:15.1')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            self.assertEqual(1, len(c))
+
+            rf1 = c[0]
+
+            self.assertEqual(0, rf1['properties']['property1'])
+
+    def test_geojson_driver_truncates_float_property_to_requested_int_format(self):
+        driver = "GeoJSON"
+        self._write_collection(
+            self._records_with_float_property1,
+            {'geometry': 'Point', 'properties': [('property1', 'int')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            self.assertEqual(2, len(c))
+
+            rf1, rf2 = list(c)
+
+            self.assertEqual(12, rf1['properties']['property1'])
+            self.assertEqual(12, rf2['properties']['property1'])
+
+    def test_geojson_driver_does_not_round_float_property_to_requested_digits_number(self):
+        driver = "GeoJSON"
+        self._write_collection(
+            self._records_with_float_property1,
+            {'geometry': 'Point', 'properties': [('property1', 'float:15.1')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            self.assertEqual(2, len(c))
+
+            rf1, rf2 = list(c)
+
+            # ****************************************
+            # FLOAT FORMATTING IS NOT RESPECTED...
+            self.assertEqual(12.22, rf1['properties']['property1'])
+            self.assertEqual(12.88, rf2['properties']['property1'])
+
+    def test_string_is_converted_to_number_and_truncated_to_requested_int_by_geojson_driver(self):
+        driver = "GeoJSON"
+        self._write_collection(
+            self._records_with_float_property1_as_string,
+            {'geometry': 'Point', 'properties': [('property1', 'int')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            self.assertEqual(2, len(c))
+
+            rf1, rf2 = list(c)
+
+            self.assertEqual(12, rf1['properties']['property1'])
+            self.assertEqual(12, rf2['properties']['property1'])
+
+    def test_string_is_converted_to_number_but_not_rounded_to_requested_digits_number_by_geojson_driver(self):
+        driver = "GeoJSON"
+        self._write_collection(
+            self._records_with_float_property1_as_string,
+            {'geometry': 'Point', 'properties': [('property1', 'float:15.1')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            self.assertEqual(2, len(c))
+
+            rf1, rf2 = list(c)
+
+            # ****************************************
+            # FLOAT FORMATTING IS NOT RESPECTED...
+            self.assertEqual(12.22, rf1['properties']['property1'])
+            self.assertEqual(12.88, rf2['properties']['property1'])
+
+    def test_invalid_number_is_converted_to_0_and_written_by_geojson_driver(self):
+        driver = "GeoJSON"
+        self._write_collection(
+            self._records_with_invalid_number_property1,
+            # {'geometry': 'Point', 'properties': [('property1', 'int')]},
+            {'geometry': 'Point', 'properties': [('property1', 'float:15.1')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            self.assertEqual(1, len(c))
+
+            rf1 = c[0]
+
+            self.assertEqual(0, rf1['properties']['property1'])
+
+
 class PointWritingTest(unittest.TestCase):
 
     def setUp(self):
@@ -371,8 +636,9 @@ class PointWritingTest(unittest.TestCase):
     def test_cpg(self):
         """Requires GDAL 1.9"""
         self.sink.close()
-        self.assertTrue(open(os.path.join(
-            self.tempdir, "point_writing_test.cpg")).readline() == 'UTF-8')
+        with open(os.path.join(self.tempdir, "point_writing_test.cpg")) as f:
+            encoding = f.readline()
+        self.assertTrue(encoding == "UTF-8")
 
     def test_write_one(self):
         self.assertEqual(len(self.sink), 0)
@@ -665,3 +931,16 @@ class OpenKeywordArgsTest(unittest.TestCase):
 
     def tearDown(self):
         shutil.rmtree(self.tempdir)
+
+@pytest.mark.network
+def test_collection_http():
+    ds = fiona.Collection('http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.shp', vsi='http')
+    assert ds.path == '/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.shp'
+    assert len(ds) == 10
+
+@pytest.mark.network
+def test_collection_zip_http():
+    ds = fiona.Collection('http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip', vsi='zip+http')
+    assert ds.path == '/vsizip/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip'
+    assert len(ds) == 10
+        

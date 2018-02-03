@@ -152,7 +152,8 @@ cdef class FeatureBuilder:
     argument is not destroyed.
     """
 
-    cdef build(self, void *feature, encoding='utf-8', bbox=False, driver=None):
+    cdef build(self, void *feature, encoding='utf-8', bbox=False, driver=None,
+               ignore_fields=None, ignore_geometry=False):
         # The only method anyone ever needs to call
         cdef void *fdefn
         cdef int i
@@ -166,8 +167,17 @@ cdef class FeatureBuilder:
         cdef unsigned char *data
         cdef int l
         cdef int retval
+        cdef int fieldsubtype
         cdef const char *key_c = NULL
+        fid = OGR_F_GetFID(feature)
         props = OrderedDict()
+        fiona_feature = {
+            "type": "Feature",
+            "id": str(fid),
+            "properties": props,
+        }
+        if not ignore_fields:
+            ignore_fields = set()
         for i in range(OGR_F_GetFieldCount(feature)):
             fdefn = OGR_F_GetFieldDefnRef(feature, i)
             if fdefn == NULL:
@@ -177,7 +187,12 @@ cdef class FeatureBuilder:
                 raise ValueError("Null field name reference")
             key_b = key_c
             key = key_b.decode(encoding)
+
+            if key in ignore_fields:
+                continue
+
             fieldtypename = FIELD_TYPES[OGR_Fld_GetType(fdefn)]
+            fieldsubtype = get_field_subtype(fdefn)
             if not fieldtypename:
                 log.warning(
                     "Skipping field %s: invalid type %s",
@@ -190,7 +205,10 @@ cdef class FeatureBuilder:
             if is_field_null(feature, i):
                 props[key] = None
             elif fieldtype is int:
-                props[key] = OGR_F_GetFieldAsInteger64(feature, i)
+                if fieldsubtype == OFSTBoolean:
+                    props[key] = bool(OGR_F_GetFieldAsInteger64(feature, i))
+                else:
+                    props[key] = OGR_F_GetFieldAsInteger64(feature, i)
             elif fieldtype is float:
                 props[key] = OGR_F_GetFieldAsDouble(feature, i)
 
@@ -236,16 +254,14 @@ cdef class FeatureBuilder:
                 log.debug("%s: None, fieldtype: %r, %r" % (key, fieldtype, fieldtype in string_types))
                 props[key] = None
 
-        cdef void *cogr_geometry = OGR_F_GetGeometryRef(feature)
-        if cogr_geometry is not NULL:
-            geom = GeomBuilder().build(cogr_geometry)
-        else:
-            geom = None
-        return {
-            'type': 'Feature',
-            'id': str(OGR_F_GetFID(feature)),
-            'geometry': geom,
-            'properties': props }
+        cdef void *cogr_geometry
+        if not ignore_geometry:
+            cogr_geometry = OGR_F_GetGeometryRef(feature)
+            if cogr_geometry is not NULL:
+                geom = GeomBuilder().build(cogr_geometry)
+                fiona_feature["geometry"] = geom
+
+        return fiona_feature
 
 
 cdef class OGRFeatureBuilder:
@@ -395,12 +411,12 @@ cdef class Session:
     def __dealloc__(self):
         self.stop()
 
-    def start(self, collection):
+    def start(self, collection, **kwargs):
         cdef const char *path_c = NULL
         cdef const char *name_c = NULL
         cdef void *drv = NULL
         cdef void *ds = NULL
-        cdef char **drvs = NULL
+        cdef char **ignore_fields = NULL
 
         if collection.path == '-':
             path = '/vsistdin/'
@@ -412,6 +428,8 @@ cdef class Session:
             # Presume already a UTF-8 encoded string
             path_b = path
         path_c = path_b
+
+        userencoding = kwargs.get('encoding')
 
         # TODO: eliminate this context manager in 2.0 as we have done
         # in Rasterio 1.0.
@@ -426,7 +444,7 @@ cdef class Session:
             else:
                 drivers = None
 
-            self.cogr_ds = gdal_open_vector(path_c, 0, drivers)
+            self.cogr_ds = gdal_open_vector(path_c, 0, drivers, kwargs)
 
         if self.cogr_ds == NULL:
             raise FionaValueError(
@@ -449,19 +467,26 @@ cdef class Session:
         if self.cogr_layer == NULL:
             raise ValueError("Null layer: " + repr(collection.name))
 
-        self.collection = collection
+        self._fileencoding = userencoding or (
+            OGR_L_TestCapability(
+                self.cogr_layer, OLC_STRINGSASUTF8) and
+            'utf-8') or (
+            self.get_driver() == "ESRI Shapefile" and
+            'ISO-8859-1') or locale.getpreferredencoding().upper()
 
-        userencoding = self.collection.encoding
-        if userencoding:
-            CPLSetThreadLocalConfigOption('SHAPE_ENCODING', '')
-            self._fileencoding = userencoding.upper()
-        else:
-            self._fileencoding = (
-                OGR_L_TestCapability(
-                    self.cogr_layer, OLC_STRINGSASUTF8) and
-                'utf-8') or (
-                self.get_driver() == "ESRI Shapefile" and
-                'ISO-8859-1') or locale.getpreferredencoding().upper()
+        if collection.ignore_fields:
+            try:
+                for name in collection.ignore_fields:
+                    try:
+                        name = name.encode(self._fileencoding)
+                    except AttributeError:
+                        raise TypeError("Ignored field \"{}\" has type \"{}\", expected string".format(name, name.__class__.__name__))
+                    ignore_fields = CSLAddString(ignore_fields, <const char *>name)
+                OGR_L_SetIgnoredFields(self.cogr_layer, ignore_fields)
+            finally:
+                CSLDestroy(ignore_fields)
+
+        self.collection = collection
 
     def stop(self):
         self.cogr_layer = NULL
@@ -505,6 +530,11 @@ cdef class Session:
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
 
+        if self.collection.ignore_fields:
+            ignore_fields = self.collection.ignore_fields
+        else:
+            ignore_fields = set()
+
         cogr_featuredefn = OGR_L_GetLayerDefn(self.cogr_layer)
         if cogr_featuredefn == NULL:
             raise ValueError("Null feature definition")
@@ -518,6 +548,8 @@ cdef class Session:
             if not bool(key_b):
                 raise ValueError("Invalid field name ref: %s" % key)
             key = key_b.decode(self.get_internalencoding())
+            if key in ignore_fields:
+                continue
             fieldtypename = FIELD_TYPES[OGR_Fld_GetType(cogr_fielddefn)]
             if not fieldtypename:
                 log.warning(
@@ -550,12 +582,14 @@ cdef class Session:
 
             props.append((key, val))
 
-        code = normalize_geometry_type_code(
-            OGR_FD_GetGeomType(cogr_featuredefn))
+        ret = {"properties": OrderedDict(props)}
 
-        return {
-            'properties': OrderedDict(props),
-            'geometry': GEOMETRY_TYPES[code]}
+        if not self.collection.ignore_geometry:
+            code = normalize_geometry_type_code(
+                OGR_FD_GetGeomType(cogr_featuredefn))
+            ret["geometry"] = GEOMETRY_TYPES[code]
+
+        return ret
 
     def get_crs(self):
         cdef char *proj_c = NULL
@@ -692,7 +726,9 @@ cdef class Session:
                 cogr_feature,
                 bbox=False,
                 encoding=self.get_internalencoding(),
-                driver=self.collection.driver
+                driver=self.collection.driver,
+                ignore_fields=self.collection.ignore_fields,
+                ignore_geometry=self.collection.ignore_geometry,
             )
             _deleteOgrFeature(cogr_feature)
             return feature
@@ -712,13 +748,16 @@ cdef class WritingSession(Session):
     def start(self, collection, **kwargs):
         cdef void *cogr_srs = NULL
         cdef char **options = NULL
-        self.collection = collection
         cdef const char *path_c = NULL
         cdef const char *driver_c = NULL
         cdef const char *name_c = NULL
         cdef const char *proj_c = NULL
         cdef const char *fileencoding_c = NULL
+        cdef OGRFieldSubType field_subtype
         path = collection.path
+        self.collection = collection
+
+        userencoding = kwargs.get('encoding')
 
         if collection.mode == 'a':
             if os.path.exists(path):
@@ -727,7 +766,7 @@ cdef class WritingSession(Session):
                 except UnicodeDecodeError:
                     path_b = path
                 path_c = path_b
-                self.cogr_ds = gdal_open_vector(path_c, 1, None)
+                self.cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
 
                 cogr_driver = GDALGetDatasetDriver(self.cogr_ds)
                 if cogr_driver == NULL:
@@ -748,7 +787,6 @@ cdef class WritingSession(Session):
             else:
                 raise OSError("No such file or directory %s" % path)
 
-            userencoding = self.collection.encoding
             self._fileencoding = (userencoding or (
                 OGR_L_TestCapability(self.cogr_layer, OLC_STRINGSASUTF8) and
                 'utf-8') or (
@@ -765,15 +803,6 @@ cdef class WritingSession(Session):
             driver_b = collection.driver.encode()
             driver_c = driver_b
 
-            # Creation options
-            for k, v in kwargs.items():
-                k, v = k.upper(), str(v).upper()
-                key_b = k.encode('utf-8')
-                val_b = v.encode('utf-8')
-                key_c = key_b
-                val_c = val_b
-                options = CSLSetNameValue(options, key_c, val_c)
-                log.debug("Option %r=%r\n", k, v)
 
             cogr_driver = GDALGetDriverByName(driver_c)
             if cogr_driver == NULL:
@@ -785,23 +814,23 @@ cdef class WritingSession(Session):
             #
             # TODO: remove the assumption.
             if not os.path.exists(path):
-                cogr_ds = exc_wrap_pointer(gdal_create(cogr_driver, path_c))
+                cogr_ds = exc_wrap_pointer(gdal_create(cogr_driver, path_c, kwargs))
 
             # TODO: revisit the logic in the following blocks when we
             # change the assumption above.
             # TODO: use exc_wrap_pointer()
             else:
-                cogr_ds = gdal_open_vector(path_c, 1, None)
+                cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
 
                 # TODO: use exc_wrap_pointer()
                 if cogr_ds == NULL:
-                    cogr_ds = gdal_create(cogr_driver, path_c)
+                    cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
 
                 elif collection.name is None:
                     GDALClose(cogr_ds)
                     cogr_ds = NULL
                     log.debug("Deleted pre-existing data at %s", path)
-                    cogr_ds = gdal_create(cogr_driver, path_c)
+                    cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
 
                 else:
                     pass
@@ -857,7 +886,6 @@ cdef class WritingSession(Session):
             # to the collection constructor takes highest precedence, then
             # 'iso-8859-1', then the system's default encoding as last resort.
             sysencoding = locale.getpreferredencoding()
-            userencoding = collection.encoding
             self._fileencoding = (userencoding or (
                 collection.driver == "ESRI Shapefile" and
                 'ISO-8859-1') or sysencoding).upper()
@@ -866,7 +894,7 @@ cdef class WritingSession(Session):
             # will result in a warning. Fixing is a TODO.
             fileencoding = self.get_fileencoding()
             if fileencoding:
-                fileencoding_b = fileencoding.encode()
+                fileencoding_b = fileencoding.encode('utf-8')
                 fileencoding_c = fileencoding_b
                 with cpl_errs:
                     options = CSLSetNameValue(options, "ENCODING", fileencoding_c)
@@ -894,6 +922,15 @@ cdef class WritingSession(Session):
             # Create the named layer in the datasource.
             name_b = collection.name.encode('utf-8')
             name_c = name_b
+
+            for k, v in kwargs.items():
+                k = k.upper().encode('utf-8')
+                if isinstance(v, bool):
+                    v = ('ON' if v else 'OFF').encode('utf-8')
+                else:
+                    v = str(v).encode('utf-8')
+                log.debug("Set option %r: %r", k, v)
+                options = CSLAddNameValue(options, <const char *>k, <const char *>v)
 
             try:
                 self.cogr_layer = exc_wrap_pointer(
@@ -924,11 +961,17 @@ cdef class WritingSession(Session):
             # which are an ordered dict since Fiona 1.0.1.
             for key, value in collection.schema['properties'].items():
                 log.debug("Creating field: %s %s", key, value)
+                
+                field_subtype = OFSTNone
 
                 # Convert 'long' to 'int'. See
                 # https://github.com/Toblerity/Fiona/issues/101.
                 if value == 'long':
                     value = 'int'
+                
+                if value == 'bool':
+                    value = 'int'
+                    field_subtype = OFSTBoolean
 
                 # Is there a field width/precision?
                 width = precision = None
@@ -957,6 +1000,9 @@ cdef class WritingSession(Session):
                     OGR_Fld_SetWidth(cogr_fielddefn, width)
                 if precision:
                     OGR_Fld_SetPrecision(cogr_fielddefn, precision)
+                if field_subtype != OFSTNone:
+                    # subtypes are new in GDAL 2.x, ignored in 1.x
+                    set_field_subtype(cogr_fielddefn, field_subtype)
                 OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1)
                 OGR_Fld_Destroy(cogr_fielddefn)
             log.debug("Created fields")
@@ -1196,7 +1242,9 @@ cdef class Iterator:
             cogr_feature,
             bbox=False,
             encoding=self.encoding,
-            driver=self.collection.driver
+            driver=self.collection.driver,
+            ignore_fields=self.collection.ignore_fields,
+            ignore_geometry=self.collection.ignore_geometry,
         )
         _deleteOgrFeature(cogr_feature)
         return feature
@@ -1225,7 +1273,9 @@ cdef class ItemsIterator(Iterator):
             cogr_feature,
             bbox=False,
             encoding=self.encoding,
-            driver=self.collection.driver
+            driver=self.collection.driver,
+            ignore_fields=self.collection.ignore_fields,
+            ignore_geometry=self.collection.ignore_geometry,
         )
         _deleteOgrFeature(cogr_feature)
 
@@ -1275,7 +1325,7 @@ def _remove(path, driver=None):
         raise RuntimeError("Failed to remove data source {}".format(path))
 
 
-def _listlayers(path):
+def _listlayers(path, **kwargs):
 
     """Provides a list of the layers in an OGR data source.
     """
@@ -1292,7 +1342,7 @@ def _listlayers(path):
         path_b = path
     path_c = path_b
     with cpl_errs:
-        cogr_ds = gdal_open_vector(path_c, 0, None)
+        cogr_ds = gdal_open_vector(path_c, 0, None, kwargs)
     if cogr_ds == NULL:
         raise ValueError("No data available at path '%s'" % path)
 

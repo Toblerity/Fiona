@@ -34,6 +34,8 @@ For example: a script with required data.
 
 For example: Mac OS X 10.12.3.
 
-## Fiona version and provenance
+## Fiona and GDAL version and provenance
 
 For example: the 1.7.10.post1 manylinux1 wheel installed from PyPI using pip version 9.0.1.
+
+For example: GDAL 2.1.0 installed via Homebrew

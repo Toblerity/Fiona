@@ -152,3 +152,21 @@ def _filter_supported_drivers():
     supported_drivers = supported_drivers_copy
 
 _filter_supported_drivers()
+
+class AWSGDALEnv(GDALEnv):
+
+    def __init__(self, **options):
+        import boto3
+        session = boto3.Session()
+        if session:
+            if session.region_name:
+                options.update(aws_region=session.region_name)
+            creds = session.get_credentials()
+            if creds:
+                if creds.access_key:
+                    options.update(aws_access_key_id=creds.access_key)
+                if creds.secret_key:  # pragma: no branch
+                    options.update(aws_secret_access_key=creds.secret_key)
+                if creds.token:
+                    options.update(aws_session_token=creds.token)
+        super(AWSGDALEnv, self).__init__(**options)

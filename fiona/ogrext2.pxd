@@ -9,6 +9,14 @@ cdef extern from "ogr_core.h":
 
     ctypedef int OGRErr
 
+    ctypedef int OGRFieldSubType
+    ctypedef enum OGRFieldSubType:
+        OFSTNone = 0
+        OFSTBoolean = 1
+        OFSTInt16 = 2
+        OFSTFloat32 = 3
+        OFSTMaxSubType = 3
+
     ctypedef struct OGREnvelope:
         double MinX
         double MaxX
@@ -83,6 +91,7 @@ cdef extern from "cpl_conv.h":
 
 
 cdef extern from "cpl_string.h":
+    char ** CSLAddNameValue (char **list, const char *name, const char *value)
     char ** CSLSetNameValue (char **list, const char *name, const char *value)
     void CSLDestroy (char **list)
     char ** CSLAddString(char **list, const char *string)
@@ -171,6 +180,8 @@ cdef extern from "ogr_api.h":
     void    OGR_Fld_Set (void *fielddefn, char *name, int fieldtype, int width, int precision, int justification)
     void    OGR_Fld_SetPrecision (void *fielddefn, int n)
     void    OGR_Fld_SetWidth (void *fielddefn, int n)
+    OGRFieldSubType OGR_Fld_GetSubType(void *fielddefn)
+    void    OGR_Fld_SetSubType(void *fielddefn, OGRFieldSubType subtype)
     OGRErr  OGR_G_AddGeometryDirectly (void *geometry, void *part)
     void    OGR_G_AddPoint (void *geometry, double x, double y, double z)
     void    OGR_G_AddPoint_2D (void *geometry, double x, double y)
@@ -210,6 +221,7 @@ cdef extern from "ogr_api.h":
     void *  OGROpen (char *path, int mode, void *x)
     void *  OGROpenShared (char *path, int mode, void *x)
     int     OGRReleaseDataSource (void *datasource)
+    OGRErr  OGR_L_SetIgnoredFields (void *layer, const char **papszFields)
     OGRErr  OGR_L_SetNextByIndex (void *layer, long nIndex)
     long long OGR_F_GetFieldAsInteger64 (void *feature, int n)
     void    OGR_F_SetFieldInteger64 (void *feature, int n, long long value)
