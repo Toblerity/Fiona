@@ -7,6 +7,9 @@ Fiona is OGR's neat and nimble API for Python programmers.
 .. image:: https://travis-ci.org/Toblerity/Fiona.png?branch=master   
    :target: https://travis-ci.org/Toblerity/Fiona
 
+.. image:: https://ci.appveyor.com/api/projects/status/github/Toblerity/Fiona?svg=true
+   :target: https://ci.appveyor.com/project/sgillies/fiona/branch/master
+
 .. image:: https://coveralls.io/repos/Toblerity/Fiona/badge.png
    :target: https://coveralls.io/r/Toblerity/Fiona
 
@@ -184,6 +187,17 @@ and write zipped Shapefiles.
     
     # Output:
     # (0, u'coutwildrnp', 67)
+
+Fiona can also read from more exotic file systems. For instance, a
+zipped shape file in S3 can be accessed like so:
+
+.. code-block:: python
+		
+   with fiona.open('zip+s3://mapbox/rasterio/coutwildrnp.zip') as src:
+       print(len(src))
+
+   # Output:
+   # 67
 
 Fiona CLI
 =========

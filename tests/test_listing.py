@@ -22,11 +22,11 @@ def test_single_file(path_coutwildrnp_shp):
 
 
 def test_directory(data_dir):
-    assert fiona.listlayers(data_dir) == ['coutwildrnp']
+    assert fiona.listlayers(data_dir) == ['coutwildrnp', 'gre']
 
 
 def test_directory_trailing_slash(data_dir):
-    assert fiona.listlayers(data_dir) == ['coutwildrnp']
+    assert fiona.listlayers(data_dir) == ['coutwildrnp', 'gre']
 
 
 def test_zip_path(path_coutwildrnp_zip):
@@ -49,15 +49,3 @@ class ListLayersArgsTest(unittest.TestCase):
 
     def test_path_ioerror(self):
         self.assertRaises(IOError, fiona.listlayers, ("foobar"))
-
-
-def test_parse_path():
-    assert fiona.parse_paths("zip://foo.zip") == ("foo.zip", "zip", None)
-
-
-def test_parse_path2():
-    assert fiona.parse_paths("foo") == ("foo", None, None)
-
-
-def test_parse_vfs():
-    assert fiona.parse_paths("/", "zip://foo.zip") == ("/", "zip", "foo.zip")

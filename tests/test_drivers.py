@@ -25,5 +25,6 @@ def test_options(tmpdir):
         path = os.path.join("tests", "data", "coutwildrnp.shp")
         c = fiona.open(path)
         c.close()
-        log = open(logfile).read()
+        with open(logfile, "r") as f:
+            log = f.read()
         assert "Option CPL_DEBUG" in log
