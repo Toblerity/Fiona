@@ -219,7 +219,9 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
         # Parse the vfs into a vsi and an archive path.
         path, vsi, archive = parse_paths(fp, vfs)
         if mode in ('a', 'r'):
-            if archive:
+            if is_remote(vsi):
+                pass
+            elif archive:
                 if not os.path.exists(archive):
                     raise IOError("no such archive file: %r" % archive)
             elif path != '-' and not os.path.exists(path):
