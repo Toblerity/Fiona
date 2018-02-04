@@ -62,6 +62,7 @@ Because Fiona collections are context managers, they are closed and (in
 writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
+from contextlib import contextmanager
 import logging
 import os
 from six import string_types
@@ -71,6 +72,7 @@ from fiona.vfs import vsi_path, parse_paths, is_remote
 from fiona._drivers import driver_count, GDALEnv
 from fiona.drvsupport import supported_drivers
 from fiona.compat import OrderedDict
+from fiona.io import MemoryFile
 from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove
 from fiona.ogrext import (
     calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name)
@@ -88,20 +90,10 @@ __gdal_version__ = get_gdal_release_name().decode('utf-8')
 log = logging.getLogger(__name__)
 
 
-def open(
-        path,
-        mode='r',
-        driver=None,
-        schema=None,
-        crs=None,
-        encoding=None,
-        layer=None,
-        vfs=None,
-        enabled_drivers=None,
-        crs_wkt=None,
-        **kwargs):
-    """Open file at ``path`` in ``mode`` "r" (read), "a" (append), or
-    "w" (write) and return a ``Collection`` object.
+def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
+         layer=None, vfs=None, enabled_drivers=None, crs_wkt=None,
+         **kwargs):
+    """Open a collection for read, append, or write
 
     In write mode, a driver name such as "ESRI Shapefile" or "GPX" (see
     OGR docs or ``ogr2ogr --help`` on the command line) and a schema
@@ -135,11 +127,6 @@ def open(
     When the provided path is to a file containing multiple named layers
     of data, a layer can be singled out by ``layer``.
 
-    A virtual filesystem can be specified. The ``vfs`` parameter may be
-    an Apache Commons VFS style string beginning with "zip://" or
-    "tar://"". In this case, the ``path`` must be an absolute path
-    within that container.
-
     The drivers enabled for opening datasets may be restricted to those
     listed in the ``enabled_drivers`` parameter. This and the ``driver``
     parameter afford much control over opening of files.
@@ -153,35 +140,111 @@ def open(
       fiona.open(
           'example.shp', enabled_drivers=['GeoJSON', 'ESRI Shapefile'])
 
+    Parameters
+    ----------
+    fp : URI, or file-like object
+        A dataset resource identifier or file object.
+    mode : str
+        One of 'r', to read (the default); 'a', to append; or 'w', to
+        write.
+    driver : str
+        In 'w' mode a format driver name is required. In 'r' or 'a'
+        mode this parameter has no effect.
+    schema : dict
+        Required in 'w' mode, has no effect in 'r' or 'a' mode.
+    crs : str or dict
+        Required in 'w' mode, has no effect in 'r' or 'a' mode.
+    encoding : str
+        Name of the encoding used to encode or decode the dataset.
+    layer : int or str
+        The integer index or name of a layer in a multi-layer dataset.
+    vfs : str
+        This is a deprecated parameter. A URI scheme such as "zip://"
+        should be used instead.
+    enabled_drivers : list
+        An optional list of driver names to used when opening a
+        collection.
+    crs_wkt : str
+        An optional WKT representation of a coordinate reference
+        system.
+    kwargs : mapping
+        Other driver-specific parameters that will be interpreted by
+        the OGR library as layer creation or opening options.
+
+    Returns
+    -------
+    Collection
     """
-    # Parse the vfs into a vsi and an archive path.
-    path, vsi, archive = parse_paths(path, vfs)
-    if mode in ('a', 'r'):
-        if is_remote(vsi):
-            pass
-        elif archive:
-            if not os.path.exists(archive):
-                raise IOError("no such archive file: %r" % archive)
-        elif path != '-' and not os.path.exists(path):
-            raise IOError("no such file or directory: %r" % path)
-        c = Collection(path, mode, driver=driver, encoding=encoding,
-                       layer=layer, vsi=vsi, archive=archive,
-                       enabled_drivers=enabled_drivers, **kwargs)
-    elif mode == 'w':
+
+    if mode == 'r' and hasattr(fp, 'read'):
+
+        @contextmanager
+        def fp_reader(fp):
+            memfile = MemoryFile(fp.read())
+            dataset = memfile.open()
+            try:
+                yield dataset
+            finally:
+                dataset.close()
+                memfile.close()
+
+        return fp_reader(fp)
+
+    elif mode == 'w' and hasattr(fp, 'write'):
         if schema:
             # Make an ordered dict of schema properties.
             this_schema = schema.copy()
             this_schema['properties'] = OrderedDict(schema['properties'])
         else:
             this_schema = None
-        c = Collection(path, mode, crs=crs, driver=driver, schema=this_schema,
-                       encoding=encoding, layer=layer, vsi=vsi, archive=archive,
-                       enabled_drivers=enabled_drivers, crs_wkt=crs_wkt,
-                       **kwargs)
+
+        @contextmanager
+        def fp_writer(fp):
+            memfile = MemoryFile()
+            dataset = memfile.open(
+                driver=driver, crs=crs, schema=schema, layer=layer,
+                encoding=encoding, enabled_drivers=enabled_drivers,
+                **kwargs)
+            try:
+                yield dataset
+            finally:
+                dataset.close()
+                memfile.seek(0)
+                fp.write(memfile.read())
+                memfile.close()
+
+        return fp_writer(fp)
+
     else:
-        raise ValueError(
-            "mode string must be one of 'r', 'w', or 'a', not %s" % mode)
-    return c
+        # Parse the vfs into a vsi and an archive path.
+        path, vsi, archive = parse_paths(fp, vfs)
+        if mode in ('a', 'r'):
+            if is_remote(vsi):
+                pass
+            elif archive:
+                if not os.path.exists(archive):
+                    raise IOError("no such archive file: %r" % archive)
+            elif path != '-' and not os.path.exists(path):
+                raise IOError("no such file or directory: %r" % path)
+            c = Collection(path, mode, driver=driver, encoding=encoding,
+                           layer=layer, vsi=vsi, archive=archive,
+                           enabled_drivers=enabled_drivers, **kwargs)
+        elif mode == 'w':
+            if schema:
+                # Make an ordered dict of schema properties.
+                this_schema = schema.copy()
+                this_schema['properties'] = OrderedDict(schema['properties'])
+            else:
+                this_schema = None
+            c = Collection(path, mode, crs=crs, driver=driver, schema=this_schema,
+                           encoding=encoding, layer=layer, vsi=vsi, archive=archive,
+                           enabled_drivers=enabled_drivers, crs_wkt=crs_wkt,
+                           **kwargs)
+        else:
+            raise ValueError(
+                "mode string must be one of 'r', 'w', or 'a', not %s" % mode)
+
+        return c
 
 collection = open
 

@@ -6,6 +6,13 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 Next
 ----
 
+New features:
+
+- We've added a ``MemoryFile`` class which supports formatted in-memory
+  feature collections (#501).
+  
+Bug fixes:
+
 - Obsolete and derelict fiona.tool module has been removed.
 
 1.8a1 (2017-11-06)
