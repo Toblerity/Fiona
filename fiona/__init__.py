@@ -89,20 +89,10 @@ __gdal_version__ = get_gdal_release_name().decode('utf-8')
 log = logging.getLogger(__name__)
 
 
-def open(
-        fp,
-        mode='r',
-        driver=None,
-        schema=None,
-        crs=None,
-        encoding=None,
-        layer=None,
-        vfs=None,
-        enabled_drivers=None,
-        crs_wkt=None,
-        **kwargs):
-    """Open file at ``path`` in ``mode`` "r" (read), "a" (append), or
-    "w" (write) and return a ``Collection`` object.
+def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
+         layer=None, vfs=None, enabled_drivers=None, crs_wkt=None,
+         **kwargs):
+    """Open a collection for read, append, or write
 
     In write mode, a driver name such as "ESRI Shapefile" or "GPX" (see
     OGR docs or ``ogr2ogr --help`` on the command line) and a schema
@@ -136,11 +126,6 @@ def open(
     When the provided path is to a file containing multiple named layers
     of data, a layer can be singled out by ``layer``.
 
-    A virtual filesystem can be specified. The ``vfs`` parameter may be
-    an Apache Commons VFS style string beginning with "zip://" or
-    "tar://"". In this case, the ``path`` must be an absolute path
-    within that container.
-
     The drivers enabled for opening datasets may be restricted to those
     listed in the ``enabled_drivers`` parameter. This and the ``driver``
     parameter afford much control over opening of files.
@@ -154,8 +139,42 @@ def open(
       fiona.open(
           'example.shp', enabled_drivers=['GeoJSON', 'ESRI Shapefile'])
 
+    Parameters
+    ----------
+    fp : URI, or file-like object
+        A dataset resource identifier or file object.
+    mode : str
+        One of 'r', to read (the default); 'a', to append; or 'w', to
+        write.
+    driver : str
+        In 'w' mode a format driver name is required. In 'r' or 'a'
+        mode this parameter has no effect.
+    schema : dict
+        Required in 'w' mode, has no effect in 'r' or 'a' mode.
+    crs : str or dict
+        Required in 'w' mode, has no effect in 'r' or 'a' mode.
+    encoding : str
+        Name of the encoding used to encode or decode the dataset.
+    layer : int or str
+        The integer index or name of a layer in a multi-layer dataset.
+    vfs : str
+        This is a deprecated parameter. A URI scheme such as "zip://"
+        should be used instead.
+    enabled_drivers : list
+        An optional list of driver names to used when opening a
+        collection.
+    crs_wkt : str
+        An optional WKT representation of a coordinate reference
+        system.
+    kwargs : mapping
+        Other driver-specific parameters that will be interpreted by
+        the OGR library as layer creation or opening options.
+
+    Returns
+    -------
+    Collection
     """
-    # Special case for file object argument.
+
     if mode == 'r' and hasattr(fp, 'read'):
 
         @contextmanager
@@ -171,12 +190,20 @@ def open(
         return fp_reader(fp)
 
     elif mode == 'w' and hasattr(fp, 'write'):
+        if schema:
+            # Make an ordered dict of schema properties.
+            this_schema = schema.copy()
+            this_schema['properties'] = OrderedDict(schema['properties'])
+        else:
+            this_schema = None
 
         @contextmanager
         def fp_writer(fp):
             memfile = MemoryFile()
             dataset = memfile.open(
-                driver=driver, crs=crs, schema=schema, layer=layer, **kwargs)
+                driver=driver, crs=crs, schema=schema, layer=layer,
+                encoding=encoding, enabled_drivers=enabled_drivers,
+                **kwargs)
             try:
                 yield dataset
             finally:
@@ -213,6 +240,7 @@ def open(
         else:
             raise ValueError(
                 "mode string must be one of 'r', 'w', or 'a', not %s" % mode)
+
         return c
 
 collection = open
