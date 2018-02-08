@@ -3,6 +3,12 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.7.11.post1 (2018-01-08)
+-------------------------
+
+- This post-release adds missing expat (and thereby GPX format) support to 
+  the included GDAL library (still version 2.2.2).
+
 1.7.11 (2017-12-14)
 -------------------
 
