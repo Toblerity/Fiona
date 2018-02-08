@@ -13,6 +13,8 @@ New features:
   
 Bug fixes:
 
+- An ``AttributeError`` raised when the ``--bbox`` option of fio-cat is used
+  with more than one input file has been fixed (#543, #544).
 - Obsolete and derelict fiona.tool module has been removed.
 
 1.8a1 (2017-11-06)
