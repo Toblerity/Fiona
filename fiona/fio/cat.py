@@ -65,14 +65,14 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
             layer[str(i)] = [0]
     try:
         with fiona.drivers(CPL_DEBUG=verbosity > 2):
+            if bbox:
+                try:
+                    bbox = tuple(map(float, bbox.split(',')))
+                except ValueError:
+                    bbox = json.loads(bbox)
             for i, path in enumerate(files, 1):
                 for lyr in layer[str(i)]:
                     with fiona.open(path, layer=lyr) as src:
-                        if bbox:
-                            try:
-                                bbox = tuple(map(float, bbox.split(',')))
-                            except ValueError:
-                                bbox = json.loads(bbox)
                         for i, feat in src.items(bbox=bbox):
                             if dst_crs or precision >= 0:
                                 g = transform_geom(

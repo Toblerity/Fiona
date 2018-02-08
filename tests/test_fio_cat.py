@@ -46,6 +46,16 @@ def test_bbox_yes():
     assert result.output.count('"Feature"') == 19
 
 
+def test_bbox_yes_two_files():
+    runner = CliRunner()
+    result = runner.invoke(
+        cat.cat,
+        [WILDSHP, WILDSHP, '--bbox', '-109,37,-107,39'],
+        catch_exceptions=False)
+    assert result.exit_code == 0
+    assert result.output.count('"Feature"') == 38
+
+
 def test_bbox_json_yes():
     runner = CliRunner()
     result = runner.invoke(
