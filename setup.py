@@ -219,9 +219,9 @@ elif "clean" not in sys.argv:
             Extension('fiona.ogrext', ['fiona/ogrext2.c'], **ext_options))
 
 requirements = [
-    'cligj',
+    'cligj>=0.4',
     'click-plugins',
-    'six',
+    'six>=1.7',
     'munch']
 
 if sys.version_info < (2, 7):

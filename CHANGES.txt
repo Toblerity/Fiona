@@ -3,6 +3,11 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.7.12 (Next)
+-------------
+
+- Require six 1.7 or greater (#550).
+
 1.7.11.post1 (2018-01-08)
 -------------------------
 
