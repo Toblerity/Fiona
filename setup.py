@@ -247,9 +247,9 @@ elif "clean" not in sys.argv:
                 Extension('fiona._shim', ['fiona/_shim2.c'], **ext_options))
 
 requirements = [
-    'cligj',
+    'cligj>=0.4',
     'click-plugins',
-    'six',
+    'six>=1.7',
     'munch']
 
 if sys.version_info < (2, 7):
@@ -264,7 +264,7 @@ extras_require = {
     's3': ['boto3>=1.2.4'],
     'test': ['pytest>=3', 'pytest-cov', 'boto3>=1.2.4', 'packaging'],
 }
-    
+
 extras_require['all'] = list(set(it.chain(*extras_require.values())))
 
 
