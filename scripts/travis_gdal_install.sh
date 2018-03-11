@@ -55,8 +55,8 @@ ls -l $GDALINST
 
 if [ "$GDALVERSION" = "trunk" ]; then
   # always rebuild trunk
-  git clone https://github.com/OSGeo/gdal.git $GDALBUILD/trunk
-  cd $GDALBUILD/trunk
+  git clone -b trunk --single-branch --depth=1 https://github.com/OSGeo/gdal.git $GDALBUILD/trunk
+  cd $GDALBUILD/trunk/gdal
   ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS
   make -s -j 2
   make install
