@@ -55,7 +55,7 @@ ls -l $GDALINST
 
 if [ "$GDALVERSION" = "trunk" ]; then
   # always rebuild trunk
-  svn checkout https://svn.osgeo.org/gdal/trunk/gdal $GDALBUILD/trunk
+  svn checkout https://svn.osgeo.org/gdal/trunk/gdal gdal $GDALBUILD/trunk
   cd $GDALBUILD/trunk
   ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS
   make -s -j 2
