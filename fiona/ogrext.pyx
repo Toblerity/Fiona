@@ -260,6 +260,8 @@ cdef class FeatureBuilder:
             if cogr_geometry is not NULL:
                 geom = GeomBuilder().build(cogr_geometry)
                 fiona_feature["geometry"] = geom
+            else:
+                fiona_feature["geometry"] = None
 
         return fiona_feature
 
