@@ -25,7 +25,7 @@ from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
 from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
-    TransactionError)
+    TransactionError, GeometryTypeValidationError)
 from fiona.compat import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -260,6 +260,8 @@ cdef class FeatureBuilder:
             if cogr_geometry is not NULL:
                 geom = GeomBuilder().build(cogr_geometry)
                 fiona_feature["geometry"] = geom
+            else:
+                fiona_feature["geometry"] = None
 
         return fiona_feature
 
@@ -932,13 +934,22 @@ cdef class WritingSession(Session):
                 log.debug("Set option %r: %r", k, v)
                 options = CSLAddNameValue(options, <const char *>k, <const char *>v)
 
+            geometry_type = collection.schema.get("geometry", "Unknown")
+            if not isinstance(geometry_type, string_types) and geometry_type is not None:
+                geometry_types = set(geometry_type)
+                if len(geometry_types) > 1:
+                    geometry_type = "Unknown"
+                else:
+                    geometry_type = geometry_types.pop()
+            if geometry_type == "Any" or geometry_type is None:
+                geometry_type = "Unknown"
+            geometry_code = geometry_type_code(geometry_type)
+
             try:
                 self.cogr_layer = exc_wrap_pointer(
                     GDALDatasetCreateLayer(
                         self.cogr_ds, name_c, cogr_srs,
-                        geometry_type_code(
-                            collection.schema.get('geometry', 'Unknown')),
-                        options))
+                        geometry_code, options))
             except Exception as exc:
                 raise DriverIOError(str(exc))
             finally:
@@ -1028,22 +1039,13 @@ cdef class WritingSession(Session):
 
         schema_geom_type = collection.schema['geometry']
         cogr_driver = GDALGetDatasetDriver(self.cogr_ds)
-        if OGR_Dr_GetName(cogr_driver) == b"GeoJSON":
-            def validate_geometry_type(rec):
+        driver_name = OGR_Dr_GetName(cogr_driver).decode("utf-8")
+
+        valid_geom_types = collection._valid_geom_types
+        def validate_geometry_type(record):
+            if record["geometry"] is None:
                 return True
-        elif OGR_Dr_GetName(cogr_driver) == b"ESRI Shapefile" \
-                and "Point" not in collection.schema['geometry']:
-            schema_geom_type = collection.schema['geometry'].lstrip(
-                "3D ").lstrip("Multi")
-            def validate_geometry_type(rec):
-                return rec['geometry'] is None or \
-                rec['geometry']['type'].lstrip(
-                    "3D ").lstrip("Multi") == schema_geom_type
-        else:
-            schema_geom_type = collection.schema['geometry'].lstrip("3D ")
-            def validate_geometry_type(rec):
-                return rec['geometry'] is None or \
-                       rec['geometry']['type'].lstrip("3D ") == schema_geom_type
+            return record["geometry"]["type"].lstrip("3D ") in valid_geom_types
 
         log.debug("Starting transaction (initial)")
         result = gdal_start_transaction(self.cogr_ds, 0)
@@ -1060,7 +1062,7 @@ cdef class WritingSession(Session):
                         record['properties'].keys(),
                         list(schema_props_keys) ))
             if not validate_geometry_type(record):
-                raise ValueError(
+                raise GeometryTypeValidationError(
                     "Record's geometry type does not match "
                     "collection schema's geometry type: %r != %r" % (
                          record['geometry']['type'],
