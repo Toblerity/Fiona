@@ -14,6 +14,10 @@ cdef bint is_field_null(void *feature, int n):
         return False
 
 
+cdef void set_field_null(void *feature, int n):
+    pass
+
+
 cdef void gdal_flush_cache(void *cogr_ds):
     with cpl_errs:
         GDALFlushCache(cogr_ds)

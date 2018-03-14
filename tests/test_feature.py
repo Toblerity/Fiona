@@ -6,6 +6,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+import pytest
 
 import fiona
 from fiona import collection
@@ -111,24 +112,21 @@ class PolygonRoundTripTest(unittest.TestCase):
         g = featureRT(f, self.c)
         self.assertEqual(g['properties']['title'], 'foo')
 
-class TestNullField(unittest.TestCase):
-    def setUp(self):
-        self.tempdir = tempfile.mkdtemp()
-    def tearDown(self):
-        shutil.rmtree(self.tempdir)
 
-    def test_feature_null_field(self):
-        """
-        In GDAL 2.2 the behaviour of OGR_F_IsFieldSet slightly changed.
-        See GH #460.
-        """
-        meta = {"driver": "ESRI Shapefile", "schema": {"geometry": "Point", "properties": {"RETURN_P": "int"}}}
-        filename = os.path.join(self.tempdir, "test_null.shp")
-        with fiona.open(filename, "w", **meta) as dst:
-            g = {"coordinates": [1.0, 2.0], "type": "Point"}
-            feature = {"geometry": g, "properties": {"RETURN_P": None}}
-            dst.write(feature)
+@pytest.mark.parametrize("driver, extension", [("ESRI Shapefile", "shp"), ("GeoJSON", "geojson")])
+def test_feature_null_field(tmpdir, driver, extension):
+    """
+    In GDAL 2.2 the behaviour of OGR_F_IsFieldSet slightly changed. Some drivers
+    (e.g. GeoJSON) also require fields to be explicitly set to null.
+    See GH #460.
+    """
+    meta = {"driver": driver, "schema": {"geometry": "Point", "properties": {"RETURN_P": "str"}}}
+    filename = os.path.join(str(tmpdir), "test_null."+extension)
+    with fiona.open(filename, "w", **meta) as dst:
+        g = {"coordinates": [1.0, 2.0], "type": "Point"}
+        feature = {"geometry": g, "properties": {"RETURN_P": None}}
+        dst.write(feature)
 
-        with fiona.open(filename, "r") as src:
-            feature = next(iter(src))
-            assert(feature["properties"]["RETURN_P"] is None)
+    with fiona.open(filename, "r") as src:
+        feature = next(iter(src))
+        assert(feature["properties"]["RETURN_P"] is None)
