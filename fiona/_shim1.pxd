@@ -8,6 +8,7 @@ ctypedef enum OGRFieldSubType:
     OFSTMaxSubType = 3
 
 cdef bint is_field_null(void *feature, int n)
+cdef void set_field_null(void *feature, int n)
 cdef void gdal_flush_cache(void *cogr_ds)
 cdef void* gdal_open_vector(char* path_c, int mode, drivers, options)
 cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except *

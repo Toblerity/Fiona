@@ -165,6 +165,7 @@ cdef extern from "ogr_api.h":
     void    OGR_F_SetFieldInteger (void *feature, int n, int value)
     void    OGR_F_SetFieldString (void *feature, int n, char *value)
     void    OGR_F_SetFieldBinary (void *feature, int n, int l, unsigned char *value)
+    void    OGR_F_SetFieldNull (void *feature, int n)  # new in GDAL 2.2
     int     OGR_F_SetGeometryDirectly (void *feature, void *geometry)
     void *  OGR_FD_Create (char *name)
     int     OGR_FD_GetFieldCount (void *featuredefn)

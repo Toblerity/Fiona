@@ -362,7 +362,7 @@ cdef class OGRFeatureBuilder:
                 OGR_F_SetFieldBinary(cogr_feature, i, len(value),
                     <unsigned char*>string_c)
             elif value is None:
-                pass # keep field unset/null
+                set_field_null(cogr_feature, i)
             else:
                 raise ValueError("Invalid field type %s" % type(value))
             log.debug("Set field %s: %s" % (key, value))
