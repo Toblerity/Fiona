@@ -2,6 +2,9 @@
 # All rights reserved.
 # See ../LICENSE.txt
 
+from libc.stdio cimport FILE
+
+
 cdef extern from "ogr_core.h":
 
     ctypedef int OGRErr
@@ -94,14 +97,25 @@ cdef extern from "cpl_string.h":
     char ** CSLAddString(char **list, const char *string)
 
 
-cdef extern from "cpl_vsi.h":
-    ctypedef struct VSILFILE:
-        pass
-    int VSIFCloseL (VSILFILE *)
-    VSILFILE * VSIFileFromMemBuffer (const char * filename,
-                                     unsigned char * data,
-                                     int data_len,
-                                     int take_ownership)
+cdef extern from "cpl_vsi.h" nogil:
+    ctypedef int vsi_l_offset
+    ctypedef FILE VSILFILE
+
+    unsigned char *VSIGetMemFileBuffer(const char *path,
+                                       vsi_l_offset *data_len,
+                                       int take_ownership)
+    VSILFILE *VSIFileFromMemBuffer(const char *path, void *data,
+                                   vsi_l_offset data_len, int take_ownership)
+    VSILFILE* VSIFOpenL(const char *path, const char *mode)
+    int VSIFCloseL(VSILFILE *fp)
+    int VSIUnlink(const char *path)
+
+    int VSIFFlushL(VSILFILE *fp)
+    size_t VSIFReadL(void *buffer, size_t nSize, size_t nCount, VSILFILE *fp)
+    int VSIFSeekL(VSILFILE *fp, vsi_l_offset nOffset, int nWhence)
+    vsi_l_offset VSIFTellL(VSILFILE *fp)
+    int VSIFTruncateL(VSILFILE *fp, vsi_l_offset nNewSize)
+    size_t VSIFWriteL(void *buffer, size_t nSize, size_t nCount, VSILFILE *fp)
     int VSIUnlink (const char * pathname)
 
 
@@ -151,6 +165,7 @@ cdef extern from "ogr_api.h":
     void    OGR_F_SetFieldInteger (void *feature, int n, int value)
     void    OGR_F_SetFieldString (void *feature, int n, char *value)
     void    OGR_F_SetFieldBinary (void *feature, int n, int l, unsigned char *value)
+    void    OGR_F_SetFieldNull (void *feature, int n)  # new in GDAL 2.2
     int     OGR_F_SetGeometryDirectly (void *feature, void *geometry)
     void *  OGR_FD_Create (char *name)
     int     OGR_FD_GetFieldCount (void *featuredefn)

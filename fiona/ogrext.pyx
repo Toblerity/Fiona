@@ -18,14 +18,14 @@ from fiona._shim cimport *
 from fiona._geometry cimport (
     GeomBuilder, OGRGeomBuilder, geometry_type_code,
     normalize_geometry_type_code)
-from fiona._err cimport exc_wrap_pointer
+from fiona._err cimport exc_wrap_pointer, exc_wrap_vsilfile
 
 from fiona._err import cpl_errs
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
 from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
-    TransactionError)
+    TransactionError, GeometryTypeValidationError)
 from fiona.compat import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -260,6 +260,8 @@ cdef class FeatureBuilder:
             if cogr_geometry is not NULL:
                 geom = GeomBuilder().build(cogr_geometry)
                 fiona_feature["geometry"] = geom
+            else:
+                fiona_feature["geometry"] = None
 
         return fiona_feature
 
@@ -360,7 +362,7 @@ cdef class OGRFeatureBuilder:
                 OGR_F_SetFieldBinary(cogr_feature, i, len(value),
                     <unsigned char*>string_c)
             elif value is None:
-                pass # keep field unset/null
+                set_field_null(cogr_feature, i)
             else:
                 raise ValueError("Invalid field type %s" % type(value))
             log.debug("Set field %s: %s" % (key, value))
@@ -932,13 +934,22 @@ cdef class WritingSession(Session):
                 log.debug("Set option %r: %r", k, v)
                 options = CSLAddNameValue(options, <const char *>k, <const char *>v)
 
+            geometry_type = collection.schema.get("geometry", "Unknown")
+            if not isinstance(geometry_type, string_types) and geometry_type is not None:
+                geometry_types = set(geometry_type)
+                if len(geometry_types) > 1:
+                    geometry_type = "Unknown"
+                else:
+                    geometry_type = geometry_types.pop()
+            if geometry_type == "Any" or geometry_type is None:
+                geometry_type = "Unknown"
+            geometry_code = geometry_type_code(geometry_type)
+
             try:
                 self.cogr_layer = exc_wrap_pointer(
                     GDALDatasetCreateLayer(
                         self.cogr_ds, name_c, cogr_srs,
-                        geometry_type_code(
-                            collection.schema.get('geometry', 'Unknown')),
-                        options))
+                        geometry_code, options))
             except Exception as exc:
                 raise DriverIOError(str(exc))
             finally:
@@ -1028,22 +1039,13 @@ cdef class WritingSession(Session):
 
         schema_geom_type = collection.schema['geometry']
         cogr_driver = GDALGetDatasetDriver(self.cogr_ds)
-        if OGR_Dr_GetName(cogr_driver) == b"GeoJSON":
-            def validate_geometry_type(rec):
+        driver_name = OGR_Dr_GetName(cogr_driver).decode("utf-8")
+
+        valid_geom_types = collection._valid_geom_types
+        def validate_geometry_type(record):
+            if record["geometry"] is None:
                 return True
-        elif OGR_Dr_GetName(cogr_driver) == b"ESRI Shapefile" \
-                and "Point" not in collection.schema['geometry']:
-            schema_geom_type = collection.schema['geometry'].lstrip(
-                "3D ").lstrip("Multi")
-            def validate_geometry_type(rec):
-                return rec['geometry'] is None or \
-                rec['geometry']['type'].lstrip(
-                    "3D ").lstrip("Multi") == schema_geom_type
-        else:
-            schema_geom_type = collection.schema['geometry'].lstrip("3D ")
-            def validate_geometry_type(rec):
-                return rec['geometry'] is None or \
-                       rec['geometry']['type'].lstrip("3D ") == schema_geom_type
+            return record["geometry"]["type"].lstrip("3D ") in valid_geom_types
 
         log.debug("Starting transaction (initial)")
         result = gdal_start_transaction(self.cogr_ds, 0)
@@ -1060,7 +1062,7 @@ cdef class WritingSession(Session):
                         record['properties'].keys(),
                         list(schema_props_keys) ))
             if not validate_geometry_type(record):
-                raise ValueError(
+                raise GeometryTypeValidationError(
                     "Record's geometry type does not match "
                     "collection schema's geometry type: %r != %r" % (
                          record['geometry']['type'],
@@ -1362,6 +1364,7 @@ def _listlayers(path, **kwargs):
 
     return layer_names
 
+
 def buffer_to_virtual_file(bytesbuf, ext=''):
     """Maps a bytes buffer to a virtual file.
 
@@ -1371,7 +1374,8 @@ def buffer_to_virtual_file(bytesbuf, ext=''):
     vsi_filename = '/vsimem/{}'.format(uuid.uuid4().hex + ext)
     vsi_cfilename = vsi_filename if not isinstance(vsi_filename, string_types) else vsi_filename.encode('utf-8')
 
-    vsi_handle = VSIFileFromMemBuffer(vsi_cfilename, bytesbuf, len(bytesbuf), 0)
+    vsi_handle = VSIFileFromMemBuffer(vsi_cfilename, <unsigned char *>bytesbuf, len(bytesbuf), 0)
+
     if vsi_handle == NULL:
         raise OSError('failed to map buffer to file')
     if VSIFCloseL(vsi_handle) != 0:
@@ -1379,6 +1383,188 @@ def buffer_to_virtual_file(bytesbuf, ext=''):
 
     return vsi_filename
 
+
 def remove_virtual_file(vsi_filename):
     vsi_cfilename = vsi_filename if not isinstance(vsi_filename, string_types) else vsi_filename.encode('utf-8')
     return VSIUnlink(vsi_cfilename)
+
+
+cdef class MemoryFileBase(object):
+    """Base for a BytesIO-like class backed by an in-memory file."""
+
+    def __init__(self, file_or_bytes=None, filename=None, ext=''):
+        """A file in an in-memory filesystem.
+
+        Parameters
+        ----------
+        file_or_bytes : file or bytes
+            A file opened in binary mode or bytes or a bytearray
+        filename : str
+            A filename for the in-memory file under /vsimem
+        ext : str
+            A file extension for the in-memory file under /vsimem. Ignored if
+            filename was provided.
+        """
+        cdef VSILFILE *vsi_handle = NULL
+
+        if file_or_bytes:
+            if hasattr(file_or_bytes, 'read'):
+                initial_bytes = file_or_bytes.read()
+            else:
+                initial_bytes = file_or_bytes
+            if not isinstance(initial_bytes, (bytearray, bytes)):
+                raise TypeError(
+                    "Constructor argument must be a file opened in binary "
+                    "mode or bytes/bytearray.")
+        else:
+            initial_bytes = b''
+
+        if filename:
+            # GDAL's SRTMHGT driver requires the filename to be "correct" (match
+            # the bounds being written)
+            self.name = '/vsimem/{0}'.format(filename)
+        else:
+            # GDAL 2.1 requires a .zip extension for zipped files.
+            self.name = '/vsimem/{0}.{1}'.format(uuid.uuid4(), ext.lstrip('.'))
+
+        self.path = self.name.encode('utf-8')
+        self._len = 0
+        self._pos = 0
+        self.closed = False
+
+        self._initial_bytes = initial_bytes
+        cdef unsigned char *buffer = self._initial_bytes
+
+        if self._initial_bytes:
+
+            vsi_handle = VSIFileFromMemBuffer(
+                self.path, buffer, len(self._initial_bytes), 0)
+            self._len = len(self._initial_bytes)
+
+            if vsi_handle == NULL:
+                raise IOError(
+                    "Failed to create in-memory file using initial bytes.")
+
+            if VSIFCloseL(vsi_handle) != 0:
+                raise IOError(
+                    "Failed to properly close in-memory file.")
+
+    def exists(self):
+        """Test if the in-memory file exists.
+
+        Returns
+        -------
+        bool
+            True if the in-memory file exists.
+        """
+        cdef VSILFILE *fp = NULL
+        cdef const char *cypath = self.path
+
+        with nogil:
+            fp = VSIFOpenL(cypath, 'r')
+
+        if fp != NULL:
+            VSIFCloseL(fp)
+            return True
+        else:
+            return False
+
+    def __len__(self):
+        """Length of the file's buffer in number of bytes.
+
+        Returns
+        -------
+        int
+        """
+        cdef unsigned char *buff = NULL
+        cdef const char *cfilename = self.path
+        cdef vsi_l_offset buff_len = 0
+        buff = VSIGetMemFileBuffer(self.path, &buff_len, 0)
+        return int(buff_len)
+
+    def close(self):
+        """Close MemoryFile and release allocated memory."""
+        VSIUnlink(self.path)
+        self._pos = 0
+        self._initial_bytes = None
+        self.closed = True
+
+    def read(self, size=-1):
+        """Read size bytes from MemoryFile."""
+        cdef VSILFILE *fp = NULL
+        # Return no bytes immediately if the position is at or past the
+        # end of the file.
+        length = len(self)
+
+        if self._pos >= length:
+            self._pos = length
+            return b''
+
+        if size == -1:
+            size = length - self._pos
+        else:
+            size = min(size, length - self._pos)
+
+        cdef unsigned char *buffer = <unsigned char *>CPLMalloc(size)
+        cdef bytes result
+
+        fp = VSIFOpenL(self.path, 'r')
+
+        try:
+            fp = exc_wrap_vsilfile(fp)
+            if VSIFSeekL(fp, self._pos, 0) < 0:
+                raise IOError(
+                    "Failed to seek to offset %s in %s.",
+                    self._pos, self.name)
+
+            objects_read = VSIFReadL(buffer, 1, size, fp)
+            result = <bytes>buffer[:objects_read]
+
+        finally:
+            VSIFCloseL(fp)
+            CPLFree(buffer)
+
+        self._pos += len(result)
+        return result
+
+    def seek(self, offset, whence=0):
+        """Seek to position in MemoryFile."""
+        if whence == 0:
+            pos = offset
+        elif whence == 1:
+            pos = self._pos + offset
+        elif whence == 2:
+            pos = len(self) - offset
+        if pos < 0:
+            raise ValueError("negative seek position: {}".format(pos))
+        if pos > len(self):
+            raise ValueError("seek position past end of file: {}".format(pos))
+        self._pos = pos
+        return self._pos
+
+    def tell(self):
+        """Tell current position in MemoryFile."""
+        return self._pos
+
+    def write(self, data):
+        """Write data bytes to MemoryFile"""
+        cdef VSILFILE *fp = NULL
+        cdef const unsigned char *view = <bytes>data
+        n = len(data)
+
+        if not self.exists():
+            fp = exc_wrap_vsilfile(VSIFOpenL(self.path, 'w'))
+        else:
+            fp = exc_wrap_vsilfile(VSIFOpenL(self.path, 'r+'))
+            if VSIFSeekL(fp, self._pos, 0) < 0:
+                raise IOError(
+                    "Failed to seek to offset %s in %s.", self._pos, self.name)
+
+        result = VSIFWriteL(view, 1, n, fp)
+        VSIFFlushL(fp)
+        VSIFCloseL(fp)
+
+        self._pos += result
+        self._len = max(self._len, self._pos)
+
+        return result
