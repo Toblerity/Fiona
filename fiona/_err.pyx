@@ -221,13 +221,13 @@ cdef inline object exc_check():
 
 cdef void *exc_wrap_pointer(void *ptr) except NULL:
     """Wrap a GDAL/OGR function that returns GDALDatasetH etc (void *)
-    Raises a Rasterio exception if a non-fatal error has be set.
+    Raises a Fiona exception which inherits from CPLE_BaseError if a non-fatal
+    error has be set.
     """
     if ptr == NULL:
         exc = exc_check()
         if exc:
             raise exc
-            return NULL
     return ptr
 
 

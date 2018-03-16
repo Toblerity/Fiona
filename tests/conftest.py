@@ -30,6 +30,11 @@ def _read_file(name):
         return f.read()
 
 
+has_gpkg = "GPKG" in fiona.supported_drivers.keys()
+has_gpkg_reason = "Requires geopackage driver"
+requires_gpkg = pytest.mark.skipif(not has_gpkg, reason=has_gpkg_reason)
+
+
 @pytest.fixture(scope='session')
 def data_dir():
     """Absolute file path to the directory containing test datasets."""
@@ -107,7 +112,6 @@ def bytes_grenada_geojson():
 def path_coutwildrnp_gpkg():
     """Creates ``coutwildrnp.gpkg`` if it does not exist and returns the absolute
     file path."""
-    has_gpkg = "GPKG" in fiona.supported_drivers.keys()
     if not has_gpkg:
         raise RuntimeError("GDAL has not been compiled with GPKG support")
     path = os.path.join(data_dir(), 'coutwildrnp.gpkg')

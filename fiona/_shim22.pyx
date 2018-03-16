@@ -2,7 +2,9 @@ cdef extern from "ogr_api.h":
     int OGR_F_IsFieldNull(void *feature, int n)
 
 from fiona.ogrext2 cimport *
-from fiona._err import cpl_errs
+from fiona.errors import DriverIOError
+from fiona._err import cpl_errs, CPLE_BaseError
+from fiona._err cimport exc_wrap_pointer
 
 import logging
 
@@ -28,16 +30,18 @@ cdef void gdal_flush_cache(void *cogr_ds):
         GDALFlushCache(cogr_ds)
 
 
-cdef void* gdal_open_vector(char* path_c, int mode, drivers, options):
+cdef void* gdal_open_vector(char* path_c, int mode, drivers, options) except NULL:
     cdef void* cogr_ds = NULL
     cdef char **drvs = NULL
     cdef void* drv = NULL
     cdef char **open_opts = NULL
+    cdef unsigned int flags
 
+    flags = GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR
     if mode == 1:
-        mode = GDAL_OF_UPDATE
+        flags |= GDAL_OF_UPDATE
     else:
-        mode = GDAL_OF_READONLY
+        flags |= GDAL_OF_READONLY
 
     if drivers:
         for name in drivers:
@@ -59,20 +63,17 @@ cdef void* gdal_open_vector(char* path_c, int mode, drivers, options):
 
     open_opts = CSLAddNameValue(open_opts, "VALIDATE_OPEN_OPTIONS", "NO")
 
-    if mode == 1:
-        flags = GDAL_OF_VECTOR | GDAL_OF_UPDATE
-    else:
-        flags = GDAL_OF_VECTOR | GDAL_OF_READONLY
     try:
-        cogr_ds = GDALOpenEx(
-            path_c, flags, <const char *const *>drvs, open_opts, NULL)
-        return cogr_ds
+        return exc_wrap_pointer(GDALOpenEx(
+            path_c, flags, <const char *const *>drvs, open_opts, NULL))
+    except CPLE_BaseError as exc:
+        raise DriverIOError(str(exc))
     finally:
         CSLDestroy(drvs)
         CSLDestroy(open_opts)
 
 
-cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except *:
+cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except NULL:
     cdef char **creation_opts = NULL
 
     for k, v in options.items():
@@ -85,9 +86,16 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except *:
         creation_opts = CSLAddNameValue(creation_opts, <const char *>k, <const char *>v)
 
     try:
-        return GDALCreate(cogr_driver, path_c, 0, 0, 0, GDT_Unknown, creation_opts)
+        return exc_wrap_pointer(
+            GDALCreate(cogr_driver, path_c, 0, 0, 0, GDT_Unknown, creation_opts))
+    except CPLE_BaseError as exc:
+        raise DriverIOError(str(exc))
     finally:
         CSLDestroy(creation_opts)
+
+
+cdef bint check_capability_create_layer(void *cogr_ds):
+    return GDALDatasetTestCapability(cogr_ds, ODsCCreateLayer)
 
 
 cdef OGRErr gdal_start_transaction(void* cogr_ds, int force):

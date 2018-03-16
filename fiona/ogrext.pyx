@@ -20,7 +20,7 @@ from fiona._geometry cimport (
     normalize_geometry_type_code)
 from fiona._err cimport exc_wrap_pointer, exc_wrap_vsilfile
 
-from fiona._err import cpl_errs
+from fiona._err import cpl_errs, CPLE_BaseError, CPLE_OpenFailedError
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
 from fiona.errors import (
@@ -348,6 +348,10 @@ cdef class OGRFeatureBuilder:
                 hh, mm, ss = value.hour, value.minute, value.second
                 OGR_F_SetFieldDateTime(
                     cogr_feature, i, 0, 0, 0, hh, mm, ss, 0)
+            elif isinstance(value, bytes) and schema_type == "bytes":
+                string_c = value
+                OGR_F_SetFieldBinary(cogr_feature, i, len(value),
+                    <unsigned char*>string_c)
             elif isinstance(value, string_types):
                 try:
                     value_bytes = value.encode(encoding)
@@ -357,10 +361,6 @@ cdef class OGRFeatureBuilder:
                     value_bytes = value
                 string_c = value_bytes
                 OGR_F_SetFieldString(cogr_feature, i, string_c)
-            elif isinstance(value, bytes):
-                string_c = value
-                OGR_F_SetFieldBinary(cogr_feature, i, len(value),
-                    <unsigned char*>string_c)
             elif value is None:
                 set_field_null(cogr_feature, i)
             else:
@@ -433,26 +433,30 @@ cdef class Session:
 
         userencoding = kwargs.get('encoding')
 
+        # We have two ways of specifying drivers to try. Resolve the
+        # values into a single set of driver short names.
+        if collection._driver:
+            drivers = set([collection._driver])
+        elif collection.enabled_drivers:
+            drivers = set(collection.enabled_drivers)
+        else:
+            drivers = None
+
         # TODO: eliminate this context manager in 2.0 as we have done
         # in Rasterio 1.0.
-        with cpl_errs:
-
-            # We have two ways of specifying drivers to try. Resolve the
-            # values into a single set of driver short names.
-            if collection._driver:
-                drivers = set([collection._driver])
-            elif collection.enabled_drivers:
-                drivers = set(collection.enabled_drivers)
-            else:
-                drivers = None
-
-            self.cogr_ds = gdal_open_vector(path_c, 0, drivers, kwargs)
+        message = None
+        try:
+            with cpl_errs:
+                self.cogr_ds = gdal_open_vector(path_c, 0, drivers, kwargs)
+        except CPLE_OpenFailedError as e:
+            message = e.errmsg.decode("utf-8")
 
         if self.cogr_ds == NULL:
+            if not message:
+                message = "No dataset found at path '{}'".format(collection.path)
+
             raise FionaValueError(
-                "No dataset found at path '%s' using drivers: %s" % (
-                    collection.path,
-                    drivers or '*'))
+                message + " using drivers {}".format(drivers or "*"))
 
         if isinstance(collection.name, string_types):
             name_b = collection.name.encode('utf-8')
@@ -810,37 +814,18 @@ cdef class WritingSession(Session):
             if cogr_driver == NULL:
                 raise ValueError("Null driver")
 
-            # Our most common use case is the creation of a new data
-            # file and historically we've assumed that it's a file on
-            # the local filesystem and queryable via os.path.
-            #
-            # TODO: remove the assumption.
-            if not os.path.exists(path):
-                cogr_ds = exc_wrap_pointer(gdal_create(cogr_driver, path_c, kwargs))
-
-            # TODO: revisit the logic in the following blocks when we
-            # change the assumption above.
-            # TODO: use exc_wrap_pointer()
-            else:
+            try:
                 cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
-
-                # TODO: use exc_wrap_pointer()
-                if cogr_ds == NULL:
-                    cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
-
-                elif collection.name is None:
-                    GDALClose(cogr_ds)
-                    cogr_ds = NULL
+            except DriverIOError:
+                capability = check_capability_create_layer(cogr_ds)
+                if GDAL_VERSION_NUM < 2000000 and collection.driver == "GeoJSON":
+                    capability = False
+                if not capability or collection.name is None:
                     log.debug("Deleted pre-existing data at %s", path)
-                    cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
-
-                else:
-                    pass
-
-            if cogr_ds == NULL:
-                raise RuntimeError("Failed to open %s" % path)
-            else:
-                self.cogr_ds = cogr_ds
+                    if collection.driver == "GeoJSON" and os.path.exists(path):
+                        os.unlink(path)
+                cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
+            self.cogr_ds = cogr_ds
 
             # Set the spatial reference system from the crs given to the
             # collection constructor. We by-pass the crs_wkt and crs
@@ -1343,10 +1328,10 @@ def _listlayers(path, **kwargs):
     except UnicodeDecodeError:
         path_b = path
     path_c = path_b
-    with cpl_errs:
-        cogr_ds = gdal_open_vector(path_c, 0, None, kwargs)
-    if cogr_ds == NULL:
-        raise ValueError("No data available at path '%s'" % path)
+    try:
+        cogr_ds = exc_wrap_pointer(gdal_open_vector(path_c, 0, None, kwargs))
+    except CPLE_BaseError:
+        raise DriverIOError("No data available at path '%s'" % path)
 
     # Loop over the layers to get their names.
     layer_count = GDALDatasetGetLayerCount(cogr_ds)

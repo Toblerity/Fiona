@@ -3,6 +3,7 @@ import logging
 from fiona.ogrext1 cimport *
 
 from fiona.errors import DriverIOError
+from fiona._err import CPLE_BaseError
 from fiona._err cimport exc_wrap_pointer
 
 
@@ -28,7 +29,7 @@ cdef void gdal_flush_cache(void *cogr_ds):
         raise RuntimeError("Failed to sync to disk")
 
 
-cdef void* gdal_open_vector(const char *path_c, int mode, drivers, options):
+cdef void* gdal_open_vector(const char *path_c, int mode, drivers, options) except NULL:
     cdef void* cogr_ds = NULL
     cdef void* drv = NULL
     cdef void* ds = NULL
@@ -55,10 +56,14 @@ cdef void* gdal_open_vector(const char *path_c, int mode, drivers, options):
                 break
     else:
         cogr_ds = OGROpen(path_c, mode, NULL)
+
+    if cogr_ds == NULL:
+        raise DriverIOError("Failed to open dataset in mode {}: {}".format(mode, path_c.decode("utf-8")))
+
     return cogr_ds
 
 
-cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except *:
+cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except NULL:
     cdef void* cogr_ds = NULL
     cdef char **opts = NULL
 
@@ -83,10 +88,15 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except *:
             OGR_Dr_CreateDataSource(
                 cogr_driver, path_c, opts))
         return cogr_ds
-    except Exception as exc:
+    except CPLE_BaseError as exc:
         raise DriverIOError(str(exc))
     finally:
         CSLDestroy(opts)
+
+
+cdef bint check_capability_create_layer(void *cogr_ds):
+    return OGR_DS_TestCapability(cogr_ds, ODsCCreateLayer)
+
 
 # transactions are not supported in GDAL 1.x
 cdef OGRErr gdal_start_transaction(void* cogr_ds, int force):

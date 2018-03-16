@@ -1,4 +1,5 @@
 import fiona
+import six
 
 GDAL_MAJOR_VER = fiona.get_gdal_version_num() // 1000000
 
@@ -15,7 +16,7 @@ def test_read_bool_subtype(tmpdir):
         assert type(feature["properties"]["bool"]) is bool
     else:
         assert type(feature["properties"]["bool"]) is int
-    assert type(feature["properties"]["not_bool"]) is int
+    assert isinstance(feature["properties"]["not_bool"], six.integer_types)
     assert type(feature["properties"]["float"]) is float
 
 def test_write_bool_subtype(tmpdir):
