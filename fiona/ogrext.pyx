@@ -348,6 +348,10 @@ cdef class OGRFeatureBuilder:
                 hh, mm, ss = value.hour, value.minute, value.second
                 OGR_F_SetFieldDateTime(
                     cogr_feature, i, 0, 0, 0, hh, mm, ss, 0)
+            elif isinstance(value, bytes) and schema_type == "bytes":
+                string_c = value
+                OGR_F_SetFieldBinary(cogr_feature, i, len(value),
+                    <unsigned char*>string_c)
             elif isinstance(value, string_types):
                 try:
                     value_bytes = value.encode(encoding)
@@ -357,10 +361,6 @@ cdef class OGRFeatureBuilder:
                     value_bytes = value
                 string_c = value_bytes
                 OGR_F_SetFieldString(cogr_feature, i, string_c)
-            elif isinstance(value, bytes):
-                string_c = value
-                OGR_F_SetFieldBinary(cogr_feature, i, len(value),
-                    <unsigned char*>string_c)
             elif value is None:
                 set_field_null(cogr_feature, i)
             else:

@@ -1,10 +1,9 @@
 import os
 import pytest
 import fiona
+from .conftest import requires_gpkg
 
-has_gpkg = "GPKG" in fiona.supported_drivers.keys()
-
-@pytest.mark.skipif(not has_gpkg, reason="Requires geopackage driver")
+@requires_gpkg
 def test_read_gpkg(path_coutwildrnp_gpkg):
     """
     Implicitly tests writing gpkg as the fixture will create the data source on
@@ -16,7 +15,7 @@ def test_read_gpkg(path_coutwildrnp_gpkg):
         assert feature["geometry"]["type"] == "Polygon"
         assert feature["properties"]["NAME"] == "Mount Naomi Wilderness"
 
-@pytest.mark.skipif(not has_gpkg, reason="Requires geopackage driver")
+@requires_gpkg
 def test_write_gpkg(tmpdir):
     schema = {
         'geometry': 'Point',
