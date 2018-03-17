@@ -26,6 +26,10 @@ cdef extern from "ogr_core.h":
     char *  OGRGeometryTypeToName(int)
 
 
+    char * ODsCCreateLayer = "CreateLayer"
+    char * ODsCDeleteLayer = "DeleteLayer"
+
+
 cdef extern from "gdal.h":
     char * GDALVersionInfo (char *pszRequest)
     void * GDALGetDriverByName(const char * pszName)
@@ -63,6 +67,7 @@ cdef extern from "gdal.h":
     OGRErr GDALDatasetStartTransaction (void * hDataset, int bForce)
     OGRErr GDALDatasetCommitTransaction (void * hDataset)
     OGRErr GDALDatasetRollbackTransaction (void * hDataset)
+    int GDALDatasetTestCapability (void * hDataset, char *)
 
 
     ctypedef enum GDALDataType:

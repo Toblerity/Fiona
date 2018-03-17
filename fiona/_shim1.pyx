@@ -1,9 +1,9 @@
 import logging
 
 from fiona.ogrext1 cimport *
-
-from fiona.errors import DriverIOError
 from fiona._err cimport exc_wrap_pointer
+from fiona._err import cpl_errs, CPLE_BaseError, FionaNullPointerError
+from fiona.errors import DriverError
 
 
 log = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ cdef void gdal_flush_cache(void *cogr_ds):
         raise RuntimeError("Failed to sync to disk")
 
 
-cdef void* gdal_open_vector(const char *path_c, int mode, drivers, options):
+cdef void* gdal_open_vector(const char *path_c, int mode, drivers, options) except NULL:
     cdef void* cogr_ds = NULL
     cdef void* drv = NULL
     cdef void* ds = NULL
@@ -55,10 +55,16 @@ cdef void* gdal_open_vector(const char *path_c, int mode, drivers, options):
                 break
     else:
         cogr_ds = OGROpen(path_c, mode, NULL)
-    return cogr_ds
+
+    try:
+        return exc_wrap_pointer(cogr_ds)
+    except FionaNullPointerError:
+        raise DriverError("Failed to open dataset (mode={}): {}".format(mode, path_c.decode("utf-8")))
+    except CPLE_BaseError as exc:
+        raise DriverError(str(exc))
 
 
-cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except *:
+cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except NULL:
     cdef void* cogr_ds = NULL
     cdef char **opts = NULL
 
@@ -79,12 +85,13 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except *:
         opts = CSLAddNameValue(opts, <const char *>k, <const char *>v)
 
     try:
-        cogr_ds = exc_wrap_pointer(
-            OGR_Dr_CreateDataSource(
-                cogr_driver, path_c, opts))
-        return cogr_ds
-    except Exception as exc:
-        raise DriverIOError(str(exc))
+        return exc_wrap_pointer(
+            OGR_Dr_CreateDataSource(cogr_driver, path_c, opts)
+        )
+    except FionaNullPointerError:
+        raise DriverError("Failed to create dataset: {}".format(path_c.decode("utf-8")))
+    except CPLE_BaseError as exc:
+        raise DriverError(str(exc))
     finally:
         CSLDestroy(opts)
 
@@ -101,3 +108,6 @@ cdef OGRFieldSubType get_field_subtype(void *fielddefn):
     return OFSTNone
 cdef void set_field_subtype(void *fielddefn, OGRFieldSubType subtype):
     pass
+
+cdef bint check_capability_create_layer(void *cogr_ds):
+    return OGR_DS_TestCapability(cogr_ds, ODsCCreateLayer)
