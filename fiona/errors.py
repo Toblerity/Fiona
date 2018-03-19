@@ -25,6 +25,10 @@ class DriverIOError(IOError):
     """A format specific driver error."""
 
 
+class DatasetDeleteError(IOError):
+    """Failure to delete a dataset"""
+
+
 class FieldNameEncodeError(UnicodeEncodeError):
     """Failure to encode a field name."""
 

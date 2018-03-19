@@ -303,6 +303,7 @@ setup_args = dict(
         insp=fiona.fio.insp:insp
         load=fiona.fio.load:load
         ls=fiona.fio.ls:ls
+        rm=fiona.fio.rm:rm
         ''',
     install_requires=requirements,
     extras_require=extras_require,

@@ -1,0 +1,25 @@
+import click
+import fiona
+import logging
+
+logger = logging.getLogger('fio')
+
+@click.command(help="Remove a datasource or an individual layer.")
+@click.argument("input", required=True)
+@click.option("--layer", type=str, default=None, required=False, help="Name of layer to remove.")
+@click.option("--yes", is_flag=True)
+@click.pass_context
+def rm(ctx, input, layer, yes):
+    if layer is None:
+        kind = "datasource"
+    else:
+        kind = "layer"
+
+    if not yes:
+        click.confirm("The {} will be removed. Are you sure?".format(kind), abort=True)
+
+    try:
+        fiona.remove(input, layer=layer)
+    except Exception:
+        logger.exception("Failed to remove {}.".format(kind))
+        raise click.Abort()

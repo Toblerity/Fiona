@@ -73,7 +73,7 @@ from fiona._drivers import driver_count, GDALEnv
 from fiona.drvsupport import supported_drivers
 from fiona.compat import OrderedDict
 from fiona.io import MemoryFile
-from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove
+from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove, _remove_layer
 from fiona.ogrext import (
     calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name)
 
@@ -249,7 +249,7 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
 collection = open
 
 
-def remove(path_or_collection, driver=None):
+def remove(path_or_collection, driver=None, layer=None):
     """Deletes an OGR data source
 
     The required ``path`` argument may be an absolute or relative file path.
@@ -271,9 +271,10 @@ def remove(path_or_collection, driver=None):
         collection.close()
     else:
         path = path_or_collection
-        if driver is None:
-            raise ValueError("The driver argument is required when removing a path")
-    _remove(path, driver)
+    if layer is None:
+        _remove(path, driver)
+    else:
+        _remove_layer(path, layer, driver)
 
 
 def listlayers(path, vfs=None):
