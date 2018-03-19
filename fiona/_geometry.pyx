@@ -11,7 +11,7 @@ class NullHandler(logging.Handler):
     def emit(self, record):
         pass
 
-log = logging.getLogger("Fiona")
+log = logging.getLogger(__name__)
 log.addHandler(NullHandler())
 
 # Mapping of OGR integer geometry types to GeoJSON type names.
@@ -67,19 +67,17 @@ cdef unsigned int geometry_type_code(name) except? 9999:
 
 
 cdef object normalize_geometry_type_code(unsigned int code):
-    """Normalize geometry type codes."""
-    # Remove 2.5D flag.
-    norm_code = code & (~0x80000000)
+    """Normalize M geometry type codes."""
+    # Normalize 'M' types to 2D types.
+    if 2000 < code < 3000:
+        code = code % 1000
+    # Normalize 'ZM' types to 3D types.
+    elif 3000 < code < 4000:
+        code = (code % 1000) | 0x80000000
+    if code not in GEOMETRY_TYPES:
+        raise UnsupportedGeometryTypeError(code)
 
-    # Normalize Z, M, and ZM types. Fiona 1.x does not support M
-    # and doesn't treat OGC 'Z' variants as special types of their
-    # own.
-    norm_code = norm_code % 1000
-
-    if norm_code not in GEOMETRY_TYPES:
-        raise UnsupportedGeometryTypeError(norm_code)
-
-    return norm_code
+    return code
 
 
 # Geometry related functions and classes follow.
