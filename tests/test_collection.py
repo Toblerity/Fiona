@@ -849,7 +849,7 @@ class CollectionTest(unittest.TestCase):
     @pytest.mark.skipif(sys.platform.startswith("win"),
                      reason="test only for *nix based system")
     def test_no_read_directory(self):
-        self.assertRaises(ValueError, fiona.open, "/dev/null", "r")
+        self.assertRaises(DriverError, fiona.open, "/dev/null", "r")
 
 
 class GeoJSONCRSWritingTest(unittest.TestCase):

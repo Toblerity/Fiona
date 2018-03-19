@@ -136,6 +136,13 @@ class CPLE_AWSInvalidCredentialsError(CPLE_BaseError):
 class CPLE_AWSSignatureDoesNotMatchError(CPLE_BaseError):
     pass
 
+class FionaNullPointerError(CPLE_BaseError):
+    """
+    Returned from exc_wrap_pointer when a NULL pointer is passed, but no GDAL
+    error was raised.
+    """
+    pass
+
 
 # Map of GDAL error numbers to the Python exceptions.
 exception_map = {
@@ -227,7 +234,9 @@ cdef void *exc_wrap_pointer(void *ptr) except NULL:
         exc = exc_check()
         if exc:
             raise exc
-            return NULL
+        else:
+            # null pointer was passed, but no error message from GDAL
+            raise FionaNullPointerError(-1, -1, "NULL pointer error")
     return ptr
 
 

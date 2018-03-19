@@ -433,26 +433,16 @@ cdef class Session:
 
         userencoding = kwargs.get('encoding')
 
-        # TODO: eliminate this context manager in 2.0 as we have done
-        # in Rasterio 1.0.
-        with cpl_errs:
+        # We have two ways of specifying drivers to try. Resolve the
+        # values into a single set of driver short names.
+        if collection._driver:
+            drivers = set([collection._driver])
+        elif collection.enabled_drivers:
+            drivers = set(collection.enabled_drivers)
+        else:
+            drivers = None
 
-            # We have two ways of specifying drivers to try. Resolve the
-            # values into a single set of driver short names.
-            if collection._driver:
-                drivers = set([collection._driver])
-            elif collection.enabled_drivers:
-                drivers = set(collection.enabled_drivers)
-            else:
-                drivers = None
-
-            self.cogr_ds = gdal_open_vector(path_c, 0, drivers, kwargs)
-
-        if self.cogr_ds == NULL:
-            raise FionaValueError(
-                "No dataset found at path '%s' using drivers: %s" % (
-                    collection.path,
-                    drivers or '*'))
+        self.cogr_ds = gdal_open_vector(path_c, 0, drivers, kwargs)
 
         if isinstance(collection.name, string_types):
             name_b = collection.name.encode('utf-8')
@@ -816,31 +806,34 @@ cdef class WritingSession(Session):
             #
             # TODO: remove the assumption.
             if not os.path.exists(path):
-                cogr_ds = exc_wrap_pointer(gdal_create(cogr_driver, path_c, kwargs))
+                log.debug("File doesn't exist. Creating a new one...")
+                cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
 
             # TODO: revisit the logic in the following blocks when we
             # change the assumption above.
-            # TODO: use exc_wrap_pointer()
             else:
-                cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
-
-                # TODO: use exc_wrap_pointer()
-                if cogr_ds == NULL:
+                if collection.driver == "GeoJSON" and os.path.exists(path):
+                    # manually remove geojson file as GDAL doesn't do this for us
+                    os.unlink(path)
+                try:
+                    # attempt to open existing dataset in write mode
+                    cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
+                except DriverError:
+                    # failed, attempt to create it
                     cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
-
-                elif collection.name is None:
-                    GDALClose(cogr_ds)
-                    cogr_ds = NULL
-                    log.debug("Deleted pre-existing data at %s", path)
-                    cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
-
                 else:
-                    pass
+                    # check capability of creating a new layer in the existing dataset
+                    capability = check_capability_create_layer(cogr_ds)
+                    if GDAL_VERSION_NUM < 2000000 and collection.driver == "GeoJSON":
+                        # GeoJSON driver tells lies about it's capability
+                        capability = False
+                    if not capability or collection.name is None:
+                        # unable to use existing dataset, recreate it
+                        GDALClose(cogr_ds)
+                        cogr_ds = NULL
+                        cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
 
-            if cogr_ds == NULL:
-                raise RuntimeError("Failed to open %s" % path)
-            else:
-                self.cogr_ds = cogr_ds
+            self.cogr_ds = cogr_ds
 
             # Set the spatial reference system from the crs given to the
             # collection constructor. We by-pass the crs_wkt and crs
@@ -1343,10 +1336,7 @@ def _listlayers(path, **kwargs):
     except UnicodeDecodeError:
         path_b = path
     path_c = path_b
-    with cpl_errs:
-        cogr_ds = gdal_open_vector(path_c, 0, None, kwargs)
-    if cogr_ds == NULL:
-        raise ValueError("No data available at path '%s'" % path)
+    cogr_ds = gdal_open_vector(path_c, 0, None, kwargs)
 
     # Loop over the layers to get their names.
     layer_count = GDALDatasetGetLayerCount(cogr_ds)
