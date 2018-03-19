@@ -10,6 +10,8 @@ New features:
 
 - We've added a ``MemoryFile`` class which supports formatted in-memory
   feature collections (#501).
+- A new ``fio rm`` command makes it possible to cleanly remove multi-file
+  datasets (#538).
   
 Bug fixes:
 
