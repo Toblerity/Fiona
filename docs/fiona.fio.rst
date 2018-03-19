@@ -124,6 +124,14 @@ fiona.fio.options module
     :undoc-members:
     :show-inheritance:
 
+fiona.fio.rm module
+-------------------
+
+.. automodule:: fiona.fio.rm
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------

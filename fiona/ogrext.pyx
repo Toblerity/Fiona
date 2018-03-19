@@ -20,12 +20,12 @@ from fiona._geometry cimport (
     normalize_geometry_type_code)
 from fiona._err cimport exc_wrap_pointer, exc_wrap_vsilfile
 
-from fiona._err import cpl_errs
+from fiona._err import cpl_errs, FionaNullPointerError
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
 from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
-    TransactionError, GeometryTypeValidationError)
+    TransactionError, GeometryTypeValidationError, DatasetDeleteError)
 from fiona.compat import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -1303,21 +1303,62 @@ def _remove(path, driver=None):
     """Deletes an OGR data source
     """
     cdef void *cogr_driver
+    cdef void *cogr_ds
     cdef int result
+    cdef char *driver_c
 
     if driver is None:
-        driver = 'ESRI Shapefile'
+        # attempt to identify the driver by opening the dataset
+        try:
+            cogr_ds = gdal_open_vector(path.encode("utf-8"), 0, None, {})
+        except (DriverError, FionaNullPointerError):
+            raise DatasetDeleteError("Failed to remove data source {}".format(path))
+        cogr_driver = GDALGetDatasetDriver(cogr_ds)
+        GDALClose(cogr_ds)
+    else:
+        cogr_driver = OGRGetDriverByName(driver.encode("utf-8"))
 
-    cogr_driver = OGRGetDriverByName(driver.encode('utf-8'))
     if cogr_driver == NULL:
-        raise ValueError("Null driver")
+        raise DatasetDeleteError("Null driver when attempting to delete {}".format(path))
 
     if not OGR_Dr_TestCapability(cogr_driver, ODrCDeleteDataSource):
-        raise RuntimeError("Driver does not support dataset removal operation")
+        raise DatasetDeleteError("Driver does not support dataset removal operation")
 
     result = GDALDeleteDataset(cogr_driver, path.encode('utf-8'))
     if result != OGRERR_NONE:
-        raise RuntimeError("Failed to remove data source {}".format(path))
+        raise DatasetDeleteError("Failed to remove data source {}".format(path))
+
+
+def _remove_layer(path, layer, driver=None):
+    cdef void *cogr_ds
+    cdef int layer_index
+    
+    if isinstance(layer, integer_types):
+        layer_index = layer
+        layer_str = str(layer_index)
+    else:
+        layer_names = _listlayers(path)
+        try:
+            layer_index = layer_names.index(layer)
+        except ValueError:
+            raise ValueError("Layer \"{}\" does not exist in datasource: {}".format(layer, path))
+        layer_str = '"{}"'.format(layer)
+    
+    if layer_index < 0:
+        layer_names = _listlayers(path)
+        layer_index = len(layer_names) + layer_index
+    
+    try:
+        cogr_ds = gdal_open_vector(path.encode("utf-8"), 1, None, {})
+    except (DriverError, FionaNullPointerError):
+        raise DatasetDeleteError("Failed to remove data source {}".format(path))
+
+    result = OGR_DS_DeleteLayer(cogr_ds, layer_index)
+    GDALClose(cogr_ds)
+    if result == OGRERR_UNSUPPORTED_OPERATION:
+        raise DatasetDeleteError("Removal of layer {} not supported by driver".format(layer_str))
+    elif result != OGRERR_NONE:
+        raise DatasetDeleteError("Failed to remove layer {} from datasource: {}".format(layer_str, path))
 
 
 def _listlayers(path, **kwargs):
