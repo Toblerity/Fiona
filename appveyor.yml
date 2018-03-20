@@ -121,4 +121,4 @@ test_script:
 
 matrix:
   allow_failures:
-    GDAL_VERSION : trunk
+    - GDAL_VERSION : trunk
