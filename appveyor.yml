@@ -18,19 +18,19 @@ environment:
         #  PYTHON_VERSION: "2.7.10"
         #  PYTHON_ARCH: "64"
 
-        - PYTHON: "C:\\Python34-x64"
-          PYTHON_VERSION: "3.4.3"
+        - PYTHON: "C:\\Python36-x64"
+          PYTHON_VERSION: "3.6.4"
           PYTHON_ARCH: "64"
           GDAL_VERSION: "1.11.4"
           GIS_INTERNALS: "release-1600-x64-gdal-1-11-4-mapserver-6-4-3.zip"
           GIS_INTERNALS_LIBS: "release-1600-x64-gdal-1-11-4-mapserver-6-4-3-libs.zip"
           
-        - PYTHON: "C:\\Python34-x64"
-          PYTHON_VERSION: "3.4.3"
+        - PYTHON: "C:\\Python36-x64"
+          PYTHON_VERSION: "3.6.4"
           PYTHON_ARCH: "64"
-          GDAL_VERSION: "2.2.1"
-          GIS_INTERNALS: "release-1600-x64-gdal-2-2-1-mapserver-7-0-6.zip"
-          GIS_INTERNALS_LIBS: "release-1600-x64-gdal-2-2-1-mapserver-7-0-6-libs.zip"
+          GDAL_VERSION: "2.2.3"
+          GIS_INTERNALS: "release-1600-x64-gdal-2-2-3-mapserver-7-0-7.zip"
+          GIS_INTERNALS_LIBS: "release-1600-x64-gdal-2-2-3-mapserver-7-0-7-libs.zip"
 
 install:
 
