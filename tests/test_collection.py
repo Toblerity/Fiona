@@ -745,7 +745,7 @@ class PointAppendTest(unittest.TestCase):
 
     def test_append_point(self):
         with fiona.open(os.path.join(self.tempdir, "test_append_point.shp"), "a") as c:
-            self.assertEqual(c.schema['geometry'], 'Point')
+            self.assertEqual(c.schema['geometry'], '3D Point')
             c.write({'geometry': {'type': 'Point', 'coordinates': (0.0, 45.0)},
                      'properties': {'PERIMETER': 1.0,
                                     'FEATURE2': None,
@@ -837,7 +837,7 @@ class CollectionTest(unittest.TestCase):
     @pytest.mark.skipif(sys.platform.startswith("win"),
                      reason="test only for *nix based system")
     def test_no_read_directory(self):
-        self.assertRaises(ValueError, fiona.open, "/dev/null", "r")
+        self.assertRaises(DriverError, fiona.open, "/dev/null", "r")
 
 
 class GeoJSONCRSWritingTest(unittest.TestCase):

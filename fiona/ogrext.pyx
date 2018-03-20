@@ -20,12 +20,12 @@ from fiona._geometry cimport (
     normalize_geometry_type_code)
 from fiona._err cimport exc_wrap_pointer, exc_wrap_vsilfile
 
-from fiona._err import cpl_errs
+from fiona._err import cpl_errs, FionaNullPointerError
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
 from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
-    TransactionError)
+    TransactionError, GeometryTypeValidationError, DatasetDeleteError)
 from fiona.compat import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -260,6 +260,8 @@ cdef class FeatureBuilder:
             if cogr_geometry is not NULL:
                 geom = GeomBuilder().build(cogr_geometry)
                 fiona_feature["geometry"] = geom
+            else:
+                fiona_feature["geometry"] = None
 
         return fiona_feature
 
@@ -346,6 +348,10 @@ cdef class OGRFeatureBuilder:
                 hh, mm, ss = value.hour, value.minute, value.second
                 OGR_F_SetFieldDateTime(
                     cogr_feature, i, 0, 0, 0, hh, mm, ss, 0)
+            elif isinstance(value, bytes) and schema_type == "bytes":
+                string_c = value
+                OGR_F_SetFieldBinary(cogr_feature, i, len(value),
+                    <unsigned char*>string_c)
             elif isinstance(value, string_types):
                 try:
                     value_bytes = value.encode(encoding)
@@ -355,12 +361,8 @@ cdef class OGRFeatureBuilder:
                     value_bytes = value
                 string_c = value_bytes
                 OGR_F_SetFieldString(cogr_feature, i, string_c)
-            elif isinstance(value, bytes):
-                string_c = value
-                OGR_F_SetFieldBinary(cogr_feature, i, len(value),
-                    <unsigned char*>string_c)
             elif value is None:
-                pass # keep field unset/null
+                set_field_null(cogr_feature, i)
             else:
                 raise ValueError("Invalid field type %s" % type(value))
             log.debug("Set field %s: %s" % (key, value))
@@ -431,26 +433,16 @@ cdef class Session:
 
         userencoding = kwargs.get('encoding')
 
-        # TODO: eliminate this context manager in 2.0 as we have done
-        # in Rasterio 1.0.
-        with cpl_errs:
+        # We have two ways of specifying drivers to try. Resolve the
+        # values into a single set of driver short names.
+        if collection._driver:
+            drivers = set([collection._driver])
+        elif collection.enabled_drivers:
+            drivers = set(collection.enabled_drivers)
+        else:
+            drivers = None
 
-            # We have two ways of specifying drivers to try. Resolve the
-            # values into a single set of driver short names.
-            if collection._driver:
-                drivers = set([collection._driver])
-            elif collection.enabled_drivers:
-                drivers = set(collection.enabled_drivers)
-            else:
-                drivers = None
-
-            self.cogr_ds = gdal_open_vector(path_c, 0, drivers, kwargs)
-
-        if self.cogr_ds == NULL:
-            raise FionaValueError(
-                "No dataset found at path '%s' using drivers: %s" % (
-                    collection.path,
-                    drivers or '*'))
+        self.cogr_ds = gdal_open_vector(path_c, 0, drivers, kwargs)
 
         if isinstance(collection.name, string_types):
             name_b = collection.name.encode('utf-8')
@@ -814,31 +806,34 @@ cdef class WritingSession(Session):
             #
             # TODO: remove the assumption.
             if not os.path.exists(path):
-                cogr_ds = exc_wrap_pointer(gdal_create(cogr_driver, path_c, kwargs))
+                log.debug("File doesn't exist. Creating a new one...")
+                cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
 
             # TODO: revisit the logic in the following blocks when we
             # change the assumption above.
-            # TODO: use exc_wrap_pointer()
             else:
-                cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
-
-                # TODO: use exc_wrap_pointer()
-                if cogr_ds == NULL:
+                if collection.driver == "GeoJSON" and os.path.exists(path):
+                    # manually remove geojson file as GDAL doesn't do this for us
+                    os.unlink(path)
+                try:
+                    # attempt to open existing dataset in write mode
+                    cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
+                except DriverError:
+                    # failed, attempt to create it
                     cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
-
-                elif collection.name is None:
-                    GDALClose(cogr_ds)
-                    cogr_ds = NULL
-                    log.debug("Deleted pre-existing data at %s", path)
-                    cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
-
                 else:
-                    pass
+                    # check capability of creating a new layer in the existing dataset
+                    capability = check_capability_create_layer(cogr_ds)
+                    if GDAL_VERSION_NUM < 2000000 and collection.driver == "GeoJSON":
+                        # GeoJSON driver tells lies about it's capability
+                        capability = False
+                    if not capability or collection.name is None:
+                        # unable to use existing dataset, recreate it
+                        GDALClose(cogr_ds)
+                        cogr_ds = NULL
+                        cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
 
-            if cogr_ds == NULL:
-                raise RuntimeError("Failed to open %s" % path)
-            else:
-                self.cogr_ds = cogr_ds
+            self.cogr_ds = cogr_ds
 
             # Set the spatial reference system from the crs given to the
             # collection constructor. We by-pass the crs_wkt and crs
@@ -932,13 +927,22 @@ cdef class WritingSession(Session):
                 log.debug("Set option %r: %r", k, v)
                 options = CSLAddNameValue(options, <const char *>k, <const char *>v)
 
+            geometry_type = collection.schema.get("geometry", "Unknown")
+            if not isinstance(geometry_type, string_types) and geometry_type is not None:
+                geometry_types = set(geometry_type)
+                if len(geometry_types) > 1:
+                    geometry_type = "Unknown"
+                else:
+                    geometry_type = geometry_types.pop()
+            if geometry_type == "Any" or geometry_type is None:
+                geometry_type = "Unknown"
+            geometry_code = geometry_type_code(geometry_type)
+
             try:
                 self.cogr_layer = exc_wrap_pointer(
                     GDALDatasetCreateLayer(
                         self.cogr_ds, name_c, cogr_srs,
-                        geometry_type_code(
-                            collection.schema.get('geometry', 'Unknown')),
-                        options))
+                        geometry_code, options))
             except Exception as exc:
                 raise DriverIOError(str(exc))
             finally:
@@ -1028,22 +1032,13 @@ cdef class WritingSession(Session):
 
         schema_geom_type = collection.schema['geometry']
         cogr_driver = GDALGetDatasetDriver(self.cogr_ds)
-        if OGR_Dr_GetName(cogr_driver) == b"GeoJSON":
-            def validate_geometry_type(rec):
+        driver_name = OGR_Dr_GetName(cogr_driver).decode("utf-8")
+
+        valid_geom_types = collection._valid_geom_types
+        def validate_geometry_type(record):
+            if record["geometry"] is None:
                 return True
-        elif OGR_Dr_GetName(cogr_driver) == b"ESRI Shapefile" \
-                and "Point" not in collection.schema['geometry']:
-            schema_geom_type = collection.schema['geometry'].lstrip(
-                "3D ").lstrip("Multi")
-            def validate_geometry_type(rec):
-                return rec['geometry'] is None or \
-                rec['geometry']['type'].lstrip(
-                    "3D ").lstrip("Multi") == schema_geom_type
-        else:
-            schema_geom_type = collection.schema['geometry'].lstrip("3D ")
-            def validate_geometry_type(rec):
-                return rec['geometry'] is None or \
-                       rec['geometry']['type'].lstrip("3D ") == schema_geom_type
+            return record["geometry"]["type"].lstrip("3D ") in valid_geom_types
 
         log.debug("Starting transaction (initial)")
         result = gdal_start_transaction(self.cogr_ds, 0)
@@ -1060,7 +1055,7 @@ cdef class WritingSession(Session):
                         record['properties'].keys(),
                         list(schema_props_keys) ))
             if not validate_geometry_type(record):
-                raise ValueError(
+                raise GeometryTypeValidationError(
                     "Record's geometry type does not match "
                     "collection schema's geometry type: %r != %r" % (
                          record['geometry']['type'],
@@ -1308,21 +1303,62 @@ def _remove(path, driver=None):
     """Deletes an OGR data source
     """
     cdef void *cogr_driver
+    cdef void *cogr_ds
     cdef int result
+    cdef char *driver_c
 
     if driver is None:
-        driver = 'ESRI Shapefile'
+        # attempt to identify the driver by opening the dataset
+        try:
+            cogr_ds = gdal_open_vector(path.encode("utf-8"), 0, None, {})
+        except (DriverError, FionaNullPointerError):
+            raise DatasetDeleteError("Failed to remove data source {}".format(path))
+        cogr_driver = GDALGetDatasetDriver(cogr_ds)
+        GDALClose(cogr_ds)
+    else:
+        cogr_driver = OGRGetDriverByName(driver.encode("utf-8"))
 
-    cogr_driver = OGRGetDriverByName(driver.encode('utf-8'))
     if cogr_driver == NULL:
-        raise ValueError("Null driver")
+        raise DatasetDeleteError("Null driver when attempting to delete {}".format(path))
 
     if not OGR_Dr_TestCapability(cogr_driver, ODrCDeleteDataSource):
-        raise RuntimeError("Driver does not support dataset removal operation")
+        raise DatasetDeleteError("Driver does not support dataset removal operation")
 
     result = GDALDeleteDataset(cogr_driver, path.encode('utf-8'))
     if result != OGRERR_NONE:
-        raise RuntimeError("Failed to remove data source {}".format(path))
+        raise DatasetDeleteError("Failed to remove data source {}".format(path))
+
+
+def _remove_layer(path, layer, driver=None):
+    cdef void *cogr_ds
+    cdef int layer_index
+    
+    if isinstance(layer, integer_types):
+        layer_index = layer
+        layer_str = str(layer_index)
+    else:
+        layer_names = _listlayers(path)
+        try:
+            layer_index = layer_names.index(layer)
+        except ValueError:
+            raise ValueError("Layer \"{}\" does not exist in datasource: {}".format(layer, path))
+        layer_str = '"{}"'.format(layer)
+    
+    if layer_index < 0:
+        layer_names = _listlayers(path)
+        layer_index = len(layer_names) + layer_index
+    
+    try:
+        cogr_ds = gdal_open_vector(path.encode("utf-8"), 1, None, {})
+    except (DriverError, FionaNullPointerError):
+        raise DatasetDeleteError("Failed to remove data source {}".format(path))
+
+    result = OGR_DS_DeleteLayer(cogr_ds, layer_index)
+    GDALClose(cogr_ds)
+    if result == OGRERR_UNSUPPORTED_OPERATION:
+        raise DatasetDeleteError("Removal of layer {} not supported by driver".format(layer_str))
+    elif result != OGRERR_NONE:
+        raise DatasetDeleteError("Failed to remove layer {} from datasource: {}".format(layer_str, path))
 
 
 def _listlayers(path, **kwargs):
@@ -1341,10 +1377,7 @@ def _listlayers(path, **kwargs):
     except UnicodeDecodeError:
         path_b = path
     path_c = path_b
-    with cpl_errs:
-        cogr_ds = gdal_open_vector(path_c, 0, None, kwargs)
-    if cogr_ds == NULL:
-        raise ValueError("No data available at path '%s'" % path)
+    cogr_ds = gdal_open_vector(path_c, 0, None, kwargs)
 
     # Loop over the layers to get their names.
     layer_count = GDALDatasetGetLayerCount(cogr_ds)

@@ -26,6 +26,10 @@ cdef extern from "ogr_core.h":
     char *  OGRGeometryTypeToName(int)
 
 
+    char * ODsCCreateLayer = "CreateLayer"
+    char * ODsCDeleteLayer = "DeleteLayer"
+
+
 cdef extern from "gdal.h":
     char * GDALVersionInfo (char *pszRequest)
     void * GDALGetDriverByName(const char * pszName)
@@ -63,6 +67,7 @@ cdef extern from "gdal.h":
     OGRErr GDALDatasetStartTransaction (void * hDataset, int bForce)
     OGRErr GDALDatasetCommitTransaction (void * hDataset)
     OGRErr GDALDatasetRollbackTransaction (void * hDataset)
+    int GDALDatasetTestCapability (void * hDataset, char *)
 
 
     ctypedef enum GDALDataType:
@@ -147,6 +152,7 @@ cdef extern from "ogr_api.h":
     int     OGR_Dr_DeleteDataSource (void *driver, char *)
     void *  OGR_Dr_Open (void *driver, const char *path, int bupdate)
     int     OGR_Dr_TestCapability (void *driver, const char *)
+    int     OGR_DS_DeleteLayer (void *datasource, int n)
     void *  OGR_F_Create (void *featuredefn)
     void    OGR_F_Destroy (void *feature)
     long    OGR_F_GetFID (void *feature)
@@ -165,6 +171,7 @@ cdef extern from "ogr_api.h":
     void    OGR_F_SetFieldInteger (void *feature, int n, int value)
     void    OGR_F_SetFieldString (void *feature, int n, char *value)
     void    OGR_F_SetFieldBinary (void *feature, int n, int l, unsigned char *value)
+    void    OGR_F_SetFieldNull (void *feature, int n)  # new in GDAL 2.2
     int     OGR_F_SetGeometryDirectly (void *feature, void *geometry)
     void *  OGR_FD_Create (char *name)
     int     OGR_FD_GetFieldCount (void *featuredefn)

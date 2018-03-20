@@ -19,6 +19,7 @@ and protocols such as files, dictionaries, mappings, and iterators instead of
 classes specific to OGR. Fiona can read and write real-world data using
 multi-layered GIS formats and zipped virtual file systems and integrates
 readily with other Python GIS packages such as pyproj_, Rtree_, and Shapely_.
+Fiona is supported only on CPython versions 2.7 and 3.4+.
 
 For more details, see:
 

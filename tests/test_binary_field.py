@@ -7,8 +7,7 @@ import binascii
 import tempfile
 import shutil
 from collections import OrderedDict
-
-has_gpkg = os.path.exists('tests/data/coutwildrnp.gpkg')
+from .conftest import requires_gpkg
 
 class TestBinaryField(unittest.TestCase):
     def setUp(self):
@@ -17,7 +16,7 @@ class TestBinaryField(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tempdir)
     
-    @pytest.mark.skipif(not has_gpkg, reason="Requires geopackage fixture")
+    @requires_gpkg
     def test_binary_field(self):
         meta = {
             "driver": "GPKG",

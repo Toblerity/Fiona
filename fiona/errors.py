@@ -25,12 +25,20 @@ class DriverIOError(IOError):
     """A format specific driver error."""
 
 
+class DatasetDeleteError(IOError):
+    """Failure to delete a dataset"""
+
+
 class FieldNameEncodeError(UnicodeEncodeError):
     """Failure to encode a field name."""
 
 
 class UnsupportedGeometryTypeError(KeyError):
     """When a OGR geometry type isn't supported by Fiona."""
+
+
+class GeometryTypeValidationError(FionaValueError):
+    """Tried to write a geometry type not specified in the schema"""
 
 
 class TransactionError(RuntimeError):

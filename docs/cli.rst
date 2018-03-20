@@ -10,23 +10,27 @@ Fiona's new command line interface is a program named "fio".
       Fiona command line interface.
 
     Options:
-      -v, --verbose  Increase verbosity.
-      -q, --quiet    Decrease verbosity.
-      --version      Show the version and exit.
-      --help         Show this message and exit.
+      -v, --verbose     Increase verbosity.
+      -q, --quiet       Decrease verbosity.
+      --version         Show the version and exit.
+      --gdal-version    Show the version and exit.
+      --python-version  Show the version and exit.
+      --help            Show this message and exit.
 
     Commands:
       bounds   Print the extent of GeoJSON objects
-      buffer   Buffer geometries on all sides by a fixed distance.
+      calc     Calculate GeoJSON property by Python expression
       cat      Concatenate and print the features of datasets
       collect  Collect a sequence of features.
-      distrib  Distribute features from a collection
+      distrib  Distribute features from a collection.
       dump     Dump a dataset to GeoJSON.
       env      Print information about the fio environment.
-      filter   Filter GeoJSON features by python expression
+      filter   Filter GeoJSON features by python expression.
       info     Print information about a dataset.
       insp     Open a dataset and start an interpreter.
       load     Load GeoJSON to a dataset in another format.
+      ls       List layers in a datasource.
+      rm       Remove a datasource or an individual layer.
 
 It is developed using the ``click`` package and is new in 1.1.6.
 
@@ -259,6 +263,19 @@ For example
 
 Would create a geojson file with only those features from `data.shp` where the
 area was over a given threshold.
+
+rm
+--
+The ``fio rm`` command deletes an entire datasource or a single layer in a
+multi-layer datasource. If the datasource is composed of multiple files
+(e.g. an ESRI Shapefile) all of the files will be removed.
+
+.. code-block:: console
+
+    $ fio rm countries.shp
+    $ fio rm --layer forests land_cover.gpkg
+
+New in 1.8.0.
 
 Coordinate Reference System Transformations
 -------------------------------------------
