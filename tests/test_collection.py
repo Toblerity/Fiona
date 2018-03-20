@@ -19,12 +19,6 @@ from fiona.errors import FionaValueError, DriverError
 from .conftest import WGS84PATTERN
 
 
-OGRINFO_TOOL = "ogrinfo"
-# if sys.platform.startswith('win'):
-#     # Set extra path if in windows
-#     OGRINFO_TOOL = 'gdal\\apps\\' + OGRINFO_TOOL
-
-
 WILDSHP = os.path.join('tests', 'data','coutwildrnp.shp')
 TEMPDIR = tempfile.gettempdir()
 
@@ -650,12 +644,6 @@ class PointWritingTest(unittest.TestCase):
         self.assertEqual(len(self.sink), 1)
         self.assertEqual(self.sink.bounds, (0.0, 0.1, 0.0, 0.1))
         self.sink.close()
-        # Check information with ogrinfo tool
-        info = subprocess.check_output(
-            [OGRINFO_TOOL, self.filename, "point_writing_test"])
-        self.assertTrue(
-            'date (Date) = 2012/01/29' in info.decode('utf-8'),
-            info)
 
     def test_write_two(self):
         self.assertEqual(len(self.sink), 0)
