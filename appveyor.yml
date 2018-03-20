@@ -35,6 +35,13 @@ environment:
           GIS_INTERNALS: "release-1600-x64-gdal-2-2-3-mapserver-7-0-7.zip"
           GIS_INTERNALS_LIBS: "release-1600-x64-gdal-2-2-3-mapserver-7-0-7-libs.zip"
 
+        - PYTHON: "C:\\Python36-x64"
+          PYTHON_VERSION: "3.6.4"
+          PYTHON_ARCH: "64"
+          GDAL_VERSION: "trunk"
+          GIS_INTERNALS: "release-1911-x64-gdal-mapserver.zip"
+          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-mapserver-libs.zip"
+
 install:
 
   - ECHO "Filesystem root:"
@@ -111,3 +118,7 @@ test_script:
 
   # TODO: return to running test_write_gb18030 when GDAL build is updated.
   - "%CMD_IN_ENV% pytest -k \"not test_write_gb18030\" --cov fiona --cov-report term-missing"
+
+matrix:
+  allow_failures:
+    GDAL_VERSION : trunk
