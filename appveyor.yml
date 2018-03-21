@@ -14,9 +14,12 @@ environment:
         GDAL_HOME: "C:\\gdal"
 
     matrix:
-        # - PYTHON: "C:\\Python27.10-x64"
-        #  PYTHON_VERSION: "2.7.10"
-        #  PYTHON_ARCH: "64"
+        - PYTHON: "C:\\Python27-x64"
+          PYTHON_VERSION: "2.7.14"
+          PYTHON_ARCH: "64"
+          GDAL_VERSION: "1.11.4"
+          GIS_INTERNALS: "release-1600-x64-gdal-1-11-4-mapserver-6-4-3.zip"
+          GIS_INTERNALS_LIBS: "release-1600-x64-gdal-1-11-4-mapserver-6-4-3-libs.zip"
 
         - PYTHON: "C:\\Python36-x64"
           PYTHON_VERSION: "3.6.4"
@@ -31,6 +34,20 @@ environment:
           GDAL_VERSION: "2.2.3"
           GIS_INTERNALS: "release-1600-x64-gdal-2-2-3-mapserver-7-0-7.zip"
           GIS_INTERNALS_LIBS: "release-1600-x64-gdal-2-2-3-mapserver-7-0-7-libs.zip"
+
+        - PYTHON: "C:\\Python27-x64"
+          PYTHON_VERSION: "2.7.14"
+          PYTHON_ARCH: "64"
+          GDAL_VERSION: "2.3.0"
+          GIS_INTERNALS: "release-1911-x64-gdal-mapserver.zip"
+          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-mapserver-libs.zip"
+
+        - PYTHON: "C:\\Python36-x64"
+          PYTHON_VERSION: "3.6.4"
+          PYTHON_ARCH: "64"
+          GDAL_VERSION: "2.3.0"
+          GIS_INTERNALS: "release-1911-x64-gdal-mapserver.zip"
+          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-mapserver-libs.zip"
 
 install:
 
@@ -108,3 +125,7 @@ test_script:
 
   # TODO: return to running test_write_gb18030 when GDAL build is updated.
   - "%CMD_IN_ENV% pytest -k \"not test_write_gb18030\" --cov fiona --cov-report term-missing"
+
+matrix:
+  allow_failures:
+    - GDAL_VERSION: 2.3.0
