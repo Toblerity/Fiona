@@ -11,12 +11,13 @@ from fiona.io import MemoryFile, ZipMemoryFile
 @pytest.fixture(scope='session')
 def profile_first_coutwildrnp_shp(path_coutwildrnp_shp):
     with fiona.open(path_coutwildrnp_shp) as col:
-        return col.profile, next(col)
+        return col.profile, next(iter(col))
 
 
 def test_memoryfile(path_coutwildrnp_json):
     """In-memory GeoJSON file can be read"""
-    data = open(path_coutwildrnp_json, 'rb').read()
+    with open(path_coutwildrnp_json, 'rb') as f:
+        data = f.read()
     with MemoryFile(data) as memfile:
         with memfile.open() as collection:
             assert len(collection) == 67
@@ -46,7 +47,8 @@ def test_write_memoryfile(profile_first_coutwildrnp_shp):
 
 def test_memoryfile_bytesio(path_coutwildrnp_json):
     """In-memory GeoJSON file can be read"""
-    data = open(path_coutwildrnp_json, 'rb').read()
+    with open(path_coutwildrnp_json, 'rb') as f:
+        data = f.read()
 
     with fiona.open(BytesIO(data)) as collection:
         assert len(collection) == 67
