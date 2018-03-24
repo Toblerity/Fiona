@@ -70,3 +70,36 @@ def test_binary_field(tmpdir):
         assert(features["properties"]["name"][0] == "test")
         data = features["properties"]["data"][0]
         assert(binascii.b2a_hex(data) == b"deadbeef")
+
+@requires_gpkg  # ESRI Shapefile doesn't support datetime fields
+def test_datetime_fields(tmpdir):
+    filename = str(tmpdir.join("test.gpkg"))
+    schema = {
+        "geometry": "Point",
+        "properties": [
+            ("date", "date"),
+            ("datetime", "datetime"),
+            ("nulldt", "datetime"),
+        ]
+    }
+    with fiona.open(filename, "w", driver="GPKG", schema=schema) as dst:
+        feature = {
+            "geometry": None,
+            "properties": {
+                "date": "2018-03-24",
+                "datetime": "2018-03-24T15:06:01",
+                "nulldt": None,
+            }
+        }
+        dst.write(feature)
+
+    with fiona.open(filename, "r") as src:
+        features = read_vectorized(src)
+
+        assert features["properties"]["date"].dtype.name == "datetime64[D]"
+        assert features["properties"]["datetime"].dtype.name == "datetime64[s]"
+        assert features["properties"]["nulldt"].dtype.name == "datetime64[s]"
+
+        assert features["properties"]["date"][0] == np.datetime64("2018-03-24")
+        assert features["properties"]["datetime"][0] == np.datetime64("2018-03-24T15:06:01")
+        assert str(features["properties"]["nulldt"][0]) == "NaT"

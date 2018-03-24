@@ -1,9 +1,11 @@
 from .ogrext cimport Session, _deleteOgrFeature
 from .ogrext import FIELD_TYPES, FIELD_TYPES_MAP, OGRERR_NONE
 from ._shim cimport *
+from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 
 import logging
 from six import text_type
+import datetime
 
 import numpy as np
 cimport numpy as np
@@ -22,6 +24,13 @@ def read_vectorized(collection):
     cdef bytes field_name_bytes
     cdef int i
     cdef int l
+    cdef int y = 0
+    cdef int m = 0
+    cdef int d = 0
+    cdef int hh = 0
+    cdef int mm = 0
+    cdef int ss = 0
+    cdef int tz = 0
     cdef long long fid
     cdef long long [:] arr_int
     cdef double [:] arr_double
@@ -66,6 +75,13 @@ def read_vectorized(collection):
             data_properties[field_name] = np.empty([length], dtype=object)
         elif field_type == "bytes":
             data_properties[field_name] = np.empty([length], dtype=object)
+        elif field_type == "date":
+            data_properties[field_name] = np.empty([length], dtype='datetime64[D]')
+        elif field_type == "time":
+            # numpy has no dtype for time without date
+            data_properties[field_name] = np.empty([length], dtype=object)
+        elif field_type == "datetime":
+            data_properties[field_name] = np.empty([length], dtype='datetime64[s]')
         else:
             # TODO: other types (dates, bytes, boolean subtype)
             raise TypeError("Unexpected field type: {}".format(field_type))
@@ -122,7 +138,19 @@ def read_vectorized(collection):
                             "Failed to decode %s using %s codec", value, encoding)
                 arr = data_properties[field_name]
                 arr[feature_index] = value
-            # TODO: support date dtype
+            elif field_type in (FionaDateType, FionaTimeType, FionaDateTimeType):
+                arr = data_properties[field_name]
+                retval = OGR_F_GetFieldAsDateTime(
+                    cogr_feature, field_index, &y, &m, &d, &hh, &mm, &ss, &tz)
+                if not retval:
+                    arr[feature_index] = None
+                else:
+                    if field_type is FionaDateType:
+                        arr[feature_index] = datetime.date(y, m, d).isoformat()
+                    elif field_type is FionaTimeType:
+                        arr[feature_index] = datetime.time(hh, mm, ss).isoformat()
+                    else:
+                        arr[feature_index] = datetime.datetime(y, m, d, hh, mm, ss).isoformat()
             elif field_type is bytes:
                 data = OGR_F_GetFieldAsBinary(cogr_feature, field_index, &l)
                 arr = data_properties[field_name]
