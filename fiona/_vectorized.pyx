@@ -83,7 +83,6 @@ def read_vectorized(collection):
         elif field_type == "datetime":
             data_properties[field_name] = np.empty([length], dtype='datetime64[s]')
         else:
-            # TODO: other types (dates, bytes, boolean subtype)
             raise TypeError("Unexpected field type: {}".format(field_type))
 
     OGR_L_ResetReading(session.cogr_layer)
@@ -116,7 +115,7 @@ def read_vectorized(collection):
                 # TODO: support boolean subtype
                 arr_int = data_properties[field_name]
                 if is_field_null(cogr_feature, field_index):
-                    # TODO: this isn't the correct way to handle NULL for ints
+                    # TODO: is this the best way to handle NULL values for int?
                     arr_int[feature_index] = 0
                 else:
                     arr_int[feature_index] = OGR_F_GetFieldAsInteger64(cogr_feature, field_index)
