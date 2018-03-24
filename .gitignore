@@ -76,6 +76,7 @@ fiona/_shim2.c
 fiona/_shim22.c
 fiona/_shim.pxd
 fiona/_shim.pyx
+fiona/_vectorized.c
 tests/data/coutwildrnp.json
 tests/data/coutwildrnp.tar
 tests/data/coutwildrnp.zip
