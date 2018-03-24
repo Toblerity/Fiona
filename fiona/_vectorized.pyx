@@ -33,11 +33,24 @@ def read_vectorized(collection):
 
     length = OGR_L_GetFeatureCount(session.cogr_layer, 0)
 
-    data_geometry = np.empty([length], dtype=object)
     data_properties = {}
+
+    if collection.ignore_fields:
+        ignore_fields = set(collection.ignore_fields)
+    else:
+        ignore_fields = set()
+
+    if collection.ignore_geometry:
+        ignore_geometry = True
+        data_geometry = None
+    else:
+        ignore_geometry = False
+        data_geometry = np.empty([length], dtype=object)
 
     schema = session.get_schema()
     for field_name, field_type in schema["properties"].items():
+        if field_name in ignore_fields:
+            continue
         field_type, precision = field_type.split(":")
         if field_type == "int":
             data_properties[field_name] = np.empty([length], dtype=np.int64)
@@ -61,6 +74,8 @@ def read_vectorized(collection):
             field_name_c = OGR_Fld_GetNameRef(fdefn)
             field_name_bytes = field_name_c
             field_name = field_name_bytes.decode(encoding)
+            if field_name in ignore_fields:
+                continue
 
             # field type
             field_type_id = OGR_Fld_GetType(fdefn)
@@ -95,15 +110,15 @@ def read_vectorized(collection):
             else:
                 raise TypeError("Unexpected field type: {}".format(field_type))
 
-        # TODO: best way to return geometries for shapely?
-        cogr_geometry = OGR_F_GetGeometryRef(cogr_feature)
-        if cogr_geometry == NULL:
-            data_geometry[feature_index] = None
-        else:
-            result = OGR_G_ExportToWkt(cogr_geometry, &wkt)
-            if result != OGRERR_NONE:
-                raise ValueError("Failed to export geometry to WKT")
-            data_geometry[feature_index] = wkt
+        if not ignore_geometry:
+            cogr_geometry = OGR_F_GetGeometryRef(cogr_feature)
+            if cogr_geometry == NULL:
+                data_geometry[feature_index] = None
+            else:
+                result = OGR_G_ExportToWkt(cogr_geometry, &wkt)
+                if result != OGRERR_NONE:
+                    raise ValueError("Failed to export geometry to WKT")
+                data_geometry[feature_index] = wkt
 
         _deleteOgrFeature(cogr_feature)
 

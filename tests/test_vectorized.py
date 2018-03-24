@@ -3,17 +3,12 @@ import fiona
 from six import integer_types, string_types
 try:
     from fiona._vectorized import read_vectorized
-    has_vectorized = True
 except ImportError:
-    has_vectorized = False
-
-if has_vectorized:
+    pytestmark = pytest.mark.skip
+else:
     import numpy as np
     from numpy.testing import assert_allclose
 
-requires_vectorized = pytest.mark.skipif(not has_vectorized, reason="Vectorized submodule not available")
-
-@requires_vectorized
 def test_read_vectorized(path_coutwildrnp_shp):
     with fiona.open(path_coutwildrnp_shp, "r") as collection:
         features = read_vectorized(collection)
@@ -44,3 +39,18 @@ def test_read_vectorized(path_coutwildrnp_shp):
         assert features["properties"]["NAME"].shape == (67,)
         assert features["properties"]["NAME"][0] == "Mount Naomi Wilderness"
         assert features["properties"]["NAME"][-1] == "Mesa Verde Wilderness"
+
+def test_ignore_fields(path_coutwildrnp_shp):
+    with fiona.open(path_coutwildrnp_shp, ignore_fields=["NAME"]) as collection:
+        features = read_vectorized(collection)
+
+        assert "PERIMETER" in features["properties"]
+        assert "WILDRNP020" in features["properties"]
+        assert "NAME" not in features["properties"]
+
+        assert features["geometry"] is not None
+
+def test_ignore_geometry(path_coutwildrnp_shp):
+    with fiona.open(path_coutwildrnp_shp, ignore_geometry=True) as collection:
+        features = read_vectorized(collection)
+        assert features["geometry"] is None
