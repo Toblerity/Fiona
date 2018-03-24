@@ -21,6 +21,8 @@ def read_vectorized(collection):
     cdef char * field_name_c
     cdef bytes field_name_bytes
     cdef int i
+    cdef int l
+    cdef long long fid
     cdef long long [:] arr_int
     cdef double [:] arr_double
     cdef char * wkt
@@ -33,6 +35,7 @@ def read_vectorized(collection):
 
     length = OGR_L_GetFeatureCount(session.cogr_layer, 0)
 
+    data_fids = np.empty([length], dtype=object)
     data_properties = {}
 
     if collection.ignore_fields:
@@ -51,20 +54,31 @@ def read_vectorized(collection):
     for field_name, field_type in schema["properties"].items():
         if field_name in ignore_fields:
             continue
-        field_type, precision = field_type.split(":")
+        if ":" in field_type:
+            field_type, precision = field_type.split(":")
+        else:
+            precision = None
         if field_type == "int":
             data_properties[field_name] = np.empty([length], dtype=np.int64)
         elif field_type == "float":
             data_properties[field_name] = np.empty([length], dtype=np.float64)
         elif field_type == "str":
             data_properties[field_name] = np.empty([length], dtype=object)
+        elif field_type == "bytes":
+            data_properties[field_name] = np.empty([length], dtype=object)
         else:
             # TODO: other types (dates, bytes, boolean subtype)
             raise TypeError("Unexpected field type: {}".format(field_type))
 
+    OGR_L_ResetReading(session.cogr_layer)
     for feature_index in range(length):
-        # TODO: this isn't the correct way to iterate over features
-        cogr_feature = OGR_L_GetFeature(session.cogr_layer, feature_index)
+        cogr_feature = OGR_L_GetNextFeature(session.cogr_layer)
+
+        if cogr_feature == NULL:
+            raise ValueError("Failed to read feature {}".format(feature_index))
+
+        fid = OGR_F_GetFID(cogr_feature)
+        data_fids[feature_index] = str(fid)
 
         num_fields = OGR_F_GetFieldCount(cogr_feature)
         for field_index in range(num_fields):
@@ -83,6 +97,7 @@ def read_vectorized(collection):
             field_type = FIELD_TYPES_MAP[field_type_name]
 
             if field_type is int:
+                # TODO: support boolean subtype
                 arr_int = data_properties[field_name]
                 if is_field_null(cogr_feature, field_index):
                     # TODO: this isn't the correct way to handle NULL for ints
@@ -107,6 +122,11 @@ def read_vectorized(collection):
                             "Failed to decode %s using %s codec", value, encoding)
                 arr = data_properties[field_name]
                 arr[feature_index] = value
+            # TODO: support date dtype
+            elif field_type is bytes:
+                data = OGR_F_GetFieldAsBinary(cogr_feature, field_index, &l)
+                arr = data_properties[field_name]
+                arr[feature_index] = data[:l]
             else:
                 raise TypeError("Unexpected field type: {}".format(field_type))
 
@@ -123,6 +143,7 @@ def read_vectorized(collection):
         _deleteOgrFeature(cogr_feature)
 
     features = {
+        "id": data_fids,
         "geometry": data_geometry,
         "properties": data_properties,
     }

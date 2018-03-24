@@ -1,5 +1,6 @@
 import pytest
 import fiona
+import binascii
 from six import integer_types, string_types
 try:
     from fiona._vectorized import read_vectorized
@@ -8,6 +9,8 @@ except ImportError:
 else:
     import numpy as np
     from numpy.testing import assert_allclose
+from .conftest import requires_gpkg
+from .test_binary_field import write_binary_gpkg
 
 def test_read_vectorized(path_coutwildrnp_shp):
     with fiona.open(path_coutwildrnp_shp, "r") as collection:
@@ -54,3 +57,16 @@ def test_ignore_geometry(path_coutwildrnp_shp):
     with fiona.open(path_coutwildrnp_shp, ignore_geometry=True) as collection:
         features = read_vectorized(collection)
         assert features["geometry"] is None
+
+@requires_gpkg
+def test_binary_field(tmpdir):
+    filename = str(tmpdir.join("test.gpkg"))
+    write_binary_gpkg(filename)
+
+    with fiona.open(filename, "r") as collection:
+        print(collection.schema)
+        features = read_vectorized(collection)
+
+        assert(features["properties"]["name"][0] == "test")
+        data = features["properties"]["data"][0]
+        assert(binascii.b2a_hex(data) == b"deadbeef")
