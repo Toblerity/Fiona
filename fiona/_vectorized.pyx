@@ -1,6 +1,7 @@
 from .ogrext cimport Session, _deleteOgrFeature
 from .ogrext import FIELD_TYPES, FIELD_TYPES_MAP, OGRERR_NONE
 from ._shim cimport *
+from libc.stdlib cimport malloc, free
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 
 import logging
@@ -12,7 +13,7 @@ cimport numpy as np
 
 log = logging.getLogger(__name__)
 
-def read_vectorized(collection):
+def read_vectorized(collection, use_wkb=False):
     cdef Session session
     cdef void * cogr_feature
     cdef void * cogr_geometry
@@ -35,6 +36,7 @@ def read_vectorized(collection):
     cdef long long [:] arr_int
     cdef double [:] arr_double
     cdef char * wkt
+    cdef char * wkb
 
     session = collection.session
     encoding = session._fileencoding
@@ -161,6 +163,14 @@ def read_vectorized(collection):
             cogr_geometry = OGR_F_GetGeometryRef(cogr_feature)
             if cogr_geometry == NULL:
                 data_geometry[feature_index] = None
+            elif use_wkb:
+                length = OGR_G_WkbSize(cogr_geometry)
+                wkb = <char*>malloc(sizeof(char)*length)
+                result = OGR_G_ExportToWkb(cogr_geometry, 1, wkb)
+                if result != OGRERR_NONE:
+                    raise ValueError("Failed to export geometry to WKB")
+                data_geometry[feature_index] = wkb[:length]
+                free(wkb)
             else:
                 result = OGR_G_ExportToWkt(cogr_geometry, &wkt)
                 if result != OGRERR_NONE:

@@ -103,3 +103,13 @@ def test_datetime_fields(tmpdir):
         assert features["properties"]["date"][0] == np.datetime64("2018-03-24")
         assert features["properties"]["datetime"][0] == np.datetime64("2018-03-24T15:06:01")
         assert str(features["properties"]["nulldt"][0]) == "NaT"
+
+def test_wkb(path_coutwildrnp_shp):
+    with fiona.open(path_coutwildrnp_shp, "r") as collection:
+        features = read_vectorized(collection, use_wkb=True)
+
+    geometry = features["geometry"][0]
+    assert geometry[0:1] == b"\x01"  # little endian
+    assert geometry[1:5] == b"\x03\x00\x00\x00"  # polygon
+    assert geometry[5:9] == b"\x01\x00\x00\x00"  # 1 ring
+    assert len(geometry) == 1325
