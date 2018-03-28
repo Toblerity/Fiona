@@ -26,7 +26,9 @@ class DebugHandler(logging.Handler):
         if self.pattern in record.msg:
             self.history[record.msg] += 1
 
-log = logging.getLogger("Fiona")
+
+log = logging.getLogger()
+
 
 @pytest.mark.skipif(not has_gpkg, reason="Requires geopackage driver")
 class TestTransaction:
@@ -54,8 +56,6 @@ class TestTransaction:
         assert fiona.ogrext.DEFAULT_TRANSACTION_SIZE == transaction_size
 
         path = str(tmpdir.join("output.gpkg"))
-
-        feature = next(create_records(1))
 
         schema = {
             "geometry": "Point",

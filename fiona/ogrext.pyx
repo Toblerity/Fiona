@@ -29,6 +29,7 @@ from fiona.errors import (
 from fiona.compat import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
+from fiona.schema import FIELD_TYPES, FIELD_TYPES_MAP, normalize_field_type
 
 from fiona._shim cimport is_field_null
 
@@ -37,40 +38,7 @@ from libc.string cimport strcmp
 from cpython cimport PyBytes_FromStringAndSize, PyBytes_AsString
 
 
-log = logging.getLogger("Fiona")
-
-# Mapping of OGR integer field types to Fiona field type names.
-#
-# Lists are currently unsupported in this version, but might be done as
-# arrays in a future version.
-
-FIELD_TYPES = [
-    'int',          # OFTInteger, Simple 32bit integer
-    None,           # OFTIntegerList, List of 32bit integers
-    'float',        # OFTReal, Double Precision floating point
-    None,           # OFTRealList, List of doubles
-    'str',          # OFTString, String of ASCII chars
-    None,           # OFTStringList, Array of strings
-    None,           # OFTWideString, deprecated
-    None,           # OFTWideStringList, deprecated
-    'bytes',        # OFTBinary, Raw Binary data
-    'date',         # OFTDate, Date
-    'time',         # OFTTime, Time
-    'datetime',     # OFTDateTime, Date and Time
-    'int',          # OFTInteger64, Single 64bit integer
-    None,           # OFTInteger64List, List of 64bit integers
-    ]
-
-# Mapping of Fiona field type names to Python types.
-FIELD_TYPES_MAP = {
-    'int':      int,
-    'float':    float,
-    'str':      text_type,
-    'date':     FionaDateType,
-    'time':     FionaTimeType,
-    'datetime': FionaDateTimeType,
-    'bytes':    bytes,
-   }
+log = logging.getLogger(__name__)
 
 DEFAULT_TRANSACTION_SIZE = 20000
 
@@ -154,8 +122,29 @@ cdef class FeatureBuilder:
 
     cdef build(self, void *feature, encoding='utf-8', bbox=False, driver=None,
                ignore_fields=None, ignore_geometry=False):
-        # The only method anyone ever needs to call
-        cdef void *fdefn
+        """Build a Fiona feature object from an OGR feature
+
+        Parameters
+        ----------
+        feature : void *
+            The OGR feature # TODO: use a real typedef
+        encoding : str
+            The encoding of OGR feature attributes
+        bbox : bool
+            Not used
+        driver : str
+            OGR format driver name like 'GeoJSON'
+        ignore_fields : sequence
+            A sequence of field names that will be ignored and omitted
+            in the Fiona feature properties
+        ignore_geometry : bool
+            Flag for whether the OGR geometry field is to be ignored
+
+        Returns
+        -------
+        dict
+        """
+        cdef void *fdefn = NULL
         cdef int i
         cdef int y = 0
         cdef int m = 0
@@ -164,11 +153,13 @@ cdef class FeatureBuilder:
         cdef int mm = 0
         cdef int ss = 0
         cdef int tz = 0
-        cdef unsigned char *data
+        cdef unsigned char *data = NULL
         cdef int l
         cdef int retval
         cdef int fieldsubtype
         cdef const char *key_c = NULL
+
+        # Skeleton of the feature to be returned.
         fid = OGR_F_GetFID(feature)
         props = OrderedDict()
         fiona_feature = {
@@ -176,8 +167,10 @@ cdef class FeatureBuilder:
             "id": str(fid),
             "properties": props,
         }
-        if not ignore_fields:
-            ignore_fields = set()
+
+        ignore_fields = set(ignore_fields or [])
+
+        # Iterate over the fields of the OGR feature.
         for i in range(OGR_F_GetFieldCount(feature)):
             fdefn = OGR_F_GetFieldDefnRef(feature, i)
             if fdefn == NULL:
@@ -202,13 +195,22 @@ cdef class FeatureBuilder:
 
             # TODO: other types
             fieldtype = FIELD_TYPES_MAP[fieldtypename]
+
             if is_field_null(feature, i):
                 props[key] = None
+
+            elif fieldtypename is 'int32':
+                if fieldsubtype == OFSTBoolean:
+                    props[key] = bool(OGR_F_GetFieldAsInteger(feature, i))
+                else:
+                    props[key] = OGR_F_GetFieldAsInteger(feature, i)
+
             elif fieldtype is int:
                 if fieldsubtype == OFSTBoolean:
                     props[key] = bool(OGR_F_GetFieldAsInteger64(feature, i))
                 else:
                     props[key] = OGR_F_GetFieldAsInteger64(feature, i)
+
             elif fieldtype is float:
                 props[key] = OGR_F_GetFieldAsDouble(feature, i)
 
@@ -302,6 +304,7 @@ cdef class OGRFeatureBuilder:
             log.debug(
                 "Looking up %s in %s", key, repr(session._schema_mapping))
             ogr_key = session._schema_mapping[key]
+            # schema_type = normalize_field_type(collection.schema['properties'][key])
             schema_type = collection.schema['properties'][key]
             try:
                 key_bytes = ogr_key.encode(encoding)
@@ -319,7 +322,10 @@ cdef class OGRFeatureBuilder:
 
             # Continue over the standard OGR types.
             if isinstance(value, integer_types):
-                OGR_F_SetFieldInteger64(cogr_feature, i, value)
+                if schema_type == 'int32':
+                    OGR_F_SetFieldInteger(cogr_feature, i, value)
+                else:
+                    OGR_F_SetFieldInteger64(cogr_feature, i, value)
             elif isinstance(value, float):
                 OGR_F_SetFieldDouble(cogr_feature, i, value)
             elif (isinstance(value, string_types)
@@ -559,16 +565,16 @@ cdef class Session:
                 if precision: # and precision != 15:
                     fmt += ".%d" % precision
                 val = "float" + fmt
-            elif fieldtypename == 'int':
+            elif fieldtypename in ('int32', 'int64'):
                 fmt = ""
                 width = OGR_Fld_GetWidth(cogr_fielddefn)
-                if width: # and width != 11:
+                if width:
                     fmt = ":%d" % width
-                val = fieldtypename + fmt
+                val = 'int' + fmt
             elif fieldtypename == 'str':
                 fmt = ""
                 width = OGR_Fld_GetWidth(cogr_fielddefn)
-                if width: # and width != 80:
+                if width:
                     fmt = ":%d" % width
                 val = fieldtypename + fmt
 
@@ -970,11 +976,13 @@ cdef class WritingSession(Session):
 
                 # Convert 'long' to 'int'. See
                 # https://github.com/Toblerity/Fiona/issues/101.
-                if value == 'long':
-                    value = 'int'
-                
+                if GDAL_VERSION_NUM >= 2000000 and value in ('int', 'long'):
+                    value = 'int64'
+                elif value == 'int':
+                    value = 'int32'
+
                 if value == 'bool':
-                    value = 'int'
+                    value = 'int32'
                     field_subtype = OFSTBoolean
 
                 # Is there a field width/precision?
@@ -985,12 +993,17 @@ cdef class WritingSession(Session):
                         width, precision = map(int, fmt.split('.'))
                     else:
                         width = int(fmt)
+                    if value == 'int':
+                        if GDAL_VERSION_NUM >= 2000000 and width == 0 or width >= 10:
+                            value = 'int64'
+                        else:
+                            value = 'int32'
 
                 field_type = FIELD_TYPES.index(value)
-                if GDAL_VERSION_NUM >= 2000000:
-                    # See https://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
-                    if value == 'int' and (width is not None and width >= 10):
-                        field_type = 12
+                #if GDAL_VERSION_NUM >= 2000000:
+                #    # See https://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+                #    if value == 'int64':
+                #        field_type = 12
 
                 encoding = self.get_internalencoding()
                 key_bytes = key.encode(encoding)

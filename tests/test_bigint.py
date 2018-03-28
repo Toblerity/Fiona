@@ -3,6 +3,7 @@ import os
 import shutil
 import tempfile
 import unittest
+import pytest
 from fiona.ogrext import calc_gdal_version_num, get_gdal_version_num
 
 """
@@ -64,6 +65,20 @@ class TestBigInt(unittest.TestCase):
                     self.assertEqual(first['properties'][fieldname], a_bigint)
 
 
+@pytest.mark.skipif(get_gdal_version_num() < calc_gdal_version_num(2, 0, 0),
+                    reason="Test requires GDAL 2+")
+@pytest.mark.parametrize('dtype', ['int', 'int64'])
+def test_issue691(tmpdir, dtype):
+    """Type 'int' maps to 'int64'"""
+    schema = {'geometry': 'Any', 'properties': {'foo': dtype}}
+    with fiona.open(str(tmpdir.join('test.shp')), 'w', driver='Shapefile', schema=schema, crs='epsg:4326') as dst:
+        dst.write({'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': (-122.278015, 37.868995)}, 'properties': {'foo': 3694063472}})
+
+    with fiona.open(str(tmpdir.join('test.shp'))) as src:
+        assert src.schema['properties']['foo'] == 'int:18'
+        first = next(src)
+        assert first['properties']['foo'] == 3694063472
+
+
 if __name__ == "__main__":
-    # import sys;sys.argv = ['', 'Test.testName']
     unittest.main()
