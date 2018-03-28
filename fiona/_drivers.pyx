@@ -41,7 +41,7 @@ cdef extern from "ogr_api.h":
     const char * OGR_Dr_GetName(void *driver)
 
 
-log = logging.getLogger('Fiona')
+log = logging.getLogger(__name__)
 class NullHandler(logging.Handler):
     def emit(self, record):
         pass
@@ -147,7 +147,11 @@ cdef class GDALEnv(object):
                 val_b = ('ON' if val else 'OFF').encode('utf-8')
             val_c = val_b
             CPLSetThreadLocalConfigOption(key_c, val_c)
-            log.debug("Option %s=%s", key, CPLGetConfigOption(key_c, NULL))
+            # Logging of config options has been disabled to prevent
+            # credential leakage and will be completely
+            # removed as soon as the Fiona driver environment and
+            # AWS authentication interactions are stable.
+            # log.debug("Option %s=%s", key, CPLGetConfigOption(key_c, NULL))
         return self
 
     def stop(self):
