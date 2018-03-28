@@ -30,9 +30,7 @@ def _load(output):
     return features
 
 
-def test_calc_seq(feature_seq):
-    runner = CliRunner()
-
+def test_calc_seq(feature_seq, runner):
     result = runner.invoke(calc, [
         "TEST",
         "f.properties.AREA / f.properties.PERIMETER"],
