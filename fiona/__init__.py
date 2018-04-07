@@ -65,7 +65,12 @@ writing modes) flush contents to disk when their ``with`` blocks end.
 from contextlib import contextmanager
 import logging
 import os
+import sys
 from six import string_types
+
+if sys.platform == "win32":
+    libdir = os.path.join(os.path.dirname(__file__), ".libs")
+    os.environ["PATH"] = os.environ["PATH"] + ";" + libdir
 
 from fiona.collection import Collection, BytesCollection
 from fiona.vfs import vsi_path, parse_paths, is_remote
