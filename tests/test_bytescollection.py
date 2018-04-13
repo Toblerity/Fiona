@@ -221,7 +221,10 @@ def test_zipped_bytes_collection(bytes_coutwildrnp_zip):
         assert col.name == 'coutwildrnp'
         assert len(col) == 67
 
-
+pytest.mark.skipif(
+    parse(fiona.get_gdal_release_name().decode('utf-8')) >= parse('2.3.0'),
+    reason="Changed behavior with gdal 2.3, possibly related to RFC 70:"
+    "Guessing output format from output file name extension for utilities")
 def test_grenada_bytes_geojson(bytes_grenada_geojson):
     """Read grenada.geojson as BytesCollection.
 
