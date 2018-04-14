@@ -5,10 +5,15 @@ import unittest
 
 import pytest
 import six
-from packaging.version import parse
+
 import fiona
 
 @pytest.mark.usefixtures('uttc_path_coutwildrnp_json')
+
+
+def calc_gdal_version_num(maj, min, rev):
+    """Calculates the internal gdal version number based on major, minor and revision"""
+    return int(maj * 1000000 + min * 10000 + rev*100)
 
 
 class ReadingTest(unittest.TestCase):
@@ -221,8 +226,7 @@ def test_zipped_bytes_collection(bytes_coutwildrnp_zip):
         assert col.name == 'coutwildrnp'
         assert len(col) == 67
 
-pytest.mark.skipif(
-    parse(fiona.get_gdal_release_name().decode('utf-8')) >= parse('2.3.0'),
+pytest.mark.skipif(fiona.get_gdal_version_num() >= fiona.calc_gdal_version_num(2, 3, 0),
     reason="Changed behavior with gdal 2.3, possibly related to RFC 70:"
     "Guessing output format from output file name extension for utilities")
 def test_grenada_bytes_geojson(bytes_grenada_geojson):
