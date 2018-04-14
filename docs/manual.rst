@@ -713,9 +713,10 @@ Features Access) installed, you can see this in by verifying the following.
 
    Some files may contain vectors that are :dfn:`invalid` from a simple
    features standpoint due to accident (inadequate quality control on the
-   producer's end) or intention ("dirty" vectors saved to a file for special
-   treatment). Fiona doesn't sniff for or attempt to clean dirty data, so make
-   sure you're getting yours from a clean source.
+   producer's end), intention ("dirty" vectors saved to a file for special
+   treatment) or discrepancies of the numeric precision models (Fiona can't
+   handle fixed precision models yet). Fiona doesn't sniff for or attempt to
+   clean dirty data, so make sure you're getting yours from a clean source.
 
 Writing Vector Data
 ===================
@@ -815,16 +816,16 @@ iterator) of records.
    You may also call :py:meth:`flush` periodically to write the buffer contents
    to disk.
 
-Writing New Files
------------------
+Creating files of the same structure
+------------------------------------
 
 Writing a new file is more complex than appending to an existing file because
 the file CRS, format, and schema have not yet been defined and must be done so
 by the programmer. Still, it's not very complicated. A schema is just
 a mapping, as described above. A CRS is also just a mapping, and the possible
-formats are enumerated in the :py:attr:`fiona.drivers` list.
+formats are enumerated in the :py:attr:`fiona.supported_drivers` list.
 
-Copy the parameters of our demo file.
+Review the parameters of our demo file.
 
 .. sourcecode:: pycon
 
@@ -845,7 +846,7 @@ Copy the parameters of our demo file.
                   'AREA': 'float:15.2',
                   'POP_CNTRY': 'float:15.2'}}
 
-And now create a new file using them.
+We can create a new file using them.
 
 .. sourcecode:: pycon
 
@@ -899,6 +900,77 @@ a file's meta properties even easier.
 
   >>> source = fiona.open('docs/data/test_uk.shp')
   >>> sink = fiona.open('/tmp/foo.shp', 'w', **source.meta)
+
+Writing new files from scratch
+-------------------------------
+
+To write a new file from scratch we have to define our own specific driver, crs and schema.
+
+Consider the following record, representing the Eiffel Tower using a point geometry with UTM coordinates in zone 31N.
+
+.. sourcecode:: pycon
+
+  >>> eiffel_tower =  {
+  ...   'geometry': {'coordinates': [448252, 5411935]},
+  ...   'properties': {
+  ...     'name': 'Eiffel Tower',
+  ...     'height': 300.01,
+  ...     'view': 'scenic',
+  ...     'year': 1889
+  ...   }
+  ... }
+
+A corresponding scheme could be:
+
+.. sourcecode:: pycon
+
+  >>> landmarks_schema = {
+  ...   'geometry': 'Point',
+  ...   'properties': {
+  ...     'name': 'str',
+  ...     'height': 'float',
+  ...     'view': 'str',
+  ...     'year': 'int',
+  ...   }
+  ... }
+
+The coordinate reference system of these landmark coordinates is ETRS89 / UTM zone 31N which is referenced in the EPSG database as EPSG:25831.
+
+.. sourcecode:: pycon
+
+  >>> from fiona.crs import from_epsg
+  >>> landmarks_crs = from_epsg(25831)
+
+An appropriate driver could be:
+
+.. sourcecode:: pycon
+
+  >>> output_driver = "GeoJSON"
+
+Having specified schema, crs and driver, we are ready to open a file for writing our record:
+
+.. sourcecode:: pycon
+
+  >>> with fiona.open(
+  ...         '/tmp/foo.geojson',
+  ...         'w',
+  ...         driver=output_driver,
+  ...         crs=landmarks_crs,
+  ...         schema=landmarks_schema) as c:
+  ...     c.write(eiffel_tower)
+  ...
+
+  >>> import pprint
+  >>> with fiona.open('/tmp/foo.geojson') as source:
+  ...   for record in source:
+  ...     pprint.pprint(record)
+  {'geometry': {'coordinates': (448252.0, 5411935.0), 'type': 'Point'},
+   'id': '0',
+   'properties': OrderedDict([('name', 'Eiffel Tower'),
+                              ('height', 300.01),
+                              ('view', 'scenic'),
+                              ('year', 1889)]),
+   'type': 'Feature'}
 
 Ordering Record Fields
 ......................
