@@ -5,7 +5,7 @@ import unittest
 
 import pytest
 import six
-
+from packaging.version import parse
 import fiona
 
 @pytest.mark.usefixtures('uttc_path_coutwildrnp_json')
