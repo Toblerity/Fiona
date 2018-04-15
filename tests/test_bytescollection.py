@@ -9,13 +9,6 @@ import six
 import fiona
 
 @pytest.mark.usefixtures('uttc_path_coutwildrnp_json')
-
-
-def calc_gdal_version_num(maj, min, rev):
-    """Calculates the internal gdal version number based on major, minor and revision"""
-    return int(maj * 1000000 + min * 10000 + rev*100)
-
-
 class ReadingTest(unittest.TestCase):
 
     def setUp(self):
