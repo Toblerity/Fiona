@@ -57,8 +57,11 @@ def parse_paths(uri, vfs=None):
         scheme = parts.scheme
         path = parts.path
         if parts.netloc and parts.netloc != 'localhost':
-            # We need to deal with cases such as zip+https://server.com/data.zip
-            path = "{}://{}{}".format(scheme.split("+")[-1], parts.netloc, path)
+            if scheme.split("+")[-1] in REMOTESCHEMES:
+                # We need to deal with cases such as zip+https://server.com/data.zip
+                path = "{}://{}{}".format(scheme.split("+")[-1], parts.netloc, path)
+            else:
+                path = parts.netloc + path
         if scheme in SCHEMES:
             parts = path.split('!')
             path = parts.pop() if parts else None
