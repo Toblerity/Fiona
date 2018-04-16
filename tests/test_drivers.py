@@ -11,6 +11,7 @@ import fiona
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
+GDAL_MAJOR_VER = fiona.get_gdal_version_num() // 1000000
 
 def test_options(tmpdir):
     """Test that setting CPL_DEBUG=ON works"""
@@ -27,4 +28,7 @@ def test_options(tmpdir):
         c.close()
         with open(logfile, "r") as f:
             log = f.read()
-        assert "GDALClose" in log
+        if GDAL_MAJOR_VER >= 2:
+            assert "GDALOpen" in log
+        else:
+            assert "OGROpen" in log
