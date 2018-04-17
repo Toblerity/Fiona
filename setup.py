@@ -319,6 +319,6 @@ setup_args = dict(
         'Topic :: Scientific/Engineering :: GIS'])
 
 if os.environ.get('PACKAGE_DATA'):
-    setup_args['package_data'] = {'fiona': ['gdal_data/*', 'proj_data/*']}
+    setup_args['package_data'] = {'fiona': ['gdal_data/*', 'proj_data/*', '.libs/*', '.libs/licenses/*']}
 
 setup(**setup_args)
