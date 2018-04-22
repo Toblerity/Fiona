@@ -162,7 +162,7 @@ class TarArchiveReadingTest(VsiReadingTest):
 
 @pytest.mark.network        
 def test_open_http():
-    ds = fiona.open('http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.shp')
+    ds = fiona.open('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.shp')
     assert len(ds) == 10
 
 @credentials
