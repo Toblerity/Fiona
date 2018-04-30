@@ -3,10 +3,11 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.7.12 (Next)
--------------
+1.7.11.post2 (2018-04-30)
+-------------------------
 
-- Require six 1.7 or greater (#550).
+- This post-release adds GPKG (geopackage) support to manylinux1 wheels
+  and upgrades the included GDAL library to 2.2.4.
 
 1.7.11.post1 (2018-01-08)
 -------------------------
