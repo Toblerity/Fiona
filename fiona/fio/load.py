@@ -7,6 +7,7 @@ import json
 import logging
 
 import click
+import cligj
 
 import fiona
 from fiona.fio import options
@@ -23,6 +24,7 @@ FIELD_TYPES_MAP_REV = dict([(v, k) for k, v in fiona.FIELD_TYPES_MAP.items()])
 @options.src_crs_opt
 @click.option('--dst-crs', '--dst_crs',
               help="Destination CRS.  Defaults to --src-crs when not given.")
+@cligj.features_in_arg
 @click.option('--sequence / --no-sequence', default=False,
               help="Specify whether the input stream is a LF-delimited "
                    "sequence of GeoJSON features (the default) or a single "
@@ -31,14 +33,13 @@ FIELD_TYPES_MAP_REV = dict([(v, k) for k, v in fiona.FIELD_TYPES_MAP.items()])
               help="Load features into specified layer.  Layers use "
                    "zero-based numbering when accessed by index.")
 @click.pass_context
-def load(ctx, output, driver, src_crs, dst_crs, sequence, layer):
+def load(ctx, output, driver, src_crs, dst_crs, features, sequence, layer):
     """Load features from JSON to a file in another format.
 
     The input is a GeoJSON feature collection or optionally a sequence of
     GeoJSON feature objects."""
     verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
     logger = logging.getLogger('fio')
-    stdin = click.get_text_stream('stdin')
 
     dst_crs = dst_crs or src_crs
 
@@ -48,38 +49,10 @@ def load(ctx, output, driver, src_crs, dst_crs, sequence, layer):
     else:
         transformer = lambda x: x
 
-    first_line = next(stdin)
-
-    # If input is RS-delimited JSON sequence.
-    if first_line.startswith(u'\x1e'):
-        def feature_gen():
-            buffer = first_line.strip(u'\x1e')
-            for line in stdin:
-                if line.startswith(u'\x1e'):
-                    if buffer:
-                        feat = json.loads(buffer)
-                        feat['geometry'] = transformer(feat['geometry'])
-                        yield feat
-                    buffer = line.strip(u'\x1e')
-                else:
-                    buffer += line
-            else:
-                feat = json.loads(buffer)
-                feat['geometry'] = transformer(feat['geometry'])
-                yield feat
-    elif sequence:
-        def feature_gen():
-            yield json.loads(first_line)
-            for line in stdin:
-                feat = json.loads(line)
-                feat['geometry'] = transformer(feat['geometry'])
-                yield feat
-    else:
-        def feature_gen():
-            text = "".join(itertools.chain([first_line], stdin))
-            for feat in json.loads(text)['features']:
-                feat['geometry'] = transformer(feat['geometry'])
-                yield feat
+    def feature_gen():
+        for feat in features:
+            feat['geometry'] = transformer(feat['geometry'])
+            yield feat
 
     try:
         source = feature_gen()
