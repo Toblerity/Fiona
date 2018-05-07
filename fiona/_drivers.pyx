@@ -28,6 +28,7 @@ cdef extern from "gdal.h":
     void * GDALGetDriver(int i)
     const char * GDALGetDriverShortName(void *driver)
     const char * GDALGetDriverLongName(void *driver)
+    const char * GDALVersionInfo(const char *key)
 
 
 cdef extern from "ogr_api.h":
@@ -111,15 +112,33 @@ cdef class GDALEnv(object):
         if 'GDAL_DATA' in os.environ:
             log.debug("GDAL_DATA: %s", os.environ['GDAL_DATA'])
         else:
+            # We will try a few well-known paths, starting with the
+            # official wheel path.
             whl_datadir = os.path.abspath(
                 os.path.join(os.path.dirname(__file__), "gdal_data"))
-            share_datadir = os.path.join(sys.prefix, 'share/gdal')
+            fhs_share_datadir = os.path.join(sys.prefix, 'share/gdal')
+
+            # Debian supports multiple GDAL installs.
+            gdal_release_name = GDALVersionInfo("RELEASE_NAME")
+            gdal_release_name = gdal_release_name.decode('utf-8')
+            deb_share_datadir = os.path.join(
+                fhs_share_datadir,
+                "{}.{}".format(*gdal_release_name.split('.')[:2]))
+
+            # If we find GDAL data at the well-known paths, we will
+            # add a GDAL_DATA key to the config options dict.
             if os.path.exists(os.path.join(whl_datadir, 'pcs.csv')):
-                os.environ['GDAL_DATA'] = whl_datadir
                 log.debug("Set GDAL_DATA = %r", whl_datadir)
-            elif os.path.exists(os.path.join(share_datadir, 'pcs.csv')):
-                os.environ['GDAL_DATA'] = share_datadir
-                log.debug("Set GDAL_DATA = %r", share_datadir)
+                self.options['GDAL_DATA'] = whl_datadir
+
+            elif os.path.exists(os.path.join(deb_share_datadir, 'pcs.csv')):
+                log.debug("Set GDAL_DATA = %r", deb_share_datadir)
+                self.options['GDAL_DATA'] = deb_share_datadir
+
+            elif os.path.exists(os.path.join(fhs_share_datadir, 'pcs.csv')):
+                os.environ['GDAL_DATA'] = fhs_share_datadir
+                log.debug("Set GDAL_DATA = %r", fhs_share_datadir)
+
             else:
                 log.warning("GDAL data files not located, GDAL_DATA not set")
 
@@ -129,12 +148,15 @@ cdef class GDALEnv(object):
             whl_datadir = os.path.abspath(
                 os.path.join(os.path.dirname(__file__), "proj_data"))
             share_datadir = os.path.join(sys.prefix, 'share/proj')
+
             if os.path.exists(whl_datadir):
-                os.environ['PROJ_LIB'] = whl_datadir
                 log.debug("Set PROJ_LIB = %r", whl_datadir)
+                self.options['PROJ_LIB'] = whl_datadir
+
             elif os.path.exists(share_datadir):
-                os.environ['PROJ_LIB'] = share_datadir
                 log.debug("Set PROJ_LIB = %r", share_datadir)
+                self.options['PROJ_LIB'] = share_datadir
+
             else:
                 log.warning("PROJ data files not located, PROJ_LIB not set")
 
