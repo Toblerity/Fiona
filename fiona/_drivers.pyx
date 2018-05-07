@@ -136,8 +136,8 @@ cdef class GDALEnv(object):
                 self.options['GDAL_DATA'] = deb_share_datadir
 
             elif os.path.exists(os.path.join(fhs_share_datadir, 'pcs.csv')):
-                os.environ['GDAL_DATA'] = fhs_share_datadir
                 log.debug("Set GDAL_DATA = %r", fhs_share_datadir)
+                self.options['GDAL_DATA'] = fhs_share_datadir
 
             else:
                 log.warning("GDAL data files not located, GDAL_DATA not set")
@@ -151,11 +151,11 @@ cdef class GDALEnv(object):
 
             if os.path.exists(whl_datadir):
                 log.debug("Set PROJ_LIB = %r", whl_datadir)
-                self.options['PROJ_LIB'] = whl_datadir
+                os.environ['PROJ_LIB'] = whl_datadir
 
             elif os.path.exists(share_datadir):
                 log.debug("Set PROJ_LIB = %r", share_datadir)
-                self.options['PROJ_LIB'] = share_datadir
+                os.environ['PROJ_LIB'] = share_datadir
 
             else:
                 log.warning("PROJ data files not located, PROJ_LIB not set")
