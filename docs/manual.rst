@@ -906,18 +906,27 @@ Writing new files from scratch
 
 To write a new file from scratch we have to define our own specific driver, crs and schema.
 
-Consider the following record, representing the Eiffel Tower using a point geometry with UTM coordinates in zone 31N.
+To ensure the order of the attribute fields is predictable, in both the schema and the actual manifestation as feature attributes, we will use ordered dictionaries.
+
+.. sourcecode:: pycon
+
+  >>> from collections import OrderedDict
+
+Consider the following record, structured in accordance to the `Python geo protocol <https://gist.github.com/sgillies/2217756>`__, representing the Eiffel Tower using a point geometry with UTM coordinates in zone 31N.
 
 .. sourcecode:: pycon
 
   >>> eiffel_tower =  {
-  ...   'geometry': {'coordinates': [448252, 5411935]},
-  ...   'properties': {
-  ...     'name': 'Eiffel Tower',
-  ...     'height': 300.01,
-  ...     'view': 'scenic',
-  ...     'year': 1889
-  ...   }
+  ...   'geometry': {
+  ...     'type': 'Point',
+  ...     'coordinates': (448252, 5411935)
+  ...   },
+  ...   'properties': OrderedDict([
+  ...     ('name', 'Eiffel Tower'),
+  ...     ('height', 300.01),
+  ...     ('view', 'scenic'),
+  ...     ('year', 1889)
+  ...   ])
   ... }
 
 A corresponding scheme could be:
@@ -926,12 +935,12 @@ A corresponding scheme could be:
 
   >>> landmarks_schema = {
   ...   'geometry': 'Point',
-  ...   'properties': {
-  ...     'name': 'str',
-  ...     'height': 'float',
-  ...     'view': 'str',
-  ...     'year': 'int',
-  ...   }
+  ...   'properties': OrderedDict([
+  ...     ('name', 'str'),
+  ...     ('height', 'float'),
+  ...     ('view', 'str'),
+  ...     ('year', 'int')
+  ...   ])
   ... }
 
 The coordinate reference system of these landmark coordinates is ETRS89 / UTM zone 31N which is referenced in the EPSG database as EPSG:25831.
