@@ -25,15 +25,11 @@ FIELD_TYPES_MAP_REV = dict([(v, k) for k, v in fiona.FIELD_TYPES_MAP.items()])
 @click.option('--dst-crs', '--dst_crs',
               help="Destination CRS.  Defaults to --src-crs when not given.")
 @cligj.features_in_arg
-@click.option('--sequence / --no-sequence', default=False,
-              help="Specify whether the input stream is a LF-delimited "
-                   "sequence of GeoJSON features (the default) or a single "
-                   "GeoJSON feature collection.")
 @click.option('--layer', metavar="INDEX|NAME", callback=options.cb_layer,
               help="Load features into specified layer.  Layers use "
                    "zero-based numbering when accessed by index.")
 @click.pass_context
-def load(ctx, output, driver, src_crs, dst_crs, features, sequence, layer):
+def load(ctx, output, driver, src_crs, dst_crs, features, layer):
     """Load features from JSON to a file in another format.
 
     The input is a GeoJSON feature collection or optionally a sequence of
