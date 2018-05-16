@@ -9,7 +9,6 @@ import subprocess
 import tempfile
 import unittest
 import re
-import pathlib
 
 import pytest
 
@@ -273,10 +272,11 @@ class ReadingTest(unittest.TestCase):
         self.assertTrue(0 in self.c.keys())
         self.assertTrue(0 in self.c)
 
-class ReadingPathTest(ReadingTest):
-
-    def setUp(self):
-        self.c = fiona.open(pathlib.Path(WILDSHP), "r")
+class ReadingPathTest(unittest.TestCase):
+    def test_open_path(self):
+        pathlib = pytest.importorskip("pathlib")
+        with fiona.open(pathlib.Path(WILDSHP)) as collection:
+            assert collection.name == 'coutwildrnp'
 
 
 class IgnoreFieldsAndGeometryTest(unittest.TestCase):
