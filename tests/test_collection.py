@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 import unittest
 import re
+import pathlib
 
 import pytest
 
@@ -271,6 +272,11 @@ class ReadingTest(unittest.TestCase):
     def test_in_keys(self):
         self.assertTrue(0 in self.c.keys())
         self.assertTrue(0 in self.c)
+
+class ReadingPathTest(ReadingTest):
+
+    def setUp(self):
+        self.c = fiona.open(pathlib.Path(WILDSHP), "r")
 
 
 class IgnoreFieldsAndGeometryTest(unittest.TestCase):
