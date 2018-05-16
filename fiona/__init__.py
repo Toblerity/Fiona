@@ -68,6 +68,12 @@ import os
 import sys
 from six import string_types
 
+try:
+    from pathlib import Path
+except ImportError:  # pragma: no cover
+    class Path:
+        pass
+
 if sys.platform == "win32":
     libdir = os.path.join(os.path.dirname(__file__), ".libs")
     os.environ["PATH"] = os.environ["PATH"] + ";" + libdir
@@ -147,7 +153,7 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
 
     Parameters
     ----------
-    fp : URI, or file-like object
+    fp : URI (str or pathlib.Path), or file-like object
         A dataset resource identifier or file object.
     mode : str
         One of 'r', to read (the default); 'a', to append; or 'w', to
@@ -221,6 +227,10 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
         return fp_writer(fp)
 
     else:
+        # If a pathlib.Path instance is given, convert it to a string path.
+        if isinstance(fp, Path):
+            fp = str(fp)
+
         # Parse the vfs into a vsi and an archive path.
         path, vsi, archive = parse_paths(fp, vfs)
         if mode in ('a', 'r'):
