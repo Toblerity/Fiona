@@ -153,7 +153,7 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
 
     Parameters
     ----------
-    fp : URI, or file-like object
+    fp : URI (str or pathlib.Path), or file-like object
         A dataset resource identifier or file object.
     mode : str
         One of 'r', to read (the default); 'a', to append; or 'w', to
