@@ -86,7 +86,8 @@ from fiona.compat import OrderedDict
 from fiona.io import MemoryFile
 from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove, _remove_layer
 from fiona.ogrext import (
-    calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name)
+    calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name,
+    get_gdal_version_tuple)
 
 # These modules are imported by fiona.ogrext, but are also import here to
 # help tools like cx_Freeze find them automatically
@@ -97,6 +98,8 @@ import uuid
 __all__ = ['bounds', 'listlayers', 'open', 'prop_type', 'prop_width']
 __version__ = "1.8a2"
 __gdal_version__ = get_gdal_release_name().decode('utf-8')
+
+gdal_version = get_gdal_version_tuple()
 
 log = logging.getLogger(__name__)
 
