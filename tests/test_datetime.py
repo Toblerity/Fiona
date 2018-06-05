@@ -6,6 +6,7 @@ import fiona
 import pytest
 import tempfile, shutil
 import os
+from fiona.errors import DriverSupportError
 from .conftest import requires_gpkg
 
 GDAL_MAJOR_VER = fiona.get_gdal_version_num() // 1000000
@@ -139,11 +140,13 @@ class TestDatetimeFieldSupport:
     def test_shapefile(self):
         # datetime is silently converted to date
         driver = "ESRI Shapefile"
-        schema, features = self.write_data(driver)
+
+        with pytest.raises(DriverSupportError):
+            schema, features = self.write_data(driver)
         
-        assert schema["properties"]["datetime"] == "date"
-        assert features[0]["properties"]["datetime"] == "2018-03-25"
-        assert features[1]["properties"]["datetime"] is None
+        # assert schema["properties"]["datetime"] == "date"
+        # assert features[0]["properties"]["datetime"] == "2018-03-25"
+        # assert features[1]["properties"]["datetime"] is None
 
     @requires_gpkg
     def test_gpkg(self):
@@ -219,10 +222,9 @@ class TestTimeFieldSupport:
         return schema, features
 
     def test_shapefile(self):
-        # attempting to write time field to shapefile raises KeyError
-        # this is a bug in fiona
+        # no support for time fields
         driver = "ESRI Shapefile"
-        with pytest.raises(KeyError):
+        with pytest.raises(DriverSupportError):
             self.write_data(driver)
 
     @requires_gpkg
@@ -230,14 +232,16 @@ class TestTimeFieldSupport:
         # GDAL 2: time field is silently converted to string
         # GDAL 1: time field dropped completely
         driver = "GPKG"
-        schema, features = self.write_data(driver)
+
+        with pytest.raises(DriverSupportError):
+            schema, features = self.write_data(driver)
     
-        if GDAL_MAJOR_VER >= 2:
-            assert schema["properties"]["time"] == "str"
-            assert features[0]["properties"]["time"] == TIME_EXAMPLE
-            assert features[1]["properties"]["time"] is None
-        else:
-            assert "time" not in schema["properties"]
+        # if GDAL_MAJOR_VER >= 2:
+        #     assert schema["properties"]["time"] == "str"
+        #     assert features[0]["properties"]["time"] == TIME_EXAMPLE
+        #     assert features[1]["properties"]["time"] is None
+        # else:
+        #     assert "time" not in schema["properties"]
 
     def test_geojson(self):
         # GDAL 1: time field silently converted to string
