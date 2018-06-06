@@ -152,15 +152,15 @@ class TestDatetimeFieldSupport:
     def test_gpkg(self):
         # GDAL 1: datetime silently downgraded to date
         driver = "GPKG"
-        schema, features = self.write_data(driver)
         
         if GDAL_MAJOR_VER >= 2:
+            schema, features = self.write_data(driver)
             assert schema["properties"]["datetime"] == "datetime"
             assert features[0]["properties"]["datetime"] == DATETIME_EXAMPLE
+            assert features[1]["properties"]["datetime"] is None
         else:
-            assert schema["properties"]["datetime"] == "date"
-            assert features[0]["properties"]["datetime"] == DATE_EXAMPLE
-        assert features[1]["properties"]["datetime"] is None
+            with pytest.raises(DriverSupportError):
+                schema, features = self.write_data(driver)
 
     def test_geojson(self):
         # GDAL 1: datetime silently converted to string

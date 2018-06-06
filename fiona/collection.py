@@ -413,6 +413,9 @@ class Collection(object):
             elif self._driver == "GPKG":
                 if field_type == "time":
                     raise DriverSupportError("GPKG does not support time fields")
+                elif gdal_version_major == 1:
+                    if field_type == "datetime":
+                        raise DriverSupportError("GDAL 1.x GPKG driver does not support datetime fields")
             elif self._driver == "GeoJSON":
                 if gdal_version_major == 1:
                     if field_type == "date":
