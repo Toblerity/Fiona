@@ -1,5 +1,6 @@
 argparse
 cligj>=0.4
+click-plugins
 six>=1.7
 ordereddict
 munch
