@@ -5,6 +5,7 @@ import os
 import shutil
 import sys
 import tempfile
+from collections import OrderedDict
 
 import pytest
 
@@ -116,3 +117,34 @@ class TestUnicodeStringField(object):
             f = next(iter(c))
             assert f['properties']['label'] == u'徐汇区'
             assert f['properties']['num'] == 0
+
+    def test_gb2312_field_wrong_encoding(self):
+        """Attempt to create field with a name not supported by the encoding
+
+        ESRI Shapefile driver defaults to ISO-8859-1 encoding if none is
+        specified. This doesn't support the field name used. Previously this
+        went undetected and would raise a KeyError later when the user tried
+        to write a feature to the layer. Instead we raise a more useful error.
+
+        See GH#595.
+        """
+        field_name = "区县名称"
+        meta = {
+            "schema": {
+                "properties": OrderedDict([(field_name, "int")]),
+                "geometry": "Point",
+            },
+            "driver": "ESRI Shapefile",
+        }
+        feature = {
+            "properties": {field_name: 123},
+            "geometry": {"type": "Point", "coordinates": [1, 2]}
+        }
+        # when encoding is specified, write is successful
+        collection = fiona.open(os.path.join(self.tempdir, "test1.shp"), "w", encoding="GB2312", **meta)
+        collection.write(feature)
+        collection.close()
+        # no encoding
+        with pytest.raises(ValueError):
+            collection = fiona.open(os.path.join(self.tempdir, "test2.shp"), "w", **meta)
+

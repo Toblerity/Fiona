@@ -822,6 +822,7 @@ cdef class WritingSession(Session):
         cdef const char *proj_c = NULL
         cdef const char *fileencoding_c = NULL
         cdef OGRFieldSubType field_subtype
+        cdef int ret
         path = collection.path
         self.collection = collection
 

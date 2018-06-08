@@ -209,7 +209,7 @@ cdef extern from "ogr_api.h":
     void    OGR_G_ImportFromWkb (void *geometry, unsigned char *bytes, int nbytes)
     int     OGR_G_WkbSize (void *geometry)
     OGRErr  OGR_L_CreateFeature (void *layer, void *feature)
-    int     OGR_L_CreateField (void *layer, void *fielddefn, int flexible)
+    OGRErr  OGR_L_CreateField (void *layer, void *fielddefn, int flexible)
     OGRErr  OGR_L_GetExtent (void *layer, void *extent, int force)
     void *  OGR_L_GetFeature (void *layer, int n)
     int     OGR_L_GetFeatureCount (void *layer, int m)
