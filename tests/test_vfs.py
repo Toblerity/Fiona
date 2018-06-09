@@ -73,7 +73,7 @@ class ZipReadingTest(VsiReadingTest):
                 path=self.path))
 
 
-@pytest.mark.usefixtures('uttc_path_coutwildrnp_zip')
+@pytest.mark.usefixtures('uttc_path_coutwildrnp_zip', 'uttc_data_dir')
 class ZipArchiveReadingTest(VsiReadingTest):
 
     def setUp(self):

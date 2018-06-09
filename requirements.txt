@@ -1,5 +1,7 @@
 argparse
 cligj>=0.4
+click-plugins
+enum34 ; python_version <= '2.7'
 six>=1.7
 ordereddict
 munch
