@@ -16,8 +16,8 @@ logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 # Custom markers (from rasterio)
 mingdalversion = pytest.mark.skipif(
-    parse(fiona.get_gdal_release_name().decode('utf-8')) < parse('2.1.0dev'),
-          reason="S3 raster access requires GDAL 2.1")
+    fiona.gdal_version < (2, 1, 0),
+    reason="S3 raster access requires GDAL 2.1")
 
 credentials = pytest.mark.skipif(
     not(boto3.Session()._session.get_credentials()),

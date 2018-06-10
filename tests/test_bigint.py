@@ -3,7 +3,7 @@ import os
 import shutil
 import tempfile
 import unittest
-from fiona.ogrext import calc_gdal_version_num, get_gdal_version_num
+import fiona
 
 """
 
@@ -43,7 +43,7 @@ class TestBigInt(unittest.TestCase):
             'schema': {
                 'geometry': 'Point',
                 'properties': [(fieldname, 'int:10')]}}
-        if get_gdal_version_num() < calc_gdal_version_num(2, 0, 0):
+        if fiona.gdal_version < (2, 0, 0):
             with self.assertRaises(OverflowError):
                 with fiona.open(name, 'w', **kwargs) as dst:
                     rec = {}
@@ -59,7 +59,7 @@ class TestBigInt(unittest.TestCase):
                 dst.write(rec)
 
             with fiona.open(name) as src:
-                if get_gdal_version_num() >= calc_gdal_version_num(2, 0, 0):
+                if fiona.gdal_version >= (2, 0, 0):
                     first = next(iter(src))
                     self.assertEqual(first['properties'][fieldname], a_bigint)
 
