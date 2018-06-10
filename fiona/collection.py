@@ -11,7 +11,7 @@ from fiona.ogrext import Session, WritingSession
 from fiona.ogrext import (
     calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name)
 from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file, GEOMETRY_TYPES
-from fiona.errors import DriverError, SchemaError, CRSError, UnsupportedGeometryTypeError
+from fiona.errors import (DriverError, SchemaError, CRSError, UnsupportedGeometryTypeError, DriverSupportError)
 from fiona._drivers import driver_count, GDALEnv
 from fiona.drvsupport import supported_drivers, AWSGDALEnv
 from six import string_types, binary_type
@@ -132,6 +132,8 @@ class Collection(object):
             elif 'geometry' not in schema:
                 raise SchemaError("schema lacks: geometry")
             self._schema = schema
+
+            self._check_schema_driver_support()
 
             if crs_wkt:
                 self._crs_wkt = crs_wkt
@@ -394,6 +396,34 @@ class Collection(object):
         if self._bounds is None and self.session is not None:
             self._bounds = self.session.get_extent()
         return self._bounds
+
+    def _check_schema_driver_support(self):
+        """Check support for the schema against the driver
+
+        See GH#572 for discussion.
+        """
+        gdal_version_major = get_gdal_version_num() // 1000000
+        for field in self._schema["properties"]:
+            field_type = field.split(":")[0]
+            if self._driver == "ESRI Shapefile":
+                if field_type == "datetime":
+                    raise DriverSupportError("ESRI Shapefile does not support datetime fields")
+                elif field_type == "time":
+                    raise DriverSupportError("ESRI Shapefile does not support time fields")
+            elif self._driver == "GPKG":
+                if field_type == "time":
+                    raise DriverSupportError("GPKG does not support time fields")
+                elif gdal_version_major == 1:
+                    if field_type == "datetime":
+                        raise DriverSupportError("GDAL 1.x GPKG driver does not support datetime fields")
+            elif self._driver == "GeoJSON":
+                if gdal_version_major == 1:
+                    if field_type == "date":
+                        warnings.warn("GeoJSON driver in GDAL 1.x silently converts date to string in non-standard format")
+                    elif field_type == "datetime":
+                        warnings.warn("GeoJSON driver in GDAL 1.x silently converts datetime to string in non-standard format")
+                    elif field_type == "time":
+                        warnings.warn("GeoJSON driver in GDAL 1.x silently converts time to string")
 
     def flush(self):
         """Flush the buffer."""
