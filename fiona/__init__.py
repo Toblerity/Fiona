@@ -81,7 +81,7 @@ import uuid
 
 
 __all__ = ['bounds', 'listlayers', 'open', 'prop_type', 'prop_width']
-__version__ = "1.7.11.post2"
+__version__ = "1.7.12"
 __gdal_version__ = get_gdal_release_name().decode('utf-8')
 
 log = logging.getLogger(__name__)

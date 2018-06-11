@@ -3,6 +3,12 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.7.12 (2018-06-11)
+-------------------
+
+- Require six>=1.7
+- Include sqlite 3.24.0 in macosx wheels (frs-wheel-builds 1.8.2).
+
 1.7.11.post2 (2018-04-30)
 -------------------------
 
