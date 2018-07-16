@@ -135,6 +135,12 @@ def get_gdal_release_name():
     """Return release name of gdal"""
     return ogrext1.GDALVersionInfo("RELEASE_NAME")
 
+# check compiled version against runtime version
+# only compare the major and minor version number
+GDAL_RUNTIME_VERSION = get_gdal_version_num()
+if GDAL_VERSION_NUM // 1000 != GDAL_RUNTIME_VERSION // 1000:
+    log.warning("Fiona was compiled against GDAL {} but run with GDAL {}".format(GDAL_VERSION_NUM, GDAL_RUNTIME_VERSION))
+
 
 # Feature extension classes and functions follow.
 
