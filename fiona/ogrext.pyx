@@ -1000,11 +1000,6 @@ cdef class WritingSession(Session):
                             value = 'int32'
 
                 field_type = FIELD_TYPES.index(value)
-                #if GDAL_VERSION_NUM >= 2000000:
-                #    # See https://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
-                #    if value == 'int64':
-                #        field_type = 12
-
                 encoding = self.get_internalencoding()
                 key_bytes = key.encode(encoding)
 

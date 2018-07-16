@@ -7,8 +7,6 @@ from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 # Mapping of OGR integer field types to Fiona field type names.
 # Lists are currently unsupported in this version, but might be done as
 # arrays in a future version.
-#
-# NB: in Fiona 2, we will switch 'int' -> 'int64'.
 FIELD_TYPES = [
     'int32',        # OFTInteger, Simple 32bit integer
     None,           # OFTIntegerList, List of 32bit integers
