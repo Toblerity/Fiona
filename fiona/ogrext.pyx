@@ -315,7 +315,6 @@ cdef class OGRFeatureBuilder:
             ogr_key = session._schema_mapping[key]
 
             schema_type = normalize_field_type(collection.schema['properties'][key])
-            # schema_type = collection.schema['properties'][key]
 
             log.debug("Normalizing schema type for key %r in schema %r to %r", key, collection.schema['properties'], schema_type)
 
@@ -998,7 +997,7 @@ cdef class WritingSession(Session):
             # which are an ordered dict since Fiona 1.0.1.
             for key, value in collection.schema['properties'].items():
 
-                log.debug("Begin creating field: %s %s", key, value)
+                log.debug("Begin creating field: %r %r", key, value)
 
                 field_subtype = OFSTNone
 
@@ -1060,7 +1059,7 @@ cdef class WritingSession(Session):
 
                 OGR_Fld_Destroy(cogr_fielddefn)
 
-                log.debug("End creating field {}".format(key))
+                log.debug("End creating field %r", key)
 
         # Mapping of the Python collection schema to the munged
         # OGR schema.
