@@ -997,7 +997,7 @@ cdef class WritingSession(Session):
             # which are an ordered dict since Fiona 1.0.1.
             for key, value in collection.schema['properties'].items():
 
-                log.debug("Begin creating field: %r %r", key, value)
+                log.debug("Begin creating field: %r value: %r", key, value)
 
                 field_subtype = OFSTNone
 

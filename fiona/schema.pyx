@@ -48,6 +48,9 @@ FIELD_TYPES_MAP = {
     'int': int
 }
 
+FIELD_TYPES_MAP_REV = dict([(v, k) for k, v in FIELD_TYPES_MAP.items()])
+FIELD_TYPES_MAP_REV[int] = 'int'
+
 
 def normalize_field_type(ftype):
     """Normalize free form field types to an element of FIELD_TYPES
