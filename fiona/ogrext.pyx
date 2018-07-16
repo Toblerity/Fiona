@@ -10,6 +10,7 @@ import os
 import warnings
 import math
 import uuid
+from collections import namedtuple
 
 from six import integer_types, string_types, text_type
 
@@ -110,6 +111,14 @@ def get_gdal_release_name():
     return GDALVersionInfo("RELEASE_NAME")
 
 cdef int GDAL_VERSION_NUM = get_gdal_version_num()
+
+GDALVersion = namedtuple("GDALVersion", ["major", "minor", "revision"])
+def get_gdal_version_tuple():
+    gdal_version_num = get_gdal_version_num()
+    major = gdal_version_num // 1000000
+    minor = (gdal_version_num - (major * 1000000)) // 10000
+    revision = (gdal_version_num - (major * 1000000) - (minor * 10000)) // 100
+    return GDALVersion(major, minor, revision)
 
 # Feature extension classes and functions follow.
 

@@ -48,7 +48,7 @@ class TestBinaryField(unittest.TestCase):
         
         # read the data back and check consistency
         with fiona.open(filename, "r") as src:
-            feature = next(src)
+            feature = next(iter(src))
             assert(feature["properties"]["name"] == "test")
             data = feature["properties"]["data"]
             assert(binascii.b2a_hex(data) == b"deadbeef")

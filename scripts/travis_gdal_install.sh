@@ -55,10 +55,10 @@ ls -l $GDALINST
 
 if [ "$GDALVERSION" = "trunk" ]; then
   # always rebuild trunk
-  git clone -b trunk --single-branch --depth=1 https://github.com/OSGeo/gdal.git $GDALBUILD/trunk
+  git clone -b master --single-branch --depth=1 https://github.com/OSGeo/gdal.git $GDALBUILD/trunk
   cd $GDALBUILD/trunk/gdal
   ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS
-  make -s -j 2
+  make -j 2
   make install
 elif [ ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
   # only build if not already installed
@@ -67,7 +67,7 @@ elif [ ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
   tar -xzf gdal-$GDALVERSION.tar.gz
   cd gdal-$GDALVERSION
   ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS
-  make -s -j 2
+  make -j 2
   make install
 fi
 

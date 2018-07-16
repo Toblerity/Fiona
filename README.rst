@@ -280,14 +280,15 @@ install gdal`` using Homebrew on OS X), installation is this simple.
 If gdal-config is not available or if GDAL/OGR headers and libs aren't
 installed to a well known location, you must set include dirs, library dirs,
 and libraries options via the setup.cfg file or setup command line as shown
-below (using ``git``). You must also specify the major version of the GDAL API
-(1 or 2) on the setup command line.
+below (using ``git``). You must also specify the version of the GDAL API on the
+command line using the ``--gdalversion`` argument (see example below) or with
+the ``GDAL_VERSION`` environment variable (e.g. ``export GDAL_VERSION=2.1``).
 
 .. code-block:: console
 
   (fiona_env)$ git clone git://github.com/Toblerity/Fiona.git
   (fiona_env)$ cd Fiona
-  (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal install --gdalversion 1
+  (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal install --gdalversion 2.1
 
 Or specify that build options and GDAL API version should be provided by a
 particular gdal-config program.
@@ -311,15 +312,23 @@ cannot rely on gdal-config, which is only present on UNIX systems, to discover
 the locations of header files and libraries that Fiona needs to compile its 
 C extensions. On Windows, these paths need to be provided by the user. 
 You will need to find the include files and the library files for gdal and 
-use setup.py as follows. You must also specify the major version of the GDAL
-API (1 or 2) on the setup command line.
+use setup.py as follows. You must also specify the version of the GDAL API on the
+command line using the ``--gdalversion`` argument (see example below) or with
+the ``GDAL_VERSION`` environment variable (e.g. ``set GDAL_VERSION=2.1``).
 
 .. code-block:: console
 
-    $ python setup.py build_ext -I<path to gdal include files> -lgdal_i -L<path to gdal library> install --gdalversion 1
+    $ python setup.py build_ext -I<path to gdal include files> -lgdal_i -L<path to gdal library> install --gdalversion 2.1
 
-Note: The GDAL dll (gdal111.dll) and gdal-data directory need to be in your 
-Windows PATH otherwise Fiona will fail to work.
+Note: The GDAL DLL (``gdal111.dll`` or similar) and gdal-data directory need to
+be in your Windows PATH otherwise Fiona will fail to work.
+
+The [Appveyor CI build](https://ci.appveyor.com/project/sgillies/fiona/history)
+uses the GISInternals GDAL binaries to build Fiona. This produces a binary wheel
+for successful builds, which includes GDAL and other dependencies, for users
+wanting to try an unstable development version.
+The [Appveyor configuration file](appveyor.yml) may be a useful example for
+users building from source on Windows.
 
 Development and testing
 =======================

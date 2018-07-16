@@ -16,8 +16,8 @@ logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 # Custom markers (from rasterio)
 mingdalversion = pytest.mark.skipif(
-    parse(fiona.get_gdal_release_name().decode('utf-8')) < parse('2.1.0dev'),
-          reason="S3 raster access requires GDAL 2.1")
+    fiona.gdal_version < (2, 1, 0),
+    reason="S3 raster access requires GDAL 2.1")
 
 credentials = pytest.mark.skipif(
     not(boto3.Session()._session.get_credentials()),
@@ -73,7 +73,7 @@ class ZipReadingTest(VsiReadingTest):
                 path=self.path))
 
 
-@pytest.mark.usefixtures('uttc_path_coutwildrnp_zip')
+@pytest.mark.usefixtures('uttc_path_coutwildrnp_zip', 'uttc_data_dir')
 class ZipArchiveReadingTest(VsiReadingTest):
 
     def setUp(self):
@@ -162,7 +162,7 @@ class TarArchiveReadingTest(VsiReadingTest):
 
 @pytest.mark.network        
 def test_open_http():
-    ds = fiona.open('http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.shp')
+    ds = fiona.open('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.shp')
     assert len(ds) == 10
 
 @credentials

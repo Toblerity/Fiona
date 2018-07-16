@@ -46,7 +46,7 @@ def test_seq_rs(feature_seq_pp_rs, tmpdir, runner):
 def test_seq_no_rs(tmpdir, runner, feature_seq):
     tmpfile = str(tmpdir.mkdir('tests').join('test_seq_no_rs.shp'))
     result = runner.invoke(main_group, [
-        'load', '-f', 'Shapefile', '--sequence', tmpfile], feature_seq)
+        'load', '-f', 'Shapefile', tmpfile], feature_seq)
     assert result.exit_code == 0
     assert len(fiona.open(tmpfile)) == 2
 
@@ -59,7 +59,7 @@ def test_dst_crs_default_to_src_crs(tmpdir, runner, feature_seq):
         '--src-crs',
         'EPSG:32617',
         '-f', 'Shapefile',
-        '--sequence', tmpfile
+        tmpfile
     ], feature_seq)
     assert result.exit_code == 0
     with fiona.open(tmpfile) as src:
@@ -72,7 +72,7 @@ def test_different_crs(tmpdir, runner, feature_seq):
     result = runner.invoke(
         main_group, [
             'load', '--src-crs', 'EPSG:32617', '--dst-crs', 'EPSG:32610',
-            '-f', 'Shapefile', '--sequence', tmpfile
+            '-f', 'Shapefile', tmpfile
         ], feature_seq)
     assert result.exit_code == 0
     with fiona.open(tmpfile) as src:
@@ -87,7 +87,7 @@ def test_dst_crs_no_src(tmpdir, runner, feature_seq):
         '--dst-crs',
         'EPSG:32610',
         '-f', 'Shapefile',
-        '--sequence', tmpfile
+        tmpfile
     ], feature_seq)
     assert result.exit_code == 0
     with fiona.open(tmpfile) as src:
@@ -112,8 +112,7 @@ def test_fio_load_layer(tmpdir, runner):
             outdir,
             '--driver', 'ESRI Shapefile',
             '--src-crs', 'EPSG:4236',
-            '--layer', 'test_layer',
-            '--sequence'],
+            '--layer', 'test_layer'],
             input=sequence)
         assert result.exit_code == 0
 

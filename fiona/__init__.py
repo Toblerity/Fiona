@@ -65,7 +65,18 @@ writing modes) flush contents to disk when their ``with`` blocks end.
 from contextlib import contextmanager
 import logging
 import os
+import sys
 from six import string_types
+
+try:
+    from pathlib import Path
+except ImportError:  # pragma: no cover
+    class Path:
+        pass
+
+if sys.platform == "win32":
+    libdir = os.path.join(os.path.dirname(__file__), ".libs")
+    os.environ["PATH"] = os.environ["PATH"] + ";" + libdir
 
 from fiona.collection import Collection, BytesCollection
 from fiona.vfs import vsi_path, parse_paths, is_remote
@@ -75,7 +86,8 @@ from fiona.compat import OrderedDict
 from fiona.io import MemoryFile
 from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove, _remove_layer
 from fiona.ogrext import (
-    calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name)
+    calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name,
+    get_gdal_version_tuple)
 
 # These modules are imported by fiona.ogrext, but are also import here to
 # help tools like cx_Freeze find them automatically
@@ -86,6 +98,8 @@ import uuid
 __all__ = ['bounds', 'listlayers', 'open', 'prop_type', 'prop_width']
 __version__ = "1.8a2"
 __gdal_version__ = get_gdal_release_name().decode('utf-8')
+
+gdal_version = get_gdal_version_tuple()
 
 log = logging.getLogger(__name__)
 
@@ -142,7 +156,7 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
 
     Parameters
     ----------
-    fp : URI, or file-like object
+    fp : URI (str or pathlib.Path), or file-like object
         A dataset resource identifier or file object.
     mode : str
         One of 'r', to read (the default); 'a', to append; or 'w', to
@@ -216,6 +230,10 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
         return fp_writer(fp)
 
     else:
+        # If a pathlib.Path instance is given, convert it to a string path.
+        if isinstance(fp, Path):
+            fp = str(fp)
+
         # Parse the vfs into a vsi and an archive path.
         path, vsi, archive = parse_paths(fp, vfs)
         if mode in ('a', 'r'):

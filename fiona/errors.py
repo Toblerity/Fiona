@@ -25,6 +25,10 @@ class DriverIOError(IOError):
     """A format specific driver error."""
 
 
+class DriverSupportError(DriverIOError):
+    """Driver does not support schema"""
+
+
 class DatasetDeleteError(IOError):
     """Failure to delete a dataset"""
 

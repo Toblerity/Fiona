@@ -272,6 +272,12 @@ class ReadingTest(unittest.TestCase):
         self.assertTrue(0 in self.c.keys())
         self.assertTrue(0 in self.c)
 
+class ReadingPathTest(unittest.TestCase):
+    def test_open_path(self):
+        pathlib = pytest.importorskip("pathlib")
+        with fiona.open(pathlib.Path(WILDSHP)) as collection:
+            assert collection.name == 'coutwildrnp'
+
 
 class IgnoreFieldsAndGeometryTest(unittest.TestCase):
 
@@ -922,13 +928,13 @@ class OpenKeywordArgsTest(unittest.TestCase):
 
 @pytest.mark.network
 def test_collection_http():
-    ds = fiona.Collection('http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.shp', vsi='http')
-    assert ds.path == '/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.shp'
+    ds = fiona.Collection('http://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.shp', vsi='http')
+    assert ds.path == '/vsicurl/http://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.shp'
     assert len(ds) == 10
 
 @pytest.mark.network
 def test_collection_zip_http():
-    ds = fiona.Collection('http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip', vsi='zip+http')
-    assert ds.path == '/vsizip/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip'
+    ds = fiona.Collection('http://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip', vsi='zip+http')
+    assert ds.path == '/vsizip/vsicurl/http://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip'
     assert len(ds) == 10
         

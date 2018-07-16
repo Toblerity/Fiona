@@ -5,10 +5,24 @@ import sys
 import re
 from fiona.compat import urlparse
 
-# Supported URI schemes and their mapping to GDAL's VSI suffix. 
-SCHEMES = {'gzip': 'gzip', 'zip': 'zip', 'tar': 'tar', 'https': 'curl',
-           'http': 'curl', 's3': 's3'}
-REMOTESCHEMES = set(('https', 'http', 's3',))
+
+# Supported URI schemes and their mapping to GDAL's VSI suffix.
+# TODO: extend for other cloud plaforms.
+SCHEMES = {
+    'ftp': 'curl',
+    'gzip': 'gzip',
+    'http': 'curl',
+    'https': 'curl',
+    's3': 's3',
+    'tar': 'tar',
+    'zip': 'zip',
+}
+
+CURLSCHEMES = set([k for k, v in SCHEMES.items() if v == 'curl'])
+
+# TODO: extend for other cloud plaforms.
+REMOTESCHEMES = set([k for k, v in SCHEMES.items() if v in ('curl', 's3')])
+
 
 def valid_vsi(vsi):
     """Ensures all parts of our vsi path are valid schemes."""
@@ -19,8 +33,9 @@ def is_remote(scheme):
         return False
     return any(p in REMOTESCHEMES for p in scheme.split('+'))
 
+
 def vsi_path(path, vsi=None, archive=None):
-    # If a VSF and archive file are specified, we convert the path to
+    # If a VSI and archive file are specified, we convert the path to
     # an OGR VSI path (see cpl_vsi.h).
     if vsi:
         prefix = '/'.join('vsi{0}'.format(SCHEMES[p]) for p in vsi.split('+'))
@@ -57,7 +72,11 @@ def parse_paths(uri, vfs=None):
         scheme = parts.scheme
         path = parts.path
         if parts.netloc and parts.netloc != 'localhost':
-            path = parts.netloc + path
+            if scheme.split("+")[-1] in CURLSCHEMES:
+                # We need to deal with cases such as zip+https://server.com/data.zip
+                path = "{}://{}{}".format(scheme.split("+")[-1], parts.netloc, path)
+            else:
+                path = parts.netloc + path
         if scheme in SCHEMES:
             parts = path.split('!')
             path = parts.pop() if parts else None

@@ -98,7 +98,7 @@ supported_drivers = dict([
 #EPIInfo .REC 	REC 	No 	No 	Yes
 #S-57 (ENC) 	S57 	No 	Yes 	Yes
 # multi-layer
-#   ("S57", "r"),
+    ("S57", "r"),
 #SDTS 	SDTS 	No 	Yes 	Yes
 # multi-layer
 #   ("SDTS", "r"),

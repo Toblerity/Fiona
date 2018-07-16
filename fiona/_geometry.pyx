@@ -212,16 +212,13 @@ cdef class OGRGeomBuilder:
     cdef void * _buildLineString(self, object coordinates) except NULL:
         cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['LineString'])
         for coordinate in coordinates:
-            log.debug("Adding point %s", coordinate)
             self._addPointToGeometry(cogr_geometry, coordinate)
         return cogr_geometry
     
     cdef void * _buildLinearRing(self, object coordinates) except NULL:
         cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['LinearRing'])
         for coordinate in coordinates:
-            log.debug("Adding point %s", coordinate)
             self._addPointToGeometry(cogr_geometry, coordinate)
-        log.debug("Closing ring")
         OGR_G_CloseRings(cogr_geometry)
         return cogr_geometry
     
@@ -229,54 +226,40 @@ cdef class OGRGeomBuilder:
         cdef void *cogr_ring
         cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['Polygon'])
         for ring in coordinates:
-            log.debug("Adding ring %s", ring)
             cogr_ring = self._buildLinearRing(ring)
-            log.debug("Built ring")
             OGR_G_AddGeometryDirectly(cogr_geometry, cogr_ring)
-            log.debug("Added ring %s", ring)
         return cogr_geometry
 
     cdef void * _buildMultiPoint(self, object coordinates) except NULL:
         cdef void *cogr_part
         cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['MultiPoint'])
         for coordinate in coordinates:
-            log.debug("Adding point %s", coordinate)
             cogr_part = self._buildPoint(coordinate)
             OGR_G_AddGeometryDirectly(cogr_geometry, cogr_part)
-            log.debug("Added point %s", coordinate)
         return cogr_geometry
 
     cdef void * _buildMultiLineString(self, object coordinates) except NULL:
         cdef void *cogr_part
         cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['MultiLineString'])
         for line in coordinates:
-            log.debug("Adding line %s", line)
             cogr_part = self._buildLineString(line)
-            log.debug("Built line")
             OGR_G_AddGeometryDirectly(cogr_geometry, cogr_part)
-            log.debug("Added line %s", line)
         return cogr_geometry
 
     cdef void * _buildMultiPolygon(self, object coordinates) except NULL:
         cdef void *cogr_part
         cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['MultiPolygon'])
         for part in coordinates:
-            log.debug("Adding polygon %s", part)
             cogr_part = self._buildPolygon(part)
-            log.debug("Built polygon")
             OGR_G_AddGeometryDirectly(cogr_geometry, cogr_part)
-            log.debug("Added polygon %s", part)
         return cogr_geometry
 
     cdef void * _buildGeometryCollection(self, object coordinates) except NULL:
         cdef void *cogr_part
         cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['GeometryCollection'])
         for part in coordinates:
-            log.debug("Adding part %s", part)
             cogr_part = OGRGeomBuilder().build(part)
-            log.debug("Built part")
             OGR_G_AddGeometryDirectly(cogr_geometry, cogr_part)
-            log.debug("Added part %s", part)
         return cogr_geometry
 
     cdef void * build(self, object geometry) except NULL:
