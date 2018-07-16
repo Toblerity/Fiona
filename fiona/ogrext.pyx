@@ -19,9 +19,9 @@ from fiona._shim cimport *
 from fiona._geometry cimport (
     GeomBuilder, OGRGeomBuilder, geometry_type_code,
     normalize_geometry_type_code)
-from fiona._err cimport exc_wrap_pointer, exc_wrap_vsilfile
+from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile
 
-from fiona._err import cpl_errs, FionaNullPointerError
+from fiona._err import cpl_errs, FionaNullPointerError, CPLE_BaseError
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
 from fiona.errors import (
@@ -313,8 +313,12 @@ cdef class OGRFeatureBuilder:
             log.debug(
                 "Looking up %s in %s", key, repr(session._schema_mapping))
             ogr_key = session._schema_mapping[key]
-            # schema_type = normalize_field_type(collection.schema['properties'][key])
-            schema_type = collection.schema['properties'][key]
+
+            schema_type = normalize_field_type(collection.schema['properties'][key])
+            # schema_type = collection.schema['properties'][key]
+
+            log.debug("Normalizing schema type for key %r in schema %r to %r", key, collection.schema['properties'], schema_type)
+
             try:
                 key_bytes = ogr_key.encode(encoding)
             except UnicodeDecodeError:
@@ -331,10 +335,14 @@ cdef class OGRFeatureBuilder:
 
             # Continue over the standard OGR types.
             if isinstance(value, integer_types):
+
+                log.debug("Setting field %r, type %r, to value %r", i, schema_type, value)
+
                 if schema_type == 'int32':
                     OGR_F_SetFieldInteger(cogr_feature, i, value)
                 else:
                     OGR_F_SetFieldInteger64(cogr_feature, i, value)
+
             elif isinstance(value, float):
                 OGR_F_SetFieldDouble(cogr_feature, i, value)
             elif (isinstance(value, string_types)
@@ -529,8 +537,8 @@ cdef class Session:
     def get_schema(self):
         cdef int i
         cdef int n
-        cdef void *cogr_featuredefn
-        cdef void *cogr_fielddefn
+        cdef void *cogr_featuredefn = NULL
+        cdef void *cogr_fielddefn = NULL
         cdef const char *key_c
         props = []
 
@@ -545,18 +553,27 @@ cdef class Session:
         cogr_featuredefn = OGR_L_GetLayerDefn(self.cogr_layer)
         if cogr_featuredefn == NULL:
             raise ValueError("Null feature definition")
+
         n = OGR_FD_GetFieldCount(cogr_featuredefn)
+
         for i from 0 <= i < n:
+            cogr_fielddefn == NULL
             cogr_fielddefn = OGR_FD_GetFieldDefn(cogr_featuredefn, i)
             if cogr_fielddefn == NULL:
                 raise ValueError("Null field definition")
+
             key_c = OGR_Fld_GetNameRef(cogr_fielddefn)
             key_b = key_c
+
             if not bool(key_b):
                 raise ValueError("Invalid field name ref: %s" % key)
+
             key = key_b.decode(self.get_internalencoding())
+
             if key in ignore_fields:
+                log.debug("By request, ignoring field %r", key)
                 continue
+
             fieldtypename = FIELD_TYPES[OGR_Fld_GetType(cogr_fielddefn)]
             if not fieldtypename:
                 log.warning(
@@ -564,6 +581,7 @@ cdef class Session:
                     key,
                     OGR_Fld_GetType(cogr_fielddefn))
                 continue
+
             val = fieldtypename
             if fieldtypename == 'float':
                 fmt = ""
@@ -979,8 +997,9 @@ cdef class WritingSession(Session):
             # Next, make a layer definition from the given schema properties,
             # which are an ordered dict since Fiona 1.0.1.
             for key, value in collection.schema['properties'].items():
-                log.debug("Creating field: %s %s", key, value)
-                
+
+                log.debug("Begin creating field: %s %s", key, value)
+
                 field_subtype = OFSTNone
 
                 # Convert 'long' to 'int'. See
@@ -998,12 +1017,16 @@ cdef class WritingSession(Session):
                 width = precision = None
                 if ':' in value:
                     value, fmt = value.split(':')
+
+                    log.debug("Field format parsing, value: %r, fmt: %r", value, fmt)
+
                     if '.' in fmt:
                         width, precision = map(int, fmt.split('.'))
                     else:
                         width = int(fmt)
+
                     if value == 'int':
-                        if GDAL_VERSION_NUM >= 2000000 and width == 0 or width >= 10:
+                        if GDAL_VERSION_NUM >= 2000000 and (width == 0 or width >= 10):
                             value = 'int64'
                         else:
                             value = 'int32'
@@ -1012,11 +1035,16 @@ cdef class WritingSession(Session):
                 encoding = self.get_internalencoding()
                 key_bytes = key.encode(encoding)
 
-                cogr_fielddefn = OGR_Fld_Create(
-                    key_bytes,
-                    field_type)
+                try:
+                    cogr_fielddefn = exc_wrap_pointer(
+                        OGR_Fld_Create(key_bytes, field_type))
+                    log.debug("Creating field %r (%r) with type %r (%r)", key, key_bytes, field_type, value)
+                except Exception:
+                    raise
+
                 if cogr_fielddefn == NULL:
-                    raise ValueError("Null field definition")
+                    raise ValueError("Field {} definition is NULL".format(key))
+
                 if width:
                     OGR_Fld_SetWidth(cogr_fielddefn, width)
                 if precision:
@@ -1024,9 +1052,15 @@ cdef class WritingSession(Session):
                 if field_subtype != OFSTNone:
                     # subtypes are new in GDAL 2.x, ignored in 1.x
                     set_field_subtype(cogr_fielddefn, field_subtype)
-                OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1)
+
+                try:
+                    exc_wrap_int(OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1))
+                except CPLE_BaseError as exc:
+                    raise SchemaError(str(exc))
+
                 OGR_Fld_Destroy(cogr_fielddefn)
-            log.debug("Created fields")
+
+                log.debug("End creating field {}".format(key))
 
         # Mapping of the Python collection schema to the munged
         # OGR schema.

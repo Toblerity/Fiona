@@ -34,6 +34,8 @@ class TestBigInt(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tempdir)
 
+    @pytest.mark.xfail(get_gdal_version_num() < calc_gdal_version_num(2, 0, 0),
+                       reason="64-bit integer fields require GDAL 2+")
     def testCreateBigIntSchema(self):
         name = os.path.join(self.tempdir, 'output1.shp')
 
@@ -46,25 +48,17 @@ class TestBigInt(unittest.TestCase):
             'schema': {
                 'geometry': 'Point',
                 'properties': [(fieldname, 'int:10')]}}
-        if fiona.gdal_version < (2, 0, 0):
-            with self.assertRaises(OverflowError):
-                with fiona.open(name, 'w', **kwargs) as dst:
-                    rec = {}
-                    rec['geometry'] = {'type': 'Point', 'coordinates': (0, 0)}
-                    rec['properties'] = {fieldname: a_bigint}
-                    dst.write(rec)
-        else:
 
-            with fiona.open(name, 'w', **kwargs) as dst:
-                rec = {}
-                rec['geometry'] = {'type': 'Point', 'coordinates': (0, 0)}
-                rec['properties'] = {fieldname: a_bigint}
-                dst.write(rec)
+        with fiona.open(name, 'w', **kwargs) as dst:
+            rec = {}
+            rec['geometry'] = {'type': 'Point', 'coordinates': (0, 0)}
+            rec['properties'] = {fieldname: a_bigint}
+            dst.write(rec)
 
-            with fiona.open(name) as src:
-                if fiona.gdal_version >= (2, 0, 0):
-                    first = next(iter(src))
-                    self.assertEqual(first['properties'][fieldname], a_bigint)
+        with fiona.open(name) as src:
+            if fiona.gdal_version >= (2, 0, 0):
+                first = next(iter(src))
+                self.assertEqual(first['properties'][fieldname], a_bigint)
 
 
 @pytest.mark.skipif(get_gdal_version_num() < calc_gdal_version_num(2, 0, 0),

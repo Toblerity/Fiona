@@ -8,6 +8,7 @@ import pytest
 import fiona
 from fiona.errors import SchemaError, UnsupportedGeometryTypeError
 from fiona.schema import FIELD_TYPES, normalize_field_type
+from fiona.ogrext import calc_gdal_version_num, get_gdal_version_num
 
 
 class SchemaOrder(unittest.TestCase):
@@ -28,6 +29,7 @@ class SchemaOrder(unittest.TestCase):
             self.assertEqual(list(c.schema['properties'].items()), items)
         with fiona.open(os.path.join(self.tempdir, 'test_schema.shp')) as c:
             self.assertEqual(list(c.schema['properties'].items()), items)
+
 
 class ShapefileSchema(unittest.TestCase):
 
@@ -182,6 +184,8 @@ def test_normalize_int32(x):
     assert normalize_field_type('int:{}'.format(x)) == 'int32'
 
 
+@pytest.mark.skipif(get_gdal_version_num() < calc_gdal_version_num(2, 0, 0),
+                    reason="64-bit integer fields require GDAL 2+")
 @pytest.mark.parametrize('x', list(range(10, 20)))
 def test_normalize_int64(x):
     assert normalize_field_type('int:{}'.format(x)) == 'int64'

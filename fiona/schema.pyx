@@ -4,6 +4,17 @@ from fiona.errors import SchemaError
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 
 
+cdef extern from "gdal.h":
+    char * GDALVersionInfo (char *pszRequest)
+
+
+def get_gdal_version_num():
+    """Return current internal version number of gdal"""
+    return int(GDALVersionInfo("VERSION_NUM"))
+
+
+GDAL_VERSION_NUM = get_gdal_version_num()
+
 # Mapping of OGR integer field types to Fiona field type names.
 # Lists are currently unsupported in this version, but might be done as
 # arrays in a future version.
@@ -57,7 +68,7 @@ def normalize_field_type(ftype):
         return 'bool'
     elif ftype.startswith('int'):
         width = int((ftype.split(':')[1:] or ['0'])[0])
-        if width == 0 or width >= 10:
+        if GDAL_VERSION_NUM >= 2000000 and (width == 0 or width >= 10):
             return 'int64'
         else:
             return 'int32'

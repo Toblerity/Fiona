@@ -226,6 +226,18 @@ cdef inline object exc_check():
         return
 
 
+cdef int exc_wrap_int(int err) except -1:
+    """Wrap a GDAL/OGR function that returns CPLErr or OGRErr (int)
+
+    Raises a Rasterio exception if a non-fatal error has be set.
+    """
+    if err:
+        exc = exc_check()
+        if exc:
+            raise exc
+    return err
+
+
 cdef void *exc_wrap_pointer(void *ptr) except NULL:
     """Wrap a GDAL/OGR function that returns GDALDatasetH etc (void *)
     Raises a Rasterio exception if a non-fatal error has be set.
