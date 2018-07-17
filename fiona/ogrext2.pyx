@@ -34,6 +34,10 @@ from libc.string cimport strcmp
 
 
 log = logging.getLogger("Fiona")
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+log.addHandler(NullHandler())
 
 # Mapping of OGR integer field types to Fiona field type names.
 #
@@ -122,17 +126,23 @@ def _bounds(geometry):
     except (KeyError, TypeError):
         return None
 
+
 def calc_gdal_version_num(maj, min, rev):
     """Calculates the internal gdal version number based on major, minor and revision"""
     return int(maj * 1000000 + min * 10000 + rev*100)
+
 
 def get_gdal_version_num():
     """Return current internal version number of gdal"""
     return int(ogrext2.GDALVersionInfo("VERSION_NUM"))
 
+
 def get_gdal_release_name():
     """Return release name of gdal"""
     return ogrext2.GDALVersionInfo("RELEASE_NAME")
+
+
+include "isfieldnull.pxi"
 
 
 # Feature extension classes and functions follow.
@@ -157,6 +167,7 @@ cdef class FeatureBuilder:
         cdef int tz = 0
         cdef int retval
         cdef const char *key_c = NULL
+        cdef bint is_null
         props = OrderedDict()
         for i in range(ogrext2.OGR_F_GetFieldCount(feature)):
             fdefn = ogrext2.OGR_F_GetFieldDefnRef(feature, i)
@@ -177,8 +188,10 @@ cdef class FeatureBuilder:
 
             # TODO: other types
             fieldtype = FIELD_TYPES_MAP[fieldtypename]
-            if not ogrext2.OGR_F_IsFieldSet(feature, i):
+
+            if is_field_null(feature, i):
                 props[key] = None
+
             elif fieldtype is int:
                 props[key] = ogrext2.OGR_F_GetFieldAsInteger64(feature, i)
             elif fieldtype is float:

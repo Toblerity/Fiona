@@ -1,6 +1,5 @@
 from distutils.command.sdist import sdist
 from distutils import log
-import logging
 import os
 import shutil
 import subprocess
@@ -168,11 +167,19 @@ if 'clean' not in sys.argv:
             log.info("Copying proj data from %s" % projdatadir)
             copy_data_tree(projdatadir, 'fiona/proj_data')
 
+
+def calc_gdal_version_num(maj=1, min=0, rev=0):
+    return int(maj * 1000000 + min * 10000 + rev*100)
+
+
+GDAL_VERSION_NUM = calc_gdal_version_num(*[int(i) for i in gdalversion.split(".")])
+
 ext_options = dict(
     include_dirs=include_dirs,
     library_dirs=library_dirs,
     libraries=libraries,
-    extra_link_args=extra_link_args)
+    extra_link_args=extra_link_args,
+)
 
 # Define the extension modules.
 ext_modules = []
@@ -192,13 +199,20 @@ if source_is_repo and "clean" not in sys.argv:
         log.info("Building Fiona for gdal 2.x: {0}".format(gdalversion))
         shutil.copy('fiona/ogrext2.pyx', 'fiona/ogrext.pyx')
 
+    # Add shim for OGR_IsFieldNull.
+    if gdalversion.startswith("2.2"):
+        shutil.copy("fiona/isfieldnull22.pxi", "fiona/isfieldnull.pxi")
+    else:
+        shutil.copy("fiona/isfieldnull1.pxi", "fiona/isfieldnull.pxi")
+
     ext_modules = cythonize([
         Extension('fiona._geometry', ['fiona/_geometry.pyx'], **ext_options),
         Extension('fiona._transform', ['fiona/_transform.pyx'], **ext_options),
         Extension('fiona._crs', ['fiona/_crs.pyx'], **ext_options),
         Extension('fiona._drivers', ['fiona/_drivers.pyx'], **ext_options),
         Extension('fiona._err', ['fiona/_err.pyx'], **ext_options),
-        Extension('fiona.ogrext', ['fiona/ogrext.pyx'], **ext_options)])
+        Extension('fiona.ogrext', ['fiona/ogrext.pyx'], **ext_options)],
+        compile_time_env={"GDAL_VERSION_NUM": GDAL_VERSION_NUM},)
 
 # If there's no manifest template, as in an sdist, we just specify .c files.
 elif "clean" not in sys.argv:
