@@ -3,6 +3,14 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.7.13 (2018-07-17)
+-------------------
+
+In GDAL 2.2, the behavior of GDAL with respect to null fields changed (#460).
+A fix in the master (1.8-to-be) branch has been back-ported so that Fiona's
+results with GDAL 2.1 and 2.2 are the same. The value reported for unset
+integer or string fields will be `None` and not `0` or `""`.
+
 1.7.12 (2018-06-11)
 -------------------
 
