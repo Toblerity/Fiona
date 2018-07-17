@@ -199,6 +199,12 @@ if source_is_repo and "clean" not in sys.argv:
         log.info("Building Fiona for gdal 2.x: {0}".format(gdalversion))
         shutil.copy('fiona/ogrext2.pyx', 'fiona/ogrext.pyx')
 
+    # Add shim for OGR_IsFieldNull.
+    if gdalversion.startswith("2.2"):
+        shutil.copy("fiona/isfieldnull22.pxi", "fiona/isfieldnull.pxi")
+    else:
+        shutil.copy("fiona/isfieldnull1.pxi", "fiona/isfieldnull.pxi")
+
     ext_modules = cythonize([
         Extension('fiona._geometry', ['fiona/_geometry.pyx'], **ext_options),
         Extension('fiona._transform', ['fiona/_transform.pyx'], **ext_options),

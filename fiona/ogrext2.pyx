@@ -126,17 +126,23 @@ def _bounds(geometry):
     except (KeyError, TypeError):
         return None
 
+
 def calc_gdal_version_num(maj, min, rev):
     """Calculates the internal gdal version number based on major, minor and revision"""
     return int(maj * 1000000 + min * 10000 + rev*100)
+
 
 def get_gdal_version_num():
     """Return current internal version number of gdal"""
     return int(ogrext2.GDALVersionInfo("VERSION_NUM"))
 
+
 def get_gdal_release_name():
     """Return release name of gdal"""
     return ogrext2.GDALVersionInfo("RELEASE_NAME")
+
+
+include "isfieldnull.pxi"
 
 
 # Feature extension classes and functions follow.
@@ -183,13 +189,7 @@ cdef class FeatureBuilder:
             # TODO: other types
             fieldtype = FIELD_TYPES_MAP[fieldtypename]
 
-            is_null = False
-            IF GDAL_VERSION_NUM >= 2020000:
-                if ogrext2.OGR_F_IsFieldNull(feature, i):
-                    is_null = True
-            if not ogrext2.OGR_F_IsFieldSet(feature, i):
-                is_null =True
-            if is_null:
+            if is_field_null(feature, i):
                 props[key] = None
 
             elif fieldtype is int:
