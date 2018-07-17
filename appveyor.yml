@@ -137,7 +137,9 @@ test_script:
   - ps: python -c "import fiona"
 
   # TODO: return to running test_write_gb18030 when GDAL build is updated.
-  - "%CMD_IN_ENV% python -m pytest -k \"not test_write_gb18030\" --cov fiona --cov-report term-missing"
+  # GenericWriting test is skipped on Appveyor because our Windows GDAL doesn't
+  # have iconv support and can't encode field names.
+  - "%CMD_IN_ENV% python -m pytest -k \"not test_write_gb18030\ and not GenericWritingTest" --cov fiona --cov-report term-missing"
 
 matrix:
   allow_failures:
