@@ -1,18 +1,14 @@
 # testing features, to be called by nosetests
 
-import logging
 import os
 import shutil
-import sys
 import tempfile
 import unittest
 
 import fiona
-from fiona import collection
 from fiona.collection import Collection
 from fiona.ogrext import featureRT
 
-#logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 class PointRoundTripTest(unittest.TestCase):
     def setUp(self):
@@ -112,18 +108,26 @@ class PolygonRoundTripTest(unittest.TestCase):
         self.assertEqual(g['properties']['title'], 'foo')
 
 
-def test_feature_null_field(tmpdir):
-    """
-    In GDAL 2.2 the behaviour of OGR_F_IsFieldSet slightly changed.
-    See GH #460.
-    """
-    meta = {"driver": "ESRI Shapefile", "schema": {"geometry": "Point", "properties": {"RETURN_P": "int"}}}
-    filename = str(tmpdir.join("test_null.shp"))
-    with fiona.open(filename, "w", **meta) as dst:
-        g = {"coordinates": [1.0, 2.0], "type": "Point"}
-        feature = {"geometry": g, "properties": {"RETURN_P": None}}
-        dst.write(feature)
+class NullFieldTest(unittest.TestCase):
+    """See issue #460."""
 
-    with fiona.open(filename, "r") as src:
-        feature = next(iter(src))
-        assert(feature["properties"]["RETURN_P"] is None)
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+
+    def test_feature_null_field(self):
+        """Undefined int feature properties are None, not 0"""
+
+        meta = {"driver": "ESRI Shapefile", "schema": {"geometry": "Point", "properties": {"RETURN_P": "int"}}}
+        filename = os.path.join(self.tempdir, "test_null.shp")
+
+        with fiona.open(filename, "w", **meta) as dst:
+            g = {"coordinates": [1.0, 2.0], "type": "Point"}
+            feature = {"geometry": g, "properties": {"RETURN_P": None}}
+            dst.write(feature)
+
+        with fiona.open(filename, "r") as src:
+            feature = next(iter(src))
+            self.assertEqual(feature["properties"]["RETURN_P"], None)
