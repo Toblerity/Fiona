@@ -1,6 +1,5 @@
 from distutils.command.sdist import sdist
 from distutils import log
-import logging
 import os
 import shutil
 import subprocess
@@ -168,8 +167,11 @@ if 'clean' not in sys.argv:
             log.info("Copying proj data from %s" % projdatadir)
             copy_data_tree(projdatadir, 'fiona/proj_data')
 
+
 def calc_gdal_version_num(maj=1, min=0, rev=0):
     return int(maj * 1000000 + min * 10000 + rev*100)
+
+
 GDAL_VERSION_NUM = calc_gdal_version_num(*[int(i) for i in gdalversion.split(".")])
 
 ext_options = dict(

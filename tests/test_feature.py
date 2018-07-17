@@ -111,6 +111,7 @@ class PolygonRoundTripTest(unittest.TestCase):
         g = featureRT(f, self.c)
         self.assertEqual(g['properties']['title'], 'foo')
 
+
 def test_feature_null_field(tmpdir):
     """
     In GDAL 2.2 the behaviour of OGR_F_IsFieldSet slightly changed.
