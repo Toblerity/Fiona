@@ -59,6 +59,28 @@ Using ``--with-id`` gives you
     > | fio bounds --with-id
     {"id": "0", "bbox": [0.735, 51.357216, 0.947778, 51.444717]}
 
+calc
+----
+
+New in 1.7b1
+
+The calc command creates a new property on GeoJSON features using the
+specified expression.
+
+The expression is evaluated in a restricted namespace containing 4 functions
+(`sum`, `pow`, `min`, `max`), the `math` module, the shapely `shape` function,
+type conversions (`bool`, `int`, `str`, `len`, `float`), and an object `f`
+representing the feature to be evaluated. This `f` object allows access in
+javascript-style dot notation for convenience.
+
+The expression will be evaluated for each feature and its return value will be
+added to the properties as the specified property_name. Existing properties
+will not be overwritten by default (an `Exception` is raised).
+
+.. code-block:: console
+
+    $ fio cat data.shp | fio calc sumAB  "f.properties.A + f.properties.B"
+
 cat
 ---
 
@@ -255,11 +277,11 @@ access in javascript-style dot notation for convenience.
 If the expression evaluates to a "truthy" value, the feature is printed verbatim.
 Otherwise, the feature is excluded from the output.
 
-For example 
+.. code-block:: console
 
-    fio cat data.shp \
-    | fio filter "f.properties.area > 1000.0" \
-    | fio collect > large_polygons.geojson
+    $ fio cat data.shp \
+    > | fio filter "f.properties.area > 1000.0" \
+    > | fio collect > large_polygons.geojson
 
 Would create a geojson file with only those features from `data.shp` where the
 area was over a given threshold.
