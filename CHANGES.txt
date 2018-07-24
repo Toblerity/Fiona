@@ -3,11 +3,12 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.8a2
------
+1.8a2 (2018-07-24)
+------------------
 
 New features:
 
+- 64-bit integers are the now the default for int type fields (#562, #564).
 - 'http', 's3', 'zip+http', and 'zip+s3' URI schemes for datasets are now
   supported (#425, #426).
 - We've added a ``MemoryFile`` class which supports formatted in-memory
