@@ -214,6 +214,7 @@ if source_is_repo and "clean" not in sys.argv:
 
     ext_modules = cythonize([
         Extension('fiona._geometry', ['fiona/_geometry.pyx'], **ext_options),
+        Extension('fiona.schema', ['fiona/schema.pyx'], **ext_options),
         Extension('fiona._transform', ['fiona/_transform.pyx'], **ext_options_cpp),
         Extension('fiona._crs', ['fiona/_crs.pyx'], **ext_options),
         Extension('fiona._drivers', ['fiona/_drivers.pyx'], **ext_options),
@@ -224,6 +225,7 @@ if source_is_repo and "clean" not in sys.argv:
 # If there's no manifest template, as in an sdist, we just specify .c files.
 elif "clean" not in sys.argv:
     ext_modules = [
+        Extension('fiona.schema', ['fiona/schema.c'], **ext_options),
         Extension('fiona._transform', ['fiona/_transform.cpp'], **ext_options_cpp),
         Extension('fiona._geometry', ['fiona/_geometry.c'], **ext_options),
         Extension('fiona._crs', ['fiona/_crs.c'], **ext_options),

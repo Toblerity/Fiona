@@ -1,13 +1,4 @@
-import fiona
-import os
-import shutil
-import tempfile
-import unittest
-import fiona
-
-"""
-
-OGR 54bit handling: https://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+"""OGR 64bit handling: https://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
 
 Shapefile: OFTInteger fields are created by default with a width of 9
 characters, so to be unambiguously read as OFTInteger (and if specifying
@@ -23,6 +14,18 @@ fields of size 10 or 11 hold 32 bit or 64 bit values and adjust the type
 accordingly (and same for integer fields of size 19 or 20, in case of overflow
 of 64 bit integer, OFTReal is chosen)
 """
+
+import os
+import shutil
+import tempfile
+import unittest
+
+import pytest
+
+import fiona
+from fiona.ogrext import calc_gdal_version_num, get_gdal_version_num
+
+
 class TestBigInt(unittest.TestCase):
 
     def setUp(self):
@@ -31,6 +34,8 @@ class TestBigInt(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tempdir)
 
+    @pytest.mark.xfail(fiona.gdal_version.major < 2,
+                       reason="64-bit integer fields require GDAL 2+")
     def testCreateBigIntSchema(self):
         name = os.path.join(self.tempdir, 'output1.shp')
 
@@ -43,27 +48,39 @@ class TestBigInt(unittest.TestCase):
             'schema': {
                 'geometry': 'Point',
                 'properties': [(fieldname, 'int:10')]}}
-        if fiona.gdal_version < (2, 0, 0):
-            with self.assertRaises(OverflowError):
-                with fiona.open(name, 'w', **kwargs) as dst:
-                    rec = {}
-                    rec['geometry'] = {'type': 'Point', 'coordinates': (0, 0)}
-                    rec['properties'] = {fieldname: a_bigint}
-                    dst.write(rec)
-        else:
 
-            with fiona.open(name, 'w', **kwargs) as dst:
-                rec = {}
-                rec['geometry'] = {'type': 'Point', 'coordinates': (0, 0)}
-                rec['properties'] = {fieldname: a_bigint}
-                dst.write(rec)
+        with fiona.open(name, 'w', **kwargs) as dst:
+            rec = {}
+            rec['geometry'] = {'type': 'Point', 'coordinates': (0, 0)}
+            rec['properties'] = {fieldname: a_bigint}
+            dst.write(rec)
 
-            with fiona.open(name) as src:
-                if fiona.gdal_version >= (2, 0, 0):
-                    first = next(iter(src))
-                    self.assertEqual(first['properties'][fieldname], a_bigint)
+        with fiona.open(name) as src:
+            if fiona.gdal_version >= (2, 0, 0):
+                first = next(iter(src))
+                self.assertEqual(first['properties'][fieldname], a_bigint)
+
+
+@pytest.mark.skipif(get_gdal_version_num() < calc_gdal_version_num(2, 0, 0),
+                    reason="Test requires GDAL 2+")
+@pytest.mark.parametrize('dtype', ['int', 'int64'])
+def test_issue691(tmpdir, dtype):
+    """Type 'int' maps to 'int64'"""
+    schema = {'geometry': 'Any', 'properties': {'foo': dtype}}
+    with fiona.open(
+            str(tmpdir.join('test.shp')), 'w', driver='Shapefile',
+            schema=schema, crs='epsg:4326') as dst:
+        dst.write({
+            'type': 'Feature',
+            'geometry': {'type': 'Point',
+                         'coordinates': (-122.278015, 37.868995)},
+            'properties': {'foo': 3694063472}})
+
+    with fiona.open(str(tmpdir.join('test.shp'))) as src:
+        assert src.schema['properties']['foo'] == 'int:18'
+        first = next(src)
+        assert first['properties']['foo'] == 3694063472
 
 
 if __name__ == "__main__":
-    # import sys;sys.argv = ['', 'Test.testName']
     unittest.main()

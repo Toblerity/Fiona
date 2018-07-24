@@ -2,8 +2,6 @@
 
 
 from functools import partial
-import itertools
-import json
 import logging
 
 import click
@@ -11,10 +9,8 @@ import cligj
 
 import fiona
 from fiona.fio import options
+from fiona.schema import FIELD_TYPES_MAP_REV
 from fiona.transform import transform_geom
-
-
-FIELD_TYPES_MAP_REV = dict([(v, k) for k, v in fiona.FIELD_TYPES_MAP.items()])
 
 
 @click.command(short_help="Load GeoJSON to a dataset in another format.")
