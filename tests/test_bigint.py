@@ -34,7 +34,7 @@ class TestBigInt(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tempdir)
 
-    @pytest.mark.xfail(get_gdal_version_num() < calc_gdal_version_num(2, 0, 0),
+    @pytest.mark.xfail(fiona.gdal_version.major < 2,
                        reason="64-bit integer fields require GDAL 2+")
     def testCreateBigIntSchema(self):
         name = os.path.join(self.tempdir, 'output1.shp')

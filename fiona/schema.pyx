@@ -8,12 +8,12 @@ cdef extern from "gdal.h":
     char * GDALVersionInfo (char *pszRequest)
 
 
-def get_gdal_version_num():
+def _get_gdal_version_num():
     """Return current internal version number of gdal"""
     return int(GDALVersionInfo("VERSION_NUM"))
 
 
-GDAL_VERSION_NUM = get_gdal_version_num()
+GDAL_VERSION_NUM = _get_gdal_version_num()
 
 # Mapping of OGR integer field types to Fiona field type names.
 # Lists are currently unsupported in this version, but might be done as

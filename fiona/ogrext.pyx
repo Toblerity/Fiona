@@ -21,6 +21,7 @@ from fiona._geometry cimport (
     normalize_geometry_type_code)
 from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile
 
+import fiona
 from fiona._err import cpl_errs, FionaNullPointerError, CPLE_BaseError
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
@@ -556,7 +557,6 @@ cdef class Session:
         n = OGR_FD_GetFieldCount(cogr_featuredefn)
 
         for i from 0 <= i < n:
-            cogr_fielddefn == NULL
             cogr_fielddefn = OGR_FD_GetFieldDefn(cogr_featuredefn, i)
             if cogr_fielddefn == NULL:
                 raise ValueError("Null field definition")
@@ -1003,7 +1003,7 @@ cdef class WritingSession(Session):
 
                 # Convert 'long' to 'int'. See
                 # https://github.com/Toblerity/Fiona/issues/101.
-                if GDAL_VERSION_NUM >= 2000000 and value in ('int', 'long'):
+                if fiona.gdal_version.major >= 2 and value in ('int', 'long'):
                     value = 'int64'
                 elif value == 'int':
                     value = 'int32'
@@ -1034,12 +1034,7 @@ cdef class WritingSession(Session):
                 encoding = self.get_internalencoding()
                 key_bytes = key.encode(encoding)
 
-                try:
-                    cogr_fielddefn = exc_wrap_pointer(
-                        OGR_Fld_Create(key_bytes, field_type))
-                    log.debug("Creating field %r (%r) with type %r (%r)", key, key_bytes, field_type, value)
-                except Exception:
-                    raise
+                cogr_fielddefn = exc_wrap_pointer(OGR_Fld_Create(key_bytes, field_type))
 
                 if cogr_fielddefn == NULL:
                     raise ValueError("Field {} definition is NULL".format(key))

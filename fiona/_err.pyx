@@ -136,10 +136,19 @@ class CPLE_AWSInvalidCredentialsError(CPLE_BaseError):
 class CPLE_AWSSignatureDoesNotMatchError(CPLE_BaseError):
     pass
 
+
 class FionaNullPointerError(CPLE_BaseError):
     """
     Returned from exc_wrap_pointer when a NULL pointer is passed, but no GDAL
     error was raised.
+    """
+    pass
+
+
+class FionaCPLError(CPLE_BaseError):
+    """
+    Returned from exc_wrap_int when a error code is returned, but no GDAL
+    error was set.
     """
     pass
 
@@ -235,6 +244,8 @@ cdef int exc_wrap_int(int err) except -1:
         exc = exc_check()
         if exc:
             raise exc
+        else:
+            raise FionaCPLError(-1, -1, "The wrapped function returned an error code, but no error message was set.")
     return err
 
 
