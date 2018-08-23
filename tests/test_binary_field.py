@@ -2,8 +2,8 @@ import fiona
 
 import os
 import pytest
+import struct
 import unittest
-import binascii
 import tempfile
 import shutil
 from collections import OrderedDict
@@ -29,8 +29,8 @@ class TestBinaryField(unittest.TestCase):
             }
         }
         
-        # create some binary data to encode
-        data = binascii.a2b_hex(b"deadbeef")
+        # create some binary data
+        input_data = struct.pack("256B", *range(256))
         
         # write the binary data to a BLOB field
         filename = os.path.join(self.tempdir, "binary_test.gpkg")
@@ -39,19 +39,17 @@ class TestBinaryField(unittest.TestCase):
                 "geometry": {"type": "Point", "coordinates": ((0,0))},
                 "properties": {
                     "name": "test",
-                    "data": data
+                    u"data": input_data,
                 }
             }
             dst.write(feature)
-        
-        del(data)
         
         # read the data back and check consistency
         with fiona.open(filename, "r") as src:
             feature = next(iter(src))
             assert(feature["properties"]["name"] == "test")
-            data = feature["properties"]["data"]
-            assert(binascii.b2a_hex(data) == b"deadbeef")
+            output_data = feature["properties"]["data"]
+            assert(output_data == input_data)
 
 if __name__ == "__main__":
     unittest.main()
