@@ -18,7 +18,7 @@ def test_fio_ls_single_layer():
         DATA_DIR])
     assert result.exit_code == 0
     assert len(result.output.splitlines()) == 1
-    assert json.loads(result.output) == ['coutwildrnp', 'gre']
+    assert sorted(json.loads(result.output)) == ['coutwildrnp', 'gre']
 
 
 def test_fio_ls_indent(path_coutwildrnp_shp):
