@@ -388,7 +388,7 @@ cdef class OGRFeatureBuilder:
                 set_field_null(cogr_feature, i)
             else:
                 raise ValueError("Invalid field type %s" % type(value))
-            log.debug("Set field %s: %s" % (key, value))
+            log.debug("Set field %s: %r" % (key, value))
         return cogr_feature
 
 
