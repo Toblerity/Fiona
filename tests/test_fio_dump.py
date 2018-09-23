@@ -2,19 +2,16 @@
 
 
 import json
-import sys
 
 from click.testing import CliRunner
-import pytest
 
 import fiona
-from fiona.fio import dump
 from fiona.fio.main import main_group
 
 
 def test_dump(path_coutwildrnp_shp):
     runner = CliRunner()
-    result = runner.invoke(dump.dump, [path_coutwildrnp_shp])
+    result = runner.invoke(main_group, ['dump', path_coutwildrnp_shp])
     assert result.exit_code == 0
     assert '"FeatureCollection"' in result.output
 
@@ -22,7 +19,7 @@ def test_dump(path_coutwildrnp_shp):
 def test_dump_layer(path_gpx):
     for layer in ('routes', '1'):
         runner = CliRunner()
-        result = runner.invoke(dump.dump, [path_gpx, '--layer', layer])
+        result = runner.invoke(main_group, ['dump', path_gpx, '--layer', layer])
         assert result.exit_code == 0
         assert '"FeatureCollection"' in result.output
 
