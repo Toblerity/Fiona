@@ -835,7 +835,7 @@ class CollectionTest(unittest.TestCase):
             FionaValueError, fiona.open, os.path.join(TEMPDIR, "test-no-iter.shp"), "w", "Driver")
 
     def test_no_path(self):
-        self.assertRaises(IOError, fiona.open, "no-path.shp", "a")
+        self.assertRaises(Exception, fiona.open, "no-path.shp", "a")
 
     def test_no_read_conn_str(self):
         self.assertRaises(DriverError, fiona.open, "PG:dbname=databasename", "r")
