@@ -43,10 +43,9 @@ def info(ctx, input, indent, meta_member, layer):
     Use the '--layer' option to select a different layer.
     """
 
-    verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
-    logger = logging.getLogger('fio')
+    logger = logging.getLogger(__name__)
     try:
-        with fiona.drivers(CPL_DEBUG=verbosity > 2):
+        with ctx.obj['env']:
             with fiona.open(input, layer=layer) as src:
                 info = src.meta
                 info.update(bounds=src.bounds, name=src.name)

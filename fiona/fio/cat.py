@@ -45,8 +45,7 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
     Use the '--layer' option to select a different layer.
     """
 
-    verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
-    logger = logging.getLogger('fio')
+    logger = logging.getLogger(__name__)
 
     dump_kwds = {'sort_keys': True}
     if indent:
@@ -63,8 +62,9 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
     for i in range(1, len(files) + 1):
         if str(i) not in layer.keys():
             layer[str(i)] = [0]
+
     try:
-        with fiona.drivers(CPL_DEBUG=verbosity > 2):
+        with ctx.obj['env']:
             if bbox:
                 try:
                     bbox = tuple(map(float, bbox.split(',')))
