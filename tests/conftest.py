@@ -10,12 +10,13 @@ import pytest
 
 import fiona
 
+
 def pytest_report_header(config):
     headers = []
     # gdal version number
     gdal_release_name = fiona.get_gdal_release_name().decode("utf-8")
     headers.append('GDAL: {} ({})'.format(gdal_release_name, fiona.get_gdal_version_num()))
-    supported_drivers = ", ".join(sorted(list(fiona.supported_drivers.keys())))
+    supported_drivers = ", ".join(sorted(list(fiona.drvsupport.supported_drivers.keys())))
     # supported drivers
     headers.append("Supported drivers: {}".format(supported_drivers))
     return '\n'.join(headers)
@@ -30,7 +31,7 @@ def _read_file(name):
         return f.read()
 
 
-has_gpkg = "GPKG" in fiona.supported_drivers.keys()
+has_gpkg = "GPKG" in fiona.drvsupport.supported_drivers.keys()
 has_gpkg_reason = "Requires geopackage driver"
 requires_gpkg = pytest.mark.skipif(not has_gpkg, reason=has_gpkg_reason)
 
@@ -38,7 +39,7 @@ requires_gpkg = pytest.mark.skipif(not has_gpkg, reason=has_gpkg_reason)
 @pytest.fixture(scope='session')
 def data_dir():
     """Absolute file path to the directory containing test datasets."""
-    return os.path.abspath(os.path.join('tests','data'))
+    return os.path.abspath(os.path.join('tests', 'data'))
 
 
 @pytest.fixture(scope='session')
@@ -57,6 +58,7 @@ def path_coutwildrnp_zip():
             for filename in _COUTWILDRNP_FILES:
                 zip.write(os.path.join(data_dir(), filename), filename)
     return path
+
 
 @pytest.fixture(scope='session')
 def path_grenada_geojson():
@@ -101,6 +103,7 @@ def path_coutwildrnp_json():
             f.write(json.dumps(my_layer))
     return path
 
+
 @pytest.fixture(scope='session')
 def bytes_grenada_geojson():
     """The geojson as bytes."""
@@ -140,19 +143,19 @@ def feature_collection():
 @pytest.fixture(scope='session')
 def feature_collection_pp():
     """Same as above but with pretty-print styling applied."""
-    return _read_file(os.path.join('data','collection-pp.txt'))
+    return _read_file(os.path.join('data', 'collection-pp.txt'))
 
 
 @pytest.fixture(scope='session')
 def feature_seq():
     """One feature per line."""
-    return _read_file(os.path.join('data','sequence.txt'))
+    return _read_file(os.path.join('data', 'sequence.txt'))
 
 
 @pytest.fixture(scope='session')
 def feature_seq_pp_rs():
     """Same as above but each feature has pretty-print styling"""
-    return _read_file(os.path.join('data','sequence-pp.txt'))
+    return _read_file(os.path.join('data', 'sequence-pp.txt'))
 
 
 @pytest.fixture(scope='session')

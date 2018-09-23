@@ -5,7 +5,6 @@ import logging
 import os
 import shutil
 import sys
-import subprocess
 import tempfile
 import unittest
 import re
@@ -19,7 +18,7 @@ from fiona.errors import FionaValueError, DriverError
 from .conftest import WGS84PATTERN
 
 
-WILDSHP = os.path.join('tests', 'data','coutwildrnp.shp')
+WILDSHP = os.path.join('tests', 'data', 'coutwildrnp.shp')
 TEMPDIR = tempfile.gettempdir()
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
@@ -92,7 +91,7 @@ class CollectionArgsTest(unittest.TestCase):
 class OpenExceptionTest(unittest.TestCase):
 
     def test_no_archive(self):
-        self.assertRaises(IOError, fiona.open, ("/"), mode='r', vfs="zip:///foo.zip")
+        self.assertRaises(DriverError, fiona.open, ("/"), mode='r', vfs="zip:///foo.zip")
 
 
 class ReadingTest(unittest.TestCase):
@@ -271,6 +270,7 @@ class ReadingTest(unittest.TestCase):
     def test_in_keys(self):
         self.assertTrue(0 in self.c.keys())
         self.assertTrue(0 in self.c)
+
 
 class ReadingPathTest(unittest.TestCase):
     def test_open_path(self):
@@ -838,7 +838,7 @@ class CollectionTest(unittest.TestCase):
         self.assertRaises(IOError, fiona.open, "no-path.shp", "a")
 
     def test_no_read_conn_str(self):
-        self.assertRaises(IOError, fiona.open, "PG:dbname=databasename", "r")
+        self.assertRaises(DriverError, fiona.open, "PG:dbname=databasename", "r")
 
     @pytest.mark.skipif(sys.platform.startswith("win"),
                      reason="test only for *nix based system")

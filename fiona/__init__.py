@@ -66,6 +66,8 @@ from contextlib import contextmanager
 import logging
 import os
 import sys
+import warnings
+
 from six import string_types
 
 try:
@@ -78,16 +80,19 @@ if sys.platform == "win32":
     libdir = os.path.join(os.path.dirname(__file__), ".libs")
     os.environ["PATH"] = os.environ["PATH"] + ";" + libdir
 
-from fiona.collection import Collection, BytesCollection
-from fiona.vfs import vsi_path, parse_paths, is_remote
-from fiona._drivers import driver_count, GDALEnv
+from fiona.collection import BytesCollection, Collection
 from fiona.drvsupport import supported_drivers
+from fiona.env import ensure_env_credentialled, Env
+from fiona.errors import FionaDeprecationWarning
+from fiona._env import driver_count, GDALEnv
 from fiona.compat import OrderedDict
 from fiona.io import MemoryFile
 from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove, _remove_layer
 from fiona.ogrext import (
     calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name,
     get_gdal_version_tuple)
+from fiona.path import ParsedPath, parse_path, vsi_path
+from fiona.vfs import parse_paths as vfs_parse_paths
 
 # These modules are imported by fiona.ogrext, but are also import here to
 # help tools like cx_Freeze find them automatically
@@ -104,6 +109,7 @@ gdal_version = get_gdal_version_tuple()
 log = logging.getLogger(__name__)
 
 
+@ensure_env_credentialled
 def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
          layer=None, vfs=None, enabled_drivers=None, crs_wkt=None,
          **kwargs):
@@ -234,19 +240,23 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
         if isinstance(fp, Path):
             fp = str(fp)
 
-        # Parse the vfs into a vsi and an archive path.
-        path, vsi, archive = parse_paths(fp, vfs)
+        if vfs:
+            # Parse the vfs into a vsi and an archive path.
+            path, scheme, archive = vfs_parse_paths(fp, vfs=vfs)
+            path = ParsedPath(path, archive, scheme)
+        else:
+            path = parse_path(fp)
+
         if mode in ('a', 'r'):
-            if is_remote(vsi):
-                pass
-            elif archive:
-                if not os.path.exists(archive):
-                    raise IOError("no such archive file: %r" % archive)
-            elif path != '-' and not os.path.exists(path):
-                raise IOError("no such file or directory: %r" % path)
+            #if is_remote(vsi):
+            #    pass
+            #elif archive:
+            #    if not os.path.exists(archive):
+            #        raise IOError("no such archive file: %r" % archive)
+            #elif path != '-' and not os.path.exists(path):
+            #    raise IOError("no such file or directory: %r" % path)
             c = Collection(path, mode, driver=driver, encoding=encoding,
-                           layer=layer, vsi=vsi, archive=archive,
-                           enabled_drivers=enabled_drivers, **kwargs)
+                           layer=layer, enabled_drivers=enabled_drivers, **kwargs)
         elif mode == 'w':
             if schema:
                 # Make an ordered dict of schema properties.
@@ -255,8 +265,7 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
             else:
                 this_schema = None
             c = Collection(path, mode, crs=crs, driver=driver, schema=this_schema,
-                           encoding=encoding, layer=layer, vsi=vsi, archive=archive,
-                           enabled_drivers=enabled_drivers, crs_wkt=crs_wkt,
+                           encoding=encoding, layer=layer, enabled_drivers=enabled_drivers, crs_wkt=crs_wkt,
                            **kwargs)
         else:
             raise ValueError(
@@ -295,6 +304,7 @@ def remove(path_or_collection, driver=None, layer=None):
         _remove_layer(path, layer, driver)
 
 
+@ensure_env_credentialled
 def listlayers(path, vfs=None):
     """Returns a list of layer names in their index order.
 
@@ -311,16 +321,20 @@ def listlayers(path, vfs=None):
     if vfs and not isinstance(vfs, string_types):
         raise TypeError("invalid vfs: %r" % vfs)
 
-    path, vsi, archive = parse_paths(path, vfs)
+    if vfs:
+        pobj_vfs = parse_path(vfs)
+        pobj_path = parse_path(path)
+        pobj = ParsedPath(pobj_path.path, pobj_vfs.path, pobj_vfs.scheme)
+    else:
+        pobj = parse_path(path)
 
-    if archive:
-        if not os.path.exists(archive):
-            raise IOError("no such archive file: %r" % archive)
-    elif not os.path.exists(path):
-        raise IOError("no such file or directory: %r" % path)
+    #if archive:
+    #    if not os.path.exists(archive):
+    #        raise IOError("no such archive file: %r" % archive)
+    #elif not os.path.exists(path):
+    #    raise IOError("no such file or directory: %r" % path)
 
-    with drivers():
-        return _listlayers(vsi_path(path, vsi, archive))
+    return _listlayers(vsi_path(pobj))
 
 
 def prop_width(val):
@@ -353,7 +367,12 @@ def prop_type(text):
 
 
 def drivers(*args, **kwargs):
-    """Returns a context manager with registered drivers."""
+    """Returns a context manager with registered drivers.
+
+    DEPRECATED
+    """
+    warnings.warn("Use fiona.Env() instead.", FionaDeprecationWarning, stacklevel=2)
+
     if driver_count == 0:
         log.debug("Creating a chief GDALEnv in drivers()")
         return GDALEnv(**kwargs)

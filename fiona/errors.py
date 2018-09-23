@@ -1,6 +1,10 @@
 # Errors.
 
 
+class FionaError(Exception):
+    """Base Fiona error"""
+
+
 class FionaValueError(ValueError):
     """Fiona-specific value errors"""
 
@@ -47,3 +51,11 @@ class GeometryTypeValidationError(FionaValueError):
 
 class TransactionError(RuntimeError):
     """Failure relating to GDAL transactions"""
+
+
+class EnvError(FionaError):
+    """Environment Errors"""
+
+
+class FionaDeprecationWarning(UserWarning):
+    """A warning about deprecation of Fiona features"""
