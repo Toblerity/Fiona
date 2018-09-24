@@ -84,7 +84,7 @@ from fiona.collection import BytesCollection, Collection
 from fiona.drvsupport import supported_drivers
 from fiona.env import ensure_env_credentialled, Env
 from fiona.errors import FionaDeprecationWarning
-from fiona._env import driver_count, GDALEnv
+from fiona._env import driver_count
 from fiona.compat import OrderedDict
 from fiona.io import MemoryFile
 from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove, _remove_layer
@@ -248,13 +248,6 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
             path = parse_path(fp)
 
         if mode in ('a', 'r'):
-            #if is_remote(vsi):
-            #    pass
-            #elif archive:
-            #    if not os.path.exists(archive):
-            #        raise IOError("no such archive file: %r" % archive)
-            #elif path != '-' and not os.path.exists(path):
-            #    raise IOError("no such file or directory: %r" % path)
             c = Collection(path, mode, driver=driver, encoding=encoding,
                            layer=layer, enabled_drivers=enabled_drivers, **kwargs)
         elif mode == 'w':
@@ -328,12 +321,6 @@ def listlayers(path, vfs=None):
     else:
         pobj = parse_path(path)
 
-    #if archive:
-    #    if not os.path.exists(archive):
-    #        raise IOError("no such archive file: %r" % archive)
-    #elif not os.path.exists(path):
-    #    raise IOError("no such file or directory: %r" % path)
-
     return _listlayers(vsi_path(pobj))
 
 
@@ -375,10 +362,10 @@ def drivers(*args, **kwargs):
 
     if driver_count == 0:
         log.debug("Creating a chief GDALEnv in drivers()")
-        return GDALEnv(**kwargs)
+        return Env(**kwargs)
     else:
         log.debug("Creating a not-responsible GDALEnv in drivers()")
-        return GDALEnv(**kwargs)
+        return Env(**kwargs)
 
 
 def bounds(ob):
