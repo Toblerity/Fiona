@@ -2,13 +2,11 @@
 
 
 import logging
-import sys
-
 import os
+
+import pytest
+
 import fiona
-
-
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 
 def test_options(tmpdir):
@@ -20,13 +18,14 @@ def test_options(tmpdir):
     fh.setLevel(logging.DEBUG)
     logger.addHandler(fh)
 
-    with fiona.Env(CPL_DEBUG=True):
-        path = os.path.join("tests", "data", "coutwildrnp.shp")
-        c = fiona.open(path)
-        c.close()
-        with open(logfile, "r") as f:
-            log = f.read()
-        if fiona.gdal_version.major >= 2:
-            assert "GDALOpen" in log
-        else:
-            assert "OGROpen" in log
+    with pytest.warns(UserWarning):
+        with fiona.drivers(CPL_DEBUG=True):
+            path = os.path.join("tests", "data", "coutwildrnp.shp")
+            c = fiona.open(path)
+            c.close()
+            with open(logfile, "r") as f:
+                log = f.read()
+            if fiona.gdal_version.major >= 2:
+                assert "GDALOpen" in log
+            else:
+                assert "OGROpen" in log
