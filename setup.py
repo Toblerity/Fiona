@@ -249,7 +249,8 @@ elif "clean" not in sys.argv:
                 Extension('fiona._shim', ['fiona/_shim2.c'], **ext_options))
 
 requirements = [
-    'cligj>=0.4',
+    'click>=4.0,<8',
+    'cligj>=0.5',
     'click-plugins',
     'six>=1.7',
     'munch']
