@@ -445,16 +445,6 @@ cdef class Session:
         cdef char **ignore_fields = NULL
 
         path_b = collection.path.encode('utf-8')
-
-#        if collection.path == '-':
-#            path = '/vsistdin/'
-#        else:
-#            path = collection.path
-#        try:
-#            path_b = path.encode('utf-8')
-#        except UnicodeDecodeError:
-#            # Presume already a UTF-8 encoded string
-#            path_b = path
         path_c = path_b
 
         userencoding = kwargs.get('encoding')

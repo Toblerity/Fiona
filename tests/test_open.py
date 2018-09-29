@@ -3,6 +3,6 @@
 import fiona
 
 
-def test_open_shp():
+def test_open_shp(path_coutwildrnp_shp):
     """Open a shapefile"""
-    assert fiona.open("tests/data/coutwildrnp.shp")
+    assert fiona.open(path_coutwildrnp_shp)

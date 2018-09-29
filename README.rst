@@ -4,7 +4,7 @@ Fiona
 
 Fiona is OGR's neat and nimble API for Python programmers.
 
-.. image:: https://travis-ci.org/Toblerity/Fiona.png?branch=master   
+.. image:: https://travis-ci.org/Toblerity/Fiona.png?branch=master
    :target: https://travis-ci.org/Toblerity/Fiona
 
 .. image:: https://ci.appveyor.com/api/projects/status/github/Toblerity/Fiona?svg=true
@@ -43,56 +43,43 @@ file, change their geometry attributes, and write them to a new data file.
 .. code-block:: python
 
     import fiona
-  
-    # Register format drivers with a context manager
-    
-    with fiona.drivers():
 
-        # Open a file for reading. We'll call this the "source."
-        
-        with fiona.open('tests/data/coutwildrnp.shp') as source:
+    # Open a file for reading. We'll call this the "source."
 
-            # The file we'll write to, the "sink", must be initialized
-            # with a coordinate system, a format driver name, and
-            # a record schema.  We can get initial values from the open
-            # collection's ``meta`` property and then modify them as
-            # desired.
+    with fiona.open('tests/data/coutwildrnp.shp') as src:
 
-            meta = source.meta
-            meta['schema']['geometry'] = 'Point'
+        # The file we'll write to, the "destination", must be initialized
+        # with a coordinate system, a format driver name, and
+        # a record schema.  We can get initial values from the open
+        # collection's ``meta`` property and then modify them as
+        # desired.
 
-            # Open an output file, using the same format driver and
-            # coordinate reference system as the source. The ``meta``
-            # mapping fills in the keyword parameters of fiona.open().
-            
-            with fiona.open('test_write.shp', 'w', **meta) as sink:
+        meta = source.meta
+        meta['schema']['geometry'] = 'Point'
 
-                # Process only the records intersecting a box.
-                for f in source.filter(bbox=(-107.0, 37.0, -105.0, 39.0)):
-          
-                    # Get a point on the boundary of the record's
-                    # geometry.
-                    
-                    f['geometry'] = {
-                        'type': 'Point',
-                        'coordinates': f['geometry']['coordinates'][0][0]}
-              
-                    # Write the record out.
-                    
-                    sink.write(f)
-              
-        # The sink's contents are flushed to disk and the file is
-        # closed when its ``with`` block ends. This effectively
-        # executes ``sink.flush(); sink.close()``.
+        # Open an output file, using the same format driver and
+        # coordinate reference system as the source. The ``meta``
+        # mapping fills in the keyword parameters of fiona.open().
 
-    # At the end of the ``with fiona.drivers()`` block, context
-    # manager exits and all drivers are de-registered.
+        with fiona.open('test_write.shp', 'w', **meta) as dst:
 
-The fiona.drivers() function and context manager are new in 1.1. The
-example above shows the way to use it to register and de-register
-drivers in a deterministic and efficient way. Code written for Fiona 1.0
-will continue to work: opened collections may manage the global driver
-registry if no other manager is present.
+            # Process only the records intersecting a box.
+            for f in source.filter(bbox=(-107.0, 37.0, -105.0, 39.0)):
+
+                # Get a point on the boundary of the record's
+                # geometry.
+
+                f['geometry'] = {
+                    'type': 'Point',
+                    'coordinates': f['geometry']['coordinates'][0][0]}
+
+                # Write the record out.
+
+                dst.write(f)
+
+    # The destination's contents are flushed to disk and the file is
+    # closed when its ``with`` block ends. This effectively
+    # executes ``dst.flush(); dst.close()``.
 
 Reading Multilayer data
 -----------------------
@@ -104,12 +91,10 @@ provides an index ordered list of layer names.
 
 .. code-block:: python
 
-    with fiona.drivers():
+    for layername in fiona.listlayers('tests/data'):
+        with fiona.open('tests/data', layer=layername) as src:
+            print(layername, len(src))
 
-        for layername in fiona.listlayers('tests/data'):
-            with fiona.open('tests/data', layer=layername) as src:
-                print(layername, len(src))
-    
     # Output:
     # (u'coutwildrnp', 67)
 
@@ -118,12 +103,10 @@ Layer can also be specified by index. In this case, ``layer=0`` and
 
 .. code-block:: python
 
-    with fiona.drivers():
+    for i, layername in enumerate(fiona.listlayers('tests/data')):
+        with fiona.open('tests/data', layer=i) as src:
+            print(i, layername, len(src))
 
-        for i, layername in enumerate(fiona.listlayers('tests/data')):
-            with fiona.open('tests/data', layer=i) as src:
-                print(i, layername, len(src))
-    
     # Output:
     # (0, u'coutwildrnp', 67)
 
@@ -134,24 +117,22 @@ Multilayer data can be written as well. Layers must be specified by name when
 writing.
 
 .. code-block:: python
-    
-    with fiona.drivers():
 
-        with open('tests/data/cowildrnp.shp') as src:
-            meta = src.meta
-            f = next(src)
-    
-        with fiona.open('/tmp/foo', 'w', layer='bar', **meta) as dst:
-            dst.write(f)
-    
-        print(fiona.listlayers('/tmp/foo'))
+    with open('tests/data/cowildrnp.shp') as src:
+        meta = src.meta
+        f = next(src)
 
-        with fiona.open('/tmp/foo', layer='bar') as src:
-            print(len(src))
-            f = next(src)
-            print(f['geometry']['type'])
-            print(f['properties'])
-    
+    with fiona.open('/tmp/foo', 'w', layer='bar', **meta) as dst:
+        dst.write(f)
+
+    print(fiona.listlayers('/tmp/foo'))
+
+    with fiona.open('/tmp/foo', layer='bar') as src:
+        print(len(src))
+        f = next(src)
+        print(f['geometry']['type'])
+        print(f['properties'])
+
         # Output:
         # [u'bar']
         # 1
@@ -174,18 +155,11 @@ and write zipped Shapefiles.
 
 .. code-block:: python
 
-    with fiona.drivers():
+    for i, layername in enumerate(
+            fiona.listlayers('zip://tests/data/coutwildrnp.zip'):
+        with fiona.open('zip://tests/data/coutwildrnp.zip', layer=i) as src:
+            print(i, layername, len(src))
 
-        for i, layername in enumerate(
-                fiona.listlayers(
-                    '/', 
-                    vfs='zip://tests/data/coutwildrnp.zip')):
-            with fiona.open(
-                    '/', 
-                    vfs='zip://tests/data/coutwildrnp.zip', 
-                    layer=i) as src:
-                print(i, layername, len(src))
-    
     # Output:
     # (0, u'coutwildrnp', 67)
 
@@ -193,7 +167,7 @@ Fiona can also read from more exotic file systems. For instance, a
 zipped shape file in S3 can be accessed like so:
 
 .. code-block:: python
-		
+
    with fiona.open('zip+s3://mapbox/rasterio/coutwildrnp.zip') as src:
        print(len(src))
 
@@ -308,10 +282,10 @@ You can download a binary distribution of GDAL from `here
 the compiled libraries and headers (include files).
 
 When building from source on Windows, it is important to know that setup.py
-cannot rely on gdal-config, which is only present on UNIX systems, to discover 
-the locations of header files and libraries that Fiona needs to compile its 
-C extensions. On Windows, these paths need to be provided by the user. 
-You will need to find the include files and the library files for gdal and 
+cannot rely on gdal-config, which is only present on UNIX systems, to discover
+the locations of header files and libraries that Fiona needs to compile its
+C extensions. On Windows, these paths need to be provided by the user.
+You will need to find the include files and the library files for gdal and
 use setup.py as follows. You must also specify the version of the GDAL API on the
 command line using the ``--gdalversion`` argument (see example below) or with
 the ``GDAL_VERSION`` environment variable (e.g. ``set GDAL_VERSION=2.1``).

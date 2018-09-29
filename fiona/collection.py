@@ -15,7 +15,7 @@ from fiona.errors import (DriverError, SchemaError, CRSError, UnsupportedGeometr
 from fiona._env import driver_count
 from fiona.env import Env
 from fiona.drvsupport import supported_drivers
-from fiona.path import Path, ParsedPath, UnparsedPath, vsi_path, parse_path
+from fiona.path import Path, UnparsedPath, vsi_path, parse_path
 from six import string_types, binary_type
 
 
@@ -149,13 +149,6 @@ class Collection(object):
                     self._crs = crs
                 else:
                     raise CRSError("crs lacks init or proj parameter")
-
-        #if driver_count == 0:
-        #    # create a local manager and enter
-        #    self.env = Env()
-        #else:
-        #    self.env = Env()
-        #self.env.__enter__()
 
         self._driver = driver
         kwargs.update(encoding=encoding or '')

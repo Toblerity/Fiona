@@ -27,8 +27,9 @@ class ThreadEnv(threading.local):
         #
         #   from osgeo import gdal import rasterio
         #
-        #   gdal.SetConfigOption('key', 'value') with
-        #   rasterio.Env(key='something'): pass
+        #   gdal.SetConfigOption('key', 'value')
+        #   with rasterio.Env(key='something'):
+        #       pass
         #
         # The config option 'key' would be unset when 'Env()' exits.
         # A more comprehensive solution would also leverage
@@ -339,8 +340,8 @@ def ensure_env(f):
     return wrapper
 
 
-def ensure_env_credentialled(f):
-    """Ensures a config environment exists and is credentialized
+def ensure_env_with_credentials(f):
+    """Ensures a config environment exists and has credentials.
 
     Parameters
     ----------

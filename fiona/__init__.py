@@ -82,7 +82,7 @@ if sys.platform == "win32":
 
 from fiona.collection import BytesCollection, Collection
 from fiona.drvsupport import supported_drivers
-from fiona.env import ensure_env_credentialled, Env
+from fiona.env import ensure_env_with_credentials, Env
 from fiona.errors import FionaDeprecationWarning
 from fiona._env import driver_count
 from fiona.compat import OrderedDict
@@ -109,7 +109,7 @@ gdal_version = get_gdal_version_tuple()
 log = logging.getLogger(__name__)
 
 
-@ensure_env_credentialled
+@ensure_env_with_credentials
 def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
          layer=None, vfs=None, enabled_drivers=None, crs_wkt=None,
          **kwargs):
@@ -297,7 +297,7 @@ def remove(path_or_collection, driver=None, layer=None):
         _remove_layer(path, layer, driver)
 
 
-@ensure_env_credentialled
+@ensure_env_with_credentials
 def listlayers(path, vfs=None):
     """Returns a list of layer names in their index order.
 
