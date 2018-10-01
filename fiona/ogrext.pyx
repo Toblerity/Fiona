@@ -727,7 +727,6 @@ cdef class Session:
         else:
             return False
 
-
     def __getitem__(self, item):
         cdef void * cogr_feature
         if isinstance(item, slice):
@@ -756,7 +755,6 @@ cdef class Session:
             )
             _deleteOgrFeature(cogr_feature)
             return feature
-
 
     def isactive(self):
         if self.cogr_layer != NULL and self.cogr_ds != NULL:
@@ -1219,10 +1217,8 @@ cdef class Iterator:
         log.debug("Index: %d", self.next_index)
         OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
 
-
     def __iter__(self):
         return self
-
 
     def _next(self):
         """Internal method to set read cursor to next item"""
@@ -1240,7 +1236,6 @@ cdef class Iterator:
         else:
             if self.next_index > self.start or (self.stop is not None and self.next_index <= self.stop):
                 raise StopIteration
-
 
         # Set read cursor to next_item position
         if self.step > 1 and self.fastindex:
@@ -1263,7 +1258,6 @@ cdef class Iterator:
 
         # set the next index
         self.next_index += self.step
-
 
     def __next__(self):
         cdef void * cogr_feature

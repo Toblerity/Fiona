@@ -12,6 +12,7 @@ from fiona.ogrext import (
     calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name)
 from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file, GEOMETRY_TYPES
 from fiona.errors import (DriverError, SchemaError, CRSError, UnsupportedGeometryTypeError, DriverSupportError)
+from fiona.logutils import FieldSkipLogFilter
 from fiona._drivers import driver_count, GDALEnv
 from fiona.drvsupport import supported_drivers, AWSGDALEnv
 from six import string_types, binary_type
@@ -172,6 +173,8 @@ class Collection(object):
 
         if self.mode in ("a", "w"):
             self._valid_geom_types = _get_valid_geom_types(self.schema, self.driver)
+
+        self.field_skip_log_filter = FieldSkipLogFilter()
 
     def __repr__(self):
         return "<%s Collection '%s', mode '%s' at %s>" % (
@@ -453,9 +456,11 @@ class Collection(object):
         return self.session is None
 
     def __enter__(self):
+        logging.getLogger('fiona.ogrext').addFilter(self.field_skip_log_filter)
         return self
 
     def __exit__(self, type, value, traceback):
+        logging.getLogger('fiona.ogrext').removeFilter(self.field_skip_log_filter)
         self.close()
 
     def __del__(self):
