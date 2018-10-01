@@ -20,8 +20,7 @@ def distrib(ctx, use_rs):
     Print the features of GeoJSON objects read from stdin.
     """
 
-    verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
-    logger = logging.getLogger('fio')
+    logger = logging.getLogger(__name__)
     stdin = click.get_text_stream('stdin')
     try:
         source = helpers.obj_gen(stdin)

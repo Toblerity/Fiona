@@ -29,9 +29,9 @@ def load(ctx, output, driver, src_crs, dst_crs, features, layer):
     """Load features from JSON to a file in another format.
 
     The input is a GeoJSON feature collection or optionally a sequence of
-    GeoJSON feature objects."""
-    verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
-    logger = logging.getLogger('fio')
+    GeoJSON feature objects.
+    """
+    logger = logging.getLogger(__name__)
 
     dst_crs = dst_crs or src_crs
 
@@ -39,7 +39,8 @@ def load(ctx, output, driver, src_crs, dst_crs, features, layer):
         transformer = partial(transform_geom, src_crs, dst_crs,
                               antimeridian_cutting=True, precision=-1)
     else:
-        transformer = lambda x: x
+        def transformer(x):
+            return x
 
     def feature_gen():
         for feat in features:
@@ -57,7 +58,7 @@ def load(ctx, output, driver, src_crs, dst_crs, features, layer):
             (k, FIELD_TYPES_MAP_REV.get(type(v)) or 'str')
             for k, v in first['properties'].items()])
 
-        with fiona.drivers(CPL_DEBUG=verbosity > 2):
+        with ctx.obj['env']:
             with fiona.open(
                     output, 'w',
                     driver=driver,

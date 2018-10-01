@@ -32,6 +32,7 @@ from fiona.compat import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 from fiona.schema import FIELD_TYPES, FIELD_TYPES_MAP, normalize_field_type
+from fiona.path import vsi_path
 
 from fiona._shim cimport is_field_null
 
@@ -443,15 +444,7 @@ cdef class Session:
         cdef void *ds = NULL
         cdef char **ignore_fields = NULL
 
-        if collection.path == '-':
-            path = '/vsistdin/'
-        else:
-            path = collection.path
-        try:
-            path_b = path.encode('utf-8')
-        except UnicodeDecodeError:
-            # Presume already a UTF-8 encoded string
-            path_b = path
+        path_b = collection.path.encode('utf-8')
         path_c = path_b
 
         userencoding = kwargs.get('encoding')

@@ -12,8 +12,10 @@ from fiona.ogrext import (
     calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name)
 from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file, GEOMETRY_TYPES
 from fiona.errors import (DriverError, SchemaError, CRSError, UnsupportedGeometryTypeError, DriverSupportError)
-from fiona._drivers import driver_count, GDALEnv
-from fiona.drvsupport import supported_drivers, AWSGDALEnv
+from fiona._env import driver_count
+from fiona.env import Env
+from fiona.drvsupport import supported_drivers
+from fiona.path import Path, UnparsedPath, vsi_path, parse_path
 from six import string_types, binary_type
 
 
@@ -50,7 +52,7 @@ class Collection(object):
         options.
         """
 
-        if not isinstance(path, string_types):
+        if not isinstance(path, (string_types, Path)):
             raise TypeError("invalid path: %r" % path)
         if not isinstance(mode, string_types) or mode not in ('r', 'w', 'a'):
             raise TypeError("invalid mode: %r" % mode)
@@ -92,7 +94,12 @@ class Collection(object):
         self.ignore_fields = ignore_fields
         self.ignore_geometry = bool(ignore_geometry)
 
-        self.path = vfs.vsi_path(path, vsi, archive)
+        if vsi:
+            self.path = vfs.vsi_path(path, vsi, archive)
+            path = parse_path(self.path)
+        else:
+            path = parse_path(path)
+            self.path = vsi_path(path)
 
         if mode == 'w':
             if layer and not isinstance(layer, string_types):
@@ -103,7 +110,7 @@ class Collection(object):
                 self.name = 'OgrGeoJSON'
             # TODO: raise ValueError as above for other single-layer formats.
             else:
-                self.name = layer or os.path.basename(os.path.splitext(path)[0])
+                self.name = layer or os.path.basename(os.path.splitext(path.path)[0])
         else:
             if layer in (0, None):
                 self.name = 0
@@ -142,13 +149,6 @@ class Collection(object):
                     self._crs = crs
                 else:
                     raise CRSError("crs lacks init or proj parameter")
-
-        if driver_count == 0:
-            # create a local manager and enter
-            self.env = AWSGDALEnv()
-        else:
-            self.env = AWSGDALEnv()
-        self.env.__enter__()
 
         self._driver = driver
         kwargs.update(encoding=encoding or '')

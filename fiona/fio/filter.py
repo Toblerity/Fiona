@@ -36,7 +36,7 @@ def filter(ctx, filter_expression, use_rs):
             | fio collect > large_polygons.geojson
     """
 
-    logger = logging.getLogger('fio')
+    logger = logging.getLogger(__name__)
     stdin = click.get_text_stream('stdin')
 
     try:

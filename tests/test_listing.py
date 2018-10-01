@@ -11,10 +11,12 @@ import fiona
 import fiona.ogrext
 from fiona.errors import DriverError
 
+
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
+
 def test_single_file_private(path_coutwildrnp_shp):
-    with fiona.drivers():
+    with fiona.Env():
         assert fiona.ogrext._listlayers(
             path_coutwildrnp_shp) == ['coutwildrnp']
 
@@ -42,7 +44,7 @@ def test_zip_path_arch(path_coutwildrnp_zip):
 
 
 def test_list_not_existing(data_dir):
-    """Test underlying Cython function correctly raises exception for non-existant files"""
+    """Test underlying Cython function correctly raises"""
     path = os.path.join(data_dir, "does_not_exist.geojson")
     with pytest.raises(DriverError):
         fiona.ogrext._listlayers(path)
@@ -57,4 +59,4 @@ class ListLayersArgsTest(unittest.TestCase):
         self.assertRaises(TypeError, fiona.listlayers, ("/"), vfs=1)
 
     def test_path_ioerror(self):
-        self.assertRaises(IOError, fiona.listlayers, ("foobar"))
+        self.assertRaises(DriverError, fiona.listlayers, ("foobar"))
