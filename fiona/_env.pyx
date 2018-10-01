@@ -269,14 +269,14 @@ cdef class GDALEnv(ConfigEnv):
         log.debug("Stopped GDALEnv %r.", self)
 
     def drivers(self):
-        cdef GDALDriverH driver = NULL
+        cdef OGRSFDriverH driver = NULL
         cdef int i
 
         result = {}
-        for i in range(GDALGetDriverCount()):
-            driver = GDALGetDriver(i)
-            key = GDALGetDriverShortName(driver)
-            val = GDALGetDriverLongName(driver)
+        for i in range(OGRGetDriverCount()):
+            drv = OGRGetDriver(i)
+            key = OGR_Dr_GetName(drv)
+            val = OGR_Dr_GetName(drv)
             result[key] = val
 
         return result

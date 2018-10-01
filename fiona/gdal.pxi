@@ -377,6 +377,7 @@ cdef extern from "ogr_api.h" nogil:
                                     double maxx, double maxy)
     int OGR_L_TestCapability(OGRLayerH layer, const char *name)
     OGRSFDriverH OGRGetDriverByName(const char *)
+    OGRSFDriverH OGRGetDriver(int i)
     OGRDataSourceH OGROpen(const char *path, int mode, void *x)
     OGRDataSourceH OGROpenShared(const char *path, int mode, void *x)
     int OGRReleaseDataSource(OGRDataSourceH datasource)
