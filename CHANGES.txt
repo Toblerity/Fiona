@@ -3,6 +3,18 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8a3 (2018-10-01)
+------------------
+
+Bug fixes:
+
+- The Collection class now filters log messages about skipped fields to
+  a maximum of one warning message per field (#627).
+- The boto3 module is only imported when needed (#507, #629).
+- Compatibility with Click 7.0 is achieved (#633).
+- Use of %r instead of %s in a debug() call prevents UnicodeDecodeErrors
+  (#620).
+
 1.8a2 (2018-07-24)
 ------------------
 
