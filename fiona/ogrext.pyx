@@ -101,8 +101,15 @@ def _bounds(geometry):
         return None
 
 def calc_gdal_version_num(maj, min, rev):
-    """Calculates the internal gdal version number based on major, minor and revision"""
-    return int(maj * 1000000 + min * 10000 + rev*100)
+    """Calculates the internal gdal version number based on major, minor and revision
+
+    GDAL Version Information macro changed with GDAL version 1.10.0 (April 2013)
+
+    """
+    if (maj, min, rev) >= (1, 10, 0):
+        return int(maj * 1000000 + min * 10000 + rev * 100)
+    else:
+        return int(maj * 1000 + min * 100 + rev * 10)
 
 def get_gdal_version_num():
     """Return current internal version number of gdal"""
@@ -116,11 +123,23 @@ cdef int GDAL_VERSION_NUM = get_gdal_version_num()
 
 GDALVersion = namedtuple("GDALVersion", ["major", "minor", "revision"])
 def get_gdal_version_tuple():
+    """
+    Calculates gdal version tuple from gdal's internal version number.
+    
+    GDAL Version Information macro changed with GDAL version 1.10.0 (April 2013)
+    """
     gdal_version_num = get_gdal_version_num()
-    major = gdal_version_num // 1000000
-    minor = (gdal_version_num - (major * 1000000)) // 10000
-    revision = (gdal_version_num - (major * 1000000) - (minor * 10000)) // 100
-    return GDALVersion(major, minor, revision)
+
+    if gdal_version_num >= calc_gdal_version_num(1, 10, 0):
+        major = gdal_version_num // 1000000
+        minor = (gdal_version_num - (major * 1000000)) // 10000
+        revision = (gdal_version_num - (major * 1000000) - (minor * 10000)) // 100
+        return GDALVersion(major, minor, revision)
+    else:
+        major = gdal_version_num // 1000
+        minor = (gdal_version_num - (major * 1000)) // 100
+        revision = (gdal_version_num - (major * 1000) - (minor * 100)) // 10
+        return GDALVersion(major, minor, revision)     
 
 # Feature extension classes and functions follow.
 
