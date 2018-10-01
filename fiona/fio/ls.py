@@ -19,8 +19,6 @@ def ls(ctx, input, indent):
     List layers in a datasource.
     """
 
-    verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
-
-    with fiona.drivers(CPL_DEBUG=verbosity > 2):
+    with ctx.obj['env']:
         result = fiona.listlayers(input)
         click.echo(json.dumps(result, indent=indent))

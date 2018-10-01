@@ -41,8 +41,7 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
     """Dump a dataset either as a GeoJSON feature collection (the default)
     or a sequence of GeoJSON features."""
 
-    verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
-    logger = logging.getLogger('fio')
+    logger = logging.getLogger(__name__)
     sink = click.get_text_stream('stdout')
 
     dump_kwds = {'sort_keys': True}
@@ -65,7 +64,7 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
         return feat
 
     try:
-        with fiona.drivers(CPL_DEBUG=verbosity > 2):
+        with ctx.obj['env']:
             with fiona.open(input, **open_kwds) as source:
                 meta = source.meta
                 meta['fields'] = dict(source.schema['properties'].items())
