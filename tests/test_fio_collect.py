@@ -3,7 +3,6 @@
 
 import json
 import sys
-import unittest
 
 from click.testing import CliRunner
 import pytest
