@@ -43,27 +43,27 @@ def data_dir():
 
 
 @pytest.fixture(scope='session')
-def path_coutwildrnp_shp():
+def path_coutwildrnp_shp(data_dir):
     """Path to ```coutwildrnp.shp``"""
-    return os.path.join(data_dir(), 'coutwildrnp.shp')
+    return os.path.join(data_dir, 'coutwildrnp.shp')
 
 
 @pytest.fixture(scope='session')
-def path_coutwildrnp_zip():
+def path_coutwildrnp_zip(data_dir):
     """Creates ``coutwildrnp.zip`` if it does not exist and returns the absolute
     file path."""
-    path = os.path.join(data_dir(), 'coutwildrnp.zip')
+    path = os.path.join(data_dir, 'coutwildrnp.zip')
     if not os.path.exists(path):
         with zipfile.ZipFile(path, 'w') as zip:
             for filename in _COUTWILDRNP_FILES:
-                zip.write(os.path.join(data_dir(), filename), filename)
+                zip.write(os.path.join(data_dir, filename), filename)
     return path
 
 
 @pytest.fixture(scope='session')
-def path_grenada_geojson():
+def path_grenada_geojson(data_dir):
     """Path to ```grenada.geojson```"""
-    return os.path.join(data_dir(), 'grenada.geojson')
+    return os.path.join(data_dir, 'grenada.geojson')
 
 
 @pytest.fixture(scope='session')
@@ -74,27 +74,27 @@ def bytes_coutwildrnp_zip(path_coutwildrnp_zip):
 
 
 @pytest.fixture(scope='session')
-def path_coutwildrnp_tar():
+def path_coutwildrnp_tar(data_dir):
     """Creates ``coutwildrnp.tar`` if it does not exist and returns the absolute
     file path."""
-    path = os.path.join(data_dir(), 'coutwildrnp.tar')
+    path = os.path.join(data_dir, 'coutwildrnp.tar')
     if not os.path.exists(path):
         with tarfile.open(path, 'w') as tar:
             for filename in _COUTWILDRNP_FILES:
                 tar.add(
-                    os.path.join(data_dir(), filename),
+                    os.path.join(data_dir, filename),
                     arcname=os.path.join('testing', filename))
     return path
 
 
 @pytest.fixture(scope='session')
-def path_coutwildrnp_json():
+def path_coutwildrnp_json(data_dir):
     """Creates ``coutwildrnp.json`` if it does not exist and returns the absolute
     file path."""
-    path = os.path.join(data_dir(), 'coutwildrnp.json')
+    path = os.path.join(data_dir, 'coutwildrnp.json')
     if not os.path.exists(path):
         name = _COUTWILDRNP_FILES[0]
-        with fiona.open(os.path.join(data_dir(), name), 'r') as source:
+        with fiona.open(os.path.join(data_dir, name), 'r') as source:
             features = [feat for feat in source]
         my_layer = {
             'type': 'FeatureCollection',
@@ -105,22 +105,22 @@ def path_coutwildrnp_json():
 
 
 @pytest.fixture(scope='session')
-def bytes_grenada_geojson():
+def bytes_grenada_geojson(path_grenada_geojson):
     """The geojson as bytes."""
-    with open(path_grenada_geojson(), 'rb') as src:
+    with open(path_grenada_geojson, 'rb') as src:
         return src.read()
 
 
 @pytest.fixture(scope='session')
-def path_coutwildrnp_gpkg():
+def path_coutwildrnp_gpkg(data_dir):
     """Creates ``coutwildrnp.gpkg`` if it does not exist and returns the absolute
     file path."""
     if not has_gpkg:
         raise RuntimeError("GDAL has not been compiled with GPKG support")
-    path = os.path.join(data_dir(), 'coutwildrnp.gpkg')
+    path = os.path.join(data_dir, 'coutwildrnp.gpkg')
     if not os.path.exists(path):
         filename_shp = _COUTWILDRNP_FILES[0]
-        path_shp = os.path.join(data_dir(), filename_shp)
+        path_shp = os.path.join(data_dir, filename_shp)
         with fiona.open(path_shp, "r") as src:
             meta = copy.deepcopy(src.meta)
             meta["driver"] = "GPKG"
