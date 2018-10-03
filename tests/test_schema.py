@@ -204,7 +204,18 @@ def test_normalize_float():
     assert normalize_field_type('float:25.8') == 'float'
 
 
-@pytest.mark.parametrize('x', set(FIELD_TYPES))
+def generate_field_types():
+    """
+    Produce a unique set of field types in a consistent order.
+
+    This ensures that tests are able to run in parallel.
+    """
+    types = set(FIELD_TYPES)
+    types.remove(None)
+    return list(sorted(types)) + [None]
+
+
+@pytest.mark.parametrize('x', generate_field_types())
 def test_normalize_std(x):
     assert normalize_field_type(x) == x
 
