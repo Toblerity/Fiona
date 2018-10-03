@@ -50,6 +50,3 @@ class TestBinaryField(unittest.TestCase):
             assert(feature["properties"]["name"] == "test")
             output_data = feature["properties"]["data"]
             assert(output_data == input_data)
-
-if __name__ == "__main__":
-    unittest.main()

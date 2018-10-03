@@ -80,7 +80,3 @@ def test_issue691(tmpdir, dtype):
         assert src.schema['properties']['foo'] == 'int:18'
         first = next(iter(src))
         assert first['properties']['foo'] == 3694063472
-
-
-if __name__ == "__main__":
-    unittest.main()
