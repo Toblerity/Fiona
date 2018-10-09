@@ -57,5 +57,11 @@ class EnvError(FionaError):
     """Environment Errors"""
 
 
+class GDALVersionError(FionaError):
+    """Raised if the runtime version of GDAL does not meet the required
+    version of GDAL.
+    """
+
+
 class FionaDeprecationWarning(UserWarning):
     """A warning about deprecation of Fiona features"""

@@ -100,6 +100,7 @@ def _bounds(geometry):
     except (KeyError, TypeError):
         return None
 
+
 def calc_gdal_version_num(maj, min, rev):
     """Calculates the internal gdal version number based on major, minor and revision
 
@@ -111,17 +112,25 @@ def calc_gdal_version_num(maj, min, rev):
     else:
         return int(maj * 1000 + min * 100 + rev * 10)
 
+
 def get_gdal_version_num():
     """Return current internal version number of gdal"""
     return int(GDALVersionInfo("VERSION_NUM"))
 
+
 def get_gdal_release_name():
     """Return release name of gdal"""
-    return GDALVersionInfo("RELEASE_NAME")
+    cdef const char *name_c = NULL
+    name_c = GDALVersionInfo("RELEASE_NAME")
+    name_b = name_c
+    return name_b.decode('utf-8')
+
 
 cdef int GDAL_VERSION_NUM = get_gdal_version_num()
 
 GDALVersion = namedtuple("GDALVersion", ["major", "minor", "revision"])
+
+
 def get_gdal_version_tuple():
     """
     Calculates gdal version tuple from gdal's internal version number.

@@ -12,8 +12,6 @@ from fiona.vfs import vsi_path, parse_paths
 from .test_collection import ReadingTest
 
 
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)
-
 # Custom markers (from rasterio)
 mingdalversion = pytest.mark.skipif(
     fiona.gdal_version < (2, 1, 0),
@@ -22,6 +20,7 @@ mingdalversion = pytest.mark.skipif(
 credentials = pytest.mark.skipif(
     not(boto3.Session()._session.get_credentials()),
     reason="S3 raster access requires credentials")
+
 
 class VsiReadingTest(ReadingTest):
     # There's a bug in GDAL 1.9.2 http://trac.osgeo.org/gdal/ticket/5093
@@ -158,7 +157,7 @@ class TarArchiveReadingTest(VsiReadingTest):
         self.assertEqual(
             self.c.path,
             '/vsitar/{path}/testing/coutwildrnp.shp'.format(
-                path=self.path))    
+                path=self.path))
 
 @pytest.mark.network
 def test_open_http():

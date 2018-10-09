@@ -1,7 +1,7 @@
 import sys
 import collections
 
-from six.moves import UserDict
+# from six.moves import UserDict
 try:
     from collections import OrderedDict
 except ImportError:
@@ -10,9 +10,11 @@ except ImportError:
 if sys.version_info[0] >= 3:
     from urllib.parse import urlparse
     from collections import UserDict
+    from inspect import getfullargspec as getargspec
 else:
     from urlparse import urlparse
     from UserDict import UserDict
+    from inspect import getargspec
 
 # Users can pass in objects that subclass a few different objects
 # More specifically, rasterio has a CRS() class that subclasses UserDict()
