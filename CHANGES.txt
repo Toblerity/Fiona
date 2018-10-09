@@ -3,6 +3,14 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8b1 (2018-10-15)
+------------------
+
+Bug fixes:
+
+- Dependency on attrs is made explicit.
+- Other dependencies are pinned to known good versions in requirements files.
+
 1.8a3 (2018-10-01)
 ------------------
 

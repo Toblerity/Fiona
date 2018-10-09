@@ -38,6 +38,7 @@ def copy_data_tree(datadir, destdir):
         pass
     shutil.copytree(datadir, destdir)
 
+
 # Parse the version from the fiona module.
 with open('fiona/__init__.py', 'r') as f:
     for line in f:
@@ -95,6 +96,7 @@ class sdist_multi_gdal(sdist):
 #
 # 1. By the gdal-config program, optionally pointed to by GDAL_CONFIG
 # 2. By a GDAL_VERSION environment variable. This overrides number 1.
+
 
 include_dirs = []
 library_dirs = []
@@ -251,9 +253,10 @@ elif "clean" not in sys.argv:
                 Extension('fiona._shim', ['fiona/_shim2.c'], **ext_options))
 
 requirements = [
+    'attrs>=17',
     'click>=4.0,<8',
     'cligj>=0.5',
-    'click-plugins',
+    'click-plugins>=1.0',
     'six>=1.7',
     'munch']
 

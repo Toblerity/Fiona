@@ -18,4 +18,3 @@ else:
 # More specifically, rasterio has a CRS() class that subclasses UserDict()
 # In Python 2 UserDict() is in its own module and does not subclass Mapping()
 DICT_TYPES = (dict, collections.Mapping, UserDict)
-
