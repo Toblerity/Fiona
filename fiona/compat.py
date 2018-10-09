@@ -1,7 +1,6 @@
 import sys
 import collections
 
-# from six.moves import UserDict
 try:
     from collections import OrderedDict
 except ImportError:
