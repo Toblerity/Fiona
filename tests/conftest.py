@@ -9,12 +9,13 @@ from click.testing import CliRunner
 import pytest
 
 import fiona
+from fiona.env import GDALVersion
 
 
 def pytest_report_header(config):
     headers = []
     # gdal version number
-    gdal_release_name = fiona.get_gdal_release_name().decode("utf-8")
+    gdal_release_name = fiona.get_gdal_release_name()
     headers.append('GDAL: {} ({})'.format(gdal_release_name, fiona.get_gdal_version_num()))
     supported_drivers = ", ".join(sorted(list(fiona.drvsupport.supported_drivers.keys())))
     # supported drivers
@@ -34,6 +35,17 @@ def _read_file(name):
 has_gpkg = "GPKG" in fiona.drvsupport.supported_drivers.keys()
 has_gpkg_reason = "Requires geopackage driver"
 requires_gpkg = pytest.mark.skipif(not has_gpkg, reason=has_gpkg_reason)
+
+
+@pytest.fixture(scope='function')
+def gdalenv(request):
+    import fiona.env
+
+    def fin():
+        if fiona.env.local._env:
+            fiona.env.delenv()
+            fiona.env.local._env = None
+    request.addfinalizer(fin)
 
 
 @pytest.fixture(scope='session')
@@ -198,8 +210,26 @@ def uttc_path_gpx(path_gpx, request):
     ``uttc`` stands for unittest test case."""
     request.cls.path_gpx = path_gpx
 
-"""
-GDAL 2.3.x silently converts ESRI WKT to OGC WKT
-The regular expression below will match against either
-"""
+
+# GDAL 2.3.x silently converts ESRI WKT to OGC WKT
+# The regular expression below will match against either
 WGS84PATTERN = 'GEOGCS\["(?:GCS_WGS_1984|WGS 84)",DATUM\["WGS_1984",SPHEROID\["WGS[_ ]84"'
+
+# Define helpers to skip tests based on GDAL version
+gdal_version = GDALVersion.runtime()
+
+requires_only_gdal1 = pytest.mark.skipif(
+    gdal_version.major != 1,
+    reason="Only relevant for GDAL 1.x")
+
+requires_gdal2 = pytest.mark.skipif(
+    not gdal_version.major >= 2,
+    reason="Requires GDAL 2.x")
+
+requires_gdal21 = pytest.mark.skipif(
+    not gdal_version.at_least('2.1'),
+    reason="Requires GDAL 2.1.x")
+
+requires_gdal22 = pytest.mark.skipif(
+    not gdal_version.at_least('2.2'),
+    reason="Requires GDAL 2.2.x")

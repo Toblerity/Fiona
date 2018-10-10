@@ -1,12 +1,17 @@
-"""Rasterio's GDAL/AWS environment"""
+"""Fiona's GDAL/AWS environment"""
 
-from functools import wraps
+from functools import wraps, total_ordering
 import logging
+import re
 import threading
+
+import attr
+from six import string_types
 
 from fiona._env import (
     GDALEnv, get_gdal_config, set_gdal_config)
-from fiona.errors import EnvError
+from fiona.compat import getargspec
+from fiona.errors import EnvError, GDALVersionError
 from fiona.session import Session, AWSSession, DummySession
 
 
@@ -14,30 +19,30 @@ class ThreadEnv(threading.local):
     def __init__(self):
         self._env = None  # Initialises in each thread
 
-        # When the outermost 'rasterio.Env()' executes '__enter__' it
+        # When the outermost 'fiona.Env()' executes '__enter__' it
         # probes the GDAL environment to see if any of the supplied
         # config options already exist, the assumption being that they
         # were set with 'osgeo.gdal.SetConfigOption()' or possibly
-        # 'rasterio.env.set_gdal_config()'.  The discovered options are
-        # reinstated when the outermost Rasterio environment exits.
+        # 'fiona.env.set_gdal_config()'.  The discovered options are
+        # reinstated when the outermost Fiona environment exits.
         # Without this check any environment options that are present in
-        # the GDAL environment and are also passed to 'rasterio.Env()'
-        # will be unset when 'rasterio.Env()' tears down, regardless of
+        # the GDAL environment and are also passed to 'fiona.Env()'
+        # will be unset when 'fiona.Env()' tears down, regardless of
         # their value.  For example:
         #
-        #   from osgeo import gdal import rasterio
+        #   from osgeo import gdal import fiona
         #
         #   gdal.SetConfigOption('key', 'value')
-        #   with rasterio.Env(key='something'):
+        #   with fiona.Env(key='something'):
         #       pass
         #
         # The config option 'key' would be unset when 'Env()' exits.
         # A more comprehensive solution would also leverage
         # https://trac.osgeo.org/gdal/changeset/37273 but this gets
-        # Rasterio + older versions of GDAL halfway there.  One major
+        # Fiona + older versions of GDAL halfway there.  One major
         # assumption is that environment variables are not set directly
         # with 'osgeo.gdal.SetConfigOption()' OR
-        # 'rasterio.env.set_gdal_config()' inside of a 'rasterio.Env()'.
+        # 'fiona.env.set_gdal_config()' inside of a 'fiona.Env()'.
         self._discovered_options = None
 
 
@@ -52,7 +57,7 @@ class Env(object):
     The GDAL library is stateful: it has a registry of format drivers,
     an error stack, and dozens of configuration options.
 
-    Rasterio's approach to working with GDAL is to wrap all the state
+    Fiona's approach to working with GDAL is to wrap all the state
     up using a Python context manager (see PEP 343,
     https://www.python.org/dev/peps/pep-0343/). When the context is
     entered GDAL drivers are registered, error handlers are
@@ -62,7 +67,7 @@ class Env(object):
 
     Example:
 
-        with rasterio.Env(GDAL_CACHEMAX=512) as env:
+        with fiona.Env(GDAL_CACHEMAX=512) as env:
             # All drivers are registered, GDAL's raster block cache
             # size is set to 512MB.
             # Commence processing...
@@ -98,33 +103,16 @@ class Env(object):
         }
 
     def __init__(
-            self, session=None, aws_unsigned=False, aws_access_key_id=None,
-            aws_secret_access_key=None, aws_session_token=None,
-            region_name=None, profile_name=None, session_class=AWSSession,
-            **options):
+            self, session=None, **options):
         """Create a new GDAL/AWS environment.
 
         Note: this class is a context manager. GDAL isn't configured
-        until the context is entered via `with rasterio.Env():`
+        until the context is entered via `with fiona.Env():`
 
         Parameters
         ----------
         session : optional
             A Session object.
-        aws_unsigned : bool, optional (default: False)
-            If True, requests will be unsigned.
-        aws_access_key_id : str, optional
-            An access key id, as per boto3.
-        aws_secret_access_key : str, optional
-            A secret access key, as per boto3.
-        aws_session_token : str, optional
-            A session token, as per boto3.
-        region_name : str, optional
-            A region name, as per boto3.
-        profile_name : str, optional
-            A shared credentials profile name, as per boto3.
-        session_class : Session, optional
-            A sub-class of Session.
         **options : optional
             A mapping of GDAL configuration options, e.g.,
             `CPL_DEBUG=True, CHECK_WITH_INVERT_PROJ=False`.
@@ -143,18 +131,18 @@ class Env(object):
         --------
 
         >>> with Env(CPL_DEBUG=True, CPL_CURL_VERBOSE=True):
-        ...     with rasterio.open("https://example.com/a.tif") as src:
-        ...         print(src.profile)
+        ...     with fiona.open("zip+https://example.com/a.zip") as col:
+        ...         print(col.meta)
 
-        For access to secured cloud resources, a Rasterio Session or a
-        foreign session object may be passed to the constructor.
+        For access to secured cloud resources, a Fiona Session may be
+        passed to the constructor.
 
         >>> import boto3
-        >>> from rasterio.session import AWSSession
+        >>> from fiona.session import AWSSession
         >>> boto3_session = boto3.Session(...)
         >>> with Env(AWSSession(boto3_session)):
-        ...     with rasterio.open("s3://mybucket/a.tif") as src:
-        ...         print(src.profile)
+        ...     with fiona.open("zip+s3://example/a.zip") as col:
+        ...         print(col.meta)
 
         """
         if ('AWS_ACCESS_KEY_ID' in options or
@@ -203,7 +191,7 @@ class Env(object):
         -------
         bool
         """
-        return hascreds()  # bool(self.session)
+        return hascreds()
 
     def credentialize(self):
         """Get credentials and configure GDAL
@@ -236,8 +224,8 @@ class Env(object):
             # See note directly above where _discovered_options is globally
             # defined.  This MUST happen before calling 'defenv()'.
             local._discovered_options = {}
-            # Don't want to reinstate the "RASTERIO_ENV" option.
-            probe_env = {k for k in self.options.keys() if k != "RASTERIO_ENV"}
+            # Don't want to reinstate the "FIONA_ENV" option.
+            probe_env = {k for k in self.options.keys() if k != "FIONA_ENV"}
             for key in probe_env:
                 val = get_gdal_config(key, normalize=False)
                 if val is not None:
@@ -376,3 +364,181 @@ def ensure_env_with_credentials(f):
             return f(*args, **kwds)
 
     return wrapper
+
+
+@attr.s(slots=True)
+@total_ordering
+class GDALVersion(object):
+    """Convenience class for obtaining GDAL major and minor version
+    components and comparing between versions.  This is highly
+    simplistic and assumes a very normal numbering scheme for versions
+    and ignores everything except the major and minor components.
+    """
+
+    major = attr.ib(default=0, validator=attr.validators.instance_of(int))
+    minor = attr.ib(default=0, validator=attr.validators.instance_of(int))
+
+    def __eq__(self, other):
+        return (self.major, self.minor) == tuple(other.major, other.minor)
+
+    def __lt__(self, other):
+        return (self.major, self.minor) < tuple(other.major, other.minor)
+
+    def __repr__(self):
+        return "GDALVersion(major={0}, minor={1})".format(self.major, self.minor)
+
+    def __str__(self):
+        return "{0}.{1}".format(self.major, self.minor)
+
+    @classmethod
+    def parse(cls, input):
+        """
+        Parses input tuple or string to GDALVersion. If input is a GDALVersion
+        instance, it is returned.
+
+        Parameters
+        ----------
+        input: tuple of (major, minor), string, or instance of GDALVersion
+
+        Returns
+        -------
+        GDALVersion instance
+        """
+
+        if isinstance(input, cls):
+            return input
+        if isinstance(input, tuple):
+            return cls(*input)
+        elif isinstance(input, string_types):
+            # Extract major and minor version components.
+            # alpha, beta, rc suffixes ignored
+            match = re.search(r'^\d+\.\d+', input)
+            if not match:
+                raise ValueError(
+                    "value does not appear to be a valid GDAL version "
+                    "number: {}".format(input))
+            major, minor = (int(c) for c in match.group().split('.'))
+            return cls(major=major, minor=minor)
+
+        raise TypeError("GDALVersion can only be parsed from a string or tuple")
+
+    @classmethod
+    def runtime(cls):
+        """Return GDALVersion of current GDAL runtime"""
+        from fiona.ogrext import get_gdal_release_name  # to avoid circular import
+        return cls.parse(get_gdal_release_name())
+
+    def at_least(self, other):
+        other = self.__class__.parse(other)
+        return self >= other
+
+
+def require_gdal_version(version, param=None, values=None, is_max_version=False,
+                         reason=''):
+    """A decorator that ensures the called function or parameters are supported
+    by the runtime version of GDAL.  Raises GDALVersionError if conditions
+    are not met.
+
+    Examples:
+    \b
+        @require_gdal_version('2.2')
+        def some_func():
+
+    calling `some_func` with a runtime version of GDAL that is < 2.2 raises a
+    GDALVersionErorr.
+
+    \b
+        @require_gdal_version('2.2', param='foo')
+        def some_func(foo='bar'):
+
+    calling `some_func` with parameter `foo` of any value on GDAL < 2.2 raises
+    a GDALVersionError.
+
+    \b
+        @require_gdal_version('2.2', param='foo', values=('bar',))
+        def some_func(foo=None):
+
+    calling `some_func` with parameter `foo` and value `bar` on GDAL < 2.2
+    raises a GDALVersionError.
+
+
+    Parameters
+    ------------
+    version: tuple, string, or GDALVersion
+    param: string (optional, default: None)
+        If `values` are absent, then all use of this parameter with a value
+        other than default value requires at least GDAL `version`.
+    values: tuple, list, or set (optional, default: None)
+        contains values that require at least GDAL `version`.  `param`
+        is required for `values`.
+    is_max_version: bool (optional, default: False)
+        if `True` indicates that the version provided is the maximum version
+        allowed, instead of requiring at least that version.
+    reason: string (optional: default: '')
+        custom error message presented to user in addition to message about
+        GDAL version.  Use this to provide an explanation of what changed
+        if necessary context to the user.
+
+    Returns
+    ---------
+    wrapped function
+    """
+
+    if values is not None:
+        if param is None:
+            raise ValueError(
+                'require_gdal_version: param must be provided with values')
+
+        if not isinstance(values, (tuple, list, set)):
+            raise ValueError(
+                'require_gdal_version: values must be a tuple, list, or set')
+
+    version = GDALVersion.parse(version)
+    runtime = GDALVersion.runtime()
+    inequality = '>=' if runtime < version else '<='
+    reason = '\n{0}'.format(reason) if reason else reason
+
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwds):
+            if ((runtime < version and not is_max_version) or
+                    (is_max_version and runtime > version)):
+
+                if param is None:
+                    raise GDALVersionError(
+                        "GDAL version must be {0} {1}{2}".format(
+                            inequality, str(version), reason))
+
+                # normalize args and kwds to dict
+                argspec = getargspec(f)
+                full_kwds = kwds.copy()
+
+                if argspec.args:
+                    full_kwds.update(dict(zip(argspec.args[:len(args)], args)))
+
+                if argspec.defaults:
+                    defaults = dict(zip(
+                        reversed(argspec.args), reversed(argspec.defaults)))
+                else:
+                    defaults = {}
+
+                if param in full_kwds:
+                    if values is None:
+                        if param not in defaults or (
+                                full_kwds[param] != defaults[param]):
+                            raise GDALVersionError(
+                                'usage of parameter "{0}" requires '
+                                'GDAL {1} {2}{3}'.format(param, inequality,
+                                                         version, reason))
+
+                    elif full_kwds[param] in values:
+                        raise GDALVersionError(
+                            'parameter "{0}={1}" requires '
+                            'GDAL {2} {3}{4}'.format(
+                                param, full_kwds[param], inequality, version, reason))
+
+            return f(*args, **kwds)
+
+        return wrapper
+
+    return decorator
