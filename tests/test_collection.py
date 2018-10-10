@@ -18,7 +18,6 @@ from fiona.errors import FionaValueError, DriverError
 from .conftest import WGS84PATTERN
 
 
-WILDSHP = os.path.join('tests', 'data', 'coutwildrnp.shp')
 TEMPDIR = tempfile.gettempdir()
 
 
@@ -92,10 +91,11 @@ class OpenExceptionTest(unittest.TestCase):
         self.assertRaises(DriverError, fiona.open, ("/"), mode='r', vfs="zip:///foo.zip")
 
 
+@pytest.mark.usefixtures("unittest_path_coutwildrnp_shp")
 class ReadingTest(unittest.TestCase):
 
     def setUp(self):
-        self.c = fiona.open(WILDSHP, "r")
+        self.c = fiona.open(self.path_coutwildrnp_shp, "r")
 
     def tearDown(self):
         self.c.close()
@@ -104,17 +104,17 @@ class ReadingTest(unittest.TestCase):
         self.assertEqual(
             repr(self.c),
             ("<open Collection '{path}:coutwildrnp', mode 'r' "
-             "at {hexid}>".format(hexid=hex(id(self.c)), path=WILDSHP)))
+             "at {hexid}>".format(hexid=hex(id(self.c)), path=self.path_coutwildrnp_shp)))
 
     def test_closed_repr(self):
         self.c.close()
         self.assertEqual(
             repr(self.c),
             ("<closed Collection '{path}:coutwildrnp', mode 'r' "
-             "at {hexid}>".format(hexid=hex(id(self.c)), path=WILDSHP)))
+             "at {hexid}>".format(hexid=hex(id(self.c)), path=self.path_coutwildrnp_shp)))
 
     def test_path(self):
-        self.assertEqual(self.c.path, WILDSHP)
+        self.assertEqual(self.c.path, self.path_coutwildrnp_shp)
 
     def test_name(self):
         self.assertEqual(self.c.name, 'coutwildrnp')
@@ -215,7 +215,7 @@ class ReadingTest(unittest.TestCase):
         self.assertAlmostEqual(self.c.bounds[3], 41.996277, 6)
 
     def test_context(self):
-        with fiona.open(WILDSHP, "r") as c:
+        with fiona.open(self.path_coutwildrnp_shp, "r") as c:
             self.assertEqual(c.name, 'coutwildrnp')
             self.assertEqual(len(c), 67)
         self.assertEqual(c.closed, True)
@@ -270,17 +270,19 @@ class ReadingTest(unittest.TestCase):
         self.assertTrue(0 in self.c)
 
 
+@pytest.mark.usefixtures("unittest_path_coutwildrnp_shp")
 class ReadingPathTest(unittest.TestCase):
     def test_open_path(self):
         pathlib = pytest.importorskip("pathlib")
-        with fiona.open(pathlib.Path(WILDSHP)) as collection:
+        with fiona.open(pathlib.Path(self.path_coutwildrnp_shp)) as collection:
             assert collection.name == 'coutwildrnp'
 
 
+@pytest.mark.usefixtures("unittest_path_coutwildrnp_shp")
 class IgnoreFieldsAndGeometryTest(unittest.TestCase):
 
     def test_without_ignore(self):
-        with fiona.open(WILDSHP, "r") as collection:
+        with fiona.open(self.path_coutwildrnp_shp, "r") as collection:
             assert("AREA" in collection.schema["properties"].keys())
             assert("STATE" in collection.schema["properties"].keys())
             assert("NAME" in collection.schema["properties"].keys())
@@ -293,7 +295,7 @@ class IgnoreFieldsAndGeometryTest(unittest.TestCase):
             assert(feature["geometry"] is not None)
 
     def test_ignore_fields(self):
-        with fiona.open(WILDSHP, "r", ignore_fields=["AREA", "STATE"]) as collection:
+        with fiona.open(self.path_coutwildrnp_shp, "r", ignore_fields=["AREA", "STATE"]) as collection:
             assert("AREA" not in collection.schema["properties"].keys())
             assert("STATE" not in collection.schema["properties"].keys())
             assert("NAME" in collection.schema["properties"].keys())
@@ -306,16 +308,16 @@ class IgnoreFieldsAndGeometryTest(unittest.TestCase):
             assert(feature["geometry"] is not None)
 
     def test_ignore_invalid_field_missing(self):
-        with fiona.open(WILDSHP, "r", ignore_fields=["DOES_NOT_EXIST"]):
+        with fiona.open(self.path_coutwildrnp_shp, "r", ignore_fields=["DOES_NOT_EXIST"]):
             pass
 
     def test_ignore_invalid_field_not_string(self):
         with self.assertRaises(TypeError):
-            with fiona.open(WILDSHP, "r", ignore_fields=[42]):
+            with fiona.open(self.path_coutwildrnp_shp, "r", ignore_fields=[42]):
                 pass
 
     def test_ignore_geometry(self):
-        with fiona.open(WILDSHP, "r", ignore_geometry=True) as collection:
+        with fiona.open(self.path_coutwildrnp_shp, "r", ignore_geometry=True) as collection:
             assert("AREA" in collection.schema["properties"].keys())
             assert("STATE" in collection.schema["properties"].keys())
             assert("NAME" in collection.schema["properties"].keys())
@@ -328,10 +330,11 @@ class IgnoreFieldsAndGeometryTest(unittest.TestCase):
             assert("geometry" not in feature.keys())
 
 
+@pytest.mark.usefixtures("unittest_path_coutwildrnp_shp")
 class FilterReadingTest(unittest.TestCase):
 
     def setUp(self):
-        self.c = fiona.open(WILDSHP, "r")
+        self.c = fiona.open(self.path_coutwildrnp_shp, "r")
 
     def tearDown(self):
         self.c.close()
@@ -728,10 +731,12 @@ class LineWritingTest(unittest.TestCase):
         self.assertEqual(self.sink.bounds, (0.0, -0.2, 0.0, 0.2))
 
 
+@pytest.mark.usefixtures("unittest_path_coutwildrnp_shp")
 class PointAppendTest(unittest.TestCase):
+
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
-        with fiona.open(WILDSHP, "r") as input:
+        with fiona.open(self.path_coutwildrnp_shp, "r") as input:
             output_schema = input.schema.copy()
             output_schema['geometry'] = '3D Point'
             with fiona.open(

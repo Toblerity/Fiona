@@ -8,6 +8,8 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Bug fixes:
 
+- Migrated unittest test cases in test_collection.py and test_layer.py to the
+  use of the standard data_dir and path_coutwildrnp_shp fixtures (#616).
 - Root logger configuration has been removed from all test scripts (#615).
 - An AWS session is created for the CLI context Env only if explicitly
   requested, matching the behavior of Rasterio's CLI (#635).
