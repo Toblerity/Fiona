@@ -12,16 +12,11 @@ from fiona.collection import supported_drivers
 from fiona.errors import FionaValueError, DriverError, SchemaError, CRSError
 
 
-# logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-
-log = logging.getLogger(__name__)
-
-
 class ReadingTest(unittest.TestCase):
-    
+
     def setUp(self):
         self.c = fiona.open('tests/data/coutwildrnp.json', 'r')
-    
+
     def tearDown(self):
         self.c.close()
 
@@ -39,8 +34,8 @@ class WritingTest(unittest.TestCase):
     def test_json(self):
         """Write a simple GeoJSON file"""
         path = os.path.join(self.tempdir, 'foo.json')
-        with fiona.open(path, 'w', 
-                driver='GeoJSON', 
+        with fiona.open(path, 'w',
+                driver='GeoJSON',
                 schema={'geometry': 'Unknown', 'properties': [('title', 'str')]}) as c:
             c.writerecords([{
                 'geometry': {'type': 'Point', 'coordinates': [0.0, 0.0]},

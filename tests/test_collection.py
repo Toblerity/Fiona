@@ -21,8 +21,6 @@ from .conftest import WGS84PATTERN
 WILDSHP = os.path.join('tests', 'data', 'coutwildrnp.shp')
 TEMPDIR = tempfile.gettempdir()
 
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)
-
 
 class SupportedDriversTest(unittest.TestCase):
 
@@ -308,12 +306,12 @@ class IgnoreFieldsAndGeometryTest(unittest.TestCase):
             assert(feature["geometry"] is not None)
 
     def test_ignore_invalid_field_missing(self):
-        with fiona.open(WILDSHP, "r", ignore_fields=["DOES_NOT_EXIST"]) as collection:
+        with fiona.open(WILDSHP, "r", ignore_fields=["DOES_NOT_EXIST"]):
             pass
 
     def test_ignore_invalid_field_not_string(self):
         with self.assertRaises(TypeError):
-            with fiona.open(WILDSHP, "r", ignore_fields=[42]) as collection:
+            with fiona.open(WILDSHP, "r", ignore_fields=[42]):
                 pass
 
     def test_ignore_geometry(self):
@@ -860,7 +858,6 @@ class GeoJSONCRSWritingTest(unittest.TestCase):
                 'properties': [('title', 'str'), ('date', 'date')]},
             crs={'a': 6370997, 'lon_0': -100, 'y_0': 0, 'no_defs': True, 'proj': 'laea', 'x_0': 0, 'units': 'm', 'b': 6370997, 'lat_0': 45})
 
-
     def tearDown(self):
         self.sink.close()
         shutil.rmtree(self.tempdir)
@@ -901,7 +898,6 @@ class DateTimeTest(unittest.TestCase):
             self.assertEqual(rf1['properties']['date'], '2013-02-25')
             self.assertEqual(rf2['properties']['date'], '2014-02-03')
 
-
     def tearDown(self):
         shutil.rmtree(self.tempdir)
 
@@ -937,4 +933,3 @@ def test_collection_zip_http():
     ds = fiona.Collection('http://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip', vsi='zip+http')
     assert ds.path == '/vsizip/vsicurl/http://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip'
     assert len(ds) == 10
-        

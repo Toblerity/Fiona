@@ -12,9 +12,6 @@ import fiona.ogrext
 from fiona.errors import DriverError
 
 
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)
-
-
 def test_single_file_private(path_coutwildrnp_shp):
     with fiona.Env():
         assert fiona.ogrext._listlayers(

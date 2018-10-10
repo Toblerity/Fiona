@@ -3,7 +3,6 @@ import sys
 
 import fiona
 
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 def test_collection_get():
     with fiona.open('tests/data/coutwildrnp.shp') as src:

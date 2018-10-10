@@ -6,13 +6,12 @@ import tempfile
 import unittest
 
 import fiona
-
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)
-
 from .test_collection import ReadingTest
 
-WILDSHP = os.path.join('tests', 'data','coutwildrnp.shp')
+
+WILDSHP = os.path.join('tests', 'data', 'coutwildrnp.shp')
 DATA_DIR = os.path.join('tests', 'data')
+
 
 def test_index_selection():
     with fiona.open(WILDSHP, 'r', layer=0) as c:

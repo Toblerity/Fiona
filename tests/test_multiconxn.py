@@ -10,7 +10,6 @@ import pytest
 import fiona
 from fiona.compat import OrderedDict
 
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 class ReadAccess(unittest.TestCase):
     # To check that we'll be able to get multiple 'r' connections to layers
@@ -27,11 +26,12 @@ class ReadAccess(unittest.TestCase):
             self.assertEqual(len(self.c), len(c2))
             self.assertEqual(sorted(self.c.schema.items()), sorted(c2.schema.items()))
 
-    def test_meta(self):
+    def test_feat(self):
         f1 = next(iter(self.c))
         with fiona.open("tests/data/coutwildrnp.shp", "r", layer="coutwildrnp") as c2:
             f2 = next(iter(c2))
             self.assertEqual(f1, f2)
+
 
 class ReadWriteAccess(unittest.TestCase):
     # To check that we'll be able to read from a file that we're
