@@ -9,6 +9,7 @@ from cligj import precision_opt, use_rs_opt
 
 import fiona
 from fiona.fio.helpers import obj_gen
+from fiona.fio import with_context_env
 
 
 @click.command(short_help="Print the extent of GeoJSON objects")
@@ -23,6 +24,7 @@ from fiona.fio.helpers import obj_gen
                    "(default: without).")
 @use_rs_opt
 @click.pass_context
+@with_context_env
 def bounds(ctx, precision, explode, with_id, with_obj, use_rs):
     """Print the bounding boxes of GeoJSON objects read from stdin.
 
@@ -36,10 +38,8 @@ def bounds(ctx, precision, explode, with_id, with_obj, use_rs):
     as GeoJSON object, use --with-obj. This has the effect of updating
     input objects with {id: identifier, bbox: bounds}.
     """
-    verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
-    logger = logging.getLogger('fio')
+    logger = logging.getLogger(__name__)
     stdin = click.get_text_stream('stdin')
-    stdout = click.get_text_stream('stdout')
     try:
         source = obj_gen(stdin)
         for i, obj in enumerate(source):

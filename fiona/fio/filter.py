@@ -8,12 +8,14 @@ import click
 from cligj import use_rs_opt
 
 from fiona.fio.helpers import obj_gen, eval_feature_expression
+from fiona.fio import with_context_env
 
 
 @click.command()
 @click.argument('filter_expression')
 @use_rs_opt
 @click.pass_context
+@with_context_env
 def filter(ctx, filter_expression, use_rs):
     """
     Filter GeoJSON features by python expression.

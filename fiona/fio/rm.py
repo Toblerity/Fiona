@@ -1,14 +1,18 @@
 import click
-import fiona
 import logging
 
-logger = logging.getLogger('fio')
+import fiona
+from fiona.fio import with_context_env
+
+
+logger = logging.getLogger(__name__)
 
 @click.command(help="Remove a datasource or an individual layer.")
 @click.argument("input", required=True)
 @click.option("--layer", type=str, default=None, required=False, help="Name of layer to remove.")
 @click.option("--yes", is_flag=True)
 @click.pass_context
+@with_context_env
 def rm(ctx, input, layer, yes):
     if layer is None:
         kind = "datasource"

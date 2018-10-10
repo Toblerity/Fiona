@@ -8,14 +8,14 @@ import unittest
 from click.testing import CliRunner
 import pytest
 
-from fiona.fio import collect
+# from fiona.fio import collect
+from fiona.fio.main import main_group
 
 
 def test_collect_rs(feature_seq_pp_rs):
     runner = CliRunner()
     result = runner.invoke(
-        collect.collect,
-        ['--src-crs', 'EPSG:3857'],
+        main_group, ['collect', '--src-crs', 'EPSG:3857'],
         feature_seq_pp_rs,
         catch_exceptions=False)
     assert result.exit_code == 0
@@ -25,8 +25,7 @@ def test_collect_rs(feature_seq_pp_rs):
 def test_collect_no_rs(feature_seq):
     runner = CliRunner()
     result = runner.invoke(
-        collect.collect,
-        ['--src-crs', 'EPSG:3857'],
+        main_group, ['collect', '--src-crs', 'EPSG:3857'],
         feature_seq,
         catch_exceptions=False)
     assert result.exit_code == 0
@@ -36,8 +35,7 @@ def test_collect_no_rs(feature_seq):
 def test_collect_ld(feature_seq):
     runner = CliRunner()
     result = runner.invoke(
-        collect.collect,
-        ['--with-ld-context', '--add-ld-context-item', 'foo=bar'],
+        main_group, ['collect', '--with-ld-context', '--add-ld-context-item', 'foo=bar'],
         feature_seq,
         catch_exceptions=False)
     assert result.exit_code == 0
@@ -47,7 +45,7 @@ def test_collect_ld(feature_seq):
 
 def test_collect_rec_buffered(feature_seq):
     runner = CliRunner()
-    result = runner.invoke(collect.collect, ['--record-buffered'], feature_seq)
+    result = runner.invoke(main_group, ['collect', '--record-buffered'], feature_seq)
     assert result.exit_code == 0
     assert '"FeatureCollection"' in result.output
 
@@ -55,8 +53,7 @@ def test_collect_rec_buffered(feature_seq):
 def test_collect_noparse(feature_seq):
     runner = CliRunner()
     result = runner.invoke(
-        collect.collect,
-        ['--no-parse'],
+        main_group, ['collect', '--no-parse'],
         feature_seq,
         catch_exceptions=False)
     assert result.exit_code == 0
@@ -67,8 +64,7 @@ def test_collect_noparse(feature_seq):
 def test_collect_noparse_records(feature_seq):
     runner = CliRunner()
     result = runner.invoke(
-        collect.collect,
-        ['--no-parse', '--record-buffered'],
+        main_group, ['collect', '--no-parse', '--record-buffered'],
         feature_seq,
         catch_exceptions=False)
     assert result.exit_code == 0
@@ -79,8 +75,7 @@ def test_collect_noparse_records(feature_seq):
 def test_collect_src_crs(feature_seq):
     runner = CliRunner()
     result = runner.invoke(
-        collect.collect,
-        ['--no-parse', '--src-crs', 'epsg:4326'],
+        main_group, ['collect', '--no-parse', '--src-crs', 'epsg:4326'],
         feature_seq,
         catch_exceptions=False)
     assert result.exit_code == 2
@@ -89,8 +84,7 @@ def test_collect_src_crs(feature_seq):
 def test_collect_noparse_rs(feature_seq_pp_rs):
     runner = CliRunner()
     result = runner.invoke(
-        collect.collect,
-        ['--no-parse'],
+        main_group, ['collect', '--no-parse'],
         feature_seq_pp_rs,
         catch_exceptions=False)
     assert result.exit_code == 0

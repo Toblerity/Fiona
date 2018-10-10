@@ -9,7 +9,7 @@ from cligj import indent_opt
 
 import fiona
 import fiona.crs
-from fiona.fio import options
+from fiona.fio import options, with_context_env
 
 
 @click.command()
@@ -34,8 +34,8 @@ from fiona.fio import options
 @click.option('--name', 'meta_member', flag_value='name',
               help="Print the datasource's name.")
 @click.pass_context
+@with_context_env
 def info(ctx, input, indent, meta_member, layer):
-
     """
     Print information about a dataset.
 
@@ -45,27 +45,26 @@ def info(ctx, input, indent, meta_member, layer):
 
     logger = logging.getLogger(__name__)
     try:
-        with ctx.obj['env']:
-            with fiona.open(input, layer=layer) as src:
-                info = src.meta
-                info.update(bounds=src.bounds, name=src.name)
-                try:
-                    info.update(count=len(src))
-                except TypeError:
-                    info.update(count=None)
-                    logger.debug("Setting 'count' to None/null - layer does "
-                                 "not support counting")
-                proj4 = fiona.crs.to_string(src.crs)
-                if proj4.startswith('+init=epsg'):
-                    proj4 = proj4.split('=')[1].upper()
-                info['crs'] = proj4
-                if meta_member:
-                    if isinstance(info[meta_member], (list, tuple)):
-                        click.echo(" ".join(map(str, info[meta_member])))
-                    else:
-                        click.echo(info[meta_member])
+        with fiona.open(input, layer=layer) as src:
+            info = src.meta
+            info.update(bounds=src.bounds, name=src.name)
+            try:
+                info.update(count=len(src))
+            except TypeError:
+                info.update(count=None)
+                logger.debug("Setting 'count' to None/null - layer does "
+                             "not support counting")
+            proj4 = fiona.crs.to_string(src.crs)
+            if proj4.startswith('+init=epsg'):
+                proj4 = proj4.split('=')[1].upper()
+            info['crs'] = proj4
+            if meta_member:
+                if isinstance(info[meta_member], (list, tuple)):
+                    click.echo(" ".join(map(str, info[meta_member])))
                 else:
-                    click.echo(json.dumps(info, indent=indent))
+                    click.echo(info[meta_member])
+            else:
+                click.echo(json.dumps(info, indent=indent))
 
     except Exception:
         logger.exception("Exception caught during processing")

@@ -37,27 +37,27 @@ def calc(ctx, property_name, expression, overwrite, use_rs):
     \b
     $ fio cat data.shp | fio calc sumAB  "f.properties.A + f.properties.B"
     """
-    logger = logging.getLogger('fio')
+    logger = logging.getLogger(__name__)
     stdin = click.get_text_stream('stdin')
+    with ctx.obj['env']:
+        try:
+            source = obj_gen(stdin)
+            for i, obj in enumerate(source):
+                features = obj.get('features') or [obj]
+                for j, feat in enumerate(features):
 
-    try:
-        source = obj_gen(stdin)
-        for i, obj in enumerate(source):
-            features = obj.get('features') or [obj]
-            for j, feat in enumerate(features):
+                    if not overwrite and property_name in feat['properties']:
+                        raise click.UsageError(
+                            '{0} already exists in properties; '
+                            'rename or use --overwrite'.format(property_name))
 
-                if not overwrite and property_name in feat['properties']:
-                    raise click.UsageError(
-                        '{0} already exists in properties; '
-                        'rename or use --overwrite'.format(property_name))
+                    feat['properties'][property_name] = eval_feature_expression(
+                        feat, expression)
 
-                feat['properties'][property_name] = eval_feature_expression(
-                    feat, expression)
+                    if use_rs:
+                        click.echo(u'\u001e', nl=False)
+                    click.echo(json.dumps(feat))
 
-                if use_rs:
-                    click.echo(u'\u001e', nl=False)
-                click.echo(json.dumps(feat))
-
-    except Exception:
-        logger.exception("Exception caught during processing")
-        raise click.Abort()
+        except Exception:
+            logger.exception("Exception caught during processing")
+            raise click.Abort()

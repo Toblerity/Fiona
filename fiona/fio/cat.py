@@ -10,7 +10,7 @@ import cligj
 
 import fiona
 from fiona.transform import transform_geom
-from fiona.fio import options
+from fiona.fio import options, with_context_env
 
 
 warnings.simplefilter('default')
@@ -34,9 +34,9 @@ warnings.simplefilter('default')
 @click.option('--bbox', default=None, metavar="w,s,e,n",
               help="filter for features intersecting a bounding box")
 @click.pass_context
+@with_context_env
 def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
         use_rs, bbox, layer):
-
     """
     Concatenate and print the features of input datasets as a sequence of
     GeoJSON features.
@@ -64,26 +64,25 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
             layer[str(i)] = [0]
 
     try:
-        with ctx.obj['env']:
-            if bbox:
-                try:
-                    bbox = tuple(map(float, bbox.split(',')))
-                except ValueError:
-                    bbox = json.loads(bbox)
-            for i, path in enumerate(files, 1):
-                for lyr in layer[str(i)]:
-                    with fiona.open(path, layer=lyr) as src:
-                        for i, feat in src.items(bbox=bbox):
-                            if dst_crs or precision >= 0:
-                                g = transform_geom(
-                                    src.crs, dst_crs, feat['geometry'],
-                                    antimeridian_cutting=True,
-                                    precision=precision)
-                                feat['geometry'] = g
-                                feat['bbox'] = fiona.bounds(g)
-                            if use_rs:
-                                click.echo(u'\u001e', nl=False)
-                            click.echo(json.dumps(feat, **dump_kwds))
+        if bbox:
+            try:
+                bbox = tuple(map(float, bbox.split(',')))
+            except ValueError:
+                bbox = json.loads(bbox)
+        for i, path in enumerate(files, 1):
+            for lyr in layer[str(i)]:
+                with fiona.open(path, layer=lyr) as src:
+                    for i, feat in src.items(bbox=bbox):
+                        if dst_crs or precision >= 0:
+                            g = transform_geom(
+                                src.crs, dst_crs, feat['geometry'],
+                                antimeridian_cutting=True,
+                                precision=precision)
+                            feat['geometry'] = g
+                            feat['bbox'] = fiona.bounds(g)
+                        if use_rs:
+                            click.echo(u'\u001e', nl=False)
+                        click.echo(json.dumps(feat, **dump_kwds))
 
     except Exception:
         logger.exception("Exception caught during processing")
