@@ -8,6 +8,8 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Bug fixes:
 
+- An AWS session is created for the CLI context Env only if explicitly
+  requested, matching the behavior of Rasterio's CLI (#635).
 - Dependency on attrs is made explicit.
 - Other dependencies are pinned to known good versions in requirements files.
 
