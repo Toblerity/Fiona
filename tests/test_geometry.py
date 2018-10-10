@@ -8,9 +8,6 @@ from fiona._geometry import (GeomBuilder, geometryRT)
 from fiona.errors import UnsupportedGeometryTypeError
 
 
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)
-
-
 def geometry_wkb(wkb):
     return GeomBuilder().build_wkb(wkb)
 
@@ -24,9 +21,11 @@ class OGRBuilderExceptionsTest(unittest.TestCase):
 #
 class RoundTripping(object):
     """Derive type specific classes from this."""
+
     def test_type(self):
         self.assertEqual(
             geometryRT(self.geom)['type'], self.geom['type'])
+
     def test_coordinates(self):
         self.assertEqual(
             geometryRT(self.geom)['coordinates'], self.geom['coordinates'])
@@ -40,27 +39,29 @@ class PointRoundTripTest(unittest.TestCase, RoundTripping):
 class LineStringRoundTripTest(unittest.TestCase, RoundTripping):
     def setUp(self):
         self.geom = {
-            'type': "LineString", 
+            'type': "LineString",
             'coordinates': [(0.0, 0.0), (1.0, 1.0)]}
 
 class PolygonRoundTripTest1(unittest.TestCase, RoundTripping):
     """An explicitly closed polygon."""
     def setUp(self):
         self.geom = {
-            'type': "Polygon", 
+            'type': "Polygon",
             'coordinates': [
                 [(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]]}
 
 class PolygonRoundTripTest2(unittest.TestCase, RoundTripping):
     """An implicitly closed polygon."""
+
     def setUp(self):
         self.geom = {
-            'type': "Polygon", 
+            'type': "Polygon",
             'coordinates': [
                 [(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0)]]}
+
     def test_coordinates(self):
         self.assertEqual(
-            [geometryRT(self.geom)['coordinates'][0][:-1]], 
+            [geometryRT(self.geom)['coordinates'][0][:-1]],
             self.geom['coordinates'])
 
 class MultiPointRoundTripTest(unittest.TestCase, RoundTripping):
@@ -71,45 +72,51 @@ class MultiPointRoundTripTest(unittest.TestCase, RoundTripping):
 class MultiLineStringRoundTripTest(unittest.TestCase, RoundTripping):
     def setUp(self):
         self.geom = {
-            'type': "MultiLineString", 
+            'type': "MultiLineString",
             'coordinates': [[(0.0, 0.0), (1.0, 1.0)]]}
 
 class MultiPolygonRoundTripTest1(unittest.TestCase, RoundTripping):
+
     def setUp(self):
         # This is an explicitly closed polygon.
         self.geom = {
-            'type': "MultiPolygon", 
-            'coordinates': [[
-                [(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]
-                ]]}
+            'type': "MultiPolygon",
+            'coordinates': [[[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]]]}
+
 
 class MultiPolygonRoundTripTest2(unittest.TestCase, RoundTripping):
+
     def setUp(self):
         # This is an implicitly closed polygon.
         self.geom = {
-            'type': "MultiPolygon", 
-            'coordinates': 
+            'type': "MultiPolygon",
+            'coordinates':
                 [[[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0)]]]}
+
     def test_coordinates(self):
         self.assertEqual(
-            [[geometryRT(self.geom)['coordinates'][0][0][:-1]]], 
+            [[geometryRT(self.geom)['coordinates'][0][0][:-1]]],
             self.geom['coordinates'])
 
+
 class GeometryCollectionRoundTripTest(unittest.TestCase):
+
     def setUp(self):
         self.geom = {
             'type': "GeometryCollection",
             'geometries': [
                 {'type': "Point", 'coordinates': (0.0, 0.0)}, {
-                    'type': "LineString", 
+                    'type': "LineString",
                     'coordinates': [(0.0, 0.0), (1.0, 1.0)]}]}
+
     def test_len(self):
         result = geometryRT(self.geom)
         self.assertEqual(len(result['geometries']), 2)
+
     def test_type(self):
         result = geometryRT(self.geom)
         self.assertEqual(
-            [g['type'] for g in result['geometries']], 
+            [g['type'] for g in result['geometries']],
             ['Point', 'LineString'])
 
 class PointTest(unittest.TestCase):

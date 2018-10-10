@@ -7,8 +7,6 @@ import fiona
 from fiona.errors import FionaValueError
 
 
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)
-
 def test_read_fail():
     with pytest.raises(FionaValueError):
         fiona.open('tests/data/coutwildrnp.shp', driver='GeoJSON')

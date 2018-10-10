@@ -13,11 +13,11 @@ from cligj import verbose_opt, quiet_opt
 
 import fiona
 from fiona import __version__ as fio_version
-from fiona.session import AWSSession
+from fiona.session import AWSSession, DummySession
 
 
 def configure_logging(verbosity):
-    log_level = max(10, 30 - 10*verbosity)
+    log_level = max(10, 30 - 10 * verbosity)
     logging.basicConfig(stream=sys.stderr, level=log_level)
 
 
@@ -45,19 +45,20 @@ def configure_logging(verbosity):
 def main_group(
         ctx, verbose, quiet, aws_profile, aws_no_sign_requests,
         aws_requester_pays):
-
-    """Fiona command line interface."""
-
+    """Fiona command line interface.
+    """
     verbosity = verbose - quiet
     configure_logging(verbosity)
     ctx.obj = {}
     ctx.obj["verbosity"] = verbosity
     ctx.obj["aws_profile"] = aws_profile
-    ctx.obj["env"] = fiona.Env(
-        session=AWSSession(
+    envopts = {"CPL_DEBUG": (verbosity > 2)}
+    if aws_profile or aws_no_sign_requests:
+        session = AWSSession(
             profile_name=aws_profile,
             aws_unsigned=aws_no_sign_requests,
             requester_pays=aws_requester_pays,
-        ),
-        CPL_DEBUG=(verbosity > 2)
-    )
+        )
+    else:
+        session = DummySession()
+    ctx.obj["env"] = fiona.Env(session=session, **envopts)

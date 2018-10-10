@@ -233,3 +233,15 @@ requires_gdal21 = pytest.mark.skipif(
 requires_gdal22 = pytest.mark.skipif(
     not gdal_version.at_least('2.2'),
     reason="Requires GDAL 2.2.x")
+
+
+@pytest.fixture(scope="class")
+def unittest_data_dir(data_dir, request):
+    """Makes data_dir available to unittest tests"""
+    request.cls.data_dir = data_dir
+
+
+@pytest.fixture(scope="class")
+def unittest_path_coutwildrnp_shp(path_coutwildrnp_shp, request):
+    """Makes shapefile path available to unittest tests"""
+    request.cls.path_coutwildrnp_shp = path_coutwildrnp_shp

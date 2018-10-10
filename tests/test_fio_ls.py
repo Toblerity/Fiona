@@ -9,13 +9,10 @@ import pytest
 import fiona
 from fiona.fio.main import main_group
 
-DATA_DIR = os.path.join("tests", "data")
 
-def test_fio_ls_single_layer():
+def test_fio_ls_single_layer(data_dir):
 
-    result = CliRunner().invoke(main_group, [
-        'ls',
-        DATA_DIR])
+    result = CliRunner().invoke(main_group, ['ls', data_dir])
     assert result.exit_code == 0
     assert len(result.output.splitlines()) == 1
     assert sorted(json.loads(result.output)) == ['coutwildrnp', 'gre']

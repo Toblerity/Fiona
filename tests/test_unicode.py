@@ -12,8 +12,6 @@ import pytest
 import fiona
 
 
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)
-
 class UnicodePathTest(unittest.TestCase):
 
     def setUp(self):

@@ -13,10 +13,7 @@ import pytest
 import fiona
 
 
-logging.basicConfig(level=logging.DEBUG)
-
-
-# Uncomment when merged to master, where we're using pytest.
+# TODO: Uncomment when merged to master, where we're using pytest.
 # We're still holding our noses in maint-1.7.
 # @pytest.fixture(scope='function')
 # def gre_shp_cp1252():
