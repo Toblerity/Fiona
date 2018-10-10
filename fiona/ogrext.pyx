@@ -297,7 +297,7 @@ cdef class FeatureBuilder:
 
         cdef void *cogr_geometry
         if not ignore_geometry:
-            cogr_geometry = OGR_F_GetGeometryRef(feature)
+            cogr_geometry = get_linear_geometry(OGR_F_GetGeometryRef(feature))
             if cogr_geometry is not NULL:
                 geom = GeomBuilder().build(cogr_geometry)
                 fiona_feature["geometry"] = geom
@@ -431,7 +431,7 @@ cdef _deleteOgrFeature(void *cogr_feature):
 def featureRT(feature, collection):
     # For testing purposes only, leaks the JSON data
     cdef void *cogr_feature = OGRFeatureBuilder().build(feature, collection)
-    cdef void *cogr_geometry = OGR_F_GetGeometryRef(cogr_feature)
+    cdef void *cogr_geometry = get_linear_geometry(OGR_F_GetGeometryRef(cogr_feature))
     if cogr_geometry == NULL:
         raise ValueError("Null geometry")
     log.debug("Geometry: %s" % OGR_G_ExportToJson(cogr_geometry))

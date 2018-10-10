@@ -8,6 +8,8 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Bug fixes:
 
+- Implicitly convert curve geometries to their linear approximations rather
+  than failing (#617).
 - Migrated unittest test cases in test_collection.py and test_layer.py to the
   use of the standard data_dir and path_coutwildrnp_shp fixtures (#616).
 - Root logger configuration has been removed from all test scripts (#615).

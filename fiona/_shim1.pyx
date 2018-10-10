@@ -111,3 +111,6 @@ cdef void set_field_subtype(void *fielddefn, OGRFieldSubType subtype):
 
 cdef bint check_capability_create_layer(void *cogr_ds):
     return OGR_DS_TestCapability(cogr_ds, ODsCCreateLayer)
+
+cdef void *get_linear_geometry(void *geom):
+    return geom

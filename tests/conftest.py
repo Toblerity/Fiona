@@ -55,6 +55,12 @@ def data_dir():
 
 
 @pytest.fixture(scope='session')
+def path_curves_line_csv(data_dir):
+    """Path to ```curves_line.csv``"""
+    return os.path.join(data_dir, 'curves_line.csv')
+
+
+@pytest.fixture(scope='session')
 def path_coutwildrnp_shp(data_dir):
     """Path to ```coutwildrnp.shp``"""
     return os.path.join(data_dir, 'coutwildrnp.shp')
