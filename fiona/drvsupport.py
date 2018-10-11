@@ -30,6 +30,7 @@ supported_drivers = dict([
     # AutoCAD DXF 	DXF 	Yes 	No 	Yes
     ("DXF", "raw"),
     # Comma Separated Value (.csv) 	CSV 	Yes 	No 	Yes
+    ("CSV", "raw"),
     # CouchDB / GeoCouch 	CouchDB 	Yes 	Yes 	No, needs libcurl
     # DODS/OPeNDAP 	DODS 	No 	Yes 	No, needs libdap
     # EDIGEO 	EDIGEO 	No 	Yes 	Yes
@@ -56,6 +57,7 @@ supported_drivers = dict([
     # GeoRSS 	GeoRSS 	Yes 	Yes 	Yes (read support needs libexpat)
     # Google Fusion Tables 	GFT 	Yes 	Yes 	No, needs libcurl
     # GML 	GML 	Yes 	Yes 	Yes (read support needs Xerces or libexpat)
+    ("GML", "raw"),
     # GMT 	GMT 	Yes 	Yes 	Yes
     ("GMT", "raw"),
     # GPSBabel 	GPSBabel 	Yes 	Yes 	Yes (needs GPSBabel and GPX driver)

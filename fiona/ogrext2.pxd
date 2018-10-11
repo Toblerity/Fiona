@@ -213,6 +213,7 @@ cdef extern from "ogr_api.h":
     OGRErr  OGR_L_GetExtent (void *layer, void *extent, int force)
     void *  OGR_L_GetFeature (void *layer, int n)
     int     OGR_L_GetFeatureCount (void *layer, int m)
+    void *  OGR_G_GetLinearGeometry (void *hGeom, double dfMaxAngleStepSizeDegrees, char **papszOptions)
     void *  OGR_L_GetLayerDefn (void *layer)
     char *  OGR_L_GetName (void *layer)
     void *  OGR_L_GetNextFeature (void *layer)

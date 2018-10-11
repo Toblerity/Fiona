@@ -295,12 +295,24 @@ cdef class FeatureBuilder:
                 log.debug("%s: None, fieldtype: %r, %r" % (key, fieldtype, fieldtype in string_types))
                 props[key] = None
 
-        cdef void *cogr_geometry
+        cdef void *cogr_geometry = NULL
+
         if not ignore_geometry:
             cogr_geometry = OGR_F_GetGeometryRef(feature)
+
             if cogr_geometry is not NULL:
-                geom = GeomBuilder().build(cogr_geometry)
+                code = OGR_G_GetGeometryType(cogr_geometry)
+
+                if 7 < code < 100:  # Curves.
+                    cogr_geometry = get_linear_geometry(cogr_geometry)
+                    geom = GeomBuilder().build(cogr_geometry)
+                    OGR_G_DestroyGeometry(cogr_geometry)
+
+                else:
+                    geom = GeomBuilder().build(cogr_geometry)
+
                 fiona_feature["geometry"] = geom
+
             else:
                 fiona_feature["geometry"] = None
 
