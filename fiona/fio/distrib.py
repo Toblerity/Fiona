@@ -7,19 +7,18 @@ import logging
 import click
 import cligj
 
-from fiona.fio import helpers
+from fiona.fio import helpers, with_context_env
 
 
 @click.command()
 @cligj.use_rs_opt
 @click.pass_context
+@with_context_env
 def distrib(ctx, use_rs):
-
     """Distribute features from a collection.
 
     Print the features of GeoJSON objects read from stdin.
     """
-
     logger = logging.getLogger(__name__)
     stdin = click.get_text_stream('stdin')
     try:

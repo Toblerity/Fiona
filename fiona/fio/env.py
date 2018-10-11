@@ -6,6 +6,7 @@ import logging
 import click
 
 import fiona
+from fiona.fio import with_context_env
 
 
 @click.command(short_help="Print information about the fio environment.")
@@ -15,7 +16,6 @@ import fiona
               help="Print credentials.")
 @click.pass_context
 def env(ctx, key):
-
     """Print information about the Fiona environment: available
     formats, etc.
     """

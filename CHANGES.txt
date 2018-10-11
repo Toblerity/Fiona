@@ -17,6 +17,13 @@ Bug fixes:
   requested, matching the behavior of Rasterio's CLI (#635).
 - Dependency on attrs is made explicit.
 - Other dependencies are pinned to known good versions in requirements files.
+- Unused arguments have been removed from the Env constructor (#637).
+
+Refactoring:
+
+- A with_context_env decorator has been added and used to set up the GDAL
+  environment for CLI commands. The command functions themselves are now
+  simplified.
 
 1.8a3 (2018-10-01)
 ------------------

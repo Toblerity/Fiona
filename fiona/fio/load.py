@@ -8,7 +8,7 @@ import click
 import cligj
 
 import fiona
-from fiona.fio import options
+from fiona.fio import options, with_context_env
 from fiona.schema import FIELD_TYPES_MAP_REV
 from fiona.transform import transform_geom
 
@@ -25,6 +25,7 @@ from fiona.transform import transform_geom
               help="Load features into specified layer.  Layers use "
                    "zero-based numbering when accessed by index.")
 @click.pass_context
+@with_context_env
 def load(ctx, output, driver, src_crs, dst_crs, features, layer):
     """Load features from JSON to a file in another format.
 
@@ -58,15 +59,14 @@ def load(ctx, output, driver, src_crs, dst_crs, features, layer):
             (k, FIELD_TYPES_MAP_REV.get(type(v)) or 'str')
             for k, v in first['properties'].items()])
 
-        with ctx.obj['env']:
-            with fiona.open(
-                    output, 'w',
-                    driver=driver,
-                    crs=dst_crs,
-                    schema=schema,
-                    layer=layer) as dst:
-                dst.write(first)
-                dst.writerecords(source)
+        with fiona.open(
+                output, 'w',
+                driver=driver,
+                crs=dst_crs,
+                schema=schema,
+                layer=layer) as dst:
+            dst.write(first)
+            dst.writerecords(source)
 
     except Exception:
         logger.exception("Exception caught during processing")

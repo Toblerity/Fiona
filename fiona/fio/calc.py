@@ -6,6 +6,7 @@ import click
 from cligj import use_rs_opt
 
 from .helpers import obj_gen, eval_feature_expression
+from fiona.fio import with_context_env
 
 
 @click.command(short_help="Calculate GeoJSON property by Python expression")
@@ -15,6 +16,7 @@ from .helpers import obj_gen, eval_feature_expression
               help="Overwrite properties, default: False")
 @use_rs_opt
 @click.pass_context
+@with_context_env
 def calc(ctx, property_name, expression, overwrite, use_rs):
     """
     Create a new property on GeoJSON features using the specified expression.
@@ -37,9 +39,8 @@ def calc(ctx, property_name, expression, overwrite, use_rs):
     \b
     $ fio cat data.shp | fio calc sumAB  "f.properties.A + f.properties.B"
     """
-    logger = logging.getLogger('fio')
+    logger = logging.getLogger(__name__)
     stdin = click.get_text_stream('stdin')
-
     try:
         source = obj_gen(stdin)
         for i, obj in enumerate(source):

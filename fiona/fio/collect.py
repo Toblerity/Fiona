@@ -1,15 +1,14 @@
 """$ fio collect"""
 
 
-from functools import partial
+from functools import partial, wraps
 import json
 import logging
 
 import click
 import cligj
 
-from fiona.fio import helpers
-from fiona.fio import options
+from fiona.fio import helpers, options, with_context_env
 from fiona.transform import transform_geom
 
 
@@ -31,12 +30,12 @@ from fiona.transform import transform_geom
 @click.option('--parse/--no-parse', default=True,
               help="load and dump the geojson feature (default is True)")
 @click.pass_context
+@with_context_env
 def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
             src_crs, with_ld_context, add_ld_context_item, parse):
     """Make a GeoJSON feature collection from a sequence of GeoJSON
     features and print it."""
-    verbosity = (ctx.obj and ctx.obj['verbosity']) or 2
-    logger = logging.getLogger('fio')
+    logger = logging.getLogger(__name__)
     stdin = click.get_text_stream('stdin')
     sink = click.get_text_stream('stdout')
 
@@ -53,7 +52,8 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
         transformer = partial(transform_geom, src_crs, 'EPSG:4326',
                               antimeridian_cutting=True, precision=precision)
     else:
-        transformer = lambda x: x
+        def transformer(x):
+            return x
 
     first_line = next(stdin)
 

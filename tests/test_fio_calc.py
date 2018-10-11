@@ -6,13 +6,12 @@ import json
 
 from click.testing import CliRunner
 
-from fiona.fio.calc import calc
+from fiona.fio.main import main_group
 
 
 def test_fail():
     runner = CliRunner()
-    result = runner.invoke(calc,
-                           ["TEST", "f.properties.test > 5"],
+    result = runner.invoke(main_group, ['calc', "TEST", "f.properties.test > 5"],
                            '{"type": "no_properties"}')
     assert result.exit_code == 1
 
@@ -31,7 +30,7 @@ def _load(output):
 
 
 def test_calc_seq(feature_seq, runner):
-    result = runner.invoke(calc, [
+    result = runner.invoke(main_group, ['calc', 
         "TEST",
         "f.properties.AREA / f.properties.PERIMETER"],
         feature_seq)
@@ -45,8 +44,7 @@ def test_calc_seq(feature_seq, runner):
 
 
 def test_bool_seq(feature_seq, runner):
-    result = runner.invoke(calc,
-                           ["TEST", "f.properties.AREA > 0.015"],
+    result = runner.invoke(main_group, ['calc', "TEST", "f.properties.AREA > 0.015"],
                            feature_seq)
     assert result.exit_code == 0
     feats = _load(result.output)
@@ -56,13 +54,11 @@ def test_bool_seq(feature_seq, runner):
 
 
 def test_existing_property(feature_seq, runner):
-    result = runner.invoke(calc,
-                           ["AREA", "f.properties.AREA * 2"],
+    result = runner.invoke(main_group, ['calc', "AREA", "f.properties.AREA * 2"],
                            feature_seq)
     assert result.exit_code == 1
 
-    result = runner.invoke(calc,
-                           ["--overwrite", "AREA", "f.properties.AREA * 2"],
+    result = runner.invoke(main_group, ['calc', "--overwrite", "AREA", "f.properties.AREA * 2"],
                            feature_seq)
     assert result.exit_code == 0
     feats = _load(result.output)
