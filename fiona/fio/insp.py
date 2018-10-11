@@ -18,6 +18,8 @@ from fiona.fio import with_context_env
 @click.pass_context
 @with_context_env
 def insp(ctx, src_path, interpreter):
+    """Open a collection within an interactive interpreter.
+    """
     logger = logging.getLogger(__name__)
     banner = 'Fiona %s Interactive Inspector (Python %s)\n' \
              'Type "src.schema", "next(src)", or "help(src)" ' \
@@ -26,9 +28,7 @@ def insp(ctx, src_path, interpreter):
 
     try:
         with fiona.open(src_path) as src:
-
             scope = locals()
-
             if not interpreter:
                 code.interact(banner, local=scope)
             elif interpreter == 'ipython':
