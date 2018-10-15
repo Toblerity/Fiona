@@ -4,7 +4,7 @@ import re
 import fiona
 import fiona.crs
 
-from .conftest import WGS84PATTERN
+from .conftest import WGS84PATTERN, requires_gdal2
 
 
 def test_collection_crs_wkt(path_coutwildrnp_shp):
@@ -24,6 +24,7 @@ def test_collection_no_crs_wkt(tmpdir, path_coutwildrnp_shp):
         assert dst.crs == {}
 
 
+@requires_gdal2
 def test_collection_create_crs_wkt(tmpdir):
     """A collection can be created using crs_wkt"""
     filename = str(tmpdir.join("test.shp"))
