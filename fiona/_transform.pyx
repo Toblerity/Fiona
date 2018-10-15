@@ -9,6 +9,8 @@ import logging
 from fiona cimport _cpl, _crs, _csl, _geometry
 from fiona._crs cimport OGRSpatialReferenceH
 
+from fiona.compat import UserDict
+
 
 cdef extern from "ogr_geometry.h" nogil:
 
@@ -25,7 +27,7 @@ cdef extern from "ogr_spatialref.h":
         pass
 
 
-log = logging.getLogger("Fiona")
+log = logging.getLogger(__name__)
 class NullHandler(logging.Handler):
     def emit(self, record):
         pass
@@ -40,6 +42,9 @@ cdef void *_crs_from_crs(object crs):
         raise ValueError("NULL spatial reference")
     params = []
     # Normally, we expect a CRS dict.
+    if isinstance(crs, UserDict):
+        crs = dict(crs)
+
     if isinstance(crs, dict):
         # EPSG is a special case.
         init = crs.get('init')

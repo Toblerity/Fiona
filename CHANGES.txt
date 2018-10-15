@@ -13,6 +13,8 @@ Deprecations:
 
 Bug fixes:
 
+- Rasterio CRS objects passed to transform module methods will be converted
+  to dicts as needed (#590).
 - Implicitly convert curve geometries to their linear approximations rather
   than failing (#617).
 - Migrated unittest test cases in test_collection.py and test_layer.py to the
