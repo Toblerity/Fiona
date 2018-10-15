@@ -15,6 +15,7 @@ from fiona.errors import (DriverError, SchemaError, CRSError, UnsupportedGeometr
 from fiona.logutils import FieldSkipLogFilter
 from fiona._env import driver_count
 from fiona.env import Env
+from fiona.errors import FionaDeprecationWarning
 from fiona.drvsupport import supported_drivers
 from fiona.path import Path, UnparsedPath, vsi_path, parse_path
 from six import string_types, binary_type
@@ -329,7 +330,7 @@ class Collection(object):
         """Returns next record from iterator."""
         warnings.warn("Collection.__next__() is buggy and will be removed in "
                       "Fiona 2.0. Switch to `next(iter(collection))`.",
-                      DeprecationWarning, stacklevel=2)
+                      FionaDeprecationWarning, stacklevel=2)
         if not self.iterator:
             iter(self)
         return next(self.iterator)
@@ -338,6 +339,9 @@ class Collection(object):
 
     def __getitem__(self, item):
         return self.session.__getitem__(item)
+
+    def get(self, item):
+        return self.session.get(item)
 
     def writerecords(self, records):
         """Stages multiple records for writing to disk."""
@@ -494,7 +498,7 @@ def _get_valid_geom_types(schema, driver):
     if driver == "ESRI Shapefile" and "Point" not in valid_types:
         for geom_type in list(valid_types):
             if not geom_type.startswith("Multi"):
-                valid_types.add("Multi"+geom_type)
+                valid_types.add("Multi" + geom_type)
 
     return valid_types
 

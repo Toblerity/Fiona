@@ -27,7 +27,8 @@ from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
 from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
-    TransactionError, GeometryTypeValidationError, DatasetDeleteError)
+    TransactionError, GeometryTypeValidationError, DatasetDeleteError,
+    FionaDeprecationWarning)
 from fiona.compat import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -755,14 +756,26 @@ cdef class Session:
         fid = int(fid)
         cogr_feature = OGR_L_GetFeature(self.cogr_layer, fid)
         if cogr_feature != NULL:
+            feature = FeatureBuilder().build(
+                cogr_feature,
+                bbox=False,
+                encoding=self.get_internalencoding(),
+                driver=self.collection.driver,
+                ignore_fields=self.collection.ignore_fields,
+                ignore_geometry=self.collection.ignore_geometry,
+            )
             _deleteOgrFeature(cogr_feature)
-            return True
+            return feature
         else:
-            return False
+            raise KeyError("There is no feature with fid {!r}".format(fid))
 
+    get = get_feature
+
+    # TODO: Make this an alias for get_feature in a future version.
     def __getitem__(self, item):
         cdef void * cogr_feature
         if isinstance(item, slice):
+            warnings.warn("Collection slicing is deprecated and will be disabled in a future version.", FionaDeprecationWarning)
             itr = Iterator(self.collection, item.start, item.stop, item.step)
             log.debug("Slice: %r", item)
             return list(itr)

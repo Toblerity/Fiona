@@ -25,7 +25,7 @@ def test_filtering(caplog):
 def test_skipping_slice(caplog):
     """Collection filters out all but one warning message"""
     with fiona.open("tests/data/issue627.geojson") as src:
-        results = src[:]
+        results = list(src)
     assert len(results) == 3
     assert not any(['skip_me' in f['properties'] for f in results])
     assert len([rec for rec in caplog.records if rec.getMessage().startswith('Skipping')]) == 1

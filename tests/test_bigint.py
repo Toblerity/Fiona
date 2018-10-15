@@ -78,7 +78,7 @@ def test_issue691(tmpdir, dtype):
 
     with fiona.open(str(tmpdir.join('test.shp'))) as src:
         assert src.schema['properties']['foo'] == 'int:18'
-        first = next(src)
+        first = next(iter(src))
         assert first['properties']['foo'] == 3694063472
 
 

@@ -6,6 +6,11 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.8b1 (2018-10-15)
 ------------------
 
+Deprecations:
+
+- Collection slicing has been deprecated and will be prohibited in a future
+  version.
+
 Bug fixes:
 
 - Implicitly convert curve geometries to their linear approximations rather

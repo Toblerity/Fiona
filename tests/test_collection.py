@@ -927,11 +927,13 @@ class OpenKeywordArgsTest(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tempdir)
 
+
 @pytest.mark.network
 def test_collection_http():
     ds = fiona.Collection('http://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.shp', vsi='http')
     assert ds.path == '/vsicurl/http://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.shp'
     assert len(ds) == 10
+
 
 @pytest.mark.network
 def test_collection_zip_http():
