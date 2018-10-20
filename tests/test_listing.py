@@ -3,7 +3,6 @@
 import logging
 import sys
 import os
-import unittest
 
 import pytest
 
@@ -47,13 +46,16 @@ def test_list_not_existing(data_dir):
         fiona.ogrext._listlayers(path)
 
 
-class ListLayersArgsTest(unittest.TestCase):
+def test_invalid_path():
+    with pytest.raises(TypeError):
+        fiona.listlayers(1)
 
-    def test_path(self):
-        self.assertRaises(TypeError, fiona.listlayers, (1))
 
-    def test_vfs(self):
-        self.assertRaises(TypeError, fiona.listlayers, ("/"), vfs=1)
+def test_invalid_vfs():
+    with pytest.raises(TypeError):
+        fiona.listlayers("/", vfs=1)
 
-    def test_path_ioerror(self):
-        self.assertRaises(DriverError, fiona.listlayers, ("foobar"))
+
+def test_invalid_path_ioerror():
+    with pytest.raises(DriverError):
+        fiona.listlayers("foobar")
