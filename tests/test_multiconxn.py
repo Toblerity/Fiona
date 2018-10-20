@@ -31,15 +31,15 @@ class TestReadAccess(object):
                 assert f1 == f2
 
 
-class ReadWriteAccess(unittest.TestCase):
+class TestReadWriteAccess(object):
     # To check that we'll be able to read from a file that we're
     # writing to.
 
-    def setUp(self):
-        self.tempdir = tempfile.mkdtemp()
+    @pytest.fixture(autouse=True)
+    def multi_write_test_shp(self, tmpdir):
+        self.shapefile_path = str(tmpdir.join("multi_write_test.shp"))
         self.c = fiona.open(
-            os.path.join(self.tempdir, "multi_write_test.shp"),
-            "w",
+            self.shapefile_path, "w",
             driver="ESRI Shapefile",
             schema={
                 'geometry': 'Point',
@@ -52,26 +52,24 @@ class ReadWriteAccess(unittest.TestCase):
             'properties': OrderedDict([('title', 'point one'), ('date', '2012-01-29')])}
         self.c.writerecords([self.f])
         self.c.flush()
-
-    def tearDown(self):
+        yield
         self.c.close()
-        shutil.rmtree(self.tempdir)
 
     def test_meta(self):
-        c2 = fiona.open(os.path.join(self.tempdir, "multi_write_test.shp"), "r")
+        c2 = fiona.open(self.shapefile_path, "r")
         assert len(self.c) == len(c2)
         assert sorted(self.c.schema.items()) == sorted(c2.schema.items())
         c2.close()
 
     def test_read(self):
-        c2 = fiona.open(os.path.join(self.tempdir, "multi_write_test.shp"), "r")
+        c2 = fiona.open(self.shapefile_path, "r")
         f2 = next(iter(c2))
         del f2['id']
         assert self.f == f2
         c2.close()
 
     def test_read_after_close(self):
-        c2 = fiona.open(os.path.join(self.tempdir, "multi_write_test.shp"), "r")
+        c2 = fiona.open(self.shapefile_path, "r")
         self.c.close()
         f2 = next(iter(c2))
         del f2['id']
