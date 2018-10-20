@@ -11,26 +11,24 @@ import fiona
 from fiona.compat import OrderedDict
 
 
-class ReadAccess(unittest.TestCase):
+class TestReadAccess(object):
     # To check that we'll be able to get multiple 'r' connections to layers
     # in a single file.
 
-    def setUp(self):
-        self.c = fiona.open("tests/data/coutwildrnp.shp", "r", layer="coutwildrnp")
+    def test_meta(self, path_coutwildrnp_shp):
+        with fiona.open(path_coutwildrnp_shp, "r", layer="coutwildrnp") as c:
+            with fiona.open(path_coutwildrnp_shp, "r",
+                            layer="coutwildrnp") as c2:
+                assert len(c) == len(c2)
+                assert sorted(c.schema.items()) == sorted(c2.schema.items())
 
-    def tearDown(self):
-        self.c.close()
-
-    def test_meta(self):
-        with fiona.open("tests/data/coutwildrnp.shp", "r", layer="coutwildrnp") as c2:
-            assert len(self.c) == len(c2)
-            assert sorted(self.c.schema.items()) == sorted(c2.schema.items())
-
-    def test_feat(self):
-        f1 = next(iter(self.c))
-        with fiona.open("tests/data/coutwildrnp.shp", "r", layer="coutwildrnp") as c2:
-            f2 = next(iter(c2))
-            assert f1 == f2
+    def test_feat(self, path_coutwildrnp_shp):
+        with fiona.open(path_coutwildrnp_shp, "r", layer="coutwildrnp") as c:
+            f1 = next(iter(c))
+            with fiona.open(path_coutwildrnp_shp, "r",
+                            layer="coutwildrnp") as c2:
+                f2 = next(iter(c2))
+                assert f1 == f2
 
 
 class ReadWriteAccess(unittest.TestCase):
