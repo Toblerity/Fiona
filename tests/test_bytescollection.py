@@ -23,7 +23,8 @@ class ReadingTest(unittest.TestCase):
     def test_construct_with_str(self):
         with open(self.path_coutwildrnp_json) as src:
             strbuf = src.read()
-        self.assertRaises(ValueError, fiona.BytesCollection, strbuf)
+        with pytest.raises(ValueError):
+            fiona.BytesCollection(strbuf)
 
     def test_open_repr(self):
         # I'm skipping checking the name of the virtual file as it produced by uuid.
@@ -61,7 +62,8 @@ class ReadingTest(unittest.TestCase):
 
     def test_closed_no_iter(self):
         self.c.close()
-        self.assertRaises(ValueError, iter, self.c)
+        with pytest.raises(ValueError):
+            iter(self.c)
 
     def test_len(self):
         assert len(self.c) == 67
@@ -156,7 +158,8 @@ class ReadingTest(unittest.TestCase):
         assert f['properties']['STATE'] == 'UT'
 
     def test_no_write(self):
-        self.assertRaises(IOError, self.c.write, {})
+        with pytest.raises(IOError):
+            self.c.write({})
 
     def test_iter_items_list(self):
         i, f = list(self.c.items())[0]

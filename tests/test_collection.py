@@ -35,58 +35,60 @@ class SupportedDriversTest(unittest.TestCase):
 class CollectionArgsTest(unittest.TestCase):
 
     def test_path(self):
-        self.assertRaises(TypeError, Collection, (0))
+        with pytest.raises(TypeError):
+            Collection(0)
 
     def test_mode(self):
-        self.assertRaises(TypeError, Collection, ("foo"), mode=0)
+        with pytest.raises(TypeError):
+            Collection("foo", mode=0)
 
     def test_driver(self):
-        self.assertRaises(TypeError, Collection, ("foo"), mode='w', driver=1)
+        with pytest.raises(TypeError):
+            Collection("foo", mode='w', driver=1)
 
     def test_schema(self):
-        self.assertRaises(
-            TypeError, Collection, ("foo"), mode='w',
-            driver="ESRI Shapefile", schema=1)
+        with pytest.raises(TypeError):
+            Collection("foo", mode='w', driver="ESRI Shapefile", schema=1)
 
     def test_crs(self):
-        self.assertRaises(
-            TypeError, Collection, ("foo"), mode='w',
-            driver="ESRI Shapefile", schema=0, crs=1)
+        with pytest.raises(TypeError):
+            Collection("foo", mode='w', driver="ESRI Shapefile", schema=0,
+                       crs=1)
 
     def test_encoding(self):
-        self.assertRaises(
-            TypeError, Collection, ("foo"), mode='r',
-            encoding=1)
+        with pytest.raises(TypeError):
+            Collection("foo", mode='r', encoding=1)
 
     def test_layer(self):
-        self.assertRaises(
-            TypeError, Collection, ("foo"), mode='r',
-            layer=0.5)
+        with pytest.raises(TypeError):
+            Collection("foo", mode='r', layer=0.5)
 
     def test_vsi(self):
-        self.assertRaises(
-            TypeError, Collection, ("foo"), mode='r',
-            vsi='git')
+        with pytest.raises(TypeError):
+            Collection("foo", mode='r', vsi='git')
 
     def test_archive(self):
-        self.assertRaises(
-            TypeError, Collection, ("foo"), mode='r',
-            archive=1)
+        with pytest.raises(TypeError):
+            Collection("foo", mode='r', archive=1)
 
     def test_write_numeric_layer(self):
-        self.assertRaises(ValueError, Collection, ("foo"), mode='w', layer=1)
+        with pytest.raises(ValueError):
+            Collection("foo", mode='w', layer=1)
 
     def test_write_geojson_layer(self):
-        self.assertRaises(ValueError, Collection, ("foo"), mode='w', driver='GeoJSON', layer='foo')
+        with pytest.raises(ValueError):
+            Collection("foo", mode='w', driver='GeoJSON', layer='foo')
 
     def test_append_geojson(self):
-        self.assertRaises(ValueError, Collection, ("foo"), mode='w', driver='ARCGEN')
+        with pytest.raises(ValueError):
+            Collection("foo", mode='w', driver='ARCGEN')
 
 
 class OpenExceptionTest(unittest.TestCase):
 
     def test_no_archive(self):
-        self.assertRaises(DriverError, fiona.open, ("/"), mode='r', vfs="zip:///foo.zip")
+        with pytest.raises(DriverError):
+            fiona.open("/", mode='r', vfs="zip:///foo.zip")
 
 
 @pytest.mark.usefixtures("unittest_path_coutwildrnp_shp")
@@ -128,7 +130,8 @@ class ReadingTest(unittest.TestCase):
 
     def test_closed_no_iter(self):
         self.c.close()
-        self.assertRaises(ValueError, iter, self.c)
+        with pytest.raises(ValueError):
+            iter(self.c)
 
     def test_len(self):
         assert len(self.c) == 67
@@ -245,7 +248,8 @@ class ReadingTest(unittest.TestCase):
         assert f['id'] == "2"
 
     def test_no_write(self):
-        self.assertRaises(IOError, self.c.write, {})
+        with pytest.raises(IOError):
+            self.c.write({})
 
     def test_iter_items_list(self):
         i, f = list(self.c.items())[0]
@@ -304,7 +308,7 @@ class IgnoreFieldsAndGeometryTest(unittest.TestCase):
             pass
 
     def test_ignore_invalid_field_not_string(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             with fiona.open(self.path_coutwildrnp_shp, "r", ignore_fields=[42]):
                 pass
 
@@ -359,9 +363,9 @@ class UnsupportedDriverTest(unittest.TestCase):
         schema = {
             'geometry': 'Point',
             'properties': {'label': 'str', u'verit\xe9': 'int'}}
-        self.assertRaises(
-            DriverError,
-            fiona.open, os.path.join(TEMPDIR, "foo"), "w", "Bogus", schema=schema)
+        with pytest.raises(DriverError):
+            fiona.open(os.path.join(TEMPDIR, "foo"), "w", "Bogus",
+                       schema=schema)
 
 
 class GenericWritingTest(unittest.TestCase):
@@ -387,10 +391,12 @@ class GenericWritingTest(unittest.TestCase):
         assert self.c.encoding == 'Windows-1252'
 
     def test_no_iter(self):
-        self.assertRaises(IOError, iter, self.c)
+        with pytest.raises(IOError):
+            iter(self.c)
 
     def test_no_filter(self):
-        self.assertRaises(IOError, self.c.filter)
+        with pytest.raises(IOError):
+            self.c.filter()
 
 
 class PropertiesNumberFormattingTest(unittest.TestCase):
@@ -822,23 +828,29 @@ class ShapefileFieldWidthTest(unittest.TestCase):
 class CollectionTest(unittest.TestCase):
 
     def test_invalid_mode(self):
-        self.assertRaises(ValueError, fiona.open, os.path.join(TEMPDIR, "bogus.shp"), "r+")
+        with pytest.raises(ValueError):
+            fiona.open(os.path.join(TEMPDIR, "bogus.shp"), "r+")
 
     def test_w_args(self):
-        self.assertRaises(FionaValueError, fiona.open, os.path.join(TEMPDIR, "test-no-iter.shp"), "w")
-        self.assertRaises(
-            FionaValueError, fiona.open, os.path.join(TEMPDIR, "test-no-iter.shp"), "w", "Driver")
+        with pytest.raises(FionaValueError):
+            fiona.open(os.path.join(TEMPDIR, "test-no-iter.shp"), "w")
+        with pytest.raises(FionaValueError):
+            fiona.open(os.path.join(TEMPDIR, "test-no-iter.shp"), "w",
+                       "Driver")
 
     def test_no_path(self):
-        self.assertRaises(Exception, fiona.open, "no-path.shp", "a")
+        with pytest.raises(Exception):
+            fiona.open("no-path.shp", "a")
 
     def test_no_read_conn_str(self):
-        self.assertRaises(DriverError, fiona.open, "PG:dbname=databasename", "r")
+        with pytest.raises(DriverError):
+            fiona.open("PG:dbname=databasename", "r")
 
     @pytest.mark.skipif(sys.platform.startswith("win"),
                      reason="test only for *nix based system")
     def test_no_read_directory(self):
-        self.assertRaises(DriverError, fiona.open, "/dev/null", "r")
+        with pytest.raises(DriverError):
+            fiona.open("/dev/null", "r")
 
 
 class GeoJSONCRSWritingTest(unittest.TestCase):
