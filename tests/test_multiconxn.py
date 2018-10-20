@@ -1,10 +1,3 @@
-import logging
-import os
-import shutil
-import sys
-import tempfile
-import unittest
-
 import pytest
 
 import fiona
@@ -76,17 +69,13 @@ class TestReadWriteAccess(object):
         assert self.f == f2
         c2.close()
 
-class LayerCreation(unittest.TestCase):
 
-    def setUp(self):
-        self.tempdir = tempfile.mkdtemp()
-        self.dir = os.path.join(self.tempdir, 'layer_creation')
-        if os.path.exists(self.dir):
-            shutil.rmtree(self.dir)
-        os.mkdir(self.dir)
+class TestLayerCreation(object):
+    @pytest.fixture(autouse=True)
+    def layer_creation_shp(self, tmpdir):
+        self.dir = tmpdir.mkdir('layer_creation')
         self.c = fiona.open(
-            self.dir,
-            'w',
+            str(self.dir), 'w',
             layer='write_test',
             driver='ESRI Shapefile',
             schema={
@@ -100,26 +89,24 @@ class LayerCreation(unittest.TestCase):
             'properties': OrderedDict([('title', 'point one'), ('date', '2012-01-29')])}
         self.c.writerecords([self.f])
         self.c.flush()
-
-    def tearDown(self):
+        yield
         self.c.close()
-        shutil.rmtree(self.tempdir)
 
     def test_meta(self):
-        c2 = fiona.open(os.path.join(self.dir, "write_test.shp"), "r")
+        c2 = fiona.open(str(self.dir.join("write_test.shp")), "r")
         assert len(self.c) == len(c2)
         assert sorted(self.c.schema.items()) == sorted(c2.schema.items())
         c2.close()
 
     def test_read(self):
-        c2 = fiona.open(os.path.join(self.dir, "write_test.shp"), "r")
+        c2 = fiona.open(str(self.dir.join("write_test.shp")), "r")
         f2 = next(iter(c2))
         del f2['id']
         assert self.f == f2
         c2.close()
 
     def test_read_after_close(self):
-        c2 = fiona.open(os.path.join(self.dir, "write_test.shp"), "r")
+        c2 = fiona.open(str(self.dir.join("write_test.shp")), "r")
         self.c.close()
         f2 = next(iter(c2))
         del f2['id']
