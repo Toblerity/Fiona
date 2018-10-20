@@ -1,59 +1,57 @@
 """Tests for Fiona's RFC 3339 support."""
 
 
-import logging
 import re
-import sys
-import unittest
+
+import pytest
 
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import group_accessor, pattern_date
 
 
-class DateParseTest(unittest.TestCase):
+class TestDateParse(object):
 
     def test_yyyymmdd(self):
-        self.assertEqual(
-            parse_date("2012-01-29"), (2012, 1, 29, 0, 0, 0, 0.0))
+        assert parse_date("2012-01-29") == (2012, 1, 29, 0, 0, 0, 0.0)
 
     def test_error(self):
-        self.assertRaises(ValueError, parse_date, ("xxx"))
+        with pytest.raises(ValueError):
+            parse_date("xxx")
 
-class TimeParseTest(unittest.TestCase):
+
+class TestTimeParse(object):
 
     def test_hhmmss(self):
-        self.assertEqual(
-            parse_time("10:11:12"), (0, 0, 0, 10, 11, 12, 0.0))
+        assert parse_time("10:11:12") == (0, 0, 0, 10, 11, 12, 0.0)
 
     def test_hhmm(self):
-        self.assertEqual(
-            parse_time("10:11"), (0, 0, 0, 10, 11, 0, 0.0))
+        assert parse_time("10:11") == (0, 0, 0, 10, 11, 0, 0.0)
 
     def test_hhmmssff(self):
-        self.assertEqual(
-            parse_time("10:11:12.42"),
-            (0, 0, 0, 10, 11, 12, 0.42*1000000.0))
+        assert parse_time("10:11:12.42") == (0, 0, 0, 10, 11, 12, 0.42*1000000)
 
     def test_hhmmssz(self):
-        self.assertEqual(
-            parse_time("10:11:12Z"), (0, 0, 0, 10, 11, 12, 0.0))
+        assert parse_time("10:11:12Z") == (0, 0, 0, 10, 11, 12, 0.0)
 
     def test_hhmmssoff(self):
-        self.assertEqual(
-            parse_time("10:11:12-01:00"), (0, 0, 0, 10, 11, 12, 0.0))
+        assert parse_time("10:11:12-01:00") == (0, 0, 0, 10, 11, 12, 0.0)
 
     def test_error(self):
-        self.assertRaises(ValueError, parse_time, ("xxx"))
+        with pytest.raises(ValueError):
+            parse_time("xxx")
 
-class DatetimeParseTest(unittest.TestCase):
+
+class TestDatetimeParse(object):
 
     def test_yyyymmdd(self):
-        self.assertEqual(
-            parse_datetime("2012-01-29T10:11:12"),
+        assert (
+            parse_datetime("2012-01-29T10:11:12") ==
             (2012, 1, 29, 10, 11, 12, 0.0))
 
     def test_error(self):
-        self.assertRaises(ValueError, parse_datetime, ("xxx"))
+        with pytest.raises(ValueError):
+            parse_datetime("xxx")
+
 
 def test_group_accessor_indexerror():
     match = re.search(pattern_date, '2012-01-29')
