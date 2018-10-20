@@ -23,14 +23,14 @@ class ReadAccess(unittest.TestCase):
 
     def test_meta(self):
         with fiona.open("tests/data/coutwildrnp.shp", "r", layer="coutwildrnp") as c2:
-            self.assertEqual(len(self.c), len(c2))
-            self.assertEqual(sorted(self.c.schema.items()), sorted(c2.schema.items()))
+            assert len(self.c) == len(c2)
+            assert sorted(self.c.schema.items()) == sorted(c2.schema.items())
 
     def test_feat(self):
         f1 = next(iter(self.c))
         with fiona.open("tests/data/coutwildrnp.shp", "r", layer="coutwildrnp") as c2:
             f2 = next(iter(c2))
-            self.assertEqual(f1, f2)
+            assert f1 == f2
 
 
 class ReadWriteAccess(unittest.TestCase):
@@ -61,15 +61,15 @@ class ReadWriteAccess(unittest.TestCase):
 
     def test_meta(self):
         c2 = fiona.open(os.path.join(self.tempdir, "multi_write_test.shp"), "r")
-        self.assertEqual(len(self.c), len(c2))
-        self.assertEqual(sorted(self.c.schema.items()), sorted(c2.schema.items()))
+        assert len(self.c) == len(c2)
+        assert sorted(self.c.schema.items()) == sorted(c2.schema.items())
         c2.close()
 
     def test_read(self):
         c2 = fiona.open(os.path.join(self.tempdir, "multi_write_test.shp"), "r")
         f2 = next(iter(c2))
         del f2['id']
-        self.assertEqual(self.f, f2)
+        assert self.f == f2
         c2.close()
 
     def test_read_after_close(self):
@@ -77,7 +77,7 @@ class ReadWriteAccess(unittest.TestCase):
         self.c.close()
         f2 = next(iter(c2))
         del f2['id']
-        self.assertEqual(self.f, f2)
+        assert self.f == f2
         c2.close()
 
 class LayerCreation(unittest.TestCase):
@@ -111,15 +111,15 @@ class LayerCreation(unittest.TestCase):
 
     def test_meta(self):
         c2 = fiona.open(os.path.join(self.dir, "write_test.shp"), "r")
-        self.assertEqual(len(self.c), len(c2))
-        self.assertEqual(sorted(self.c.schema.items()), sorted(c2.schema.items()))
+        assert len(self.c) == len(c2)
+        assert sorted(self.c.schema.items()) == sorted(c2.schema.items())
         c2.close()
 
     def test_read(self):
         c2 = fiona.open(os.path.join(self.dir, "write_test.shp"), "r")
         f2 = next(iter(c2))
         del f2['id']
-        self.assertEqual(self.f, f2)
+        assert self.f == f2
         c2.close()
 
     def test_read_after_close(self):
@@ -127,5 +127,5 @@ class LayerCreation(unittest.TestCase):
         self.c.close()
         f2 = next(iter(c2))
         del f2['id']
-        self.assertEqual(self.f, f2)
+        assert self.f == f2
         c2.close()
