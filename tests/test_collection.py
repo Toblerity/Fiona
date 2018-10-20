@@ -806,25 +806,20 @@ class LineAppendTest(unittest.TestCase):
             self.assertEqual(c.bounds, (0.0, -0.2, 0.0, 0.2))
 
 
-class ShapefileFieldWidthTest(unittest.TestCase):
-
-    def test_text(self):
-        self.tempdir = tempfile.mkdtemp()
-        with fiona.open(
-                os.path.join(self.tempdir, "textfield.shp"), 'w',
-                schema={'geometry': 'Point', 'properties': {'text': 'str:254'}},
-                driver="ESRI Shapefile") as c:
-            c.write(
-                {'geometry': {'type': 'Point', 'coordinates': (0.0, 45.0)},
-                 'properties': {'text': 'a' * 254}})
-        c = fiona.open(os.path.join(self.tempdir, "textfield.shp"), "r")
-        self.assertEqual(c.schema['properties']['text'], 'str:254')
-        f = next(iter(c))
-        self.assertEqual(f['properties']['text'], 'a' * 254)
-        c.close()
-
-    def tearDown(self):
-        shutil.rmtree(self.tempdir)
+def test_shapefile_field_width(tmpdir):
+    name = str(tmpdir.join('textfield.shp'))
+    with fiona.open(
+            name, 'w',
+            schema={'geometry': 'Point', 'properties': {'text': 'str:254'}},
+            driver="ESRI Shapefile") as c:
+        c.write(
+            {'geometry': {'type': 'Point', 'coordinates': (0.0, 45.0)},
+             'properties': {'text': 'a' * 254}})
+    c = fiona.open(name, "r")
+    assert c.schema['properties']['text'] == 'str:254'
+    f = next(iter(c))
+    assert f['properties']['text'] == 'a' * 254
+    c.close()
 
 
 class CollectionTest(unittest.TestCase):
@@ -868,64 +863,49 @@ class GeoJSONCRSWritingTest(unittest.TestCase):
         shutil.rmtree(self.tempdir)
 
 
-class DateTimeTest(unittest.TestCase):
+def test_date(tmpdir):
+    name = str(tmpdir.join("date_test.shp"))
+    sink = fiona.open(
+        name, "w",
+        driver="ESRI Shapefile",
+        schema={
+            'geometry': 'Point',
+            'properties': [('id', 'int'), ('date', 'date')]},
+        crs={'init': "epsg:4326", 'no_defs': True})
 
-    def setUp(self):
-        self.tempdir = tempfile.mkdtemp()
+    recs = [{
+        'geometry': {'type': 'Point',
+                     'coordinates': (7.0, 50.0)},
+        'properties': {'id': 1, 'date': '2013-02-25'}
+    }, {
+        'geometry': {'type': 'Point',
+                     'coordinates': (7.0, 50.2)},
+        'properties': {'id': 1, 'date': datetime.date(2014, 2, 3)}
+    }]
+    sink.writerecords(recs)
+    sink.close()
+    assert len(sink) == 2
 
-    def test_date(self):
-        self.sink = fiona.open(
-            os.path.join(self.tempdir, "date_test.shp"),
-            "w",
-            driver="ESRI Shapefile",
-            schema={
-                'geometry': 'Point',
-                'properties': [('id', 'int'), ('date', 'date')]},
-            crs={'init': "epsg:4326", 'no_defs': True})
+    with fiona.open(name, "r") as c:
+        assert len(c) == 2
 
-        recs = [{
-            'geometry': {'type': 'Point',
-                         'coordinates': (7.0, 50.0)},
-            'properties': {'id': 1, 'date': '2013-02-25'}
-        }, {
-            'geometry': {'type': 'Point',
-                         'coordinates': (7.0, 50.2)},
-            'properties': {'id': 1, 'date': datetime.date(2014, 2, 3)}
-        }]
-        self.sink.writerecords(recs)
-        self.sink.close()
-        self.assertEqual(len(self.sink), 2)
-
-        with fiona.open(os.path.join(self.tempdir, "date_test.shp"), "r") as c:
-            self.assertEqual(len(c), 2)
-
-            rf1, rf2 = list(c)
-            self.assertEqual(rf1['properties']['date'], '2013-02-25')
-            self.assertEqual(rf2['properties']['date'], '2014-02-03')
-
-    def tearDown(self):
-        shutil.rmtree(self.tempdir)
+        rf1, rf2 = list(c)
+        assert rf1['properties']['date'] == '2013-02-25'
+        assert rf2['properties']['date'] == '2014-02-03'
 
 
-class OpenKeywordArgsTest(unittest.TestCase):
+def test_open_kwargs(tmpdir, path_coutwildrnp_shp):
+    dstfile = str(tmpdir.join('test.json'))
+    with fiona.open(path_coutwildrnp_shp) as src:
+        kwds = src.profile
+        kwds['driver'] = 'GeoJSON'
+        kwds['coordinate_precision'] = 2
+        with fiona.open(dstfile, 'w', **kwds) as dst:
+            dst.writerecords(ftr for ftr in src)
 
-    def setUp(self):
-        self.tempdir = tempfile.mkdtemp()
-
-    def test_kwargs(self):
-        dstfile = os.path.join(self.tempdir, 'test.json')
-        with fiona.open(os.path.join('tests', 'data', 'coutwildrnp.shp')) as src:
-            kwds = src.profile
-            kwds['driver'] = 'GeoJSON'
-            kwds['coordinate_precision'] = 2
-            with fiona.open(dstfile, 'w', **kwds) as dst:
-                dst.writerecords(ftr for ftr in src)
-
-        with open(dstfile) as f:
-            assert '"coordinates": [ [ [ -111.74, 42.0 ], [ -111.66, 42.0 ]' in f.read(2000)
-
-    def tearDown(self):
-        shutil.rmtree(self.tempdir)
+    with open(dstfile) as f:
+        assert '"coordinates": [ [ [ -111.74, 42.0 ], [ -111.66, 42.0 ]' in \
+            f.read(2000)
 
 
 @pytest.mark.network

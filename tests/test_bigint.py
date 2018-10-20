@@ -15,50 +15,37 @@ accordingly (and same for integer fields of size 19 or 20, in case of overflow
 of 64 bit integer, OFTReal is chosen)
 """
 
-import os
-import shutil
-import tempfile
-import unittest
-
 import pytest
 
 import fiona
 from fiona.ogrext import calc_gdal_version_num, get_gdal_version_num
 
 
-class TestBigInt(unittest.TestCase):
+@pytest.mark.xfail(fiona.gdal_version.major < 2,
+                   reason="64-bit integer fields require GDAL 2+")
+def testCreateBigIntSchema(tmpdir):
+    name = str(tmpdir.join('output1.shp'))
 
-    def setUp(self):
-        self.tempdir = tempfile.mkdtemp()
+    a_bigint = 10 ** 18 - 1
+    fieldname = 'abigint'
 
-    def tearDown(self):
-        shutil.rmtree(self.tempdir)
+    kwargs = {
+        'driver': 'ESRI Shapefile',
+        'crs': 'EPSG:4326',
+        'schema': {
+            'geometry': 'Point',
+            'properties': [(fieldname, 'int:10')]}}
 
-    @pytest.mark.xfail(fiona.gdal_version.major < 2,
-                       reason="64-bit integer fields require GDAL 2+")
-    def testCreateBigIntSchema(self):
-        name = os.path.join(self.tempdir, 'output1.shp')
+    with fiona.open(name, 'w', **kwargs) as dst:
+        rec = {}
+        rec['geometry'] = {'type': 'Point', 'coordinates': (0, 0)}
+        rec['properties'] = {fieldname: a_bigint}
+        dst.write(rec)
 
-        a_bigint = 10 ** 18 - 1
-        fieldname = 'abigint'
-
-        kwargs = {
-            'driver': 'ESRI Shapefile',
-            'crs': 'EPSG:4326',
-            'schema': {
-                'geometry': 'Point',
-                'properties': [(fieldname, 'int:10')]}}
-
-        with fiona.open(name, 'w', **kwargs) as dst:
-            rec = {}
-            rec['geometry'] = {'type': 'Point', 'coordinates': (0, 0)}
-            rec['properties'] = {fieldname: a_bigint}
-            dst.write(rec)
-
-        with fiona.open(name) as src:
-            if fiona.gdal_version >= (2, 0, 0):
-                first = next(iter(src))
-                self.assertEqual(first['properties'][fieldname], a_bigint)
+    with fiona.open(name) as src:
+        if fiona.gdal_version >= (2, 0, 0):
+            first = next(iter(src))
+            assert first['properties'][fieldname] == a_bigint
 
 
 @pytest.mark.skipif(get_gdal_version_num() < calc_gdal_version_num(2, 0, 0),
