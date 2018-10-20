@@ -1,10 +1,3 @@
-import logging
-import os
-import shutil
-import sys
-import tempfile
-import unittest
-
 import pytest
 
 import fiona
@@ -71,13 +64,11 @@ class DirReadingTest(ReadingTest):
         self.assertEqual(self.c.path, self.data_dir)
 
 
-@pytest.mark.usefixtures("unittest_path_coutwildrnp_shp")
-class InvalidLayerTest(unittest.TestCase):
+def test_invalid_layer(path_coutwildrnp_shp):
+    with pytest.raises(ValueError):
+        fiona.open(path_coutwildrnp_shp, layer="foo")
 
-    def test_invalid(self):
-        self.assertRaises(ValueError, fiona.open, (self.path_coutwildrnp_shp), layer="foo")
 
-    def test_write_numeric_layer(self):
-        self.assertRaises(ValueError, fiona.open,
-                          (os.path.join(tempfile.gettempdir(), "test-no-iter.shp")),
-                          mode='w', layer=0)
+def test_write_invalid_numeric_layer(path_coutwildrnp_shp, tmpdir):
+    with pytest.raises(ValueError):
+        fiona.open(str(tmpdir.join("test-no-iter.shp")), mode='w', layer=0)
