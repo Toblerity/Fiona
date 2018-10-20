@@ -21,7 +21,7 @@ from .conftest import WGS84PATTERN
 TEMPDIR = tempfile.gettempdir()
 
 
-class SupportedDriversTest(unittest.TestCase):
+class TestSupportedDrivers(object):
 
     def test_shapefile(self):
         assert "ESRI Shapefile" in supported_drivers
@@ -32,7 +32,7 @@ class SupportedDriversTest(unittest.TestCase):
         assert set(supported_drivers["MapInfo File"]) == set("raw")
 
 
-class CollectionArgsTest(unittest.TestCase):
+class TestCollectionArgs(object):
 
     def test_path(self):
         with pytest.raises(TypeError):
@@ -84,7 +84,7 @@ class CollectionArgsTest(unittest.TestCase):
             Collection("foo", mode='w', driver='ARCGEN')
 
 
-class OpenExceptionTest(unittest.TestCase):
+class TestOpenException(object):
 
     def test_no_archive(self):
         with pytest.raises(DriverError):
@@ -275,7 +275,7 @@ class ReadingPathTest(unittest.TestCase):
 
 
 @pytest.mark.usefixtures("unittest_path_coutwildrnp_shp")
-class IgnoreFieldsAndGeometryTest(unittest.TestCase):
+class TestIgnoreFieldsAndGeometry(object):
 
     def test_without_ignore(self):
         with fiona.open(self.path_coutwildrnp_shp, "r") as collection:
@@ -357,7 +357,7 @@ class FilterReadingTest(unittest.TestCase):
         assert len(results) == 26
 
 
-class UnsupportedDriverTest(unittest.TestCase):
+class TestUnsupportedDriver(object):
 
     def test_immediate_fail_driver(self):
         schema = {
@@ -820,7 +820,7 @@ def test_shapefile_field_width(tmpdir):
     c.close()
 
 
-class CollectionTest(unittest.TestCase):
+class TestCollection(object):
 
     def test_invalid_mode(self):
         with pytest.raises(ValueError):
