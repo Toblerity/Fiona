@@ -51,7 +51,7 @@ def gdalenv(request):
 @pytest.fixture(scope='session')
 def data_dir():
     """Absolute file path to the directory containing test datasets."""
-    return os.path.abspath(os.path.join('tests', 'data'))
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
 
 
 @pytest.fixture(scope='session')
