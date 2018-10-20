@@ -1,9 +1,5 @@
 """Tests for geometry objects."""
 
-import logging
-import sys
-import unittest
-
 import pytest
 
 from fiona._geometry import (GeomBuilder, geometryRT)
@@ -11,6 +7,10 @@ from fiona.errors import UnsupportedGeometryTypeError
 
 
 def geometry_wkb(wkb):
+    try:
+        wkb = bytes.fromhex(wkb)
+    except AttributeError:
+        wkb = wkb.decode('hex')
     return GeomBuilder().build_wkb(wkb)
 
 
@@ -63,82 +63,71 @@ def test_geometry_collection_round_trip():
     assert [g['type'] for g in result['geometries']] == ['Point', 'LineString']
 
 
-class PointTest(unittest.TestCase):
-    def test_point(self):
-        # Hex-encoded Point (0 0)
-        try:
-            wkb = bytes.fromhex("010100000000000000000000000000000000000000")
-        except:
-            wkb = "010100000000000000000000000000000000000000".decode('hex')
-        geom = geometry_wkb(wkb)
-        self.assertEqual(geom['type'], "Point")
-        self.assertEqual(geom['coordinates'], (0.0, 0.0))
+def test_point_wkb():
+    # Hex-encoded Point (0 0)
+    wkb = "010100000000000000000000000000000000000000"
+    geom = geometry_wkb(wkb)
+    assert geom['type'] == "Point"
+    assert geom['coordinates'] == (0.0, 0.0)
 
-class LineStringTest(unittest.TestCase):
-    def test_line(self):
-        # Hex-encoded LineString (0 0, 1 1)
-        try:
-            wkb = bytes.fromhex("01020000000200000000000000000000000000000000000000000000000000f03f000000000000f03f")
-        except:
-            wkb = "01020000000200000000000000000000000000000000000000000000000000f03f000000000000f03f".decode('hex')
-        geom = geometry_wkb(wkb)
-        self.assertEqual(geom['type'], "LineString")
-        self.assertEqual(geom['coordinates'], [(0.0, 0.0), (1.0, 1.0)])
 
-class PolygonTest(unittest.TestCase):
-    def test_polygon(self):
-        # 1 x 1 box (0, 0, 1, 1)
-        try:
-            wkb = bytes.fromhex("01030000000100000005000000000000000000f03f0000000000000000000000000000f03f000000000000f03f0000000000000000000000000000f03f00000000000000000000000000000000000000000000f03f0000000000000000")
-        except:
-            wkb = "01030000000100000005000000000000000000f03f0000000000000000000000000000f03f000000000000f03f0000000000000000000000000000f03f00000000000000000000000000000000000000000000f03f0000000000000000".decode('hex')
-        geom = geometry_wkb(wkb)
-        self.assertEqual(geom['type'], "Polygon")
-        self.assertEqual(len(geom['coordinates']), 1)
-        self.assertEqual(len(geom['coordinates'][0]), 5)
-        x, y = zip(*geom['coordinates'][0])
-        self.assertEqual(min(x), 0.0)
-        self.assertEqual(min(y), 0.0)
-        self.assertEqual(max(x), 1.0)
-        self.assertEqual(max(y), 1.0)
+def test_line_wkb():
+    # Hex-encoded LineString (0 0, 1 1)
+    wkb = ("01020000000200000000000000000000000000000000000000000000000000f03f"
+           "000000000000f03f")
+    geom = geometry_wkb(wkb)
+    assert geom['type'] == "LineString"
+    assert geom['coordinates'] == [(0.0, 0.0), (1.0, 1.0)]
 
-class MultiPointTest(unittest.TestCase):
-    def test_multipoint(self):
-        try:
-            wkb = bytes.fromhex("0104000000020000000101000000000000000000000000000000000000000101000000000000000000f03f000000000000f03f")
-        except:
-            wkb = "0104000000020000000101000000000000000000000000000000000000000101000000000000000000f03f000000000000f03f".decode('hex')
-        geom = geometry_wkb(wkb)
-        self.assertEqual(geom['type'], "MultiPoint")
-        self.assertEqual(geom['coordinates'], [(0.0, 0.0), (1.0, 1.0)])
 
-class MultiLineStringTest(unittest.TestCase):
-    def test_multilinestring(self):
-        # Hex-encoded LineString (0 0, 1 1)
-        try:
-            wkb = bytes.fromhex("01050000000100000001020000000200000000000000000000000000000000000000000000000000f03f000000000000f03f")
-        except:
-            wkb = "01050000000100000001020000000200000000000000000000000000000000000000000000000000f03f000000000000f03f".decode('hex')
-        geom = geometry_wkb(wkb)
-        self.assertEqual(geom['type'], "MultiLineString")
-        self.assertEqual(len(geom['coordinates']), 1)
-        self.assertEqual(len(geom['coordinates'][0]), 2)
-        self.assertEqual(geom['coordinates'][0], [(0.0, 0.0), (1.0, 1.0)])
+def test_polygon_wkb():
+    # 1 x 1 box (0, 0, 1, 1)
+    wkb = ("01030000000100000005000000000000000000f03f000000000000000000000000"
+           "0000f03f000000000000f03f0000000000000000000000000000f03f0000000000"
+           "0000000000000000000000000000000000f03f0000000000000000")
+    geom = geometry_wkb(wkb)
+    assert geom['type'], "Polygon"
+    assert len(geom['coordinates']) == 1
+    assert len(geom['coordinates'][0]) == 5
+    x, y = zip(*geom['coordinates'][0])
+    assert min(x) == 0.0
+    assert min(y) == 0.0
+    assert max(x) == 1.0
+    assert max(y) == 1.0
 
-class MultiPolygonTest(unittest.TestCase):
-    def test_multipolygon(self):
-        # [1 x 1 box (0, 0, 1, 1)]
-        try:
-            wkb = bytes.fromhex("01060000000100000001030000000100000005000000000000000000f03f0000000000000000000000000000f03f000000000000f03f0000000000000000000000000000f03f00000000000000000000000000000000000000000000f03f0000000000000000")
-        except:
-            wkb = "01060000000100000001030000000100000005000000000000000000f03f0000000000000000000000000000f03f000000000000f03f0000000000000000000000000000f03f00000000000000000000000000000000000000000000f03f0000000000000000".decode('hex')
-        geom = geometry_wkb(wkb)
-        self.assertEqual(geom['type'], "MultiPolygon")
-        self.assertEqual(len(geom['coordinates']), 1)
-        self.assertEqual(len(geom['coordinates'][0]), 1)
-        self.assertEqual(len(geom['coordinates'][0][0]), 5)
-        x, y = zip(*geom['coordinates'][0][0])
-        self.assertEqual(min(x), 0.0)
-        self.assertEqual(min(y), 0.0)
-        self.assertEqual(max(x), 1.0)
-        self.assertEqual(max(y), 1.0)
+
+def test_multipoint_wkb():
+    wkb = ("010400000002000000010100000000000000000000000000000000000000010100"
+           "0000000000000000f03f000000000000f03f")
+    geom = geometry_wkb(wkb)
+    assert geom['type'] == "MultiPoint"
+    assert geom['coordinates'] == [(0.0, 0.0), (1.0, 1.0)]
+
+
+def test_multilinestring_wkb():
+    # Hex-encoded LineString (0 0, 1 1)
+    wkb = ("010500000001000000010200000002000000000000000000000000000000000000"
+           "00000000000000f03f000000000000f03f")
+    geom = geometry_wkb(wkb)
+    assert geom['type'] == "MultiLineString"
+    assert len(geom['coordinates']) == 1
+    assert len(geom['coordinates'][0]) == 2
+    assert geom['coordinates'][0] == [(0.0, 0.0), (1.0, 1.0)]
+
+
+def test_multipolygon_wkb():
+    # [1 x 1 box (0, 0, 1, 1)]
+    wkb = ("01060000000100000001030000000100000005000000000000000000f03f000000"
+           "0000000000000000000000f03f000000000000f03f000000000000000000000000"
+           "0000f03f00000000000000000000000000000000000000000000f03f0000000000"
+           "000000")
+    geom = geometry_wkb(wkb)
+    assert geom['type'] == "MultiPolygon"
+    assert len(geom['coordinates']) == 1
+    assert len(geom['coordinates'][0]) == 1
+    assert len(geom['coordinates'][0][0]) == 5
+    x, y = zip(*geom['coordinates'][0][0])
+    assert min(x) == 0.0
+    assert min(y) == 0.0
+    assert max(x) == 1.0
+    assert max(y) == 1.0
