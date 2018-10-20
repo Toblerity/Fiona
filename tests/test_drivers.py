@@ -2,7 +2,6 @@
 
 
 import logging
-import os
 
 import pytest
 
@@ -10,7 +9,7 @@ import fiona
 from fiona.errors import FionaDeprecationWarning
 
 
-def test_options(tmpdir):
+def test_options(tmpdir, path_coutwildrnp_shp):
     """Test that setting CPL_DEBUG=ON works and that a warning is raised."""
     logfile = str(tmpdir.mkdir('tests').join('test_options.log'))
     logger = logging.getLogger()
@@ -22,8 +21,7 @@ def test_options(tmpdir):
     # fiona.drivers() will be deprecated.
     with pytest.warns(FionaDeprecationWarning):
         with fiona.drivers(CPL_DEBUG=True):
-            path = os.path.join("tests", "data", "coutwildrnp.shp")
-            c = fiona.open(path)
+            c = fiona.open(path_coutwildrnp_shp)
             c.close()
             with open(logfile, "r") as f:
                 log = f.read()
