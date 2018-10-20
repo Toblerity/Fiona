@@ -848,25 +848,6 @@ class TestCollection(object):
             fiona.open("/dev/null", "r")
 
 
-class GeoJSONCRSWritingTest(unittest.TestCase):
-
-    def setUp(self):
-        self.tempdir = tempfile.mkdtemp()
-        self.filename = os.path.join(self.tempdir, "crs_writing_test.json")
-        self.sink = fiona.open(
-            self.filename,
-            "w",
-            driver="GeoJSON",
-            schema={
-                'geometry': 'Point',
-                'properties': [('title', 'str'), ('date', 'date')]},
-            crs={'a': 6370997, 'lon_0': -100, 'y_0': 0, 'no_defs': True, 'proj': 'laea', 'x_0': 0, 'units': 'm', 'b': 6370997, 'lat_0': 45})
-
-    def tearDown(self):
-        self.sink.close()
-        shutil.rmtree(self.tempdir)
-
-
 def test_date(tmpdir):
     name = str(tmpdir.join("date_test.shp"))
     sink = fiona.open(
