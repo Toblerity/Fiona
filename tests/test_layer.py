@@ -26,20 +26,20 @@ class FileReadingTest(ReadingTest):
         self.c.close()
 
     def test_open_repr(self):
-        self.assertEqual(
-            repr(self.c),
+        assert (
+            repr(self.c) ==
             ("<open Collection '{path}:coutwildrnp', mode 'r' "
             "at {id}>".format(path=self.path_coutwildrnp_shp, id=hex(id(self.c)))))
 
     def test_closed_repr(self):
         self.c.close()
-        self.assertEqual(
-            repr(self.c),
+        assert (
+            repr(self.c) ==
             ("<closed Collection '{path}:coutwildrnp', mode 'r' "
             "at {id}>".format(path=self.path_coutwildrnp_shp, id=hex(id(self.c)))))
 
     def test_name(self):
-        self.assertEqual(self.c.name, 'coutwildrnp')
+        assert self.c.name == 'coutwildrnp'
 
 
 @pytest.mark.usefixtures("unittest_data_dir")
@@ -52,23 +52,23 @@ class DirReadingTest(ReadingTest):
         self.c.close()
 
     def test_open_repr(self):
-        self.assertEqual(
-            repr(self.c),
+        assert (
+            repr(self.c) ==
             ("<open Collection '{path}:coutwildrnp', mode 'r' "
             "at {id}>".format(path=self.data_dir, id=hex(id(self.c)))))
 
     def test_closed_repr(self):
         self.c.close()
-        self.assertEqual(
-            repr(self.c),
+        assert (
+            repr(self.c) ==
             ("<closed Collection '{path}:coutwildrnp', mode 'r' "
             "at {id}>".format(path=self.data_dir, id=hex(id(self.c)))))
 
     def test_name(self):
-        self.assertEqual(self.c.name, 'coutwildrnp')
+        assert self.c.name == 'coutwildrnp'
 
     def test_path(self):
-        self.assertEqual(self.c.path, self.data_dir)
+        assert self.c.path == self.data_dir
 
 
 @pytest.mark.usefixtures("unittest_path_coutwildrnp_shp")
