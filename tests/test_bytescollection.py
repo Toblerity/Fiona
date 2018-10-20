@@ -28,27 +28,27 @@ class ReadingTest(unittest.TestCase):
     def test_open_repr(self):
         # I'm skipping checking the name of the virtual file as it produced by uuid.
         print(repr(self.c))
-        self.assertTrue(repr(self.c).startswith("<open BytesCollection '/vsimem/"))
+        assert repr(self.c).startswith("<open BytesCollection '/vsimem/")
 
     def test_closed_repr(self):
         # I'm skipping checking the name of the virtual file as it produced by uuid.
         self.c.close()
         print(repr(self.c))
-        self.assertTrue(repr(self.c).startswith("<closed BytesCollection '/vsimem/"))
+        assert repr(self.c).startswith("<closed BytesCollection '/vsimem/")
 
     def test_path(self):
         assert self.c.path == self.c.virtual_file
 
     def test_closed_virtual_file(self):
         self.c.close()
-        self.assertTrue(self.c.virtual_file is None)
+        assert self.c.virtual_file is None
 
     def test_closed_buf(self):
         self.c.close()
-        self.assertTrue(self.c.bytesbuf is None)
+        assert self.c.bytesbuf is None
 
     def test_name(self):
-        self.assertTrue(len(self.c.name) > 0)
+        assert len(self.c.name) > 0
 
     def test_mode(self):
         assert self.c.mode == 'r'
@@ -57,7 +57,7 @@ class ReadingTest(unittest.TestCase):
         assert self.c.encoding == 'utf-8'
 
     def test_iter(self):
-        self.assertTrue(iter(self.c))
+        assert iter(self.c)
 
     def test_closed_no_iter(self):
         self.c.close()
@@ -111,8 +111,7 @@ class ReadingTest(unittest.TestCase):
         assert self.c.crs['init'] == 'epsg:4326'
 
     def test_crs_wkt(self):
-        crs = self.c.crs_wkt
-        self.assertTrue(crs.startswith('GEOGCS["WGS 84"'))
+        assert self.c.crs_wkt.startswith('GEOGCS["WGS 84"')
 
     def test_closed_crs(self):
         # Crs is lazy too, never computed in this case. TODO?
@@ -170,8 +169,8 @@ class ReadingTest(unittest.TestCase):
         assert i == 0
 
     def test_in_keys(self):
-        self.assertTrue(0 in self.c.keys())
-        self.assertTrue(0 in self.c)
+        assert 0 in self.c.keys()
+        assert 0 in self.c
 
 
 @pytest.mark.usefixtures('uttc_path_coutwildrnp_json')

@@ -24,11 +24,11 @@ TEMPDIR = tempfile.gettempdir()
 class SupportedDriversTest(unittest.TestCase):
 
     def test_shapefile(self):
-        self.assertTrue("ESRI Shapefile" in supported_drivers)
+        assert "ESRI Shapefile" in supported_drivers
         assert set(supported_drivers["ESRI Shapefile"]) == set("raw")
 
     def test_map(self):
-        self.assertTrue("MapInfo File" in supported_drivers)
+        assert "MapInfo File" in supported_drivers
         assert set(supported_drivers["MapInfo File"]) == set("raw")
 
 
@@ -124,7 +124,7 @@ class ReadingTest(unittest.TestCase):
         assert self.c.encoding == 'iso-8859-1'
 
     def test_iter(self):
-        self.assertTrue(iter(self.c))
+        assert iter(self.c)
 
     def test_closed_no_iter(self):
         self.c.close()
@@ -258,8 +258,8 @@ class ReadingTest(unittest.TestCase):
         assert i == 0
 
     def test_in_keys(self):
-        self.assertTrue(0 in self.c.keys())
-        self.assertTrue(0 in self.c)
+        assert 0 in self.c.keys()
+        assert 0 in self.c
 
 
 @pytest.mark.usefixtures("unittest_path_coutwildrnp_shp")
@@ -674,8 +674,8 @@ class PointWritingTest(unittest.TestCase):
         finvalid = {
             'geometry': {'type': 'Point', 'coordinates': (0.0, -0.1)},
             'properties': {'not-a-title': 'point two', 'date': "2012-01-29"}}
-        self.assertTrue(self.sink.validate_record(fvalid))
-        self.assertFalse(self.sink.validate_record(finvalid))
+        assert self.sink.validate_record(fvalid)
+        assert not self.sink.validate_record(finvalid)
 
 
 class LineWritingTest(unittest.TestCase):
