@@ -130,10 +130,10 @@ class ReadingTest(unittest.TestCase):
                 ['crs', 'crs_wkt', 'driver', 'schema'])
 
     def test_bounds(self):
-        self.assertAlmostEqual(self.c.bounds[0], -113.564247, 6)
-        self.assertAlmostEqual(self.c.bounds[1], 37.068981, 6)
-        self.assertAlmostEqual(self.c.bounds[2], -104.970871, 6)
-        self.assertAlmostEqual(self.c.bounds[3], 41.996277, 6)
+        assert self.c.bounds[0] == pytest.approx(-113.564247)
+        assert self.c.bounds[1] == pytest.approx(37.068981)
+        assert self.c.bounds[2] == pytest.approx(-104.970871)
+        assert self.c.bounds[3] == pytest.approx(41.996277)
 
     def test_iter_one(self):
         itr = iter(self.c)
