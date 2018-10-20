@@ -4,6 +4,8 @@ import logging
 import sys
 import unittest
 
+import pytest
+
 from fiona._geometry import (GeomBuilder, geometryRT)
 from fiona.errors import UnsupportedGeometryTypeError
 
@@ -12,112 +14,54 @@ def geometry_wkb(wkb):
     return GeomBuilder().build_wkb(wkb)
 
 
-class OGRBuilderExceptionsTest(unittest.TestCase):
-    def test(self):
-        geom = {'type': "Bogus", 'coordinates': None}
-        self.assertRaises(ValueError, geometryRT, geom)
-
-# The round tripping tests are defined in this not to be run base class.
-#
-class RoundTripping(object):
-    """Derive type specific classes from this."""
-
-    def test_type(self):
-        self.assertEqual(
-            geometryRT(self.geom)['type'], self.geom['type'])
-
-    def test_coordinates(self):
-        self.assertEqual(
-            geometryRT(self.geom)['coordinates'], self.geom['coordinates'])
-
-# All these get their tests from the RoundTripping class.
-#
-class PointRoundTripTest(unittest.TestCase, RoundTripping):
-    def setUp(self):
-        self.geom = {'type': "Point", 'coordinates': (0.0, 0.0)}
-
-class LineStringRoundTripTest(unittest.TestCase, RoundTripping):
-    def setUp(self):
-        self.geom = {
-            'type': "LineString",
-            'coordinates': [(0.0, 0.0), (1.0, 1.0)]}
-
-class PolygonRoundTripTest1(unittest.TestCase, RoundTripping):
-    """An explicitly closed polygon."""
-    def setUp(self):
-        self.geom = {
-            'type': "Polygon",
-            'coordinates': [
-                [(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]]}
-
-class PolygonRoundTripTest2(unittest.TestCase, RoundTripping):
-    """An implicitly closed polygon."""
-
-    def setUp(self):
-        self.geom = {
-            'type': "Polygon",
-            'coordinates': [
-                [(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0)]]}
-
-    def test_coordinates(self):
-        self.assertEqual(
-            [geometryRT(self.geom)['coordinates'][0][:-1]],
-            self.geom['coordinates'])
-
-class MultiPointRoundTripTest(unittest.TestCase, RoundTripping):
-    def setUp(self):
-        self.geom = {
-            'type': "MultiPoint", 'coordinates': [(0.0, 0.0), (1.0, 1.0)]}
-
-class MultiLineStringRoundTripTest(unittest.TestCase, RoundTripping):
-    def setUp(self):
-        self.geom = {
-            'type': "MultiLineString",
-            'coordinates': [[(0.0, 0.0), (1.0, 1.0)]]}
-
-class MultiPolygonRoundTripTest1(unittest.TestCase, RoundTripping):
-
-    def setUp(self):
-        # This is an explicitly closed polygon.
-        self.geom = {
-            'type': "MultiPolygon",
-            'coordinates': [[[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]]]}
+def test_ogr_builder_exceptions():
+    geom = {'type': "Bogus", 'coordinates': None}
+    with pytest.raises(ValueError):
+        geometryRT(geom)
 
 
-class MultiPolygonRoundTripTest2(unittest.TestCase, RoundTripping):
+@pytest.mark.parametrize('geom_type, coordinates', [
+    ('Point', (0.0, 0.0)),
+    ('LineString', [(0.0, 0.0), (1.0, 1.0)]),
+    ('Polygon',
+     [[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]]),
+    ('MultiPoint', [(0.0, 0.0), (1.0, 1.0)]),
+    ('MultiLineString', [[(0.0, 0.0), (1.0, 1.0)]]),
+    ('MultiPolygon',
+     [[[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]]]),
+])
+def test_round_tripping(geom_type, coordinates):
+    result = geometryRT({'type': geom_type, 'coordinates': coordinates})
+    assert result['type'] == geom_type
+    assert result['coordinates'] == coordinates
 
-    def setUp(self):
-        # This is an implicitly closed polygon.
-        self.geom = {
-            'type': "MultiPolygon",
-            'coordinates':
-                [[[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0)]]]}
 
-    def test_coordinates(self):
-        self.assertEqual(
-            [[geometryRT(self.geom)['coordinates'][0][0][:-1]]],
-            self.geom['coordinates'])
+@pytest.mark.parametrize('geom_type, coordinates', [
+    ('Polygon', [[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0)]]),
+    ('MultiPolygon', [[[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0)]]]),
+])
+def test_implicitly_closed_round_tripping(geom_type, coordinates):
+    result = geometryRT({'type': geom_type, 'coordinates': coordinates})
+    assert result['type'] == geom_type
+    result_coordinates = result['coordinates']
+    while not isinstance(coordinates[0], tuple):
+        result_coordinates = result_coordinates[0]
+        coordinates = coordinates[0]
+    assert result_coordinates[:-1] == coordinates
 
 
-class GeometryCollectionRoundTripTest(unittest.TestCase):
+def test_geometry_collection_round_trip():
+    geom = {
+        'type': "GeometryCollection",
+        'geometries': [
+            {'type': "Point", 'coordinates': (0.0, 0.0)}, {
+                'type': "LineString",
+                'coordinates': [(0.0, 0.0), (1.0, 1.0)]}]}
 
-    def setUp(self):
-        self.geom = {
-            'type': "GeometryCollection",
-            'geometries': [
-                {'type': "Point", 'coordinates': (0.0, 0.0)}, {
-                    'type': "LineString",
-                    'coordinates': [(0.0, 0.0), (1.0, 1.0)]}]}
+    result = geometryRT(geom)
+    assert len(result['geometries']) == 2
+    assert [g['type'] for g in result['geometries']] == ['Point', 'LineString']
 
-    def test_len(self):
-        result = geometryRT(self.geom)
-        self.assertEqual(len(result['geometries']), 2)
-
-    def test_type(self):
-        result = geometryRT(self.geom)
-        self.assertEqual(
-            [g['type'] for g in result['geometries']],
-            ['Point', 'LineString'])
 
 class PointTest(unittest.TestCase):
     def test_point(self):
