@@ -12,16 +12,10 @@ from fiona.collection import supported_drivers
 from fiona.errors import FionaValueError, DriverError, SchemaError, CRSError
 
 
-class ReadingTest(unittest.TestCase):
+def test_json_read(path_coutwildrnp_json):
+    with fiona.open(path_coutwildrnp_json, 'r') as c:
+        assert len(c) == 67
 
-    def setUp(self):
-        self.c = fiona.open('tests/data/coutwildrnp.json', 'r')
-
-    def tearDown(self):
-        self.c.close()
-
-    def test_json(self):
-        self.assertEqual(len(self.c), 67)
 
 class WritingTest(unittest.TestCase):
 
