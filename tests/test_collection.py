@@ -2,9 +2,7 @@
 
 import datetime
 import logging
-import os
 import sys
-import tempfile
 import unittest
 import re
 
@@ -15,9 +13,6 @@ from fiona.collection import Collection, supported_drivers
 from fiona.errors import FionaValueError, DriverError
 
 from .conftest import WGS84PATTERN
-
-
-TEMPDIR = tempfile.gettempdir()
 
 
 class TestSupportedDrivers(object):
@@ -355,13 +350,12 @@ class TestFilterReading(object):
 
 class TestUnsupportedDriver(object):
 
-    def test_immediate_fail_driver(self):
+    def test_immediate_fail_driver(self, tmpdir):
         schema = {
             'geometry': 'Point',
             'properties': {'label': 'str', u'verit\xe9': 'int'}}
         with pytest.raises(DriverError):
-            fiona.open(os.path.join(TEMPDIR, "foo"), "w", "Bogus",
-                       schema=schema)
+            fiona.open(str(tmpdir.join("foo")), "w", "Bogus", schema=schema)
 
 
 class TestGenericWritingTest(object):
@@ -791,16 +785,15 @@ def test_shapefile_field_width(tmpdir):
 
 class TestCollection(object):
 
-    def test_invalid_mode(self):
+    def test_invalid_mode(self, tmpdir):
         with pytest.raises(ValueError):
-            fiona.open(os.path.join(TEMPDIR, "bogus.shp"), "r+")
+            fiona.open(str(tmpdir.join("bogus.shp")), "r+")
 
-    def test_w_args(self):
+    def test_w_args(self, tmpdir):
         with pytest.raises(FionaValueError):
-            fiona.open(os.path.join(TEMPDIR, "test-no-iter.shp"), "w")
+            fiona.open(str(tmpdir.join("test-no-iter.shp")), "w")
         with pytest.raises(FionaValueError):
-            fiona.open(os.path.join(TEMPDIR, "test-no-iter.shp"), "w",
-                       "Driver")
+            fiona.open(str(tmpdir.join("test-no-iter.shp")), "w", "Driver")
 
     def test_no_path(self):
         with pytest.raises(Exception):
