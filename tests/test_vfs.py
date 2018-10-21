@@ -3,7 +3,6 @@ import sys
 import os
 
 import pytest
-from packaging.version import parse
 import boto3
 
 import fiona
