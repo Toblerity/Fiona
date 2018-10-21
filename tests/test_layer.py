@@ -1,7 +1,7 @@
 import pytest
 
 import fiona
-from .test_collection import ReadingTest
+from .test_collection import TestReading
 
 
 def test_index_selection(path_coutwildrnp_shp):
@@ -9,59 +9,55 @@ def test_index_selection(path_coutwildrnp_shp):
         assert len(c) == 67
 
 
-@pytest.mark.usefixtures("unittest_path_coutwildrnp_shp")
-class FileReadingTest(ReadingTest):
-
-    def setUp(self):
-        self.c = fiona.open(self.path_coutwildrnp_shp, 'r', layer='coutwildrnp')
-
-    def tearDown(self):
+class TestFileReading(TestReading):
+    @pytest.fixture(autouse=True)
+    def shapefile(self, path_coutwildrnp_shp):
+        self.c = fiona.open(path_coutwildrnp_shp, 'r', layer='coutwildrnp')
+        yield
         self.c.close()
 
-    def test_open_repr(self):
+    def test_open_repr(self, path_coutwildrnp_shp):
         assert (
             repr(self.c) ==
             ("<open Collection '{path}:coutwildrnp', mode 'r' "
-            "at {id}>".format(path=self.path_coutwildrnp_shp, id=hex(id(self.c)))))
+             "at {id}>".format(path=path_coutwildrnp_shp, id=hex(id(self.c)))))
 
-    def test_closed_repr(self):
+    def test_closed_repr(self, path_coutwildrnp_shp):
         self.c.close()
         assert (
             repr(self.c) ==
             ("<closed Collection '{path}:coutwildrnp', mode 'r' "
-            "at {id}>".format(path=self.path_coutwildrnp_shp, id=hex(id(self.c)))))
+             "at {id}>".format(path=path_coutwildrnp_shp, id=hex(id(self.c)))))
 
     def test_name(self):
         assert self.c.name == 'coutwildrnp'
 
 
-@pytest.mark.usefixtures("unittest_data_dir")
-class DirReadingTest(ReadingTest):
-
-    def setUp(self):
-        self.c = fiona.open(self.data_dir, "r", layer="coutwildrnp")
-
-    def tearDown(self):
+class TestDirReading(TestReading):
+    @pytest.fixture(autouse=True)
+    def shapefile(self, data_dir):
+        self.c = fiona.open(data_dir, "r", layer="coutwildrnp")
+        yield
         self.c.close()
 
-    def test_open_repr(self):
+    def test_open_repr(self, data_dir):
         assert (
             repr(self.c) ==
             ("<open Collection '{path}:coutwildrnp', mode 'r' "
-            "at {id}>".format(path=self.data_dir, id=hex(id(self.c)))))
+             "at {id}>".format(path=data_dir, id=hex(id(self.c)))))
 
-    def test_closed_repr(self):
+    def test_closed_repr(self, data_dir):
         self.c.close()
         assert (
             repr(self.c) ==
             ("<closed Collection '{path}:coutwildrnp', mode 'r' "
-            "at {id}>".format(path=self.data_dir, id=hex(id(self.c)))))
+             "at {id}>".format(path=data_dir, id=hex(id(self.c)))))
 
     def test_name(self):
         assert self.c.name == 'coutwildrnp'
 
-    def test_path(self):
-        assert self.c.path == self.data_dir
+    def test_path(self, data_dir):
+        assert self.c.path == data_dir
 
 
 def test_invalid_layer(path_coutwildrnp_shp):

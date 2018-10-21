@@ -3,7 +3,6 @@
 import datetime
 import logging
 import sys
-import unittest
 import re
 
 import pytest
@@ -85,30 +84,30 @@ class TestOpenException(object):
             fiona.open("/", mode='r', vfs="zip:///foo.zip")
 
 
-@pytest.mark.usefixtures("unittest_path_coutwildrnp_shp")
-class ReadingTest(unittest.TestCase):
-
-    def setUp(self):
-        self.c = fiona.open(self.path_coutwildrnp_shp, "r")
-
-    def tearDown(self):
+class TestReading(object):
+    @pytest.fixture(autouse=True)
+    def shapefile(self, path_coutwildrnp_shp):
+        self.c = fiona.open(path_coutwildrnp_shp, "r")
+        yield
         self.c.close()
 
-    def test_open_repr(self):
+    def test_open_repr(self, path_coutwildrnp_shp):
         assert (
             repr(self.c) ==
             ("<open Collection '{path}:coutwildrnp', mode 'r' "
-             "at {hexid}>".format(hexid=hex(id(self.c)), path=self.path_coutwildrnp_shp)))
+             "at {hexid}>".format(hexid=hex(id(self.c)),
+                                  path=path_coutwildrnp_shp)))
 
-    def test_closed_repr(self):
+    def test_closed_repr(self, path_coutwildrnp_shp):
         self.c.close()
         assert (
             repr(self.c) ==
             ("<closed Collection '{path}:coutwildrnp', mode 'r' "
-             "at {hexid}>".format(hexid=hex(id(self.c)), path=self.path_coutwildrnp_shp)))
+             "at {hexid}>".format(hexid=hex(id(self.c)),
+                                  path=path_coutwildrnp_shp)))
 
-    def test_path(self):
-        assert self.c.path == self.path_coutwildrnp_shp
+    def test_path(self, path_coutwildrnp_shp):
+        assert self.c.path == path_coutwildrnp_shp
 
     def test_name(self):
         assert self.c.name == 'coutwildrnp'
@@ -203,8 +202,8 @@ class ReadingTest(unittest.TestCase):
         assert self.c.bounds[2] == pytest.approx(-104.970871)
         assert self.c.bounds[3] == pytest.approx(41.996277)
 
-    def test_context(self):
-        with fiona.open(self.path_coutwildrnp_shp, "r") as c:
+    def test_context(self, path_coutwildrnp_shp):
+        with fiona.open(path_coutwildrnp_shp, "r") as c:
             assert c.name == 'coutwildrnp'
             assert len(c) == 67
         assert c.closed
