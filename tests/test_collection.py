@@ -3,7 +3,6 @@
 import datetime
 import logging
 import os
-import shutil
 import sys
 import tempfile
 import unittest
@@ -266,11 +265,10 @@ class ReadingTest(unittest.TestCase):
         assert 0 in self.c
 
 
-@pytest.mark.usefixtures("unittest_path_coutwildrnp_shp")
-class ReadingPathTest(unittest.TestCase):
-    def test_open_path(self):
+class TestReadingPathTest(object):
+    def test_open_path(self, path_coutwildrnp_shp):
         pathlib = pytest.importorskip("pathlib")
-        with fiona.open(pathlib.Path(self.path_coutwildrnp_shp)) as collection:
+        with fiona.open(pathlib.Path(path_coutwildrnp_shp)) as collection:
             assert collection.name == 'coutwildrnp'
 
 
@@ -326,13 +324,11 @@ class TestIgnoreFieldsAndGeometry(object):
             assert("geometry" not in feature.keys())
 
 
-@pytest.mark.usefixtures("unittest_path_coutwildrnp_shp")
-class FilterReadingTest(unittest.TestCase):
-
-    def setUp(self):
-        self.c = fiona.open(self.path_coutwildrnp_shp, "r")
-
-    def tearDown(self):
+class TestFilterReading(object):
+    @pytest.fixture(autouse=True)
+    def shapefile(self, path_coutwildrnp_shp):
+        self.c = fiona.open(path_coutwildrnp_shp, "r")
+        yield
         self.c.close()
 
     def test_filter_1(self):
@@ -368,24 +364,17 @@ class TestUnsupportedDriver(object):
                        schema=schema)
 
 
-class GenericWritingTest(unittest.TestCase):
-    tempdir = None
-    c = None
-
-    @classmethod
-    def setUpClass(self):
-        self.tempdir = tempfile.mkdtemp()
+class TestGenericWritingTest(object):
+    @pytest.fixture(autouse=True)
+    def no_iter_shp(self, tmpdir):
         schema = {
             'geometry': 'Point',
             'properties': [('label', 'str'), (u'verit\xe9', 'int')]}
-        self.c = fiona.open(os.path.join(self.tempdir, "test-no-iter.shp"),
+        self.c = fiona.open(str(tmpdir.join("test-no-iter.shp")),
                             'w', driver="ESRI Shapefile", schema=schema,
                             encoding='Windows-1252')
-
-    @classmethod
-    def tearDownClass(self):
+        yield
         self.c.close()
-        shutil.rmtree(self.tempdir)
 
     def test_encoding(self):
         assert self.c.encoding == 'Windows-1252'
@@ -399,14 +388,10 @@ class GenericWritingTest(unittest.TestCase):
             self.c.filter()
 
 
-class PropertiesNumberFormattingTest(unittest.TestCase):
-
-    def setUp(self):
-        self.tempdir = tempfile.mkdtemp()
-        self.filename = os.path.join(self.tempdir, "properties_number_formatting_test")
-
-    def tearDown(self):
-        shutil.rmtree(self.tempdir)
+class TestPropertiesNumberFormatting(object):
+    @pytest.fixture(autouse=True)
+    def shapefile(self, tmpdir):
+        self.filename = str(tmpdir.join("properties_number_formatting_test"))
 
     _records_with_float_property1 = [
         {
@@ -613,11 +598,10 @@ class PropertiesNumberFormattingTest(unittest.TestCase):
             assert 0 == rf1['properties']['property1']
 
 
-class PointWritingTest(unittest.TestCase):
-
-    def setUp(self):
-        self.tempdir = tempfile.mkdtemp()
-        self.filename = os.path.join(self.tempdir, "point_writing_test.shp")
+class TestPointWriting(object):
+    @pytest.fixture(autouse=True)
+    def shapefile(self, tmpdir):
+        self.filename = str(tmpdir.join("point_writing_test.shp"))
         self.sink = fiona.open(
             self.filename,
             "w",
@@ -627,16 +611,13 @@ class PointWritingTest(unittest.TestCase):
                 'properties': [('title', 'str'), ('date', 'date')]},
             crs='epsg:4326',
             encoding='utf-8')
-
-    def tearDown(self):
+        yield
         self.sink.close()
-        shutil.rmtree(self.tempdir)
 
-    def test_cpg(self):
+    def test_cpg(self, tmpdir):
         """Requires GDAL 1.9"""
         self.sink.close()
-        with open(os.path.join(self.tempdir, "point_writing_test.cpg")) as f:
-            encoding = f.readline()
+        encoding = tmpdir.join("point_writing_test.cpg").read()
         assert encoding == "UTF-8"
 
     def test_write_one(self):
@@ -684,22 +665,19 @@ class PointWritingTest(unittest.TestCase):
         assert not self.sink.validate_record(finvalid)
 
 
-class LineWritingTest(unittest.TestCase):
-
-    def setUp(self):
-        self.tempdir = tempfile.mkdtemp()
+class TestLineWriting(object):
+    @pytest.fixture(autouse=True)
+    def shapefile(self, tmpdir):
         self.sink = fiona.open(
-            os.path.join(self.tempdir, "line_writing_test.shp"),
+            str(tmpdir.join("line_writing_test.shp")),
             "w",
             driver="ESRI Shapefile",
             schema={
                 'geometry': 'LineString',
                 'properties': [('title', 'str'), ('date', 'date')]},
             crs={'init': "epsg:4326", 'no_defs': True})
-
-    def tearDown(self):
+        yield
         self.sink.close()
-        shutil.rmtree(self.tempdir)
 
     def test_write_one(self):
         assert len(self.sink) == 0
@@ -729,16 +707,14 @@ class LineWritingTest(unittest.TestCase):
         assert self.sink.bounds == (0.0, -0.2, 0.0, 0.2)
 
 
-@pytest.mark.usefixtures("unittest_path_coutwildrnp_shp")
-class PointAppendTest(unittest.TestCase):
-
-    def setUp(self):
-        self.tempdir = tempfile.mkdtemp()
-        with fiona.open(self.path_coutwildrnp_shp, "r") as input:
+class TestPointAppend(object):
+    @pytest.fixture(autouse=True)
+    def shapefile(self, tmpdir, path_coutwildrnp_shp):
+        with fiona.open(path_coutwildrnp_shp, "r") as input:
             output_schema = input.schema.copy()
             output_schema['geometry'] = '3D Point'
             with fiona.open(
-                    os.path.join(self.tempdir, "test_append_point.shp"),
+                    str(tmpdir.join("test_append_point.shp")),
                     'w', crs=None, driver="ESRI Shapefile",
                     schema=output_schema) as output:
                 for f in input:
@@ -747,11 +723,8 @@ class PointAppendTest(unittest.TestCase):
                         'coordinates': f['geometry']['coordinates'][0][0]}
                     output.write(f)
 
-    def tearDown(self):
-        shutil.rmtree(self.tempdir)
-
-    def test_append_point(self):
-        with fiona.open(os.path.join(self.tempdir, "test_append_point.shp"), "a") as c:
+    def test_append_point(self, tmpdir):
+        with fiona.open(str(tmpdir.join("test_append_point.shp")), "a") as c:
             assert c.schema['geometry'] == '3D Point'
             c.write({'geometry': {'type': 'Point', 'coordinates': (0.0, 45.0)},
                      'properties': {'PERIMETER': 1.0,
@@ -767,12 +740,11 @@ class PointAppendTest(unittest.TestCase):
             assert len(c) == 68
 
 
-class LineAppendTest(unittest.TestCase):
-
-    def setUp(self):
-        self.tempdir = tempfile.mkdtemp()
+class TestLineAppend(object):
+    @pytest.fixture(autouse=True)
+    def shapefile(self, tmpdir):
         with fiona.open(
-                os.path.join(self.tempdir, "test_append_line.shp"),
+                str(tmpdir.join("test_append_line.shp")),
                 "w",
                 driver="ESRI Shapefile",
                 schema={
@@ -784,11 +756,8 @@ class LineAppendTest(unittest.TestCase):
                  'properties': {'title': 'line one', 'date': "2012-01-29"}}
             output.writerecords([f])
 
-    def tearDown(self):
-        shutil.rmtree(self.tempdir)
-
-    def test_append_line(self):
-        with fiona.open(os.path.join(self.tempdir, "test_append_line.shp"), "a") as c:
+    def test_append_line(self, tmpdir):
+        with fiona.open(str(tmpdir.join("test_append_line.shp")), "a") as c:
             assert c.schema['geometry'] == 'LineString'
             f1 = {
                 'geometry': {'type': 'LineString',
