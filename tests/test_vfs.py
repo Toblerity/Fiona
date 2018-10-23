@@ -33,10 +33,10 @@ class VsiReadingTest(ReadingTest):
                               "differs based on the GDAL version.")
     def test_filter_vsi(self):
         results = list(self.c.filter(bbox=(-114.0, 35.0, -104, 45.0)))
-        self.assertEqual(len(results), 67)
+        assert len(results) == 67
         f = results[0]
-        self.assertEqual(f['id'], "0")
-        self.assertEqual(f['properties']['STATE'], 'UT')
+        assert f['id'] == "0"
+        assert f['properties']['STATE'] == 'UT'
 
 
 @pytest.mark.usefixtures('uttc_path_coutwildrnp_zip', 'uttc_data_dir')
@@ -50,8 +50,8 @@ class ZipReadingTest(VsiReadingTest):
         self.c.close()
 
     def test_open_repr(self):
-        self.assertEqual(
-            repr(self.c),
+        assert (
+            repr(self.c) ==
             ("<open Collection '/vsizip/{path}:coutwildrnp', mode 'r' "
             "at {id}>".format(
                 id=hex(id(self.c)),
@@ -59,17 +59,15 @@ class ZipReadingTest(VsiReadingTest):
 
     def test_closed_repr(self):
         self.c.close()
-        self.assertEqual(
-            repr(self.c),
+        assert (
+            repr(self.c) ==
             ("<closed Collection '/vsizip/{path}:coutwildrnp', mode 'r' "
             "at {id}>".format(
                 id=hex(id(self.c)),
                 path=self.path)))
 
     def test_path(self):
-        self.assertEqual(
-            self.c.path, '/vsizip/{path}'.format(
-                path=self.path))
+        assert self.c.path == '/vsizip/{path}'.format(path=self.path)
 
 
 @pytest.mark.usefixtures('uttc_path_coutwildrnp_zip', 'uttc_data_dir')
@@ -84,8 +82,8 @@ class ZipArchiveReadingTest(VsiReadingTest):
         self.c.close()
 
     def test_open_repr(self):
-        self.assertEqual(
-            repr(self.c),
+        assert (
+            repr(self.c) ==
             ("<open Collection '/vsizip/{path}/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at {id}>".format(
                 id=hex(id(self.c)),
@@ -93,18 +91,16 @@ class ZipArchiveReadingTest(VsiReadingTest):
 
     def test_closed_repr(self):
         self.c.close()
-        self.assertEqual(
-            repr(self.c),
+        assert (
+            repr(self.c) ==
             ("<closed Collection '/vsizip/{path}/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at {id}>".format(
                 id=hex(id(self.c)),
                 path=self.path)))
 
     def test_path(self):
-        self.assertEqual(
-            self.c.path,
-            '/vsizip/{path}/coutwildrnp.shp'.format(
-                path=self.path))
+        assert (self.c.path ==
+                '/vsizip/{path}/coutwildrnp.shp'.format(path=self.path))
 
 
 @pytest.mark.usefixtures('uttc_path_coutwildrnp_zip')
@@ -137,8 +133,8 @@ class TarArchiveReadingTest(VsiReadingTest):
         self.c.close()
 
     def test_open_repr(self):
-        self.assertEqual(
-            repr(self.c),
+        assert (
+            repr(self.c) ==
             ("<open Collection '/vsitar/{path}/testing/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at {id}>".format(
                 id=hex(id(self.c)),
@@ -146,18 +142,18 @@ class TarArchiveReadingTest(VsiReadingTest):
 
     def test_closed_repr(self):
         self.c.close()
-        self.assertEqual(
-            repr(self.c),
+        assert (
+            repr(self.c) ==
             ("<closed Collection '/vsitar/{path}/testing/coutwildrnp.shp:coutwildrnp', mode 'r' "
             "at {id}>".format(
                 id=hex(id(self.c)),
                 path=self.path)))
 
     def test_path(self):
-        self.assertEqual(
-            self.c.path,
-            '/vsitar/{path}/testing/coutwildrnp.shp'.format(
-                path=self.path))
+        assert (
+            self.c.path ==
+            '/vsitar/{path}/testing/coutwildrnp.shp'.format(path=self.path))
+
 
 @pytest.mark.network
 def test_open_http():
