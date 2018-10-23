@@ -5,21 +5,21 @@ import os
 import shutil
 import sys
 import tempfile
-import unittest
 
 import pytest
 
 import fiona
 
 
-class UnicodePathTest(unittest.TestCase):
+class TestUnicodePath(object):
 
-    def setUp(self):
+    def setup(self):
         tempdir = tempfile.mkdtemp()
         self.dir = os.path.join(tempdir, u'français')
-        shutil.copytree('tests/data/', self.dir)
+        shutil.copytree(os.path.join(os.path.dirname(__file__), 'data'),
+                        self.dir)
 
-    def tearDown(self):
+    def teardown(self):
         shutil.rmtree(os.path.dirname(self.dir))
 
     def test_unicode_path(self):
@@ -39,12 +39,13 @@ class UnicodePathTest(unittest.TestCase):
             with fiona.open(path) as c:
                 assert len(c) == 67
 
-class UnicodeStringFieldTest(unittest.TestCase):
 
-    def setUp(self):
+class TestUnicodeStringField(object):
+
+    def setup(self):
         self.tempdir = tempfile.mkdtemp()
 
-    def tearDown(self):
+    def teardown(self):
         shutil.rmtree(self.tempdir)
 
     @pytest.mark.xfail(reason="OGR silently fails to convert strings")
@@ -78,7 +79,7 @@ class UnicodeStringFieldTest(unittest.TestCase):
         with fiona.open(os.path.join(self.tempdir), encoding='latin1') as c:
             f = next(iter(c))
             # Next assert fails.
-            self.assertEqual(f['properties']['label'], u'徐汇区')
+            assert f['properties']['label'] == u'徐汇区'
 
     def test_write_utf8(self):
         schema = {
@@ -95,8 +96,8 @@ class UnicodeStringFieldTest(unittest.TestCase):
 
         with fiona.open(os.path.join(self.tempdir), encoding='utf-8') as c:
             f = next(iter(c))
-            self.assertEqual(f['properties']['label'], u'Ba\u2019kelalan')
-            self.assertEqual(f['properties'][u'verit\xe9'], 0)
+            assert f['properties']['label'] == u'Ba\u2019kelalan'
+            assert f['properties'][u'verit\xe9'] == 0
 
     def test_write_gb18030(self):
         """Can write a simplified Chinese shapefile"""
@@ -113,5 +114,5 @@ class UnicodeStringFieldTest(unittest.TestCase):
 
         with fiona.open(os.path.join(self.tempdir), encoding='gb18030') as c:
             f = next(iter(c))
-            self.assertEqual(f['properties']['label'], u'徐汇区')
-            self.assertEqual(f['properties']['num'], 0)
+            assert f['properties']['label'] == u'徐汇区'
+            assert f['properties']['num'] == 0

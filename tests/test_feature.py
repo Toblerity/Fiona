@@ -5,7 +5,6 @@ import os
 import shutil
 import sys
 import tempfile
-import unittest
 import pytest
 
 import fiona
@@ -14,15 +13,15 @@ from fiona.collection import Collection
 from fiona.ogrext import featureRT
 
 
-class PointRoundTripTest(unittest.TestCase):
+class TestPointRoundTrip(object):
 
-    def setUp(self):
+    def setup(self):
         self.tempdir = tempfile.mkdtemp()
         schema = {'geometry': 'Point', 'properties': {'title': 'str'}}
         self.c = Collection(os.path.join(self.tempdir, "foo.shp"),
                             "w", driver="ESRI Shapefile", schema=schema)
 
-    def tearDown(self):
+    def teardown(self):
         self.c.close()
         shutil.rmtree(self.tempdir)
 
@@ -31,8 +30,8 @@ class PointRoundTripTest(unittest.TestCase):
               'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
               'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
-        self.assertEqual(
-            sorted(g['geometry'].items()),
+        assert (
+            sorted(g['geometry'].items()) ==
             [('coordinates', (0.0, 0.0)), ('type', 'Point')])
 
     def test_properties(self):
@@ -40,25 +39,25 @@ class PointRoundTripTest(unittest.TestCase):
               'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
               'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
-        self.assertEqual(g['properties']['title'], 'foo')
+        assert g['properties']['title'] == 'foo'
 
     def test_none_property(self):
         f = { 'id': '1',
               'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
               'properties': {'title': None} }
         g = featureRT(f, self.c)
-        self.assertEqual(g['properties']['title'], None)
+        assert g['properties']['title'] is None
 
 
-class LineStringRoundTripTest(unittest.TestCase):
+class TestLineStringRoundTrip(object):
 
-    def setUp(self):
+    def setup(self):
         self.tempdir = tempfile.mkdtemp()
         schema = {'geometry': 'LineString', 'properties': {'title': 'str'}}
         self.c = Collection(os.path.join(self.tempdir, "foo.shp"),
                             "w", "ESRI Shapefile", schema=schema)
 
-    def tearDown(self):
+    def teardown(self):
         self.c.close()
         shutil.rmtree(self.tempdir)
 
@@ -68,8 +67,8 @@ class LineStringRoundTripTest(unittest.TestCase):
                             'coordinates': [(0.0, 0.0), (1.0, 1.0)] },
               'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
-        self.assertEqual(
-            sorted(g['geometry'].items()),
+        assert (
+            sorted(g['geometry'].items()) ==
             [('coordinates', [(0.0, 0.0), (1.0, 1.0)]),
              ('type', 'LineString')])
 
@@ -78,18 +77,18 @@ class LineStringRoundTripTest(unittest.TestCase):
               'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
               'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
-        self.assertEqual(g['properties']['title'], 'foo')
+        assert g['properties']['title'] == 'foo'
 
 
-class PolygonRoundTripTest(unittest.TestCase):
+class TestPolygonRoundTrip(object):
 
-    def setUp(self):
+    def setup(self):
         self.tempdir = tempfile.mkdtemp()
         schema = {'geometry': 'Polygon', 'properties': {'title': 'str'}}
         self.c = Collection(os.path.join(self.tempdir, "foo.shp"),
                             "w", "ESRI Shapefile", schema=schema)
 
-    def tearDown(self):
+    def teardown(self):
         self.c.close()
         shutil.rmtree(self.tempdir)
 
@@ -104,8 +103,8 @@ class PolygonRoundTripTest(unittest.TestCase):
                                   (0.0, 0.0)]] },
               'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
-        self.assertEqual(
-            sorted(g['geometry'].items()),
+        assert (
+            sorted(g['geometry'].items()) ==
             [('coordinates', [[(0.0, 0.0),
                                   (0.0, 1.0),
                                   (1.0, 1.0),
@@ -124,7 +123,7 @@ class PolygonRoundTripTest(unittest.TestCase):
                                   (0.0, 0.0)]] },
               'properties': {'title': u'foo'} }
         g = featureRT(f, self.c)
-        self.assertEqual(g['properties']['title'], 'foo')
+        assert g['properties']['title'] == 'foo'
 
 
 @pytest.mark.parametrize("driver, extension", [("ESRI Shapefile", "shp"), ("GeoJSON", "geojson")])
