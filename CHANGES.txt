@@ -3,6 +3,14 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8b2 (2018-10-23)
+------------------
+
+Bug fixes:
+
+- The Mapping abstract base class is imported from collections.abc when
+  possible.
+
 1.8b1 (2018-10-15)
 ------------------
 
@@ -34,6 +42,12 @@ Refactoring:
 
 1.8a3 (2018-10-01)
 ------------------
+
+Deprecations:
+
+- The ``rasterio.drivers()`` context manager is officially deprecated. All
+  users should switch to ``rasterio.Env()``, which registers format drivers and
+  manages GDAL configuration in a reversible manner.
 
 Bug fixes:
 
