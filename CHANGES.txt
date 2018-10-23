@@ -8,10 +8,17 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Bug fixes:
 
+- An unused import of the packaging module and the dependency have been 
+  removed (#653).
 - The Env class logged to the 'rasterio' hierarchy instead of 'fiona'. This
   mistake has been corrected (#646).
 - The Mapping abstract base class is imported from collections.abc when
   possible (#647).
+
+Refactoring:
+
+- Standardization of the tests on pytest functions and fixtures continues and
+  is nearing completion (#648, #649, #650, #651, #652).
 
 1.8b1 (2018-10-15)
 ------------------
