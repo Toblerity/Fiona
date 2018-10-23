@@ -12,7 +12,7 @@ from fiona._env import (
     GDALEnv, get_gdal_config, set_gdal_config)
 from fiona.compat import getargspec
 from fiona.errors import EnvError, GDALVersionError
-from fiona.session import Session, AWSSession, DummySession
+from fiona.session import Session, DummySession
 
 
 class ThreadEnv(threading.local):
@@ -299,9 +299,7 @@ def setenv(**options):
 
 
 def hascreds():
-    gdal_config = local._env.get_config_options()
-    return bool('AWS_ACCESS_KEY_ID' in gdal_config and
-                'AWS_SECRET_ACCESS_KEY' in gdal_config)
+    return local._env is not None and all(key in local._env.get_config_options() for key in ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY'])
 
 
 def delenv():
@@ -354,7 +352,9 @@ def ensure_env_with_credentials(f):
         else:
             env_ctor = Env.from_defaults
 
-        if isinstance(args[0], str):
+        if hascreds():
+            session = None
+        elif isinstance(args[0], str):
             session = Session.from_path(args[0])
         else:
             session = Session.from_path(None)

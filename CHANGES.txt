@@ -8,6 +8,9 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Bug fixes:
 
+- The ensure_env_with_credentials decorator will no longer clobber credentials
+  of the outer environment. This fixes a bug reported to the Rasterio project
+  and which also existed in Fiona.
 - An unused import of the packaging module and the dependency have been 
   removed (#653).
 - The Env class logged to the 'rasterio' hierarchy instead of 'fiona'. This
