@@ -8,8 +8,10 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Bug fixes:
 
+- The Env class logged to the 'rasterio' hierarchy instead of 'fiona'. This
+  mistake has been corrected (#646).
 - The Mapping abstract base class is imported from collections.abc when
-  possible.
+  possible (#647).
 
 1.8b1 (2018-10-15)
 ------------------
