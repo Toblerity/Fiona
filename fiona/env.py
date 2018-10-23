@@ -353,7 +353,7 @@ def ensure_env_with_credentials(f):
             env_ctor = Env.from_defaults
 
         if hascreds():
-            session = None
+            session = DummySession()
         elif isinstance(args[0], str):
             session = Session.from_path(args[0])
         else:
