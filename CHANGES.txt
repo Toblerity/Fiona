@@ -3,6 +3,14 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+Next
+----
+
+Bug fixes:
+
+- We cpdef Session.stop so that it has a C version that can be called safely
+  from __dealloc__, fixing a PyPy issue (#659, #553).
+
 1.8rc1 (2018-10-26)
 -------------------
 
