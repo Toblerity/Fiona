@@ -537,7 +537,7 @@ cdef class Session:
 
         self.collection = collection
 
-    def stop(self):
+    cpdef stop(self):
         self.cogr_layer = NULL
         if self.cogr_ds != NULL:
             GDALClose(self.cogr_ds)
