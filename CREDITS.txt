@@ -4,35 +4,51 @@ Credits
 Fiona is written by:
 
 - Sean Gillies <sean.gillies@gmail.com>
-- Rene Buffat <buffat@gmail.com>
-- Kevin Wurster <wursterk@gmail.com>
-- Micah Cochran <micah@micahcochran.net>
-- Matthew Perry <perrygeo@gmail.com>
+- René Buffat <buffat@gmail.com>
 - Joshua Arnott <josh@snorfalorpagus.net>
+- Kevin Wurster <wursterk@gmail.com>
+- Micah Cochran <micahcochran@users.noreply.github.com>
+- Matthew Perry <perrygeo@gmail.com>
+- Elliott Sales de Andrade <quantum.analyst@gmail.com>
 - Kelsey Jordahl <kjordahl@enthought.com>
 - Patrick Young <patrick.mckendree.young@gmail.com>
 - Simon Norris <snorris@hillcrestgeo.ca>
 - Hannes Gräuler <graeuler@geoplex.de>
 - Johan Van de Wauw <johan.vandewauw@gmail.com>
 - Jacob Wasserman <jwasserman@gmail.com>
-- Ryan Grout <rgrout@continuum.io>
 - Michael Weisman <mweisman@gmail.com>
-- fredj <frederic.junod@camptocamp.com>
+- Ryan Grout <rgrout@continuum.io>
 - Bas Couwenberg <sebastic@xs4all.nl>
 - Brendan Ward <bcward@consbio.org>
+- Hannes <kannes@users.noreply.github.com>
 - Michele Citterio <michele@citterio.net>
 - Miro Hrončok <miro@hroncok.cz>
+- Sid Kapur <sid-kap@users.noreply.github.com>
+- Tim Tröndle <tim.troendle@usys.ethz.ch>
+- fredj <frederic.junod@camptocamp.com>
 - qinfeng <guo.qinfeng+github@gmail.com>
-- Michael Weisman <michael@urbanmapping.com>
+- Ariel Nunez <ingenieroariel@gmail.com>
+- Ariki <Ariki@users.noreply.github.com>
 - Brandon Liu <bdon@bdon.org>
+- Chris Mutel <cmutel@gmail.com>
+- Denis Rykov <rykovd@gmail.com>
+- Efrén <chefren@users.noreply.github.com>
+- Egor Fedorov <egor.fedorov@emlid.com>
+- Even Rouault <even.rouault@mines-paris.org>
+- Filipe Fernandes <ocefpaf@gmail.com>
+- Géraud <galak75@users.noreply.github.com>
+- Hannes Gräuler <hgraeule@uos.de>
+- Jesse Crocker <jesse@gaiagps.com>
+- Juan Luis Cano Rodríguez <Juanlu001@users.noreply.github.com>
 - Ludovic Delauné <ludotux@gmail.com>
 - Martijn Visser <mgvisser@gmail.com>
-- Ariel Nunez <ingenieroariel@gmail.com>
+- Matthew Perry <perrygeo@users.noreply.github.com>
+- Michael Weisman <michael@urbanmapping.com>
 - Oliver Tonnhofer <olt@bogosoft.com>
 - Stefano Costa <steko@iosa.it>
+- Stephane Poss <stephposs@gmail.com>
 - dimlev <dimlev@gmail.com>
 - wilsaj <wilson.andrew.j+github@gmail.com>
-- Jesse Crocker <jesse@gaiagps.com>
 
 Fiona would not be possible without the great work of Frank Warmerdam and other
 GDAL/OGR developers.
