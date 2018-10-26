@@ -9,6 +9,7 @@ import fiona
 from fiona.vfs import vsi_path, parse_paths
 
 from .test_collection import TestReading
+from .test_collection_legacy import ReadingTest
 
 
 # Custom markers (from rasterio)
@@ -19,6 +20,26 @@ mingdalversion = pytest.mark.skipif(
 credentials = pytest.mark.skipif(
     not(boto3.Session()._session.get_credentials()),
     reason="S3 raster access requires credentials")
+
+
+# TODO: remove this once we've successfully moved the tar tests over
+# to TestVsiReading.
+
+class VsiReadingTest(ReadingTest):
+    # There's a bug in GDAL 1.9.2 http://trac.osgeo.org/gdal/ticket/5093
+    # in which the VSI driver reports the wrong number of features.
+    # I'm overriding ReadingTest's test_filter_1 with a function that
+    # passes and creating a new method in this class that we can exclude
+    # from the test runner at run time.
+
+    @pytest.mark.xfail(reason="The number of features present in the archive "
+                              "differs based on the GDAL version.")
+    def test_filter_vsi(self):
+        results = list(self.c.filter(bbox=(-114.0, 35.0, -104, 45.0)))
+        assert len(results) == 67
+        f = results[0]
+        assert f['id'] == "0"
+        assert f['properties']['STATE'] == 'UT'
 
 
 class TestVsiReading(TestReading):
@@ -117,13 +138,22 @@ class TestZipArchiveReadingAbsPath(TestZipArchiveReading):
         assert self.c.path.startswith('/vsizip/')
 
 
-class TestTarArchiveReading(TestVsiReading):
-    @pytest.fixture(autouse=True)
-    def tarfile(self, data_dir, path_coutwildrnp_tar):
-        vfs = "tar://{}".format(path_coutwildrnp_tar)
+#class TestTarArchiveReading(TestVsiReading):
+#    @pytest.fixture(autouse=True)
+#    def tarfile(self, data_dir, path_coutwildrnp_tar):
+#        vfs = "tar://{}".format(path_coutwildrnp_tar)
+#        self.c = fiona.open("/testing/coutwildrnp.shp", "r", vfs=vfs)
+#        self.path = os.path.join(data_dir, 'coutwildrnp.tar')
+#        yield
+@pytest.mark.usefixtures('uttc_path_coutwildrnp_tar', 'uttc_data_dir')
+class TarArchiveReadingTest(VsiReadingTest):
+
+    def setUp(self):
+        vfs = "tar://{}".format(self.path_coutwildrnp_tar)
         self.c = fiona.open("/testing/coutwildrnp.shp", "r", vfs=vfs)
-        self.path = os.path.join(data_dir, 'coutwildrnp.tar')
-        yield
+        self.path = os.path.join(self.data_dir, 'coutwildrnp.tar')
+
+    def tearDown(self):
         self.c.close()
 
     def test_open_repr(self):

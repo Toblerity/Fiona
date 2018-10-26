@@ -1,0 +1,926 @@
+# Testing collections and workspaces
+
+import datetime
+import logging
+import os
+import shutil
+import sys
+import tempfile
+import unittest
+import re
+
+import pytest
+
+import fiona
+from fiona.collection import Collection, supported_drivers
+from fiona.errors import FionaValueError, DriverError
+
+from .conftest import WGS84PATTERN
+
+
+TEMPDIR = tempfile.gettempdir()
+
+
+class SupportedDriversTest(unittest.TestCase):
+
+    def test_shapefile(self):
+        assert "ESRI Shapefile" in supported_drivers
+        assert set(supported_drivers["ESRI Shapefile"]) == set("raw")
+
+    def test_map(self):
+        assert "MapInfo File" in supported_drivers
+        assert set(supported_drivers["MapInfo File"]) == set("raw")
+
+
+class CollectionArgsTest(unittest.TestCase):
+
+    def test_path(self):
+        with pytest.raises(TypeError):
+            Collection(0)
+
+    def test_mode(self):
+        with pytest.raises(TypeError):
+            Collection("foo", mode=0)
+
+    def test_driver(self):
+        with pytest.raises(TypeError):
+            Collection("foo", mode='w', driver=1)
+
+    def test_schema(self):
+        with pytest.raises(TypeError):
+            Collection("foo", mode='w', driver="ESRI Shapefile", schema=1)
+
+    def test_crs(self):
+        with pytest.raises(TypeError):
+            Collection("foo", mode='w', driver="ESRI Shapefile", schema=0,
+                       crs=1)
+
+    def test_encoding(self):
+        with pytest.raises(TypeError):
+            Collection("foo", mode='r', encoding=1)
+
+    def test_layer(self):
+        with pytest.raises(TypeError):
+            Collection("foo", mode='r', layer=0.5)
+
+    def test_vsi(self):
+        with pytest.raises(TypeError):
+            Collection("foo", mode='r', vsi='git')
+
+    def test_archive(self):
+        with pytest.raises(TypeError):
+            Collection("foo", mode='r', archive=1)
+
+    def test_write_numeric_layer(self):
+        with pytest.raises(ValueError):
+            Collection("foo", mode='w', layer=1)
+
+    def test_write_geojson_layer(self):
+        with pytest.raises(ValueError):
+            Collection("foo", mode='w', driver='GeoJSON', layer='foo')
+
+    def test_append_geojson(self):
+        with pytest.raises(ValueError):
+            Collection("foo", mode='w', driver='ARCGEN')
+
+
+class OpenExceptionTest(unittest.TestCase):
+
+    def test_no_archive(self):
+        with pytest.raises(DriverError):
+            fiona.open("/", mode='r', vfs="zip:///foo.zip")
+
+
+@pytest.mark.usefixtures("unittest_path_coutwildrnp_shp")
+class ReadingTest(unittest.TestCase):
+
+    def setUp(self):
+        self.c = fiona.open(self.path_coutwildrnp_shp, "r")
+
+    def tearDown(self):
+        self.c.close()
+
+    def test_open_repr(self):
+        assert (
+            repr(self.c) ==
+            ("<open Collection '{path}:coutwildrnp', mode 'r' "
+             "at {hexid}>".format(hexid=hex(id(self.c)), path=self.path_coutwildrnp_shp)))
+
+    def test_closed_repr(self):
+        self.c.close()
+        assert (
+            repr(self.c) ==
+            ("<closed Collection '{path}:coutwildrnp', mode 'r' "
+             "at {hexid}>".format(hexid=hex(id(self.c)), path=self.path_coutwildrnp_shp)))
+
+    def test_path(self):
+        assert self.c.path == self.path_coutwildrnp_shp
+
+    def test_name(self):
+        assert self.c.name == 'coutwildrnp'
+
+    def test_mode(self):
+        assert self.c.mode == 'r'
+
+    def test_collection(self):
+        assert self.c.encoding == 'iso-8859-1'
+
+    def test_iter(self):
+        assert iter(self.c)
+
+    def test_closed_no_iter(self):
+        self.c.close()
+        with pytest.raises(ValueError):
+            iter(self.c)
+
+    def test_len(self):
+        assert len(self.c) == 67
+
+    def test_closed_len(self):
+        # Len is lazy, it's never computed in this case. TODO?
+        self.c.close()
+        assert len(self.c) == 0
+
+    def test_len_closed_len(self):
+        # Lazy len is computed in this case and sticks.
+        len(self.c)
+        self.c.close()
+        assert len(self.c) == 67
+
+    def test_driver(self):
+        assert self.c.driver == "ESRI Shapefile"
+
+    def test_closed_driver(self):
+        self.c.close()
+        assert self.c.driver is None
+
+    def test_driver_closed_driver(self):
+        self.c.driver
+        self.c.close()
+        assert self.c.driver == "ESRI Shapefile"
+
+    def test_schema(self):
+        s = self.c.schema['properties']
+        assert s['PERIMETER'] == "float:24.15"
+        assert s['NAME'] == "str:80"
+        assert s['URL'] == "str:101"
+        assert s['STATE_FIPS'] == "str:80"
+        assert s['WILDRNP020'] == "int:10"
+
+    def test_closed_schema(self):
+        # Schema is lazy too, never computed in this case. TODO?
+        self.c.close()
+        assert self.c.schema is None
+
+    def test_schema_closed_schema(self):
+        self.c.schema
+        self.c.close()
+        assert sorted(self.c.schema.keys()) == ['geometry', 'properties']
+
+    def test_crs(self):
+        crs = self.c.crs
+        assert crs['init'] == 'epsg:4326'
+
+    def test_crs_wkt(self):
+        crs = self.c.crs_wkt
+        assert re.match(WGS84PATTERN, crs)
+
+    def test_closed_crs(self):
+        # Crs is lazy too, never computed in this case. TODO?
+        self.c.close()
+        assert self.c.crs is None
+
+    def test_crs_closed_crs(self):
+        self.c.crs
+        self.c.close()
+        assert sorted(self.c.crs.keys()) == ['init']
+
+    def test_meta(self):
+        assert (sorted(self.c.meta.keys()) ==
+                ['crs', 'crs_wkt', 'driver', 'schema'])
+
+    def test_profile(self):
+        assert (sorted(self.c.profile.keys()) ==
+                ['crs', 'crs_wkt', 'driver', 'schema'])
+
+    def test_bounds(self):
+        assert self.c.bounds[0] == pytest.approx(-113.564247)
+        assert self.c.bounds[1] == pytest.approx(37.068981)
+        assert self.c.bounds[2] == pytest.approx(-104.970871)
+        assert self.c.bounds[3] == pytest.approx(41.996277)
+
+    def test_context(self):
+        with fiona.open(self.path_coutwildrnp_shp, "r") as c:
+            assert c.name == 'coutwildrnp'
+            assert len(c) == 67
+        assert c.closed
+
+    def test_iter_one(self):
+        itr = iter(self.c)
+        f = next(itr)
+        assert f['id'] == "0"
+        assert f['properties']['STATE'] == 'UT'
+
+    def test_iter_list(self):
+        f = list(self.c)[0]
+        assert f['id'] == "0"
+        assert f['properties']['STATE'] == 'UT'
+
+    def test_re_iter_list(self):
+        f = list(self.c)[0]  # Run through iterator
+        f = list(self.c)[0]  # Run through a new, reset iterator
+        assert f['id'] == "0"
+        assert f['properties']['STATE'] == 'UT'
+
+    def test_getitem_one(self):
+        f = self.c[0]
+        assert f['id'] == "0"
+        assert f['properties']['STATE'] == 'UT'
+
+    def test_getitem_iter_combo(self):
+        i = iter(self.c)
+        f = next(i)
+        f = next(i)
+        assert f['id'] == "1"
+        f = self.c[0]
+        assert f['id'] == "0"
+        f = next(i)
+        assert f['id'] == "2"
+
+    def test_no_write(self):
+        with pytest.raises(IOError):
+            self.c.write({})
+
+    def test_iter_items_list(self):
+        i, f = list(self.c.items())[0]
+        assert i == 0
+        assert f['id'] == "0"
+        assert f['properties']['STATE'] == 'UT'
+
+    def test_iter_keys_list(self):
+        i = list(self.c.keys())[0]
+        assert i == 0
+
+    def test_in_keys(self):
+        assert 0 in self.c.keys()
+        assert 0 in self.c
+
+
+@pytest.mark.usefixtures("unittest_path_coutwildrnp_shp")
+class ReadingPathTest(unittest.TestCase):
+    def test_open_path(self):
+        pathlib = pytest.importorskip("pathlib")
+        with fiona.open(pathlib.Path(self.path_coutwildrnp_shp)) as collection:
+            assert collection.name == 'coutwildrnp'
+
+
+@pytest.mark.usefixtures("unittest_path_coutwildrnp_shp")
+class IgnoreFieldsAndGeometryTest(unittest.TestCase):
+
+    def test_without_ignore(self):
+        with fiona.open(self.path_coutwildrnp_shp, "r") as collection:
+            assert("AREA" in collection.schema["properties"].keys())
+            assert("STATE" in collection.schema["properties"].keys())
+            assert("NAME" in collection.schema["properties"].keys())
+            assert("geometry" in collection.schema.keys())
+
+            feature = next(iter(collection))
+            assert(feature["properties"]["AREA"] is not None)
+            assert(feature["properties"]["STATE"] is not None)
+            assert(feature["properties"]["NAME"] is not None)
+            assert(feature["geometry"] is not None)
+
+    def test_ignore_fields(self):
+        with fiona.open(self.path_coutwildrnp_shp, "r", ignore_fields=["AREA", "STATE"]) as collection:
+            assert("AREA" not in collection.schema["properties"].keys())
+            assert("STATE" not in collection.schema["properties"].keys())
+            assert("NAME" in collection.schema["properties"].keys())
+            assert("geometry" in collection.schema.keys())
+
+            feature = next(iter(collection))
+            assert("AREA" not in feature["properties"].keys())
+            assert("STATE" not in feature["properties"].keys())
+            assert(feature["properties"]["NAME"] is not None)
+            assert(feature["geometry"] is not None)
+
+    def test_ignore_invalid_field_missing(self):
+        with fiona.open(self.path_coutwildrnp_shp, "r", ignore_fields=["DOES_NOT_EXIST"]):
+            pass
+
+    def test_ignore_invalid_field_not_string(self):
+        with pytest.raises(TypeError):
+            with fiona.open(self.path_coutwildrnp_shp, "r", ignore_fields=[42]):
+                pass
+
+    def test_ignore_geometry(self):
+        with fiona.open(self.path_coutwildrnp_shp, "r", ignore_geometry=True) as collection:
+            assert("AREA" in collection.schema["properties"].keys())
+            assert("STATE" in collection.schema["properties"].keys())
+            assert("NAME" in collection.schema["properties"].keys())
+            assert("geometry" not in collection.schema.keys())
+
+            feature = next(iter(collection))
+            assert(feature["properties"]["AREA"] is not None)
+            assert(feature["properties"]["STATE"] is not None)
+            assert(feature["properties"]["NAME"] is not None)
+            assert("geometry" not in feature.keys())
+
+
+@pytest.mark.usefixtures("unittest_path_coutwildrnp_shp")
+class FilterReadingTest(unittest.TestCase):
+
+    def setUp(self):
+        self.c = fiona.open(self.path_coutwildrnp_shp, "r")
+
+    def tearDown(self):
+        self.c.close()
+
+    def test_filter_1(self):
+        results = list(self.c.filter(bbox=(-120.0, 30.0, -100.0, 50.0)))
+        assert len(results) == 67
+        f = results[0]
+        assert f['id'] == "0"
+        assert f['properties']['STATE'] == 'UT'
+
+    def test_filter_reset(self):
+        results = list(self.c.filter(bbox=(-112.0, 38.0, -106.0, 40.0)))
+        assert len(results) == 26
+        results = list(self.c.filter())
+        assert len(results) == 67
+
+    def test_filter_mask(self):
+        mask = {
+            'type': 'Polygon',
+            'coordinates': (
+                ((-112, 38), (-112, 40), (-106, 40), (-106, 38), (-112, 38)),)}
+        results = list(self.c.filter(mask=mask))
+        assert len(results) == 26
+
+
+class UnsupportedDriverTest(unittest.TestCase):
+
+    def test_immediate_fail_driver(self):
+        schema = {
+            'geometry': 'Point',
+            'properties': {'label': 'str', u'verit\xe9': 'int'}}
+        with pytest.raises(DriverError):
+            fiona.open(os.path.join(TEMPDIR, "foo"), "w", "Bogus",
+                       schema=schema)
+
+
+class GenericWritingTest(unittest.TestCase):
+    tempdir = None
+    c = None
+
+    @classmethod
+    def setUpClass(self):
+        self.tempdir = tempfile.mkdtemp()
+        schema = {
+            'geometry': 'Point',
+            'properties': [('label', 'str'), (u'verit\xe9', 'int')]}
+        self.c = fiona.open(os.path.join(self.tempdir, "test-no-iter.shp"),
+                            'w', driver="ESRI Shapefile", schema=schema,
+                            encoding='Windows-1252')
+
+    @classmethod
+    def tearDownClass(self):
+        self.c.close()
+        shutil.rmtree(self.tempdir)
+
+    def test_encoding(self):
+        assert self.c.encoding == 'Windows-1252'
+
+    def test_no_iter(self):
+        with pytest.raises(IOError):
+            iter(self.c)
+
+    def test_no_filter(self):
+        with pytest.raises(IOError):
+            self.c.filter()
+
+
+class PropertiesNumberFormattingTest(unittest.TestCase):
+
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+        self.filename = os.path.join(self.tempdir, "properties_number_formatting_test")
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+
+    _records_with_float_property1 = [
+        {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
+            'properties': {'property1': 12.22}
+        },
+        {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.2)},
+            'properties': {'property1': 12.88}
+        }
+    ]
+
+    _records_with_float_property1_as_string = [
+        {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
+            'properties': {'property1': '12.22'}
+        },
+        {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.2)},
+            'properties': {'property1': '12.88'}
+        }
+    ]
+
+    _records_with_invalid_number_property1 = [
+        {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.3)},
+            'properties': {'property1': 'invalid number'}
+        }
+    ]
+
+    def _write_collection(self, records, schema, driver):
+        with fiona.open(
+                self.filename,
+                "w",
+                driver=driver,
+                schema=schema,
+                crs='epsg:4326',
+                encoding='utf-8'
+        ) as c:
+            c.writerecords(records)
+
+    def test_shape_driver_truncates_float_property_to_requested_int_format(self):
+        driver = "ESRI Shapefile"
+        self._write_collection(
+            self._records_with_float_property1,
+            {'geometry': 'Point', 'properties': [('property1', 'int')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            assert 2 == len(c)
+
+            rf1, rf2 = list(c)
+
+            assert 12 == rf1['properties']['property1']
+            assert 12 == rf2['properties']['property1']
+
+    def test_shape_driver_rounds_float_property_to_requested_digits_number(self):
+        driver = "ESRI Shapefile"
+        self._write_collection(
+            self._records_with_float_property1,
+            {'geometry': 'Point', 'properties': [('property1', 'float:15.1')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            assert 2 == len(c)
+
+            rf1, rf2 = list(c)
+
+            assert 12.2 == rf1['properties']['property1']
+            assert 12.9 == rf2['properties']['property1']
+
+    def test_string_is_converted_to_number_and_truncated_to_requested_int_by_shape_driver(self):
+        driver = "ESRI Shapefile"
+        self._write_collection(
+            self._records_with_float_property1_as_string,
+            {'geometry': 'Point', 'properties': [('property1', 'int')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            assert 2 == len(c)
+
+            rf1, rf2 = list(c)
+
+            assert 12 == rf1['properties']['property1']
+            assert 12 == rf2['properties']['property1']
+
+    def test_string_is_converted_to_number_and_rounded_to_requested_digits_number_by_shape_driver(self):
+        driver = "ESRI Shapefile"
+        self._write_collection(
+            self._records_with_float_property1_as_string,
+            {'geometry': 'Point', 'properties': [('property1', 'float:15.1')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            assert 2 == len(c)
+
+            rf1, rf2 = list(c)
+
+            assert 12.2 == rf1['properties']['property1']
+            assert 12.9 == rf2['properties']['property1']
+
+    def test_invalid_number_is_converted_to_0_and_written_by_shape_driver(self):
+        driver = "ESRI Shapefile"
+        self._write_collection(
+            self._records_with_invalid_number_property1,
+            # {'geometry': 'Point', 'properties': [('property1', 'int')]},
+            {'geometry': 'Point', 'properties': [('property1', 'float:15.1')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            assert 1 == len(c)
+
+            rf1 = c[0]
+
+            assert 0 == rf1['properties']['property1']
+
+    def test_geojson_driver_truncates_float_property_to_requested_int_format(self):
+        driver = "GeoJSON"
+        self._write_collection(
+            self._records_with_float_property1,
+            {'geometry': 'Point', 'properties': [('property1', 'int')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            assert 2 == len(c)
+
+            rf1, rf2 = list(c)
+
+            assert 12 == rf1['properties']['property1']
+            assert 12 == rf2['properties']['property1']
+
+    def test_geojson_driver_does_not_round_float_property_to_requested_digits_number(self):
+        driver = "GeoJSON"
+        self._write_collection(
+            self._records_with_float_property1,
+            {'geometry': 'Point', 'properties': [('property1', 'float:15.1')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            assert 2 == len(c)
+
+            rf1, rf2 = list(c)
+
+            # ****************************************
+            # FLOAT FORMATTING IS NOT RESPECTED...
+            assert 12.22 == rf1['properties']['property1']
+            assert 12.88 == rf2['properties']['property1']
+
+    def test_string_is_converted_to_number_and_truncated_to_requested_int_by_geojson_driver(self):
+        driver = "GeoJSON"
+        self._write_collection(
+            self._records_with_float_property1_as_string,
+            {'geometry': 'Point', 'properties': [('property1', 'int')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            assert 2 == len(c)
+
+            rf1, rf2 = list(c)
+
+            assert 12 == rf1['properties']['property1']
+            assert 12 == rf2['properties']['property1']
+
+    def test_string_is_converted_to_number_but_not_rounded_to_requested_digits_number_by_geojson_driver(self):
+        driver = "GeoJSON"
+        self._write_collection(
+            self._records_with_float_property1_as_string,
+            {'geometry': 'Point', 'properties': [('property1', 'float:15.1')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            assert 2 == len(c)
+
+            rf1, rf2 = list(c)
+
+            # ****************************************
+            # FLOAT FORMATTING IS NOT RESPECTED...
+            assert 12.22 == rf1['properties']['property1']
+            assert 12.88 == rf2['properties']['property1']
+
+    def test_invalid_number_is_converted_to_0_and_written_by_geojson_driver(self):
+        driver = "GeoJSON"
+        self._write_collection(
+            self._records_with_invalid_number_property1,
+            # {'geometry': 'Point', 'properties': [('property1', 'int')]},
+            {'geometry': 'Point', 'properties': [('property1', 'float:15.1')]},
+            driver
+        )
+
+        with fiona.open(self.filename, driver=driver, encoding='utf-8') as c:
+            assert 1 == len(c)
+
+            rf1 = c[0]
+
+            assert 0 == rf1['properties']['property1']
+
+
+class PointWritingTest(unittest.TestCase):
+
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+        self.filename = os.path.join(self.tempdir, "point_writing_test.shp")
+        self.sink = fiona.open(
+            self.filename,
+            "w",
+            driver="ESRI Shapefile",
+            schema={
+                'geometry': 'Point',
+                'properties': [('title', 'str'), ('date', 'date')]},
+            crs='epsg:4326',
+            encoding='utf-8')
+
+    def tearDown(self):
+        self.sink.close()
+        shutil.rmtree(self.tempdir)
+
+    def test_cpg(self):
+        """Requires GDAL 1.9"""
+        self.sink.close()
+        with open(os.path.join(self.tempdir, "point_writing_test.cpg")) as f:
+            encoding = f.readline()
+        assert encoding == "UTF-8"
+
+    def test_write_one(self):
+        assert len(self.sink) == 0
+        assert self.sink.bounds == (0.0, 0.0, 0.0, 0.0)
+        f = {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
+            'properties': {'title': 'point one', 'date': "2012-01-29"}}
+        self.sink.writerecords([f])
+        assert len(self.sink) == 1
+        assert self.sink.bounds == (0.0, 0.1, 0.0, 0.1)
+        self.sink.close()
+
+    def test_write_two(self):
+        assert len(self.sink) == 0
+        assert self.sink.bounds == (0.0, 0.0, 0.0, 0.0)
+        f1 = {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
+            'properties': {'title': 'point one', 'date': "2012-01-29"}}
+        f2 = {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, -0.1)},
+            'properties': {'title': 'point two', 'date': "2012-01-29"}}
+        self.sink.writerecords([f1, f2])
+        assert len(self.sink) == 2
+        assert self.sink.bounds == (0.0, -0.1, 0.0, 0.1)
+
+    def test_write_one_null_geom(self):
+        assert len(self.sink) == 0
+        assert self.sink.bounds == (0.0, 0.0, 0.0, 0.0)
+        f = {
+            'geometry': None,
+            'properties': {'title': 'point one', 'date': "2012-01-29"}}
+        self.sink.writerecords([f])
+        assert len(self.sink) == 1
+        assert self.sink.bounds == (0.0, 0.0, 0.0, 0.0)
+
+    def test_validate_record(self):
+        fvalid = {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
+            'properties': {'title': 'point one', 'date': "2012-01-29"}}
+        finvalid = {
+            'geometry': {'type': 'Point', 'coordinates': (0.0, -0.1)},
+            'properties': {'not-a-title': 'point two', 'date': "2012-01-29"}}
+        assert self.sink.validate_record(fvalid)
+        assert not self.sink.validate_record(finvalid)
+
+
+class LineWritingTest(unittest.TestCase):
+
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+        self.sink = fiona.open(
+            os.path.join(self.tempdir, "line_writing_test.shp"),
+            "w",
+            driver="ESRI Shapefile",
+            schema={
+                'geometry': 'LineString',
+                'properties': [('title', 'str'), ('date', 'date')]},
+            crs={'init': "epsg:4326", 'no_defs': True})
+
+    def tearDown(self):
+        self.sink.close()
+        shutil.rmtree(self.tempdir)
+
+    def test_write_one(self):
+        assert len(self.sink) == 0
+        assert self.sink.bounds == (0.0, 0.0, 0.0, 0.0)
+        f = {
+            'geometry': {'type': 'LineString',
+                         'coordinates': [(0.0, 0.1), (0.0, 0.2)]},
+            'properties': {'title': 'line one', 'date': "2012-01-29"}}
+        self.sink.writerecords([f])
+        assert len(self.sink) == 1
+        assert self.sink.bounds == (0.0, 0.1, 0.0, 0.2)
+
+    def test_write_two(self):
+        assert len(self.sink) == 0
+        assert self.sink.bounds == (0.0, 0.0, 0.0, 0.0)
+        f1 = {
+            'geometry': {'type': 'LineString',
+                         'coordinates': [(0.0, 0.1), (0.0, 0.2)]},
+            'properties': {'title': 'line one', 'date': "2012-01-29"}}
+        f2 = {
+            'geometry': {'type': 'MultiLineString',
+                         'coordinates': [[(0.0, 0.0), (0.0, -0.1)],
+                                         [(0.0, -0.1), (0.0, -0.2)]]},
+            'properties': {'title': 'line two', 'date': "2012-01-29"}}
+        self.sink.writerecords([f1, f2])
+        assert len(self.sink) == 2
+        assert self.sink.bounds == (0.0, -0.2, 0.0, 0.2)
+
+
+@pytest.mark.usefixtures("unittest_path_coutwildrnp_shp")
+class PointAppendTest(unittest.TestCase):
+
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+        with fiona.open(self.path_coutwildrnp_shp, "r") as input:
+            output_schema = input.schema.copy()
+            output_schema['geometry'] = '3D Point'
+            with fiona.open(
+                    os.path.join(self.tempdir, "test_append_point.shp"),
+                    'w', crs=None, driver="ESRI Shapefile",
+                    schema=output_schema) as output:
+                for f in input:
+                    f['geometry'] = {
+                        'type': 'Point',
+                        'coordinates': f['geometry']['coordinates'][0][0]}
+                    output.write(f)
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+
+    def test_append_point(self):
+        with fiona.open(os.path.join(self.tempdir, "test_append_point.shp"), "a") as c:
+            assert c.schema['geometry'] == '3D Point'
+            c.write({'geometry': {'type': 'Point', 'coordinates': (0.0, 45.0)},
+                     'properties': {'PERIMETER': 1.0,
+                                    'FEATURE2': None,
+                                    'NAME': 'Foo',
+                                    'FEATURE1': None,
+                                    'URL': 'http://example.com',
+                                    'AGBUR': 'BAR',
+                                    'AREA': 0.0,
+                                    'STATE_FIPS': 1,
+                                    'WILDRNP020': 1,
+                                    'STATE': 'XL'}})
+            assert len(c) == 68
+
+
+class LineAppendTest(unittest.TestCase):
+
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+        with fiona.open(
+                os.path.join(self.tempdir, "test_append_line.shp"),
+                "w",
+                driver="ESRI Shapefile",
+                schema={
+                    'geometry': 'MultiLineString',
+                    'properties': {'title': 'str', 'date': 'date'}},
+                crs={'init': "epsg:4326", 'no_defs': True}) as output:
+            f = {'geometry': {'type': 'MultiLineString',
+                              'coordinates': [[(0.0, 0.1), (0.0, 0.2)]]},
+                 'properties': {'title': 'line one', 'date': "2012-01-29"}}
+            output.writerecords([f])
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+
+    def test_append_line(self):
+        with fiona.open(os.path.join(self.tempdir, "test_append_line.shp"), "a") as c:
+            assert c.schema['geometry'] == 'LineString'
+            f1 = {
+                'geometry': {'type': 'LineString',
+                             'coordinates': [(0.0, 0.1), (0.0, 0.2)]},
+                'properties': {'title': 'line one', 'date': "2012-01-29"}}
+            f2 = {
+                'geometry': {'type': 'MultiLineString',
+                             'coordinates': [[(0.0, 0.0), (0.0, -0.1)],
+                                             [(0.0, -0.1), (0.0, -0.2)]]},
+                'properties': {'title': 'line two', 'date': "2012-01-29"}}
+            c.writerecords([f1, f2])
+            assert len(c) == 3
+            assert c.bounds == (0.0, -0.2, 0.0, 0.2)
+
+
+def test_shapefile_field_width(tmpdir):
+    name = str(tmpdir.join('textfield.shp'))
+    with fiona.open(
+            name, 'w',
+            schema={'geometry': 'Point', 'properties': {'text': 'str:254'}},
+            driver="ESRI Shapefile") as c:
+        c.write(
+            {'geometry': {'type': 'Point', 'coordinates': (0.0, 45.0)},
+             'properties': {'text': 'a' * 254}})
+    c = fiona.open(name, "r")
+    assert c.schema['properties']['text'] == 'str:254'
+    f = next(iter(c))
+    assert f['properties']['text'] == 'a' * 254
+    c.close()
+
+
+class CollectionTest(unittest.TestCase):
+
+    def test_invalid_mode(self):
+        with pytest.raises(ValueError):
+            fiona.open(os.path.join(TEMPDIR, "bogus.shp"), "r+")
+
+    def test_w_args(self):
+        with pytest.raises(FionaValueError):
+            fiona.open(os.path.join(TEMPDIR, "test-no-iter.shp"), "w")
+        with pytest.raises(FionaValueError):
+            fiona.open(os.path.join(TEMPDIR, "test-no-iter.shp"), "w",
+                       "Driver")
+
+    def test_no_path(self):
+        with pytest.raises(Exception):
+            fiona.open("no-path.shp", "a")
+
+    def test_no_read_conn_str(self):
+        with pytest.raises(DriverError):
+            fiona.open("PG:dbname=databasename", "r")
+
+    @pytest.mark.skipif(sys.platform.startswith("win"),
+                     reason="test only for *nix based system")
+    def test_no_read_directory(self):
+        with pytest.raises(DriverError):
+            fiona.open("/dev/null", "r")
+
+
+class GeoJSONCRSWritingTest(unittest.TestCase):
+
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+        self.filename = os.path.join(self.tempdir, "crs_writing_test.json")
+        self.sink = fiona.open(
+            self.filename,
+            "w",
+            driver="GeoJSON",
+            schema={
+                'geometry': 'Point',
+                'properties': [('title', 'str'), ('date', 'date')]},
+            crs={'a': 6370997, 'lon_0': -100, 'y_0': 0, 'no_defs': True, 'proj': 'laea', 'x_0': 0, 'units': 'm', 'b': 6370997, 'lat_0': 45})
+
+    def tearDown(self):
+        self.sink.close()
+        shutil.rmtree(self.tempdir)
+
+
+def test_date(tmpdir):
+    name = str(tmpdir.join("date_test.shp"))
+    sink = fiona.open(
+        name, "w",
+        driver="ESRI Shapefile",
+        schema={
+            'geometry': 'Point',
+            'properties': [('id', 'int'), ('date', 'date')]},
+        crs={'init': "epsg:4326", 'no_defs': True})
+
+    recs = [{
+        'geometry': {'type': 'Point',
+                     'coordinates': (7.0, 50.0)},
+        'properties': {'id': 1, 'date': '2013-02-25'}
+    }, {
+        'geometry': {'type': 'Point',
+                     'coordinates': (7.0, 50.2)},
+        'properties': {'id': 1, 'date': datetime.date(2014, 2, 3)}
+    }]
+    sink.writerecords(recs)
+    sink.close()
+    assert len(sink) == 2
+
+    with fiona.open(name, "r") as c:
+        assert len(c) == 2
+
+        rf1, rf2 = list(c)
+        assert rf1['properties']['date'] == '2013-02-25'
+        assert rf2['properties']['date'] == '2014-02-03'
+
+
+def test_open_kwargs(tmpdir, path_coutwildrnp_shp):
+    dstfile = str(tmpdir.join('test.json'))
+    with fiona.open(path_coutwildrnp_shp) as src:
+        kwds = src.profile
+        kwds['driver'] = 'GeoJSON'
+        kwds['coordinate_precision'] = 2
+        with fiona.open(dstfile, 'w', **kwds) as dst:
+            dst.writerecords(ftr for ftr in src)
+
+    with open(dstfile) as f:
+        assert '"coordinates": [ [ [ -111.74, 42.0 ], [ -111.66, 42.0 ]' in \
+            f.read(2000)
+
+
+@pytest.mark.network
+def test_collection_http():
+    ds = fiona.Collection('http://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.shp', vsi='http')
+    assert ds.path == '/vsicurl/http://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.shp'
+    assert len(ds) == 10
+
+
+@pytest.mark.network
+def test_collection_zip_http():
+    ds = fiona.Collection('http://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip', vsi='zip+http')
+    assert ds.path == '/vsizip/vsicurl/http://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip'
+    assert len(ds) == 10
