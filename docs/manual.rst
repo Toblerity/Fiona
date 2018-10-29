@@ -1042,7 +1042,7 @@ OGR configuration options
 
 GDAL/OGR has a large number of features that are controlled by global or
 thread-local configuration options. Fiona allows you to configure these options
-using a context manager, `fiona.Env`. This class's constructor takes GDAL/OGR
+using a context manager, ``fiona.Env``. This class's constructor takes GDAL/OGR
 configuration options as keyword arguments. To see debugging information from
 GDAL/OGR, for example, you may do the following.
 
@@ -1058,17 +1058,15 @@ GDAL/OGR, for example, you may do the following.
     with fiona.Env(CPL_DEBUG=True):
         fiona.open('tests/data/coutwildrnp.shp')
 
-The following extra messages will appear in the Python logger's output.
+The following extra messages will appear in the Python logger's output.::
 
-.. sourcecode::
-
-        DEBUG:fiona._env:CPLE_None in GNM: GNMRegisterAllInternal
-        DEBUG:fiona._env:CPLE_None in GNM: RegisterGNMFile
-        DEBUG:fiona._env:CPLE_None in GNM: RegisterGNMdatabase
-        DEBUG:fiona._env:CPLE_None in GNM: GNMRegisterAllInternal
-        DEBUG:fiona._env:CPLE_None in GNM: RegisterGNMFile
-        DEBUG:fiona._env:CPLE_None in GNM: RegisterGNMdatabase
-        DEBUG:fiona._env:CPLE_None in GDAL: GDALOpen(tests/data/coutwildrnp.shp, this=0x1683930) succeeds as ESRI Shapefile.
+    DEBUG:fiona._env:CPLE_None in GNM: GNMRegisterAllInternal
+    DEBUG:fiona._env:CPLE_None in GNM: RegisterGNMFile
+    DEBUG:fiona._env:CPLE_None in GNM: RegisterGNMdatabase
+    DEBUG:fiona._env:CPLE_None in GNM: GNMRegisterAllInternal
+    DEBUG:fiona._env:CPLE_None in GNM: RegisterGNMFile
+    DEBUG:fiona._env:CPLE_None in GNM: RegisterGNMdatabase
+    DEBUG:fiona._env:CPLE_None in GDAL: GDALOpen(tests/data/coutwildrnp.shp, this=0x1683930) succeeds as ESRI Shapefile.
 
 If you call ``fiona.open()`` with no surrounding ``Env`` environment, one will
 be created for you.
