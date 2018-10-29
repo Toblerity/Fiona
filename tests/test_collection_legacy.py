@@ -735,7 +735,7 @@ class PointAppendTest(unittest.TestCase):
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
         with fiona.open(self.path_coutwildrnp_shp, "r") as input:
-            output_schema = input.schema.copy()
+            output_schema = input.schema
             output_schema['geometry'] = '3D Point'
             with fiona.open(
                     os.path.join(self.tempdir, "test_append_point.shp"),

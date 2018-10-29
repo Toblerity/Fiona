@@ -704,7 +704,7 @@ class TestPointAppend(object):
     @pytest.fixture(autouse=True)
     def shapefile(self, tmpdir, path_coutwildrnp_shp):
         with fiona.open(path_coutwildrnp_shp, "r") as input:
-            output_schema = input.schema.copy()
+            output_schema = input.schema
             output_schema['geometry'] = '3D Point'
             with fiona.open(
                     str(tmpdir.join("test_append_point.shp")),

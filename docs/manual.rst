@@ -119,7 +119,7 @@ the Fiona repository for use in this and other examples.
   with fiona.open('docs/data/test_uk.shp', 'r') as source:
       
       # Copy the source schema and add two new properties.
-      sink_schema = source.schema.copy()
+      sink_schema = source.schema
       sink_schema['properties']['s_area'] = 'float'
       sink_schema['properties']['timestamp'] = 'datetime'
       
