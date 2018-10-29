@@ -1037,6 +1037,83 @@ Point' schema geometry, for example) a default z value of 0 will be provided.
 Advanced Topics
 ===============
 
+OGR configuration options
+-------------------------
+
+GDAL/OGR has a large number of features that are controlled by global or
+thread-local configuration options. Fiona allows you to configure these options
+using a context manager, `fiona.Env`. This class's constructor takes GDAL/OGR
+configuration options as keyword arguments. To see debugging information from
+GDAL/OGR, for example, you may do the following.
+
+.. sourcecode:: python
+
+    import logging
+
+    import fiona
+
+
+    logging.basicConfig(level=logging.DEBUG)
+
+    with fiona.Env(CPL_DEBUG=True):
+        fiona.open('tests/data/coutwildrnp.shp')
+
+The following extra messages will appear in the Python logger's output.
+
+.. sourcecode::
+
+        DEBUG:fiona._env:CPLE_None in GNM: GNMRegisterAllInternal
+        DEBUG:fiona._env:CPLE_None in GNM: RegisterGNMFile
+        DEBUG:fiona._env:CPLE_None in GNM: RegisterGNMdatabase
+        DEBUG:fiona._env:CPLE_None in GNM: GNMRegisterAllInternal
+        DEBUG:fiona._env:CPLE_None in GNM: RegisterGNMFile
+        DEBUG:fiona._env:CPLE_None in GNM: RegisterGNMdatabase
+        DEBUG:fiona._env:CPLE_None in GDAL: GDALOpen(tests/data/coutwildrnp.shp, this=0x1683930) succeeds as ESRI Shapefile.
+
+If you call ``fiona.open()`` with no surrounding ``Env`` environment, one will
+be created for you.
+
+When your program exits the environent's with block the configuration reverts
+to its previous state. 
+
+Cloud storage credentials
+-------------------------
+
+One of the most important uses of ``fiona.Env`` is to set credentials for
+accessing data stored in AWS S3 or another cloud storage system.
+
+.. sourcecode:: python
+
+        from fiona.session import AWSSession
+        import fiona
+
+        with fiona.Env(
+            session=AWSession(
+                aws_access_key_id="key",
+                aws_secret_access_key="secret",
+            )
+        ):
+            fiona.open("zip+s3://example-bucket/example.zip")
+
+The AWSSession class is currently the only credential session manager in Fiona.
+The source code has an example of how classes for other cloud storage providers
+may be implemented.  AWSSession relies upon boto3 and botocore, which will be
+installed as extra dependencies of Fiona if you run ``pip install fiona[s3]``.
+
+If you call ``fiona.open()`` with no surrounding ``Env`` and pass a path to an
+S3 object, a session will be created for you using code equivalent to the
+following code.
+
+.. sourcecode:: python
+
+    import boto3
+
+    from fiona.session import AWSSession
+    import fiona
+
+    with fiona.Env(session=AWSSession(boto3.Session())):
+        fiona.open('zip+s3://fiona-testing/coutwildrnp.zip')
+
 Slicing and masking iterators
 -----------------------------
 

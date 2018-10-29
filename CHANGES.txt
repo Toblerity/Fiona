@@ -14,7 +14,9 @@ Bug fixes:
 1.8rc1 (2018-10-26)
 -------------------
 
-There are no changes in 1.8rc1.
+There are no changes in 1.8rc1 other than more test standardization and the
+introduction of a temporary test_collection_legacy.py module to support the
+build of fully tested Python 2.7 macosx wheels on Travis-CI.
 
 1.8b2 (2018-10-23)
 ------------------
