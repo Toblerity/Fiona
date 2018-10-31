@@ -3,8 +3,10 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-Next
-----
+1.8.0 (2018-10-31)
+------------------
+
+This is the final 1.8.0 release. Thanks, everyone!
 
 Bug fixes:
 
