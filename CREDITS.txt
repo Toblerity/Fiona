@@ -50,6 +50,9 @@ Fiona is written by:
 - dimlev <dimlev@gmail.com>
 - wilsaj <wilson.andrew.j+github@gmail.com>
 
+The GeoPandas project (Joris Van den Bossche et al.) has been a major driver
+for new features in 1.8.0.
+
 Fiona would not be possible without the great work of Frank Warmerdam and other
 GDAL/OGR developers.
 
