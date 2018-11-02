@@ -74,8 +74,8 @@ Refactoring:
 
 Deprecations:
 
-- The ``rasterio.drivers()`` context manager is officially deprecated. All
-  users should switch to ``rasterio.Env()``, which registers format drivers and
+- The ``fiona.drivers()`` context manager is officially deprecated. All
+  users should switch to ``fiona.Env()``, which registers format drivers and
   manages GDAL configuration in a reversible manner.
 
 Bug fixes:
