@@ -1077,7 +1077,10 @@ cdef class WritingSession(Session):
 
                 field_type = FIELD_TYPES.index(value)
                 encoding = self.get_internalencoding()
-                key_bytes = key.encode(encoding)
+                try:
+                    key_bytes = key.encode(encoding)
+                except UnicodeEncodeError as exc:
+                    raise SchemaError(u"{}".format(exc))
 
                 cogr_fielddefn = exc_wrap_pointer(OGR_Fld_Create(key_bytes, field_type))
 
