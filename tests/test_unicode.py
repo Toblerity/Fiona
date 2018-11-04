@@ -128,7 +128,7 @@ class TestUnicodeStringField(object):
 
         See GH#595.
         """
-        field_name = "区县名称"
+        field_name = u"区县名称"
         meta = {
             "schema": {
                 "properties": OrderedDict([(field_name, "int")]),
@@ -141,10 +141,9 @@ class TestUnicodeStringField(object):
             "geometry": {"type": "Point", "coordinates": [1, 2]}
         }
         # when encoding is specified, write is successful
-        collection = fiona.open(os.path.join(self.tempdir, "test1.shp"), "w", encoding="GB2312", **meta)
-        collection.write(feature)
-        collection.close()
+        with fiona.open(os.path.join(self.tempdir, "test1.shp"), "w", encoding="GB2312", **meta) as collection:
+            collection.write(feature)
         # no encoding
         with pytest.raises(ValueError):
-            collection = fiona.open(os.path.join(self.tempdir, "test2.shp"), "w", **meta)
+            fiona.open(os.path.join(self.tempdir, "test2.shp"), "w", **meta)
 
