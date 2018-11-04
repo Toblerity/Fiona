@@ -10,6 +10,7 @@ from collections import OrderedDict
 import pytest
 
 import fiona
+from fiona.errors import SchemaError
 
 
 class TestUnicodePath(object):
@@ -144,6 +145,6 @@ class TestUnicodeStringField(object):
         with fiona.open(os.path.join(self.tempdir, "test1.shp"), "w", encoding="GB2312", **meta) as collection:
             collection.write(feature)
         # no encoding
-        with pytest.raises(ValueError):
+        with pytest.raises(SchemaError):
             fiona.open(os.path.join(self.tempdir, "test2.shp"), "w", **meta)
 
