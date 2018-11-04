@@ -1095,7 +1095,7 @@ cdef class WritingSession(Session):
                 try:
                     exc_wrap_int(OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1))
                 except CPLE_BaseError as exc:
-                    raise SchemaError(str(exc))
+                    raise SchemaError(u"{}".format(exc))
 
                 OGR_Fld_Destroy(cogr_fielddefn)
 
