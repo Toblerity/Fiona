@@ -822,6 +822,7 @@ cdef class WritingSession(Session):
         cdef const char *proj_c = NULL
         cdef const char *fileencoding_c = NULL
         cdef OGRFieldSubType field_subtype
+        cdef int ret
         path = collection.path
         self.collection = collection
 
@@ -1076,7 +1077,10 @@ cdef class WritingSession(Session):
 
                 field_type = FIELD_TYPES.index(value)
                 encoding = self.get_internalencoding()
-                key_bytes = key.encode(encoding)
+                try:
+                    key_bytes = key.encode(encoding)
+                except UnicodeEncodeError as exc:
+                    raise SchemaError(u"{}".format(exc))
 
                 cogr_fielddefn = exc_wrap_pointer(OGR_Fld_Create(key_bytes, field_type))
 
@@ -1094,7 +1098,7 @@ cdef class WritingSession(Session):
                 try:
                     exc_wrap_int(OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1))
                 except CPLE_BaseError as exc:
-                    raise SchemaError(str(exc))
+                    raise SchemaError(u"{}".format(exc))
 
                 OGR_Fld_Destroy(cogr_fielddefn)
 
