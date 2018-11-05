@@ -520,7 +520,7 @@ cdef class Session:
             OGR_L_TestCapability(
                 self.cogr_layer, OLC_STRINGSASUTF8) and
             'utf-8') or (
-            self.get_driver() == "ESRI Shapefile" and
+            "Shapefile" in self.get_driver() and
             'ISO-8859-1') or locale.getpreferredencoding().upper()
 
         if collection.ignore_fields:
@@ -884,7 +884,7 @@ cdef class WritingSession(Session):
             # TODO: remove the assumption.
             if not os.path.exists(path):
                 log.debug("File doesn't exist. Creating a new one...")
-                cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
+                cogr_ds = gdal_create(cogr_driver, path_c, {})
 
             # TODO: revisit the logic in the following blocks when we
             # change the assumption above.
@@ -959,16 +959,14 @@ cdef class WritingSession(Session):
             # 'iso-8859-1', then the system's default encoding as last resort.
             sysencoding = locale.getpreferredencoding()
             self._fileencoding = (userencoding or (
-                collection.driver == "ESRI Shapefile" and
+                "Shapefile" in collection.driver and
                 'ISO-8859-1') or sysencoding).upper()
 
-            # The ENCODING option makes no sense for some drivers and
-            # will result in a warning. Fixing is a TODO.
-            fileencoding = self.get_fileencoding()
-            if fileencoding:
-                fileencoding_b = fileencoding.encode('utf-8')
-                fileencoding_c = fileencoding_b
-                with cpl_errs:
+            if "Shapefile" in collection.driver:
+                fileencoding = self.get_fileencoding()
+                if fileencoding:
+                    fileencoding_b = fileencoding.encode('utf-8')
+                    fileencoding_c = fileencoding_b
                     options = CSLSetNameValue(options, "ENCODING", fileencoding_c)
 
             # Does the layer exist already? If so, we delete it.
@@ -996,7 +994,14 @@ cdef class WritingSession(Session):
             name_c = name_b
 
             for k, v in kwargs.items():
+
+                # We need to remove encoding from the layer creation
+                # options if we're not creating a shapefile.
+                if k == 'encoding' and "Shapefile" not in collection.driver:
+                    continue
+
                 k = k.upper().encode('utf-8')
+
                 if isinstance(v, bool):
                     v = ('ON' if v else 'OFF').encode('utf-8')
                 else:
