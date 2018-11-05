@@ -182,11 +182,9 @@ ext_options = dict(
     libraries=libraries,
     extra_link_args=extra_link_args)
 
-ext_options_cpp = ext_options.copy()
 # GDAL 2.3+ requires C++11
-if sys.platform == "win32":
-    ext_options_cpp["extra_compile_args"] = ["/std:c++11"]
-else:
+ext_options_cpp = ext_options.copy()
+if sys.platform != "win32":
     ext_options_cpp["extra_compile_args"] = ["-std=c++11"]
 
 
