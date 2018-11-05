@@ -125,6 +125,21 @@ cdef extern from "ogr_core.h":
         wkbMultiPolygon25D
         wkbGeometryCollection25D
 
+    ctypedef enum OGRFieldType:
+        OFTInteger
+        OFTIntegerList
+        OFTReal
+        OFTRealList
+        OFTString
+        OFTStringList
+        OFTWideString
+        OFTWideStringList
+        OFTBinary
+        OFTDate
+        OFTTime
+        OFTDateTime
+        OFTMaxType
+
     char *  OGRGeometryTypeToName(int)
 
     char * ODsCCreateLayer = "CreateLayer"
