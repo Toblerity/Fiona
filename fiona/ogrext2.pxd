@@ -34,9 +34,9 @@ cdef extern from "gdal.h":
     void * GDALGetDriverByName(const char * pszName)
     void * GDALOpenEx(const char * pszFilename,
                       unsigned int nOpenFlags,
-                      const char ** papszAllowedDrivers,
-                      const char ** papszOpenOptions,
-                      const char *const *papszSibling1Files
+                      const char *const *papszAllowedDrivers,
+                      const char *const *papszOpenOptions,
+                      const char *const *papszSiblingFiles
                       )
     int GDAL_OF_UPDATE
     int GDAL_OF_READONLY
@@ -146,7 +146,7 @@ cdef extern from "ogr_srs_api.h":
 
 cdef extern from "ogr_api.h":
 
-    char *  OGR_Dr_GetName (void *driver)
+    const char * OGR_Dr_GetName (void *driver)
     void *  OGR_Dr_CreateDataSource (void *driver, const char *path, char **options)
     int     OGR_Dr_DeleteDataSource (void *driver, char *)
     void *  OGR_Dr_Open (void *driver, const char *path, int bupdate)

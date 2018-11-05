@@ -79,7 +79,7 @@ cdef extern from "ogr_srs_api.h":
     int     OCTTransform (void *ct, int nCount, double *x, double *y, double *z)
 
 cdef extern from "ogr_api.h":
-    char *  OGR_Dr_GetName (void *driver)
+    const char * OGR_Dr_GetName (void *driver)
     void *  OGR_Dr_CreateDataSource (void *driver, const char *path, char **options)
     int     OGR_Dr_DeleteDataSource (void *driver, char *)
     void *  OGR_Dr_Open (void *driver, const char *path, int bupdate)
