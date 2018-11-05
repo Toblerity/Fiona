@@ -3,6 +3,14 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.1 ()
+--------
+
+Bug fixes:
+
+- Pervasive warning level log messages about ENCODING creation options (#668)
+  have been eliminated.
+
 1.8.0 (2018-10-31)
 ------------------
 
