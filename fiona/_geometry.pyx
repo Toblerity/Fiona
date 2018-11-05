@@ -286,11 +286,6 @@ cdef class OGRGeomBuilder:
             raise ValueError("Unsupported geometry type %s" % typename)
 
 
-cdef geometry(void *geom):
-    """Factory for Fiona geometries"""
-    return GeomBuilder().build(geom)
-
-
 def geometryRT(geometry):
     # For testing purposes only, leaks the JSON data
     cdef void *cogr_geometry = OGRGeomBuilder().build(geometry)
