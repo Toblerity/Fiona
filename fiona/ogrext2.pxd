@@ -9,6 +9,96 @@ cdef extern from "ogr_core.h":
 
     ctypedef int OGRErr
 
+    ctypedef enum OGRwkbGeometryType:
+        wkbUnknown
+        wkbPoint
+        wkbLineString
+        wkbPolygon
+        wkbMultiPoint
+        wkbMultiLineString
+        wkbMultiPolygon
+        wkbGeometryCollection
+        wkbCircularString
+        wkbCompoundCurve
+        wkbCurvePolygon
+        wkbMultiCurve
+        wkbMultiSurface
+        wkbCurve
+        wkbSurface
+        wkbPolyhedralSurface
+        wkbTIN
+        wkbTriangle
+        wkbNone
+        wkbLinearRing
+        wkbCircularStringZ
+        wkbCompoundCurveZ
+        wkbCurvePolygonZ
+        wkbMultiCurveZ
+        wkbMultiSurfaceZ
+        wkbCurveZ
+        wkbSurfaceZ
+        wkbPolyhedralSurfaceZ
+        wkbTINZ
+        wkbTriangleZ
+        wkbPointM
+        wkbLineStringM
+        wkbPolygonM
+        wkbMultiPointM
+        wkbMultiLineStringM
+        wkbMultiPolygonM
+        wkbGeometryCollectionM
+        wkbCircularStringM
+        wkbCompoundCurveM
+        wkbCurvePolygonM
+        wkbMultiCurveM
+        wkbMultiSurfaceM
+        wkbCurveM
+        wkbSurfaceM
+        wkbPolyhedralSurfaceM
+        wkbTINM
+        wkbTriangleM
+        wkbPointZM
+        wkbLineStringZM
+        wkbPolygonZM
+        wkbMultiPointZM
+        wkbMultiLineStringZM
+        wkbMultiPolygonZM
+        wkbGeometryCollectionZM
+        wkbCircularStringZM
+        wkbCompoundCurveZM
+        wkbCurvePolygonZM
+        wkbMultiCurveZM
+        wkbMultiSurfaceZM
+        wkbCurveZM
+        wkbSurfaceZM
+        wkbPolyhedralSurfaceZM
+        wkbTINZM
+        wkbTriangleZM
+        wkbPoint25D
+        wkbLineString25D
+        wkbPolygon25D
+        wkbMultiPoint25D
+        wkbMultiLineString25D
+        wkbMultiPolygon25D
+        wkbGeometryCollection25D
+
+    ctypedef enum OGRFieldType:
+        OFTInteger
+        OFTIntegerList
+        OFTReal
+        OFTRealList
+        OFTString
+        OFTStringList
+        OFTWideString
+        OFTWideStringList
+        OFTBinary
+        OFTDate
+        OFTTime
+        OFTDateTime
+        OFTInteger64
+        OFTInteger64List
+        OFTMaxType
+
     ctypedef int OGRFieldSubType
     cdef int OFSTNone = 0
     cdef int OFSTBoolean = 1
@@ -177,7 +267,7 @@ cdef extern from "ogr_api.h":
     void *  OGR_FD_GetFieldDefn (void *featuredefn, int n)
     int     OGR_FD_GetGeomType (void *featuredefn)
     char *  OGR_FD_GetName (void *featuredefn)
-    void *  OGR_Fld_Create (char *name, int fieldtype)
+    void *  OGR_Fld_Create (char *name, OGRFieldType fieldtype)
     void    OGR_Fld_Destroy (void *fielddefn)
     char *  OGR_Fld_GetNameRef (void *fielddefn)
     int     OGR_Fld_GetPrecision (void *fielddefn)

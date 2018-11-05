@@ -1024,7 +1024,7 @@ cdef class WritingSession(Session):
                 self.cogr_layer = exc_wrap_pointer(
                     GDALDatasetCreateLayer(
                         self.cogr_ds, name_c, cogr_srs,
-                        geometry_code, options))
+                        <OGRwkbGeometryType>geometry_code, options))
             except Exception as exc:
                 raise DriverIOError(str(exc))
             finally:
@@ -1087,7 +1087,7 @@ cdef class WritingSession(Session):
                 except UnicodeEncodeError as exc:
                     raise SchemaError(u"{}".format(exc))
 
-                cogr_fielddefn = exc_wrap_pointer(OGR_Fld_Create(key_bytes, field_type))
+                cogr_fielddefn = exc_wrap_pointer(OGR_Fld_Create(key_bytes, <OGRFieldType>field_type))
 
                 if cogr_fielddefn == NULL:
                     raise ValueError("Field {} definition is NULL".format(key))
