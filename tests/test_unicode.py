@@ -13,8 +13,7 @@ import fiona
 from fiona.errors import SchemaError
 
 
-class TestUnicodePath(object):
-
+class TestUnicodePath:
     def setup(self):
         tempdir = tempfile.mkdtemp()
         self.dir = os.path.join(tempdir, u'français')
@@ -42,16 +41,9 @@ class TestUnicodePath(object):
                 assert len(c) == 67
 
 
-class TestUnicodeStringField(object):
-
-    def setup(self):
-        self.tempdir = tempfile.mkdtemp()
-
-    def teardown(self):
-        shutil.rmtree(self.tempdir)
-
+class TestUnicodeStringField:
     @pytest.mark.xfail(reason="OGR silently fails to convert strings")
-    def test_write_mismatch(self):
+    def test_write_mismatch(self, tmpdir):
         """TOFIX: OGR silently fails to convert strings"""
         # Details:
         #
@@ -68,7 +60,7 @@ class TestUnicodeStringField(object):
             'geometry': 'Point',
             'properties': {'label': 'str', 'num': 'int'}}
 
-        with fiona.open(os.path.join(self.tempdir, "test-write-fail.shp"),
+        with fiona.open(os.path.join(tmpdir, "test-write-fail.shp"),
                         'w', driver="ESRI Shapefile", schema=schema,
                         encoding='latin1') as c:
             c.writerecords([{
@@ -78,16 +70,16 @@ class TestUnicodeStringField(object):
                     'label': u'徐汇区',
                     'num': 0}}])
 
-        with fiona.open(os.path.join(self.tempdir), encoding='latin1') as c:
+        with fiona.open(os.path.join(tmpdir, "test-write-fail.shp"), encoding='latin1') as c:
             f = next(iter(c))
             # Next assert fails.
             assert f['properties']['label'] == u'徐汇区'
 
-    def test_write_utf8(self):
+    def test_write_utf8(self, tmpdir):
         schema = {
             'geometry': 'Point',
             'properties': {'label': 'str', u'verit\xe9': 'int'}}
-        with fiona.open(os.path.join(self.tempdir, "test-write.shp"),
+        with fiona.open(os.path.join(tmpdir, "test-write.shp"),
                         "w", "ESRI Shapefile", schema=schema,
                         encoding='utf-8') as c:
             c.writerecords([{
@@ -96,17 +88,17 @@ class TestUnicodeStringField(object):
                 'properties': {
                     'label': u'Ba\u2019kelalan', u'verit\xe9': 0}}])
 
-        with fiona.open(os.path.join(self.tempdir), encoding='utf-8') as c:
+        with fiona.open(os.path.join(tmpdir, "test-write.shp"), encoding='utf-8') as c:
             f = next(iter(c))
             assert f['properties']['label'] == u'Ba\u2019kelalan'
             assert f['properties'][u'verit\xe9'] == 0
 
-    def test_write_gb18030(self):
+    def test_write_gb18030(self, tmpdir):
         """Can write a simplified Chinese shapefile"""
         schema = {
             'geometry': 'Point',
             'properties': {'label': 'str', 'num': 'int'}}
-        with fiona.open(os.path.join(self.tempdir, "test-write-gb18030.shp"),
+        with fiona.open(os.path.join(tmpdir, "test-write-gb18030.shp"),
                         'w', driver="ESRI Shapefile", schema=schema,
                         encoding='gb18030') as c:
             c.writerecords([{
@@ -114,12 +106,12 @@ class TestUnicodeStringField(object):
                 'geometry': {'type': 'Point', 'coordinates': [0, 0]},
                 'properties': {'label': u'徐汇区', 'num': 0}}])
 
-        with fiona.open(os.path.join(self.tempdir), encoding='gb18030') as c:
+        with fiona.open(os.path.join(tmpdir, "test-write-gb18030.shp"), encoding='gb18030') as c:
             f = next(iter(c))
             assert f['properties']['label'] == u'徐汇区'
             assert f['properties']['num'] == 0
 
-    def test_gb2312_field_wrong_encoding(self):
+    def test_gb2312_field_wrong_encoding(self, tmpdir):
         """Attempt to create field with a name not supported by the encoding
 
         ESRI Shapefile driver defaults to ISO-8859-1 encoding if none is
@@ -142,9 +134,9 @@ class TestUnicodeStringField(object):
             "geometry": {"type": "Point", "coordinates": [1, 2]}
         }
         # when encoding is specified, write is successful
-        with fiona.open(os.path.join(self.tempdir, "test1.shp"), "w", encoding="GB2312", **meta) as collection:
+        with fiona.open(os.path.join(tmpdir, "test1.shp"), "w", encoding="GB2312", **meta) as collection:
             collection.write(feature)
         # no encoding
         with pytest.raises(SchemaError):
-            fiona.open(os.path.join(self.tempdir, "test2.shp"), "w", **meta)
+            fiona.open(os.path.join(tmpdir, "test2.shp"), "w", **meta)
 
