@@ -70,3 +70,16 @@ def test_ensure_env_decorator_sets_gdal_data_wheel(gdalenv, monkeypatch, tmpdir)
     monkeypatch.setattr(_env, '__file__', str(tmpdir.join(os.path.basename(_env.__file__))))
 
     assert f() == str(tmpdir.join("gdal_data"))
+
+
+def test_ensure_env_with_decorator_sets_gdal_data_wheel(gdalenv, monkeypatch, tmpdir):
+    """fiona.env.ensure_env finds GDAL data in a wheel"""
+    @ensure_env_with_credentials
+    def f(*args):
+        return getenv()['GDAL_DATA']
+
+    tmpdir.ensure("gdal_data/pcs.csv")
+    monkeypatch.delenv('GDAL_DATA', raising=False)
+    monkeypatch.setattr(_env, '__file__', str(tmpdir.join(os.path.basename(_env.__file__))))
+
+    assert f("foo") == str(tmpdir.join("gdal_data"))
