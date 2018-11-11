@@ -11,7 +11,7 @@ from .conftest import gdal_version
 def mock_wheel(tmpdir):
     """A fake rasterio wheel"""
     moduledir = tmpdir.mkdir("rasterio")
-    moduledir.ensure("__init__,py")
+    moduledir.ensure("__init__.py")
     moduledir.ensure("_env.py")
     moduledir.ensure("gdal_data/pcs.csv")
     moduledir.ensure("proj_data/epsg")
