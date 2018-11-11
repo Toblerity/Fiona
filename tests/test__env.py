@@ -72,7 +72,7 @@ def test_search_debian_gdal_data_failure(tmpdir):
 def test_search_debian_gdal_data(mock_debian):
     """Find GDAL data under Debian locations"""
     finder = GDALDataFinder()
-    assert finder.search_debian(str(mock_debian)) == str(mock_debian.join("share/gdal/{}".format(str(gdal_version))))
+    assert finder.search_debian(str(mock_debian)) == str(mock_debian.join("share/gdal/{}.{}".format(gdal_version.major, gdal_version.minor)))
 
 
 def test_search_gdal_data_wheel(mock_wheel):
@@ -88,7 +88,7 @@ def test_search_gdal_data_fhs(mock_fhs):
 def test_search_gdal_data_debian(mock_debian):
     """Find GDAL data under Debian locations"""
     finder = GDALDataFinder()
-    assert finder.search(str(mock_debian)) == str(mock_debian.join("share/gdal/{}".format(str(gdal_version))))
+    assert finder.search(str(mock_debian)) == str(mock_debian.join("share/gdal/{}.{}".format(gdal_version.major, gdal_version.minor)))
 
 
 def test_search_wheel_proj_data_failure(tmpdir):

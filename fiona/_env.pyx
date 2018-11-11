@@ -16,6 +16,8 @@ import os.path
 import sys
 import threading
 
+from fiona.ogrext import get_gdal_version_tuple
+
 
 level_map = {
     0: 0,
@@ -212,8 +214,8 @@ class GDALDataFinder(object):
 
     def search_debian(self, prefix=sys.prefix):
         """Check Debian locations"""
-        gdal_release_name = GDALVersionInfo("RELEASE_NAME")
-        datadir = os.path.join(prefix, 'share/gdal', '{}.{}'.format(*gdal_release_name.split('.')[:2]))
+        gdal_version = get_gdal_version_tuple()
+        datadir = os.path.join(prefix, 'share/gdal/{}.{}'.format(gdal_version.major, gdal_version.minor))
         return datadir if os.path.exists(os.path.join(datadir, 'pcs.csv')) else None
 
 
