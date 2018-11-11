@@ -309,6 +309,12 @@ cdef class FeatureBuilder:
                     geom = GeomBuilder().build(cogr_geometry)
                     OGR_G_DestroyGeometry(cogr_geometry)
 
+                # RFC 64: Triangle, Polyhedral surface and TIN
+                if code % 100 in (15, 16):
+                    cogr_geometry = OGR_G_ForceToMultiPolygon(cogr_geometry)
+                    geom = GeomBuilder().build(cogr_geometry)
+                    OGR_G_DestroyGeometry(cogr_geometry)
+
                 else:
                     geom = GeomBuilder().build(cogr_geometry)
 
