@@ -160,15 +160,16 @@ class Env(object):
         self.context_options = {}
 
     @classmethod
-    def from_defaults(cls, *args, **kwargs):
+    def from_defaults(cls, session=None, **options):
         """Create an environment with default config options
 
         Parameters
         ----------
-        args : optional
-            Positional arguments for Env()
-        kwargs : optional
-            Keyword arguments for Env()
+        session : optional
+            A Session object.
+        **options : optional
+            A mapping of GDAL configuration options, e.g.,
+            `CPL_DEBUG=True, CHECK_WITH_INVERT_PROJ=False`.
 
         Returns
         -------
@@ -179,9 +180,9 @@ class Env(object):
         The items in kwargs will be overlaid on the default values.
 
         """
-        options = Env.default_options()
-        options.update(**kwargs)
-        return Env(*args, **options)
+        opts = Env.default_options()
+        opts.update(**options)
+        return Env(session=session, **opts)
 
     @property
     def is_credentialized(self):
@@ -315,14 +316,30 @@ def delenv():
 
 def ensure_env(f):
     """A decorator that ensures an env exists before a function
-    calls any GDAL C functions."""
+    calls any GDAL C functions.
+
+    Parameters
+    ----------
+    f : function
+        A function.
+
+    Returns
+    -------
+    A function wrapper.
+
+    Notes
+    -----
+    If there is already an existing environment, the wrapper does
+    nothing and immediately calls f with the given arguments.
+
+    """
     @wraps(f)
-    def wrapper(*args, **kwds):
+    def wrapper(*args, **kwargs):
         if local._env:
-            return f(*args, **kwds)
+            return f(*args, **kwargs)
         else:
             with Env.from_defaults():
-                return f(*args, **kwds)
+                return f(*args, **kwargs)
     return wrapper
 
 
@@ -344,25 +361,23 @@ def ensure_env_with_credentials(f):
     credentializes the environment if the first argument is a URI with
     scheme "s3".
 
+    If there is already an existing environment, the wrapper does
+    nothing and immediately calls f with the given arguments.
+
     """
     @wraps(f)
-    def wrapper(*args, **kwds):
+    def wrapper(*args, **kwargs):
         if local._env:
-            env_ctor = Env
+            return f(*args, **kwargs)
         else:
-            env_ctor = Env.from_defaults
+            if isinstance(args[0], str):
+                session = Session.from_path(args[0])
+            else:
+                session = Session.from_path(None)
 
-        if hascreds():
-            session = DummySession()
-        elif isinstance(args[0], str):
-            session = Session.from_path(args[0])
-        else:
-            session = Session.from_path(None)
-
-        with env_ctor(session=session):
-            log.debug("Credentialized: {!r}".format(getenv()))
-            return f(*args, **kwds)
-
+            with Env.from_defaults(session=session):
+                log.debug("Credentialized: {!r}".format(getenv()))
+                return f(*args, **kwargs)
     return wrapper
 
 
