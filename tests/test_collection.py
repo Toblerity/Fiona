@@ -206,6 +206,7 @@ class TestReading(object):
         with fiona.open(path_coutwildrnp_shp, "r") as c:
             assert c.name == 'coutwildrnp'
             assert len(c) == 67
+            assert c.crs
         assert c.closed
 
     def test_iter_one(self):

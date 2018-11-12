@@ -9,7 +9,8 @@ import attr
 from six import string_types
 
 from fiona._env import (
-    GDALEnv, get_gdal_config, set_gdal_config)
+    GDALEnv, calc_gdal_version_num, get_gdal_version_num, get_gdal_config,
+    set_gdal_config, get_gdal_release_name)
 from fiona.compat import getargspec
 from fiona.errors import EnvError, GDALVersionError
 from fiona.session import Session, DummySession
@@ -440,7 +441,6 @@ class GDALVersion(object):
     @classmethod
     def runtime(cls):
         """Return GDALVersion of current GDAL runtime"""
-        from fiona.ogrext import get_gdal_release_name  # to avoid circular import
         return cls.parse(get_gdal_release_name())
 
     def at_least(self, other):
