@@ -5,13 +5,23 @@ See https://trac.osgeo.org/gdal/wiki/rfc64_triangle_polyhedralsurface_tin.
 
 import fiona
 
-from .conftest import requires_gdal2
+from .conftest import  requires_gdal22
 
 
-@requires_gdal2
-def test_tin(path_test_tin):
-    """Convert curved geometries to linear approximations"""
-    with fiona.open(path_test_tin) as col:
+def test_tin_shp(path_test_tin_shp):
+    """Convert TIN to MultiPolygon"""
+    with fiona.open(path_test_tin_shp) as col:
+        assert col.schema['geometry'] == 'Unknown'
+        features = list(col)
+        assert len(features) == 1
+        assert features[0]['geometry']['type'] == 'MultiPolygon'
+
+@requires_gdal22
+def test_tin_csv(path_test_tin_csv):
+    """Convert TIN to MultiPolygon and Triangle to Polygon"""
+    with fiona.open(path_test_tin_csv) as col:
         assert col.schema['geometry'] == 'Unknown'
         features = list(col)
         assert len(features) == 2
+        assert features[0]['geometry']['type'] == 'MultiPolygon'
+        assert features[1]['geometry']['type'] == 'Polygon'

@@ -304,14 +304,25 @@ cdef class FeatureBuilder:
             if cogr_geometry is not NULL:
                 code = OGR_G_GetGeometryType(cogr_geometry)
 
-                if 7 < code < 100:  # Curves.
-                    cogr_geometry = get_linear_geometry(cogr_geometry)
-                    geom = GeomBuilder().build(cogr_geometry)
-                    OGR_G_DestroyGeometry(cogr_geometry)
-
                 # RFC 64: Triangle, Polyhedral surface and TIN
                 if code % 100 in (15, 16):
-                    cogr_geometry = OGR_G_ForceToMultiPolygon(cogr_geometry)
+                    """
+                    cogr_geometry is cloned as OGR_G_Force* consumes the original feature
+                    which would lead to a segfault in _deleteOgrFeature().
+                    """
+                    cogr_geometry_clone = OGR_G_Clone(cogr_geometry)
+                    cogr_geometry_clone = OGR_G_ForceToMultiPolygon(cogr_geometry_clone)
+                    geom = GeomBuilder().build(cogr_geometry_clone)
+                    OGR_G_DestroyGeometry(cogr_geometry_clone)
+
+                elif code % 100 == 17:
+                    cogr_geometry_clone = OGR_G_Clone(cogr_geometry)
+                    cogr_geometry_clone = OGR_G_ForceToPolygon(cogr_geometry_clone)
+                    geom = GeomBuilder().build(cogr_geometry_clone)
+                    OGR_G_DestroyGeometry(cogr_geometry_clone)
+
+                elif 7 < code % 100 < 15:  # Curves.
+                    cogr_geometry = get_linear_geometry(cogr_geometry)
                     geom = GeomBuilder().build(cogr_geometry)
                     OGR_G_DestroyGeometry(cogr_geometry)
 

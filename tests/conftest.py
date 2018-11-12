@@ -61,10 +61,14 @@ def path_curves_line_csv(data_dir):
 
 
 @pytest.fixture(scope='session')
-def path_test_tin(data_dir):
+def path_test_tin_shp(data_dir):
     """Path to ```test_tin.shp``"""
     return os.path.join(data_dir, 'test_tin.shp')
 
+@pytest.fixture(scope='session')
+def path_test_tin_csv(data_dir):
+    """Path to ```test_tin.csv``"""
+    return os.path.join(data_dir, 'test_tin.csv')
 
 @pytest.fixture(scope='session')
 def path_coutwildrnp_shp(data_dir):
