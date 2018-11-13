@@ -18,7 +18,7 @@ from fiona._shim cimport *
 
 from fiona._geometry cimport (
     GeomBuilder, OGRGeomBuilder, geometry_type_code,
-    normalize_geometry_type_code)
+    normalize_geometry_type_code, base_geometry_type_code)
 from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile
 
 import fiona
@@ -302,10 +302,11 @@ cdef class FeatureBuilder:
             cogr_geometry = OGR_F_GetGeometryRef(feature)
 
             if cogr_geometry is not NULL:
-                code = OGR_G_GetGeometryType(cogr_geometry)
+
+                code = base_geometry_type_code(OGR_G_GetGeometryType(cogr_geometry))
 
                 # RFC 64: Triangle, Polyhedral surface and TIN
-                if code % 100 in (15, 16):
+                if code in (15, 16):
                     """
                     cogr_geometry is cloned as OGR_G_Force* consumes the original feature
                     which would lead to a segfault in _deleteOgrFeature().
@@ -315,13 +316,13 @@ cdef class FeatureBuilder:
                     geom = GeomBuilder().build(cogr_geometry_clone)
                     OGR_G_DestroyGeometry(cogr_geometry_clone)
 
-                elif code % 100 == 17:
+                elif code == 17:
                     cogr_geometry_clone = OGR_G_Clone(cogr_geometry)
                     cogr_geometry_clone = OGR_G_ForceToPolygon(cogr_geometry_clone)
                     geom = GeomBuilder().build(cogr_geometry_clone)
                     OGR_G_DestroyGeometry(cogr_geometry_clone)
 
-                elif 7 < code % 100 < 15:  # Curves.
+                elif 7 < code < 15:  # Curves.
                     cogr_geometry = get_linear_geometry(cogr_geometry)
                     geom = GeomBuilder().build(cogr_geometry)
                     OGR_G_DestroyGeometry(cogr_geometry)

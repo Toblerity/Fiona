@@ -67,3 +67,5 @@ cdef class OGRGeomBuilder:
 
 cdef unsigned int geometry_type_code(object name) except? 9999
 cdef object normalize_geometry_type_code(unsigned int code)
+cdef unsigned int base_geometry_type_code(unsigned int code)
+

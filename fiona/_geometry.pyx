@@ -80,6 +80,17 @@ cdef object normalize_geometry_type_code(unsigned int code):
     return code
 
 
+cdef inline unsigned int base_geometry_type_code(unsigned int code):
+    """ Returns base geometry code without Z, M and ZM types """
+    # Remove 2.5D flag.
+    code = code & (~0x80000000)
+
+    # Normalize Z, M, and ZM types. Fiona 1.x does not support M
+    # and doesn't treat OGC 'Z' variants as special types of their
+    # own.
+    return code % 1000
+
+
 # Geometry related functions and classes follow.
 cdef void * _createOgrGeomFromWKB(object wkb) except NULL:
     """Make an OGR geometry from a WKB string"""
@@ -162,13 +173,7 @@ cdef class GeomBuilder:
 
         cdef unsigned int etype = OGR_G_GetGeometryType(geom)
 
-        # Remove 2.5D flag.
-        self.code = etype & (~0x80000000)
-
-        # Normalize Z, M, and ZM types. Fiona 1.x does not support M
-        # and doesn't treat OGC 'Z' variants as special types of their
-        # own.
-        self.code = self.code % 1000
+        self.code = base_geometry_type_code(etype)
 
         if self.code not in GEOMETRY_TYPES:
             raise UnsupportedGeometryTypeError(self.code)
