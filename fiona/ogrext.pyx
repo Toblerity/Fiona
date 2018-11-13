@@ -24,7 +24,7 @@ from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile
 import fiona
 from fiona.env import env_ctx_if_needed
 from fiona._env import GDALVersion, get_gdal_version_num
-from fiona._err import cpl_errs, FionaNullPointerError, CPLE_BaseError
+from fiona._err import cpl_errs, FionaNullPointerError, CPLE_BaseError, CPLE_OpenFailedError
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
 from fiona.errors import (
@@ -621,17 +621,25 @@ cdef class Session:
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
 
-        cogr_crs = OGR_L_GetSpatialRef(self.cogr_layer)
-        crs = {}
-
-        if cogr_crs is not NULL:
-
-            log.debug("Got coordinate system")
+        # We can't simply wrap a method in Python 2.7 so we
+        # bring the context manager inside like so.
+        with env_ctx_if_needed():
 
             try:
-                # We can't simply wrap a method in Python 2.7 so we
-                # bring the context manager inside like so.
-                with env_ctx_if_needed():
+                cogr_crs = exc_wrap_pointer(OGR_L_GetSpatialRef(self.cogr_layer))
+            # TODO: we don't intend to use try/except for flow control
+            # this is a work around for a GDAL issue.
+            except FionaNullPointerError:
+                log.debug("Layer has no coordinate system")
+            except fiona._err.CPLE_OpenFailedError as exc:
+                log.debug("A support file wasn't opened. See the preceding ERROR level message.")
+
+            if cogr_crs is not NULL:
+
+                log.debug("Got coordinate system")
+                crs = {}
+
+                try:
 
                     retval = OSRAutoIdentifyEPSG(cogr_crs)
                     if retval > 0:
@@ -672,39 +680,54 @@ cdef class Session:
                                 raise ValueError("Unexpected proj parameter %s" % param)
                             k = k.lstrip("+")
                             crs[k] = v
-            finally:
-                CPLFree(proj_c)
+                finally:
+                    CPLFree(proj_c)
+                    return crs
 
-        else:
-            log.debug("Projection not found (cogr_crs was NULL)")
+            else:
+                log.debug("Projection not found (cogr_crs was NULL)")
 
-        return crs
+        return {}
 
     def get_crs_wkt(self):
         cdef char *proj_c = NULL
+        cdef void *cogr_crs = NULL
 
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
 
-        cogr_crs = OGR_L_GetSpatialRef(self.cogr_layer)
-
-        if cogr_crs is not NULL:
-            log.debug("Got coordinate system")
+        # We can't simply wrap a method in Python 2.7 so we
+        # bring the context manager inside like so.
+        with env_ctx_if_needed():
 
             try:
-                with env_ctx_if_needed():
+                cogr_crs = exc_wrap_pointer(OGR_L_GetSpatialRef(self.cogr_layer))
+
+            # TODO: we don't intend to use try/except for flow control
+            # this is a work around for a GDAL issue.
+            except FionaNullPointerError:
+                log.debug("Layer has no coordinate system")
+            except fiona._err.CPLE_OpenFailedError as exc:
+                log.debug("A support file wasn't opened. See the preceding ERROR level message.")
+
+
+            if cogr_crs is not NULL:
+                log.debug("Got coordinate system")
+
+                try:
                     OSRExportToWkt(cogr_crs, &proj_c)
                     if proj_c == NULL:
                         raise ValueError("Null projection")
                     proj_b = proj_c
                     crs_wkt = proj_b.decode('utf-8')
-            finally:
-                CPLFree(proj_c)
-                return crs_wkt
 
-        else:
-            log.debug("Projection not found (cogr_crs was NULL)")
-            return ""
+                finally:
+                    CPLFree(proj_c)
+                    return crs_wkt
+
+            else:
+                log.debug("Projection not found (cogr_crs was NULL)")
+                return ""
 
     def get_extent(self):
         cdef OGREnvelope extent

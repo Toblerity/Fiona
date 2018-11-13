@@ -107,6 +107,7 @@ __gdal_version__ = get_gdal_release_name()
 gdal_version = get_gdal_version_tuple()
 
 log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 @ensure_env_with_credentials

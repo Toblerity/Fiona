@@ -105,11 +105,10 @@ def get_gdal_version_tuple():
 cdef void log_error(CPLErr err_class, int err_no, const char* msg) with gil:
     """Send CPL debug messages and warnings to Python's logger."""
     log = logging.getLogger(__name__)
-    if err_class < 3:
-        if err_no in code_map:
-            log.log(level_map[err_class], "%s in %s", code_map[err_no], msg)
-        else:
-            log.info("Unknown error number %r", err_no)
+    if err_no in code_map:
+        log.log(level_map[err_class], "%s", msg)
+    else:
+        log.info("Unknown error number %r", err_no)
 
 
 # Definition of GDAL callback functions, one for Windows and one for
