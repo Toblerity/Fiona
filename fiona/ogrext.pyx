@@ -959,15 +959,15 @@ cdef class WritingSession(Session):
                     else:
                         raise ValueError("Invalid CRS")
 
+                    # Fixup, export to WKT, and set the GDAL dataset's projection.
+                    OSRFixup(cogr_srs)
+
             except (ValueError, CPLE_BaseError) as exc:
                 OGRReleaseDataSource(self.cogr_ds)
                 self.cogr_ds = NULL
                 self.cogr_layer = NULL
                 raise CRSError(u"{}".format(exc))
 
-            else:
-                # Fixup, export to WKT, and set the GDAL dataset's projection.
-                OSRFixup(cogr_srs)
 
             # Figure out what encoding to use. The encoding parameter given
             # to the collection constructor takes highest precedence, then
