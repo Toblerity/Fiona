@@ -835,40 +835,42 @@ cdef class WritingSession(Session):
         userencoding = kwargs.get('encoding')
 
         if collection.mode == 'a':
-            if os.path.exists(path):
-                try:
-                    path_b = path.encode('utf-8')
-                except UnicodeDecodeError:
-                    path_b = path
-                path_c = path_b
-                self.cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
 
-                cogr_driver = GDALGetDatasetDriver(self.cogr_ds)
-                if cogr_driver == NULL:
-                    raise ValueError("Null driver")
+            if not os.path.exists(path):
+                raise OSError("No such file or directory %s" % path)
+
+            try:
+                path_b = path.encode('utf-8')
+            except UnicodeDecodeError:
+                path_b = path
+            path_c = path_b
+
+            try:
+                self.cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
 
                 if isinstance(collection.name, string_types):
                     name_b = collection.name.encode()
                     name_c = name_b
-                    self.cogr_layer = GDALDatasetGetLayerByName(
-                                        self.cogr_ds, name_c)
+                    self.cogr_layer = exc_wrap_pointer(GDALDatasetGetLayerByName(self.cogr_ds, name_c))
+
                 elif isinstance(collection.name, int):
-                    self.cogr_layer = GDALDatasetGetLayer(
-                                        self.cogr_ds, collection.name)
+                    self.cogr_layer = exc_wrap_pointer(GDALDatasetGetLayer(self.cogr_ds, collection.name))
 
-                if self.cogr_layer == NULL:
-                    raise RuntimeError(
-                        "Failed to get layer %s" % collection.name)
+            except CPLE_BaseError as exc:
+                OGRReleaseDataSource(self.cogr_ds)
+                self.cogr_ds = NULL
+                self.cogr_layer = NULL
+                raise DriverError(u"{}".format(exc))
+
             else:
-                raise OSError("No such file or directory %s" % path)
-
-            self._fileencoding = (userencoding or (
-                OGR_L_TestCapability(self.cogr_layer, OLC_STRINGSASUTF8) and
-                'utf-8') or (
-                self.get_driver() == "ESRI Shapefile" and
-                'ISO-8859-1') or locale.getpreferredencoding()).upper()
+                self._fileencoding = (userencoding or (
+                    OGR_L_TestCapability(self.cogr_layer, OLC_STRINGSASUTF8) and
+                    'utf-8') or (
+                    self.get_driver() == "ESRI Shapefile" and
+                    'ISO-8859-1') or locale.getpreferredencoding()).upper()
 
         elif collection.mode == 'w':
+
             try:
                 path_b = path.encode('utf-8')
             except UnicodeDecodeError:
@@ -877,11 +879,7 @@ cdef class WritingSession(Session):
 
             driver_b = collection.driver.encode()
             driver_c = driver_b
-
-
-            cogr_driver = GDALGetDriverByName(driver_c)
-            if cogr_driver == NULL:
-                raise ValueError("Null driver")
+            cogr_driver = exc_wrap_pointer(GDALGetDriverByName(driver_c))
 
             # Our most common use case is the creation of a new data
             # file and historically we've assumed that it's a file on
@@ -922,41 +920,52 @@ cdef class WritingSession(Session):
             # collection constructor. We by-pass the crs_wkt and crs
             # properties because they aren't accessible until the layer
             # is constructed (later).
-            col_crs = collection._crs_wkt or collection._crs
-            if col_crs:
-                cogr_srs = OSRNewSpatialReference(NULL)
-                if cogr_srs == NULL:
-                    raise ValueError("NULL spatial reference")
-                # First, check for CRS strings like "EPSG:3857".
-                if isinstance(col_crs, string_types):
-                    proj_b = col_crs.encode('utf-8')
-                    proj_c = proj_b
-                    OSRSetFromUserInput(cogr_srs, proj_c)
-                elif isinstance(col_crs, compat.DICT_TYPES):
-                    # EPSG is a special case.
-                    init = col_crs.get('init')
-                    if init:
-                        log.debug("Init: %s", init)
-                        auth, val = init.split(':')
-                        if auth.upper() == 'EPSG':
-                            log.debug("Setting EPSG: %s", val)
-                            OSRImportFromEPSG(cogr_srs, int(val))
-                    else:
-                        params = []
-                        col_crs['wktext'] = True
-                        for k, v in col_crs.items():
-                            if v is True or (k in ('no_defs', 'wktext') and v):
-                                params.append("+%s" % k)
-                            else:
-                                params.append("+%s=%s" % (k, v))
-                        proj = " ".join(params)
-                        log.debug("PROJ.4 to be imported: %r", proj)
-                        proj_b = proj.encode('utf-8')
-                        proj_c = proj_b
-                        OSRImportFromProj4(cogr_srs, proj_c)
-                else:
-                    raise ValueError("Invalid CRS")
+            try:
 
+                col_crs = collection._crs_wkt or collection._crs
+
+                if col_crs:
+                    cogr_srs = exc_wrap_pointer(OSRNewSpatialReference(NULL))
+
+                    # First, check for CRS strings like "EPSG:3857".
+                    if isinstance(col_crs, string_types):
+                        proj_b = col_crs.encode('utf-8')
+                        proj_c = proj_b
+                        OSRSetFromUserInput(cogr_srs, proj_c)
+
+                    elif isinstance(col_crs, compat.DICT_TYPES):
+                        # EPSG is a special case.
+                        init = col_crs.get('init')
+                        if init:
+                            log.debug("Init: %s", init)
+                            auth, val = init.split(':')
+                            if auth.upper() == 'EPSG':
+                                log.debug("Setting EPSG: %s", val)
+                                OSRImportFromEPSG(cogr_srs, int(val))
+                        else:
+                            params = []
+                            col_crs['wktext'] = True
+                            for k, v in col_crs.items():
+                                if v is True or (k in ('no_defs', 'wktext') and v):
+                                    params.append("+%s" % k)
+                                else:
+                                    params.append("+%s=%s" % (k, v))
+                            proj = " ".join(params)
+                            log.debug("PROJ.4 to be imported: %r", proj)
+                            proj_b = proj.encode('utf-8')
+                            proj_c = proj_b
+                            OSRImportFromProj4(cogr_srs, proj_c)
+
+                    else:
+                        raise ValueError("Invalid CRS")
+
+            except (ValueError, CPLE_BaseError) as exc:
+                OGRReleaseDataSource(self.cogr_ds)
+                self.cogr_ds = NULL
+                self.cogr_layer = NULL
+                raise CRSError(u"{}".format(exc))
+
+            else:
                 # Fixup, export to WKT, and set the GDAL dataset's projection.
                 OSRFixup(cogr_srs)
 
@@ -1031,8 +1040,12 @@ cdef class WritingSession(Session):
                     GDALDatasetCreateLayer(
                         self.cogr_ds, name_c, cogr_srs,
                         <OGRwkbGeometryType>geometry_code, options))
+
             except Exception as exc:
-                raise DriverIOError(str(exc))
+                OGRReleaseDataSource(self.cogr_ds)
+                self.cogr_ds = NULL
+                raise DriverIOError(u"{}".format(exc))
+
             finally:
                 if options != NULL:
                     CSLDestroy(options)
@@ -1043,9 +1056,6 @@ cdef class WritingSession(Session):
                 # OGRSpatialReferenceH.
                 if cogr_srs != NULL:
                     OSRRelease(cogr_srs)
-
-            if self.cogr_layer == NULL:
-                raise ValueError("Null layer")
 
             log.debug("Created layer %s", collection.name)
 
@@ -1090,30 +1100,24 @@ cdef class WritingSession(Session):
                 encoding = self.get_internalencoding()
                 try:
                     key_bytes = key.encode(encoding)
-                except UnicodeEncodeError as exc:
-                    raise SchemaError(u"{}".format(exc))
-
-                cogr_fielddefn = exc_wrap_pointer(OGR_Fld_Create(key_bytes, <OGRFieldType>field_type))
-
-                if cogr_fielddefn == NULL:
-                    raise ValueError("Field {} definition is NULL".format(key))
-
-                if width:
-                    OGR_Fld_SetWidth(cogr_fielddefn, width)
-                if precision:
-                    OGR_Fld_SetPrecision(cogr_fielddefn, precision)
-                if field_subtype != OFSTNone:
-                    # subtypes are new in GDAL 2.x, ignored in 1.x
-                    set_field_subtype(cogr_fielddefn, field_subtype)
-
-                try:
+                    cogr_fielddefn = exc_wrap_pointer(OGR_Fld_Create(key_bytes, <OGRFieldType>field_type))
+                    if width:
+                        OGR_Fld_SetWidth(cogr_fielddefn, width)
+                    if precision:
+                        OGR_Fld_SetPrecision(cogr_fielddefn, precision)
+                    if field_subtype != OFSTNone:
+                        # subtypes are new in GDAL 2.x, ignored in 1.x
+                        set_field_subtype(cogr_fielddefn, field_subtype)
                     exc_wrap_int(OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1))
-                except CPLE_BaseError as exc:
+                except (UnicodeEncodeError, CPLE_BaseError) as exc:
+                    OGRReleaseDataSource(self.cogr_ds)
+                    self.cogr_ds = NULL
+                    self.cogr_layer = NULL
                     raise SchemaError(u"{}".format(exc))
 
-                OGR_Fld_Destroy(cogr_fielddefn)
-
-                log.debug("End creating field %r", key)
+                else:
+                    OGR_Fld_Destroy(cogr_fielddefn)
+                    log.debug("End creating field %r", key)
 
         # Mapping of the Python collection schema to the munged
         # OGR schema.

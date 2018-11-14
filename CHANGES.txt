@@ -8,6 +8,8 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Bug fixes:
 
+- Opened data sources are now released before we raise exceptions in
+  WritingSession.start (#676).
 - We now ensure that an Env instance exists when getting the crs or crs_wkt
   properties of a Collection (#673, #690). Otherwise, required GDAL and PROJ
   data files included in Fiona wheels can not be found.
