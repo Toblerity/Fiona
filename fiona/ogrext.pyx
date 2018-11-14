@@ -631,12 +631,6 @@ cdef class Session:
             # this is a work around for a GDAL issue.
             except FionaNullPointerError:
                 log.debug("Layer has no coordinate system")
-            except fiona._err.CPLE_OpenFailedError as exc:
-                log.debug("A support file wasn't opened. See the preceding ERROR level message.")
-                cogr_crs = OGR_L_GetSpatialRef(self.cogr_layer)
-                log.debug("Called OGR_L_GetSpatialRef() again without error checking.")
-                if cogr_crs == NULL:
-                    raise exc
 
             if cogr_crs is not NULL:
 
