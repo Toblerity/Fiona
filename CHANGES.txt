@@ -8,6 +8,12 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Bug fixes:
 
+- We now ensure that an Env instance exists when getting the crs or crs_wkt
+  properties of a Collection (#673, #690). Otherwise, required GDAL and PROJ
+  data files included in Fiona wheels can not be found.
+- GDAL and PROJ data search has been refactored to improve testability (#678).
+- In the project's Cython code, void* pointers have been replaced with proper
+  GDAL types (#672).
 - Pervasive warning level log messages about ENCODING creation options (#668)
   have been eliminated.
 
