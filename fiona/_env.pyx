@@ -10,13 +10,12 @@ option is set to a new value inside the thread.
 
 include "gdal.pxi"
 
+from collections import namedtuple
 import logging
 import os
 import os.path
 import sys
 import threading
-
-from fiona.ogrext import get_gdal_version_tuple
 
 
 level_map = {
@@ -55,14 +54,61 @@ log = logging.getLogger(__name__)
 cdef bint is_64bit = sys.maxsize > 2 ** 32
 
 
+def calc_gdal_version_num(maj, min, rev):
+    """Calculates the internal gdal version number based on major, minor and revision
+
+    GDAL Version Information macro changed with GDAL version 1.10.0 (April 2013)
+
+    """
+    if (maj, min, rev) >= (1, 10, 0):
+        return int(maj * 1000000 + min * 10000 + rev * 100)
+    else:
+        return int(maj * 1000 + min * 100 + rev * 10)
+
+
+def get_gdal_version_num():
+    """Return current internal version number of gdal"""
+    return int(GDALVersionInfo("VERSION_NUM"))
+
+
+def get_gdal_release_name():
+    """Return release name of gdal"""
+    cdef const char *name_c = NULL
+    name_c = GDALVersionInfo("RELEASE_NAME")
+    name = name_c
+    return name
+
+
+GDALVersion = namedtuple("GDALVersion", ["major", "minor", "revision"])
+
+
+def get_gdal_version_tuple():
+    """
+    Calculates gdal version tuple from gdal's internal version number.
+
+    GDAL Version Information macro changed with GDAL version 1.10.0 (April 2013)
+    """
+    gdal_version_num = get_gdal_version_num()
+
+    if gdal_version_num >= calc_gdal_version_num(1, 10, 0):
+        major = gdal_version_num // 1000000
+        minor = (gdal_version_num - (major * 1000000)) // 10000
+        revision = (gdal_version_num - (major * 1000000) - (minor * 10000)) // 100
+        return GDALVersion(major, minor, revision)
+    else:
+        major = gdal_version_num // 1000
+        minor = (gdal_version_num - (major * 1000)) // 100
+        revision = (gdal_version_num - (major * 1000) - (minor * 100)) // 10
+        return GDALVersion(major, minor, revision)
+
+
 cdef void log_error(CPLErr err_class, int err_no, const char* msg) with gil:
     """Send CPL debug messages and warnings to Python's logger."""
     log = logging.getLogger(__name__)
-    if err_class < 3:
-        if err_no in code_map:
-            log.log(level_map[err_class], "%s in %s", code_map[err_no], msg)
-        else:
-            log.info("Unknown error number %r", err_no)
+    if err_no in code_map:
+        log.log(level_map[err_class], "%s", msg)
+    else:
+        log.info("Unknown error number %r", err_no)
 
 
 # Definition of GDAL callback functions, one for Windows and one for

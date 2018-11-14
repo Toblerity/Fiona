@@ -22,7 +22,9 @@ from fiona._geometry cimport (
 from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile
 
 import fiona
-from fiona._err import cpl_errs, FionaNullPointerError, CPLE_BaseError
+from fiona.env import env_ctx_if_needed
+from fiona._env import GDALVersion, get_gdal_version_num
+from fiona._err import cpl_errs, FionaNullPointerError, CPLE_BaseError, CPLE_OpenFailedError
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
 from fiona.errors import (
@@ -102,54 +104,8 @@ def _bounds(geometry):
         return None
 
 
-def calc_gdal_version_num(maj, min, rev):
-    """Calculates the internal gdal version number based on major, minor and revision
-
-    GDAL Version Information macro changed with GDAL version 1.10.0 (April 2013)
-
-    """
-    if (maj, min, rev) >= (1, 10, 0):
-        return int(maj * 1000000 + min * 10000 + rev * 100)
-    else:
-        return int(maj * 1000 + min * 100 + rev * 10)
-
-
-def get_gdal_version_num():
-    """Return current internal version number of gdal"""
-    return int(GDALVersionInfo("VERSION_NUM"))
-
-
-def get_gdal_release_name():
-    """Return release name of gdal"""
-    cdef const char *name_c = NULL
-    name_c = GDALVersionInfo("RELEASE_NAME")
-    name_b = name_c
-    return name_b.decode('utf-8')
-
-
 cdef int GDAL_VERSION_NUM = get_gdal_version_num()
 
-GDALVersion = namedtuple("GDALVersion", ["major", "minor", "revision"])
-
-
-def get_gdal_version_tuple():
-    """
-    Calculates gdal version tuple from gdal's internal version number.
-    
-    GDAL Version Information macro changed with GDAL version 1.10.0 (April 2013)
-    """
-    gdal_version_num = get_gdal_version_num()
-
-    if gdal_version_num >= calc_gdal_version_num(1, 10, 0):
-        major = gdal_version_num // 1000000
-        minor = (gdal_version_num - (major * 1000000)) // 10000
-        revision = (gdal_version_num - (major * 1000000) - (minor * 10000)) // 100
-        return GDALVersion(major, minor, revision)
-    else:
-        major = gdal_version_num // 1000
-        minor = (gdal_version_num - (major * 1000)) // 100
-        revision = (gdal_version_num - (major * 1000) - (minor * 100)) // 10
-        return GDALVersion(major, minor, revision)     
 
 # Feature extension classes and functions follow.
 
@@ -650,79 +606,129 @@ cdef class Session:
         return ret
 
     def get_crs(self):
+        """Get the layer's CRS
+
+        Returns
+        -------
+        CRS
+
+        """
         cdef char *proj_c = NULL
         cdef const char *auth_key = NULL
         cdef const char *auth_val = NULL
         cdef void *cogr_crs = NULL
+
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
-        cogr_crs = OGR_L_GetSpatialRef(self.cogr_layer)
-        crs = {}
-        if cogr_crs is not NULL:
-            log.debug("Got coordinate system")
 
-            retval = OSRAutoIdentifyEPSG(cogr_crs)
-            if retval > 0:
-                log.info("Failed to auto identify EPSG: %d", retval)
+        # We can't simply wrap a method in Python 2.7 so we
+        # bring the context manager inside like so.
+        with env_ctx_if_needed():
 
-            auth_key = OSRGetAuthorityName(cogr_crs, NULL)
-            auth_val = OSRGetAuthorityCode(cogr_crs, NULL)
+            try:
+                cogr_crs = exc_wrap_pointer(OGR_L_GetSpatialRef(self.cogr_layer))
+            # TODO: we don't intend to use try/except for flow control
+            # this is a work around for a GDAL issue.
+            except FionaNullPointerError:
+                log.debug("Layer has no coordinate system")
 
-            if auth_key != NULL and auth_val != NULL:
-                key_b = auth_key
-                key = key_b.decode('utf-8')
-                if key == 'EPSG':
-                    val_b = auth_val
-                    val = val_b.decode('utf-8')
-                    crs['init'] = "epsg:" + val
-            else:
-                OSRExportToProj4(cogr_crs, &proj_c)
-                if proj_c == NULL:
-                    raise ValueError("Null projection")
-                proj_b = proj_c
-                log.debug("Params: %s", proj_b)
-                value = proj_b.decode()
-                value = value.strip()
-                for param in value.split():
-                    kv = param.split("=")
-                    if len(kv) == 2:
-                        k, v = kv
-                        try:
-                            v = float(v)
-                            if v % 1 == 0:
-                                v = int(v)
-                        except ValueError:
-                            # Leave v as a string
-                            pass
-                    elif len(kv) == 1:
-                        k, v = kv[0], True
+            if cogr_crs is not NULL:
+
+                log.debug("Got coordinate system")
+                crs = {}
+
+                try:
+
+                    retval = OSRAutoIdentifyEPSG(cogr_crs)
+                    if retval > 0:
+                        log.info("Failed to auto identify EPSG: %d", retval)
+
+                    auth_key = OSRGetAuthorityName(cogr_crs, NULL)
+                    auth_val = OSRGetAuthorityCode(cogr_crs, NULL)
+
+                    if auth_key != NULL and auth_val != NULL:
+                        key_b = auth_key
+                        key = key_b.decode('utf-8')
+                        if key == 'EPSG':
+                            val_b = auth_val
+                            val = val_b.decode('utf-8')
+                            crs['init'] = "epsg:" + val
                     else:
-                        raise ValueError("Unexpected proj parameter %s" % param)
-                    k = k.lstrip("+")
-                    crs[k] = v
+                        OSRExportToProj4(cogr_crs, &proj_c)
+                        if proj_c == NULL:
+                            raise ValueError("Null projection")
+                        proj_b = proj_c
+                        log.debug("Params: %s", proj_b)
+                        value = proj_b.decode()
+                        value = value.strip()
+                        for param in value.split():
+                            kv = param.split("=")
+                            if len(kv) == 2:
+                                k, v = kv
+                                try:
+                                    v = float(v)
+                                    if v % 1 == 0:
+                                        v = int(v)
+                                except ValueError:
+                                    # Leave v as a string
+                                    pass
+                            elif len(kv) == 1:
+                                k, v = kv[0], True
+                            else:
+                                raise ValueError("Unexpected proj parameter %s" % param)
+                            k = k.lstrip("+")
+                            crs[k] = v
+                finally:
+                    CPLFree(proj_c)
+                    return crs
 
-            CPLFree(proj_c)
-        else:
-            log.debug("Projection not found (cogr_crs was NULL)")
-        return crs
+            else:
+                log.debug("Projection not found (cogr_crs was NULL)")
+
+        return {}
 
     def get_crs_wkt(self):
         cdef char *proj_c = NULL
+        cdef void *cogr_crs = NULL
+
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
-        cogr_crs = OGR_L_GetSpatialRef(self.cogr_layer)
-        crs_wkt = ""
-        if cogr_crs is not NULL:
-            log.debug("Got coordinate system")
-            OSRExportToWkt(cogr_crs, &proj_c)
-            if proj_c == NULL:
-                raise ValueError("Null projection")
-            proj_b = proj_c
-            crs_wkt = proj_b.decode('utf-8')
-            CPLFree(proj_c)
-        else:
-            log.debug("Projection not found (cogr_crs was NULL)")
-        return crs_wkt
+
+        # We can't simply wrap a method in Python 2.7 so we
+        # bring the context manager inside like so.
+        with env_ctx_if_needed():
+
+            try:
+                cogr_crs = exc_wrap_pointer(OGR_L_GetSpatialRef(self.cogr_layer))
+
+            # TODO: we don't intend to use try/except for flow control
+            # this is a work around for a GDAL issue.
+            except FionaNullPointerError:
+                log.debug("Layer has no coordinate system")
+            except fiona._err.CPLE_OpenFailedError as exc:
+                log.debug("A support file wasn't opened. See the preceding ERROR level message.")
+                cogr_crs = OGR_L_GetSpatialRef(self.cogr_layer)
+                log.debug("Called OGR_L_GetSpatialRef() again without error checking.")
+                if cogr_crs == NULL:
+                    raise exc
+
+            if cogr_crs is not NULL:
+                log.debug("Got coordinate system")
+
+                try:
+                    OSRExportToWkt(cogr_crs, &proj_c)
+                    if proj_c == NULL:
+                        raise ValueError("Null projection")
+                    proj_b = proj_c
+                    crs_wkt = proj_b.decode('utf-8')
+
+                finally:
+                    CPLFree(proj_c)
+                    return crs_wkt
+
+            else:
+                log.debug("Projection not found (cogr_crs was NULL)")
+                return ""
 
     def get_extent(self):
         cdef OGREnvelope extent

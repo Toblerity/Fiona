@@ -54,6 +54,7 @@ def test_ensure_env_decorator_sets_gdal_data_prefix(gdalenv, monkeypatch, tmpdir
 
     tmpdir.ensure("share/gdal/pcs.csv")
     monkeypatch.delenv('GDAL_DATA', raising=False)
+    monkeypatch.setattr(_env, '__file__', str(tmpdir.join("fake.py")))
     monkeypatch.setattr(sys, 'prefix', str(tmpdir))
 
     assert f() == str(tmpdir.join("share/gdal"))
@@ -83,3 +84,8 @@ def test_ensure_env_with_decorator_sets_gdal_data_wheel(gdalenv, monkeypatch, tm
     monkeypatch.setattr(_env, '__file__', str(tmpdir.join(os.path.basename(_env.__file__))))
 
     assert f("foo") == str(tmpdir.join("gdal_data"))
+
+
+def test_ensure_env_crs(path_coutwildrnp_shp):
+    """Decoration of .crs works"""
+    assert fiona.open(path_coutwildrnp_shp).crs

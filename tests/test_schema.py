@@ -6,7 +6,7 @@ import pytest
 import fiona
 from fiona.errors import SchemaError, UnsupportedGeometryTypeError
 from fiona.schema import FIELD_TYPES, normalize_field_type
-from fiona.ogrext import calc_gdal_version_num, get_gdal_version_num
+from fiona.env import calc_gdal_version_num, get_gdal_version_num
 
 
 def test_schema_ordering_items(tmpdir):
