@@ -25,7 +25,7 @@ cdef void gdal_flush_cache(void *cogr_ds):
         GDALFlushCache(cogr_ds)
 
 
-cdef void* gdal_open_vector(char* path_c, int mode, drivers, options) except NULL:
+cdef void* gdal_open_vector(const char* path_c, int mode, drivers, options) except NULL:
     cdef void* cogr_ds = NULL
     cdef char **drvs = NULL
     cdef char **open_opts = NULL

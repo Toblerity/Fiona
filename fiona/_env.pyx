@@ -311,8 +311,8 @@ cdef class GDALEnv(ConfigEnv):
         result = {}
         for i in range(OGRGetDriverCount()):
             drv = OGRGetDriver(i)
-            key = OGR_Dr_GetName(drv)
-            val = OGR_Dr_GetName(drv)
+            key = <char *>OGR_Dr_GetName(drv)
+            val = <char *>OGR_Dr_GetName(drv)
             result[key] = val
 
         return result

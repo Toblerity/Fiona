@@ -104,6 +104,7 @@ libraries = []
 extra_link_args = []
 gdal_output = [None for i in range(4)]
 gdalversion = None
+language = None
 
 if 'clean' not in sys.argv:
     try:
@@ -172,6 +173,11 @@ if 'clean' not in sys.argv:
             log.info("Copying proj data from %s" % projdatadir)
             copy_data_tree(projdatadir, 'fiona/proj_data')
 
+    if "--cython-language" in sys.argv:
+        index = sys.argv.index("--cython-language")
+        sys.argv.pop(index)
+        language = sys.argv.pop(index).lower()
+
     gdal_version_parts = gdalversion.split('.')
     gdal_major_version = int(gdal_version_parts[0])
     gdal_minor_version = int(gdal_version_parts[1])
@@ -182,11 +188,15 @@ ext_options = dict(
     libraries=libraries,
     extra_link_args=extra_link_args)
 
-ext_options_cpp = ext_options.copy()
 # GDAL 2.3+ requires C++11
-if sys.platform == "win32":
-    ext_options_cpp["extra_compile_args"] = ["/std:c++11"]
-else:
+
+if language == "c++":
+    ext_options["language"] = "c++"
+    if sys.platform != "win32":
+        ext_options["extra_compile_args"] = ["-std=c++11"]
+
+ext_options_cpp = ext_options.copy()
+if sys.platform != "win32":
     ext_options_cpp["extra_compile_args"] = ["-std=c++11"]
 
 
