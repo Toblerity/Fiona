@@ -5,7 +5,7 @@ See https://trac.osgeo.org/gdal/wiki/rfc64_triangle_polyhedralsurface_tin.
 
 import fiona
 
-from .conftest import  requires_gdal22
+from .conftest import requires_gdal22
 
 
 def test_tin_shp(path_test_tin_shp):
@@ -15,6 +15,15 @@ def test_tin_shp(path_test_tin_shp):
         features = list(col)
         assert len(features) == 1
         assert features[0]['geometry']['type'] == 'MultiPolygon'
+        assert features[0]['geometry']['coordinates'] == [[[(0.0, 0.0, 0.0),
+                                                            (0.0, 0.0, 1.0),
+                                                            (0.0, 1.0, 0.0),
+                                                            (0.0, 0.0, 0.0)]],
+                                                          [[(0.0, 0.0, 0.0),
+                                                            (0.0, 1.0, 0.0),
+                                                            (1.0, 1.0, 0.0),
+                                                            (0.0, 0.0, 0.0)]]]
+
 
 @requires_gdal22
 def test_tin_csv(path_test_tin_csv):
@@ -24,4 +33,17 @@ def test_tin_csv(path_test_tin_csv):
         features = list(col)
         assert len(features) == 2
         assert features[0]['geometry']['type'] == 'MultiPolygon'
+        assert features[0]['geometry']['coordinates'] == [[[(0.0, 0.0, 0.0),
+                                                            (0.0, 0.0, 1.0),
+                                                            (0.0, 1.0, 0.0),
+                                                            (0.0, 0.0, 0.0)]],
+                                                          [[(0.0, 0.0, 0.0),
+                                                              (0.0, 1.0, 0.0),
+                                                              (1.0, 1.0, 0.0),
+                                                              (0.0, 0.0, 0.0)]]]
+
         assert features[1]['geometry']['type'] == 'Polygon'
+        assert features[1]['geometry']['coordinates'] == [[(0.0, 0.0, 0.0),
+                                                           (0.0, 1.0, 0.0),
+                                                           (1.0, 1.0, 0.0),
+                                                           (0.0, 0.0, 0.0)]]
