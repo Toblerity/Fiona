@@ -305,8 +305,12 @@ cdef class FeatureBuilder:
 
                 code = base_geometry_type_code(OGR_G_GetGeometryType(cogr_geometry))
 
-                # RFC 64: Triangle, Polyhedral surface and TIN
-                if code in (15, 16):
+                if 7 < code < 15:  # Curves.
+                    cogr_geometry = get_linear_geometry(cogr_geometry)
+                    geom = GeomBuilder().build(cogr_geometry)
+                    OGR_G_DestroyGeometry(cogr_geometry)
+
+                elif code in (15, 16):  # RFC 64: Polyhedral surface and TIN
                     """
                     cogr_geometry is cloned as OGR_G_Force* consumes the original feature
                     which would lead to a segfault in _deleteOgrFeature().
@@ -316,16 +320,11 @@ cdef class FeatureBuilder:
                     geom = GeomBuilder().build(cogr_geometry_clone)
                     OGR_G_DestroyGeometry(cogr_geometry_clone)
 
-                elif code == 17:
+                elif code == 17:  # RFC 64: Triangle
                     cogr_geometry_clone = OGR_G_Clone(cogr_geometry)
                     cogr_geometry_clone = OGR_G_ForceToPolygon(cogr_geometry_clone)
                     geom = GeomBuilder().build(cogr_geometry_clone)
                     OGR_G_DestroyGeometry(cogr_geometry_clone)
-
-                elif 7 < code < 15:  # Curves.
-                    cogr_geometry = get_linear_geometry(cogr_geometry)
-                    geom = GeomBuilder().build(cogr_geometry)
-                    OGR_G_DestroyGeometry(cogr_geometry)
 
                 else:
                     geom = GeomBuilder().build(cogr_geometry)
