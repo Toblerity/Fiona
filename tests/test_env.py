@@ -57,7 +57,7 @@ def test_ensure_env_decorator_sets_gdal_data_prefix(gdalenv, monkeypatch, tmpdir
     monkeypatch.setattr(_env, '__file__', str(tmpdir.join("fake.py")))
     monkeypatch.setattr(sys, 'prefix', str(tmpdir))
 
-    assert f() == str(tmpdir.join("share/gdal"))
+    assert f() == str(tmpdir.join("share").join("gdal"))
 
 
 def test_ensure_env_decorator_sets_gdal_data_wheel(gdalenv, monkeypatch, tmpdir):
