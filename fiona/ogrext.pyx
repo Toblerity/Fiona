@@ -643,8 +643,12 @@ cdef class Session:
                     if retval > 0:
                         log.info("Failed to auto identify EPSG: %d", retval)
 
-                    auth_key = OSRGetAuthorityName(cogr_crs, NULL)
-                    auth_val = OSRGetAuthorityCode(cogr_crs, NULL)
+                    try:
+                        auth_key = <const char *>exc_wrap_pointer(<void *>OSRGetAuthorityName(cogr_crs, NULL))
+                        auth_val = <const char *>exc_wrap_pointer(<void *>OSRGetAuthorityCode(cogr_crs, NULL))
+
+                    except CPLE_BaseError as exc:
+                        log.debug("{}".format(exc))
 
                     if auth_key != NULL and auth_val != NULL:
                         key_b = auth_key
@@ -653,6 +657,7 @@ cdef class Session:
                             val_b = auth_val
                             val = val_b.decode('utf-8')
                             crs['init'] = "epsg:" + val
+
                     else:
                         OSRExportToProj4(cogr_crs, &proj_c)
                         if proj_c == NULL:
@@ -678,6 +683,7 @@ cdef class Session:
                                 raise ValueError("Unexpected proj parameter %s" % param)
                             k = k.lstrip("+")
                             crs[k] = v
+
                 finally:
                     CPLFree(proj_c)
                     return crs

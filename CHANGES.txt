@@ -3,13 +3,16 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.8.1 ()
---------
+1.8.1 (2018-11-15)
+------------------
 
 Bug fixes:
 
+- Add checks around OSRGetAuthorityName and OSRGetAuthorityCode calls that will
+  log problems with looking up these items.
 - Opened data sources are now released before we raise exceptions in
-  WritingSession.start (#676).
+  WritingSession.start (#676). This fixes an issue with locked files on
+  Windows.
 - We now ensure that an Env instance exists when getting the crs or crs_wkt
   properties of a Collection (#673, #690). Otherwise, required GDAL and PROJ
   data files included in Fiona wheels can not be found.

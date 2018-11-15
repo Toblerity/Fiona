@@ -203,7 +203,7 @@ cdef class GDALErrCtxManager:
 
 cdef inline object exc_check():
     """Checks GDAL error stack for fatal or non-fatal errors
-    
+
     Returns
     -------
     An Exception, SystemExit, or None
