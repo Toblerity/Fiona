@@ -255,13 +255,13 @@ class GDALDataFinder(object):
 
     def search_prefix(self, prefix=sys.prefix):
         """Check sys.prefix location"""
-        datadir = os.path.join(prefix, 'share/gdal')
+        datadir = os.path.join(prefix, 'share', 'gdal')
         return datadir if os.path.exists(os.path.join(datadir, 'pcs.csv')) else None
 
     def search_debian(self, prefix=sys.prefix):
         """Check Debian locations"""
         gdal_version = get_gdal_version_tuple()
-        datadir = os.path.join(prefix, 'share/gdal/{}.{}'.format(gdal_version.major, gdal_version.minor))
+        datadir = os.path.join(prefix, 'share', 'gdal', '{}.{}'.format(gdal_version.major, gdal_version.minor))
         return datadir if os.path.exists(os.path.join(datadir, 'pcs.csv')) else None
 
 
@@ -283,7 +283,7 @@ class PROJDataFinder(object):
 
     def search_prefix(self, prefix=sys.prefix):
         """Check sys.prefix location"""
-        datadir = os.path.join(prefix, 'share/proj')
+        datadir = os.path.join(prefix, 'share', 'proj')
         return datadir if os.path.exists(datadir) else None
 
 
