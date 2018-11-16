@@ -85,7 +85,7 @@ cdef void * _createOgrGeomFromWKB(object wkb) except NULL:
     """Make an OGR geometry from a WKB string"""
     wkbtype = bytearray(wkb)[1]
     cdef unsigned char *buffer = wkb
-    cdef void *cogr_geometry = OGR_G_CreateGeometry(wkbtype)
+    cdef void *cogr_geometry = OGR_G_CreateGeometry(<OGRwkbGeometryType>wkbtype)
     if cogr_geometry is not NULL:
         OGR_G_ImportFromWkb(cogr_geometry, buffer, len(wkb))
     return cogr_geometry
@@ -191,7 +191,7 @@ cdef class OGRGeomBuilder:
     """Builds OGR geometries from Fiona geometries.
     """
     cdef void * _createOgrGeometry(self, int geom_type) except NULL:
-        cdef void *cogr_geometry = OGR_G_CreateGeometry(geom_type)
+        cdef void *cogr_geometry = OGR_G_CreateGeometry(<OGRwkbGeometryType>geom_type)
         if cogr_geometry == NULL:
             raise Exception("Could not create OGR Geometry of type: %i" % geom_type)
         return cogr_geometry
@@ -284,11 +284,6 @@ cdef class OGRGeomBuilder:
             return self._buildGeometryCollection(coordinates)
         else:
             raise ValueError("Unsupported geometry type %s" % typename)
-
-
-cdef geometry(void *geom):
-    """Factory for Fiona geometries"""
-    return GeomBuilder().build(geom)
 
 
 def geometryRT(geometry):

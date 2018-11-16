@@ -22,7 +22,9 @@ from fiona._geometry cimport (
 from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile
 
 import fiona
-from fiona._err import cpl_errs, FionaNullPointerError, CPLE_BaseError
+from fiona.env import env_ctx_if_needed
+from fiona._env import GDALVersion, get_gdal_version_num
+from fiona._err import cpl_errs, FionaNullPointerError, CPLE_BaseError, CPLE_OpenFailedError
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
 from fiona.errors import (
@@ -102,54 +104,8 @@ def _bounds(geometry):
         return None
 
 
-def calc_gdal_version_num(maj, min, rev):
-    """Calculates the internal gdal version number based on major, minor and revision
-
-    GDAL Version Information macro changed with GDAL version 1.10.0 (April 2013)
-
-    """
-    if (maj, min, rev) >= (1, 10, 0):
-        return int(maj * 1000000 + min * 10000 + rev * 100)
-    else:
-        return int(maj * 1000 + min * 100 + rev * 10)
-
-
-def get_gdal_version_num():
-    """Return current internal version number of gdal"""
-    return int(GDALVersionInfo("VERSION_NUM"))
-
-
-def get_gdal_release_name():
-    """Return release name of gdal"""
-    cdef const char *name_c = NULL
-    name_c = GDALVersionInfo("RELEASE_NAME")
-    name_b = name_c
-    return name_b.decode('utf-8')
-
-
 cdef int GDAL_VERSION_NUM = get_gdal_version_num()
 
-GDALVersion = namedtuple("GDALVersion", ["major", "minor", "revision"])
-
-
-def get_gdal_version_tuple():
-    """
-    Calculates gdal version tuple from gdal's internal version number.
-    
-    GDAL Version Information macro changed with GDAL version 1.10.0 (April 2013)
-    """
-    gdal_version_num = get_gdal_version_num()
-
-    if gdal_version_num >= calc_gdal_version_num(1, 10, 0):
-        major = gdal_version_num // 1000000
-        minor = (gdal_version_num - (major * 1000000)) // 10000
-        revision = (gdal_version_num - (major * 1000000) - (minor * 10000)) // 100
-        return GDALVersion(major, minor, revision)
-    else:
-        major = gdal_version_num // 1000
-        minor = (gdal_version_num - (major * 1000)) // 100
-        revision = (gdal_version_num - (major * 1000) - (minor * 100)) // 10
-        return GDALVersion(major, minor, revision)     
 
 # Feature extension classes and functions follow.
 
@@ -520,7 +476,7 @@ cdef class Session:
             OGR_L_TestCapability(
                 self.cogr_layer, OLC_STRINGSASUTF8) and
             'utf-8') or (
-            self.get_driver() == "ESRI Shapefile" and
+            "Shapefile" in self.get_driver() and
             'ISO-8859-1') or locale.getpreferredencoding().upper()
 
         if collection.ignore_fields:
@@ -531,7 +487,7 @@ cdef class Session:
                     except AttributeError:
                         raise TypeError("Ignored field \"{}\" has type \"{}\", expected string".format(name, name.__class__.__name__))
                     ignore_fields = CSLAddString(ignore_fields, <const char *>name)
-                OGR_L_SetIgnoredFields(self.cogr_layer, ignore_fields)
+                OGR_L_SetIgnoredFields(self.cogr_layer, <const char**>ignore_fields)
             finally:
                 CSLDestroy(ignore_fields)
 
@@ -650,79 +606,135 @@ cdef class Session:
         return ret
 
     def get_crs(self):
+        """Get the layer's CRS
+
+        Returns
+        -------
+        CRS
+
+        """
         cdef char *proj_c = NULL
         cdef const char *auth_key = NULL
         cdef const char *auth_val = NULL
         cdef void *cogr_crs = NULL
+
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
-        cogr_crs = OGR_L_GetSpatialRef(self.cogr_layer)
-        crs = {}
-        if cogr_crs is not NULL:
-            log.debug("Got coordinate system")
 
-            retval = OSRAutoIdentifyEPSG(cogr_crs)
-            if retval > 0:
-                log.info("Failed to auto identify EPSG: %d", retval)
+        # We can't simply wrap a method in Python 2.7 so we
+        # bring the context manager inside like so.
+        with env_ctx_if_needed():
 
-            auth_key = OSRGetAuthorityName(cogr_crs, NULL)
-            auth_val = OSRGetAuthorityCode(cogr_crs, NULL)
+            try:
+                cogr_crs = exc_wrap_pointer(OGR_L_GetSpatialRef(self.cogr_layer))
+            # TODO: we don't intend to use try/except for flow control
+            # this is a work around for a GDAL issue.
+            except FionaNullPointerError:
+                log.debug("Layer has no coordinate system")
 
-            if auth_key != NULL and auth_val != NULL:
-                key_b = auth_key
-                key = key_b.decode('utf-8')
-                if key == 'EPSG':
-                    val_b = auth_val
-                    val = val_b.decode('utf-8')
-                    crs['init'] = "epsg:" + val
-            else:
-                OSRExportToProj4(cogr_crs, &proj_c)
-                if proj_c == NULL:
-                    raise ValueError("Null projection")
-                proj_b = proj_c
-                log.debug("Params: %s", proj_b)
-                value = proj_b.decode()
-                value = value.strip()
-                for param in value.split():
-                    kv = param.split("=")
-                    if len(kv) == 2:
-                        k, v = kv
-                        try:
-                            v = float(v)
-                            if v % 1 == 0:
-                                v = int(v)
-                        except ValueError:
-                            # Leave v as a string
-                            pass
-                    elif len(kv) == 1:
-                        k, v = kv[0], True
+            if cogr_crs is not NULL:
+
+                log.debug("Got coordinate system")
+                crs = {}
+
+                try:
+
+                    retval = OSRAutoIdentifyEPSG(cogr_crs)
+                    if retval > 0:
+                        log.info("Failed to auto identify EPSG: %d", retval)
+
+                    try:
+                        auth_key = <const char *>exc_wrap_pointer(<void *>OSRGetAuthorityName(cogr_crs, NULL))
+                        auth_val = <const char *>exc_wrap_pointer(<void *>OSRGetAuthorityCode(cogr_crs, NULL))
+
+                    except CPLE_BaseError as exc:
+                        log.debug("{}".format(exc))
+
+                    if auth_key != NULL and auth_val != NULL:
+                        key_b = auth_key
+                        key = key_b.decode('utf-8')
+                        if key == 'EPSG':
+                            val_b = auth_val
+                            val = val_b.decode('utf-8')
+                            crs['init'] = "epsg:" + val
+
                     else:
-                        raise ValueError("Unexpected proj parameter %s" % param)
-                    k = k.lstrip("+")
-                    crs[k] = v
+                        OSRExportToProj4(cogr_crs, &proj_c)
+                        if proj_c == NULL:
+                            raise ValueError("Null projection")
+                        proj_b = proj_c
+                        log.debug("Params: %s", proj_b)
+                        value = proj_b.decode()
+                        value = value.strip()
+                        for param in value.split():
+                            kv = param.split("=")
+                            if len(kv) == 2:
+                                k, v = kv
+                                try:
+                                    v = float(v)
+                                    if v % 1 == 0:
+                                        v = int(v)
+                                except ValueError:
+                                    # Leave v as a string
+                                    pass
+                            elif len(kv) == 1:
+                                k, v = kv[0], True
+                            else:
+                                raise ValueError("Unexpected proj parameter %s" % param)
+                            k = k.lstrip("+")
+                            crs[k] = v
 
-            CPLFree(proj_c)
-        else:
-            log.debug("Projection not found (cogr_crs was NULL)")
-        return crs
+                finally:
+                    CPLFree(proj_c)
+                    return crs
+
+            else:
+                log.debug("Projection not found (cogr_crs was NULL)")
+
+        return {}
 
     def get_crs_wkt(self):
         cdef char *proj_c = NULL
+        cdef void *cogr_crs = NULL
+
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
-        cogr_crs = OGR_L_GetSpatialRef(self.cogr_layer)
-        crs_wkt = ""
-        if cogr_crs is not NULL:
-            log.debug("Got coordinate system")
-            OSRExportToWkt(cogr_crs, &proj_c)
-            if proj_c == NULL:
-                raise ValueError("Null projection")
-            proj_b = proj_c
-            crs_wkt = proj_b.decode('utf-8')
-            CPLFree(proj_c)
-        else:
-            log.debug("Projection not found (cogr_crs was NULL)")
-        return crs_wkt
+
+        # We can't simply wrap a method in Python 2.7 so we
+        # bring the context manager inside like so.
+        with env_ctx_if_needed():
+
+            try:
+                cogr_crs = exc_wrap_pointer(OGR_L_GetSpatialRef(self.cogr_layer))
+
+            # TODO: we don't intend to use try/except for flow control
+            # this is a work around for a GDAL issue.
+            except FionaNullPointerError:
+                log.debug("Layer has no coordinate system")
+            except fiona._err.CPLE_OpenFailedError as exc:
+                log.debug("A support file wasn't opened. See the preceding ERROR level message.")
+                cogr_crs = OGR_L_GetSpatialRef(self.cogr_layer)
+                log.debug("Called OGR_L_GetSpatialRef() again without error checking.")
+                if cogr_crs == NULL:
+                    raise exc
+
+            if cogr_crs is not NULL:
+                log.debug("Got coordinate system")
+
+                try:
+                    OSRExportToWkt(cogr_crs, &proj_c)
+                    if proj_c == NULL:
+                        raise ValueError("Null projection")
+                    proj_b = proj_c
+                    crs_wkt = proj_b.decode('utf-8')
+
+                finally:
+                    CPLFree(proj_c)
+                    return crs_wkt
+
+            else:
+                log.debug("Projection not found (cogr_crs was NULL)")
+                return ""
 
     def get_extent(self):
         cdef OGREnvelope extent
@@ -829,40 +841,42 @@ cdef class WritingSession(Session):
         userencoding = kwargs.get('encoding')
 
         if collection.mode == 'a':
-            if os.path.exists(path):
-                try:
-                    path_b = path.encode('utf-8')
-                except UnicodeDecodeError:
-                    path_b = path
-                path_c = path_b
-                self.cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
 
-                cogr_driver = GDALGetDatasetDriver(self.cogr_ds)
-                if cogr_driver == NULL:
-                    raise ValueError("Null driver")
+            if not os.path.exists(path):
+                raise OSError("No such file or directory %s" % path)
+
+            try:
+                path_b = path.encode('utf-8')
+            except UnicodeDecodeError:
+                path_b = path
+            path_c = path_b
+
+            try:
+                self.cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
 
                 if isinstance(collection.name, string_types):
                     name_b = collection.name.encode()
                     name_c = name_b
-                    self.cogr_layer = GDALDatasetGetLayerByName(
-                                        self.cogr_ds, name_c)
+                    self.cogr_layer = exc_wrap_pointer(GDALDatasetGetLayerByName(self.cogr_ds, name_c))
+
                 elif isinstance(collection.name, int):
-                    self.cogr_layer = GDALDatasetGetLayer(
-                                        self.cogr_ds, collection.name)
+                    self.cogr_layer = exc_wrap_pointer(GDALDatasetGetLayer(self.cogr_ds, collection.name))
 
-                if self.cogr_layer == NULL:
-                    raise RuntimeError(
-                        "Failed to get layer %s" % collection.name)
+            except CPLE_BaseError as exc:
+                OGRReleaseDataSource(self.cogr_ds)
+                self.cogr_ds = NULL
+                self.cogr_layer = NULL
+                raise DriverError(u"{}".format(exc))
+
             else:
-                raise OSError("No such file or directory %s" % path)
-
-            self._fileencoding = (userencoding or (
-                OGR_L_TestCapability(self.cogr_layer, OLC_STRINGSASUTF8) and
-                'utf-8') or (
-                self.get_driver() == "ESRI Shapefile" and
-                'ISO-8859-1') or locale.getpreferredencoding()).upper()
+                self._fileencoding = (userencoding or (
+                    OGR_L_TestCapability(self.cogr_layer, OLC_STRINGSASUTF8) and
+                    'utf-8') or (
+                    self.get_driver() == "ESRI Shapefile" and
+                    'ISO-8859-1') or locale.getpreferredencoding()).upper()
 
         elif collection.mode == 'w':
+
             try:
                 path_b = path.encode('utf-8')
             except UnicodeDecodeError:
@@ -871,11 +885,7 @@ cdef class WritingSession(Session):
 
             driver_b = collection.driver.encode()
             driver_c = driver_b
-
-
-            cogr_driver = GDALGetDriverByName(driver_c)
-            if cogr_driver == NULL:
-                raise ValueError("Null driver")
+            cogr_driver = exc_wrap_pointer(GDALGetDriverByName(driver_c))
 
             # Our most common use case is the creation of a new data
             # file and historically we've assumed that it's a file on
@@ -884,7 +894,7 @@ cdef class WritingSession(Session):
             # TODO: remove the assumption.
             if not os.path.exists(path):
                 log.debug("File doesn't exist. Creating a new one...")
-                cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
+                cogr_ds = gdal_create(cogr_driver, path_c, {})
 
             # TODO: revisit the logic in the following blocks when we
             # change the assumption above.
@@ -916,59 +926,68 @@ cdef class WritingSession(Session):
             # collection constructor. We by-pass the crs_wkt and crs
             # properties because they aren't accessible until the layer
             # is constructed (later).
-            col_crs = collection._crs_wkt or collection._crs
-            if col_crs:
-                cogr_srs = OSRNewSpatialReference(NULL)
-                if cogr_srs == NULL:
-                    raise ValueError("NULL spatial reference")
-                # First, check for CRS strings like "EPSG:3857".
-                if isinstance(col_crs, string_types):
-                    proj_b = col_crs.encode('utf-8')
-                    proj_c = proj_b
-                    OSRSetFromUserInput(cogr_srs, proj_c)
-                elif isinstance(col_crs, compat.DICT_TYPES):
-                    # EPSG is a special case.
-                    init = col_crs.get('init')
-                    if init:
-                        log.debug("Init: %s", init)
-                        auth, val = init.split(':')
-                        if auth.upper() == 'EPSG':
-                            log.debug("Setting EPSG: %s", val)
-                            OSRImportFromEPSG(cogr_srs, int(val))
-                    else:
-                        params = []
-                        col_crs['wktext'] = True
-                        for k, v in col_crs.items():
-                            if v is True or (k in ('no_defs', 'wktext') and v):
-                                params.append("+%s" % k)
-                            else:
-                                params.append("+%s=%s" % (k, v))
-                        proj = " ".join(params)
-                        log.debug("PROJ.4 to be imported: %r", proj)
-                        proj_b = proj.encode('utf-8')
-                        proj_c = proj_b
-                        OSRImportFromProj4(cogr_srs, proj_c)
-                else:
-                    raise ValueError("Invalid CRS")
+            try:
 
-                # Fixup, export to WKT, and set the GDAL dataset's projection.
-                OSRFixup(cogr_srs)
+                col_crs = collection._crs_wkt or collection._crs
+
+                if col_crs:
+                    cogr_srs = exc_wrap_pointer(OSRNewSpatialReference(NULL))
+
+                    # First, check for CRS strings like "EPSG:3857".
+                    if isinstance(col_crs, string_types):
+                        proj_b = col_crs.encode('utf-8')
+                        proj_c = proj_b
+                        OSRSetFromUserInput(cogr_srs, proj_c)
+
+                    elif isinstance(col_crs, compat.DICT_TYPES):
+                        # EPSG is a special case.
+                        init = col_crs.get('init')
+                        if init:
+                            log.debug("Init: %s", init)
+                            auth, val = init.split(':')
+                            if auth.upper() == 'EPSG':
+                                log.debug("Setting EPSG: %s", val)
+                                OSRImportFromEPSG(cogr_srs, int(val))
+                        else:
+                            params = []
+                            col_crs['wktext'] = True
+                            for k, v in col_crs.items():
+                                if v is True or (k in ('no_defs', 'wktext') and v):
+                                    params.append("+%s" % k)
+                                else:
+                                    params.append("+%s=%s" % (k, v))
+                            proj = " ".join(params)
+                            log.debug("PROJ.4 to be imported: %r", proj)
+                            proj_b = proj.encode('utf-8')
+                            proj_c = proj_b
+                            OSRImportFromProj4(cogr_srs, proj_c)
+
+                    else:
+                        raise ValueError("Invalid CRS")
+
+                    # Fixup, export to WKT, and set the GDAL dataset's projection.
+                    OSRFixup(cogr_srs)
+
+            except (ValueError, CPLE_BaseError) as exc:
+                OGRReleaseDataSource(self.cogr_ds)
+                self.cogr_ds = NULL
+                self.cogr_layer = NULL
+                raise CRSError(u"{}".format(exc))
+
 
             # Figure out what encoding to use. The encoding parameter given
             # to the collection constructor takes highest precedence, then
             # 'iso-8859-1', then the system's default encoding as last resort.
             sysencoding = locale.getpreferredencoding()
             self._fileencoding = (userencoding or (
-                collection.driver == "ESRI Shapefile" and
+                "Shapefile" in collection.driver and
                 'ISO-8859-1') or sysencoding).upper()
 
-            # The ENCODING option makes no sense for some drivers and
-            # will result in a warning. Fixing is a TODO.
-            fileencoding = self.get_fileencoding()
-            if fileencoding:
-                fileencoding_b = fileencoding.encode('utf-8')
-                fileencoding_c = fileencoding_b
-                with cpl_errs:
+            if "Shapefile" in collection.driver:
+                fileencoding = self.get_fileencoding()
+                if fileencoding:
+                    fileencoding_b = fileencoding.encode('utf-8')
+                    fileencoding_c = fileencoding_b
                     options = CSLSetNameValue(options, "ENCODING", fileencoding_c)
 
             # Does the layer exist already? If so, we delete it.
@@ -996,7 +1015,14 @@ cdef class WritingSession(Session):
             name_c = name_b
 
             for k, v in kwargs.items():
+
+                # We need to remove encoding from the layer creation
+                # options if we're not creating a shapefile.
+                if k == 'encoding' and "Shapefile" not in collection.driver:
+                    continue
+
                 k = k.upper().encode('utf-8')
+
                 if isinstance(v, bool):
                     v = ('ON' if v else 'OFF').encode('utf-8')
                 else:
@@ -1019,9 +1045,13 @@ cdef class WritingSession(Session):
                 self.cogr_layer = exc_wrap_pointer(
                     GDALDatasetCreateLayer(
                         self.cogr_ds, name_c, cogr_srs,
-                        geometry_code, options))
+                        <OGRwkbGeometryType>geometry_code, options))
+
             except Exception as exc:
-                raise DriverIOError(str(exc))
+                OGRReleaseDataSource(self.cogr_ds)
+                self.cogr_ds = NULL
+                raise DriverIOError(u"{}".format(exc))
+
             finally:
                 if options != NULL:
                     CSLDestroy(options)
@@ -1032,9 +1062,6 @@ cdef class WritingSession(Session):
                 # OGRSpatialReferenceH.
                 if cogr_srs != NULL:
                     OSRRelease(cogr_srs)
-
-            if self.cogr_layer == NULL:
-                raise ValueError("Null layer")
 
             log.debug("Created layer %s", collection.name)
 
@@ -1079,30 +1106,24 @@ cdef class WritingSession(Session):
                 encoding = self.get_internalencoding()
                 try:
                     key_bytes = key.encode(encoding)
-                except UnicodeEncodeError as exc:
-                    raise SchemaError(u"{}".format(exc))
-
-                cogr_fielddefn = exc_wrap_pointer(OGR_Fld_Create(key_bytes, field_type))
-
-                if cogr_fielddefn == NULL:
-                    raise ValueError("Field {} definition is NULL".format(key))
-
-                if width:
-                    OGR_Fld_SetWidth(cogr_fielddefn, width)
-                if precision:
-                    OGR_Fld_SetPrecision(cogr_fielddefn, precision)
-                if field_subtype != OFSTNone:
-                    # subtypes are new in GDAL 2.x, ignored in 1.x
-                    set_field_subtype(cogr_fielddefn, field_subtype)
-
-                try:
+                    cogr_fielddefn = exc_wrap_pointer(OGR_Fld_Create(key_bytes, <OGRFieldType>field_type))
+                    if width:
+                        OGR_Fld_SetWidth(cogr_fielddefn, width)
+                    if precision:
+                        OGR_Fld_SetPrecision(cogr_fielddefn, precision)
+                    if field_subtype != OFSTNone:
+                        # subtypes are new in GDAL 2.x, ignored in 1.x
+                        set_field_subtype(cogr_fielddefn, field_subtype)
                     exc_wrap_int(OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1))
-                except CPLE_BaseError as exc:
+                except (UnicodeEncodeError, CPLE_BaseError) as exc:
+                    OGRReleaseDataSource(self.cogr_ds)
+                    self.cogr_ds = NULL
+                    self.cogr_layer = NULL
                     raise SchemaError(u"{}".format(exc))
 
-                OGR_Fld_Destroy(cogr_fielddefn)
-
-                log.debug("End creating field %r", key)
+                else:
+                    OGR_Fld_Destroy(cogr_fielddefn)
+                    log.debug("End creating field %r", key)
 
         # Mapping of the Python collection schema to the munged
         # OGR schema.

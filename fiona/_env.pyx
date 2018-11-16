@@ -10,6 +10,7 @@ option is set to a new value inside the thread.
 
 include "gdal.pxi"
 
+from collections import namedtuple
 import logging
 import os
 import os.path
@@ -53,14 +54,61 @@ log = logging.getLogger(__name__)
 cdef bint is_64bit = sys.maxsize > 2 ** 32
 
 
+def calc_gdal_version_num(maj, min, rev):
+    """Calculates the internal gdal version number based on major, minor and revision
+
+    GDAL Version Information macro changed with GDAL version 1.10.0 (April 2013)
+
+    """
+    if (maj, min, rev) >= (1, 10, 0):
+        return int(maj * 1000000 + min * 10000 + rev * 100)
+    else:
+        return int(maj * 1000 + min * 100 + rev * 10)
+
+
+def get_gdal_version_num():
+    """Return current internal version number of gdal"""
+    return int(GDALVersionInfo("VERSION_NUM"))
+
+
+def get_gdal_release_name():
+    """Return release name of gdal"""
+    cdef const char *name_c = NULL
+    name_c = GDALVersionInfo("RELEASE_NAME")
+    name = name_c
+    return name
+
+
+GDALVersion = namedtuple("GDALVersion", ["major", "minor", "revision"])
+
+
+def get_gdal_version_tuple():
+    """
+    Calculates gdal version tuple from gdal's internal version number.
+
+    GDAL Version Information macro changed with GDAL version 1.10.0 (April 2013)
+    """
+    gdal_version_num = get_gdal_version_num()
+
+    if gdal_version_num >= calc_gdal_version_num(1, 10, 0):
+        major = gdal_version_num // 1000000
+        minor = (gdal_version_num - (major * 1000000)) // 10000
+        revision = (gdal_version_num - (major * 1000000) - (minor * 10000)) // 100
+        return GDALVersion(major, minor, revision)
+    else:
+        major = gdal_version_num // 1000
+        minor = (gdal_version_num - (major * 1000)) // 100
+        revision = (gdal_version_num - (major * 1000) - (minor * 100)) // 10
+        return GDALVersion(major, minor, revision)
+
+
 cdef void log_error(CPLErr err_class, int err_no, const char* msg) with gil:
     """Send CPL debug messages and warnings to Python's logger."""
     log = logging.getLogger(__name__)
-    if err_class < 3:
-        if err_no in code_map:
-            log.log(level_map[err_class], "%s in %s", code_map[err_no], msg)
-        else:
-            log.info("Unknown error number %r", err_no)
+    if err_no in code_map:
+        log.log(level_map[err_class], "%s", msg)
+    else:
+        log.info("Unknown error number %r", err_no)
 
 
 # Definition of GDAL callback functions, one for Windows and one for
@@ -186,6 +234,59 @@ cdef class ConfigEnv(object):
         return {k: get_gdal_config(k) for k in self.options}
 
 
+class GDALDataFinder(object):
+    """Finds GDAL and PROJ data files"""
+
+    def search(self, prefix=None):
+        """Returns GDAL_DATA location"""
+        path = self.search_wheel(prefix or __file__)
+        if not path:
+            path = self.search_prefix(prefix or sys.prefix)
+            if not path:
+                path = self.search_debian(prefix or sys.prefix)
+        return path
+
+    def search_wheel(self, prefix=None):
+        """Check wheel location"""
+        if prefix is None:
+            prefix = __file__
+        datadir = os.path.abspath(os.path.join(os.path.dirname(prefix), "gdal_data"))
+        return datadir if os.path.exists(os.path.join(datadir, 'pcs.csv')) else None
+
+    def search_prefix(self, prefix=sys.prefix):
+        """Check sys.prefix location"""
+        datadir = os.path.join(prefix, 'share', 'gdal')
+        return datadir if os.path.exists(os.path.join(datadir, 'pcs.csv')) else None
+
+    def search_debian(self, prefix=sys.prefix):
+        """Check Debian locations"""
+        gdal_version = get_gdal_version_tuple()
+        datadir = os.path.join(prefix, 'share', 'gdal', '{}.{}'.format(gdal_version.major, gdal_version.minor))
+        return datadir if os.path.exists(os.path.join(datadir, 'pcs.csv')) else None
+
+
+class PROJDataFinder(object):
+
+    def search(self, prefix=None):
+        """Returns PROJ_LIB location"""
+        path = self.search_wheel(prefix or __file__)
+        if not path:
+            path = self.search_prefix(prefix or sys.prefix)
+        return path
+
+    def search_wheel(self, prefix=None):
+        """Check wheel location"""
+        if prefix is None:
+            prefix = __file__
+        datadir = os.path.abspath(os.path.join(os.path.dirname(prefix), "proj_data"))
+        return datadir if os.path.exists(datadir) else None
+
+    def search_prefix(self, prefix=sys.prefix):
+        """Check sys.prefix location"""
+        datadir = os.path.join(prefix, 'share', 'proj')
+        return datadir if os.path.exists(datadir) else None
+
+
 cdef class GDALEnv(ConfigEnv):
     """Configuration and driver management"""
 
@@ -210,40 +311,22 @@ cdef class GDALEnv(ConfigEnv):
 
                     if 'GDAL_DATA' not in os.environ:
 
-                        # We will try a few well-known paths, starting with the
-                        # official wheel path.
-                        whl_datadir = os.path.abspath(
-                            os.path.join(os.path.dirname(__file__), "gdal_data"))
-                        fhs_share_datadir = os.path.join(sys.prefix, 'share/gdal')
+                        path = GDALDataFinder().search()
 
-                        # Debian supports multiple GDAL installs.
-                        gdal_release_name = GDALVersionInfo("RELEASE_NAME")
-                        deb_share_datadir = os.path.join(
-                            fhs_share_datadir,
-                            "{}.{}".format(*gdal_release_name.split('.')[:2]))
+                        if path:
+                            log.debug("GDAL data found in %r", path)
+                            self.update_config_options(GDAL_DATA=path)
 
-                        # If we find GDAL data at the well-known paths, we will
-                        # add a GDAL_DATA key to the config options dict.
-                        if os.path.exists(os.path.join(whl_datadir, 'pcs.csv')):
-                            self.update_config_options(GDAL_DATA=whl_datadir)
-
-                        elif os.path.exists(os.path.join(deb_share_datadir, 'pcs.csv')):
-                            self.update_config_options(GDAL_DATA=deb_share_datadir)
-
-                        elif os.path.exists(os.path.join(fhs_share_datadir, 'pcs.csv')):
-                            self.update_config_options(GDAL_DATA=fhs_share_datadir)
+                    else:
+                        self.update_config_options(GDAL_DATA=os.environ['GDAL_DATA'])
 
                     if 'PROJ_LIB' not in os.environ:
 
-                        whl_datadir = os.path.abspath(
-                            os.path.join(os.path.dirname(__file__), 'proj_data'))
-                        share_datadir = os.path.join(sys.prefix, 'share/proj')
+                        path = PROJDataFinder().search()
 
-                        if os.path.exists(whl_datadir):
-                            os.environ['PROJ_LIB'] = whl_datadir
-
-                        elif os.path.exists(share_datadir):
-                            os.environ['PROJ_LIB'] = share_datadir
+                        if path:
+                            log.debug("PROJ data found in %r", path)
+                            os.environ['PROJ_LIB'] = path
 
                     if driver_count() == 0:
                         CPLPopErrorHandler()
@@ -274,8 +357,8 @@ cdef class GDALEnv(ConfigEnv):
         result = {}
         for i in range(OGRGetDriverCount()):
             drv = OGRGetDriver(i)
-            key = OGR_Dr_GetName(drv)
-            val = OGR_Dr_GetName(drv)
+            key = <char *>OGR_Dr_GetName(drv)
+            val = <char *>OGR_Dr_GetName(drv)
             result[key] = val
 
         return result
