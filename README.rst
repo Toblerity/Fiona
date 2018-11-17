@@ -24,7 +24,7 @@ Fiona is supported only on CPython versions 2.7 and 3.4+.
 For more details, see:
 
 * Fiona `home page <https://github.com/Toblerity/Fiona>`__
-* Fiona `docs and manual <http://toblerity.github.com/fiona/>`__
+* Fiona `docs and manual <https://fiona.readthedocs.io/en/stable/>`__
 * Fiona `examples <https://github.com/Toblerity/Fiona/tree/master/examples>`__
 
 Usage
