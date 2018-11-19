@@ -9,13 +9,102 @@ cdef extern from "ogr_core.h":
 
     ctypedef int OGRErr
 
+    ctypedef enum OGRwkbGeometryType:
+        wkbUnknown
+        wkbPoint
+        wkbLineString
+        wkbPolygon
+        wkbMultiPoint
+        wkbMultiLineString
+        wkbMultiPolygon
+        wkbGeometryCollection
+        wkbCircularString
+        wkbCompoundCurve
+        wkbCurvePolygon
+        wkbMultiCurve
+        wkbMultiSurface
+        wkbCurve
+        wkbSurface
+        wkbPolyhedralSurface
+        wkbTIN
+        wkbTriangle
+        wkbNone
+        wkbLinearRing
+        wkbCircularStringZ
+        wkbCompoundCurveZ
+        wkbCurvePolygonZ
+        wkbMultiCurveZ
+        wkbMultiSurfaceZ
+        wkbCurveZ
+        wkbSurfaceZ
+        wkbPolyhedralSurfaceZ
+        wkbTINZ
+        wkbTriangleZ
+        wkbPointM
+        wkbLineStringM
+        wkbPolygonM
+        wkbMultiPointM
+        wkbMultiLineStringM
+        wkbMultiPolygonM
+        wkbGeometryCollectionM
+        wkbCircularStringM
+        wkbCompoundCurveM
+        wkbCurvePolygonM
+        wkbMultiCurveM
+        wkbMultiSurfaceM
+        wkbCurveM
+        wkbSurfaceM
+        wkbPolyhedralSurfaceM
+        wkbTINM
+        wkbTriangleM
+        wkbPointZM
+        wkbLineStringZM
+        wkbPolygonZM
+        wkbMultiPointZM
+        wkbMultiLineStringZM
+        wkbMultiPolygonZM
+        wkbGeometryCollectionZM
+        wkbCircularStringZM
+        wkbCompoundCurveZM
+        wkbCurvePolygonZM
+        wkbMultiCurveZM
+        wkbMultiSurfaceZM
+        wkbCurveZM
+        wkbSurfaceZM
+        wkbPolyhedralSurfaceZM
+        wkbTINZM
+        wkbTriangleZM
+        wkbPoint25D
+        wkbLineString25D
+        wkbPolygon25D
+        wkbMultiPoint25D
+        wkbMultiLineString25D
+        wkbMultiPolygon25D
+        wkbGeometryCollection25D
+
+    ctypedef enum OGRFieldType:
+        OFTInteger
+        OFTIntegerList
+        OFTReal
+        OFTRealList
+        OFTString
+        OFTStringList
+        OFTWideString
+        OFTWideStringList
+        OFTBinary
+        OFTDate
+        OFTTime
+        OFTDateTime
+        OFTInteger64
+        OFTInteger64List
+        OFTMaxType
+
     ctypedef int OGRFieldSubType
-    ctypedef enum OGRFieldSubType:
-        OFSTNone = 0
-        OFSTBoolean = 1
-        OFSTInt16 = 2
-        OFSTFloat32 = 3
-        OFSTMaxSubType = 3
+    cdef int OFSTNone = 0
+    cdef int OFSTBoolean = 1
+    cdef int OFSTInt16 = 2
+    cdef int OFSTFloat32 = 3
+    cdef int OFSTMaxSubType = 3
 
     ctypedef struct OGREnvelope:
         double MinX
@@ -35,9 +124,9 @@ cdef extern from "gdal.h":
     void * GDALGetDriverByName(const char * pszName)
     void * GDALOpenEx(const char * pszFilename,
                       unsigned int nOpenFlags,
-                      const char ** papszAllowedDrivers,
-                      const char ** papszOpenOptions,
-                      const char *const *papszSibling1Files
+                      const char *const *papszAllowedDrivers,
+                      const char *const *papszOpenOptions,
+                      const char *const *papszSiblingFiles
                       )
     int GDAL_OF_UPDATE
     int GDAL_OF_READONLY
@@ -147,7 +236,7 @@ cdef extern from "ogr_srs_api.h":
 
 cdef extern from "ogr_api.h":
 
-    char *  OGR_Dr_GetName (void *driver)
+    const char * OGR_Dr_GetName (void *driver)
     void *  OGR_Dr_CreateDataSource (void *driver, const char *path, char **options)
     int     OGR_Dr_DeleteDataSource (void *driver, char *)
     void *  OGR_Dr_Open (void *driver, const char *path, int bupdate)
@@ -178,7 +267,7 @@ cdef extern from "ogr_api.h":
     void *  OGR_FD_GetFieldDefn (void *featuredefn, int n)
     int     OGR_FD_GetGeomType (void *featuredefn)
     char *  OGR_FD_GetName (void *featuredefn)
-    void *  OGR_Fld_Create (char *name, int fieldtype)
+    void *  OGR_Fld_Create (char *name, OGRFieldType fieldtype)
     void    OGR_Fld_Destroy (void *fielddefn)
     char *  OGR_Fld_GetNameRef (void *fielddefn)
     int     OGR_Fld_GetPrecision (void *fielddefn)

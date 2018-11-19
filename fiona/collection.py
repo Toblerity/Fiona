@@ -8,12 +8,12 @@ import warnings
 from fiona import compat, vfs
 from fiona.ogrext import Iterator, ItemsIterator, KeysIterator
 from fiona.ogrext import Session, WritingSession
-from fiona.ogrext import (
-    calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name)
 from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file, GEOMETRY_TYPES
 from fiona.errors import (DriverError, SchemaError, CRSError, UnsupportedGeometryTypeError, DriverSupportError)
 from fiona.logutils import FieldSkipLogFilter
 from fiona._env import driver_count
+from fiona._env import (
+    calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name)
 from fiona.env import Env
 from fiona.errors import FionaDeprecationWarning
 from fiona.drvsupport import supported_drivers

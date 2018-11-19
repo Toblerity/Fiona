@@ -111,6 +111,8 @@ class TestUnicodeStringField:
             assert f['properties']['label'] == u'徐汇区'
             assert f['properties']['num'] == 0
 
+
+    @pytest.mark.skipif(sys.platform == 'win32', reason="GDAL binary used on AppVeyor does not have a working libiconv")
     def test_gb2312_field_wrong_encoding(self, tmpdir):
         """Attempt to create field with a name not supported by the encoding
 
