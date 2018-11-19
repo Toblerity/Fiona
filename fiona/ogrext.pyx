@@ -299,7 +299,10 @@ cdef class FeatureBuilder:
         cdef void *cogr_geometry = NULL
 
         if not ignore_geometry:
-            cogr_geometry = OGR_F_GetGeometryRef(feature)
+            """ We steal the geometry: the geometry of the in-memory feature is now null
+            and we are responsible for cogr_geometry.
+            """
+            cogr_geometry = OGR_F_StealGeometry(feature)
 
             if cogr_geometry is not NULL:
 
@@ -308,23 +311,15 @@ cdef class FeatureBuilder:
                 if 7 < code < 15:  # Curves.
                     cogr_geometry = get_linear_geometry(cogr_geometry)
                     geom = GeomBuilder().build(cogr_geometry)
-                    OGR_G_DestroyGeometry(cogr_geometry)
 
                 elif code in (15, 16):  # RFC 64: Polyhedral surface and TIN
-                    """
-                    cogr_geometry is cloned as OGR_G_Force* consumes the original feature
-                    which would lead to a segfault in _deleteOgrFeature().
-                    """
-                    cogr_geometry_clone = OGR_G_Clone(cogr_geometry)
-                    cogr_geometry_clone = OGR_G_ForceToMultiPolygon(cogr_geometry_clone)
-                    geom = GeomBuilder().build(cogr_geometry_clone)
-                    OGR_G_DestroyGeometry(cogr_geometry_clone)
+
+                    cogr_geometry = OGR_G_ForceToMultiPolygon(cogr_geometry)
+                    geom = GeomBuilder().build(cogr_geometry)
 
                 elif code == 17:  # RFC 64: Triangle
-                    cogr_geometry_clone = OGR_G_Clone(cogr_geometry)
-                    cogr_geometry_clone = OGR_G_ForceToPolygon(cogr_geometry_clone)
-                    geom = GeomBuilder().build(cogr_geometry_clone)
-                    OGR_G_DestroyGeometry(cogr_geometry_clone)
+                    cogr_geometry = OGR_G_ForceToPolygon(cogr_geometry)
+                    geom = GeomBuilder().build(cogr_geometry)
 
                 else:
                     geom = GeomBuilder().build(cogr_geometry)
@@ -333,6 +328,8 @@ cdef class FeatureBuilder:
 
             else:
                 fiona_feature["geometry"] = None
+
+            OGR_G_DestroyGeometry(cogr_geometry)
 
         return fiona_feature
 

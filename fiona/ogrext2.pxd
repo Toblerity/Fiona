@@ -166,6 +166,7 @@ cdef extern from "ogr_api.h":
     void *  OGR_F_GetFieldDefnRef (void *feature, int n)
     int     OGR_F_GetFieldIndex (void *feature, char *name)
     void *  OGR_F_GetGeometryRef (void *feature)
+    void *  OGR_F_StealGeometry (void *feature)
     void    OGR_F_SetFieldDateTime (void *feature, int n, int y, int m, int d, int hh, int mm, int ss, int tz)
     void    OGR_F_SetFieldDouble (void *feature, int n, double value)
     void    OGR_F_SetFieldInteger (void *feature, int n, int value)
