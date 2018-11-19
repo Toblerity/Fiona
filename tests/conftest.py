@@ -1,9 +1,11 @@
 """pytest fixtures and automatic test data generation."""
+
+import copy
 import json
 import os.path
+import shutil
 import tarfile
 import zipfile
-import copy
 
 from click.testing import CliRunner
 import pytest
@@ -52,6 +54,14 @@ def gdalenv(request):
 def data_dir():
     """Absolute file path to the directory containing test datasets."""
     return os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
+
+
+@pytest.fixture(scope='function')
+def data(tmpdir, data_dir):
+    """A temporary directory containing a copy of the files in data."""
+    for filename in _COUTWILDRNP_FILES:
+        shutil.copy(os.path.join(data_dir, filename), str(tmpdir))
+    return tmpdir
 
 
 @pytest.fixture(scope='session')

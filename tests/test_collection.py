@@ -206,6 +206,7 @@ class TestReading(object):
         with fiona.open(path_coutwildrnp_shp, "r") as c:
             assert c.name == 'coutwildrnp'
             assert len(c) == 67
+            assert c.crs
         assert c.closed
 
     def test_iter_one(self):
@@ -866,3 +867,10 @@ def test_collection_zip_http():
     ds = fiona.Collection('http://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip', vsi='zip+http')
     assert ds.path == '/vsizip/vsicurl/http://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip'
     assert len(ds) == 10
+
+
+def test_encoding_option_warning(tmpdir, caplog):
+    """There is no ENCODING creation option log warning for GeoJSON"""
+    ds = fiona.Collection(str(tmpdir.join("test.geojson")), "w", driver="GeoJSON", crs="epsg:4326",
+            schema={"geometry": "Point", "properties": {"foo": "int"}})
+    assert not caplog.text

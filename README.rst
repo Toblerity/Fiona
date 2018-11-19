@@ -24,7 +24,7 @@ Fiona is supported only on CPython versions 2.7 and 3.4+.
 For more details, see:
 
 * Fiona `home page <https://github.com/Toblerity/Fiona>`__
-* Fiona `docs and manual <http://toblerity.github.com/fiona/>`__
+* Fiona `docs and manual <https://fiona.readthedocs.io/en/stable/>`__
 * Fiona `examples <https://github.com/Toblerity/Fiona/tree/master/examples>`__
 
 Usage
@@ -214,7 +214,7 @@ info`` pretty prints information about a data file.
 Installation
 ============
 
-Fiona requires Python 2.6, 2.7, 3.3, or 3.4 and GDAL/OGR 1.8+. To build from
+Fiona requires Python 2.7 or 3.4+ and GDAL/OGR 1.8+. To build from
 a source distribution you will need a C compiler and GDAL and Python
 development headers and libraries (libgdal1-dev for Debian/Ubuntu, gdal-dev for
 CentOS/Fedora).

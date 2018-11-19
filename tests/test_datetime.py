@@ -50,10 +50,10 @@ class TestDateFieldSupport:
                 }
             },
         ]
-        with fiona.open(path, "w", driver=driver, schema=schema) as collection:
+        with fiona.Env(), fiona.open(path, "w", driver=driver, schema=schema) as collection:
             collection.writerecords(records)
-            
-        with fiona.open(path, "r") as collection:
+
+        with fiona.Env(), fiona.open(path, "r") as collection:
             schema = collection.schema
             features = list(collection)
 
@@ -64,7 +64,7 @@ class TestDateFieldSupport:
     def test_shapefile(self):
         driver = "ESRI Shapefile"
         schema, features = self.write_data(driver)
-        
+
         assert schema["properties"]["date"] == "date"
         assert features[0]["properties"]["date"] == DATE_EXAMPLE
         assert features[1]["properties"]["date"] is None
@@ -73,7 +73,7 @@ class TestDateFieldSupport:
     def test_gpkg(self):
         driver = "GPKG"
         schema, features = self.write_data(driver)
-        
+
         assert schema["properties"]["date"] == "date"
         assert features[0]["properties"]["date"] == DATE_EXAMPLE
         assert features[1]["properties"]["date"] is None
@@ -83,7 +83,7 @@ class TestDateFieldSupport:
         # GDAL 1: date string format uses / instead of -
         driver = "GeoJSON"
         schema, features = self.write_data(driver)
-        
+
         if GDAL_MAJOR_VER >= 2:
             assert schema["properties"]["date"] == "date"
             assert features[0]["properties"]["date"] == DATE_EXAMPLE
@@ -95,7 +95,7 @@ class TestDateFieldSupport:
     def test_mapinfo(self):
         driver = "MapInfo File"
         schema, features = self.write_data(driver)
-        
+
         assert schema["properties"]["date"] == "date"
         assert features[0]["properties"]["date"] == DATE_EXAMPLE
         assert features[1]["properties"]["date"] is None
@@ -126,10 +126,10 @@ class TestDatetimeFieldSupport:
                 }
             },
         ]
-        with fiona.open(path, "w", driver=driver, schema=schema) as collection:
+        with fiona.Env(), fiona.open(path, "w", driver=driver, schema=schema) as collection:
             collection.writerecords(records)
-            
-        with fiona.open(path, "r") as collection:
+
+        with fiona.Env(), fiona.open(path, "r") as collection:
             schema = collection.schema
             features = list(collection)
 
@@ -143,7 +143,7 @@ class TestDatetimeFieldSupport:
 
         with pytest.raises(DriverSupportError):
             schema, features = self.write_data(driver)
-        
+
         # assert schema["properties"]["datetime"] == "date"
         # assert features[0]["properties"]["datetime"] == "2018-03-25"
         # assert features[1]["properties"]["datetime"] is None
@@ -152,7 +152,7 @@ class TestDatetimeFieldSupport:
     def test_gpkg(self):
         # GDAL 1: datetime silently downgraded to date
         driver = "GPKG"
-        
+
         if GDAL_MAJOR_VER >= 2:
             schema, features = self.write_data(driver)
             assert schema["properties"]["datetime"] == "datetime"
@@ -167,7 +167,7 @@ class TestDatetimeFieldSupport:
         # GDAL 1: date string format uses / instead of -
         driver = "GeoJSON"
         schema, features = self.write_data(driver)
-        
+
         if GDAL_MAJOR_VER >= 2:
             assert schema["properties"]["datetime"] == "datetime"
             assert features[0]["properties"]["datetime"] == DATETIME_EXAMPLE
@@ -179,7 +179,7 @@ class TestDatetimeFieldSupport:
     def test_mapinfo(self):
         driver = "MapInfo File"
         schema, features = self.write_data(driver)
-        
+
         assert schema["properties"]["datetime"] == "datetime"
         assert features[0]["properties"]["datetime"] == DATETIME_EXAMPLE
         assert features[1]["properties"]["datetime"] is None
@@ -210,10 +210,10 @@ class TestTimeFieldSupport:
                 }
             },
         ]
-        with fiona.open(path, "w", driver=driver, schema=schema) as collection:
+        with fiona.Env(), fiona.open(path, "w", driver=driver, schema=schema) as collection:
             collection.writerecords(records)
-            
-        with fiona.open(path, "r") as collection:
+
+        with fiona.Env(), fiona.open(path, "r") as collection:
             schema = collection.schema
             features = list(collection)
 
@@ -235,7 +235,7 @@ class TestTimeFieldSupport:
 
         with pytest.raises(DriverSupportError):
             schema, features = self.write_data(driver)
-    
+
         # if GDAL_MAJOR_VER >= 2:
         #     assert schema["properties"]["time"] == "str"
         #     assert features[0]["properties"]["time"] == TIME_EXAMPLE
@@ -247,7 +247,7 @@ class TestTimeFieldSupport:
         # GDAL 1: time field silently converted to string
         driver = "GeoJSON"
         schema, features = self.write_data(driver)
-    
+
         if GDAL_MAJOR_VER >= 2:
             assert schema["properties"]["time"] == "time"
         else:
@@ -259,7 +259,7 @@ class TestTimeFieldSupport:
         # GDAL 2: null time is converted to 00:00:00 (regression?)
         driver = "MapInfo File"
         schema, features = self.write_data(driver)
-    
+
         assert schema["properties"]["time"] == "time"
         assert features[0]["properties"]["time"] == TIME_EXAMPLE
         if GDAL_MAJOR_VER >= 2:

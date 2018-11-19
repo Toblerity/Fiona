@@ -3,6 +3,25 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.1 (2018-11-15)
+------------------
+
+Bug fixes:
+
+- Add checks around OSRGetAuthorityName and OSRGetAuthorityCode calls that will
+  log problems with looking up these items.
+- Opened data sources are now released before we raise exceptions in
+  WritingSession.start (#676). This fixes an issue with locked files on
+  Windows.
+- We now ensure that an Env instance exists when getting the crs or crs_wkt
+  properties of a Collection (#673, #690). Otherwise, required GDAL and PROJ
+  data files included in Fiona wheels can not be found.
+- GDAL and PROJ data search has been refactored to improve testability (#678).
+- In the project's Cython code, void* pointers have been replaced with proper
+  GDAL types (#672).
+- Pervasive warning level log messages about ENCODING creation options (#668)
+  have been eliminated.
+
 1.8.0 (2018-10-31)
 ------------------
 

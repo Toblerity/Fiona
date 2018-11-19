@@ -3,6 +3,81 @@
 ctypedef int OGRErr
 
 
+cdef extern from "ogr_core.h":
+    ctypedef enum OGRwkbGeometryType:
+        wkbUnknown
+        wkbPoint
+        wkbLineString
+        wkbPolygon
+        wkbMultiPoint
+        wkbMultiLineString
+        wkbMultiPolygon
+        wkbGeometryCollection
+        wkbCircularString
+        wkbCompoundCurve
+        wkbCurvePolygon
+        wkbMultiCurve
+        wkbMultiSurface
+        wkbCurve
+        wkbSurface
+        wkbPolyhedralSurface
+        wkbTIN
+        wkbTriangle
+        wkbNone
+        wkbLinearRing
+        wkbCircularStringZ
+        wkbCompoundCurveZ
+        wkbCurvePolygonZ
+        wkbMultiCurveZ
+        wkbMultiSurfaceZ
+        wkbCurveZ
+        wkbSurfaceZ
+        wkbPolyhedralSurfaceZ
+        wkbTINZ
+        wkbTriangleZ
+        wkbPointM
+        wkbLineStringM
+        wkbPolygonM
+        wkbMultiPointM
+        wkbMultiLineStringM
+        wkbMultiPolygonM
+        wkbGeometryCollectionM
+        wkbCircularStringM
+        wkbCompoundCurveM
+        wkbCurvePolygonM
+        wkbMultiCurveM
+        wkbMultiSurfaceM
+        wkbCurveM
+        wkbSurfaceM
+        wkbPolyhedralSurfaceM
+        wkbTINM
+        wkbTriangleM
+        wkbPointZM
+        wkbLineStringZM
+        wkbPolygonZM
+        wkbMultiPointZM
+        wkbMultiLineStringZM
+        wkbMultiPolygonZM
+        wkbGeometryCollectionZM
+        wkbCircularStringZM
+        wkbCompoundCurveZM
+        wkbCurvePolygonZM
+        wkbMultiCurveZM
+        wkbMultiSurfaceZM
+        wkbCurveZM
+        wkbSurfaceZM
+        wkbPolyhedralSurfaceZM
+        wkbTINZM
+        wkbTriangleZM
+        wkbPoint25D
+        wkbLineString25D
+        wkbPolygon25D
+        wkbMultiPoint25D
+        wkbMultiLineString25D
+        wkbMultiPolygon25D
+        wkbGeometryCollection25D
+
+
 ctypedef struct OGREnvelope:
     double MinX
     double MaxX
@@ -15,7 +90,7 @@ cdef extern from "ogr_api.h":
     void    OGR_G_AddPoint (void *geometry, double x, double y, double z)
     void    OGR_G_AddPoint_2D (void *geometry, double x, double y)
     void    OGR_G_CloseRings (void *geometry)
-    void *  OGR_G_CreateGeometry (int wkbtypecode)
+    void *  OGR_G_CreateGeometry (OGRwkbGeometryType wkbtypecode)
     void    OGR_G_DestroyGeometry (void *geometry)
     unsigned char * OGR_G_ExportToJson (void *geometry)
     void    OGR_G_ExportToWkb (void *geometry, int endianness, char *buffer)
