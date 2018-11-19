@@ -117,5 +117,8 @@ cdef void set_field_subtype(void *fielddefn, OGRFieldSubType subtype):
 cdef bint check_capability_create_layer(void *cogr_ds):
     return GDALDatasetTestCapability(cogr_ds, ODsCCreateLayer)
 
-cdef void *get_linear_geometry(void *geom):
-    return OGR_G_GetLinearGeometry(geom, 0.0, NULL)
+cdef inline void *get_linear_geometry(void *geom):
+    cdef void *linear_geom
+    linear_geom = OGR_G_GetLinearGeometry(geom, 0.0, NULL)
+    OGR_G_DestroyGeometry(geom)
+    return linear_geom
