@@ -282,10 +282,10 @@ cdef class FeatureBuilder:
 
                 fiona_feature["geometry"] = geom
 
+                OGR_G_DestroyGeometry(cogr_geometry)
+
             else:
                 fiona_feature["geometry"] = None
-
-            OGR_G_DestroyGeometry(cogr_geometry)
 
         return fiona_feature
 
