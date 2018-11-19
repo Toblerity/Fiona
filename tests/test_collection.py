@@ -874,3 +874,13 @@ def test_encoding_option_warning(tmpdir, caplog):
     ds = fiona.Collection(str(tmpdir.join("test.geojson")), "w", driver="GeoJSON", crs="epsg:4326",
             schema={"geometry": "Point", "properties": {"foo": "int"}})
     assert not caplog.text
+
+
+def test_closed_session_next(path_coutwildrnp_shp):
+    """Confirm fix for  issue #687"""
+    src = fiona.open(path_coutwildrnp_shp)
+    itr = iter(src)
+    feats = list(itr)
+    src.close()
+    with pytest.raises(FionaValueError):
+        next(itr)

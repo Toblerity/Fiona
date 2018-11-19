@@ -3,6 +3,15 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.2 (2018-11-19)
+------------------
+
+Bug fixes:
+
+- Raise FionaValueError when an iterator's __next__ is called and the session
+  is found to be missing or inactive instead of passing a null pointer to
+  OGR_L_GetNextFeature (#687).
+
 1.8.1 (2018-11-15)
 ------------------
 
