@@ -43,7 +43,15 @@ from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
 from cpython cimport PyBytes_FromStringAndSize, PyBytes_AsString
 
-include "gdal.pxi"
+cdef extern from "ogr_api.h" nogil:
+
+    ctypedef void * OGRLayerH
+    ctypedef void * OGRDataSourceH
+    ctypedef void * OGRSFDriverH
+    ctypedef void * OGRFieldDefnH
+    ctypedef void * OGRFeatureDefnH
+    ctypedef void * OGRFeatureH
+    ctypedef void * OGRGeometryH
 
 
 log = logging.getLogger(__name__)
