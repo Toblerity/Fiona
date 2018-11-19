@@ -43,6 +43,8 @@ from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
 from cpython cimport PyBytes_FromStringAndSize, PyBytes_AsString
 
+include "gdal.pxi"
+
 
 log = logging.getLogger(__name__)
 
@@ -1331,11 +1333,16 @@ cdef class Iterator:
         self.next_index += self.step
 
     def __next__(self):
-        cdef void * cogr_feature
+        cdef OGRFeatureH cogr_feature = NULL
+        cdef OGRLayerH cogr_layer = NULL
         cdef Session session
+
         session = self.collection.session
 
-        #Update read cursor
+        if not session or not session.isactive:
+            raise FionaValueError("Session is inactive, dataset is closed or layer is unavailable.")
+
+        # Update read cursor
         self._next()
 
         # Get the next feature.
@@ -1343,16 +1350,17 @@ cdef class Iterator:
         if cogr_feature == NULL:
             raise StopIteration
 
-        feature = FeatureBuilder().build(
-            cogr_feature,
-            bbox=False,
-            encoding=self.encoding,
-            driver=self.collection.driver,
-            ignore_fields=self.collection.ignore_fields,
-            ignore_geometry=self.collection.ignore_geometry,
-        )
-        _deleteOgrFeature(cogr_feature)
-        return feature
+        try:
+            return FeatureBuilder().build(
+                cogr_feature,
+                bbox=False,
+                encoding=self.encoding,
+                driver=self.collection.driver,
+                ignore_fields=self.collection.ignore_fields,
+                ignore_geometry=self.collection.ignore_geometry,
+            )
+        finally:
+            _deleteOgrFeature(cogr_feature)
 
 
 cdef class ItemsIterator(Iterator):
