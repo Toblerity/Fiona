@@ -266,23 +266,17 @@ cdef class FeatureBuilder:
 
                 if 7 < code < 15:  # Curves.
                     cogr_geometry = get_linear_geometry(cogr_geometry)
-                    geom = GeomBuilder().build(cogr_geometry)
 
                 elif code in (15, 16):  # RFC 64: Polyhedral surface and TIN
-
                     cogr_geometry = OGR_G_ForceToMultiPolygon(cogr_geometry)
-                    geom = GeomBuilder().build(cogr_geometry)
 
                 elif code == 17:  # RFC 64: Triangle
                     cogr_geometry = OGR_G_ForceToPolygon(cogr_geometry)
-                    geom = GeomBuilder().build(cogr_geometry)
 
-                else:
-                    geom = GeomBuilder().build(cogr_geometry)
+                geom = GeomBuilder().build(cogr_geometry)
+                OGR_G_DestroyGeometry(cogr_geometry)
 
                 fiona_feature["geometry"] = geom
-
-                OGR_G_DestroyGeometry(cogr_geometry)
 
             else:
                 fiona_feature["geometry"] = None
