@@ -3,6 +3,13 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.3 (TBD)
+-----------
+
+- Options --gdal-data and --proj-data have been added to the fio-env command so
+  that users of Rasterio wheels can get paths to set GDAL_DATA and PROJ_LIB
+  environment variables.
+
 1.8.2 (2018-11-19)
 ------------------
 

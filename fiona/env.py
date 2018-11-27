@@ -11,7 +11,7 @@ from six import string_types
 
 from fiona._env import (
     GDALEnv, calc_gdal_version_num, get_gdal_version_num, get_gdal_config,
-    set_gdal_config, get_gdal_release_name)
+    set_gdal_config, get_gdal_release_name, GDALDataFinder, PROJDataFinder)
 from fiona.compat import getargspec
 from fiona.errors import EnvError, GDALVersionError
 from fiona.session import Session, DummySession
