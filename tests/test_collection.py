@@ -358,6 +358,7 @@ class TestUnsupportedDriver(object):
             fiona.open(str(tmpdir.join("foo")), "w", "Bogus", schema=schema)
 
 
+@pytest.mark.iconv
 class TestGenericWritingTest(object):
     @pytest.fixture(autouse=True)
     def no_iter_shp(self, tmpdir):
