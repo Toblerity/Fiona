@@ -235,7 +235,11 @@ cdef class ConfigEnv(object):
 
 
 class GDALDataFinder(object):
-    """Finds GDAL and PROJ data files"""
+    """Finds GDAL data files
+
+    Note: this class is private in 1.8.x and not in the public API.
+
+    """
 
     def search(self, prefix=None):
         """Returns GDAL_DATA location"""
@@ -266,6 +270,11 @@ class GDALDataFinder(object):
 
 
 class PROJDataFinder(object):
+    """Finds PROJ data files
+
+    Note: this class is private in 1.8.x and not in the public API.
+
+    """
 
     def search(self, prefix=None):
         """Returns PROJ_LIB location"""
