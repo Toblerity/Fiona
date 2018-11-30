@@ -101,7 +101,7 @@ class Env(object):
         return {
             'CHECK_WITH_INVERT_PROJ': True,
             'GTIFF_IMPLICIT_JPEG_OVR': False,
-            "RASTERIO_ENV": True
+            "FIONA_ENV": True
         }
 
     def __init__(
