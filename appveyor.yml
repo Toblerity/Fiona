@@ -1,5 +1,4 @@
 # Based on appveyor.yml from https://github.com/PDAL/PDAL and https://github.com/ogrisel/python-appveyor-demo
-#
 
 platform: x64
 
@@ -27,7 +26,7 @@ environment:
           GDAL_VERSION: "1.11.4"
           GIS_INTERNALS: "release-1800-x64-gdal-1-11-4-mapserver-6-4-3.zip"
           GIS_INTERNALS_LIBS: "release-1800-x64-gdal-1-11-4-mapserver-6-4-3-libs.zip"
-          
+
         - PYTHON: "C:\\Python36-x64"
           PYTHON_VERSION: "3.6.4"
           PYTHON_ARCH: "64"
@@ -71,7 +70,7 @@ install:
   - "python --version"
   - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
 
-  
+
   # https://code.google.com/p/pymat2/wiki/WindowsTips
   #- ps: (Get-Content "%VS90COMNTOOLS%\..\..\VC\vcvarsall.bat) | ForEach-Object { $_ -replace "vcvarsamd64.bat", "vcvars64.bat" } | Set-Content "%VS90COMNTOOLS%\..\..\VC\vcvarsall.bat
   # - '%CMD_IN_ENV% echo "conv env"'
@@ -84,10 +83,10 @@ install:
 
   - ps: mkdir C:\build | out-null
   - ps: mkdir C:\gdal | out-null
-  
+
   - curl http://download.gisinternals.com/sdk/downloads/%GIS_INTERNALS% --output gdalbin.zip
   - 7z x gdalbin.zip -oC:\gdal
-  - curl http://download.gisinternals.com/sdk/downloads/%GIS_INTERNALS_LIBS% --output gdallibs.zip  
+  - curl http://download.gisinternals.com/sdk/downloads/%GIS_INTERNALS_LIBS% --output gdallibs.zip
   - 7z x gdallibs.zip -oC:\gdal
   - "SET PATH=C:\\gdal;C:\\gdal\\bin;C:\\gdal\\data;C:\\gdal\\bin\\gdal\\apps;%PATH%"
   - "SET GDAL_DATA=C:\\gdal\\bin\\gdal-data"
@@ -95,21 +94,21 @@ install:
 
   - ECHO "Filesystem C:/GDAL:"
   - ps: "ls \"C:/GDAL\""
-  
-  
+
+
   - cd C:\projects\fiona
   # Upgrade to the latest version of pip to avoid it displaying warnings
   # about it being out of date.
   # - "python -m pip install --disable-pip-version-check --user --upgrade pip"
-  
+
   - pip --version
- 
+
   # Install the build dependencies of the project. If some dependencies contain
   # compiled extensions and are not provided as pre-built wheel packages,
   # pip will build them from source using the MSVC compiler matching the
   # target Python version and architecture
   - "%CMD_IN_ENV% pip install -r requirements-dev.txt"
-  
+
 
 build_script:
   # Build the compiled extension
@@ -136,10 +135,8 @@ test_script:
 
   - ps: python -c "import fiona"
 
-  # TODO: return to running test_write_gb18030 when GDAL build is updated.
-  # GenericWriting test is skipped on Appveyor because our Windows GDAL doesn't
-  # have iconv support and can't encode field names.
-  - "%CMD_IN_ENV% python -m pytest -k \"not test_write_gb18030 and not GenericWritingTest\" --cov fiona --cov-report term-missing"
+  # Our Windows GDAL doesn't have iconv and can't support certain tests.
+  - "%CMD_IN_ENV% python -m pytest -m \"not iconv\" --cov fiona --cov-report term-missing"
 
 matrix:
   allow_failures:

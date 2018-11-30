@@ -22,7 +22,6 @@ from fiona._geometry cimport (
 from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile
 
 import fiona
-from fiona.env import env_ctx_if_needed
 from fiona._env import GDALVersion, get_gdal_version_num
 from fiona._err import cpl_errs, FionaNullPointerError, CPLE_BaseError, CPLE_OpenFailedError
 from fiona._geometry import GEOMETRY_TYPES
@@ -631,75 +630,71 @@ cdef class Session:
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
 
-        # We can't simply wrap a method in Python 2.7 so we
-        # bring the context manager inside like so.
-        with env_ctx_if_needed():
+        try:
+            cogr_crs = exc_wrap_pointer(OGR_L_GetSpatialRef(self.cogr_layer))
+        # TODO: we don't intend to use try/except for flow control
+        # this is a work around for a GDAL issue.
+        except FionaNullPointerError:
+            log.debug("Layer has no coordinate system")
+
+        if cogr_crs is not NULL:
+
+            log.debug("Got coordinate system")
+            crs = {}
 
             try:
-                cogr_crs = exc_wrap_pointer(OGR_L_GetSpatialRef(self.cogr_layer))
-            # TODO: we don't intend to use try/except for flow control
-            # this is a work around for a GDAL issue.
-            except FionaNullPointerError:
-                log.debug("Layer has no coordinate system")
 
-            if cogr_crs is not NULL:
-
-                log.debug("Got coordinate system")
-                crs = {}
+                retval = OSRAutoIdentifyEPSG(cogr_crs)
+                if retval > 0:
+                    log.info("Failed to auto identify EPSG: %d", retval)
 
                 try:
+                    auth_key = <const char *>exc_wrap_pointer(<void *>OSRGetAuthorityName(cogr_crs, NULL))
+                    auth_val = <const char *>exc_wrap_pointer(<void *>OSRGetAuthorityCode(cogr_crs, NULL))
 
-                    retval = OSRAutoIdentifyEPSG(cogr_crs)
-                    if retval > 0:
-                        log.info("Failed to auto identify EPSG: %d", retval)
+                except CPLE_BaseError as exc:
+                    log.debug("{}".format(exc))
 
-                    try:
-                        auth_key = <const char *>exc_wrap_pointer(<void *>OSRGetAuthorityName(cogr_crs, NULL))
-                        auth_val = <const char *>exc_wrap_pointer(<void *>OSRGetAuthorityCode(cogr_crs, NULL))
+                if auth_key != NULL and auth_val != NULL:
+                    key_b = auth_key
+                    key = key_b.decode('utf-8')
+                    if key == 'EPSG':
+                        val_b = auth_val
+                        val = val_b.decode('utf-8')
+                        crs['init'] = "epsg:" + val
 
-                    except CPLE_BaseError as exc:
-                        log.debug("{}".format(exc))
+                else:
+                    OSRExportToProj4(cogr_crs, &proj_c)
+                    if proj_c == NULL:
+                        raise ValueError("Null projection")
+                    proj_b = proj_c
+                    log.debug("Params: %s", proj_b)
+                    value = proj_b.decode()
+                    value = value.strip()
+                    for param in value.split():
+                        kv = param.split("=")
+                        if len(kv) == 2:
+                            k, v = kv
+                            try:
+                                v = float(v)
+                                if v % 1 == 0:
+                                    v = int(v)
+                            except ValueError:
+                                # Leave v as a string
+                                pass
+                        elif len(kv) == 1:
+                            k, v = kv[0], True
+                        else:
+                            raise ValueError("Unexpected proj parameter %s" % param)
+                        k = k.lstrip("+")
+                        crs[k] = v
 
-                    if auth_key != NULL and auth_val != NULL:
-                        key_b = auth_key
-                        key = key_b.decode('utf-8')
-                        if key == 'EPSG':
-                            val_b = auth_val
-                            val = val_b.decode('utf-8')
-                            crs['init'] = "epsg:" + val
+            finally:
+                CPLFree(proj_c)
+                return crs
 
-                    else:
-                        OSRExportToProj4(cogr_crs, &proj_c)
-                        if proj_c == NULL:
-                            raise ValueError("Null projection")
-                        proj_b = proj_c
-                        log.debug("Params: %s", proj_b)
-                        value = proj_b.decode()
-                        value = value.strip()
-                        for param in value.split():
-                            kv = param.split("=")
-                            if len(kv) == 2:
-                                k, v = kv
-                                try:
-                                    v = float(v)
-                                    if v % 1 == 0:
-                                        v = int(v)
-                                except ValueError:
-                                    # Leave v as a string
-                                    pass
-                            elif len(kv) == 1:
-                                k, v = kv[0], True
-                            else:
-                                raise ValueError("Unexpected proj parameter %s" % param)
-                            k = k.lstrip("+")
-                            crs[k] = v
-
-                finally:
-                    CPLFree(proj_c)
-                    return crs
-
-            else:
-                log.debug("Projection not found (cogr_crs was NULL)")
+        else:
+            log.debug("Projection not found (cogr_crs was NULL)")
 
         return {}
 
@@ -710,41 +705,37 @@ cdef class Session:
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
 
-        # We can't simply wrap a method in Python 2.7 so we
-        # bring the context manager inside like so.
-        with env_ctx_if_needed():
+        try:
+            cogr_crs = exc_wrap_pointer(OGR_L_GetSpatialRef(self.cogr_layer))
+
+        # TODO: we don't intend to use try/except for flow control
+        # this is a work around for a GDAL issue.
+        except FionaNullPointerError:
+            log.debug("Layer has no coordinate system")
+        except fiona._err.CPLE_OpenFailedError as exc:
+            log.debug("A support file wasn't opened. See the preceding ERROR level message.")
+            cogr_crs = OGR_L_GetSpatialRef(self.cogr_layer)
+            log.debug("Called OGR_L_GetSpatialRef() again without error checking.")
+            if cogr_crs == NULL:
+                raise exc
+
+        if cogr_crs is not NULL:
+            log.debug("Got coordinate system")
 
             try:
-                cogr_crs = exc_wrap_pointer(OGR_L_GetSpatialRef(self.cogr_layer))
+                OSRExportToWkt(cogr_crs, &proj_c)
+                if proj_c == NULL:
+                    raise ValueError("Null projection")
+                proj_b = proj_c
+                crs_wkt = proj_b.decode('utf-8')
 
-            # TODO: we don't intend to use try/except for flow control
-            # this is a work around for a GDAL issue.
-            except FionaNullPointerError:
-                log.debug("Layer has no coordinate system")
-            except fiona._err.CPLE_OpenFailedError as exc:
-                log.debug("A support file wasn't opened. See the preceding ERROR level message.")
-                cogr_crs = OGR_L_GetSpatialRef(self.cogr_layer)
-                log.debug("Called OGR_L_GetSpatialRef() again without error checking.")
-                if cogr_crs == NULL:
-                    raise exc
+            finally:
+                CPLFree(proj_c)
+                return crs_wkt
 
-            if cogr_crs is not NULL:
-                log.debug("Got coordinate system")
-
-                try:
-                    OSRExportToWkt(cogr_crs, &proj_c)
-                    if proj_c == NULL:
-                        raise ValueError("Null projection")
-                    proj_b = proj_c
-                    crs_wkt = proj_b.decode('utf-8')
-
-                finally:
-                    CPLFree(proj_c)
-                    return crs_wkt
-
-            else:
-                log.debug("Projection not found (cogr_crs was NULL)")
-                return ""
+        else:
+            log.debug("Projection not found (cogr_crs was NULL)")
+            return ""
 
     def get_extent(self):
         cdef OGREnvelope extent
