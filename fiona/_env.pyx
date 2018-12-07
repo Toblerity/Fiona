@@ -327,7 +327,6 @@ cdef class GDALEnv(ConfigEnv):
 
                         if path:
                             self.update_config_options(GDAL_DATA=path)
-                            os.environ['GDAL_DATA'] = path
                             log.debug("GDAL_DATA not found in environment, set to %r.", path)
 
                     if 'PROJ_LIB' not in os.environ:

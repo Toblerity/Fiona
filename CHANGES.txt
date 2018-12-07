@@ -3,8 +3,13 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.8.3 (TBD)
+1.8.4 (TBD)
 -----------
+
+- Patching of the GDAL_DATA environment variable was accidentally left in place in 1.8.3 and now has been removed.
+
+1.8.3 (2018-11-30)
+------------------
 
 - The RASTERIO_ENV config environment marker this project picked up from
   Rasterio has been renamed to FIONA_ENV (#665).
