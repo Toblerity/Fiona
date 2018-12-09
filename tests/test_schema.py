@@ -7,7 +7,7 @@ import tempfile
 
 import pytest
 
-from .conftest import requires_only_gdal1
+from .conftest import requires_only_gdal1, requires_gdal2
 
 
 def test_schema_ordering_items(tmpdir):
@@ -159,7 +159,7 @@ def test_normalize_int32(x):
     assert normalize_field_type('int:{}'.format(x)) == 'int32'
 
 
-@requires_only_gdal1
+@requires_gdal2
 @pytest.mark.parametrize('x', list(range(10, 20)))
 def test_normalize_int64(x):
     assert normalize_field_type('int:{}'.format(x)) == 'int64'
@@ -219,10 +219,10 @@ def test_check_schema_driver_support(tmpdir):
     
     # GPKG
     try:
-        name = str(tmpdir.join('test_scheme.shp'))
+        name = str(tmpdir.join('test_scheme.gpkg'))
         items = [('field1',  'time')]
         with fiona.open(name, 'w',
-                        driver="ESRI Shapefile",
+                        driver="GPKG",
                         schema={
                             'geometry': 'LineString',
                             'properties': items}) as c:
