@@ -3,11 +3,14 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.8.4 (TBD)
------------
+1.8.4 (2018-12-10)
+------------------
 
-- A bug producing a spurious DriverSupportError for Shapefiles with a "time" field (#692) has been fixed.
-- Patching of the GDAL_DATA environment variable was accidentally left in place in 1.8.3 and now has been removed.
+- 3D geometries can now be transformed with a specified precision (#523).
+- A bug producing a spurious DriverSupportError for Shapefiles with a "time"
+  field (#692) has been fixed.
+- Patching of the GDAL_DATA environment variable was accidentally left in place
+  in 1.8.3 and now has been removed.
 
 1.8.3 (2018-11-30)
 ------------------

@@ -154,37 +154,66 @@ def _transform_geom(
             _csl.CSLDestroy(options)
         _crs.OSRRelease(src)
         _crs.OSRRelease(dst)
+
     else:
         g = geom
+
     if precision >= 0:
+
         if g['type'] == 'Point':
-            x, y = g['coordinates']
+            coords = list(g['coordinates'])
+            x, y = coords[:2]
             x = round(x, precision)
             y = round(y, precision)
             new_coords = [x, y]
+            if len(coords) == 3:
+                z = coords[2]
+                new_coords.append(round(z, precision))
+
         elif g['type'] in ['LineString', 'MultiPoint']:
-            xp, yp = zip(*g['coordinates'])
+            coords = list(zip(*g['coordinates']))
+            xp, yp = coords[:2]
             xp = [round(v, precision) for v in xp]
             yp = [round(v, precision) for v in yp]
-            new_coords = list(zip(xp, yp))
+            if len(coords) == 3:
+                zp = coords[2]
+                zp = [round(v, precision) for v in zp]
+                new_coords = list(zip(xp, yp, zp))
+            else:
+                new_coords = list(zip(xp, yp))
+
         elif g['type'] in ['Polygon', 'MultiLineString']:
             new_coords = []
             for piece in g['coordinates']:
-                xp, yp = zip(*piece)
+                coords = list(zip(*piece))
+                xp, yp = coords[:2]
                 xp = [round(v, precision) for v in xp]
                 yp = [round(v, precision) for v in yp]
-                new_coords.append(list(zip(xp, yp)))
+                if len(coords) == 3:
+                    zp = coords[2]
+                    zp = [round(v, precision) for v in zp]
+                    new_coords.append(list(zip(xp, yp, zp)))
+                else:
+                    new_coords.append(list(zip(xp, yp)))
+
         elif g['type'] == 'MultiPolygon':
             parts = g['coordinates']
             new_coords = []
             for part in parts:
                 inner_coords = []
                 for ring in part:
-                    xp, yp = zip(*ring)
+                    coords = list(zip(*ring))
+                    xp, yp = coords[:2]
                     xp = [round(v, precision) for v in xp]
                     yp = [round(v, precision) for v in yp]
-                    inner_coords.append(list(zip(xp, yp)))
+                    if len(coords) == 3:
+                        zp = coords[2]
+                        zp = [round(v, precision) for v in zp]
+                        inner_coords.append(list(zip(xp, yp, zp)))
+                    else:
+                        inner_coords.append(list(zip(xp, yp)))
                 new_coords.append(inner_coords)
+
         g['coordinates'] = new_coords
 
     return g
