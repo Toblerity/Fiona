@@ -60,10 +60,15 @@ if [ "$GDALVERSION" = "trunk" ]; then
   ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS
   make -j 2
   make install
+  
 elif [ ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
   # only build if not already installed
   cd $GDALBUILD
-  wget http://download.osgeo.org/gdal/$GDALVERSION/gdal-$GDALVERSION.tar.gz
+  if [ "$GDALVERSION" = "1.8.0" ]; then
+    wget http://download.osgeo.org/gdal/old_releases/gdal-$GDALVERSION.tar.gz
+  else  
+    wget http://download.osgeo.org/gdal/$GDALVERSION/gdal-$GDALVERSION.tar.gz
+  fi
   tar -xzf gdal-$GDALVERSION.tar.gz
   cd gdal-$GDALVERSION
   ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS
