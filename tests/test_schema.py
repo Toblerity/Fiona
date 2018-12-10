@@ -148,10 +148,8 @@ def test_unsupported_geometry_type():
             'geometry': 'BOGUS',
             'properties': {}}}
 
-    try:
+    with pytest.raises(UnsupportedGeometryTypeError):
         fiona.open(tmpfile, 'w', **profile)
-    except UnsupportedGeometryTypeError:
-        assert True
 
 
 @pytest.mark.parametrize('x', list(range(1, 10)))
@@ -200,34 +198,28 @@ def test_normalize_error():
 
 
 @requires_only_gdal1
-def test_check_schema_driver_support(tmpdir):
+@pytest.mark.parametrize('field_type', ['time', 'datetime'])
+def test_check_schema_driver_support_shp(tmpdir, field_type):
 
-    # Shapefile
-    for field_type in ['datetime', 'time']:
-        try:
+    with pytest.raises(DriverSupportError):
             name = str(tmpdir.join('test_scheme.shp'))
-            items = [('field1',  field_type)]
+            items = [('field1', field_type)]
             with fiona.open(name, 'w',
                             driver="ESRI Shapefile",
                             schema={
                                 'geometry': 'LineString',
                                 'properties': items}) as c:
-                assert False
-            
-        except DriverSupportError:
-            assert True
-    
-    # GPKG
-    try:
+                pass
+
+
+@requires_only_gdal1
+def test_check_schema_driver_support_gpkg(tmpdir):
+    with pytest.raises(DriverSupportError):
         name = str(tmpdir.join('test_scheme.gpkg'))
-        items = [('field1',  'time')]
+        items = [('field1', 'time')]
         with fiona.open(name, 'w',
                         driver="GPKG",
                         schema={
                             'geometry': 'LineString',
                             'properties': items}) as c:
-            assert False
-        
-    except DriverSupportError:
-        assert True
-
+            pass
