@@ -104,6 +104,7 @@ jobs:
 
 
 stages:
+  - test
   - name: Stage 2
     # require the branch name to be master (note for PRs this is the base branch name)
     if: branch = master
