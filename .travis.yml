@@ -1,7 +1,5 @@
 language: python
 
-dist: xenial
-
 cache:
   directories:
     - $GDALINST
@@ -15,27 +13,19 @@ env:
     - GDALBUILD=$HOME/gdalbuild
 
   matrix:
-    - GDALVERSION="1.8.0"
     - GDALVERSION="1.11.5"
-    - GDALVERSION="2.0.3"
+    - GDALVERSION="2.1.4"
     - GDALVERSION="2.3.2"
-    - GDALVERSION="trunk"
-
-matrix:
-  fast_finish: true
-  allow_failures:
-    - env: GDALVERSION="1.8.0"
-    - env: GDALVERSION="trunk"
     
-  exclude:
-    - env: GDALVERSION="1.8.0"
-      python: "3.6"
-    - env: GDALVERSION="trunk"
-      python: "2.7"
-
 python:
   - "2.7"
   - "3.6"
+
+matrix:
+  fast_finish: true
+  
+allow_failures:
+  - env: GDALVERSION="trunk"
 
 addons:
   apt:
@@ -46,13 +36,11 @@ addons:
     - libatlas-dev
     - libatlas-base-dev
     - gfortran
-    - libwebp5
-    
+
 before_install:
   - pip install -U pip
   - pip install wheel coveralls>=1.1 --upgrade
   - pip install setuptools==36.0.1
-  - pip install wheel
   - . ./scripts/travis_gdal_install.sh
   - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$PATH
   - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$LD_LIBRARY_PATH
@@ -85,26 +73,61 @@ git:
   
 jobs:
   include:
-    
-    - stage: Stage 2
+
+    - stage: Gdal legacy
       python: 2.7
-      env: GDALVERSION="2.1.4"
-    
-    - stage: Stage 2
+      env: GDALVERSION="1.8.0"
+
+    - stage: Gdal legacy
       python: 3.6
-      env: GDALVERSION="2.1.4"
+      env: GDALVERSION="1.8.0"
+      
+    - stage: Gdal legacy
+      python: 2.7
+      env: GDALVERSION="1.9.2"
+
+    - stage: Gdal legacy
+      python: 3.6
+      env: GDALVERSION="1.9.2"
+      
+    - stage: Gdal legacy
+      python: 2.7
+      env: GDALVERSION="1.10.1"
+
+    - stage: Gdal legacy
+      python: 3.6
+      env: GDALVERSION="1.10.1"
+
+    - stage: Gdal legacy
+      python: 2.7
+      env: GDALVERSION="2.0.3"
     
-    - stage: Stage 2
+    - stage: Gdal legacy
+      python: 3.6
+      env: GDALVERSION="2.0.3"
+    
+    - stage: Gdal legacy
       python: 2.7
       env: GDALVERSION="2.2.4"
 
-    - stage: Stage 2
+    - stage: Gdal legacy
       python: 3.6
       env: GDALVERSION="2.2.4"
 
+    - stage: Gdal trunk
+      python: 2.7
+      env: GDALVERSION="trunk"
 
+    - stage: Gdal trunk
+      python: 3.6
+      env: GDALVERSION="trunk"
+      
 stages:
   - test
-  - name: Stage 2
+
+  - name: Gdal legacy
+    if: commit_message =~ /ci_legacy/ OR commit_message =~ /ci_all/
+
+  - name: Gdal trunk
     # require the branch name to be master (note for PRs this is the base branch name)
-    if: branch = master
+    if: branch = master OR commit_message =~ /ci_gdaltrunk/ OR commit_message =~ /ci_all/

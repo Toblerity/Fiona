@@ -40,7 +40,11 @@ GDALOPTS="  --with-ogr \
             --without-perl \
             --without-php \
             --without-ruby \
-            --without-python"
+            --without-python
+            --with-oci=no \
+            --without-mrf \
+            --without-lerc \
+            --with-webp=no"
 
 # Create build dir if not exists
 if [ ! -d "$GDALBUILD" ]; then
@@ -60,20 +64,23 @@ if [ "$GDALVERSION" = "trunk" ]; then
   ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS
   make -j 2
   make install
+  rm -rf $GDALBUILD
   
 elif [ ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
   # only build if not already installed
   cd $GDALBUILD
-  if [ "$GDALVERSION" = "1.8.0" ]; then
-    wget http://download.osgeo.org/gdal/old_releases/gdal-$GDALVERSION.tar.gz
-  else  
+
+  if ( curl -o/dev/null -sfI "http://download.osgeo.org/gdal/$GDALVERSION/gdal-$GDALVERSION.tar.gz" ); then
     wget http://download.osgeo.org/gdal/$GDALVERSION/gdal-$GDALVERSION.tar.gz
+  else
+    wget http://download.osgeo.org/gdal/old_releases/gdal-$GDALVERSION.tar.gz
   fi
   tar -xzf gdal-$GDALVERSION.tar.gz
   cd gdal-$GDALVERSION
   ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS
   make -j 2
   make install
+  rm -rf $GDALBUILD
 fi
 
 # change back to travis build dir
