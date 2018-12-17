@@ -76,14 +76,6 @@ jobs:
 
     - stage: Gdal legacy
       python: 2.7
-      env: GDALVERSION="1.8.0"
-
-    - stage: Gdal legacy
-      python: 3.6
-      env: GDALVERSION="1.8.0"
-      
-    - stage: Gdal legacy
-      python: 2.7
       env: GDALVERSION="1.9.2"
 
     - stage: Gdal legacy
@@ -126,8 +118,8 @@ stages:
   - test
 
   - name: Gdal legacy
-    if: commit_message =~ /ci_legacy/ OR commit_message =~ /ci_all/
+    if: commit_message =~ /@ci_legacy/ OR commit_message =~ /@ci_all/
 
   - name: Gdal trunk
     # require the branch name to be master (note for PRs this is the base branch name)
-    if: branch = master OR commit_message =~ /ci_gdaltrunk/ OR commit_message =~ /ci_all/
+    if: branch = master OR commit_message =~ /@ci_trunk/ OR commit_message =~ /@ci_all/
