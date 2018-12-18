@@ -15,17 +15,22 @@ env:
   matrix:
     - GDALVERSION="1.11.5"
     - GDALVERSION="2.1.4"
-    - GDALVERSION="2.3.2"
+    - GDALVERSION="2.4.0rc1"
+    - GDALVERSION="trunk"
     
 python:
   - "2.7"
   - "3.6"
 
-#matrix:
-#  fast_finish: true
-  
-allow_failures:
+matrix:
+  fast_finish: true
+
+  exclude:
   - env: GDALVERSION="trunk"
+    python: "2.7"
+
+  allow_failures:
+    - env: GDALVERSION="trunk"
 
 addons:
   apt:
@@ -51,7 +56,7 @@ before_install:
 install:
   - pip install --upgrade --force-reinstall -r requirements-dev.txt
   - pip uninstall -y fiona
-  - if [ "$GDALVERSION" = "trunk" ]; then echo "Using gdal trunk"; elif [ $(gdal-config --version) == "$GDALVERSION" ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
+  - if [ "$GDALVERSION" = "trunk" ]; then echo "Using gdal trunk"; elif [ $(gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
   - pip install --global-option=build_ext --global-option='-I$GDALINST/gdal-$GDALVERSION/include' --global-option='-L$GDALINST/gdal-$GDALVERSION/lib' --global-option='-R$GDALINST/gdal-$GDALVERSION/lib' -e .[test]
   - fio --version
   - gdal-config --version
@@ -106,13 +111,22 @@ jobs:
       python: 3.6
       env: GDALVERSION="2.2.4"
 
-    - stage: Gdal trunk
+    - stage: Gdal legacy
       python: 2.7
-      env: GDALVERSION="trunk"
+      env: GDALVERSION="2.3.3rc2"
 
-    - stage: Gdal trunk
+    - stage: Gdal legacy
       python: 3.6
-      env: GDALVERSION="trunk"
+      env: GDALVERSION="2.3.3rc2"
+
+      
+    #- stage: Gdal trunk
+      #python: 2.7
+      #env: GDALVERSION="trunk"
+
+    #- stage: Gdal trunk
+      #python: 3.6
+      #env: GDALVERSION="trunk"
       
 stages:
   - test
@@ -120,6 +134,6 @@ stages:
   - name: Gdal legacy
     if: commit_message =~ /@ci_legacy/ OR commit_message =~ /@ci_all/
 
-  - name: Gdal trunk
-    # require the branch name to be master (note for PRs this is the base branch name)
-    if: branch = master OR commit_message =~ /@ci_trunk/ OR commit_message =~ /@ci_all/
+  #- name: Gdal trunk
+    #require the branch name to be master (note for PRs this is the base branch name)
+    #if: branch = master OR commit_message =~ /@ci_trunk/ OR commit_message =~ /@ci_all/

@@ -43,7 +43,6 @@ GDALOPTS="  --with-ogr \
             --without-python
             --with-oci=no \
             --without-mrf \
-            --without-lerc \
             --with-webp=no"
 
 # Create build dir if not exists
@@ -70,13 +69,15 @@ elif [ ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
   # only build if not already installed
   cd $GDALBUILD
 
-  if ( curl -o/dev/null -sfI "http://download.osgeo.org/gdal/$GDALVERSION/gdal-$GDALVERSION.tar.gz" ); then
-    wget http://download.osgeo.org/gdal/$GDALVERSION/gdal-$GDALVERSION.tar.gz
+  BASE_GDALVERSION=$(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION)
+
+  if ( curl -o/dev/null -sfI "http://download.osgeo.org/gdal/$BASE_GDALVERSION/gdal-$GDALVERSION.tar.gz" ); then
+    wget http://download.osgeo.org/gdal/$BASE_GDALVERSION/gdal-$GDALVERSION.tar.gz
   else
     wget http://download.osgeo.org/gdal/old_releases/gdal-$GDALVERSION.tar.gz
   fi
   tar -xzf gdal-$GDALVERSION.tar.gz
-  cd gdal-$GDALVERSION
+  cd gdal-$BASE_GDALVERSION
   ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS
   make -j 2
   make install
