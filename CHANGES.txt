@@ -3,6 +3,15 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.5 (TBD)
+-----------
+
+- On entering a collection context (Collection.__enter__) a new anonymous GDAL
+  environment is created if needed and entered. This makes `with
+  fiona.open(...) as collection:` roughly equivalent to `with fiona.open(...)
+  as collection, Env():`. This helps prevent bugs when Collections are created
+  and then used later or in different scopes.
+
 1.8.4 (2018-12-10)
 ------------------
 
