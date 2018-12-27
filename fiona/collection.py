@@ -11,11 +11,11 @@ from fiona.ogrext import Session, WritingSession
 from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file, GEOMETRY_TYPES
 from fiona.errors import (DriverError, SchemaError, CRSError, UnsupportedGeometryTypeError, DriverSupportError)
 from fiona.logutils import FieldSkipLogFilter
-from fiona._env import driver_count, get_gdal_release_name, get_gdal_version_tuple
-from fiona.env import Env
+from fiona._env import get_gdal_release_name, get_gdal_version_tuple
+from fiona.env import env_ctx_if_needed
 from fiona.errors import FionaDeprecationWarning
 from fiona.drvsupport import supported_drivers
-from fiona.path import Path, UnparsedPath, vsi_path, parse_path
+from fiona.path import Path, vsi_path, parse_path
 from six import string_types, binary_type
 
 
@@ -459,10 +459,13 @@ class Collection(object):
 
     def __enter__(self):
         logging.getLogger('fiona.ogrext').addFilter(self.field_skip_log_filter)
+        self._env = env_ctx_if_needed()
+        self._env.__enter__()
         return self
 
     def __exit__(self, type, value, traceback):
         logging.getLogger('fiona.ogrext').removeFilter(self.field_skip_log_filter)
+        self._env.__exit__()
         self.close()
 
     def __del__(self):

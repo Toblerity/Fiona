@@ -1,7 +1,6 @@
 # Testing collections and workspaces
 
 import datetime
-import logging
 import sys
 import re
 
@@ -9,6 +8,7 @@ import pytest
 
 import fiona
 from fiona.collection import Collection, supported_drivers
+from fiona.env import getenv
 from fiona.errors import FionaValueError, DriverError
 
 from .conftest import WGS84PATTERN
@@ -872,7 +872,7 @@ def test_collection_zip_http():
 
 def test_encoding_option_warning(tmpdir, caplog):
     """There is no ENCODING creation option log warning for GeoJSON"""
-    ds = fiona.Collection(str(tmpdir.join("test.geojson")), "w", driver="GeoJSON", crs="epsg:4326",
+    fiona.Collection(str(tmpdir.join("test.geojson")), "w", driver="GeoJSON", crs="epsg:4326",
             schema={"geometry": "Point", "properties": {"foo": "int"}})
     assert not caplog.text
 
@@ -881,7 +881,21 @@ def test_closed_session_next(path_coutwildrnp_shp):
     """Confirm fix for  issue #687"""
     src = fiona.open(path_coutwildrnp_shp)
     itr = iter(src)
-    feats = list(itr)
+    list(itr)
     src.close()
     with pytest.raises(FionaValueError):
         next(itr)
+
+
+def test_collection_no_env(path_coutwildrnp_shp):
+    """We have no GDAL env left over from open"""
+    collection = fiona.open(path_coutwildrnp_shp)
+    assert collection
+    with pytest.raises(Exception):
+        getenv()
+
+
+def test_collection_env(path_coutwildrnp_shp):
+    """We have a GDAL env within collection context"""
+    with fiona.open(path_coutwildrnp_shp):
+        assert 'FIONA_ENV' in getenv()
