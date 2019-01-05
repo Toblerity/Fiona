@@ -54,7 +54,7 @@ file, change their geometry attributes, and write them to a new data file.
         # collection's ``meta`` property and then modify them as
         # desired.
 
-        meta = source.meta
+        meta = src.meta
         meta['schema']['geometry'] = 'Point'
 
         # Open an output file, using the same format driver and
@@ -64,7 +64,7 @@ file, change their geometry attributes, and write them to a new data file.
         with fiona.open('test_write.shp', 'w', **meta) as dst:
 
             # Process only the records intersecting a box.
-            for f in source.filter(bbox=(-107.0, 37.0, -105.0, 39.0)):
+            for f in src.filter(bbox=(-107.0, 37.0, -105.0, 39.0)):
 
                 # Get a point on the boundary of the record's
                 # geometry.
