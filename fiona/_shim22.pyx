@@ -30,7 +30,7 @@ cdef void gdal_flush_cache(void *cogr_ds):
         GDALFlushCache(cogr_ds)
 
 
-cdef void* gdal_open_vector(const char* path_c, int mode, drivers, options) except NULL:
+cdef void* gdal_open_vector(char* path_c, int mode, drivers, options) except NULL:
     cdef void* cogr_ds = NULL
     cdef char **drvs = NULL
     cdef void* drv = NULL
@@ -64,7 +64,7 @@ cdef void* gdal_open_vector(const char* path_c, int mode, drivers, options) exce
 
     try:
         cogr_ds = exc_wrap_pointer(
-            GDALOpenEx(path_c, flags, <const char *const *>drvs, <const char *const *>open_opts, NULL)
+            GDALOpenEx(path_c, flags, <const char *const *>drvs, open_opts, NULL)
         )
         return cogr_ds
     except FionaNullPointerError:
@@ -107,7 +107,7 @@ cdef OGRErr gdal_commit_transaction(void* cogr_ds):
 
 cdef OGRErr gdal_rollback_transaction(void* cogr_ds):
     return GDALDatasetRollbackTransaction(cogr_ds)
-    
+
 cdef OGRFieldSubType get_field_subtype(void *fielddefn):
     return OGR_Fld_GetSubType(fielddefn)
 
@@ -117,8 +117,5 @@ cdef void set_field_subtype(void *fielddefn, OGRFieldSubType subtype):
 cdef bint check_capability_create_layer(void *cogr_ds):
     return GDALDatasetTestCapability(cogr_ds, ODsCCreateLayer)
 
-cdef inline void *get_linear_geometry(void *geom):
-    cdef void *linear_geom
-    linear_geom = OGR_G_GetLinearGeometry(geom, 0.0, NULL)
-    OGR_G_DestroyGeometry(geom)
-    return linear_geom
+cdef void *get_linear_geometry(void *geom):
+    return OGR_G_GetLinearGeometry(geom, 0.0, NULL)
