@@ -8,7 +8,7 @@ import pytest
 import fiona
 from fiona import _env
 from fiona.env import getenv, ensure_env, ensure_env_with_credentials
-from fiona.session import AWSSession
+from fiona.session import AWSSession, GSSession
 
 
 def test_nested_credentials(monkeypatch):
@@ -89,3 +89,16 @@ def test_ensure_env_with_decorator_sets_gdal_data_wheel(gdalenv, monkeypatch, tm
 def test_ensure_env_crs(path_coutwildrnp_shp):
     """Decoration of .crs works"""
     assert fiona.open(path_coutwildrnp_shp).crs
+
+def test_nested_gs_credentials(monkeypatch):
+    """Check that rasterio.open() doesn't wipe out surrounding credentials"""
+
+    @ensure_env_with_credentials
+    def fake_opener(path):
+        return fiona.env.getenv()
+
+    with fiona.env.Env(session=GSSession(google_application_credentials='foo')):
+        assert fiona.env.getenv()['GOOGLE_APPLICATION_CREDENTIALS'] == 'foo'
+
+        gdalenv = fake_opener('gs://foo/bar')
+        assert gdalenv['GOOGLE_APPLICATION_CREDENTIALS'] == 'foo'
