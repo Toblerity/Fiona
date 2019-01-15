@@ -11,9 +11,7 @@ from fiona.ogrext import Session, WritingSession
 from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file, GEOMETRY_TYPES
 from fiona.errors import (DriverError, SchemaError, CRSError, UnsupportedGeometryTypeError, DriverSupportError)
 from fiona.logutils import FieldSkipLogFilter
-from fiona._env import driver_count
-from fiona._env import (
-    calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name)
+from fiona._env import driver_count, get_gdal_release_name, get_gdal_version_tuple
 from fiona.env import Env
 from fiona.errors import FionaDeprecationWarning
 from fiona.drvsupport import supported_drivers
@@ -77,8 +75,7 @@ class Collection(object):
             raise TypeError("invalid archive: %r" % archive)
 
         # Check GDAL version against drivers
-        if (driver == "GPKG" and
-                get_gdal_version_num() < calc_gdal_version_num(1, 11, 0)):
+        if (driver == "GPKG" and get_gdal_version_tuple() < (1, 11, 0)):
             raise DriverError(
                 "GPKG driver requires GDAL 1.11.0, fiona was compiled "
                 "against: {}".format(get_gdal_release_name()))
@@ -409,8 +406,9 @@ class Collection(object):
 
         See GH#572 for discussion.
         """
-        gdal_version_major = get_gdal_version_num() // 1000000
-        for field in self._schema["properties"]:
+        gdal_version_major = get_gdal_version_tuple().major
+
+        for field in self._schema["properties"].values():
             field_type = field.split(":")[0]
             if self._driver == "ESRI Shapefile":
                 if field_type == "datetime":

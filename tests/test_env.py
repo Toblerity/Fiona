@@ -32,7 +32,7 @@ def test_nested_credentials(monkeypatch):
 def test_ensure_env_decorator(gdalenv):
     @ensure_env
     def f():
-        return getenv()['RASTERIO_ENV']
+        return getenv()['FIONA_ENV']
     assert f() is True
 
 

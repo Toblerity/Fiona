@@ -101,6 +101,7 @@ class TestUnicodeStringField(object):
             assert f['properties']['label'] == u'Ba\u2019kelalan'
             assert f['properties'][u'verit\xe9'] == 0
 
+    @pytest.mark.iconv
     def test_write_gb18030(self):
         """Can write a simplified Chinese shapefile"""
         schema = {
@@ -119,7 +120,7 @@ class TestUnicodeStringField(object):
             assert f['properties']['label'] == u'徐汇区'
             assert f['properties']['num'] == 0
 
-    @pytest.mark.skipif(sys.platform == 'win32', reason="GDAL binary used on AppVeyor does not have a working libiconv")
+    @pytest.mark.iconv
     def test_gb2312_field_wrong_encoding(self):
         """Attempt to create field with a name not supported by the encoding
 
@@ -148,4 +149,3 @@ class TestUnicodeStringField(object):
         # no encoding
         with pytest.raises(SchemaError):
             fiona.open(os.path.join(self.tempdir, "test2.shp"), "w", **meta)
-

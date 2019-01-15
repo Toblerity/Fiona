@@ -108,7 +108,7 @@ cdef void log_error(CPLErr err_class, int err_no, const char* msg) with gil:
     if err_no in code_map:
         log.log(level_map[err_class], "%s", msg)
     else:
-        log.info("Unknown error number %r", err_no)
+        log.info("Unknown error number %r.", err_no)
 
 
 # Definition of GDAL callback functions, one for Windows and one for
@@ -235,7 +235,11 @@ cdef class ConfigEnv(object):
 
 
 class GDALDataFinder(object):
-    """Finds GDAL and PROJ data files"""
+    """Finds GDAL data files
+
+    Note: this class is private in 1.8.x and not in the public API.
+
+    """
 
     def search(self, prefix=None):
         """Returns GDAL_DATA location"""
@@ -266,6 +270,11 @@ class GDALDataFinder(object):
 
 
 class PROJDataFinder(object):
+    """Finds PROJ data files
+
+    Note: this class is private in 1.8.x and not in the public API.
+
+    """
 
     def search(self, prefix=None):
         """Returns PROJ_LIB location"""
@@ -309,24 +318,24 @@ cdef class GDALEnv(ConfigEnv):
                     OGRRegisterAll()
                     log.debug("All drivers registered.")
 
-                    if 'GDAL_DATA' not in os.environ:
+                    if 'GDAL_DATA' in os.environ:
+                        self.update_config_options(GDAL_DATA=os.environ['GDAL_DATA'])
+                        log.debug("GDAL_DATA found in environment: %r.", os.environ['GDAL_DATA'])
 
+                    else:
                         path = GDALDataFinder().search()
 
                         if path:
-                            log.debug("GDAL data found in %r", path)
                             self.update_config_options(GDAL_DATA=path)
-
-                    else:
-                        self.update_config_options(GDAL_DATA=os.environ['GDAL_DATA'])
+                            log.debug("GDAL_DATA not found in environment, set to %r.", path)
 
                     if 'PROJ_LIB' not in os.environ:
 
                         path = PROJDataFinder().search()
 
                         if path:
-                            log.debug("PROJ data found in %r", path)
                             os.environ['PROJ_LIB'] = path
+                            log.debug("PROJ data not found in environment, set to %r.", path)
 
                     if driver_count() == 0:
                         CPLPopErrorHandler()
