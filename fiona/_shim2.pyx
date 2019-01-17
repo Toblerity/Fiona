@@ -112,3 +112,4 @@ cdef bint check_capability_create_layer(void *cogr_ds):
 
 cdef void *get_linear_geometry(void *geom):
     return OGR_G_GetLinearGeometry(geom, 0.0, NULL)
+

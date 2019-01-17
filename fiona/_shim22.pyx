@@ -30,7 +30,7 @@ cdef void gdal_flush_cache(void *cogr_ds):
         GDALFlushCache(cogr_ds)
 
 
-cdef void* gdal_open_vector(const char* path_c, int mode, drivers, options) except NULL:
+cdef void* gdal_open_vector(char* path_c, int mode, drivers, options) except NULL:
     cdef void* cogr_ds = NULL
     cdef char **drvs = NULL
     cdef void* drv = NULL
@@ -64,7 +64,7 @@ cdef void* gdal_open_vector(const char* path_c, int mode, drivers, options) exce
 
     try:
         cogr_ds = exc_wrap_pointer(
-            GDALOpenEx(path_c, flags, <const char *const *>drvs, <const char *const *>open_opts, NULL)
+            GDALOpenEx(path_c, flags, <const char *const *>drvs, open_opts, NULL)
         )
         return cogr_ds
     except FionaNullPointerError:
@@ -107,7 +107,7 @@ cdef OGRErr gdal_commit_transaction(void* cogr_ds):
 
 cdef OGRErr gdal_rollback_transaction(void* cogr_ds):
     return GDALDatasetRollbackTransaction(cogr_ds)
-    
+
 cdef OGRFieldSubType get_field_subtype(void *fielddefn):
     return OGR_Fld_GetSubType(fielddefn)
 

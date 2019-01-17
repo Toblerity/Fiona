@@ -18,7 +18,7 @@ from fiona._shim cimport *
 
 from fiona._geometry cimport (
     GeomBuilder, OGRGeomBuilder, geometry_type_code,
-    normalize_geometry_type_code)
+    normalize_geometry_type_code, base_geometry_type_code)
 from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile
 
 import fiona
@@ -262,15 +262,30 @@ cdef class FeatureBuilder:
                 props[key] = None
 
         cdef void *cogr_geometry = NULL
+        cdef void *org_geometry = NULL
 
         if not ignore_geometry:
             cogr_geometry = OGR_F_GetGeometryRef(feature)
 
             if cogr_geometry is not NULL:
-                code = OGR_G_GetGeometryType(cogr_geometry)
 
-                if 7 < code < 100:  # Curves.
+                code = base_geometry_type_code(OGR_G_GetGeometryType(cogr_geometry))
+
+                if 8 <= code <= 14:  # Curves.
                     cogr_geometry = get_linear_geometry(cogr_geometry)
+                    geom = GeomBuilder().build(cogr_geometry)
+                    OGR_G_DestroyGeometry(cogr_geometry)
+
+                elif 15 <= code <= 17:
+                    # We steal the geometry: the geometry of the in-memory feature is now null
+                    # and we are responsible for cogr_geometry.
+                    org_geometry = OGR_F_StealGeometry(feature)
+
+                    if code in (15, 16):
+                        cogr_geometry = OGR_G_ForceToMultiPolygon(org_geometry)
+                    elif code == 17:
+                        cogr_geometry = OGR_G_ForceToPolygon(org_geometry)
+
                     geom = GeomBuilder().build(cogr_geometry)
                     OGR_G_DestroyGeometry(cogr_geometry)
 
@@ -280,6 +295,7 @@ cdef class FeatureBuilder:
                 fiona_feature["geometry"] = geom
 
             else:
+
                 fiona_feature["geometry"] = None
 
         return fiona_feature
