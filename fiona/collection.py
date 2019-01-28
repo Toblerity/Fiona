@@ -14,7 +14,7 @@ from fiona.logutils import FieldSkipLogFilter
 from fiona._crs import crs_to_wkt
 from fiona._env import get_gdal_release_name, get_gdal_version_tuple
 from fiona.env import env_ctx_if_needed
-from fiona.errors import FionaDeprecationWarning
+from fiona.errors import FionaDeprecationWarning, DataIOError
 from fiona.drvsupport import supported_drivers
 from fiona.path import Path, vsi_path, parse_path
 from six import string_types, binary_type
@@ -212,6 +212,86 @@ class Collection(object):
         if self._crs_wkt is None and self.session:
             self._crs_wkt = self.session.get_crs_wkt()
         return self._crs_wkt
+
+    def tags(self, ns=None):
+        """Returns a dict containing copies of the dataset or layers's
+        tags. Tags are pairs of key and value strings. Tags belong to
+        namespaces.  The standard namespaces are: default (None) and
+        'IMAGE_STRUCTURE'.  Applications can create their own additional
+        namespaces.
+
+        Parameters
+        ----------
+        ns: str, optional
+            Can be used to select a namespace other than the default.
+
+        Returns
+        -------
+        dict
+        """
+        if self.session:
+            return self.session.tags(ns=ns)
+        return None
+
+    def get_tag_item(self, key, ns=None):
+        """Returns tag item value
+
+        Parameters
+        ----------
+        key: str
+            The key for the metadata item to fetch.
+        ns: str, optional
+            Used to select a namespace other than the default.
+
+        Returns
+        -------
+        str
+        """
+        if self.session:
+            return self.session.get_tag_item(key=key, ns=ns)
+        return None
+
+    def set_tags(self, tags, ns=None):
+        """Writes a dict containing the dataset or layers's tags.
+        Tags are pairs of key and value strings. Tags belong to
+        namespaces.  The standard namespaces are: default (None) and
+        'IMAGE_STRUCTURE'.  Applications can create their own additional
+        namespaces.
+
+        Parameters
+        ----------
+        tags: dict
+            The dict of metadata items to set.
+        ns: str, optional
+            Used to select a namespace other than the default.
+
+        Returns
+        -------
+        int
+        """
+        if not isinstance(self.session, WritingSession):
+            raise DataIOError("Unable to set tags as not in writing mode.")
+        return self.session.set_tags(tags, ns=ns)
+
+    def set_tag_item(self, key, tag, ns=None):
+        """Sets the tag item value
+
+        Parameters
+        ----------
+        key: str
+            The key for the metadata item to set.
+        tag: str
+            The value of the metadata item to set.
+        ns: str, optional
+            Used to select a namespace other than the default.
+
+        Returns
+        -------
+        int
+        """
+        if not isinstance(self.session, WritingSession):
+            raise DataIOError("Unable to set tags as not in writing mode.")
+        return self.session.set_tag_item(key=key, tag=tag, ns=ns)
 
     @property
     def meta(self):
