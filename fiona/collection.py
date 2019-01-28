@@ -218,6 +218,87 @@ class Collection(object):
             self._crs_wkt = self.session.get_crs_wkt()
         return self._crs_wkt
 
+    def tags(self, ns=None):
+        """Returns a dict containing copies of the dataset or layers's
+        tags. Tags are pairs of key and value strings. Tags belong to
+        namespaces.  The standard namespaces are: default (None) and
+        'IMAGE_STRUCTURE'.  Applications can create their own additional
+        namespaces.
+
+        Parameters
+        ----------
+        ns: str, optional
+            Can be used to select a namespace other than the default.
+
+        Returns
+        -------
+        dict
+        """
+        if self.session:
+            return self.session.tags(ns=ns)
+        return None
+
+    def get_tag_item(self, key, ns=None):
+        """Returns tag item value
+
+        Parameters
+        ----------
+        key: str
+            The key for the metadata item to fetch.
+        ns: str, optional
+            Used to select a namespace other than the default.
+
+        Returns
+        -------
+        str
+        """
+        if self.session:
+            return self.session.get_tag_item(key=key, ns=ns)
+        return None
+
+    def set_tags(self, tags, ns=None):
+        """Writes a dict containing the dataset or layers's tags.
+        Tags are pairs of key and value strings. Tags belong to
+        namespaces.  The standard namespaces are: default (None) and
+        'IMAGE_STRUCTURE'.  Applications can create their own additional
+        namespaces.
+
+        Parameters
+        ----------
+        tags: dict
+            The dict of metadata items to set.
+        ns: str, optional
+            Used to select a namespace other than the default.
+
+        Returns
+        -------
+        int
+        """
+        if isinstance(self.session, WritingSession):
+            return self.session.set_tags(tags, ns=ns)
+        raise RuntimeError("Unable to set tags as not in writing mode.")
+
+    def set_tag_item(self, key, tag, ns=None):
+        """Sets the tag item value
+
+        Parameters
+        ----------
+        key: str
+            The key for the metadata item to set.
+        tag: str
+            The value of the metadata item to set.
+        ns: str, optional
+            Used to select a namespace other than the default.
+
+        Returns
+        -------
+        int
+        """
+        if isinstance(self.session, WritingSession):
+            return self.session.set_tag_item(key=key, tag=tag, ns=ns)
+        raise RuntimeError("Unable to set tag item as not in writing mode.")
+
+
     @property
     def meta(self):
         """Returns a mapping with the driver, schema, crs, and additional
