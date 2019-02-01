@@ -51,6 +51,14 @@ fiona.errors module
     :undoc-members:
     :show-inheritance:
 
+fiona.io module
+---------------
+
+.. automodule:: fiona.io
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 fiona.inspector module
 ----------------------
 
