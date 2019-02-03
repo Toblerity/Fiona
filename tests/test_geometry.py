@@ -2,7 +2,7 @@
 
 import pytest
 
-from fiona._geometry import (GeomBuilder, geometryRT)
+from fiona._geometry import GeomBuilder, geometryRT
 from fiona.errors import UnsupportedGeometryTypeError
 
 
@@ -16,7 +16,7 @@ def geometry_wkb(wkb):
 
 def test_ogr_builder_exceptions():
     geom = {'type': "Bogus", 'coordinates': None}
-    with pytest.raises(ValueError):
+    with pytest.raises(UnsupportedGeometryTypeError):
         geometryRT(geom)
 
 
