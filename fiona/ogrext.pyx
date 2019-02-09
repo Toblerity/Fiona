@@ -258,7 +258,6 @@ cdef class FeatureBuilder:
                 props[key] = data[:l]
 
             else:
-                # log.debug("%s: None, fieldtype: %r, %r" % (key, fieldtype, fieldtype in string_types))
                 props[key] = None
 
         cdef void *cogr_geometry = NULL
@@ -318,13 +317,10 @@ cdef class OGRFeatureBuilder:
         encoding = session.get_internalencoding()
 
         for key, value in feature['properties'].items():
-            # log.debug(
-            #     "Looking up %s in %s", key, repr(session._schema_mapping))
             ogr_key = session._schema_mapping[key]
 
             schema_type = normalize_field_type(collection.schema['properties'][key])
 
-            # log.debug("Normalizing schema type for key %r in schema %r to %r", key, collection.schema['properties'], schema_type)
             key_bytes = strencode(ogr_key, encoding)
             key_c = key_bytes
             i = OGR_F_GetFieldIndex(cogr_feature, key_c)
@@ -337,9 +333,6 @@ cdef class OGRFeatureBuilder:
 
             # Continue over the standard OGR types.
             if isinstance(value, integer_types):
-
-                # log.debug("Setting field %r, type %r, to value %r", i, schema_type, value)
-
                 if schema_type == 'int32':
                     OGR_F_SetFieldInteger(cogr_feature, i, value)
                 else:
@@ -385,7 +378,6 @@ cdef class OGRFeatureBuilder:
                 set_field_null(cogr_feature, i)
             else:
                 raise ValueError("Invalid field type %s" % type(value))
-            # log.debug("Set field %s: %r" % (key, value))
         return cogr_feature
 
 
@@ -402,7 +394,6 @@ def featureRT(feature, collection):
     cdef void *cogr_geometry = OGR_F_GetGeometryRef(cogr_feature)
     if cogr_geometry == NULL:
         raise ValueError("Null geometry")
-    # log.debug("Geometry: %s" % OGR_G_ExportToJson(cogr_geometry))
     encoding = collection.encoding or 'utf-8'
     result = FeatureBuilder().build(
         cogr_feature,
@@ -559,7 +550,6 @@ cdef class Session:
             key = key_b.decode(self.get_internalencoding())
 
             if key in ignore_fields:
-                # log.debug("By request, ignoring field %r", key)
                 continue
 
             fieldtypename = FIELD_TYPES[OGR_Fld_GetType(cogr_fielddefn)]
@@ -780,7 +770,6 @@ cdef class Session:
         if isinstance(item, slice):
             warnings.warn("Collection slicing is deprecated and will be disabled in a future version.", FionaDeprecationWarning)
             itr = Iterator(self.collection, item.start, item.stop, item.step)
-            log.debug("Slice: %r", item)
             return list(itr)
         elif isinstance(item, int):
             index = item
@@ -1150,16 +1139,15 @@ cdef class WritingSession(Session):
                     "collection schema's geometry type: %r != %r" % (
                         record['geometry']['type'],
                         collection.schema['geometry'] ))
-            # log.debug("Creating feature in layer: %s" % record)
+            # Validate against collection's schema to give useful message
+            if set(record['properties'].keys()) != schema_props_keys:
+                raise ValueError(
+                    "Record does not match collection schema: %r != %r" % (
+                        record['properties'].keys(),
+                        list(schema_props_keys) ))
             cogr_feature = OGRFeatureBuilder().build(record, collection)
             result = OGR_L_CreateFeature(cogr_layer, cogr_feature)
             if result != OGRERR_NONE:
-                # Validate against collection's schema to give useful message
-                if set(record['properties'].keys()) != schema_props_keys:
-                    raise ValueError(
-                        "Record does not match collection schema: %r != %r" % (
-                            record['properties'].keys(),
-                            list(schema_props_keys) ))
                 raise RuntimeError("Failed to write record: %s" % record)
             _deleteOgrFeature(cogr_feature)
 
@@ -1267,7 +1255,6 @@ cdef class Iterator:
         self.step = step
 
         self.next_index = start
-        log.debug("Index: %d", self.next_index)
         OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
 
     def __iter__(self):
