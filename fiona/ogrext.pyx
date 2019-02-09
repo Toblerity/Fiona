@@ -1141,7 +1141,7 @@ cdef class WritingSession(Session):
                         collection.schema['geometry'] ))
             # Validate against collection's schema to give useful message
             if set(record['properties'].keys()) != schema_props_keys:
-                raise ValueError(
+                raise SchemaError(
                     "Record does not match collection schema: %r != %r" % (
                         record['properties'].keys(),
                         list(schema_props_keys) ))
