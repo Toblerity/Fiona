@@ -283,7 +283,7 @@ cdef class OGRGeomBuilder:
             coordinates = geometry.get('geometries')
             return self._buildGeometryCollection(coordinates)
         else:
-            raise ValueError("Unsupported geometry type %s" % typename)
+            raise UnsupportedGeometryTypeError("Unsupported geometry type %s" % typename)
 
 
 def geometryRT(geometry):
