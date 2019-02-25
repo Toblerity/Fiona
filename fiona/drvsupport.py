@@ -43,11 +43,15 @@ supported_drivers = dict([
     ("OpenFileGDB", "r"),
     # ESRI Personal GeoDatabase 	PGeo 	No 	Yes 	No, needs ODBC library
     # ESRI ArcSDE 	SDE 	No 	Yes 	No, needs ESRI SDE
+    # ESRIJSON 	ESRIJSON 	No 	Yes 	Yes 
+    ("ESRIJSON", "r"),
     # ESRI Shapefile 	ESRI Shapefile 	Yes 	Yes 	Yes
     ("ESRI Shapefile", "raw"),
     # FMEObjects Gateway 	FMEObjects Gateway 	No 	Yes 	No, needs FME
     # GeoJSON 	GeoJSON 	Yes 	Yes 	Yes
     ("GeoJSON", "rw"),
+    # GeoJSONSeq 	GeoJSON sequences 	Yes 	Yes 	Yes 
+    ("GeoJSONSeq", "rw"),
     # Géoconcept Export 	Geoconcept 	Yes 	Yes 	Yes
     # multi-layers
     #   ("Geoconcept", "raw"),
@@ -114,6 +118,8 @@ supported_drivers = dict([
     # SUA 	SUA 	No 	Yes 	Yes
     ("SUA", "r"),
     # SVG 	SVG 	No 	Yes 	No, needs libexpat
+    # TopoJSON 	TopoJSON 	No 	Yes 	Yes 
+    ("TopoJSON", "r"),
     # UK .NTF 	UK. NTF 	No 	Yes 	Yes
     # multi-layer
     #   ("UK. NTF", "r"),
