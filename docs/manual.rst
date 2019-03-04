@@ -1318,6 +1318,39 @@ The single shapefile may also be accessed like so:
   ...
   48
 
+MemoryFile and ZipMemoryFile
+----------------------------
+
+:py:class:`fiona.io.MemoryFile` and :py:class:`fiona.io.ZipMemoryFile` allow
+formatted feature collections, even zipped feature collections, to be read or
+written in memory, with no filesystem access required. For example, you may
+have a zipped shapefile in a stream of bytes coming from a web upload or
+download.
+
+.. code-block:: pycon
+
+    >>> data = open('tests/data/coutwildrnp.zip', 'rb').read()
+    >>> len(data)
+    154006
+    >>> data[:20]
+    b'PK\x03\x04\x14\x00\x00\x00\x00\x00\xaa~VM\xech\xae\x1e\xec\xab'
+
+The feature collection in this stream of bytes can be accessed by wrapping it
+in an instance of ZipMemoryFile.
+
+.. code-block:: pycon
+
+    >>> from fiona.io import ZipMemoryFile
+    >>> with ZipMemoryFile(data) as zip:
+    ...     with zip.open('coutwildrnp.shp') as collection:
+    ...         print(len(collection))
+    ...         print(collection.schema)
+    ...
+    67
+    {'properties': OrderedDict([('PERIMETER', 'float:24.15'), ('FEATURE2', 'str:80'), ('NAME', 'str:80'), ('FEATURE1', 'str:80'), ('URL', 'str:101'), ('AGBUR', 'str:80'), ('AREA', 'float:24.15'), ('STATE_FIPS', 'str:80'), ('WILDRNP020', 'int:10'), ('STATE', 'str:80')]), 'geometry': 'Polygon'}
+
+*New in 1.8.0*
+
 Dumpgj
 ======
 
