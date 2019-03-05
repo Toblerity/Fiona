@@ -12,7 +12,7 @@ from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file, GEOMETRY_T
 from fiona.errors import (DriverError, SchemaError, CRSError, UnsupportedGeometryTypeError, DriverSupportError)
 from fiona.logutils import FieldSkipLogFilter
 from fiona._env import driver_count, get_gdal_release_name, get_gdal_version_tuple
-from fiona.env import Env
+from fiona.env import Env, env_ctx_if_needed
 from fiona.errors import FionaDeprecationWarning
 from fiona.drvsupport import supported_drivers
 from fiona.path import Path, UnparsedPath, vsi_path, parse_path
@@ -88,7 +88,6 @@ class Collection(object):
         self._schema = None
         self._crs = None
         self._crs_wkt = None
-        self.env = None
         self.enabled_drivers = enabled_drivers
         self.ignore_fields = ignore_fields
         self.ignore_geometry = bool(ignore_geometry)
@@ -449,8 +448,6 @@ class Collection(object):
             log.debug("Stopped session")
             self.session = None
             self.iterator = None
-        if self.env:
-            self.env.__exit__()
 
     @property
     def closed(self):
@@ -458,10 +455,13 @@ class Collection(object):
         return self.session is None
 
     def __enter__(self):
+        self._env = env_ctx_if_needed()
+        self._env.__enter__()
         logging.getLogger('fiona.ogrext').addFilter(self.field_skip_log_filter)
         return self
 
     def __exit__(self, type, value, traceback):
+        self._env.__exit__()
         logging.getLogger('fiona.ogrext').removeFilter(self.field_skip_log_filter)
         self.close()
 
