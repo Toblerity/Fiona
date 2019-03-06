@@ -9,6 +9,8 @@ import pytest
 
 import fiona
 
+from .conftest import requires_gdal2
+
 
 @pytest.fixture(scope='function')
 def gre_shp_cp1252(tmpdir):
@@ -24,6 +26,7 @@ def gre_shp_cp1252(tmpdir):
     yield tmpdir.join('gre.shp')
 
 
+@requires_gdal2
 def test_broken_encoding(gre_shp_cp1252):
     """Reading as cp1252 mis-encodes a Russian name"""
     with fiona.open(str(gre_shp_cp1252)) as src:
@@ -32,6 +35,7 @@ def test_broken_encoding(gre_shp_cp1252):
         assert feat['properties']['name_ru'] != u'Гренада'
 
 
+@requires_gdal2
 def test_cpg_encoding(gre_shp_cp1252):
     """Reads a Russian name"""
     gre_shp_cp1252.join('../gre.cpg').write('UTF-8')
@@ -41,6 +45,7 @@ def test_cpg_encoding(gre_shp_cp1252):
         assert feat['properties']['name_ru'] == u'Гренада'
 
 
+@requires_gdal2
 def test_override_encoding(gre_shp_cp1252):
     """utf-8 override succeeds"""
     with fiona.open(str(gre_shp_cp1252), encoding='utf-8') as src:
