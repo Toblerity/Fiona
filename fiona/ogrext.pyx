@@ -42,8 +42,6 @@ from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
 from cpython cimport PyBytes_FromStringAndSize, PyBytes_AsString
 
-include "gdal.pxi"
-
 
 cdef extern from "ogr_api.h" nogil:
 
@@ -566,7 +564,7 @@ cdef class Session:
         encoding for other formats such as CSV files.
 
         """
-        if OGR_L_TestCapability(self.cogr_layer, OLCStringsAsUTF8):
+        if OGR_L_TestCapability(self.cogr_layer, OLC_STRINGSASUTF8):
             return 'utf-8'
         else:
             return self._fileencoding or self._get_fallback_encoding()
@@ -909,7 +907,7 @@ cdef class WritingSession(Session):
                 self.cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
 
                 if isinstance(collection.name, string_types):
-                    name_b = strencode(collection.name)
+                    name_b = collection.name.encode('utf-8')
                     name_c = name_b
                     self.cogr_layer = exc_wrap_pointer(GDALDatasetGetLayerByName(self.cogr_ds, name_c))
 
