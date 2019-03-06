@@ -27,14 +27,16 @@ def gre_shp_cp1252(tmpdir):
 def test_broken_encoding(gre_shp_cp1252):
     """Reading as cp1252 mis-encodes a Russian name"""
     with fiona.open(str(gre_shp_cp1252)) as src:
+        assert src.session._get_internal_encoding() == 'utf-8'
         feat = next(iter(src))
         assert feat['properties']['name_ru'] != u'Гренада'
 
 
 def test_cpg_encoding(gre_shp_cp1252):
     """Reads a Russian name"""
-    gre_shp_cp1252.join('../gre.cpg').write('utf-8')
+    gre_shp_cp1252.join('../gre.cpg').write('UTF-8')
     with fiona.open(str(gre_shp_cp1252)) as src:
+        assert src.session._get_internal_encoding() == 'utf-8'
         feat = next(iter(src))
         assert feat['properties']['name_ru'] == u'Гренада'
 
