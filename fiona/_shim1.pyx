@@ -1,6 +1,7 @@
+"""Shims on top of ogrext for GDAL versions < 2"""
+
 import logging
 
-from fiona.ogrext1 cimport *
 from fiona._err cimport exc_wrap_pointer
 from fiona._err import cpl_errs, CPLE_BaseError, FionaNullPointerError
 from fiona.errors import DriverError
@@ -44,14 +45,11 @@ cdef void* gdal_open_vector(const char *path_c, int mode, drivers, options) exce
         for name in drivers:
             name_b = name.encode()
             name_c = name_b
-            #log.debug("Trying driver: %s", name)
             drv = OGRGetDriverByName(name_c)
             if drv != NULL:
                 ds = OGR_Dr_Open(drv, path_c, mode)
             if ds != NULL:
                 cogr_ds = ds
-                # TODO
-                #collection._driver = name
                 break
     else:
         cogr_ds = OGROpen(path_c, mode, NULL)
@@ -95,22 +93,32 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except NU
     finally:
         CSLDestroy(opts)
 
+
 # transactions are not supported in GDAL 1.x
 cdef OGRErr gdal_start_transaction(void* cogr_ds, int force):
     return OGRERR_NONE
+
+
 cdef OGRErr gdal_commit_transaction(void* cogr_ds):
     return OGRERR_NONE
+
+
 cdef OGRErr gdal_rollback_transaction(void* cogr_ds):
     return OGRERR_NONE
+
 
 # field subtypes are not supported in GDAL 1.x
 cdef OGRFieldSubType get_field_subtype(void *fielddefn):
     return OFSTNone
+
+
 cdef void set_field_subtype(void *fielddefn, OGRFieldSubType subtype):
     pass
 
+
 cdef bint check_capability_create_layer(void *cogr_ds):
     return OGR_DS_TestCapability(cogr_ds, ODsCCreateLayer)
+
 
 cdef void *get_linear_geometry(void *geom):
     return geom

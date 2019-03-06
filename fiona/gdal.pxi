@@ -522,4 +522,6 @@ cdef extern from "gdal_alg.h" nogil:
 
 cdef extern from "ogr_core.h" nogil:
 
+    const char * OLCStringsAsUTF8
+
     char *OGRGeometryTypeToName(int type)
