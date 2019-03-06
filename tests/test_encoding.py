@@ -20,14 +20,13 @@ def gre_shp_cp1252(tmpdir):
     tmpdir = tmpdir.mkdir('data')
     for filename in test_files:
         shutil.copy(filename, str(tmpdir))
-    tmpdir.join('gre.cpg').write('cp1252')
+    tmpdir.join('gre.cpg').write('CP1252')
     yield tmpdir.join('gre.shp')
 
 
 def test_broken_encoding(gre_shp_cp1252):
     """Reading as cp1252 mis-encodes a Russian name"""
     with fiona.open(str(gre_shp_cp1252)) as src:
-        assert src.session._get_internal_encoding() == 'utf-8'
         feat = next(iter(src))
         assert feat['properties']['name_ru'] != u'Гренада'
 
@@ -36,7 +35,6 @@ def test_cpg_encoding(gre_shp_cp1252):
     """Reads a Russian name"""
     gre_shp_cp1252.join('../gre.cpg').write('utf-8')
     with fiona.open(str(gre_shp_cp1252)) as src:
-        assert src.session._get_internal_encoding() == 'utf-8'
         feat = next(iter(src))
         assert feat['properties']['name_ru'] == u'Гренада'
 
