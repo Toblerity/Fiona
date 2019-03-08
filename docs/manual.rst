@@ -386,6 +386,11 @@ mappings. :py:func:`~fiona.crs.to_string` converts mappings to PROJ.4 strings:
   >>> from_epsg(3857)
   {'init': 'epsg:3857', 'no_defs': True}
 
+.. No validation:: Both :py:func:`~fiona.crs.from_epsg` and 
+   :py:func:`~fiona.crs.from_string` simply restructure data, they do not
+   ensure that the resulting mapping is a pre-defined or otherwise valid
+   CRS in any way.
+
 The number of records in the collection's file can be obtained via Python's
 built in :py:func:`len` function.
 
