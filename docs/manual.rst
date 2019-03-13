@@ -1091,7 +1091,7 @@ accessing data stored in AWS S3 or another cloud storage system.
         import fiona
 
         with fiona.Env(
-            session=AWSession(
+            session=AWSSession(
                 aws_access_key_id="key",
                 aws_secret_access_key="secret",
             )
