@@ -18,29 +18,18 @@ has_driver = driver in fiona.drvsupport.supported_drivers.keys()
 @pytest.mark.skipif(not gdal_version.at_least((1, 11)), reason="Requires GDAL >= 1.11")
 @pytest.mark.skipif(not has_driver, reason="Requires {} driver".format(driver))
 def test_read_topojson(data_dir):
+    """Test reading a TopoJSON file
+
+    The TopoJSON support in GDAL is a little unpredictable. In some versions
+    the geometries or properties aren't parsed correctly. Here we just check
+    that we can open the file, get the right number of features out, and
+    that they have a geometry and some properties. See GH#722.
+    """
     with fiona.open(os.path.join(data_dir, "example.topojson"), "r") as collection:
-        assert len(collection) == 3
         features = list(collection)
 
-    expected_features = [
-        {
-            "type": "Feature",
-            "id": "0",
-            "properties": OrderedDict([("id", None), ("prop0", "value0"), ("prop1", None)]),
-            "geometry": {"type": "Point", "coordinates": (102.0, 0.5)}
-        },
-        {
-            "type": "Feature",
-            "id": "1",
-            "properties": OrderedDict([("id", None), ("prop0", "value0"), ("prop1", "0")]),
-            "geometry": {"type": "LineString", "coordinates": [(102.0, 0.0), (103.0, 1.0), (104.0, 0.0), (105.0, 1.0)]}
-        },
-        {
-            "type": "Feature",
-            "id": "2",
-            "properties": OrderedDict([("id", None), ("prop0", "value0"), ("prop1", {"this": "that"})]),
-            "geometry": {"type": "Polygon", "coordinates": [[(100.0, 0.0), (100.0, 1.0), (101.0, 1.0), (101.0, 0.0), (100.0, 0.0)]]}
-        }
-    ]
-
-    assert features == expected_features
+    assert len(features) == 3, "unexpected number of features"
+    for feature in features:
+        assert isinstance(feature["properties"], OrderedDict)
+        assert len(feature["properties"]) > 0
+        assert feature["geometry"]["type"] in {"Point", "LineString", "Polygon"}
