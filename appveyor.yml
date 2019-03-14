@@ -124,7 +124,7 @@ build_script:
   - "%CMD_IN_ENV% python setup.py build_ext -IC:\\gdal\\include -lgdal_i -LC:\\gdal\\lib bdist_wheel --gdalversion %GDAL_VERSION%"
 
   # install the wheel
-  - ps: python -m pip install --force-reinstall --ignore-installed (gci dist\*.whl | % { "$_" }) 2>&1
+  - ps: python -m pip install --force-reinstall --ignore-installed (gci dist\*.whl | % { "$_" })
   - ps: move fiona fiona.build
 
 
@@ -136,6 +136,10 @@ test_script:
 
   # Our Windows GDAL doesn't have iconv and can't support certain tests.
   - "%CMD_IN_ENV% python -m pytest -m \"not iconv\" --cov fiona --cov-report term-missing"
+
+matrix:	
+  allow_failures:	
+    - PYTHON_VERSION: "2.7.14"
 
 artifacts:
   - path: dist\*.whl
