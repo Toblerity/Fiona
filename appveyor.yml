@@ -124,8 +124,7 @@ build_script:
   - "%CMD_IN_ENV% python setup.py build_ext -IC:\\gdal\\include -lgdal_i -LC:\\gdal\\lib bdist_wheel --gdalversion %GDAL_VERSION%"
 
   # install the wheel
-  - ps: pip install -U pip 2>$1
-  - ps: pip install --force-reinstall --ignore-installed (gci dist\*.whl | % { "$_" }) 2>$1
+  - ps: python -m pip install --force-reinstall --ignore-installed (gci dist\*.whl | % { "$_" }) 2>$1
   - ps: move fiona fiona.build
 
 
