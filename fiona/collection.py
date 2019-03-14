@@ -150,7 +150,7 @@ class Collection(object):
                     raise CRSError("crs lacks init or proj parameter")
 
         self._driver = driver
-        kwargs.update(encoding=encoding or '')
+        kwargs.update(encoding=encoding)
         self.encoding = encoding
 
         try:
@@ -166,8 +166,6 @@ class Collection(object):
 
         if self.session is not None:
             self.guard_driver_mode()
-            if not self.encoding:
-                self.encoding = self.session.get_fileencoding().lower()
 
         if self.mode in ("a", "w"):
             self._valid_geom_types = _get_valid_geom_types(self.schema, self.driver)

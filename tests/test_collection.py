@@ -115,8 +115,8 @@ class TestReading(object):
     def test_mode(self):
         assert self.c.mode == 'r'
 
-    def test_collection(self):
-        assert self.c.encoding == 'iso-8859-1'
+    def test_encoding(self):
+        assert self.c.encoding is None
 
     def test_iter(self):
         assert iter(self.c)
