@@ -477,11 +477,9 @@ cdef class Session:
         else:
             drivers = None
 
-        if 'encoding' in kwargs:
-            if not kwargs['encoding']:
-                kwargs.pop('encoding')
-            else:
-                kwargs['encoding'] = kwargs['encoding'].upper()
+        encoding = kwargs.pop('encoding', None)
+        if encoding:
+            kwargs['encoding'] = encoding.upper()
 
         self.cogr_ds = gdal_open_vector(path_c, 0, drivers, kwargs)
 
@@ -522,6 +520,7 @@ cdef class Session:
 
     def get_fileencoding(self):
         """DEPRECATED"""
+        warnings.warn("get_fileencoding is deprecated and will be removed in a future version.", FionaDeprecationWarning)
         return self._fileencoding
 
     def _get_fallback_encoding(self):
