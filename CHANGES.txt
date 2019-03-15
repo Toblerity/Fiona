@@ -6,6 +6,10 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.8.5 (TBD)
 -----------
 
+- GDAL seems to work best if GDAL_DATA is set as early as possible. Ideally it
+  is set when building the library or in the environment before importing
+  Fiona, but for wheels we patch GDAL_DATA into os.environ when fiona.env
+  is imported. This resolves #731.
 - On entering a collection context (Collection.__enter__) a new anonymous GDAL
   environment is created if needed and entered. This makes `with
   fiona.open(...) as collection:` roughly equivalent to `with fiona.open(...)
