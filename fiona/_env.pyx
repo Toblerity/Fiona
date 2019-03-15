@@ -247,7 +247,7 @@ cdef class ConfigEnv(object):
 class GDALDataFinder(object):
     """Finds GDAL data files
 
-    Note: this is not part of the public API in 1.0.x.
+    Note: this is not part of the 1.8.x public API.
 
     """
     def find_file(self, basename):
@@ -311,7 +311,7 @@ class GDALDataFinder(object):
 class PROJDataFinder(object):
     """Finds PROJ data files
 
-    Note: this is not part of the public API in 1.0.x.
+    Note: this is not part of the public 1.8.x API.
 
     """
     def has_data(self):
