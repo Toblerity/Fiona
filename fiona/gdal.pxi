@@ -10,6 +10,7 @@ cdef extern from "cpl_conv.h" nogil:
     void CPLSetThreadLocalConfigOption(const char* key, const char* val)
     void CPLSetConfigOption(const char* key, const char* val)
     const char* CPLGetConfigOption(const char* key, const char* default)
+    const char *CPLFindFile(const char *pszClass, const char *pszBasename)
 
 
 cdef extern from "cpl_error.h" nogil:
