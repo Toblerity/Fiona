@@ -15,7 +15,7 @@ def test_fio_ls_single_layer(data_dir):
     result = CliRunner().invoke(main_group, ['ls', data_dir])
     assert result.exit_code == 0
     assert len(result.output.splitlines()) == 1
-    assert sorted(json.loads(result.output)) == ['coutwildrnp', 'gre']
+    assert sorted(json.loads(result.output)) == ['coutwildrnp', 'gre', 'test_tin']
 
 
 def test_fio_ls_indent(path_coutwildrnp_shp):

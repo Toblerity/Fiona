@@ -3,6 +3,32 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.5 (2019-03-15)
+------------------
+
+- GDAL seems to work best if GDAL_DATA is set as early as possible. Ideally it
+  is set when building the library or in the environment before importing
+  Fiona, but for wheels we patch GDAL_DATA into os.environ when fiona.env
+  is imported. This resolves #731.
+- A combination of bugs which allowed .cpg files to be overlooked has been
+  fixed (#726).
+- On entering a collection context (Collection.__enter__) a new anonymous GDAL
+  environment is created if needed and entered. This makes `with
+  fiona.open(...) as collection:` roughly equivalent to `with fiona.open(...)
+  as collection, Env():`. This helps prevent bugs when Collections are created
+  and then used later or in different scopes.
+- Missing GDAL support for TopoJSON, GeoJSONSeq, and ESRIJSON has been enabled
+  (#721).
+- A regression in handling of polygons with M values (#724) has been fixed.
+- Per-feature debug logging calls in OGRFeatureBuilder methods have been
+  eliminated to improve feature writing performance (#718).
+- Native support for datasets in Google Cloud Storage identified by "gs"
+  resource names has been added (#709).
+- Support has been added for triangle, polyhedral surface, and TIN geometry
+  types (#679).
+- Notes about using the MemoryFile and ZipMemoryFile classes has been added to
+  the manual (#674).
+
 1.8.4 (2018-12-10)
 ------------------
 

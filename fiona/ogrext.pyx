@@ -18,7 +18,7 @@ from fiona._shim cimport *
 
 from fiona._geometry cimport (
     GeomBuilder, OGRGeomBuilder, geometry_type_code,
-    normalize_geometry_type_code)
+    normalize_geometry_type_code, base_geometry_type_code)
 from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile
 
 import fiona
@@ -41,6 +41,7 @@ from fiona._shim cimport is_field_null
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
 from cpython cimport PyBytes_FromStringAndSize, PyBytes_AsString
+
 
 cdef extern from "ogr_api.h" nogil:
 
@@ -125,8 +126,7 @@ cdef class FeatureBuilder:
     argument is not destroyed.
     """
 
-    cdef build(self, void *feature, encoding='utf-8', bbox=False, driver=None,
-               ignore_fields=None, ignore_geometry=False):
+    cdef build(self, void *feature, encoding='utf-8', bbox=False, driver=None, ignore_fields=None, ignore_geometry=False):
         """Build a Fiona feature object from an OGR feature
 
         Parameters
@@ -261,15 +261,30 @@ cdef class FeatureBuilder:
                 props[key] = None
 
         cdef void *cogr_geometry = NULL
+        cdef void *org_geometry = NULL
 
         if not ignore_geometry:
             cogr_geometry = OGR_F_GetGeometryRef(feature)
 
             if cogr_geometry is not NULL:
-                code = OGR_G_GetGeometryType(cogr_geometry)
 
-                if 7 < code < 100:  # Curves.
+                code = base_geometry_type_code(OGR_G_GetGeometryType(cogr_geometry))
+
+                if 8 <= code <= 14:  # Curves.
                     cogr_geometry = get_linear_geometry(cogr_geometry)
+                    geom = GeomBuilder().build(cogr_geometry)
+                    OGR_G_DestroyGeometry(cogr_geometry)
+
+                elif 15 <= code <= 17:
+                    # We steal the geometry: the geometry of the in-memory feature is now null
+                    # and we are responsible for cogr_geometry.
+                    org_geometry = OGR_F_StealGeometry(feature)
+
+                    if code in (15, 16):
+                        cogr_geometry = OGR_G_ForceToMultiPolygon(org_geometry)
+                    elif code == 17:
+                        cogr_geometry = OGR_G_ForceToPolygon(org_geometry)
+
                     geom = GeomBuilder().build(cogr_geometry)
                     OGR_G_DestroyGeometry(cogr_geometry)
 
@@ -279,6 +294,7 @@ cdef class FeatureBuilder:
                 fiona_feature["geometry"] = geom
 
             else:
+
                 fiona_feature["geometry"] = None
 
         return fiona_feature
@@ -312,9 +328,8 @@ cdef class OGRFeatureBuilder:
                                 feature['geometry'])
         OGR_F_SetGeometryDirectly(cogr_feature, cogr_geometry)
 
-        # OGR_F_SetFieldString takes UTF-8 encoded strings ('bytes' in
-        # Python 3).
-        encoding = session.get_internalencoding()
+        # OGR_F_SetFieldString takes encoded strings ('bytes' in Python 3).
+        encoding = session._get_internal_encoding()
 
         for key, value in feature['properties'].items():
             ogr_key = session._schema_mapping[key]
@@ -394,11 +409,10 @@ def featureRT(feature, collection):
     cdef void *cogr_geometry = OGR_F_GetGeometryRef(cogr_feature)
     if cogr_geometry == NULL:
         raise ValueError("Null geometry")
-    encoding = collection.encoding or 'utf-8'
     result = FeatureBuilder().build(
         cogr_feature,
+        encoding='utf-8',
         bbox=False,
-        encoding=encoding,
         driver=collection.driver
     )
     _deleteOgrFeature(cogr_feature)
@@ -434,7 +448,7 @@ cdef class Session:
         path_b = collection.path.encode('utf-8')
         path_c = path_b
 
-        userencoding = kwargs.get('encoding')
+        self._fileencoding = kwargs.get('encoding') or collection.encoding
 
         # We have two ways of specifying drivers to try. Resolve the
         # values into a single set of driver short names.
@@ -445,16 +459,18 @@ cdef class Session:
         else:
             drivers = None
 
+        encoding = kwargs.pop('encoding', None)
+        if encoding:
+            kwargs['encoding'] = encoding.upper()
+
         self.cogr_ds = gdal_open_vector(path_c, 0, drivers, kwargs)
 
         if isinstance(collection.name, string_types):
             name_b = collection.name.encode('utf-8')
             name_c = name_b
-            self.cogr_layer = GDALDatasetGetLayerByName(
-                                self.cogr_ds, name_c)
+            self.cogr_layer = GDALDatasetGetLayerByName(self.cogr_ds, name_c)
         elif isinstance(collection.name, int):
-            self.cogr_layer = GDALDatasetGetLayer(
-                                self.cogr_ds, collection.name)
+            self.cogr_layer = GDALDatasetGetLayer(self.cogr_ds, collection.name)
             name_c = OGR_L_GetName(self.cogr_layer)
             name_b = name_c
             collection.name = name_b.decode('utf-8')
@@ -462,21 +478,16 @@ cdef class Session:
         if self.cogr_layer == NULL:
             raise ValueError("Null layer: " + repr(collection.name))
 
-        self._fileencoding = userencoding or (
-            OGR_L_TestCapability(
-                self.cogr_layer, OLC_STRINGSASUTF8) and
-            'utf-8') or (
-            "Shapefile" in self.get_driver() and
-            'ISO-8859-1') or locale.getpreferredencoding().upper()
+        encoding = self._get_internal_encoding()
 
         if collection.ignore_fields:
             try:
                 for name in collection.ignore_fields:
                     try:
-                        name = name.encode(self._fileencoding)
+                        name_b = name.encode(encoding)
                     except AttributeError:
                         raise TypeError("Ignored field \"{}\" has type \"{}\", expected string".format(name, name.__class__.__name__))
-                    ignore_fields = CSLAddString(ignore_fields, <const char *>name)
+                    ignore_fields = CSLAddString(ignore_fields, <const char *>name_b)
                 OGR_L_SetIgnoredFields(self.cogr_layer, <const char**>ignore_fields)
             finally:
                 CSLDestroy(ignore_fields)
@@ -490,16 +501,54 @@ cdef class Session:
         self.cogr_ds = NULL
 
     def get_fileencoding(self):
+        """DEPRECATED"""
+        warnings.warn("get_fileencoding is deprecated and will be removed in a future version.", FionaDeprecationWarning)
         return self._fileencoding
 
-    def get_internalencoding(self):
-        if not self._encoding:
-            fileencoding = self.get_fileencoding()
-            self._encoding = (
-                OGR_L_TestCapability(
-                    self.cogr_layer, OLC_STRINGSASUTF8) and
-                'utf-8') or fileencoding
-        return self._encoding
+    def _get_fallback_encoding(self):
+        """Determine a format-specific fallback encoding to use when using OGR_F functions
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        str
+
+        """
+        if "Shapefile" in self.get_driver():
+            return 'iso-8859-1'
+        else:
+            return locale.getpreferredencoding()
+
+
+    def _get_internal_encoding(self):
+        """Determine the encoding to use when use OGR_F functions
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        str
+
+        Notes
+        -----
+        If the layer implements RFC 23 support for UTF-8, the return
+        value will be 'utf-8' and callers can be certain that this is
+        correct.  If the layer does not have the OLC_STRINGSASUTF8
+        capability marker, it is not possible to know exactly what the
+        internal encoding is and this method returns best guesses. That
+        means ISO-8859-1 for shapefiles and the locale's preferred
+        encoding for other formats such as CSV files.
+
+        """
+        if OGR_L_TestCapability(self.cogr_layer, OLC_STRINGSASUTF8):
+            return 'utf-8'
+        else:
+            return self._fileencoding or self._get_fallback_encoding()
 
     def get_length(self):
         if self.cogr_layer == NULL:
@@ -534,6 +583,8 @@ cdef class Session:
         if cogr_featuredefn == NULL:
             raise ValueError("Null feature definition")
 
+        encoding = self._get_internal_encoding()
+
         n = OGR_FD_GetFieldCount(cogr_featuredefn)
 
         for i from 0 <= i < n:
@@ -547,7 +598,7 @@ cdef class Session:
             if not bool(key_b):
                 raise ValueError("Invalid field name ref: %s" % key)
 
-            key = key_b.decode(self.get_internalencoding())
+            key = key_b.decode(encoding)
 
             if key in ignore_fields:
                 continue
@@ -751,8 +802,8 @@ cdef class Session:
         if cogr_feature != NULL:
             feature = FeatureBuilder().build(
                 cogr_feature,
+                encoding=self._get_internal_encoding(),
                 bbox=False,
-                encoding=self.get_internalencoding(),
                 driver=self.collection.driver,
                 ignore_fields=self.collection.ignore_fields,
                 ignore_geometry=self.collection.ignore_geometry,
@@ -785,8 +836,8 @@ cdef class Session:
                 return None
             feature = FeatureBuilder().build(
                 cogr_feature,
+                encoding=self._get_internal_encoding(),
                 bbox=False,
-                encoding=self.get_internalencoding(),
                 driver=self.collection.driver,
                 ignore_fields=self.collection.ignore_fields,
                 ignore_geometry=self.collection.ignore_geometry,
@@ -831,7 +882,7 @@ cdef class WritingSession(Session):
                 self.cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
 
                 if isinstance(collection.name, string_types):
-                    name_b = collection.name.encode()
+                    name_b = collection.name.encode('utf-8')
                     name_c = name_b
                     self.cogr_layer = exc_wrap_pointer(GDALDatasetGetLayerByName(self.cogr_ds, name_c))
 
@@ -845,11 +896,7 @@ cdef class WritingSession(Session):
                 raise DriverError(u"{}".format(exc))
 
             else:
-                self._fileencoding = (userencoding or (
-                    OGR_L_TestCapability(self.cogr_layer, OLC_STRINGSASUTF8) and
-                    'utf-8') or (
-                    self.get_driver() == "ESRI Shapefile" and
-                    'ISO-8859-1') or locale.getpreferredencoding()).upper()
+                self._fileencoding = userencoding or self._get_fallback_encoding()
 
         elif collection.mode == 'w':
             path_b = strencode(path)
@@ -946,19 +993,16 @@ cdef class WritingSession(Session):
                 self.cogr_layer = NULL
                 raise CRSError(u"{}".format(exc))
 
-
-            # Figure out what encoding to use. The encoding parameter given
-            # to the collection constructor takes highest precedence, then
-            # 'iso-8859-1', then the system's default encoding as last resort.
+            # Determine which encoding to use. The encoding parameter given to
+            # the collection constructor takes highest precedence, then
+            # 'iso-8859-1' (for shapefiles), then the system's default encoding
+            # as last resort.
             sysencoding = locale.getpreferredencoding()
-            self._fileencoding = (userencoding or (
-                "Shapefile" in collection.driver and
-                'ISO-8859-1') or sysencoding).upper()
+            self._fileencoding = userencoding or ("Shapefile" in collection.driver and 'iso-8859-1') or sysencoding
 
             if "Shapefile" in collection.driver:
-                fileencoding = self.get_fileencoding()
-                if fileencoding:
-                    fileencoding_b = fileencoding.encode('utf-8')
+                if self._fileencoding:
+                    fileencoding_b = self._fileencoding.upper().encode('utf-8')
                     fileencoding_c = fileencoding_b
                     options = CSLSetNameValue(options, "ENCODING", fileencoding_c)
 
@@ -987,6 +1031,9 @@ cdef class WritingSession(Session):
             name_c = name_b
 
             for k, v in kwargs.items():
+
+                if v is None:
+                    continue
 
                 # We need to remove encoding from the layer creation
                 # options if we're not creating a shapefile.
@@ -1039,6 +1086,9 @@ cdef class WritingSession(Session):
 
             # Next, make a layer definition from the given schema properties,
             # which are an ordered dict since Fiona 1.0.1.
+
+            encoding = self._get_internal_encoding()
+
             for key, value in collection.schema['properties'].items():
 
                 log.debug("Begin creating field: %r value: %r", key, value)
@@ -1075,7 +1125,7 @@ cdef class WritingSession(Session):
                             value = 'int32'
 
                 field_type = FIELD_TYPES.index(value)
-                encoding = self.get_internalencoding()
+
                 try:
                     key_bytes = key.encode(encoding)
                     cogr_fielddefn = exc_wrap_pointer(OGR_Fld_Create(key_bytes, <OGRFieldType>field_type))
@@ -1087,6 +1137,7 @@ cdef class WritingSession(Session):
                         # subtypes are new in GDAL 2.x, ignored in 1.x
                         set_field_subtype(cogr_fielddefn, field_subtype)
                     exc_wrap_int(OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1))
+
                 except (UnicodeEncodeError, CPLE_BaseError) as exc:
                     OGRReleaseDataSource(self.cogr_ds)
                     self.cogr_ds = NULL
@@ -1219,9 +1270,9 @@ cdef class Iterator:
             OGR_G_DestroyGeometry(cogr_geometry)
 
         else:
-            OGR_L_SetSpatialFilter(
-                cogr_layer, NULL)
-        self.encoding = session.get_internalencoding()
+            OGR_L_SetSpatialFilter(cogr_layer, NULL)
+
+        self.encoding = session._get_internal_encoding()
 
         self.fastindex = OGR_L_TestCapability(
             session.cogr_layer, OLC_FASTSETNEXTBYINDEX)
@@ -1320,8 +1371,8 @@ cdef class Iterator:
         try:
             return FeatureBuilder().build(
                 cogr_feature,
+                encoding=self.collection.session._get_internal_encoding(),
                 bbox=False,
-                encoding=self.encoding,
                 driver=self.collection.driver,
                 ignore_fields=self.collection.ignore_fields,
                 ignore_geometry=self.collection.ignore_geometry,
@@ -1347,12 +1398,11 @@ cdef class ItemsIterator(Iterator):
         if cogr_feature == NULL:
             raise StopIteration
 
-
         fid = OGR_F_GetFID(cogr_feature)
         feature = FeatureBuilder().build(
             cogr_feature,
+            encoding=self.collection.session._get_internal_encoding(),
             bbox=False,
-            encoding=self.encoding,
             driver=self.collection.driver,
             ignore_fields=self.collection.ignore_fields,
             ignore_geometry=self.collection.ignore_geometry,
@@ -1417,7 +1467,7 @@ def _remove(path, driver=None):
 def _remove_layer(path, layer, driver=None):
     cdef void *cogr_ds
     cdef int layer_index
-    
+
     if isinstance(layer, integer_types):
         layer_index = layer
         layer_str = str(layer_index)
@@ -1428,11 +1478,11 @@ def _remove_layer(path, layer, driver=None):
         except ValueError:
             raise ValueError("Layer \"{}\" does not exist in datasource: {}".format(layer, path))
         layer_str = '"{}"'.format(layer)
-    
+
     if layer_index < 0:
         layer_names = _listlayers(path)
         layer_index = len(layer_names) + layer_index
-    
+
     try:
         cogr_ds = gdal_open_vector(path.encode("utf-8"), 1, None, {})
     except (DriverError, FionaNullPointerError):

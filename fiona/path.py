@@ -17,13 +17,14 @@ SCHEMES = {
     's3': 's3',
     'tar': 'tar',
     'zip': 'zip',
-    'file': 'file'
+    'file': 'file',
+    'gs': 'gs',
 }
 
 CURLSCHEMES = set([k for k, v in SCHEMES.items() if v == 'curl'])
 
 # TODO: extend for other cloud plaforms.
-REMOTESCHEMES = set([k for k, v in SCHEMES.items() if v in ('curl', 's3')])
+REMOTESCHEMES = set([k for k, v in SCHEMES.items() if v in ('curl', 's3', 'gs')])
 
 
 class Path(object):

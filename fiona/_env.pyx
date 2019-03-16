@@ -17,6 +17,9 @@ import os.path
 import sys
 import threading
 
+from fiona._err cimport exc_wrap_int, exc_wrap_ogrerr
+from fiona._err import CPLE_BaseError
+
 
 level_map = {
     0: 0,
@@ -52,6 +55,13 @@ log = logging.getLogger(__name__)
 
 
 cdef bint is_64bit = sys.maxsize > 2 ** 32
+
+
+cdef _safe_osr_release(OGRSpatialReferenceH srs):
+    """Wrapper to handle OSR release when NULL."""
+    if srs != NULL:
+        OSRRelease(srs)
+    srs = NULL
 
 
 def calc_gdal_version_num(maj, min, rev):
@@ -237,12 +247,41 @@ cdef class ConfigEnv(object):
 class GDALDataFinder(object):
     """Finds GDAL data files
 
-    Note: this class is private in 1.8.x and not in the public API.
+    Note: this is not part of the 1.8.x public API.
 
     """
+    def find_file(self, basename):
+        """Returns path of a GDAL data file or None
+
+        Parameters
+        ----------
+        basename : str
+            Basename of a data file such as "header.dxf"
+
+        Returns
+        -------
+        str (on success) or None (on failure)
+
+        """
+        cdef const char *path_c = NULL
+        basename_b = basename.encode('utf-8')
+        path_c = CPLFindFile("gdal", <const char *>basename_b)
+        if path_c == NULL:
+            return None
+        else:
+            path = path_c
+            return path
 
     def search(self, prefix=None):
-        """Returns GDAL_DATA location"""
+        """Returns GDAL data directory
+
+        Note well that os.environ is not consulted.
+
+        Returns
+        -------
+        str or None
+
+        """
         path = self.search_wheel(prefix or __file__)
         if not path:
             path = self.search_prefix(prefix or sys.prefix)
@@ -264,20 +303,47 @@ class GDALDataFinder(object):
 
     def search_debian(self, prefix=sys.prefix):
         """Check Debian locations"""
-        gdal_version = get_gdal_version_tuple()
-        datadir = os.path.join(prefix, 'share', 'gdal', '{}.{}'.format(gdal_version.major, gdal_version.minor))
+        gdal_release_name = GDALVersionInfo("RELEASE_NAME")
+        datadir = os.path.join(prefix, 'share', 'gdal', '{}.{}'.format(*gdal_release_name.split('.')[:2]))
         return datadir if os.path.exists(os.path.join(datadir, 'pcs.csv')) else None
 
 
 class PROJDataFinder(object):
     """Finds PROJ data files
 
-    Note: this class is private in 1.8.x and not in the public API.
+    Note: this is not part of the public 1.8.x API.
 
     """
+    def has_data(self):
+        """Returns True if PROJ's data files can be found
+
+        Returns
+        -------
+        bool
+
+        """
+        cdef OGRSpatialReferenceH osr = OSRNewSpatialReference(NULL)
+
+        try:
+            exc_wrap_ogrerr(exc_wrap_int(OSRImportFromProj4(osr, "+init=epsg:4326")))
+        except CPLE_BaseError:
+            return False
+        else:
+            return True
+        finally:
+            _safe_osr_release(osr)
+
 
     def search(self, prefix=None):
-        """Returns PROJ_LIB location"""
+        """Returns PROJ data directory
+
+        Note well that os.environ is not consulted.
+
+        Returns
+        -------
+        str or None
+
+        """
         path = self.search_wheel(prefix or __file__)
         if not path:
             path = self.search_prefix(prefix or sys.prefix)
@@ -322,6 +388,10 @@ cdef class GDALEnv(ConfigEnv):
                         self.update_config_options(GDAL_DATA=os.environ['GDAL_DATA'])
                         log.debug("GDAL_DATA found in environment: %r.", os.environ['GDAL_DATA'])
 
+                    # See https://github.com/mapbox/rasterio/issues/1631.
+                    elif GDALDataFinder().find_file("header.dxf"):
+                        log.debug("GDAL data files are available at built-in paths")
+
                     else:
                         path = GDALDataFinder().search()
 
@@ -329,8 +399,13 @@ cdef class GDALEnv(ConfigEnv):
                             self.update_config_options(GDAL_DATA=path)
                             log.debug("GDAL_DATA not found in environment, set to %r.", path)
 
-                    if 'PROJ_LIB' not in os.environ:
+                    if 'PROJ_LIB' in os.environ:
+                        log.debug("PROJ_LIB found in environment: %r.", os.environ['PROJ_LIB'])
 
+                    elif PROJDataFinder().has_data():
+                        log.debug("PROJ data files are available at built-in paths")
+
+                    else:
                         path = PROJDataFinder().search()
 
                         if path:

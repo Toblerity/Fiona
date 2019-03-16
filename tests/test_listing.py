@@ -22,11 +22,11 @@ def test_single_file(path_coutwildrnp_shp):
 
 
 def test_directory(data_dir):
-    assert sorted(fiona.listlayers(data_dir)) == ['coutwildrnp', 'gre']
+    assert sorted(fiona.listlayers(data_dir)) == ['coutwildrnp', 'gre', 'test_tin']
 
 
 def test_directory_trailing_slash(data_dir):
-    assert sorted(fiona.listlayers(data_dir)) == ['coutwildrnp', 'gre']
+    assert sorted(fiona.listlayers(data_dir)) == ['coutwildrnp', 'gre', 'test_tin']
 
 
 def test_zip_path(path_coutwildrnp_zip):
