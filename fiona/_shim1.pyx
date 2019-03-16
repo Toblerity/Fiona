@@ -2,6 +2,7 @@
 
 import logging
 
+from fiona.ogrext1 cimport *
 from fiona._err cimport exc_wrap_pointer
 from fiona._err import cpl_errs, CPLE_BaseError, FionaNullPointerError
 from fiona.errors import DriverError

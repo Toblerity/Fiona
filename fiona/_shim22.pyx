@@ -5,6 +5,7 @@ cdef extern from "ogr_api.h":
     int OGR_F_IsFieldNull(void *feature, int n)
 
 
+from fiona.ogrext2 cimport *
 from fiona._err cimport exc_wrap_pointer
 from fiona._err import cpl_errs, CPLE_BaseError, FionaNullPointerError
 from fiona.errors import DriverError
