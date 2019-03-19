@@ -3,6 +3,12 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.6 (2019-03-18)
+------------------
+
+- The advertisement for JSON driver enablement in 1.8.5 was false (#176), but
+  in this release they are ready for use.
+
 1.8.5 (2019-03-15)
 ------------------
 

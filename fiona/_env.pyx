@@ -19,6 +19,7 @@ import threading
 
 from fiona._err cimport exc_wrap_int, exc_wrap_ogrerr
 from fiona._err import CPLE_BaseError
+from fiona.errors import EnvError
 
 
 level_map = {
@@ -282,12 +283,16 @@ class GDALDataFinder(object):
         str or None
 
         """
-        path = self.search_wheel(prefix or __file__)
-        if not path:
-            path = self.search_prefix(prefix or sys.prefix)
+        path = self.find_file("header.dxf")
+        if path:
+            return os.path.dirname(path)
+        else:
+            path = self.search_wheel(prefix or __file__)
             if not path:
-                path = self.search_debian(prefix or sys.prefix)
-        return path
+                path = self.search_prefix(prefix or sys.prefix)
+                if not path:
+                    path = self.search_debian(prefix or sys.prefix)
+            return path
 
     def search_wheel(self, prefix=None):
         """Check wheel location"""
@@ -344,10 +349,13 @@ class PROJDataFinder(object):
         str or None
 
         """
-        path = self.search_wheel(prefix or __file__)
-        if not path:
-            path = self.search_prefix(prefix or sys.prefix)
-        return path
+        if self.has_data():
+            raise EnvError("Using built-in PROJ data location that can't be reported. This is often /usr/share/proj.")
+        else:
+            path = self.search_wheel(prefix or __file__)
+            if not path:
+                path = self.search_prefix(prefix or sys.prefix)
+            return path
 
     def search_wheel(self, prefix=None):
         """Check wheel location"""

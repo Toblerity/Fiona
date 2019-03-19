@@ -1,6 +1,10 @@
 """Tests of _env util module"""
 
 import pytest
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 from fiona._env import GDALDataFinder, PROJDataFinder
 
@@ -77,17 +81,23 @@ def test_search_debian_gdal_data(mock_debian):
 
 def test_search_gdal_data_wheel(mock_wheel):
     finder = GDALDataFinder()
+    finder.find_file = mock.MagicMock()
+    finder.find_file.return_value = None
     assert finder.search(str(mock_wheel.join("_env.py"))) == str(mock_wheel.join("gdal_data"))
 
 
 def test_search_gdal_data_fhs(mock_fhs):
     finder = GDALDataFinder()
+    finder.find_file = mock.MagicMock()
+    finder.find_file.return_value = None
     assert finder.search(str(mock_fhs)) == str(mock_fhs.join("share").join("gdal"))
 
 
 def test_search_gdal_data_debian(mock_debian):
     """Find GDAL data under Debian locations"""
     finder = GDALDataFinder()
+    finder.find_file = mock.MagicMock()
+    finder.find_file.return_value = None
     assert finder.search(str(mock_debian)) == str(mock_debian.join("share").join("gdal").join("{}.{}".format(gdal_version.major, gdal_version.minor)))
 
 
@@ -100,6 +110,8 @@ def test_search_wheel_proj_data_failure(tmpdir):
 def test_search_wheel_proj_data(mock_wheel):
     """Find GDAL data in a wheel"""
     finder = PROJDataFinder()
+    finder.has_data = mock.MagicMock()
+    finder.has_data.return_value = None
     assert finder.search_wheel(str(mock_wheel.join("_env.py"))) == str(mock_wheel.join("proj_data"))
 
 
@@ -112,14 +124,20 @@ def test_search_prefix_proj_data_failure(tmpdir):
 def test_search_prefix_proj_data(mock_fhs):
     """Find GDAL data under prefix"""
     finder = PROJDataFinder()
+    finder.has_data = mock.MagicMock()
+    finder.has_data.return_value = None
     assert finder.search_prefix(str(mock_fhs)) == str(mock_fhs.join("share").join("proj"))
 
 
 def test_search_proj_data_wheel(mock_wheel):
     finder = PROJDataFinder()
+    finder.has_data = mock.MagicMock()
+    finder.has_data.return_value = None
     assert finder.search(str(mock_wheel.join("_env.py"))) == str(mock_wheel.join("proj_data"))
 
 
 def test_search_proj_data_fhs(mock_fhs):
     finder = PROJDataFinder()
+    finder.has_data = mock.MagicMock()
+    finder.has_data.return_value = None
     assert finder.search(str(mock_fhs)) == str(mock_fhs.join("share").join("proj"))
