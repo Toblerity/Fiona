@@ -260,6 +260,10 @@ requires_gdal22 = pytest.mark.skipif(
     not gdal_version.at_least('2.2'),
     reason="Requires GDAL 2.2.x")
 
+requires_gdal24 = pytest.mark.skipif(
+    not gdal_version.at_least('2.4'),
+    reason="Requires GDAL 2.4.x")
+
 
 @pytest.fixture(scope="class")
 def unittest_data_dir(data_dir, request):
