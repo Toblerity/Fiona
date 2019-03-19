@@ -19,6 +19,7 @@ import threading
 
 from fiona._err cimport exc_wrap_int, exc_wrap_ogrerr
 from fiona._err import CPLE_BaseError
+from fiona.errors import EnvError
 
 
 level_map = {
