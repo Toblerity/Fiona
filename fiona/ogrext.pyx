@@ -272,7 +272,7 @@ cdef class FeatureBuilder:
 
                 if 8 <= code <= 14:  # Curves.
                     cogr_geometry = get_linear_geometry(cogr_geometry)
-                    geom = GeomBuilder().build(cogr_geometry)
+                    geom = GeomBuilder().build2(cogr_geometry)
                     OGR_G_DestroyGeometry(cogr_geometry)
 
                 elif 15 <= code <= 17:
@@ -285,11 +285,11 @@ cdef class FeatureBuilder:
                     elif code == 17:
                         cogr_geometry = OGR_G_ForceToPolygon(org_geometry)
 
-                    geom = GeomBuilder().build(cogr_geometry)
+                    geom = GeomBuilder().build2(cogr_geometry)
                     OGR_G_DestroyGeometry(cogr_geometry)
 
                 else:
-                    geom = GeomBuilder().build(cogr_geometry)
+                    geom = GeomBuilder().build2(cogr_geometry)
 
                 fiona_feature["geometry"] = geom
 
