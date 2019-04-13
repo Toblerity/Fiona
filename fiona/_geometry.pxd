@@ -93,7 +93,7 @@ cdef extern from "ogr_api.h":
     void *  OGR_G_CreateGeometry (OGRwkbGeometryType wkbtypecode)
     void    OGR_G_DestroyGeometry (void *geometry)
     unsigned char * OGR_G_ExportToJson (void *geometry)
-    void    OGR_G_ExportToWkb (void *geometry, int endianness, char *buffer)
+    void    OGR_G_ExportToWkb (void *geometry, int endianness, unsigned char *buffer)
     int     OGR_G_GetCoordinateDimension (void *geometry)
     int     OGR_G_GetGeometryCount (void *geometry)
     unsigned char *  OGR_G_GetGeometryName (void *geometry)
@@ -124,6 +124,7 @@ cdef class GeomBuilder:
     cpdef _buildGeometryCollection(self)
     cdef build(self, void *geom)
     cpdef build_wkb(self, object wkb)
+    cdef bytes build2(self, void *geom)
 
 
 cdef class OGRGeomBuilder:

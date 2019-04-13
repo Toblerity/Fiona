@@ -224,7 +224,7 @@ cdef extern from "ogr_api.h":
     void *  OGR_G_CreateGeometry (int wkbtypecode)
     void    OGR_G_DestroyGeometry (void *geometry)
     unsigned char *  OGR_G_ExportToJson (void *geometry)
-    void    OGR_G_ExportToWkb (void *geometry, int endianness, char *buffer)
+    void    OGR_G_ExportToWkb (void *geometry, int endianness, unsigned char *buffer)
     int     OGR_G_GetCoordinateDimension (void *geometry)
     int     OGR_G_GetGeometryCount (void *geometry)
     unsigned char *  OGR_G_GetGeometryName (void *geometry)

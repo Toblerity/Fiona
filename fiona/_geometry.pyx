@@ -2,6 +2,8 @@
 
 from __future__ import absolute_import
 
+from libc.stdlib cimport malloc, free
+
 import logging
 
 from fiona.errors import UnsupportedGeometryTypeError
@@ -190,6 +192,16 @@ cdef class GeomBuilder:
         result = self.build(cogr_geometry)
         _deleteOgrGeom(cogr_geometry)
         return result
+
+    cdef bytes build2(self, void *geom):
+        cdef int size = OGR_G_WkbSize(geom)
+        cdef unsigned char* buf = <unsigned char*>malloc(size * sizeof(char))
+        if not buf:
+            raise MemoryError()
+        OGR_G_ExportToWkb(geom, 1, buf)
+        cdef bytes wkb = buf[:size]
+        free(buf)
+        return wkb
 
 
 cdef class OGRGeomBuilder:
