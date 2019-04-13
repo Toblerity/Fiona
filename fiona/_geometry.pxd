@@ -138,9 +138,8 @@ cdef class OGRGeomBuilder:
     cdef void * _buildMultiPolygon(self, object coordinates) except NULL
     cdef void * _buildGeometryCollection(self, object coordinates) except NULL
     cdef void * build(self, object geom) except NULL
-
+    cdef void * build_wkb(self, object wkb) except NULL
 
 cdef unsigned int geometry_type_code(object name) except? 9999
 cdef object normalize_geometry_type_code(unsigned int code)
 cdef unsigned int base_geometry_type_code(unsigned int code)
-

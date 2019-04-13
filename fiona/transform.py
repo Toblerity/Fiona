@@ -90,3 +90,46 @@ def transform_geom(
     return _transform_geom(
         src_crs, dst_crs, geom,
         antimeridian_cutting, antimeridian_offset, precision)
+
+
+def transform_wkb(
+        src_crs, dst_crs, geom,
+        antimeridian_cutting=False, antimeridian_offset=10.0):
+    """Transform a geometry WKB from one reference system to another.
+
+    Parameters
+    ----------
+    src_crs: str or dict
+        A string like 'EPSG:4326' or a dict of proj4 parameters like
+        {'proj': 'lcc', 'lat_0': 18.0, 'lat_1': 18.0, 'lon_0': -77.0}
+        representing the coordinate reference system on the "source"
+        or "from" side of the transformation.
+    dst_crs: str or dict
+        A string or dict representing the coordinate reference system
+        on the "destination" or "to" side of the transformation.
+    geom: bytes
+        A WKB (well-known binary) representation of the geometry.
+    antimeridian_cutting: bool, optional
+        ``True`` to cut output geometries in two at the antimeridian,
+        the default is ``False`.
+    antimeridian_offset: float, optional
+        A distance in decimal degrees from the antimeridian, outside of
+        which geometries will not be cut.
+
+    Returns
+    -------
+    bytes
+        A new WKB geometry with transformed coordinates.
+
+    Examples
+    --------
+
+    >>> transform_geom(
+    ...     'EPSG:4326', 'EPSG:26953',
+    ...     wkb)
+    wkb
+
+    """
+    # Function is implemented in the _transform C extension module.
+    return _transform_wkb(src_crs, dst_crs, geom,
+                          antimeridian_cutting, antimeridian_offset)

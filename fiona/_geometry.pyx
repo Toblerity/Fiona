@@ -290,6 +290,11 @@ cdef class OGRGeomBuilder:
         else:
             raise UnsupportedGeometryTypeError("Unsupported geometry type %s" % typename)
 
+    cdef void * build_wkb(self, object wkb) except NULL:
+        cdef object data = wkb
+        cdef void *cogr_geometry = _createOgrGeomFromWKB(data)
+        return cogr_geometry
+
 
 def geometryRT(geometry):
     # For testing purposes only, leaks the JSON data
