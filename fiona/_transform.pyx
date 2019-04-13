@@ -233,7 +233,6 @@ def _transform_wkb(
     cdef OGRGeometryFactory *factory = NULL
     cdef void *src_ogr_geom = NULL
     cdef void *dst_ogr_geom = NULL
-    cdef int bufsize = NULL
 
     if src_crs and dst_crs:
         src = _crs_from_crs(src_crs)
@@ -254,13 +253,7 @@ def _transform_wkb(
                         <OGRCoordinateTransformation *>transform,
                         options)
 
-        size = OGR_G_WkbSize(dst_ogr_geom)
-        cdef unsigned char* buf = <unsigned char*>malloc(size * sizeof(char))
-        if not buf:
-            raise MemoryError()
-        OGR_G_ExportToWkb(dst_ogr_geom, 1, buf)
-        cdef bytes dst_wkb = buf[:size]
-        free(buf)
+        dst_wkb = _geometry.OGRGeomBuilder().build2(dst_ogr_geom)
 
         _geometry.OGR_G_DestroyGeometry(dst_ogr_geom)
         _geometry.OGR_G_DestroyGeometry(src_ogr_geom)
