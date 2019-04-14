@@ -197,7 +197,7 @@ cdef class GeomBuilder:
 cdef class WKBGeomBuilder:
     """Builds WKB strings from OGR geometries
     """
-    cdef bytes build_ogr(self, void *geom):
+    cdef bytes build(self, void *geom):
         size = OGR_G_WkbSize(geom)
         cdef unsigned char* buf = <unsigned char*>malloc(size * sizeof(char))
         if not buf:
