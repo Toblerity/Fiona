@@ -124,7 +124,10 @@ cdef class GeomBuilder:
     cpdef _buildGeometryCollection(self)
     cdef build(self, void *geom)
     cpdef build_wkb(self, object wkb)
-    cdef bytes build2(self, void *geom)
+
+
+cdef class WKBGeomBuilder:
+    cdef bytes build(self, void *geom)
 
 
 cdef class OGRGeomBuilder:

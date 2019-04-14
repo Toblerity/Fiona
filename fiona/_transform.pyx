@@ -221,7 +221,7 @@ def _transform_geom(
 
 def _transform_wkb(
         src_crs, dst_crs, wkb, antimeridian_cutting, antimeridian_offset,
-        precision):
+    ):
     """Return a transformed geometry."""
     cdef char *proj_c = NULL
     cdef char *key_c = NULL
@@ -253,7 +253,7 @@ def _transform_wkb(
                         <OGRCoordinateTransformation *>transform,
                         options)
 
-        dst_wkb = _geometry.OGRGeomBuilder().build2(dst_ogr_geom)
+        dst_wkb = _geometry.WKBGeomBuilder().build(dst_ogr_geom)
 
         _geometry.OGR_G_DestroyGeometry(dst_ogr_geom)
         _geometry.OGR_G_DestroyGeometry(src_ogr_geom)

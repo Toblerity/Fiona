@@ -193,8 +193,12 @@ cdef class GeomBuilder:
         _deleteOgrGeom(cogr_geometry)
         return result
 
-    cdef bytes build2(self, void *geom):
-        cdef int size = OGR_G_WkbSize(geom)
+
+cdef class WKBGeomBuilder:
+    """Builds WKB strings from OGR geometries
+    """
+    cdef bytes build_ogr(self, void *geom):
+        size = OGR_G_WkbSize(geom)
         cdef unsigned char* buf = <unsigned char*>malloc(size * sizeof(char))
         if not buf:
             raise MemoryError()
@@ -312,5 +316,13 @@ def geometryRT(geometry):
     # For testing purposes only, leaks the JSON data
     cdef void *cogr_geometry = OGRGeomBuilder().build(geometry)
     result = GeomBuilder().build(cogr_geometry)
+    _deleteOgrGeom(cogr_geometry)
+    return result
+
+
+def geometry_as_wkb(geometry):
+    # For testing purposes
+    cdef void *cogr_geometry = OGRGeomBuilder().build(geometry)
+    result = WKBGeomBuilder().build(cogr_geometry)
     _deleteOgrGeom(cogr_geometry)
     return result

@@ -1,6 +1,6 @@
 """Coordinate and geometry warping and reprojection"""
 
-from fiona._transform import _transform, _transform_geom
+from fiona._transform import _transform, _transform_geom, _transform_wkb
 
 
 def transform(src_crs, dst_crs, xs, ys):
@@ -119,16 +119,7 @@ def transform_wkb(
     Returns
     -------
     bytes
-        A new WKB geometry with transformed coordinates.
-
-    Examples
-    --------
-
-    >>> transform_geom(
-    ...     'EPSG:4326', 'EPSG:26953',
-    ...     wkb)
-    wkb
-
+        A new geometry as WKB with transformed coordinates.
     """
     # Function is implemented in the _transform C extension module.
     return _transform_wkb(src_crs, dst_crs, geom,
