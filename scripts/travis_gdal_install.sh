@@ -79,9 +79,9 @@ elif [ ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
   tar -xzf gdal-$GDALVERSION.tar.gz
 
   
-  if [ -d "gdal-$BASE_GDALVERSION" ]; 
+  if [ -d "gdal-$BASE_GDALVERSION" ]; then
     cd gdal-$BASE_GDALVERSION
-  elif [ -d "gdal-$GDALVERSION" ];
+  elif [ -d "gdal-$GDALVERSION" ]; then
     cd gdal-$GDALVERSION
   fi
   
