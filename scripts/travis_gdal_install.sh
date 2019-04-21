@@ -1,8 +1,6 @@
 #!/bin/sh
 set -e
 
-cd $HOME
-
 GDALOPTS="  --with-ogr \
             --with-geos \
             --with-expat \

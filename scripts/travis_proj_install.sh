@@ -1,8 +1,6 @@
 #!/bin/sh
 set -e
 
-cd $HOME
-
 # Create build dir if not exists
 if [ ! -d "$PROJBUILD" ]; then
   mkdir $PROJBUILD;
@@ -25,3 +23,6 @@ if [ ! -d "$GDALINST/proj-$PROJVERSION" ]; then
     make install
     rm -rf $PROJBUILD
 fi
+
+# change back to travis build dir
+cd $TRAVIS_BUILD_DIR
