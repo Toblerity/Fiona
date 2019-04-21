@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+cd $HOME
+
 GDALOPTS="  --with-ogr \
             --with-geos \
             --with-expat \
@@ -86,7 +88,7 @@ elif [ ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
   fi
   
   ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS
-  make -j 2
+  make -s -j 2
   make install
   rm -rf $GDALBUILD
 fi

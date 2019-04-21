@@ -1,6 +1,7 @@
 #!/bin/sh
 set -e
 
+cd $HOME
 
 # Create build dir if not exists
 if [ ! -d "$PROJBUILD" ]; then
@@ -20,7 +21,7 @@ if [ ! -d "$GDALINST/proj-$PROJVERSION" ]; then
     tar -xzf proj-$PROJVERSION.tar.gz
     cd proj-$PROJVERSION
     ./configure --prefix=$GDALINST/proj-$PROJVERSION
-    make -j 2
+    make -s -j 2
     make install
     rm -rf $PROJBUILD
 fi
