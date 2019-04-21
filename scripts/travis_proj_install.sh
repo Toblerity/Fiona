@@ -19,7 +19,7 @@ if [ ! -d "$GDALINST/proj-$PROJVERSION" ]; then
     tar -xzf proj-$PROJVERSION.tar.gz
     cd proj-$PROJVERSION
     ./configure --prefix=$GDALINST/proj-$PROJVERSION
-    make -s -j 2
+    make -j 2
     make install
     rm -rf $PROJBUILD
 fi

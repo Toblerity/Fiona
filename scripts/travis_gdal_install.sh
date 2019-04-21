@@ -86,7 +86,7 @@ elif [ ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
   fi
   
   ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS
-  make -s -j 2
+  make -j 2
   make install
   rm -rf $GDALBUILD
 fi
