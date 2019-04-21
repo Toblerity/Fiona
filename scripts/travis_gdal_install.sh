@@ -77,7 +77,14 @@ elif [ ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
     wget http://download.osgeo.org/gdal/old_releases/gdal-$GDALVERSION.tar.gz
   fi
   tar -xzf gdal-$GDALVERSION.tar.gz
-  cd gdal-$BASE_GDALVERSION
+
+  
+  if [ -d "gdal-$BASE_GDALVERSION" ]; 
+    cd gdal-$BASE_GDALVERSION
+  elif [ -d "gdal-$GDALVERSION" ];
+    cd gdal-$GDALVERSION
+  fi
+  
   ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS
   make -j 2
   make install
