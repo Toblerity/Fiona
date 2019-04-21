@@ -43,7 +43,8 @@ GDALOPTS="  --with-ogr \
             --without-python
             --with-oci=no \
             --without-mrf \
-            --with-webp=no"
+            --with-webp=no \
+            --with-proj=$GDALINST/proj-$PROJVERSION"
 
 # Create build dir if not exists
 if [ ! -d "$GDALBUILD" ]; then
