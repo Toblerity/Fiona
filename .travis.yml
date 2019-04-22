@@ -11,15 +11,19 @@ env:
     - PIP_FIND_LINKS=file://$HOME/.cache/pip/wheels
     - GDALINST=$HOME/gdalinstall
     - GDALBUILD=$HOME/gdalbuild
+    - PROJBUILD=$HOME/projbuild
+    - PROJVERSION="6.0.0"
+    
+    
   matrix:
-    - GDALVERSION="1.11.5"
-    - GDALVERSION="2.0.3"
-    - GDALVERSION="2.1.4"
-    - GDALVERSION="2.2.4"
+#    - GDALVERSION="1.11.5"
+#    - GDALVERSION="2.0.3"
+#    - GDALVERSION="2.1.4"
+#    - GDALVERSION="2.2.4"
     - GDALVERSION="2.3.3"
     - GDALVERSION="2.4.1"
     - GDALVERSION="2.5.0beta1"
-    - GDALVERSION="trunk"
+#    - GDALVERSION="trunk"
 
 matrix:
   allow_failures:
@@ -29,15 +33,16 @@ addons:
   apt:
     packages:
     - gdal-bin
-    - libproj-dev
     - libhdf5-serial-dev
     - libgdal-dev
     - libatlas-dev
     - libatlas-base-dev
     - gfortran
+    - libsqlite3-dev
+    - sqlite3
 
 python:
-  - "2.7"
+#  - "2.7"
   - "3.6"
 
 before_install:
@@ -45,11 +50,12 @@ before_install:
   - pip install wheel coveralls>=1.1 --upgrade
   - pip install setuptools==36.0.1
   - pip install wheel
+  - . ./scripts/travis_proj_install.sh
   - . ./scripts/travis_gdal_install.sh
-  - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$PATH
-  - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$LD_LIBRARY_PATH
+  - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$GDALINST/proj-$PROJVERSION/bin:$PATH
+  - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$GDALINST/proj-$PROJVERSION/lib::$LD_LIBRARY_PATH
   - export GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal
-  - export PROJ_LIB=/usr/share/proj
+  - export PROJ_LIB=$GDALINST/proj-$PROJVERSION/share/proj
   - gdal-config --version
 
 install:
