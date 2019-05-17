@@ -1356,40 +1356,11 @@ in an instance of ZipMemoryFile.
 
 *New in 1.8.0*
 
-Dumpgj
+Fiona command line interface
 ======
 
-Fiona installs a script named ``dumpgj``. It converts files to GeoJSON with
-JSON-LD context as an option and is intended to be an upgrade to "ogr2ogr -f
-GeoJSON".
-
-.. sourcecode:: console
-
-  $ dumpgj --help
-  usage: dumpgj [-h] [-d] [-n N] [--compact] [--encoding ENC]
-                [--record-buffered] [--ignore-errors] [--use-ld-context]
-                [--add-ld-context-item TERM=URI]
-                infile [outfile]
-  
-  Serialize a file's records or description to GeoJSON
-  
-  positional arguments:
-    infile                input file name
-    outfile               output file name, defaults to stdout if omitted
-  
-  optional arguments:
-    -h, --help            show this help message and exit
-    -d, --description     serialize file's data description (schema) only
-    -n N, --indent N      indentation level in N number of chars
-    --compact             use compact separators (',', ':')
-    --encoding ENC        Specify encoding of the input file
-    --record-buffered     Economical buffering of writes at record, not
-                          collection (default), level
-    --ignore-errors       log errors but do not stop serialization
-    --use-ld-context      add a JSON-LD context to JSON output
-    --add-ld-context-item TERM=URI
-                          map a term to a URI and add it to the output's JSON LD
-                          context
+Fiona comes with a command line interface called "fio". See the 
+`CLI Documentation <cli.html>`__ for detailed usage instructions.
 
 Final Notes
 ===========
