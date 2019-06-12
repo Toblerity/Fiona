@@ -45,3 +45,79 @@ class Object(MutableMapping):
             stacklevel=2,
         )
         del self._data[key]
+
+
+class Geometry(Object):
+    """A GeoJSON-like geometry
+    """
+
+    @property
+    def coordinates(self):
+        """The geometry's coordinates
+
+        Returns
+        -------
+        Sequence
+
+        """
+        return self._data.get("coordinates", None)
+
+    @property
+    def type(self):
+        """The geometry's type
+
+        Returns
+        -------
+        str
+
+        """
+        return self._data.get("type", None)
+
+
+class Feature(Object):
+    """A GeoJSON-like feature
+    """
+
+    @property
+    def geometry(self):
+        """The feature's geometry object
+
+        Returns
+        -------
+        Geometry
+
+        """
+        return Geometry(**self._data.get("geometry", {}))
+
+    @property
+    def id(self):
+        """The feature's id
+
+        Returns
+        ------
+        obejct
+
+        """
+        return self._data.get("id", None)
+
+    @property
+    def properties(self):
+        """The feature's properties
+
+        Returns
+        -------
+        Object
+
+        """
+        return Object(**self._data.get("properties", {}))
+
+    @property
+    def type(self):
+        """The Feature's type
+
+        Returns
+        -------
+        str
+
+        """
+        return self._data.get("type", None)
