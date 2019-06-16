@@ -27,6 +27,23 @@ def test_setitem_warning():
     assert obj["g"] == 1
 
 
+def test_update_warning():
+    """Warn about update"""
+    obj = Object()
+    with pytest.warns(FionaDeprecationWarning, match="immutable"):
+        obj.update(g=1)
+    assert "g" in obj
+    assert obj["g"] == 1
+
+
+def test_popitem_warning():
+    """Warn about pop"""
+    obj = Object(g=1)
+    with pytest.warns(FionaDeprecationWarning, match="immutable"):
+        assert obj.pop("g") == 1
+    assert "g" not in obj
+
+
 def test_delitem_warning():
     """Warn about __delitem__"""
     obj = Object(g=1)
