@@ -1,5 +1,7 @@
 """Fiona data model"""
 
+from collections.abc import MutableMapping
+import itertools
 from warnings import warn
 
 from fiona.errors import FionaDeprecationWarning
@@ -17,18 +19,27 @@ class Object(MutableMapping):
     about future deprecation of features.
     """
 
+    _delegated_properties = []
+
     def __init__(self, **data):
         self._data = {}
-        self._data.update(data)
+        self._data.update(**data)
+
+    def _props(self):
+        return {k: getattr(self._delegate, k) for k in self._delegated_properties if k is not None}
 
     def __getitem__(self, item):
-        return self._data[item]
+        props = self._props()
+        props.update(**self._data)
+        return props[item]
 
     def __iter__(self):
-        return iter(self._data)
+        props = self._props()
+        return itertools.chain(iter(props), iter(self._data))
 
     def __len__(self):
-        return len(self._data)
+        props = self._props()
+        return len(props) + len(self._data)
 
     def __setitem__(self, key, value):
         warn(
@@ -36,7 +47,10 @@ class Object(MutableMapping):
             FionaDeprecationWarning,
             stacklevel=2,
         )
-        self._data[key] = value
+        if key in self._delegated_properties:
+            setattr(self._delegate, key, value)
+        else:
+            self._data[key] = value
 
     def __delitem__(self, key):
         warn(
@@ -44,12 +58,28 @@ class Object(MutableMapping):
             FionaDeprecationWarning,
             stacklevel=2,
         )
-        del self._data[key]
+        if key in self._delegated_properties:
+            setattr(self._delegate, key, None)
+        else:
+            del self._data[key]
+
+
+class _Geometry(object):
+
+    def __init__(self, coordinates=None, type=None):
+        self.coordinates = coordinates
+        self.type = type
 
 
 class Geometry(Object):
     """A GeoJSON-like geometry
     """
+
+    _delegated_properties = ["coordinates", "type"]
+
+    def __init__(self, coordinates=None, type=None, **data):
+        self._delegate = _Geometry(coordinates=coordinates, type=type)
+        super(Geometry, self).__init__(**data)
 
     @property
     def coordinates(self):
@@ -60,7 +90,7 @@ class Geometry(Object):
         Sequence
 
         """
-        return self._data.get("coordinates", None)
+        return self._delegate.coordinates
 
     @property
     def type(self):
@@ -71,7 +101,7 @@ class Geometry(Object):
         str
 
         """
-        return self._data.get("type", None)
+        return self._delegate.type
 
 
 class Feature(Object):
