@@ -233,7 +233,7 @@ gdal``).
 Python Requirements
 -------------------
 
-Fiona depends on the modules ``enum34``, ``six``, ``cligj``,  ``munch``, ``argparse``, and
+Fiona depends on the modules ``six``, ``cligj``,  ``munch``, ``argparse``, and
 ``ordereddict`` (the two latter modules are standard in Python 2.7+). Pip will
 fetch these requirements for you, but users installing Fiona from a Windows
 installer must get them separately.

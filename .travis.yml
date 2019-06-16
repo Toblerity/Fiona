@@ -9,6 +9,9 @@ cache:
     - $GDALINST
     - ~/.cache/pip
 
+git:
+  depth: 3    
+
 env:
   global:
     - PIP_WHEEL_DIR=$HOME/.cache/pip/wheels
@@ -23,10 +26,18 @@ env:
     - GDALVERSION="2.2.4"
     - GDALVERSION="2.3.3"
     - GDALVERSION="2.4.1"
-    - GDALVERSION="3.0.0"
-    - GDALVERSION="trunk"
 
 matrix:
+
+  include:
+   - python: "3.7"
+     env: GDALVERSION="3.0.0"
+     if: type != cron
+
+   - python: "3.7"
+     env: GDALVERSION="trunk"
+     if: type != cron
+
   allow_failures:
     - env: GDALVERSION="trunk"
     - env: GDALVERSION="3.0.0"
@@ -46,25 +57,39 @@ python:
 
 before_install:
   - pip install -U pip
-  - pip install wheel coveralls>=1.1 --upgrade
-  - pip install setuptools==36.0.1
-  - pip install wheel
+  - pip install --upgrade coveralls>=1.1
+  
+  # Export environment variables and install proj and gdal from source
   - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$GDALINST/proj-$PROJVERSION/bin:$PATH
   - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$GDALINST/proj-$PROJVERSION/lib:$LD_LIBRARY_PATH
   - . ./scripts/travis_proj_install.sh
   - . ./scripts/travis_gdal_install.sh
   - export GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal
   - export PROJ_LIB=$GDALINST/proj-$PROJVERSION/share/proj
-  - gdal-config --version
 
 install:
+
+  # If event type is cron, remove version constraints from python dependencies 
+  - if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then cat requirements.txt | python scripts/remove_version.py | tee requirements.txt; fi
+  - if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then cat requirements-dev.txt | python scripts/remove_version.py | tee requirements-dev.txt; fi
+  - cat requirements.txt
+  - cat requirements-dev.txt
+  
+  # Install python dependencies 
   - pip install --upgrade --force-reinstall -r requirements-dev.txt
   - pip uninstall -y fiona
+
+  # Check if the installed version of gdal is correct. Fail if not.
   - if [ "$GDALVERSION" = "trunk" ]; then echo "Using gdal trunk"; elif [ $(gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
+
+  # Install fiona
   - pip install --global-option=build_ext --global-option='-I$GDALINST/gdal-$GDALVERSION/include' --global-option='-L$GDALINST/gdal-$GDALVERSION/lib' --global-option='-R$GDALINST/gdal-$GDALVERSION/lib' -e .[test]
+
+  # Print installation information
   - fio --version
   - gdal-config --version
   - fio --gdal-version
+  - pip freeze
 
 script:
   - python -m pytest -m "not wheel" --cov fiona --cov-report term-missing
