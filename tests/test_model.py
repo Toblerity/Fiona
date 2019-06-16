@@ -3,7 +3,7 @@
 import pytest
 
 from fiona.errors import FionaDeprecationWarning
-from fiona.model import Feature, Geometry, Object
+from fiona.model import _Geometry, Feature, Geometry, Object
 
 
 def test_object_len():
@@ -18,7 +18,7 @@ def test_object_iter():
     assert [obj[k] for k in obj] == [1]
 
 
-def test_setitem_warning():
+def test_object_setitem_warning():
     """Warn about __setitem__"""
     obj = Object()
     with pytest.warns(FionaDeprecationWarning, match="immutable"):
@@ -27,7 +27,7 @@ def test_setitem_warning():
     assert obj["g"] == 1
 
 
-def test_update_warning():
+def test_object_update_warning():
     """Warn about update"""
     obj = Object()
     with pytest.warns(FionaDeprecationWarning, match="immutable"):
@@ -36,7 +36,7 @@ def test_update_warning():
     assert obj["g"] == 1
 
 
-def test_popitem_warning():
+def test_object_popitem_warning():
     """Warn about pop"""
     obj = Object(g=1)
     with pytest.warns(FionaDeprecationWarning, match="immutable"):
@@ -44,12 +44,59 @@ def test_popitem_warning():
     assert "g" not in obj
 
 
-def test_delitem_warning():
+def test_object_delitem_warning():
     """Warn about __delitem__"""
     obj = Object(g=1)
     with pytest.warns(FionaDeprecationWarning, match="immutable"):
         del obj["g"]
     assert "g" not in obj
+
+
+def test_object_setitem_delegated():
+    """Delegation in __setitem__ works"""
+    class ThingDelegate(object):
+        def __init__(self, value):
+            self.value = value
+
+    class Thing(Object):
+        _delegated_properties = ["value"]
+
+        def __init__(self, value=None, **data):
+            self._delegate = ThingDelegate(value)
+            super(Thing, self).__init__(**data)
+
+    thing = Thing()
+    assert thing["value"] is None
+    with pytest.warns(FionaDeprecationWarning, match="immutable"):
+        thing["value"] = 1
+    assert thing["value"] == 1
+
+
+def test_object_delitem_delegated():
+    """Delegation in __delitem__ works"""
+    class ThingDelegate(object):
+        def __init__(self, value):
+            self.value = value
+
+    class Thing(Object):
+        _delegated_properties = ["value"]
+
+        def __init__(self, value=None, **data):
+            self._delegate = ThingDelegate(value)
+            super(Thing, self).__init__(**data)
+
+    thing = Thing(1)
+    assert thing["value"] == 1
+    with pytest.warns(FionaDeprecationWarning, match="immutable"):
+        del thing["value"]
+    assert thing["value"] is None
+
+
+def test__geometry_ctor():
+    """Construction of a _Geometry works"""
+    geom = _Geometry(type="Point", coordinates=(0, 0))
+    assert geom.type == "Point"
+    assert geom.coordinates == (0, 0)
 
 
 def test_geometry_type():
@@ -64,10 +111,15 @@ def test_geometry_coordinates():
     assert geom.coordinates == [(0, 0), (1, 1)]
 
 
+def test_geometry__props():
+    """Geometry properties as a dict"""
+    assert Geometry(coordinates=(0, 0), type="Point")._props() == {"coordinates": (0, 0), "type": "Point"}
+
+
 def test_feature_no_geometry():
     """Feature has no attribute"""
     feat = Feature()
-    assert feat.geometry == Object()
+    assert feat.geometry == Geometry()
 
 
 def test_feature_geometry():
@@ -108,7 +160,7 @@ def test_feature_complete():
         "type": "Feature",
         "geometry": {"type": "Point", "coordinates": (0, 0)},
         "properties": {"a": 0, "b": "bar"},
-        "extras": {"this": 1}
+        "extras": {"this": 1},
     }
     feat = Feature(**data)
     assert feat.id == "foo"
