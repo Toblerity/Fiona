@@ -54,6 +54,7 @@ def test_object_delitem_warning():
 
 def test_object_setitem_delegated():
     """Delegation in __setitem__ works"""
+
     class ThingDelegate(object):
         def __init__(self, value):
             self.value = value
@@ -74,6 +75,7 @@ def test_object_setitem_delegated():
 
 def test_object_delitem_delegated():
     """Delegation in __delitem__ works"""
+
     class ThingDelegate(object):
         def __init__(self, value):
             self.value = value
@@ -113,18 +115,21 @@ def test_geometry_coordinates():
 
 def test_geometry__props():
     """Geometry properties as a dict"""
-    assert Geometry(coordinates=(0, 0), type="Point")._props() == {"coordinates": (0, 0), "type": "Point"}
+    assert Geometry(coordinates=(0, 0), type="Point")._props() == {
+        "coordinates": (0, 0),
+        "type": "Point",
+    }
 
 
 def test_feature_no_geometry():
     """Feature has no attribute"""
     feat = Feature()
-    assert feat.geometry == Geometry()
+    assert feat.geometry is None
 
 
 def test_feature_geometry():
     """Feature has a geometry attribute"""
-    feat = Feature(geometry={"type": "Point"})
+    feat = Feature(geometry=Geometry(type="Point"))
     assert feat.geometry is not None
 
 
@@ -143,12 +148,12 @@ def test_feature_id():
 def test_feature_no_properties():
     """Feature has no properties"""
     feat = Feature()
-    assert feat.properties == Object()
+    assert feat.properties is None
 
 
 def test_feature_properties():
     """Feature has properties"""
-    feat = Feature(properties={"foo": 1})
+    feat = Feature(properties=Object(foo=1))
     assert len(feat.properties) == 1
     assert feat.properties["foo"] == 1
 
@@ -162,7 +167,7 @@ def test_feature_complete():
         "properties": {"a": 0, "b": "bar"},
         "extras": {"this": 1},
     }
-    feat = Feature(**data)
+    feat = Feature.from_dict(**data)
     assert feat.id == "foo"
     assert feat.type == "Feature"
     assert feat.geometry.type == "Point"

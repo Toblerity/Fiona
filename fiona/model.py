@@ -26,7 +26,11 @@ class Object(MutableMapping):
         self._data.update(**data)
 
     def _props(self):
-        return {k: getattr(self._delegate, k) for k in self._delegated_properties if k is not None}
+        return {
+            k: getattr(self._delegate, k)
+            for k in self._delegated_properties
+            if k is not None
+        }
 
     def __getitem__(self, item):
         props = self._props()
@@ -65,7 +69,6 @@ class Object(MutableMapping):
 
 
 class _Geometry(object):
-
     def __init__(self, coordinates=None, type=None):
         self.coordinates = coordinates
         self.type = type
@@ -73,6 +76,12 @@ class _Geometry(object):
 
 class Geometry(Object):
     """A GeoJSON-like geometry
+
+    Notes
+    -----
+    Delegates coordinates and type properties to an instance of
+    _Geometry, which will become an extension class in Fiona 2.0.
+
     """
 
     _delegated_properties = ["coordinates", "type"]
@@ -104,9 +113,46 @@ class Geometry(Object):
         return self._delegate.type
 
 
+class _Feature(object):
+    def __init__(self, geometry=None, id=None, properties=None):
+        self.geometry = geometry
+        self.id = id
+        self.properties = properties
+
+
 class Feature(Object):
     """A GeoJSON-like feature
+
+    Notes
+    -----
+    Delegates geometry and properties to an instance of _Feature, which
+    will become an extension class in Fiona 2.0.
+
     """
+
+    _delegated_properties = ["geometry", "id", "properties"]
+
+    def __init__(self, geometry=None, id=None, properties=None, **data):
+        self._delegate = _Feature(geometry=geometry, id=id, properties=properties)
+        super(Feature, self).__init__(**data)
+
+    @classmethod
+    def from_dict(cls, **data):
+        data = data.copy()
+        geom_data = data.pop("geometry", None)
+        geom = (
+            Geometry(
+                coordinates=geom_data.pop("coordinates", None),
+                type=geom_data.pop("type", None),
+                **geom_data
+            )
+            if geom_data
+            else None
+        )
+        props_data = data.pop("properties", None)
+        props = Object(**props_data) if props_data else None
+        fid = data.pop("id", None)
+        return Feature(geometry=geom, id=fid, properties=props, **data)
 
     @property
     def geometry(self):
@@ -117,7 +163,7 @@ class Feature(Object):
         Geometry
 
         """
-        return Geometry(**self._data.get("geometry", {}))
+        return self._delegate.geometry
 
     @property
     def id(self):
@@ -128,7 +174,7 @@ class Feature(Object):
         obejct
 
         """
-        return self._data.get("id", None)
+        return self._delegate.id
 
     @property
     def properties(self):
@@ -139,7 +185,7 @@ class Feature(Object):
         Object
 
         """
-        return Object(**self._data.get("properties", {}))
+        return self._delegate.properties
 
     @property
     def type(self):
@@ -150,4 +196,4 @@ class Feature(Object):
         str
 
         """
-        return self._data.get("type", None)
+        return "Feature"
