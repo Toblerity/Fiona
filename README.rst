@@ -216,8 +216,8 @@ info`` pretty prints information about a data file.
 Installation
 ============
 
-Fiona requires Python 2.7 or 3.4+ and GDAL/OGR 1.8+. To build from
-a source distribution you will need a C compiler and GDAL and Python
+Fiona requires Python versions 2.7 or 3.4+ and GDAL version 1.11-2.4. GDAL version 3 is not yet supported.
+To build from a source distribution you will need a C compiler and GDAL and Python
 development headers and libraries (libgdal1-dev for Debian/Ubuntu, gdal-dev for
 CentOS/Fedora).
 
