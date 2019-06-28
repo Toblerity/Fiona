@@ -310,17 +310,29 @@ def listlayers(path, vfs=None):
     "tar://"". In this case, the ``path`` must be an absolute path within
     that container.
     """
-    if not isinstance(path, string_types):
+
+    if isinstance(path, string_types):
+        path_str = path
+    elif isinstance(path, Path):
+        path_str = str(path)
+    else:
         raise TypeError("invalid path: %r" % path)
-    if vfs and not isinstance(vfs, string_types):
-        raise TypeError("invalid vfs: %r" % vfs)
 
     if vfs:
-        pobj_vfs = parse_path(vfs)
-        pobj_path = parse_path(path)
+
+        if isinstance(vfs, string_types):
+            vfs_str = vfs
+        elif isinstance(vfs, Path):
+            vfs_str = str(vfs)
+        else:
+            raise TypeError("invalid vfs: %r" % vfs)
+
+        pobj_vfs = parse_path(vfs_str)
+        pobj_path = parse_path(path_str)
         pobj = ParsedPath(pobj_path.path, pobj_vfs.path, pobj_vfs.scheme)
+
     else:
-        pobj = parse_path(path)
+        pobj = parse_path(path_str)
 
     return _listlayers(vsi_path(pobj))
 
