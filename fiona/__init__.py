@@ -311,19 +311,19 @@ def listlayers(path, vfs=None):
     that container.
     """
 
-    if isinstance(path, Path):
-        path_str = str(path)
-    elif isinstance(path, string_types):
+    if isinstance(path, string_types):
         path_str = path
+    elif isinstance(path, Path):
+        path_str = str(path)
     else:
         raise TypeError("invalid path: %r" % path)
 
     if vfs:
 
-        if isinstance(vfs, Path):
-            vfs_str = str(vfs)
-        elif isinstance(vfs, string_types):
+        if isinstance(vfs, string_types):
             vfs_str = vfs
+        elif isinstance(vfs, Path):
+            vfs_str = str(vfs)
         else:
             raise TypeError("invalid vfs: %r" % vfs)
 
