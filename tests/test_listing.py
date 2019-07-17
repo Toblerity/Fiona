@@ -68,6 +68,7 @@ def test_path_object(path_coutwildrnp_shp):
     assert fiona.listlayers(path_obj) == ['coutwildrnp']
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Path doesn't support URI-style locations on Windows")
 def test_zip_path_arch(path_coutwildrnp_zip):
     vfs = Path('zip://{}'.format(path_coutwildrnp_zip))
     assert fiona.listlayers('/coutwildrnp.shp', vfs=vfs) == ['coutwildrnp']
