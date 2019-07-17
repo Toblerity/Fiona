@@ -132,7 +132,7 @@ def parse_path(path):
     elif path.startswith('/vsi'):
         return UnparsedPath(path)
 
-    elif re.match("^[a-z\+]*://", path):
+    elif re.match("^[a-z\\+]*://", path):
         parts = urlparse(path)
 
         # if the scheme is not one of Rasterio's supported schemes, we
