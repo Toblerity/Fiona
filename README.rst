@@ -19,7 +19,7 @@ and protocols such as files, dictionaries, mappings, and iterators instead of
 classes specific to OGR. Fiona can read and write real-world data using
 multi-layered GIS formats and zipped virtual file systems and integrates
 readily with other Python GIS packages such as pyproj_, Rtree_, and Shapely_.
-Fiona is supported only on CPython versions 2.7 and 3.4+.
+Fiona is supported only on CPython versions 2.7 and 3.5+.
 
 For more details, see:
 
@@ -216,7 +216,7 @@ info`` pretty prints information about a data file.
 Installation
 ============
 
-Fiona requires Python versions 2.7 or 3.4+ and GDAL version 1.11-2.4. GDAL version 3 is not yet supported.
+Fiona requires Python versions 2.7 or 3.5+ and GDAL version 1.11-2.4. GDAL version 3 is not yet supported.
 To build from a source distribution you will need a C compiler and GDAL and Python
 development headers and libraries (libgdal1-dev for Debian/Ubuntu, gdal-dev for
 CentOS/Fedora).
@@ -233,10 +233,9 @@ gdal``).
 Python Requirements
 -------------------
 
-Fiona depends on the modules ``enum34``, ``six``, ``cligj``,  ``munch``, ``argparse``, and
-``ordereddict`` (the two latter modules are standard in Python 2.7+). Pip will
-fetch these requirements for you, but users installing Fiona from a Windows
-installer must get them separately.
+Fiona depends on the modules ``six``, ``cligj``,  and ``munch``.
+Pip will fetch these requirements for you, but users installing Fiona from a
+Windows installer must get them separately.
 
 Unix-like systems
 -----------------

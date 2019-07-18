@@ -1,8 +1,5 @@
-dist: xenial
-
 language: python
-
-sudo: false
+dist: xenial
 
 cache:
   directories:
@@ -17,19 +14,46 @@ env:
     - GDALBUILD=$HOME/gdalbuild
     - PROJBUILD=$HOME/projbuild
     - PROJVERSION="6.0.0"
-    
-  matrix:
-
-    - GDALVERSION="2.2.4"
-    - GDALVERSION="2.3.3"
-    - GDALVERSION="2.4.1"
-    - GDALVERSION="3.0.0"
-    - GDALVERSION="trunk"
 
 matrix:
+  include:
+    - python: "2.7"
+      env:
+      - GDALVERSION="2.2.4"
+
+    - python: "3.5"
+      env:
+      - GDALVERSION="2.2.4"
+
+    - python: "3.6"
+      env:
+      - GDALVERSION="2.2.4"
+
+    - python: "3.6"
+      env:
+      - GDALVERSION="2.3.3"
+
+    - python: "3.7"
+      env:
+      - GDALVERSION="2.4.2"
+
+    - python: "3.7"
+      env:
+      - GDALVERSION="3.0.1"
+
+    - python: "3.7"
+      env:
+      - GDALVERSION="trunk"
+
   allow_failures:
-    - env: GDALVERSION="trunk"
-    - env: GDALVERSION="3.0.0"
+    - python: "3.7"
+      env:
+      - GDALVERSION="3.0.1"
+
+    - python: "3.7"
+      env:
+      - GDALVERSION="trunk"
+
 
 addons:
   apt:
@@ -40,9 +64,6 @@ addons:
     - gfortran
     - libsqlite3-dev
     - sqlite3
-
-python:
-  - "3.7"
 
 before_install:
   - pip install -U pip

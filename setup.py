@@ -10,6 +10,11 @@ from setuptools import setup
 from setuptools.extension import Extension
 
 
+# Ensure minimum version of Python is running
+py_version = sys.version_info[0:2]
+if not (py_version == (2, 7) or py_version >= (3, 5)):
+    raise RuntimeError('Fiona requires Python 2.7, >=3.5')
+
 # Use Cython if available.
 try:
     from Cython.Build import cythonize
@@ -273,13 +278,6 @@ requirements = [
     'six>=1.7',
     'munch']
 
-if sys.version_info < (2, 7):
-    requirements.append('argparse')
-    requirements.append('ordereddict')
-
-if sys.version_info < (3, 4):
-    requirements.append('enum34')
-
 extras_require = {
     'calc': ['shapely'],
     's3': ['boto3>=1.2.4'],
@@ -336,7 +334,11 @@ setup_args = dict(
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Topic :: Scientific/Engineering :: GIS'])
 
 if os.environ.get('PACKAGE_DATA'):
