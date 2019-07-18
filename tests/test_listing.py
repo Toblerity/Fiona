@@ -1,6 +1,9 @@
 """Test listing a datasource's layers."""
 
-from pathlib import Path
+try:
+    from pathlib import Path
+except ImportError:
+    Path = None
 
 import logging
 import sys
@@ -63,11 +66,13 @@ def test_invalid_path_ioerror():
         fiona.listlayers("foobar")
 
 
+@pytest.mark.skipif(Path is None, reason='No pathlib.Path')
 def test_path_object(path_coutwildrnp_shp):
     path_obj = Path(path_coutwildrnp_shp)
     assert fiona.listlayers(path_obj) == ['coutwildrnp']
 
 
+@pytest.mark.skipif(Path is None, reason='No pathlib.Path')
 @pytest.mark.skipif(sys.platform == "win32", reason="Path doesn't support URI-style locations on Windows")
 def test_zip_path_arch(path_coutwildrnp_zip):
     vfs = Path('zip://{}'.format(path_coutwildrnp_zip))
