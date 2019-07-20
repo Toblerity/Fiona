@@ -1,8 +1,8 @@
 -r requirements.txt
 coverage==4.5.1
 cython==0.28.3
-pytest==3.4.2
-pytest-cov==2.5.1
+pytest==5.0.1
+pytest-cov==2.7.1
 setuptools==39.0.1
 boto3==1.9.19
 wheel==0.31.1
