@@ -89,6 +89,8 @@ cdef extern from "ogr_api.h":
     OGRErr  OGR_G_AddGeometryDirectly (void *geometry, void *part)
     void    OGR_G_AddPoint (void *geometry, double x, double y, double z)
     void    OGR_G_AddPoint_2D (void *geometry, double x, double y)
+    void    OGR_G_AddPointM (void *geometry, double x, double y, double m)
+    void    OGR_G_AddPointZM (void *geometry, double x, double y, double z, double m)
     void    OGR_G_CloseRings (void *geometry)
     void *  OGR_G_CreateGeometry (OGRwkbGeometryType wkbtypecode)
     void    OGR_G_DestroyGeometry (void *geometry)
@@ -103,8 +105,10 @@ cdef extern from "ogr_api.h":
     double  OGR_G_GetX (void *geometry, int n)
     double  OGR_G_GetY (void *geometry, int n)
     double  OGR_G_GetZ (void *geometry, int n)
+    double  OGR_G_GetM (void *geometry, int n)
     void    OGR_G_ImportFromWkb (void *geometry, unsigned char *bytes, int nbytes)
     int     OGR_G_WkbSize (void *geometry)
+    int     OGR_G_IsMeasured (void *geometry)
 
 
 cdef class GeomBuilder:
@@ -114,7 +118,9 @@ cdef class GeomBuilder:
     cdef object ndims
     cdef _buildCoords(self, void *geom)
     cpdef _buildPoint(self)
+    cpdef _buildPointM(self)
     cpdef _buildLineString(self)
+    cpdef _buildLineStringM(self)
     cpdef _buildLinearRing(self)
     cdef _buildParts(self, void *geom)
     cpdef _buildPolygon(self)
@@ -129,8 +135,11 @@ cdef class GeomBuilder:
 cdef class OGRGeomBuilder:
     cdef void * _createOgrGeometry(self, int geom_type) except NULL
     cdef _addPointToGeometry(self, void *cogr_geometry, object coordinate)
+    cdef _addPointMToGeometry(self, void *cogr_geometry, object coordinate)
     cdef void * _buildPoint(self, object coordinates) except NULL
+    cdef void * _buildPointM(self, object coordinates) except NULL
     cdef void * _buildLineString(self, object coordinates) except NULL
+    cdef void * _buildLineStringM(self, object coordinates) except NULL
     cdef void * _buildLinearRing(self, object coordinates) except NULL
     cdef void * _buildPolygon(self, object coordinates) except NULL
     cdef void * _buildMultiPoint(self, object coordinates) except NULL

@@ -22,7 +22,9 @@ def test_ogr_builder_exceptions():
 
 @pytest.mark.parametrize('geom_type, coordinates', [
     ('Point', (0.0, 0.0)),
+    ('PointM', (0.0, 0.0, 0.0)),
     ('LineString', [(0.0, 0.0), (1.0, 1.0)]),
+    ('LineStringM', [(0.0, 0.0, 1.0), (1.0, 1.0, 0.0)]),
     ('Polygon',
      [[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]]),
     ('MultiPoint', [(0.0, 0.0), (1.0, 1.0)]),

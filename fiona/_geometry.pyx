@@ -43,7 +43,12 @@ GEOMETRY_TYPES = {
     0x80000004: '3D MultiPoint',
     0x80000005: '3D MultiLineString',
     0x80000006: '3D MultiPolygon',
-    0x80000007: '3D GeometryCollection' }
+    0x80000007: '3D GeometryCollection',
+    2001: 'PointM',
+    2002: 'LineStringM',
+    3001: 'PointZM',
+    3002: 'LineStringZM',
+}
 
 # mapping of GeoJSON type names to OGR integer geometry types
 GEOJSON2OGR_GEOMETRY_TYPES = dict((v, k) for k, v in GEOMETRY_TYPES.iteritems())
@@ -69,10 +74,10 @@ cdef unsigned int geometry_type_code(name) except? 9999:
 cdef object normalize_geometry_type_code(unsigned int code):
     """Normalize M geometry type codes."""
     # Normalize 'M' types to 2D types.
-    if 2000 <= code < 3000:
+    if 2003 <= code < 3000:
         code = code % 1000
     # Normalize 'ZM' types to 3D types.
-    elif 3000 <= code < 4000:
+    elif 3003 <= code < 4000:
         code = (code % 1000) | 0x80000000
     if code not in GEOMETRY_TYPES:
         raise UnsupportedGeometryTypeError(code)
@@ -81,7 +86,11 @@ cdef object normalize_geometry_type_code(unsigned int code):
 
 
 cdef inline unsigned int base_geometry_type_code(unsigned int code):
-    """ Returns base geometry code without Z, M and ZM types """
+    """ ignore the supported Z and M types"""
+    if code in [2001, 2002, 3001, 3002]:
+        return code
+
+    """ Returns base geometry code for the rest of  Z, M and ZM types """
     # Remove 2.5D flag.
     code = code & (~0x80000000)
 
@@ -123,14 +132,28 @@ cdef class GeomBuilder:
             values = [OGR_G_GetX(geom, i), OGR_G_GetY(geom, i)]
             if self.ndims > 2:
                 values.append(OGR_G_GetZ(geom, i))
+            if OGR_G_IsMeasured(geom):
+                values.append(OGR_G_GetM(geom, i))
             coords.append(tuple(values))
         return coords
     
     cpdef _buildPoint(self):
         return {'type': 'Point', 'coordinates': self._buildCoords(self.geom)[0]}
+
+    cpdef _buildPointM(self):
+        return {'type': 'PointM', 'coordinates': self._buildCoords(self.geom)[0]}
+
+    cpdef _buildPointZM(self):
+        return {'type': 'PointZM', 'coordinates': self._buildCoords(self.geom)[0]}
     
     cpdef _buildLineString(self):
         return {'type': 'LineString', 'coordinates': self._buildCoords(self.geom)}
+
+    cpdef _buildLineStringM(self):
+        return {'type': 'LineStringM', 'coordinates': self._buildCoords(self.geom)}
+
+    cpdef _buildLineStringM(self):
+        return {'type': 'LineStringZM', 'coordinates': self._buildCoords(self.geom)}
     
     cpdef _buildLinearRing(self):
         return {'type': 'LinearRing', 'coordinates': self._buildCoords(self.geom)}
@@ -172,9 +195,7 @@ cdef class GeomBuilder:
             raise ValueError("Null geom")
 
         cdef unsigned int etype = OGR_G_GetGeometryType(geom)
-
         self.code = base_geometry_type_code(etype)
-
         if self.code not in GEOMETRY_TYPES:
             raise UnsupportedGeometryTypeError(self.code)
 
@@ -209,17 +230,37 @@ cdef class OGRGeomBuilder:
             x, y, z = coordinate[:3]
             OGR_G_AddPoint(cogr_geometry, x, y, z)
 
+    cdef _addPointMToGeometry(self, void *cogr_geometry, object coordinate):
+        if len(coordinate) == 3:
+            x, y, m = coordinate
+            OGR_G_AddPointM(cogr_geometry, x, y, m)
+        else:
+            x, y, z, m = coordinate[:4]
+            OGR_G_AddPointZM(cogr_geometry, x, y, z, m)
+
     cdef void * _buildPoint(self, object coordinates) except NULL:
         cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['Point'])
         self._addPointToGeometry(cogr_geometry, coordinates)
         return cogr_geometry
-    
+
+    cdef void * _buildPointM(self, object coordinates) except NULL:
+        cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['Point'])
+        self._addPointMToGeometry(cogr_geometry, coordinates)
+        return cogr_geometry
+
     cdef void * _buildLineString(self, object coordinates) except NULL:
         cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['LineString'])
         for coordinate in coordinates:
             self._addPointToGeometry(cogr_geometry, coordinate)
         return cogr_geometry
-    
+
+    cdef void * _buildLineStringM(self, object coordinates) except NULL:
+        cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['LineStringM'])
+        for coordinate in coordinates:
+            self._addPointMToGeometry(cogr_geometry, coordinate)
+        return cogr_geometry
+
+
     cdef void * _buildLinearRing(self, object coordinates) except NULL:
         cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['LinearRing'])
         for coordinate in coordinates:
@@ -272,8 +313,12 @@ cdef class OGRGeomBuilder:
         cdef object coordinates = geometry.get('coordinates')
         if typename == 'Point':
             return self._buildPoint(coordinates)
+        if typename == 'PointM':
+            return self._buildPointM(coordinates)
         elif typename == 'LineString':
             return self._buildLineString(coordinates)
+        elif typename == 'LineStringM':
+            return self._buildLineStringM(coordinates)
         elif typename == 'LinearRing':
             return self._buildLinearRing(coordinates)
         elif typename == 'Polygon':
