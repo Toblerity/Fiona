@@ -152,7 +152,7 @@ cdef class GeomBuilder:
     cpdef _buildLineStringM(self):
         return {'type': 'LineStringM', 'coordinates': self._buildCoords(self.geom)}
 
-    cpdef _buildLineStringM(self):
+    cpdef _buildLineStringZM(self):
         return {'type': 'LineStringZM', 'coordinates': self._buildCoords(self.geom)}
     
     cpdef _buildLinearRing(self):
