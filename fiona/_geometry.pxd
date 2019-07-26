@@ -109,6 +109,8 @@ cdef extern from "ogr_api.h":
     void    OGR_G_ImportFromWkb (void *geometry, unsigned char *bytes, int nbytes)
     int     OGR_G_WkbSize (void *geometry)
     int     OGR_G_IsMeasured (void *geometry)
+    int     OGR_G_Is3D (void *geometry)
+
 
 
 cdef class GeomBuilder:

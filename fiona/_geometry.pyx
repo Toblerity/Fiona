@@ -130,7 +130,7 @@ cdef class GeomBuilder:
         coords = []
         for i in range(npoints):
             values = [OGR_G_GetX(geom, i), OGR_G_GetY(geom, i)]
-            if self.ndims > 2:
+            if OGR_G_Is3D(geom):
                 values.append(OGR_G_GetZ(geom, i))
             if OGR_G_IsMeasured(geom):
                 values.append(OGR_G_GetM(geom, i))
@@ -244,7 +244,12 @@ cdef class OGRGeomBuilder:
         return cogr_geometry
 
     cdef void * _buildPointM(self, object coordinates) except NULL:
-        cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['Point'])
+        cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['PointM'])
+        self._addPointMToGeometry(cogr_geometry, coordinates)
+        return cogr_geometry
+
+    cdef void * _buildPointM(self, object coordinates) except NULL:
+        cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['PointZM'])
         self._addPointMToGeometry(cogr_geometry, coordinates)
         return cogr_geometry
 
@@ -256,6 +261,12 @@ cdef class OGRGeomBuilder:
 
     cdef void * _buildLineStringM(self, object coordinates) except NULL:
         cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['LineStringM'])
+        for coordinate in coordinates:
+            self._addPointMToGeometry(cogr_geometry, coordinate)
+        return cogr_geometry
+
+    cdef void * _buildLineStringZM(self, object coordinates) except NULL:
+        cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['LineStringZM'])
         for coordinate in coordinates:
             self._addPointMToGeometry(cogr_geometry, coordinate)
         return cogr_geometry
@@ -313,12 +324,16 @@ cdef class OGRGeomBuilder:
         cdef object coordinates = geometry.get('coordinates')
         if typename == 'Point':
             return self._buildPoint(coordinates)
-        if typename == 'PointM':
+        elif typename == 'PointM':
             return self._buildPointM(coordinates)
+        elif typename == 'PointZM':
+            return self._buildPointZM(coordinates)
         elif typename == 'LineString':
             return self._buildLineString(coordinates)
         elif typename == 'LineStringM':
             return self._buildLineStringM(coordinates)
+        elif typename == 'LineStringZM':
+            return self._buildLineStringZM(coordinates)
         elif typename == 'LinearRing':
             return self._buildLinearRing(coordinates)
         elif typename == 'Polygon':
