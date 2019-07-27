@@ -65,7 +65,14 @@ if [ "$GDALVERSION" = "trunk" ]; then
   make -j 2
   make install
   rm -rf $GDALBUILD
+
+elif ( curl -o/dev/null -sfI "https://rbuffat.github.io/gdal_builder/gdal_$GDALVERSION-1_amd64.deb" ); then
+  # install deb when available
   
+  wget https://rbuffat.github.io/gdal_builder/gdal_$GDALVERSION-1_amd64.deb
+  dpkg -i gdal_$GDALVERSION-1_amd64.deb
+  rm gdal_$GDALVERSION-1_amd64.deb
+
 elif [ ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
   # only build if not already installed
   cd $GDALBUILD
