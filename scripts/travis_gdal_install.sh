@@ -1,6 +1,10 @@
 #!/bin/sh
 set -e
 
+# change back to travis build dir
+cd $TRAVIS_BUILD_DIR
+
+
 GDALOPTS="  --with-ogr \
             --with-geos \
             --with-expat \
@@ -68,6 +72,7 @@ if [ "$GDALVERSION" = "trunk" ]; then
 
 elif ( curl -o/dev/null -sfI "https://rbuffat.github.io/gdal_builder/gdal_$GDALVERSION-1_amd64.deb" ); then
   # install deb when available
+  
   wget https://rbuffat.github.io/gdal_builder/gdal_$GDALVERSION-1_amd64.deb
   sudo dpkg -i gdal_$GDALVERSION-1_amd64.deb
   rm gdal_$GDALVERSION-1_amd64.deb
