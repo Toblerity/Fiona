@@ -23,13 +23,13 @@ env:
     - GDALVERSION="2.3.3"
     - GDALVERSION="2.4.2"
     - GDALVERSION="2.5.0rc1"
-    - GDALVERSION="3.0.0"
+    - GDALVERSION="3.0.1"
     - GDALVERSION="trunk"
 
 matrix:
   allow_failures:
     - env: GDALVERSION="trunk"
-    - env: GDALVERSION="3.0.0"
+    - env: GDALVERSION="3.0.1"
     - env: GDALVERSION="2.5.0rc1"
 
 addons:

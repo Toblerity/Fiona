@@ -45,5 +45,7 @@ if $(dpkg --compare-versions "$GDALVERSION" "ge" "2.5"); then
 
 fi
 
+ls -l $PROJINST
+
 # change back to travis build dir
 cd $TRAVIS_BUILD_DIR
