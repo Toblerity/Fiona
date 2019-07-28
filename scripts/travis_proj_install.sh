@@ -26,7 +26,7 @@ if $(dpkg --compare-versions "$GDALVERSION" "ge" "2.5"); then
         sudo dpkg -i proj_$PROJVERSION-1_amd64.deb
         rm proj_$PROJVERSION-1_amd64.deb
     
-    else:
+    else
         # Otherwise we compile proj from source
 
         if [ ! -d "$PROJINST/proj-$PROJVERSION" ]; then
