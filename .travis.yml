@@ -30,6 +30,7 @@ matrix:
   allow_failures:
     - env: GDALVERSION="trunk"
     - env: GDALVERSION="3.0.0"
+    - env: GDALVERSION="2.5.0rc1"
 
 addons:
   apt:
