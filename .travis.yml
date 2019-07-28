@@ -50,8 +50,8 @@ before_install:
   - pip install wheel coveralls>=1.1 --upgrade
   - pip install setuptools==36.0.1
   - pip install wheel
-  - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$GDALINST/proj-$PROJVERSION/bin:$PATH
-  - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$GDALINST/proj-$PROJVERSION/lib:$LD_LIBRARY_PATH
+  - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$PROJINST/proj-$PROJVERSION/bin:$PATH
+  - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$PROJINST/proj-$PROJVERSION/lib:$LD_LIBRARY_PATH
   - . ./scripts/travis_proj_install.sh
   - . ./scripts/travis_gdal_install.sh
   - export GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal
