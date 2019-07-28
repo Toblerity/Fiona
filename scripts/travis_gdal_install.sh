@@ -61,16 +61,8 @@ fi
 
 ls -l $GDALINST
 
-if [ "$GDALVERSION" = "trunk" ]; then
-  # always rebuild trunk
-  git clone -b master --single-branch --depth=1 https://github.com/OSGeo/gdal.git $GDALBUILD/trunk
-  cd $GDALBUILD/trunk/gdal
-  ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS
-  make -j 2
-  make install
-  rm -rf $GDALBUILD
 
-elif ( curl -o/dev/null -sfI "https://rbuffat.github.io/gdal_builder/gdal_$GDALVERSION-1_amd64.deb" ); then
+if ( curl -o/dev/null -sfI "https://rbuffat.github.io/gdal_builder/gdal_$GDALVERSION-1_amd64.deb" ); then
   # install deb when available
   
   wget https://rbuffat.github.io/gdal_builder/gdal_$GDALVERSION-1_amd64.deb
@@ -101,6 +93,16 @@ elif [ ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
   make -j 2
   make install
   rm -rf $GDALBUILD
+
+elif [ "$GDALVERSION" = "trunk" ]; then
+  # always rebuild trunk
+  git clone -b master --single-branch --depth=1 https://github.com/OSGeo/gdal.git $GDALBUILD/trunk
+  cd $GDALBUILD/trunk/gdal
+  ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS
+  make -j 2
+  make install
+  rm -rf $GDALBUILD
+  
 fi
 
 # change back to travis build dir
