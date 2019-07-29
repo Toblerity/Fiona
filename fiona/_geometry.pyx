@@ -86,7 +86,7 @@ cdef object normalize_geometry_type_code(unsigned int code):
 
 
 cdef inline unsigned int base_geometry_type_code(unsigned int code):
-    """ ignore the supported Z and M types"""
+    """ ignore the supported M and ZM types"""
     if code in [2001, 2002, 3001, 3002]:
         return code
 
@@ -248,7 +248,7 @@ cdef class OGRGeomBuilder:
         self._addPointMToGeometry(cogr_geometry, coordinates)
         return cogr_geometry
 
-    cdef void * _buildPointM(self, object coordinates) except NULL:
+    cdef void * _buildPointZM(self, object coordinates) except NULL:
         cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['PointZM'])
         self._addPointMToGeometry(cogr_geometry, coordinates)
         return cogr_geometry
