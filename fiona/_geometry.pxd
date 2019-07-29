@@ -142,8 +142,10 @@ cdef class OGRGeomBuilder:
     cdef _addPointMToGeometry(self, void *cogr_geometry, object coordinate)
     cdef void * _buildPoint(self, object coordinates) except NULL
     cdef void * _buildPointM(self, object coordinates) except NULL
+    cdef void * _buildPointZM(self, object coordinates) except NULL
     cdef void * _buildLineString(self, object coordinates) except NULL
     cdef void * _buildLineStringM(self, object coordinates) except NULL
+    cdef void * _buildLineStringZM(self, object coordinates) except NULL
     cdef void * _buildLinearRing(self, object coordinates) except NULL
     cdef void * _buildPolygon(self, object coordinates) except NULL
     cdef void * _buildMultiPoint(self, object coordinates) except NULL
