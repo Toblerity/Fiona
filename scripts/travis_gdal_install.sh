@@ -94,10 +94,10 @@ elif [ ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
   make install
   rm -rf $GDALBUILD
 
-elif [ "$GDALVERSION" = "trunk" ]; then
-  # always rebuild trunk
-  git clone -b master --single-branch --depth=1 https://github.com/OSGeo/gdal.git $GDALBUILD/trunk
-  cd $GDALBUILD/trunk/gdal
+elif [ "$GDALVERSION" = "master" ]; then
+  # always rebuild master
+  git clone -b master --single-branch --depth=1 https://github.com/OSGeo/gdal.git $GDALBUILD/master
+  cd $GDALBUILD/master/gdal
   ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS
   make -j 2
   make install

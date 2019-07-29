@@ -24,11 +24,11 @@ env:
     - GDALVERSION="2.4.2"
     - GDALVERSION="2.5.0rc1"
     - GDALVERSION="3.0.1"
-    - GDALVERSION="trunk"
+    - GDALVERSION="master"
 
 matrix:
   allow_failures:
-    - env: GDALVERSION="trunk"
+    - env: GDALVERSION="master"
     - env: GDALVERSION="3.0.1"
     - env: GDALVERSION="2.5.0rc1"
 
@@ -61,7 +61,7 @@ before_install:
 install:
   - pip install --upgrade --force-reinstall -r requirements-dev.txt
   - pip uninstall -y fiona
-  - if [ "$GDALVERSION" = "trunk" ]; then echo "Using gdal trunk"; elif [ $(gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
+  - if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $(gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
   - pip install --global-option=build_ext --global-option='-I$GDALINST/gdal-$GDALVERSION/include' --global-option='-L$GDALINST/gdal-$GDALVERSION/lib' --global-option='-R$GDALINST/gdal-$GDALVERSION/lib' -e .[test]
   - fio --version
   - gdal-config --version
@@ -74,4 +74,4 @@ after_success:
   - coveralls || echo "!! intermittent coveralls failure"
 
 before_cache:
-  - if [ "$GDALVERSION" = "trunk" ]; then rm -rf $GDALINST/gdal-$GDALVERSION; fi
+  - if [ "$GDALVERSION" = "master" ]; then rm -rf $GDALINST/gdal-$GDALVERSION; fi

@@ -16,7 +16,7 @@ fi
 ls -l $PROJINST
 
 # For gdal greater equal 2.5 wee need proj6
-if $(dpkg --compare-versions "$GDALVERSION" "ge" "2.5") ||  [ "$GDALVERSION" = "trunk" ]; then
+if $(dpkg --compare-versions "$GDALVERSION" "ge" "2.5") ||  [ "$GDALVERSION" = "master" ]; then
             sudo dpkg -r proj
 
     if ( curl -o/dev/null -sfI "https://rbuffat.github.io/gdal_builder/proj_$PROJVERSION-1_amd64.deb" ); then
