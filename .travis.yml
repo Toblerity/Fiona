@@ -5,6 +5,7 @@ language: python
 cache:
   directories:
     - $GDALINST
+    - $PROJINST
     - ~/.cache/pip
 
 env:
