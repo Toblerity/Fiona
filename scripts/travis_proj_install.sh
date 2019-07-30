@@ -24,7 +24,6 @@ if $(dpkg --compare-versions "$GDALVERSION" "ge" "2.5") ||  [ "$GDALVERSION" = "
 
         wget https://rbuffat.github.io/gdal_builder/proj_$PROJVERSION-1_amd64.deb
         sudo dpkg -i proj_$PROJVERSION-1_amd64.deb
-        rm proj_$PROJVERSION-1_amd64.deb
     
     else
         # Otherwise we compile proj from source

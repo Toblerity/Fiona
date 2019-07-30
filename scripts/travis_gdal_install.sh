@@ -67,7 +67,6 @@ if ( curl -o/dev/null -sfI "https://rbuffat.github.io/gdal_builder/gdal_$GDALVER
   
   wget https://rbuffat.github.io/gdal_builder/gdal_$GDALVERSION-1_amd64.deb
   sudo dpkg -i gdal_$GDALVERSION-1_amd64.deb
-  rm gdal_$GDALVERSION-1_amd64.deb
 
 elif [ ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
   # only build if not already installed
