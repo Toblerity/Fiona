@@ -1,11 +1,14 @@
 """Tests of MemoryFile and ZippedMemoryFile"""
 
+import os
 from io import BytesIO
 import pytest
 import uuid
 
 import fiona
 from fiona.io import MemoryFile, ZipMemoryFile
+
+from .conftest import requires_gpkg
 
 
 @pytest.fixture(scope='session')
@@ -75,3 +78,27 @@ def test_write_memoryfile_(profile_first_coutwildrnp_shp):
     with MemoryFile(data) as memfile:
         with memfile.open() as col:
             assert len(col) == 1
+
+
+@requires_gpkg
+def test_read_multilayer_memoryfile(path_coutwildrnp_json, tmpdir):
+    """Test read access to multilayer dataset in from file-like object"""
+    with fiona.open(path_coutwildrnp_json, "r") as src:
+        schema = src.schema
+        features = list(src)
+
+    path = os.path.join(tmpdir, "test.gpkg")
+    with fiona.open(path, "w", driver="GPKG", schema=schema, layer="layer1") as dst:
+        dst.writerecords(features[0:5])
+    with fiona.open(path, "w", driver="GPKG", schema=schema, layer="layer2") as dst:
+        dst.writerecords(features[5:])
+
+    with open(path, "rb") as f:
+        with fiona.open(f, layer="layer1") as src:
+            assert src.name == "layer1"
+            assert len(src) == 5
+    # Bug reported in #781 where this next section would fail
+    with open(path, "rb") as f:
+        with fiona.open(f, layer="layer2") as src:
+            assert src.name == "layer2"
+            assert len(src) == 62
