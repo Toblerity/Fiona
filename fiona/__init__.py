@@ -202,7 +202,10 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
         @contextmanager
         def fp_reader(fp):
             memfile = MemoryFile(fp.read())
-            dataset = memfile.open()
+            dataset = memfile.open(
+                driver=driver, crs=crs, schema=schema, layer=layer,
+                encoding=encoding, enabled_drivers=enabled_drivers,
+                **kwargs)
             try:
                 yield dataset
             finally:
