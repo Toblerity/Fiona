@@ -47,9 +47,15 @@ GDALOPTS="  --with-ogr \
             --without-python
             --with-oci=no \
             --without-mrf \
-            --with-webp=no \
-            --with-proj=$GDALINST/proj-$PROJVERSION"
+            --with-webp=no"
 
+# Proj flag changed with gdal 2.3
+if $(dpkg --compare-versions "$GDALVERSION" "lt" "2.3"); then
+    GDALOPTS_PROJ="--with-static-proj4=$PROJINST/proj-$PROJVERSION";
+else
+    GDALOPTS_PROJ="--with-proj=${PROJINST}/proj-$PROJVERSION";
+fi
+            
 # Create build dir if not exists
 if [ ! -d "$GDALBUILD" ]; then
   mkdir $GDALBUILD;
@@ -61,12 +67,12 @@ fi
 
 ls -l $GDALINST
 
-
-if ( curl -o/dev/null -sfI "https://rbuffat.github.io/gdal_builder/gdal_$GDALVERSION-1_amd64.deb" ); then
+GDAL_DEB_PATH="gdal_${GDALVERSION}_proj_${PROJVERSION}-1_amd64_${DISTRIB_CODENAME}.deb"
+if ( curl -o/dev/null -sfI "https://rbuffat.github.io/gdal_builder/$GDAL_DEB_PATH" ); then
   # install deb when available
   
-  wget https://rbuffat.github.io/gdal_builder/gdal_$GDALVERSION-1_amd64.deb
-  sudo dpkg -i gdal_$GDALVERSION-1_amd64.deb
+  wget "https://rbuffat.github.io/gdal_builder/$GDAL_DEB_PATH"
+  sudo dpkg -i "$GDAL_DEB_PATH"
 
 elif [ ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
   # only build if not already installed
@@ -88,7 +94,7 @@ elif [ ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
     cd gdal-$GDALVERSION
   fi
   
-  ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS
+  ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $GDALOPTS_PROJ
   make -j 2
   make install
   rm -rf $GDALBUILD
@@ -97,7 +103,7 @@ elif [ "$GDALVERSION" = "master" ]; then
   # always rebuild master
   git clone -b master --single-branch --depth=1 https://github.com/OSGeo/gdal.git $GDALBUILD/master
   cd $GDALBUILD/master/gdal
-  ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS
+  ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $GDALOPTS_PROJ
   make -j 2
   make install
   rm -rf $GDALBUILD
