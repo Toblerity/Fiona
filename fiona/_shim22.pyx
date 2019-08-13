@@ -41,6 +41,10 @@ cdef void* gdal_open_vector(char* path_c, int mode, drivers, options) except NUL
     cdef char **open_opts = NULL
 
     flags = GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR
+
+    if options.pop("sharing", True):
+        flags |= 0x20
+
     if mode == 1:
         flags |= GDAL_OF_UPDATE
     else:
@@ -55,7 +59,6 @@ cdef void* gdal_open_vector(char* path_c, int mode, drivers, options) except NUL
                 drvs = CSLAddString(drvs, name_c)
 
     for k, v in options.items():
-
         if v is None:
             continue
 

@@ -462,8 +462,6 @@ cdef class Session:
         cdef void *drv = NULL
         cdef void *ds = NULL
         cdef char **ignore_fields = NULL
-        cdef int flags = 0
-        cdef int sharing_flag = (0x20 if sharing else 0x0)
 
         path_b = collection.path.encode('utf-8')
         path_c = path_b
@@ -483,8 +481,9 @@ cdef class Session:
         if encoding:
             kwargs['encoding'] = encoding.upper()
 
-        flags = 0x00 | sharing_flag | 0x40
-        self.cogr_ds = gdal_open_vector(path_c, flags, drivers, kwargs)
+        kwargs["sharing"] = sharing
+
+        self.cogr_ds = gdal_open_vector(path_c, 0, drivers, kwargs)
 
         if isinstance(collection.name, string_types):
             name_b = collection.name.encode('utf-8')
@@ -889,13 +888,13 @@ cdef class WritingSession(Session):
         cdef const char *fileencoding_c = NULL
         cdef OGRFieldSubType field_subtype
         cdef int ret
-        cdef int flags = 0
-        cdef int sharing_flag = (0x20 if sharing else 0x0)
 
         path = collection.path
         self.collection = collection
 
         userencoding = kwargs.get('encoding')
+
+        kwargs["sharing"] = sharing
 
         if collection.mode == 'a':
 
@@ -909,8 +908,7 @@ cdef class WritingSession(Session):
             path_c = path_b
 
             try:
-                flags = 0x01 | sharing_flag | 0x40
-                self.cogr_ds = gdal_open_vector(path_c, flags, None, kwargs)
+                self.cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
 
                 if isinstance(collection.name, string_types):
                     name_b = collection.name.encode('utf-8')
@@ -958,8 +956,7 @@ cdef class WritingSession(Session):
                     os.unlink(path)
                 try:
                     # attempt to open existing dataset in write mode
-                    flags = 0x01 | sharing_flag | 0x40
-                    cogr_ds = gdal_open_vector(path_c, flags, None, kwargs)
+                    cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
                 except DriverError:
                     # failed, attempt to create it
                     cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
