@@ -34,7 +34,7 @@ class Collection(object):
     def __init__(self, path, mode='r', driver=None, schema=None, crs=None,
                  encoding=None, layer=None, vsi=None, archive=None,
                  enabled_drivers=None, crs_wkt=None, ignore_fields=None,
-                 ignore_geometry=False,
+                 ignore_geometry=False, sharing=True,
                  **kwargs):
 
         """The required ``path`` is the absolute or relative path to
@@ -156,10 +156,10 @@ class Collection(object):
         try:
             if self.mode == 'r':
                 self.session = Session()
-                self.session.start(self, **kwargs)
+                self.session.start(self, sharing=sharing, **kwargs)
             elif self.mode in ('a', 'w'):
                 self.session = WritingSession()
-                self.session.start(self, **kwargs)
+                self.session.start(self, sharing=sharing, **kwargs)
         except IOError:
             self.session = None
             raise
@@ -516,7 +516,7 @@ class BytesCollection(Collection):
     """BytesCollection takes a buffer of bytes and maps that to
     a virtual file that can then be opened by fiona.
     """
-    def __init__(self, bytesbuf, **kwds):
+    def __init__(self, bytesbuf, sharing=True, **kwds):
         """Takes buffer of bytes whose contents is something we'd like
         to open with Fiona and maps it to a virtual file.
         """
@@ -541,7 +541,7 @@ class BytesCollection(Collection):
 
         # Instantiate the parent class.
         super(BytesCollection, self).__init__(self.virtual_file, vsi=filetype,
-                                              encoding='utf-8', **kwds)
+                                              encoding='utf-8', sharing=sharing, **kwds)
 
     def close(self):
         """Removes the virtual file associated with the class."""

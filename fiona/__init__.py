@@ -112,7 +112,7 @@ log.addHandler(logging.NullHandler())
 
 @ensure_env_with_credentials
 def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
-         layer=None, vfs=None, enabled_drivers=None, crs_wkt=None,
+         layer=None, vfs=None, enabled_drivers=None, crs_wkt=None, sharing=True,
          **kwargs):
     """Open a collection for read, append, or write
 
@@ -188,6 +188,8 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
     crs_wkt : str
         An optional WKT representation of a coordinate reference
         system.
+    sharing : bool, optional
+            Whether to share underlying GDAL dataset handles (default: True).
     kwargs : mapping
         Other driver-specific parameters that will be interpreted by
         the OGR library as layer creation or opening options.
@@ -250,7 +252,7 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
 
         if mode in ('a', 'r'):
             c = Collection(path, mode, driver=driver, encoding=encoding,
-                           layer=layer, enabled_drivers=enabled_drivers, **kwargs)
+                           layer=layer, enabled_drivers=enabled_drivers, sharing=sharing, **kwargs)
         elif mode == 'w':
             if schema:
                 # Make an ordered dict of schema properties.
@@ -259,7 +261,7 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
             else:
                 this_schema = None
             c = Collection(path, mode, crs=crs, driver=driver, schema=this_schema,
-                           encoding=encoding, layer=layer, enabled_drivers=enabled_drivers, crs_wkt=crs_wkt,
+                           encoding=encoding, layer=layer, enabled_drivers=enabled_drivers, crs_wkt=crs_wkt, sharing=sharing,
                            **kwargs)
         else:
             raise ValueError(

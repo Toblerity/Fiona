@@ -456,12 +456,14 @@ cdef class Session:
     def __dealloc__(self):
         self.stop()
 
-    def start(self, collection, **kwargs):
+    def start(self, collection, sharing=True, **kwargs):
         cdef const char *path_c = NULL
         cdef const char *name_c = NULL
         cdef void *drv = NULL
         cdef void *ds = NULL
         cdef char **ignore_fields = NULL
+        cdef int flags = 0
+        cdef int sharing_flag = (0x20 if sharing else 0x0)
 
         path_b = collection.path.encode('utf-8')
         path_c = path_b
@@ -481,7 +483,8 @@ cdef class Session:
         if encoding:
             kwargs['encoding'] = encoding.upper()
 
-        self.cogr_ds = gdal_open_vector(path_c, 0, drivers, kwargs)
+        flags = 0x00 | sharing_flag | 0x40
+        self.cogr_ds = gdal_open_vector(path_c, flags, drivers, kwargs)
 
         if isinstance(collection.name, string_types):
             name_b = collection.name.encode('utf-8')
@@ -876,7 +879,7 @@ cdef class WritingSession(Session):
 
     cdef object _schema_mapping
 
-    def start(self, collection, **kwargs):
+    def start(self, collection, sharing=True, **kwargs):
         cdef void *cogr_srs = NULL
         cdef char **options = NULL
         cdef const char *path_c = NULL
@@ -886,6 +889,9 @@ cdef class WritingSession(Session):
         cdef const char *fileencoding_c = NULL
         cdef OGRFieldSubType field_subtype
         cdef int ret
+        cdef int flags = 0
+        cdef int sharing_flag = (0x20 if sharing else 0x0)
+
         path = collection.path
         self.collection = collection
 
@@ -903,7 +909,8 @@ cdef class WritingSession(Session):
             path_c = path_b
 
             try:
-                self.cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
+                flags = 0x01 | sharing_flag | 0x40
+                self.cogr_ds = gdal_open_vector(path_c, flags, None, kwargs)
 
                 if isinstance(collection.name, string_types):
                     name_b = collection.name.encode('utf-8')
@@ -951,7 +958,8 @@ cdef class WritingSession(Session):
                     os.unlink(path)
                 try:
                     # attempt to open existing dataset in write mode
-                    cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
+                    flags = 0x01 | sharing_flag | 0x40
+                    cogr_ds = gdal_open_vector(path_c, flags, None, kwargs)
                 except DriverError:
                     # failed, attempt to create it
                     cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
