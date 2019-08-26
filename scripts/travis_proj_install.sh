@@ -13,22 +13,29 @@ if [ ! -d "$PROJINST" ]; then
     mkdir $PROJINST;
 fi
 
-ls -l $PROJINST
+echo "PROJ VERSION: $PROJVERSION FORCE_GDAL_BUILD: $FORCE_GDAL_BUILD" 
 
-PROJ_DEB_PATH="proj_${PROJVERSION}-1_amd64_${DISTRIB_CODENAME}.deb"
-if ( curl -o/dev/null -sfI "https://rbuffat.github.io/gdal_builder/$PROJ_DEB_PATH" ); then
-    # We install proj deb if available
+PROJ_ARCHIVE_NAME="proj_${PROJVERSION}_${DISTRIB_CODENAME}.tar.gz"
+PROJ_ARCHIVE_URL="https://rbuffat.github.io/gdal_builder/$PROJ_ARCHIVE_NAME"
 
-    wget "https://rbuffat.github.io/gdal_builder/$PROJ_DEB_PATH"
-    sudo dpkg -i "$PROJ_DEB_PATH"
+echo "$PROJ_ARCHIVE_URL"
+
+if ( curl -o/dev/null -sfI "$PROJ_ARCHIVE_URL" ) && [ "$FORCE_GDAL_BUILD" != "yes" ]; then
+
+    echo "Use previously built proj $PROJVERSION"
+    
+    wget "$PROJ_ARCHIVE_URL"
+    
+    echo "tar -xzvf $PROJ_ARCHIVE_NAME -C $PROJINST"
+    tar -xzvf "$PROJ_ARCHIVE_NAME" -C "$PROJINST"
 
 else
-    # Otherwise we compile proj from source
+# Otherwise we compile proj from source
 
     if [ ! -d "$PROJINST/proj-$PROJVERSION" ]; then
         cd $PROJBUILD
 
-        wget http://download.osgeo.org/proj/proj-$PROJVERSION.tar.gz
+        wget -q http://download.osgeo.org/proj/proj-$PROJVERSION.tar.gz
         tar -xzf proj-$PROJVERSION.tar.gz
         cd proj-$PROJVERSION
         ./configure --prefix=$PROJINST/proj-$PROJVERSION
@@ -39,8 +46,8 @@ else
 
 fi
 
-
-ls -l $PROJINST
+echo "Files in $PROJINST:"
+find $PROJINST
 
 # change back to travis build dir
 cd $TRAVIS_BUILD_DIR

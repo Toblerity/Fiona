@@ -1,14 +1,12 @@
 #!/bin/sh
 set -e
 
-# change back to travis build dir
-cd $TRAVIS_BUILD_DIR
-
 
 GDALOPTS="  --with-ogr \
             --with-geos \
             --with-expat \
             --without-libtool \
+            --with-libz=internal \
             --with-libtiff=internal \
             --with-geotiff=internal \
             --without-gif \
@@ -17,14 +15,14 @@ GDALOPTS="  --with-ogr \
             --without-libgrass \
             --without-cfitsio \
             --without-pcraster \
-            --without-netcdf \
+            --with-netcdf \
             --with-png=internal \
             --with-jpeg=internal \
             --without-gif \
             --without-ogdi \
             --without-fme \
             --without-hdf4 \
-            --without-hdf5 \
+            --with-hdf5 \
             --without-jasper \
             --without-ecw \
             --without-kakadu \
@@ -49,13 +47,6 @@ GDALOPTS="  --with-ogr \
             --without-mrf \
             --with-webp=no"
 
-# Proj flag changed with gdal 2.3
-if $(dpkg --compare-versions "$GDALVERSION" "lt" "2.3"); then
-    GDALOPTS_PROJ="--with-static-proj4=$PROJINST/proj-$PROJVERSION";
-else
-    GDALOPTS_PROJ="--with-proj=${PROJINST}/proj-$PROJVERSION";
-fi
-            
 # Create build dir if not exists
 if [ ! -d "$GDALBUILD" ]; then
   mkdir $GDALBUILD;
@@ -65,20 +56,54 @@ if [ ! -d "$GDALINST" ]; then
   mkdir $GDALINST;
 fi
 
-ls -l $GDALINST
+echo "GDAL VERSION: $GDALVERSION FORCE_GDAL_BUILD: $FORCE_GDAL_BUILD" 
 
-GDAL_DEB_PATH="gdal_${GDALVERSION}_proj_${PROJVERSION}-1_amd64_${DISTRIB_CODENAME}.deb"
-if ( curl -o/dev/null -sfI "https://rbuffat.github.io/gdal_builder/$GDAL_DEB_PATH" ); then
-  # install deb when available
+GDAL_ARCHIVE_NAME="gdal_${GDALVERSION}_proj_${PROJVERSION}_${DISTRIB_CODENAME}.tar.gz"
+GDAL_ARCHIVE_URL="https://rbuffat.github.io/gdal_builder/$GDAL_ARCHIVE_NAME"
+
+echo "$GDAL_ARCHIVE_URL"
+
+if ( curl -o/dev/null -sfI "$GDAL_ARCHIVE_URL" ) && [ "$FORCE_GDAL_BUILD" != "yes" ]; then
+    echo "Use previously built gdal $GDALVERSION"
+    
+    wget "$GDAL_ARCHIVE_URL"
+    
+    echo "tar -xzvf $GDAL_ARCHIVE_NAME -C $GDALINST"
+    tar -xzvf "$GDAL_ARCHIVE_NAME" -C "$GDALINST"
+
   
-  wget "https://rbuffat.github.io/gdal_builder/$GDAL_DEB_PATH"
-  sudo dpkg -i "$GDAL_DEB_PATH"
+elif [ "$GDALVERSION" = "master" ]; then
 
-elif [ ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
-  # only build if not already installed
-  cd $GDALBUILD
+    PROJOPT="--with-proj=$PROJINST/proj-$PROJVERSION"
+    cd $GDALBUILD
+    git clone --depth 1 https://github.com/OSGeo/gdal gdal-$GDALVERSION
+    cd gdal-$GDALVERSION/gdal
+    git rev-parse HEAD > newrev.txt
+    BUILD=no
+    # Only build if nothing cached or if the GDAL revision changed
+    if test ! -f $GDALINST/gdal-$GDALVERSION/rev.txt; then
+        BUILD=yes
+    elif ! diff newrev.txt $GDALINST/gdal-$GDALVERSION/rev.txt >/dev/null; then
+        BUILD=yes
+    fi
+    if test "$BUILD" = "yes"; then
+        mkdir -p $GDALINST/gdal-$GDALVERSION
+        cp newrev.txt $GDALINST/gdal-$GDALVERSION/rev.txt
+        ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT
+        make -j 2
+        make install
+    fi
+
+else
 
   BASE_GDALVERSION=$(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION)
+  
+  # Proj flag changed with gdal 2.3
+  if $(dpkg --compare-versions "$GDALVERSION" "lt" "2.3"); then
+    PROJOPT="--with-static-proj4=$PROJINST/proj-$PROJVERSION";
+  else
+    PROJOPT="--with-proj=${PROJINST}/proj-$PROJVERSION";
+  fi
 
   if ( curl -o/dev/null -sfI "http://download.osgeo.org/gdal/$BASE_GDALVERSION/gdal-$GDALVERSION.tar.gz" ); then
     wget http://download.osgeo.org/gdal/$BASE_GDALVERSION/gdal-$GDALVERSION.tar.gz
@@ -86,7 +111,6 @@ elif [ ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
     wget http://download.osgeo.org/gdal/old_releases/gdal-$GDALVERSION.tar.gz
   fi
   tar -xzf gdal-$GDALVERSION.tar.gz
-
   
   if [ -d "gdal-$BASE_GDALVERSION" ]; then
     cd gdal-$BASE_GDALVERSION
@@ -94,21 +118,21 @@ elif [ ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
     cd gdal-$GDALVERSION
   fi
   
-  ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $GDALOPTS_PROJ
+  ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT
   make -j 2
   make install
   rm -rf $GDALBUILD
 
-elif [ "$GDALVERSION" = "master" ]; then
-  # always rebuild master
-  git clone -b master --single-branch --depth=1 https://github.com/OSGeo/gdal.git $GDALBUILD/master
-  cd $GDALBUILD/master/gdal
-  ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $GDALOPTS_PROJ
-  make -j 2
-  make install
-  rm -rf $GDALBUILD
-  
 fi
+
+echo "Files in $GDALINST:"
+find $GDALINST
+
+echo $GDAL_DATA
+ls -lh $GDAL_DATA
+echo $PROJ_LIB
+ls -lh $PROJ_LIB
+
 
 # change back to travis build dir
 cd $TRAVIS_BUILD_DIR
