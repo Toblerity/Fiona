@@ -2,7 +2,8 @@
 Fiona
 =====
 
-Fiona is OGR's neat and nimble API for Python programmers.
+Fiona reads and writes geographic data files and thereby helps Python programmers
+integrate geographic information systems with other computer systems.
 
 .. image:: https://travis-ci.org/Toblerity/Fiona.png?branch=master
    :target: https://travis-ci.org/Toblerity/Fiona
@@ -20,6 +21,8 @@ classes specific to OGR. Fiona can read and write real-world data using
 multi-layered GIS formats and zipped virtual file systems and integrates
 readily with other Python GIS packages such as pyproj_, Rtree_, and Shapely_.
 Fiona is supported only on CPython versions 2.7 and 3.4+.
+
+Why the name "Fiona"? Because Fiona is OGR's neat and nimble API for Python programmers.
 
 For more details, see:
 
