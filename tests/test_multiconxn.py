@@ -2,6 +2,7 @@ import pytest
 
 import fiona
 from fiona.compat import OrderedDict
+from fiona.model import Feature, Geometry
 
 
 class TestReadAccess(object):
@@ -39,10 +40,7 @@ class TestReadWriteAccess(object):
                 'properties': [('title', 'str:80'), ('date', 'date')]},
             crs={'init': "epsg:4326", 'no_defs': True},
             encoding='utf-8')
-        self.f = {
-            'type': 'Feature',
-            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
-            'properties': OrderedDict([('title', 'point one'), ('date', '2012-01-29')])}
+        self.f = Feature(geometry=Geometry(type="Point", coordinates=(0.0, 0.1)), properties=OrderedDict([('title', 'point one'), ('date', '2012-01-29')]))
         self.c.writerecords([self.f])
         self.c.flush()
         yield
@@ -57,16 +55,14 @@ class TestReadWriteAccess(object):
     def test_read(self):
         c2 = fiona.open(self.shapefile_path, "r")
         f2 = next(iter(c2))
-        del f2['id']
-        assert self.f == f2
+        assert self.f.properties == f2.properties
         c2.close()
 
     def test_read_after_close(self):
         c2 = fiona.open(self.shapefile_path, "r")
         self.c.close()
         f2 = next(iter(c2))
-        del f2['id']
-        assert self.f == f2
+        assert self.f.properties == f2.properties
         c2.close()
 
 
@@ -83,10 +79,7 @@ class TestLayerCreation(object):
                 'properties': [('title', 'str:80'), ('date', 'date')]},
             crs={'init': "epsg:4326", 'no_defs': True},
             encoding='utf-8')
-        self.f = {
-            'type': 'Feature',
-            'geometry': {'type': 'Point', 'coordinates': (0.0, 0.1)},
-            'properties': OrderedDict([('title', 'point one'), ('date', '2012-01-29')])}
+        self.f = Feature(geometry=Geometry(type="Point", coordinates=(0.0, 0.1)), properties=OrderedDict([('title', 'point one'), ('date', '2012-01-29')]))
         self.c.writerecords([self.f])
         self.c.flush()
         yield
@@ -101,14 +94,12 @@ class TestLayerCreation(object):
     def test_read(self):
         c2 = fiona.open(str(self.dir.join("write_test.shp")), "r")
         f2 = next(iter(c2))
-        del f2['id']
-        assert self.f == f2
+        assert self.f.properties == f2.properties
         c2.close()
 
     def test_read_after_close(self):
         c2 = fiona.open(str(self.dir.join("write_test.shp")), "r")
         self.c.close()
         f2 = next(iter(c2))
-        del f2['id']
-        assert self.f == f2
+        assert self.f.properties == f2.properties
         c2.close()

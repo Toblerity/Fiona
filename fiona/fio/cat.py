@@ -1,4 +1,4 @@
-"""$ fio cat"""
+"""fio-cat"""
 
 
 import json
@@ -10,6 +10,7 @@ import cligj
 
 import fiona
 from fiona.transform import transform_geom
+from fiona.model import ObjectEncoder
 from fiona.fio import options, with_context_env
 
 
@@ -103,7 +104,7 @@ def cat(
                             feat['bbox'] = fiona.bounds(g)
                         if use_rs:
                             click.echo(u'\u001e', nl=False)
-                        click.echo(json.dumps(feat, **dump_kwds))
+                        click.echo(json.dumps(feat, cls=ObjectEncoder, **dump_kwds))
 
     except Exception:
         logger.exception("Exception caught during processing")

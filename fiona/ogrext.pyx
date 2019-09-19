@@ -33,6 +33,7 @@ from fiona.errors import (
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
     FeatureWarning, FionaDeprecationWarning)
 from fiona.compat import OrderedDict, strencode
+from fiona.model import Feature
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 from fiona.schema import FIELD_TYPES, FIELD_TYPES_MAP, normalize_field_type
@@ -181,11 +182,6 @@ cdef class FeatureBuilder:
         # Skeleton of the feature to be returned.
         fid = OGR_F_GetFID(feature)
         props = OrderedDict()
-        fiona_feature = {
-            "type": "Feature",
-            "id": str(fid),
-            "properties": props,
-        }
 
         ignore_fields = set(ignore_fields or [])
 
@@ -288,6 +284,8 @@ cdef class FeatureBuilder:
         cdef void *cogr_geometry = NULL
         cdef void *org_geometry = NULL
 
+        geom = None
+
         if not ignore_geometry:
             cogr_geometry = OGR_F_GetGeometryRef(feature)
 
@@ -316,13 +314,7 @@ cdef class FeatureBuilder:
                 else:
                     geom = GeomBuilder().build(cogr_geometry)
 
-                fiona_feature["geometry"] = geom
-
-            else:
-
-                fiona_feature["geometry"] = None
-
-        return fiona_feature
+        return Feature(id=str(fid), properties=props, geometry=geom)
 
 
 cdef class OGRFeatureBuilder:

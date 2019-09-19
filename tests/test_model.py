@@ -3,7 +3,7 @@
 import pytest
 
 from fiona.errors import FionaDeprecationWarning
-from fiona.model import _Geometry, Feature, Geometry, Object
+from fiona.model import _Geometry, Feature, Geometry, Object, ObjectEncoder
 
 
 def test_object_len():
@@ -176,3 +176,26 @@ def test_feature_complete():
     assert feat.properties["a"] == 0
     assert feat.properties["b"] == "bar"
     assert feat["extras"]["this"] == 1
+
+
+def test_geometry_encode():
+    """Can encode a geometry"""
+    assert ObjectEncoder().default(Geometry(type="Point", coordinates=(0, 0))) == {
+        "type": "Point",
+        "coordinates": (0, 0),
+    }
+
+
+@pytest.mark.parametrize("value", [100, "foo"])
+def test_encode_error(value):
+    """Raises TypeError"""
+    with pytest.raises(TypeError):
+        ObjectEncoder().default(value)
+
+
+def test_feature_encode():
+    """Can encode a feature"""
+    o_dict = ObjectEncoder().default(Feature(id="foo", geometry=Geometry(type="Point", coordinates=(0, 0))))
+    assert o_dict["id"] == "foo"
+    assert o_dict["geometry"]["type"] == "Point"
+    assert o_dict["geometry"]["coordinates"] == (0, 0)
