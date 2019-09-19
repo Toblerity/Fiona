@@ -73,7 +73,7 @@ def transform_geom(
     -------
     obj
         A new GeoJSON-like geometry with transformed coordinates. Note
-        that if the output is at the antimeridian, it may be cut and 
+        that if the output is at the antimeridian, it may be cut and
         of a different geometry ``type`` than the input, e.g., a
         polygon input may result in multi-polygon output.
 

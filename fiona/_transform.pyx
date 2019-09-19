@@ -10,6 +10,7 @@ from fiona cimport _cpl, _crs, _csl, _geometry
 from fiona._crs cimport OGRSpatialReferenceH
 
 from fiona.compat import UserDict
+from fiona.model import Geometry
 
 
 cdef extern from "ogr_geometry.h" nogil:
@@ -126,6 +127,9 @@ def _transform_geom(
     cdef void *src_ogr_geom = NULL
     cdef void *dst_ogr_geom = NULL
     cdef int i
+
+    if not isinstance(geom, Geometry):
+        geom = Geometry.from_dict(**geom)
 
     if src_crs and dst_crs:
         src = _crs_from_crs(src_crs)

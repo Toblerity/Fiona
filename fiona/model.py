@@ -2,6 +2,7 @@
 
 from collections.abc import MutableMapping
 import itertools
+from json import JSONEncoder
 from warnings import warn
 
 from fiona.errors import FionaDeprecationWarning
@@ -89,6 +90,15 @@ class Geometry(Object):
         self._delegate = _Geometry(coordinates=coordinates, type=type)
         super(Geometry, self).__init__(**data)
 
+    @classmethod
+    def from_dict(cls, **data):
+        data = data.copy()
+        return Geometry(
+            coordinates=data.pop("coordinates", None),
+            type=data.pop("type", None),
+            **data
+        )
+
     @property
     def coordinates(self):
         """The geometry's coordinates
@@ -145,7 +155,7 @@ class Feature(Object):
                 type=geom_data.pop("type", None),
                 **geom_data
             )
-            if geom_data
+            if geom_data is not None
             else None
         )
         props_data = data.pop("properties", None)
@@ -196,3 +206,19 @@ class Feature(Object):
 
         """
         return "Feature"
+
+
+class ObjectEncoder(JSONEncoder):
+    """Encodes Geometry and Feature"""
+
+    def default(self, o):
+        if isinstance(o, Geometry):
+            return dict(**o)
+        elif isinstance(o, Feature):
+            o_dict = dict(**o)
+            o_dict["type"] = "Feature"
+            if o.geometry is not None:
+                o_dict["geometry"] = ObjectEncoder().default(o.geometry)
+            return o_dict
+
+        return JSONEncoder().default(o)

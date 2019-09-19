@@ -5,7 +5,7 @@ from __future__ import absolute_import
 import logging
 
 from fiona.errors import UnsupportedGeometryTypeError
-
+from fiona.model import Geometry
 
 class NullHandler(logging.Handler):
     def emit(self, record):
@@ -181,7 +181,8 @@ cdef class GeomBuilder:
         self.geomtypename = GEOMETRY_TYPES[self.code]
         self.ndims = OGR_G_GetCoordinateDimension(geom)
         self.geom = geom
-        return getattr(self, '_build' + self.geomtypename)()
+        built = getattr(self, '_build' + self.geomtypename)()
+        return Geometry(**built)
 
     cpdef build_wkb(self, object wkb):
         # The only other method anyone needs to call
