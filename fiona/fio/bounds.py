@@ -10,6 +10,7 @@ from cligj import precision_opt, use_rs_opt
 import fiona
 from fiona.fio.helpers import obj_gen
 from fiona.fio import with_context_env
+from fiona.model import ObjectEncoder
 
 
 @click.command(short_help="Print the extent of GeoJSON objects")
@@ -66,7 +67,7 @@ def bounds(ctx, precision, explode, with_id, with_obj, use_rs):
                         rec = (w, s, e, n)
                     if use_rs:
                         click.echo(u'\u001e', nl=False)
-                    click.echo(json.dumps(rec))
+                    click.echo(json.dumps(rec, cls=ObjectEncoder))
                 else:
                     xs.extend([w, e])
                     ys.extend([s, n])
@@ -81,7 +82,7 @@ def bounds(ctx, precision, explode, with_id, with_obj, use_rs):
                     rec = (w, s, e, n)
                 if use_rs:
                     click.echo(u'\u001e', nl=False)
-                click.echo(json.dumps(rec))
+                click.echo(json.dumps(rec, cls=ObjectEncoder))
 
     except Exception:
         logger.exception("Exception caught during processing")
