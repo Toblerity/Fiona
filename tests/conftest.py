@@ -13,6 +13,7 @@ import pytest
 import fiona
 from fiona.crs import from_epsg
 from fiona.env import GDALVersion
+from fiona.model import ObjectEncoder
 
 driver_extensions = {'DXF': 'dxf',
                      'CSV': 'csv',
@@ -106,10 +107,12 @@ def path_test_tin_shp(data_dir):
     """Path to ```test_tin.shp``"""
     return os.path.join(data_dir, 'test_tin.shp')
 
+
 @pytest.fixture(scope='session')
 def path_test_tin_csv(data_dir):
     """Path to ```test_tin.csv``"""
     return os.path.join(data_dir, 'test_tin.csv')
+
 
 @pytest.fixture(scope='session')
 def path_coutwildrnp_shp(data_dir):
@@ -169,7 +172,7 @@ def path_coutwildrnp_json(data_dir):
             'type': 'FeatureCollection',
             'features': features}
         with open(path, 'w') as f:
-            f.write(json.dumps(my_layer))
+            f.write(json.dumps(my_layer, cls=ObjectEncoder))
     return path
 
 

@@ -8,6 +8,7 @@ import click
 import cligj
 
 from fiona.fio import helpers, with_context_env
+from fiona.model import ObjectEncoder
 
 
 @click.command()
@@ -33,7 +34,7 @@ def distrib(ctx, use_rs):
                 feat['id'] = feat_id
                 if use_rs:
                     click.echo(u'\u001e', nl=False)
-                click.echo(json.dumps(feat))
+                click.echo(json.dumps(feat, cls=ObjectEncoder))
     except Exception:
         logger.exception("Exception caught during processing")
         raise click.Abort()
