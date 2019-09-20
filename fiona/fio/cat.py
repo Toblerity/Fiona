@@ -2,7 +2,6 @@
 
 
 import json
-import logging
 import warnings
 
 import click
@@ -65,10 +64,8 @@ def cat(
 
     When working with a multi-layer dataset the first layer is used by default.
     Use the '--layer' option to select a different layer.
+
     """
-
-    logger = logging.getLogger(__name__)
-
     dump_kwds = {'sort_keys': True}
     if indent:
         dump_kwds['indent'] = indent

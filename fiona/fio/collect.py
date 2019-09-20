@@ -8,7 +8,7 @@ import click
 import cligj
 
 from fiona.fio import helpers, options, with_context_env
-from fiona.model import ObjectEncoder
+from fiona.model import Feature, ObjectEncoder
 from fiona.transform import transform_geom
 
 
@@ -68,6 +68,7 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
                         if buffer:
                             feat = json.loads(buffer)
                             feat['geometry'] = transformer(feat['geometry'])
+                            feat = Feature.from_dict(**feat)
                             yield json.dumps(feat, cls=ObjectEncoder, **dump_kwds)
                         buffer = line.strip(u'\x1e')
                     else:
@@ -75,16 +76,19 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
                 else:
                     feat = json.loads(buffer)
                     feat['geometry'] = transformer(feat['geometry'])
+                    feat = Feature.from_dict(**feat)
                     yield json.dumps(feat, cls=ObjectEncoder, **dump_kwds)
         else:
             def feature_text_gen():
                 feat = json.loads(first_line)
                 feat['geometry'] = transformer(feat['geometry'])
+                feat = Feature.from_dict(**feat)
                 yield json.dumps(feat, cls=ObjectEncoder, **dump_kwds)
 
                 for line in stdin:
                     feat = json.loads(line)
                     feat['geometry'] = transformer(feat['geometry'])
+                    feat = Feature.from_dict(**feat)
                     yield json.dumps(feat, cls=ObjectEncoder, **dump_kwds)
 
     # If *not* parsing geojson

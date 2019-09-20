@@ -3,7 +3,15 @@
 import pytest
 
 from fiona.errors import FionaDeprecationWarning
-from fiona.model import _Geometry, Feature, Geometry, Object, ObjectEncoder
+from fiona.model import (
+    _Geometry,
+    Feature,
+    Geometry,
+    Object,
+    ObjectEncoder,
+    Properties,
+    decode_object,
+)
 
 
 def test_object_len():
@@ -178,6 +186,26 @@ def test_feature_complete():
     assert feat["extras"]["this"] == 1
 
 
+def test_feature_complete_2():
+    """Feature can be created from GeoJSON"""
+    data = {
+        "id": "foo",
+        "type": "Feature",
+        "geometry": Geometry(type="Point", coordinates=(0, 0)),
+        "properties": Properties(a=0, b="bar"),
+        "extras": {"this": 1},
+    }
+    feat = Feature.from_dict(**data)
+    assert feat.id == "foo"
+    assert feat.type == "Feature"
+    assert feat.geometry.type == "Point"
+    assert feat.geometry.coordinates == (0, 0)
+    assert len(feat.properties) == 2
+    assert feat.properties["a"] == 0
+    assert feat.properties["b"] == "bar"
+    assert feat["extras"]["this"] == 1
+
+
 def test_geometry_encode():
     """Can encode a geometry"""
     assert ObjectEncoder().default(Geometry(type="Point", coordinates=(0, 0))) == {
@@ -195,7 +223,52 @@ def test_encode_error(value):
 
 def test_feature_encode():
     """Can encode a feature"""
-    o_dict = ObjectEncoder().default(Feature(id="foo", geometry=Geometry(type="Point", coordinates=(0, 0))))
+    o_dict = ObjectEncoder().default(
+        Feature(
+            id="foo",
+            geometry=Geometry(type="Point", coordinates=(0, 0)),
+            properties=Properties(a=1, foo="bar"),
+        )
+    )
     assert o_dict["id"] == "foo"
     assert o_dict["geometry"]["type"] == "Point"
     assert o_dict["geometry"]["coordinates"] == (0, 0)
+
+
+def test_decode_object_hook():
+    """Can decode a feature"""
+    data = {
+        "id": "foo",
+        "type": "Feature",
+        "geometry": {"type": "Point", "coordinates": (0, 0)},
+        "properties": {"a": 0, "b": "bar"},
+        "extras": {"this": 1},
+    }
+    feat = decode_object(data)
+    assert feat.id == "foo"
+    assert feat.type == "Feature"
+    assert feat.geometry.type == "Point"
+    assert feat.geometry.coordinates == (0, 0)
+    assert len(feat.properties) == 2
+    assert feat.properties["a"] == 0
+    assert feat.properties["b"] == "bar"
+    assert feat["extras"]["this"] == 1
+
+
+def test_decode_object_hook_geometry():
+    """Can decode a geometry"""
+    data = {"type": "Point", "coordinates": (0, 0)}
+    geometry = decode_object(data)
+    assert geometry.type == "Point"
+    assert geometry.coordinates == (0, 0)
+
+
+@pytest.mark.parametrize("o", [{}, {"a": 1}, {"type": "FeatureCollection"}])
+def test_decode_object_hook_fallback(o):
+    """Pass through an ordinary dict"""
+    assert decode_object(o) == o
+
+
+def test_properties():
+    """Property factory works"""
+    assert Properties.from_dict(a=1, foo="bar")["a"] == 1
