@@ -31,7 +31,7 @@ from fiona.errors import (
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
     FionaDeprecationWarning)
 from fiona.compat import OrderedDict, strencode
-from fiona.model import Feature
+from fiona.model import Feature, Properties
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 from fiona.schema import FIELD_TYPES, FIELD_TYPES_MAP, normalize_field_type
@@ -289,7 +289,7 @@ cdef class FeatureBuilder:
                 else:
                     geom = GeomBuilder().build(cogr_geometry)
 
-        return Feature(id=str(fid), properties=props, geometry=geom)
+        return Feature(id=str(fid), properties=Properties(**props), geometry=geom)
 
 
 cdef class OGRFeatureBuilder:

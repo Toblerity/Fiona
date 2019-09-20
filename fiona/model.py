@@ -1,11 +1,45 @@
 """Fiona data model"""
 
 from collections.abc import MutableMapping
+from collections import OrderedDict
 import itertools
 from json import JSONEncoder
 from warnings import warn
 
 from fiona.errors import FionaDeprecationWarning
+
+
+# Mapping of OGR integer geometry types to GeoJSON type names.
+GEOMETRY_TYPES = {
+    0: "Unknown",
+    1: "Point",
+    2: "LineString",
+    3: "Polygon",
+    4: "MultiPoint",
+    5: "MultiLineString",
+    6: "MultiPolygon",
+    7: "GeometryCollection",
+    # Unsupported types.
+    # 8: 'CircularString',
+    # 9: 'CompoundCurve',
+    # 10: 'CurvePolygon',
+    # 11: 'MultiCurve',
+    # 12: 'MultiSurface',
+    # 13: 'Curve',
+    # 14: 'Surface',
+    # 15: 'PolyhedralSurface',
+    # 16: 'TIN',
+    # 17: 'Triangle',
+    100: "None",
+    101: "LinearRing",
+    0x80000001: "3D Point",
+    0x80000002: "3D LineString",
+    0x80000003: "3D Polygon",
+    0x80000004: "3D MultiPoint",
+    0x80000005: "3D MultiLineString",
+    0x80000006: "3D MultiPolygon",
+    0x80000007: "3D GeometryCollection",
+}
 
 
 class Object(MutableMapping):
@@ -21,9 +55,8 @@ class Object(MutableMapping):
 
     _delegated_properties = []
 
-    def __init__(self, **data):
-        self._data = {}
-        self._data.update(**data)
+    def __init__(self, **kwds):
+        self._data = OrderedDict(**kwds)
 
     def _props(self):
         return {
@@ -91,8 +124,8 @@ class Geometry(Object):
         super(Geometry, self).__init__(**data)
 
     @classmethod
-    def from_dict(cls, **data):
-        data = data.copy()
+    def from_dict(cls, **kwds):
+        data = kwds.copy()
         return Geometry(
             coordinates=data.pop("coordinates", None),
             type=data.pop("type", None),
@@ -146,20 +179,30 @@ class Feature(Object):
         super(Feature, self).__init__(**data)
 
     @classmethod
-    def from_dict(cls, **data):
-        data = data.copy()
+    def from_dict(cls, **kwds):
+        data = kwds.copy()
         geom_data = data.pop("geometry", None)
-        geom = (
-            Geometry(
-                coordinates=geom_data.pop("coordinates", None),
-                type=geom_data.pop("type", None),
-                **geom_data
+
+        if isinstance(geom_data, Geometry):
+            geom = geom_data
+        else:
+            geom = (
+                Geometry(
+                    coordinates=geom_data.pop("coordinates", None),
+                    type=geom_data.pop("type", None),
+                    **geom_data
+                )
+                if geom_data is not None
+                else None
             )
-            if geom_data is not None
-            else None
-        )
+
         props_data = data.pop("properties", None)
-        props = Object(**props_data) if props_data else None
+
+        if isinstance(props_data, Properties):
+            props = props_data
+        else:
+            props = Properties(**props_data) if props_data is not None else None
+
         fid = data.pop("id", None)
         return Feature(geometry=geom, id=fid, properties=props, **data)
 
@@ -208,17 +251,70 @@ class Feature(Object):
         return "Feature"
 
 
+class Properties(Object):
+    """A GeoJSON-like feature's properties
+
+    """
+
+    def __init__(self, **kwds):
+        super(Properties, self).__init__(**kwds)
+
+    @classmethod
+    def from_dict(cls, **kwds):
+        return Properties(**kwds)
+
+
 class ObjectEncoder(JSONEncoder):
     """Encodes Geometry and Feature"""
 
     def default(self, o):
-        if isinstance(o, Geometry):
+        if isinstance(o, (Geometry, Properties)):
             return dict(**o)
         elif isinstance(o, Feature):
             o_dict = dict(**o)
             o_dict["type"] = "Feature"
             if o.geometry is not None:
                 o_dict["geometry"] = ObjectEncoder().default(o.geometry)
+            if o.properties is not None:
+                o_dict["properties"] = ObjectEncoder().default(o.properties)
             return o_dict
+        else:
+            return JSONEncoder().default(o)
 
-        return JSONEncoder().default(o)
+
+def decode_object(o):
+    """A json.loads object_hook
+
+    Parameters
+    ----------
+    o : dict
+        A decoded dict.
+
+    Returns
+    -------
+    Feature, Geometry, or dict
+
+    """
+    if "type" in o:
+        if o["type"] == "Feature":
+            val = Feature.from_dict(**o)
+        elif o["type"] in list(GEOMETRY_TYPES.values())[:8]:
+            val = Geometry.from_dict(**o)
+        else:
+            val = o
+    else:
+        val = o
+
+    return val
+
+
+def to_dict(val):
+    """Converts an object to a dict"""
+    try:
+        o = ObjectEncoder().default(val)
+    except TypeError:
+        pass
+    else:
+        return o
+
+    return val

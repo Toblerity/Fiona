@@ -5,7 +5,7 @@ from __future__ import absolute_import
 import logging
 
 from fiona.errors import UnsupportedGeometryTypeError
-from fiona.model import Geometry
+from fiona.model import GEOMETRY_TYPES, Geometry
 
 class NullHandler(logging.Handler):
     def emit(self, record):
@@ -14,36 +14,6 @@ class NullHandler(logging.Handler):
 log = logging.getLogger(__name__)
 log.addHandler(NullHandler())
 
-# Mapping of OGR integer geometry types to GeoJSON type names.
-GEOMETRY_TYPES = {
-    0: 'Unknown',
-    1: 'Point',
-    2: 'LineString',
-    3: 'Polygon',
-    4: 'MultiPoint',
-    5: 'MultiLineString',
-    6: 'MultiPolygon',
-    7: 'GeometryCollection',
-    # Unsupported types.
-    #8: 'CircularString',
-    #9: 'CompoundCurve',
-    #10: 'CurvePolygon',
-    #11: 'MultiCurve',
-    #12: 'MultiSurface',
-    #13: 'Curve',
-    #14: 'Surface',
-    #15: 'PolyhedralSurface',
-    #16: 'TIN',
-    #17: 'Triangle',
-    100: 'None',
-    101: 'LinearRing',
-    0x80000001: '3D Point',
-    0x80000002: '3D LineString',
-    0x80000003: '3D Polygon',
-    0x80000004: '3D MultiPoint',
-    0x80000005: '3D MultiLineString',
-    0x80000006: '3D MultiPolygon',
-    0x80000007: '3D GeometryCollection' }
 
 # mapping of GeoJSON type names to OGR integer geometry types
 GEOJSON2OGR_GEOMETRY_TYPES = dict((v, k) for k, v in GEOMETRY_TYPES.iteritems())

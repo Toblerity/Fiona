@@ -2,7 +2,6 @@
 
 
 import json
-import logging
 import warnings
 
 import click
@@ -44,10 +43,8 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
 
     When working with a multi-layer dataset the first layer is used by default.
     Use the '--layer' option to select a different layer.
+
     """
-
-    logger = logging.getLogger(__name__)
-
     dump_kwds = {'sort_keys': True}
     if indent:
         dump_kwds['indent'] = indent
@@ -64,27 +61,22 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
         if str(i) not in layer.keys():
             layer[str(i)] = [0]
 
-    try:
-        if bbox:
-            try:
-                bbox = tuple(map(float, bbox.split(',')))
-            except ValueError:
-                bbox = json.loads(bbox)
-        for i, path in enumerate(files, 1):
-            for lyr in layer[str(i)]:
-                with fiona.open(path, layer=lyr) as src:
-                    for i, feat in src.items(bbox=bbox):
-                        if dst_crs or precision >= 0:
-                            g = transform_geom(
-                                src.crs, dst_crs, feat['geometry'],
-                                antimeridian_cutting=True,
-                                precision=precision)
-                            feat['geometry'] = g
-                            feat['bbox'] = fiona.bounds(g)
-                        if use_rs:
-                            click.echo(u'\u001e', nl=False)
-                        click.echo(json.dumps(feat, cls=ObjectEncoder, **dump_kwds))
-
-    except Exception:
-        logger.exception("Exception caught during processing")
-        raise click.Abort()
+    if bbox:
+        try:
+            bbox = tuple(map(float, bbox.split(',')))
+        except ValueError:
+            bbox = json.loads(bbox)
+    for i, path in enumerate(files, 1):
+        for lyr in layer[str(i)]:
+            with fiona.open(path, layer=lyr) as src:
+                for i, feat in src.items(bbox=bbox):
+                    if dst_crs or precision >= 0:
+                        g = transform_geom(
+                            src.crs, dst_crs, feat['geometry'],
+                            antimeridian_cutting=True,
+                            precision=precision)
+                        feat['geometry'] = g
+                        feat['bbox'] = fiona.bounds(g)
+                    if use_rs:
+                        click.echo(u'\u001e', nl=False)
+                    click.echo(json.dumps(feat, cls=ObjectEncoder, **dump_kwds))

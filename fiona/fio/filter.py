@@ -2,7 +2,6 @@
 
 
 import json
-import logging
 
 import click
 from cligj import use_rs_opt
@@ -36,23 +35,17 @@ def filter(ctx, filter_expression, use_rs):
         $ fio cat data.shp \\
             | fio filter "f.properties.area > 1000.0" \\
             | fio collect > large_polygons.geojson
-    """
 
-    logger = logging.getLogger(__name__)
+    """
     stdin = click.get_text_stream('stdin')
 
-    try:
-        source = obj_gen(stdin)
-        for i, obj in enumerate(source):
-            features = obj.get('features') or [obj]
-            for j, feat in enumerate(features):
-                if not eval_feature_expression(feat, filter_expression):
-                    continue
+    source = obj_gen(stdin)
+    for i, obj in enumerate(source):
+        features = obj.get('features') or [obj]
+        for j, feat in enumerate(features):
+            if not eval_feature_expression(feat, filter_expression):
+                continue
 
-                if use_rs:
-                    click.echo(u'\u001e', nl=False)
-                click.echo(json.dumps(feat))
-
-    except Exception:
-        logger.exception("Exception caught during processing")
-        raise click.Abort()
+            if use_rs:
+                click.echo(u'\u001e', nl=False)
+            click.echo(json.dumps(feat))
