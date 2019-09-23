@@ -9,7 +9,8 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 - Regression in handling of polygons with M values noted under version 1.8.5
   below was in fact not fixed then (see new report #789), but is fixed in
   version 1.8.7.
-- 
+- Windows filenames containing "!" are now parsed correctly, fixing issue #742.
+
 1.8.6 (2019-03-18)
 ------------------
 
