@@ -3,6 +3,26 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.7 (2019-09-24)
+------------------
+
+Bug fixes:
+
+- Regression in handling of polygons with M values noted under version 1.8.5
+  below was in fact not fixed then (see new report #789), but is fixed in
+  version 1.8.7.
+- Windows filenames containing "!" are now parsed correctly, fixing issue #742.
+
+Upcoming changes:
+
+- In version 1.9.0, the objects yielded when a Collection is iterated will be
+  mutable mappings but will no longer be instances of Python's dict. Version
+  1.9 is intended to be backwards compatible with 1.8 except where user code
+  tests `isinstance(feature, dict)`. In version 2.0 the new Feature, Geometry,
+  and Properties classes will become immutable mappings. See
+  https://github.com/Toblerity/fiona-rfc/blob/master/rfc/0001-fiona-2-0-changes.md
+  for more discussion of the upcoming changes for version 2.0.
+
 1.8.6 (2019-03-18)
 ------------------
 
