@@ -46,7 +46,7 @@ class TestTransaction:
         Test transaction start/commit is called the expected number of times,
         and that the default transaction size can be overloaded. The test uses
         a custom logging handler to listen for the debug messages produced
-        when the transaction is started/comitted.
+        when the transaction is started/committed.
         """
         num_records = 250
         transaction_size = 100
@@ -67,8 +67,8 @@ class TestTransaction:
 
         assert self.handler.history["Starting transaction (initial)"] == 1
         assert self.handler.history["Starting transaction (intermediate)"] == num_records // transaction_size
-        assert self.handler.history["Comitting transaction (intermediate)"] == num_records // transaction_size
-        assert self.handler.history["Comitting transaction (final)"] == 1
+        assert self.handler.history["Committing transaction (intermediate)"] == num_records // transaction_size
+        assert self.handler.history["Committing transaction (final)"] == 1
 
         with fiona.open(path, "r") as src:
             assert len(src) == num_records
