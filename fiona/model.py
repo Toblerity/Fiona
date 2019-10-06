@@ -124,8 +124,8 @@ class Geometry(Object):
         super(Geometry, self).__init__(**data)
 
     @classmethod
-    def from_dict(cls, **kwds):
-        data = kwds.copy()
+    def from_dict(cls, mapping=None, **kwargs):
+        data = dict(mapping or {}, **kwargs)
         return Geometry(
             coordinates=data.pop("coordinates", None),
             type=data.pop("type", None),
@@ -179,8 +179,8 @@ class Feature(Object):
         super(Feature, self).__init__(**data)
 
     @classmethod
-    def from_dict(cls, **kwds):
-        data = kwds.copy()
+    def from_dict(cls, mapping=None, **kwargs):
+        data = dict(mapping or {}, **kwargs)
         geom_data = data.pop("geometry", None)
 
         if isinstance(geom_data, Geometry):
@@ -260,8 +260,9 @@ class Properties(Object):
         super(Properties, self).__init__(**kwds)
 
     @classmethod
-    def from_dict(cls, **kwds):
-        return Properties(**kwds)
+    def from_dict(cls, mapping=None, **kwargs):
+        data = dict(mapping or {}, **kwargs)
+        return Properties(**data)
 
 
 class ObjectEncoder(JSONEncoder):
