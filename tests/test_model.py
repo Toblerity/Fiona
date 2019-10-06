@@ -186,6 +186,26 @@ def test_feature_complete():
     assert feat["extras"]["this"] == 1
 
 
+def test_feature_complete_bis():
+    """Feature can be created from GeoJSON"""
+    data = {
+        "id": "foo",
+        "type": "Feature",
+        "geometry": {"type": "Point", "coordinates": (0, 0)},
+        "properties": {"a": 0, "b": "bar"},
+        "extras": {"this": 1},
+    }
+    feat = Feature.from_dict(data)
+    assert feat.id == "foo"
+    assert feat.type == "Feature"
+    assert feat.geometry.type == "Point"
+    assert feat.geometry.coordinates == (0, 0)
+    assert len(feat.properties) == 2
+    assert feat.properties["a"] == 0
+    assert feat.properties["b"] == "bar"
+    assert feat["extras"]["this"] == 1
+
+
 def test_feature_complete_2():
     """Feature can be created from GeoJSON"""
     data = {
