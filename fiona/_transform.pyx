@@ -5,6 +5,7 @@
 from __future__ import absolute_import
 
 import logging
+import warnings
 
 from fiona cimport _cpl, _crs, _csl, _geometry
 from fiona._crs cimport OGRSpatialReferenceH
@@ -126,12 +127,10 @@ def _transform_geom(
     cdef void *src_ogr_geom = NULL
     cdef void *dst_ogr_geom = NULL
     cdef int i
-
     if src_crs and dst_crs:
         src = _crs_from_crs(src_crs)
         dst = _crs_from_crs(dst_crs)
         transform = _crs.OCTNewCoordinateTransformation(src, dst)
-
         # Transform options.
         options = _csl.CSLSetNameValue(
                     options, "DATELINEOFFSET", 
@@ -145,10 +144,17 @@ def _transform_geom(
                         <const OGRGeometry *>src_ogr_geom,
                         <OGRCoordinateTransformation *>transform,
                         options)
-        g = _geometry.GeomBuilder().build(dst_ogr_geom)
-
-        _geometry.OGR_G_DestroyGeometry(dst_ogr_geom)
-        _geometry.OGR_G_DestroyGeometry(src_ogr_geom)
+        if dst_ogr_geom == NULL:
+            g = None
+            warnings.warn(
+                "Destination geometry is None. If desired, consider wrapping "
+                " with fiona.Env(OGR_ENABLE_PARTIAL_REPROJECTION='"'YES'"')."
+            )
+        else:
+            g = _geometry.GeomBuilder().build(dst_ogr_geom)
+            _geometry.OGR_G_DestroyGeometry(dst_ogr_geom)
+        if src_ogr_geom != NULL:
+            _geometry.OGR_G_DestroyGeometry(src_ogr_geom)
         _crs.OCTDestroyCoordinateTransformation(transform)
         if options != NULL:
             _csl.CSLDestroy(options)
@@ -158,8 +164,7 @@ def _transform_geom(
     else:
         g = geom
 
-    if precision >= 0:
-
+    if precision >= 0 and g is not None:
         if g['type'] == 'Point':
             coords = list(g['coordinates'])
             x, y = coords[:2]
