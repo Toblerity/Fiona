@@ -7,47 +7,60 @@ import pytest
 from fiona import transform
 
 
-@pytest.mark.parametrize(
-    "geom",
-    [
-        {"type": "Point", "coordinates": [0.0, 0.0, 1000.0]},
-        {
-            "type": "LineString",
-            "coordinates": [[0.0, 0.0, 1000.0], [0.1, 0.1, -1000.0]],
-        },
-        {
-            "type": "MultiPoint",
-            "coordinates": [[0.0, 0.0, 1000.0], [0.1, 0.1, -1000.0]],
-        },
-        {
-            "type": "Polygon",
-            "coordinates": [
+TEST_GEOMS = [
+    {"type": "Point", "coordinates": [0.0, 0.0, 1000.0]},
+    {
+        "type": "LineString",
+        "coordinates": [[0.0, 0.0, 1000.0], [0.1, 0.1, -1000.0]],
+    },
+    {
+        "type": "MultiPoint",
+        "coordinates": [[0.0, 0.0, 1000.0], [0.1, 0.1, -1000.0]],
+    },
+    {
+        "type": "Polygon",
+        "coordinates": [
+            [
+                [0.0, 0.0, 1000.0],
+                [0.1, 0.1, -1000.0],
+                [0.1, -0.1, math.pi],
+                [0.0, 0.0, 1000.0],
+            ]
+        ],
+    },
+    {
+        "type": "MultiPolygon",
+        "coordinates": [
+            [
                 [
                     [0.0, 0.0, 1000.0],
                     [0.1, 0.1, -1000.0],
                     [0.1, -0.1, math.pi],
                     [0.0, 0.0, 1000.0],
                 ]
-            ],
-        },
-        {
-            "type": "MultiPolygon",
-            "coordinates": [
-                [
-                    [
-                        [0.0, 0.0, 1000.0],
-                        [0.1, 0.1, -1000.0],
-                        [0.1, -0.1, math.pi],
-                        [0.0, 0.0, 1000.0],
-                    ]
-                ]
-            ],
-        },
-    ],
-)
+            ]
+        ],
+    },
+]
+
+
+@pytest.mark.parametrize("geom", TEST_GEOMS)
 def test_transform_geom_with_z(geom):
     """Transforming a geom with Z succeeds"""
     g2 = transform.transform_geom("epsg:4326", "epsg:3857", geom, precision=3)
+
+
+@pytest.mark.parametrize("geom", TEST_GEOMS)
+def test_transform_geom_array_z(geom):
+    """Transforming a geom array with Z succeeds"""
+    g2 = transform.transform_geom(
+        "epsg:4326",
+        "epsg:3857",
+        [geom for _ in range(5)],
+        precision=3,
+    )
+    assert isinstance(g2, list)
+    assert len(g2) == 5
 
 
 def test_transform_geom_null_dest():
