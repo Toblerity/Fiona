@@ -123,3 +123,11 @@ cdef bint check_capability_create_layer(void *cogr_ds):
 
 cdef void *get_linear_geometry(void *geom):
     return geom
+
+
+cdef const char* osr_get_name(OGRSpatialReferenceH hSrs):
+    return ''
+
+
+cdef void osr_set_traditional_axis_mapping_strategy(OGRSpatialReferenceH hSrs):
+    pass

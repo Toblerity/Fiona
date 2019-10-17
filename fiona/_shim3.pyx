@@ -1,4 +1,18 @@
-"""Shims on top of ogrext for GDAL versions > 2"""
+"""Shims on top of ogrext for GDAL versions >= 2.2"""
+
+cdef extern from "ogr_api.h":
+
+    int OGR_F_IsFieldNull(void *feature, int n)
+
+
+cdef extern from "ogr_srs_api.h" nogil:
+
+    ctypedef enum OSRAxisMappingStrategy:
+        OAMS_TRADITIONAL_GIS_ORDER
+
+    const char* OSRGetName(OGRSpatialReferenceH hSRS)
+    void OSRSetAxisMappingStrategy(OGRSpatialReferenceH hSRS, OSRAxisMappingStrategy)
+
 
 from fiona.ogrext2 cimport *
 from fiona._err cimport exc_wrap_pointer
@@ -12,14 +26,16 @@ log = logging.getLogger(__name__)
 
 
 cdef bint is_field_null(void *feature, int n):
-    if not OGR_F_IsFieldSet(feature, n):
+    if OGR_F_IsFieldNull(feature, n):
+        return True
+    elif not OGR_F_IsFieldSet(feature, n):
         return True
     else:
         return False
 
 
 cdef void set_field_null(void *feature, int n):
-    pass
+    OGR_F_SetFieldNull(feature, n)
 
 
 cdef void gdal_flush_cache(void *cogr_ds):
@@ -27,9 +43,10 @@ cdef void gdal_flush_cache(void *cogr_ds):
         GDALFlushCache(cogr_ds)
 
 
-cdef void* gdal_open_vector(const char* path_c, int mode, drivers, options) except NULL:
+cdef void* gdal_open_vector(char* path_c, int mode, drivers, options) except NULL:
     cdef void* cogr_ds = NULL
     cdef char **drvs = NULL
+    cdef void* drv = NULL
     cdef char **open_opts = NULL
 
     flags = GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR
@@ -42,7 +59,6 @@ cdef void* gdal_open_vector(const char* path_c, int mode, drivers, options) exce
         for name in drivers:
             name_b = name.encode()
             name_c = name_b
-            #log.debug("Trying driver: %s", name)
             drv = GDALGetDriverByName(name_c)
             if drv != NULL:
                 drvs = CSLAddString(drvs, name_c)
@@ -63,8 +79,8 @@ cdef void* gdal_open_vector(const char* path_c, int mode, drivers, options) exce
     open_opts = CSLAddNameValue(open_opts, "VALIDATE_OPEN_OPTIONS", "NO")
 
     try:
-        cogr_ds = exc_wrap_pointer(GDALOpenEx(
-            path_c, flags, <const char *const *>drvs, open_opts, NULL)
+        cogr_ds = exc_wrap_pointer(
+            GDALOpenEx(path_c, flags, <const char *const *>drvs, open_opts, NULL)
         )
         return cogr_ds
     except FionaNullPointerError:
@@ -78,6 +94,7 @@ cdef void* gdal_open_vector(const char* path_c, int mode, drivers, options) exce
 
 cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except NULL:
     cdef char **creation_opts = NULL
+    cdef void *cogr_ds = NULL
 
     for k, v in options.items():
         k = k.upper().encode('utf-8')
@@ -126,7 +143,7 @@ cdef void *get_linear_geometry(void *geom):
     return OGR_G_GetLinearGeometry(geom, 0.0, NULL)
 
 cdef const char* osr_get_name(OGRSpatialReferenceH hSrs):
-    return ''
+        return OSRGetName(hSrs)
 
 cdef void osr_set_traditional_axis_mapping_strategy(OGRSpatialReferenceH hSrs):
-    pass
+    OSRSetAxisMappingStrategy(hSrs, OAMS_TRADITIONAL_GIS_ORDER)

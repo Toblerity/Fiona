@@ -36,7 +36,7 @@ from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 from fiona.schema import FIELD_TYPES, FIELD_TYPES_MAP, normalize_field_type
 from fiona.path import vsi_path
 
-from fiona._shim cimport is_field_null
+from fiona._shim cimport is_field_null, osr_get_name, osr_set_traditional_axis_mapping_strategy
 
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
@@ -877,7 +877,7 @@ cdef class WritingSession(Session):
     cdef object _schema_mapping
 
     def start(self, collection, **kwargs):
-        cdef void *cogr_srs = NULL
+        cdef OGRSpatialReferenceH cogr_srs = NULL
         cdef char **options = NULL
         cdef const char *path_c = NULL
         cdef const char *driver_c = NULL
@@ -995,6 +995,7 @@ cdef class WritingSession(Session):
                             if auth.upper() == 'EPSG':
                                 log.debug("Setting EPSG: %s", val)
                                 OSRImportFromEPSG(cogr_srs, int(val))
+                                osr_set_traditional_axis_mapping_strategy(cogr_srs)
                         else:
                             params = []
                             col_crs['wktext'] = True
@@ -1008,12 +1009,10 @@ cdef class WritingSession(Session):
                             proj_b = proj.encode('utf-8')
                             proj_c = proj_b
                             OSRImportFromProj4(cogr_srs, proj_c)
+                            osr_set_traditional_axis_mapping_strategy(cogr_srs)
 
                     else:
                         raise ValueError("Invalid CRS")
-
-                    # Fixup, export to WKT, and set the GDAL dataset's projection.
-                    OSRFixup(cogr_srs)
 
             except (ValueError, CPLE_BaseError) as exc:
                 OGRReleaseDataSource(self.cogr_ds)

@@ -1,5 +1,7 @@
 from fiona import crs, _crs
 
+from .conftest import requires_gdal_lt_3
+
 
 def test_proj_keys():
     assert len(crs.all_proj_keys) == 87
@@ -89,6 +91,7 @@ def test_to_string_unicode():
     assert 'NAD83' in val
 
 
+@requires_gdal_lt_3
 def test_wktext():
     """Test +wktext parameter is preserved."""
     proj4 = ('+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 '
@@ -106,11 +109,13 @@ def test_towgs84():
     assert 'towgs84' in crs.from_string(proj4)
 
 
+@requires_gdal_lt_3
 def test_towgs84_wkt():
     """+towgs84 +wktext are preserved in WKT"""
     proj4 = ('+proj=lcc +lat_1=49 +lat_2=46 +lat_0=47.5 '
              '+lon_0=13.33333333333333 +x_0=400000 +y_0=400000 +ellps=bessel '
              '+towgs84=577.326,90.129,463.919,5.137,1.474,5.297,2.4232 '
              '+units=m +wktext +no_defs')
-    assert 'towgs84' in _crs.crs_to_wkt(proj4)
+    wkt = _crs.crs_to_wkt(proj4)
+    assert 'towgs84' in wkt
     assert 'wktext' in _crs.crs_to_wkt(proj4)
