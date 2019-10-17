@@ -1,5 +1,11 @@
+dist: trusty
+
 language: python
-sudo: false
+
+python:
+  - "2.7"
+  - "3.6"
+
 cache:
   directories:
     - $GDALINST
@@ -11,19 +17,21 @@ env:
     - PIP_FIND_LINKS=file://$HOME/.cache/pip/wheels
     - GDALINST=$HOME/gdalinstall
     - GDALBUILD=$HOME/gdalbuild
+    - PROJINST=$HOME/gdalinstall
+    - PROJBUILD=$HOME/projbuild
   matrix:
-    - GDALVERSION="1.11.5"
-    - GDALVERSION="2.0.3"
-    - GDALVERSION="2.1.4"
-    - GDALVERSION="2.2.4"
-    - GDALVERSION="2.3.2"
-    - GDALVERSION="2.4.2"
-    - GDALVERSION="3.0.1"
-    - GDALVERSION="trunk"
+    - GDALVERSION="1.11.5" PROJVERSION="4.8.0"
+    - GDALVERSION="2.0.3" PROJVERSION="4.9.3"
+    - GDALVERSION="2.1.4" PROJVERSION="4.9.3"
+    - GDALVERSION="2.2.4" PROJVERSION="4.9.3"
+    - GDALVERSION="2.3.3" PROJVERSION="4.9.3"
+    - GDALVERSION="2.4.2" PROJVERSION="4.9.3"
+    - GDALVERSION="3.0.1" PROJVERSION="6.1.1"
+    - GDALVERSION="trunk" PROJVERSION="6.1.1"
 
 matrix:
   allow_failures:
-    - env: GDALVERSION="trunk"
+    - env: GDALVERSION="trunk" PROJVERSION="6.1.1"
 
 addons:
   apt:
@@ -36,15 +44,12 @@ addons:
     - libatlas-base-dev
     - gfortran
 
-python:
-  - "2.7"
-  - "3.6"
-
 before_install:
   - pip install -U pip
   - pip install wheel coveralls>=1.1 --upgrade
   - pip install setuptools==36.0.1
   - pip install wheel
+  - . ./scripts/travis_proj_install.sh
   - . ./scripts/travis_gdal_install.sh
   - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$PATH
   - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$LD_LIBRARY_PATH
