@@ -55,7 +55,7 @@ before_install:
 install:
   - pip install -r requirements-dev.txt
   - if [ "$GDALVERSION" = "trunk" ]; then echo "Using gdal trunk"; elif [ $(gdal-config --version) == "$GDALVERSION" ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
-  - pip install --upgrade --force-reinstall --global-option=build_ext --global-option='-I$GDALINST/gdal-$GDALVERSION/include' --global-option='-L$GDALINST/gdal-$GDALVERSION/lib' --global-option='-R$GDALINST/gdal-$GDALVERSION/lib' -e .
+  - pip install --force-reinstall --global-option=build_ext --global-option='-I$GDALINST/gdal-$GDALVERSION/include' --global-option='-L$GDALINST/gdal-$GDALVERSION/lib' --global-option='-R$GDALINST/gdal-$GDALVERSION/lib' -e .
   - pip install -e .[test]
   - fio --version
   - gdal-config --version
