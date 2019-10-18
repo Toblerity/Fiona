@@ -41,6 +41,7 @@ GDALOPTS="  --with-ogr \
             --without-sde \
             --without-ruby \
             --without-perl \
+            --without-php \
             --without-python"
 
 # Create build dir if not exists
@@ -71,7 +72,7 @@ if [ "$GDALVERSION" = "master" ]; then
         mkdir -p $GDALINST/gdal-$GDALVERSION
         cp newrev.txt $GDALINST/gdal-$GDALVERSION/rev.txt
         ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT
-        make -s -j 2
+        make -s -j 4
         make install
     fi
 
@@ -107,7 +108,7 @@ else
         tar -xzf gdal-$GDALVERSION.tar.gz
         cd gdal-$gdalver
         ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT
-        make -s -j 2
+        make -s -j 4
         make install
     fi
 fi
