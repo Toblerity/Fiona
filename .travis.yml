@@ -36,9 +36,6 @@ matrix:
 addons:
   apt:
     packages:
-    - gdal-bin
-    - libproj-dev
-    - libhdf5-serial-dev
     - libgdal-dev
     - libatlas-dev
     - libatlas-base-dev
