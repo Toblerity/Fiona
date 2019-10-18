@@ -51,7 +51,7 @@ before_install:
   - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$PATH
   - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$LD_LIBRARY_PATH
   - export GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal
-  - export PROJ_LIB=/usr/share/proj
+  - export PROJ_LIB=$GDALINST/gdal-$GDALVERSION/share/proj
   - gdal-config --version
 
 install:
