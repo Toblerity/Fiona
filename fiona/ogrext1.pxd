@@ -151,6 +151,7 @@ cdef extern from "ogr_srs_api.h":
 
     void    OSRCleanup ()
     OGRSpatialReferenceH  OSRClone (OGRSpatialReferenceH srs)
+    int     OSRFixup (OGRSpatialReferenceH srs)
     int     OSRExportToProj4 (OGRSpatialReferenceH srs, char **params)
     int     OSRExportToWkt (OGRSpatialReferenceH srs, char **params)
     int     OSRImportFromEPSG (OGRSpatialReferenceH, int code)
