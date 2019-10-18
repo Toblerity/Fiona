@@ -80,7 +80,7 @@ cdef void* gdal_open_vector(char* path_c, int mode, drivers, options) except NUL
 
     try:
         cogr_ds = exc_wrap_pointer(
-            GDALOpenEx(path_c, flags, <const char *const *>drvs, open_opts, NULL)
+            GDALOpenEx(path_c, flags, <const char *const *>drvs, <const char *const *>open_opts, NULL)
         )
         return cogr_ds
     except FionaNullPointerError:
