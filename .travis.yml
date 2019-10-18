@@ -50,7 +50,7 @@ before_install:
   - pip install setuptools==36.0.1
   - pip install wheel
   - . ./scripts/travis_proj_install.sh
-  - travis_wait 40 . ./scripts/travis_gdal_install.sh
+  - . ./scripts/travis_gdal_install.sh
   - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$PATH
   - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$LD_LIBRARY_PATH
   - export GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal
