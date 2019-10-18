@@ -130,4 +130,4 @@ cdef const char* osr_get_name(OGRSpatialReferenceH hSrs):
 
 
 cdef void osr_set_traditional_axis_mapping_strategy(OGRSpatialReferenceH hSrs):
-    pass
+    OSRFixup(hSrs)

@@ -1,4 +1,4 @@
-"""Shims on top of ogrext for GDAL versions >= 2.2"""
+"""Shims on top of ogrext for GDAL versions >= 3.0"""
 
 cdef extern from "ogr_api.h":
 
