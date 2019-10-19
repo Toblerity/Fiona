@@ -124,9 +124,9 @@ build_script:
   - "%CMD_IN_ENV% python setup.py build_ext -IC:\\gdal\\include -lgdal_i -LC:\\gdal\\lib bdist_wheel --gdalversion %GDAL_VERSION%"
 
   # install the wheel
-  - ps: python -m pip install --upgrade pip
-  - ps: python -m pip install --force-reinstall (gci dist\*.whl | % { "$_" })
-  - ps: python -m pip freeze
+  - ps: PYTHONWARNINGS="ignore:DEPRECATION::pip._internal.cli.base_command" python -m pip install --upgrade pip
+  - ps:PYTHONWARNINGS="ignore:DEPRECATION::pip._internal.cli.base_command" python -m pip install --force-reinstall (gci dist\*.whl | % { "$_" })
+  - ps: PYTHONWARNINGS="ignore:DEPRECATION::pip._internal.cli.base_command" python -m pip freeze
   - ps: move fiona fiona.build
 
 
