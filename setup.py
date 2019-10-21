@@ -77,7 +77,8 @@ class sdist_multi_gdal(sdist):
         sources = {
             "_shim1": "_shim",
             "_shim2": "_shim",
-            "_shim22": "_shim"
+            "_shim22": "_shim",
+            "_shim3": "_shim"
         }
         for src_a, src_b in sources.items():
             shutil.copy('fiona/{}.pyx'.format(src_a), 'fiona/{}.pyx'.format(src_b))
@@ -182,6 +183,8 @@ if 'clean' not in sys.argv:
     gdal_major_version = int(gdal_version_parts[0])
     gdal_minor_version = int(gdal_version_parts[1])
 
+log.info("GDAL version major=%r minor=%r", gdal_major_version, gdal_minor_version)
+
 ext_options = dict(
     include_dirs=include_dirs,
     library_dirs=library_dirs,
@@ -223,6 +226,9 @@ if source_is_repo and "clean" not in sys.argv:
             log.info("Building Fiona for gdal 2.0.x-2.1.x: {0}".format(gdalversion))
             shutil.copy('fiona/_shim2.pyx', 'fiona/_shim.pyx')
             shutil.copy('fiona/_shim2.pxd', 'fiona/_shim.pxd')
+    elif gdal_major_version == 3:
+        shutil.copy('fiona/_shim3.pyx', 'fiona/_shim.pyx')
+        shutil.copy('fiona/_shim3.pxd', 'fiona/_shim.pxd')
 
     ext_modules = cythonize([
         Extension('fiona._geometry', ['fiona/_geometry.pyx'], **ext_options),

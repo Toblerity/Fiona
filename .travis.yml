@@ -1,5 +1,11 @@
+dist: trusty
+
 language: python
-sudo: false
+
+python:
+  - "2.7"
+  - "3.6"
+
 cache:
   directories:
     - $GDALINST
@@ -11,50 +17,48 @@ env:
     - PIP_FIND_LINKS=file://$HOME/.cache/pip/wheels
     - GDALINST=$HOME/gdalinstall
     - GDALBUILD=$HOME/gdalbuild
+    - PROJINST=$HOME/gdalinstall
+    - PROJBUILD=$HOME/projbuild
   matrix:
-    - GDALVERSION="1.11.5"
-    - GDALVERSION="2.0.3"
-    - GDALVERSION="2.1.4"
-    - GDALVERSION="2.2.4"
-    - GDALVERSION="2.3.2"
-    - GDALVERSION="trunk"
+    - GDALVERSION="1.11.5" PROJVERSION="4.8.0"
+    - GDALVERSION="2.0.3" PROJVERSION="4.9.3"
+    - GDALVERSION="2.1.4" PROJVERSION="4.9.3"
+    - GDALVERSION="2.2.4" PROJVERSION="4.9.3"
+    - GDALVERSION="2.3.3" PROJVERSION="4.9.3"
+    - GDALVERSION="2.4.2" PROJVERSION="4.9.3"
+    - GDALVERSION="3.0.1" PROJVERSION="6.1.1"
+    - GDALVERSION="trunk" PROJVERSION="6.1.1"
 
 matrix:
   allow_failures:
-    - env: GDALVERSION="trunk"
+    - env: GDALVERSION="trunk" PROJVERSION="6.1.1"
 
 addons:
   apt:
     packages:
-    - gdal-bin
-    - libproj-dev
-    - libhdf5-serial-dev
     - libgdal-dev
     - libatlas-dev
     - libatlas-base-dev
     - gfortran
-
-python:
-  - "2.7"
-  - "3.6"
 
 before_install:
   - pip install -U pip
   - pip install wheel coveralls>=1.1 --upgrade
   - pip install setuptools==36.0.1
   - pip install wheel
+  - . ./scripts/travis_proj_install.sh
   - . ./scripts/travis_gdal_install.sh
   - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$PATH
   - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$LD_LIBRARY_PATH
   - export GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal
-  - export PROJ_LIB=/usr/share/proj
+  - export PROJ_LIB=$GDALINST/gdal-$GDALVERSION/share/proj
   - gdal-config --version
 
 install:
-  - pip install -r requirements-dev.txt
   - if [ "$GDALVERSION" = "trunk" ]; then echo "Using gdal trunk"; elif [ $(gdal-config --version) == "$GDALVERSION" ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
-  - pip install --upgrade --force-reinstall --global-option=build_ext --global-option='-I$GDALINST/gdal-$GDALVERSION/include' --global-option='-L$GDALINST/gdal-$GDALVERSION/lib' --global-option='-R$GDALINST/gdal-$GDALVERSION/lib' -e .
-  - pip install -e .[test]
+  - "python -m pip wheel -r requirements-dev.txt"
+  - "python -m pip install -r requirements-dev.txt"
+  - "GDAL_CONFIG=$GDALINST/gdal-$GDALVERSION/bin/gdal-config python -m pip install --upgrade --force-reinstall --no-use-pep517 -e .[test]"
   - fio --version
   - gdal-config --version
   - fio --gdal-version
