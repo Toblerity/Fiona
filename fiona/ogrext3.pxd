@@ -4,54 +4,11 @@
 
 from libc.stdio cimport FILE
 
-cdef extern from "gdal.h":
-    char * GDALVersionInfo (char *pszRequest)
-
-cdef extern from "gdal_version.h":
-    int    GDAL_COMPUTE_VERSION(int maj, int min, int rev)
-
-cdef extern from "cpl_conv.h":
-    void *  CPLMalloc (size_t)
-    void    CPLFree (void *ptr)
-    void    CPLSetThreadLocalConfigOption (char *key, char *val)
-    void    CPLSetConfigOption (char *key, char *val)
-    const char *CPLGetConfigOption (char *, char *)
-
-cdef extern from "cpl_string.h":
-    char ** CSLAddNameValue (char **list, char *name, char *value)
-    char ** CSLSetNameValue (char **list, char *name, char *value)
-    void    CSLDestroy (char **list)
-    char ** CSLAddString(char **list, const char *string)
-
-cdef extern from "cpl_vsi.h" nogil:
-    ctypedef int vsi_l_offset
-    ctypedef FILE VSILFILE
-
-    unsigned char *VSIGetMemFileBuffer(const char *path,
-                                       vsi_l_offset *data_len,
-                                       int take_ownership)
-    VSILFILE *VSIFileFromMemBuffer(const char *path, void *data,
-                                   vsi_l_offset data_len, int take_ownership)
-    VSILFILE* VSIFOpenL(const char *path, const char *mode)
-    int VSIFCloseL(VSILFILE *fp)
-    int VSIUnlink(const char *path)
-
-    int VSIFFlushL(VSILFILE *fp)
-    size_t VSIFReadL(void *buffer, size_t nSize, size_t nCount, VSILFILE *fp)
-    int VSIFSeekL(VSILFILE *fp, vsi_l_offset nOffset, int nWhence)
-    vsi_l_offset VSIFTellL(VSILFILE *fp)
-    int VSIFTruncateL(VSILFILE *fp, vsi_l_offset nNewSize)
-    size_t VSIFWriteL(void *buffer, size_t nSize, size_t nCount, VSILFILE *fp)
-    int VSIUnlink (const char * pathname)
-
-ctypedef int OGRErr
-ctypedef struct OGREnvelope:
-    double MinX
-    double MaxX
-    double MinY
-    double MaxY
 
 cdef extern from "ogr_core.h":
+
+    ctypedef int OGRErr
+
     ctypedef enum OGRwkbGeometryType:
         wkbUnknown
         wkbPoint
@@ -138,12 +95,123 @@ cdef extern from "ogr_core.h":
         OFTDate
         OFTTime
         OFTDateTime
+        OFTInteger64
+        OFTInteger64List
         OFTMaxType
+
+    ctypedef int OGRFieldSubType
+    cdef int OFSTNone = 0
+    cdef int OFSTBoolean = 1
+    cdef int OFSTInt16 = 2
+    cdef int OFSTFloat32 = 3
+    cdef int OFSTMaxSubType = 3
+
+    ctypedef struct OGREnvelope:
+        double MinX
+        double MaxX
+        double MinY
+        double MaxY
 
     char *  OGRGeometryTypeToName(int)
 
+
     char * ODsCCreateLayer = "CreateLayer"
     char * ODsCDeleteLayer = "DeleteLayer"
+
+
+cdef extern from "gdal.h":
+    char * GDALVersionInfo (char *pszRequest)
+    void * GDALGetDriverByName(const char * pszName)
+    void * GDALOpenEx(const char * pszFilename,
+                      unsigned int nOpenFlags,
+                      const char *const *papszAllowedDrivers,
+                      const char *const *papszOpenOptions,
+                      const char *const *papszSiblingFiles
+                      )
+    int GDAL_OF_UPDATE
+    int GDAL_OF_READONLY
+    int GDAL_OF_VECTOR
+    int GDAL_OF_VERBOSE_ERROR
+    int GDALDatasetGetLayerCount(void * hds)
+    void * GDALDatasetGetLayer(void * hDS, int iLayer)
+    void * GDALDatasetGetLayerByName(void * hDS, char * pszName)
+    void GDALClose(void * hDS)
+    void * GDALCreate(void * hDriver,
+                      const char * pszFilename,
+                      int nXSize,
+                      int     nYSize,
+                      int     nBands,
+                      GDALDataType eBandType,
+                      char ** papszOptions)
+    void * GDALDatasetCreateLayer(void * hDS,
+                                  const char * pszName,
+                                  void * hSpatialRef,
+                                  int eType,
+                                  char ** papszOptions)
+    int GDALDatasetDeleteLayer(void * hDS, int iLayer)
+    void GDALFlushCache(void * hDS)
+    char * GDALGetDriverShortName(void * hDriver)
+    char * GDALGetDatasetDriver (void * hDataset)
+    int GDALDeleteDataset(void * hDriver, const char * pszFilename)
+    OGRErr GDALDatasetStartTransaction (void * hDataset, int bForce)
+    OGRErr GDALDatasetCommitTransaction (void * hDataset)
+    OGRErr GDALDatasetRollbackTransaction (void * hDataset)
+    int GDALDatasetTestCapability (void * hDataset, char *)
+
+
+    ctypedef enum GDALDataType:
+        GDT_Unknown
+        GDT_Byte
+        GDT_UInt16
+        GDT_Int16
+        GDT_UInt32
+        GDT_Int32
+        GDT_Float32
+        GDT_Float64
+        GDT_CInt16
+        GDT_CInt32
+        GDT_CFloat32
+        GDT_CFloat64
+        GDT_TypeCount
+
+cdef extern from "gdal_version.h":
+    int    GDAL_COMPUTE_VERSION(int maj, int min, int rev)
+
+cdef extern from "cpl_conv.h":
+    void *  CPLMalloc (size_t)
+    void    CPLFree (void *ptr)
+    void    CPLSetThreadLocalConfigOption (char *key, char *val)
+    const char *CPLGetConfigOption (char *, char *)
+
+
+cdef extern from "cpl_string.h":
+    char ** CSLAddNameValue (char **list, const char *name, const char *value)
+    char ** CSLSetNameValue (char **list, const char *name, const char *value)
+    void CSLDestroy (char **list)
+    char ** CSLAddString(char **list, const char *string)
+
+
+cdef extern from "cpl_vsi.h" nogil:
+    ctypedef int vsi_l_offset
+    ctypedef FILE VSILFILE
+
+    unsigned char *VSIGetMemFileBuffer(const char *path,
+                                       vsi_l_offset *data_len,
+                                       int take_ownership)
+    VSILFILE *VSIFileFromMemBuffer(const char *path, void *data,
+                                   vsi_l_offset data_len, int take_ownership)
+    VSILFILE* VSIFOpenL(const char *path, const char *mode)
+    int VSIFCloseL(VSILFILE *fp)
+    int VSIUnlink(const char *path)
+
+    int VSIFFlushL(VSILFILE *fp)
+    size_t VSIFReadL(void *buffer, size_t nSize, size_t nCount, VSILFILE *fp)
+    int VSIFSeekL(VSILFILE *fp, vsi_l_offset nOffset, int nWhence)
+    vsi_l_offset VSIFTellL(VSILFILE *fp)
+    int VSIFTruncateL(VSILFILE *fp, vsi_l_offset nNewSize)
+    size_t VSIFWriteL(void *buffer, size_t nSize, size_t nCount, VSILFILE *fp)
+    int VSIUnlink (const char * pathname)
+
 
 cdef extern from "ogr_srs_api.h":
 
@@ -151,7 +219,6 @@ cdef extern from "ogr_srs_api.h":
 
     void    OSRCleanup ()
     OGRSpatialReferenceH  OSRClone (OGRSpatialReferenceH srs)
-    int     OSRFixup (OGRSpatialReferenceH srs)
     int     OSRExportToProj4 (OGRSpatialReferenceH srs, char **params)
     int     OSRExportToWkt (OGRSpatialReferenceH srs, char **params)
     int     OSRImportFromEPSG (OGRSpatialReferenceH, int code)
@@ -167,22 +234,13 @@ cdef extern from "ogr_srs_api.h":
     int     OCTTransform (void *ct, int nCount, double *x, double *y, double *z)
 
 cdef extern from "ogr_api.h":
+
     const char * OGR_Dr_GetName (void *driver)
     void *  OGR_Dr_CreateDataSource (void *driver, const char *path, char **options)
     int     OGR_Dr_DeleteDataSource (void *driver, char *)
     void *  OGR_Dr_Open (void *driver, const char *path, int bupdate)
     int     OGR_Dr_TestCapability (void *driver, const char *)
     int     OGR_DS_DeleteLayer (void *datasource, int n)
-    void *  OGR_DS_CreateLayer (void *datasource, char *name, void *crs, int geomType, char **options)
-    void *  OGR_DS_ExecuteSQL (void *datasource, char *name, void *filter, char *dialext)
-    void    OGR_DS_Destroy (void *datasource)
-    void *  OGR_DS_GetDriver (void *layer_defn)
-    void *  OGR_DS_GetLayerByName (void *datasource, char *name)
-    int     OGR_DS_GetLayerCount (void *datasource)
-    void *  OGR_DS_GetLayer (void *datasource, int n)
-    void    OGR_DS_ReleaseResultSet (void *datasource, void *results)
-    int     OGR_DS_SyncToDisk (void *datasource)
-    int     OGR_DS_TestCapability(void *datasource, char *capability)
     void *  OGR_F_Create (void *featuredefn)
     void    OGR_F_Destroy (void *feature)
     long    OGR_F_GetFID (void *feature)
@@ -202,6 +260,7 @@ cdef extern from "ogr_api.h":
     void    OGR_F_SetFieldInteger (void *feature, int n, int value)
     void    OGR_F_SetFieldString (void *feature, int n, char *value)
     void    OGR_F_SetFieldBinary (void *feature, int n, int l, unsigned char *value)
+    void    OGR_F_SetFieldNull (void *feature, int n)  # new in GDAL 2.2
     int     OGR_F_SetGeometryDirectly (void *feature, void *geometry)
     void *  OGR_FD_Create (char *name)
     int     OGR_FD_GetFieldCount (void *featuredefn)
@@ -217,6 +276,8 @@ cdef extern from "ogr_api.h":
     void    OGR_Fld_Set (void *fielddefn, char *name, int fieldtype, int width, int precision, int justification)
     void    OGR_Fld_SetPrecision (void *fielddefn, int n)
     void    OGR_Fld_SetWidth (void *fielddefn, int n)
+    OGRFieldSubType OGR_Fld_GetSubType(void *fielddefn)
+    void    OGR_Fld_SetSubType(void *fielddefn, OGRFieldSubType subtype)
     OGRErr  OGR_G_AddGeometryDirectly (void *geometry, void *part)
     void    OGR_G_AddPoint (void *geometry, double x, double y, double z)
     void    OGR_G_AddPoint_2D (void *geometry, double x, double y)
@@ -244,6 +305,7 @@ cdef extern from "ogr_api.h":
     OGRErr  OGR_L_GetExtent (void *layer, void *extent, int force)
     void *  OGR_L_GetFeature (void *layer, int n)
     int     OGR_L_GetFeatureCount (void *layer, int m)
+    void *  OGR_G_GetLinearGeometry (void *hGeom, double dfMaxAngleStepSizeDegrees, char **papszOptions)
     void *  OGR_L_GetLayerDefn (void *layer)
     char *  OGR_L_GetName (void *layer)
     void *  OGR_L_GetNextFeature (void *layer)
@@ -261,3 +323,5 @@ cdef extern from "ogr_api.h":
     int     OGRReleaseDataSource (void *datasource)
     OGRErr  OGR_L_SetIgnoredFields (void *layer, const char **papszFields)
     OGRErr  OGR_L_SetNextByIndex (void *layer, long nIndex)
+    long long OGR_F_GetFieldAsInteger64 (void *feature, int n)
+    void    OGR_F_SetFieldInteger64 (void *feature, int n, long long value)

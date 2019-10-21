@@ -12,7 +12,6 @@ cdef extern from "ogr_srs_api.h":
     int     OSRImportFromProj4 (OGRSpatialReferenceH srs, char *proj)
     int     OSRSetFromUserInput (OGRSpatialReferenceH srs, char *input)
     int     OSRAutoIdentifyEPSG (OGRSpatialReferenceH srs)
-    int     OSRFixup(OGRSpatialReferenceH srs)
     const char * OSRGetAuthorityName (OGRSpatialReferenceH srs, const char *key)
     const char * OSRGetAuthorityCode (OGRSpatialReferenceH srs, const char *key)
     OGRSpatialReferenceH  OSRNewSpatialReference (char *wkt)

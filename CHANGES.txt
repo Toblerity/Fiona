@@ -3,6 +3,20 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.9 (2019-10-21)
+------------------
+
+- A shim module and support for GDAL 3.0 has been added. The package can now be
+  built and used with GDAL 3.0 and PROJ 6.1 or 6.2. Note that the 1.8.9 wheels
+  we will upload to PyPI will contain GDAL 2.4.2 and PROJ 4.9.3 as in the 1.8.8
+  wheels.
+
+1.8.8 (2019-09-25)
+------------------
+
+- The schema of geopackage files with a geometry type code of 3000 could not be
+  reported using Fiona 1.8.7. This bug is fixed.
+
 1.8.7 (2019-09-24)
 ------------------
 

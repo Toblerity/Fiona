@@ -1,8 +1,17 @@
-"""Shims on top of ogrext for GDAL versions >= 2.2"""
+"""Shims on top of ogrext for GDAL versions >= 3.0"""
 
 cdef extern from "ogr_api.h":
 
     int OGR_F_IsFieldNull(void *feature, int n)
+
+
+cdef extern from "ogr_srs_api.h" nogil:
+
+    ctypedef enum OSRAxisMappingStrategy:
+        OAMS_TRADITIONAL_GIS_ORDER
+
+    const char* OSRGetName(OGRSpatialReferenceH hSRS)
+    void OSRSetAxisMappingStrategy(OGRSpatialReferenceH hSRS, OSRAxisMappingStrategy)
 
 
 from fiona.ogrext2 cimport *
@@ -71,7 +80,7 @@ cdef void* gdal_open_vector(char* path_c, int mode, drivers, options) except NUL
 
     try:
         cogr_ds = exc_wrap_pointer(
-            GDALOpenEx(path_c, flags, <const char *const *>drvs, open_opts, NULL)
+            GDALOpenEx(path_c, flags, <const char *const *>drvs, <const char *const *>open_opts, NULL)
         )
         return cogr_ds
     except FionaNullPointerError:
@@ -134,7 +143,7 @@ cdef void *get_linear_geometry(void *geom):
     return OGR_G_GetLinearGeometry(geom, 0.0, NULL)
 
 cdef const char* osr_get_name(OGRSpatialReferenceH hSrs):
-    return ''
+        return OSRGetName(hSrs)
 
 cdef void osr_set_traditional_axis_mapping_strategy(OGRSpatialReferenceH hSrs):
-    OSRFixup(hSrs)
+    OSRSetAxisMappingStrategy(hSrs, OAMS_TRADITIONAL_GIS_ORDER)
