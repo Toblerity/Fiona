@@ -57,8 +57,9 @@ environment:
           GDAL_VERSION: "3.0.0"
           GIS_INTERNALS: "release-1911-x64-gdal-3-0-mapserver-7-4.zip"
           GIS_INTERNALS_LIBS: "release-1911-x64-gdal-3-0-mapserver-7-4-libs.zip"
+          PROJ_LIB: "C:\\apps\\gisinternals\\bin\\proj6\\SHARE"
 
-          
+
 install:
 
   - ECHO "Filesystem root:"
