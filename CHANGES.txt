@@ -3,6 +3,13 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.9.post1 (2019-10-22)
+------------------------
+
+- A change has been made to the package setup script so that the shim module
+  for GDAL 3 is used when building the package from a source distribution.
+  There are no other changes to the package.
+
 1.8.9 (2019-10-21)
 ------------------
 
