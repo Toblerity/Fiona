@@ -46,15 +46,15 @@ environment:
           PYTHON_VERSION: "3.6.4"
           PYTHON_ARCH: "64"
           GDAL_VERSION: "2.4.0"
-          GIS_INTERNALS: "release-1911-x64-gdal-2-4-0-mapserver-7-2-2.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-4-0-mapserver-7-2-2-libs.zip"
+          GIS_INTERNALS: "release-1911-x64-gdal-2-4-2-mapserver-7-4-0.zip"
+          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-4-2-mapserver-7-4-0-libs.zip"
 
         - PYTHON: "C:\\Python36-x64"
           PYTHON_VERSION: "3.6.4"
           PYTHON_ARCH: "64"
-          GDAL_VERSION: "3.0.0"
-          GIS_INTERNALS: "release-1911-x64-gdal-3-0-0-mapserver-7-4-0.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-3-0-0-mapserver-7-4-0-libs.zip"
+          GDAL_VERSION: "3.0dev"
+          GIS_INTERNALS: "release-1911-x64-gdal-3-0-mapserver-7-4.zip"
+          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-3-0-mapserver-7-4-libs.zip"
 
           
 install:
@@ -150,7 +150,7 @@ test_script:
 
 matrix:
   allow_failures:
-    - PYTHON_VERSION: "2.7.14"
+    - GDAL_VERSION: "3.0dev"
 
 artifacts:
   - path: dist\*.whl
