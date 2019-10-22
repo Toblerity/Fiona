@@ -38,9 +38,9 @@ environment:
         - PYTHON: "C:\\Python36-x64"
           PYTHON_VERSION: "3.6.4"
           PYTHON_ARCH: "64"
-          GDAL_VERSION: "2.3.0"
-          GIS_INTERNALS: "release-1911-x64-gdal-2-3-0-mapserver-7-0-7.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-3-0-mapserver-7-0-7-libs.zip"
+          GDAL_VERSION: "2.3.3"
+          GIS_INTERNALS: "release-1911-x64-gdal-2-3-3-mapserver-7-2-1.zip"
+          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-3-3-mapserver-7-2-1-libs.zip"
 
         - PYTHON: "C:\\Python36-x64"
           PYTHON_VERSION: "3.6.4"
