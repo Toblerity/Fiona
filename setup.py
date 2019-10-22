@@ -261,7 +261,7 @@ elif "clean" not in sys.argv:
         log.info("Building Fiona for gdal 1.x: {0}".format(gdalversion))
         ext_modules.append(
             Extension('fiona._shim', ['fiona/_shim1.c'], **ext_options))
-    elif gdal_minor_version == 2:
+    elif gdal_major_version == 2:
         if gdal_minor_version >= 2:
             log.info("Building Fiona for gdal 2.2+: {0}".format(gdalversion))
             ext_modules.append(
