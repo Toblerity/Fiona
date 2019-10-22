@@ -3,6 +3,13 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.9.post2 (2019-10-22)
+------------------------
+
+- The 1.8.9.post1 release introduced a bug affecting builds of the package from
+  a source distribution using GDAL 2.x. This bug has been fixed in commit
+  960568d.
+
 1.8.9.post1 (2019-10-22)
 ------------------------
 
