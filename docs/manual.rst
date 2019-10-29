@@ -1044,15 +1044,64 @@ or an ordered dict.
       ... )
 
 
-Coordinates and Geometry Types
-------------------------------
+3D Coordinates and Geometry Types
+---------------------------------
 
 If you write 3D coordinates, ones having (x, y, z) tuples, to a 2D file
 ('Point' schema geometry, for example) the z values will be lost.
 
+.. sourcecode:: python
+
+  schema_props = OrderedDict([('foo', 'str')])
+
+  record = {
+      'geometry': {
+          'type': 'Point',
+          'coordinates': (-1, 1, 5)
+      },
+      'properties': OrderedDict([
+          ('foo', 'bar')
+      ])
+  }
+
+  with fiona.open(
+          '/tmp/file.shp',
+          'w',
+          driver='ESRI Shapefile',
+          schema={'geometry': 'Point', 'properties': schema_props}) as c:
+      c.write(record)
+
+  with fiona.open('/tmp/file.shp') as c:
+      print(c[0]['geometry'])
+
+  # {'type': 'Point', 'coordinates': (-1.0, 1.0)}
+
 If you write 2D coordinates, ones having only (x, y) tuples, to a 3D file ('3D
 Point' schema geometry, for example) a default z value of 0 will be provided.
 
+.. sourcecode:: python
+
+  record = {
+      'geometry': {
+          'type': 'Point',
+          'coordinates': (-1, 1)
+      },
+      'properties': OrderedDict([
+          ('foo', 'bar')
+      ])
+  }
+
+  with fiona.open(
+          '/tmp/file.shp',
+          'w',
+          driver='ESRI Shapefile',
+          schema={'geometry': '3D Point', 'properties': schema_props}) as c:
+      c.write(record)
+
+  with fiona.open('/tmp/file.shp') as c:
+      print(c[0]['geometry'])
+
+  # {'type': 'Point', 'coordinates': (-1.0, 1.0, 0.0)}
 
 Advanced Topics
 ===============
