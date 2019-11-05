@@ -27,11 +27,11 @@ env:
     - GDALVERSION="2.3.3" PROJVERSION="4.9.3"
     - GDALVERSION="2.4.2" PROJVERSION="4.9.3"
     - GDALVERSION="3.0.1" PROJVERSION="6.1.1"
-    - GDALVERSION="trunk" PROJVERSION="6.1.1"
+    - GDALVERSION="master" PROJVERSION="6.1.1"
 
 matrix:
   allow_failures:
-    - env: GDALVERSION="trunk" PROJVERSION="6.1.1"
+    - env: GDALVERSION="master" PROJVERSION="6.1.1"
 
 addons:
   apt:
@@ -55,7 +55,7 @@ before_install:
   - gdal-config --version
 
 install:
-  - if [ "$GDALVERSION" = "trunk" ]; then echo "Using gdal trunk"; elif [ $(gdal-config --version) == "$GDALVERSION" ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
+  - if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $(gdal-config --version) == "$GDALVERSION" ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
   - "python -m pip wheel -r requirements-dev.txt"
   - "python -m pip install -r requirements-dev.txt"
   - "GDAL_CONFIG=$GDALINST/gdal-$GDALVERSION/bin/gdal-config python -m pip install --upgrade --force-reinstall --no-use-pep517 -e .[test]"
