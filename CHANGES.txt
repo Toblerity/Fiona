@@ -3,6 +3,13 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.10 (TBD)
+------------
+
+- Remove old and unused _drivers extension module.
+- Check for header.dxf file instead of pcs.csv when looking for installed GDAL
+  data. The latter is gone with GDAL 3.0 but the former remains (#818).
+
 1.8.9.post2 (2019-10-22)
 ------------------------
 
