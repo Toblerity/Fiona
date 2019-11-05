@@ -58,7 +58,7 @@ def transform_geom(
         on the "destination" or "to" side of the transformation.
     geom: obj
         A GeoJSON-like geometry object with 'type' and 'coordinates'
-        members.
+        members or an iterable of GeoJSON-like geometry objects.
     antimeridian_cutting: bool, optional
         ``True`` to cut output geometries in two at the antimeridian,
         the default is ``False`.
@@ -72,7 +72,8 @@ def transform_geom(
     Returns
     -------
     obj
-        A new GeoJSON-like geometry with transformed coordinates. Note
+        A new GeoJSON-like geometry (or a list of GeoJSON-like geometries
+        if an iterable was given as input) with transformed coordinates. Note
         that if the output is at the antimeridian, it may be cut and 
         of a different geometry ``type`` than the input, e.g., a
         polygon input may result in multi-polygon output.

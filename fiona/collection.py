@@ -88,7 +88,6 @@ class Collection(object):
         self._schema = None
         self._crs = None
         self._crs_wkt = None
-        self.env = None
         self.enabled_drivers = enabled_drivers
         self.ignore_fields = ignore_fields
         self.ignore_geometry = bool(ignore_geometry)
@@ -447,8 +446,6 @@ class Collection(object):
             log.debug("Stopped session")
             self.session = None
             self.iterator = None
-        if self.env:
-            self.env.__exit__()
 
     @property
     def closed(self):
@@ -456,12 +453,15 @@ class Collection(object):
         return self.session is None
 
     def __enter__(self):
+        self._env = env_ctx_if_needed()
+        self._env.__enter__()
         logging.getLogger('fiona.ogrext').addFilter(self.field_skip_log_filter)
         self._env = env_ctx_if_needed()
         self._env.__enter__()
         return self
 
     def __exit__(self, type, value, traceback):
+        self._env.__exit__()
         logging.getLogger('fiona.ogrext').removeFilter(self.field_skip_log_filter)
         self._env.__exit__()
         self.close()

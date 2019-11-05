@@ -386,6 +386,12 @@ mappings. :py:func:`~fiona.crs.to_string` converts mappings to PROJ.4 strings:
   >>> from_epsg(3857)
   {'init': 'epsg:3857', 'no_defs': True}
 
+.. admonition:: No Validation
+
+   Both :py:func:`~fiona.crs.from_epsg` and :py:func:`~fiona.crs.from_string`
+   simply restructure data, they do not ensure that the resulting mapping is
+   a pre-defined or otherwise valid CRS in any way.
+
 The number of records in the collection's file can be obtained via Python's
 built in :py:func:`len` function.
 
@@ -1086,7 +1092,7 @@ accessing data stored in AWS S3 or another cloud storage system.
         import fiona
 
         with fiona.Env(
-            session=AWSession(
+            session=AWSSession(
                 aws_access_key_id="key",
                 aws_secret_access_key="secret",
             )
@@ -1318,40 +1324,44 @@ The single shapefile may also be accessed like so:
   ...
   48
 
-Dumpgj
+MemoryFile and ZipMemoryFile
+----------------------------
+
+:py:class:`fiona.io.MemoryFile` and :py:class:`fiona.io.ZipMemoryFile` allow
+formatted feature collections, even zipped feature collections, to be read or
+written in memory, with no filesystem access required. For example, you may
+have a zipped shapefile in a stream of bytes coming from a web upload or
+download.
+
+.. code-block:: pycon
+
+    >>> data = open('tests/data/coutwildrnp.zip', 'rb').read()
+    >>> len(data)
+    154006
+    >>> data[:20]
+    b'PK\x03\x04\x14\x00\x00\x00\x00\x00\xaa~VM\xech\xae\x1e\xec\xab'
+
+The feature collection in this stream of bytes can be accessed by wrapping it
+in an instance of ZipMemoryFile.
+
+.. code-block:: pycon
+
+    >>> from fiona.io import ZipMemoryFile
+    >>> with ZipMemoryFile(data) as zip:
+    ...     with zip.open('coutwildrnp.shp') as collection:
+    ...         print(len(collection))
+    ...         print(collection.schema)
+    ...
+    67
+    {'properties': OrderedDict([('PERIMETER', 'float:24.15'), ('FEATURE2', 'str:80'), ('NAME', 'str:80'), ('FEATURE1', 'str:80'), ('URL', 'str:101'), ('AGBUR', 'str:80'), ('AREA', 'float:24.15'), ('STATE_FIPS', 'str:80'), ('WILDRNP020', 'int:10'), ('STATE', 'str:80')]), 'geometry': 'Polygon'}
+
+*New in 1.8.0*
+
+Fiona command line interface
 ======
 
-Fiona installs a script named ``dumpgj``. It converts files to GeoJSON with
-JSON-LD context as an option and is intended to be an upgrade to "ogr2ogr -f
-GeoJSON".
-
-.. sourcecode:: console
-
-  $ dumpgj --help
-  usage: dumpgj [-h] [-d] [-n N] [--compact] [--encoding ENC]
-                [--record-buffered] [--ignore-errors] [--use-ld-context]
-                [--add-ld-context-item TERM=URI]
-                infile [outfile]
-  
-  Serialize a file's records or description to GeoJSON
-  
-  positional arguments:
-    infile                input file name
-    outfile               output file name, defaults to stdout if omitted
-  
-  optional arguments:
-    -h, --help            show this help message and exit
-    -d, --description     serialize file's data description (schema) only
-    -n N, --indent N      indentation level in N number of chars
-    --compact             use compact separators (',', ':')
-    --encoding ENC        Specify encoding of the input file
-    --record-buffered     Economical buffering of writes at record, not
-                          collection (default), level
-    --ignore-errors       log errors but do not stop serialization
-    --use-ld-context      add a JSON-LD context to JSON output
-    --add-ld-context-item TERM=URI
-                          map a term to a URI and add it to the output's JSON LD
-                          context
+Fiona comes with a command line interface called "fio". See the 
+`CLI Documentation <cli.html>`__ for detailed usage instructions.
 
 Final Notes
 ===========

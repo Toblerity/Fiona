@@ -1,4 +1,4 @@
-dist: trusty
+dist: xenial
 
 language: python
 
@@ -27,11 +27,11 @@ env:
     - GDALVERSION="2.3.3" PROJVERSION="4.9.3"
     - GDALVERSION="2.4.2" PROJVERSION="4.9.3"
     - GDALVERSION="3.0.1" PROJVERSION="6.1.1"
-    - GDALVERSION="trunk" PROJVERSION="6.1.1"
+    - GDALVERSION="master" PROJVERSION="6.1.1"
 
 matrix:
   allow_failures:
-    - env: GDALVERSION="trunk" PROJVERSION="6.1.1"
+    - env: GDALVERSION="master" PROJVERSION="6.1.1"
 
 addons:
   apt:
@@ -40,6 +40,8 @@ addons:
     - libatlas-dev
     - libatlas-base-dev
     - gfortran
+    - libsqlite3-dev
+    - sqlite3
 
 before_install:
   - pip install -U pip
@@ -55,13 +57,13 @@ before_install:
   - gdal-config --version
 
 install:
-  - if [ "$GDALVERSION" = "trunk" ]; then echo "Using gdal trunk"; elif [ $(gdal-config --version) == "$GDALVERSION" ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
+  - if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $(gdal-config --version) == "$GDALVERSION" ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
   - "python -m pip wheel -r requirements-dev.txt"
   - "python -m pip install -r requirements-dev.txt"
   - "GDAL_CONFIG=$GDALINST/gdal-$GDALVERSION/bin/gdal-config python -m pip install --upgrade --force-reinstall --no-use-pep517 -e .[test]"
   - fio --version
-  - gdal-config --version
   - fio --gdal-version
+  - "python -m pip list"
 
 script:
   - python -m pytest -m "not wheel" --cov fiona --cov-report term-missing

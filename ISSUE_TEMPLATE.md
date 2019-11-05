@@ -10,6 +10,18 @@ often omit.
 
 You think you've found something? We believe you.
 
+The primary forum for questions about installation and usage of Fiona is 
+https://fiona.groups.io/g/main. The authors and other users will answer 
+questions when they have expertise to share and time to explain. Please take the
+time to craft a clear question and be patient about responses. Please do not
+bring these questions to Fiona's issue tracker, which we want to reserve for
+bug reports and other actionable issues.
+
+Questions about development of Fiona, brainstorming, requests for comment,
+and not-yet-actionable proposals are welcome in the project's developers 
+discussion group https://fiona.groups.io/g/dev. Issues opened in Fiona's
+GitHub repo which haven't been socialized there may be perfunctorily closed.
+
 Please note: Fiona contains extension modules and is thus susceptible to
 C library compatibility issues. If you are reporting an installation or module
 import issue, please note that this project only accepts reports about problems

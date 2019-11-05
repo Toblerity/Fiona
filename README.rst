@@ -24,8 +24,10 @@ Fiona is supported only on CPython versions 2.7 and 3.4+.
 For more details, see:
 
 * Fiona `home page <https://github.com/Toblerity/Fiona>`__
-* Fiona `docs and manual <https://fiona.readthedocs.io/en/stable/>`__
-* Fiona `examples <https://github.com/Toblerity/Fiona/tree/master/examples>`__
+* `Docs and manual <https://fiona.readthedocs.io/>`__
+* `Examples <https://github.com/Toblerity/Fiona/tree/master/examples>`__
+* Main `user discussion group <https://fiona.groups.io/g/main>`__
+* `Developers discussion group <https://fiona.groups.io/g/dev>`__
 
 Usage
 =====
@@ -297,11 +299,11 @@ the ``GDAL_VERSION`` environment variable (e.g. ``set GDAL_VERSION=2.1``).
 Note: The GDAL DLL (``gdal111.dll`` or similar) and gdal-data directory need to
 be in your Windows PATH otherwise Fiona will fail to work.
 
-The [Appveyor CI build](https://ci.appveyor.com/project/sgillies/fiona/history)
+The `Appveyor CI build <https://ci.appveyor.com/project/sgillies/fiona/history>`__
 uses the GISInternals GDAL binaries to build Fiona. This produces a binary wheel
 for successful builds, which includes GDAL and other dependencies, for users
 wanting to try an unstable development version.
-The [Appveyor configuration file](appveyor.yml) may be a useful example for
+The `Appveyor configuration file <https://github.com/Toblerity/Fiona/blob/master/appveyor.yml>`__ may be a useful example for
 users building from source on Windows.
 
 Development and testing

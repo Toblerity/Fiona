@@ -877,7 +877,7 @@ def test_encoding_option_warning(tmpdir, caplog):
     assert not caplog.text
 
 
-def test_closed_session_next(path_coutwildrnp_shp):
+def test_closed_session_next(gdalenv, path_coutwildrnp_shp):
     """Confirm fix for  issue #687"""
     src = fiona.open(path_coutwildrnp_shp)
     itr = iter(src)

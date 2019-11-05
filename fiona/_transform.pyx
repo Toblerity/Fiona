@@ -5,12 +5,13 @@
 from __future__ import absolute_import
 
 import logging
+import warnings
 
 from fiona cimport _cpl, _crs, _csl, _geometry
 from fiona._crs cimport OGRSpatialReferenceH
 from fiona._shim cimport osr_set_traditional_axis_mapping_strategy
 
-from fiona.compat import UserDict
+from fiona.compat import UserDict, DICT_TYPES
 
 
 cdef extern from "ogr_geometry.h" nogil:
@@ -114,57 +115,38 @@ def _transform(src_crs, dst_crs, xs, ys):
     return res_xs, res_ys
 
 
-def _transform_geom(
-        src_crs, dst_crs, geom, antimeridian_cutting, antimeridian_offset,
-        precision):
-    """Return a transformed geometry."""
-    cdef char *proj_c = NULL
-    cdef char *key_c = NULL
-    cdef char *val_c = NULL
-    cdef char **options = NULL
-    cdef OGRSpatialReferenceH src = NULL
-    cdef OGRSpatialReferenceH dst = NULL
-    cdef void *transform = NULL
-    cdef OGRGeometryFactory *factory = NULL
+cdef object _transform_single_geom(
+    object single_geom,
+    OGRGeometryFactory *factory,
+    void *transform,
+    char **options,
+    object precision
+):
     cdef void *src_ogr_geom = NULL
     cdef void *dst_ogr_geom = NULL
     cdef int i
-
-    if src_crs and dst_crs:
-        src = _crs_from_crs(src_crs)
-        dst = _crs_from_crs(dst_crs)
-        transform = _crs.OCTNewCoordinateTransformation(src, dst)
-
-        # Transform options.
-        options = _csl.CSLSetNameValue(
-                    options, "DATELINEOFFSET", 
-                    str(antimeridian_offset).encode('utf-8'))
-        if antimeridian_cutting:
-            options = _csl.CSLSetNameValue(options, "WRAPDATELINE", "YES")
-
-        factory = new OGRGeometryFactory()
-        src_ogr_geom = _geometry.OGRGeomBuilder().build(geom)
-        dst_ogr_geom = factory.transformWithOptions(
-                        <const OGRGeometry *>src_ogr_geom,
-                        <OGRCoordinateTransformation *>transform,
-                        options)
-        g = _geometry.GeomBuilder().build(dst_ogr_geom)
-
-        _geometry.OGR_G_DestroyGeometry(dst_ogr_geom)
-        _geometry.OGR_G_DestroyGeometry(src_ogr_geom)
-        _crs.OCTDestroyCoordinateTransformation(transform)
-        if options != NULL:
-            _csl.CSLDestroy(options)
-        _crs.OSRRelease(src)
-        _crs.OSRRelease(dst)
-
+    src_ogr_geom = _geometry.OGRGeomBuilder().build(single_geom)
+    dst_ogr_geom = factory.transformWithOptions(
+                    <const OGRGeometry *>src_ogr_geom,
+                    <OGRCoordinateTransformation *>transform,
+                    options)
+    if dst_ogr_geom == NULL:
+        out_geom = None
+        warnings.warn(
+            "Full reprojection failed, but partial is possible. To enable partial "
+            "reprojection wrap the transform_geom call like so:\n"
+            "with fiona.Env(OGR_ENABLE_PARTIAL_REPROJECTION=True):\n"
+            "    transform_geom(...)"
+        )
     else:
-        g = geom
+        out_geom = _geometry.GeomBuilder().build(dst_ogr_geom)
+        _geometry.OGR_G_DestroyGeometry(dst_ogr_geom)
+    if src_ogr_geom != NULL:
+        _geometry.OGR_G_DestroyGeometry(src_ogr_geom)
 
-    if precision >= 0:
-
-        if g['type'] == 'Point':
-            coords = list(g['coordinates'])
+    if out_geom is not None and precision >= 0:
+        if out_geom['type'] == 'Point':
+            coords = list(out_geom['coordinates'])
             x, y = coords[:2]
             x = round(x, precision)
             y = round(y, precision)
@@ -173,8 +155,8 @@ def _transform_geom(
                 z = coords[2]
                 new_coords.append(round(z, precision))
 
-        elif g['type'] in ['LineString', 'MultiPoint']:
-            coords = list(zip(*g['coordinates']))
+        elif out_geom['type'] in ['LineString', 'MultiPoint']:
+            coords = list(zip(*out_geom['coordinates']))
             xp, yp = coords[:2]
             xp = [round(v, precision) for v in xp]
             yp = [round(v, precision) for v in yp]
@@ -185,9 +167,9 @@ def _transform_geom(
             else:
                 new_coords = list(zip(xp, yp))
 
-        elif g['type'] in ['Polygon', 'MultiLineString']:
+        elif out_geom['type'] in ['Polygon', 'MultiLineString']:
             new_coords = []
-            for piece in g['coordinates']:
+            for piece in out_geom['coordinates']:
                 coords = list(zip(*piece))
                 xp, yp = coords[:2]
                 xp = [round(v, precision) for v in xp]
@@ -199,8 +181,8 @@ def _transform_geom(
                 else:
                     new_coords.append(list(zip(xp, yp)))
 
-        elif g['type'] == 'MultiPolygon':
-            parts = g['coordinates']
+        elif out_geom['type'] == 'MultiPolygon':
+            parts = out_geom['coordinates']
             new_coords = []
             for part in parts:
                 inner_coords = []
@@ -217,6 +199,47 @@ def _transform_geom(
                         inner_coords.append(list(zip(xp, yp)))
                 new_coords.append(inner_coords)
 
-        g['coordinates'] = new_coords
+        out_geom['coordinates'] = new_coords
+    return out_geom
 
-    return g
+
+def _transform_geom(
+        src_crs, dst_crs, geom, antimeridian_cutting, antimeridian_offset,
+        precision):
+    """Return a transformed geometry."""
+    cdef char *proj_c = NULL
+    cdef char *key_c = NULL
+    cdef char *val_c = NULL
+    cdef char **options = NULL
+    cdef OGRSpatialReferenceH src = NULL
+    cdef OGRSpatialReferenceH dst = NULL
+    cdef void *transform = NULL
+    cdef OGRGeometryFactory *factory = NULL
+    if not all([src_crs, dst_crs]):
+        raise RuntimeError("Must provide a source and destination CRS.")
+    src = _crs_from_crs(src_crs)
+    dst = _crs_from_crs(dst_crs)
+    transform = _crs.OCTNewCoordinateTransformation(src, dst)
+    # Transform options.
+    options = _csl.CSLSetNameValue(
+                options, "DATELINEOFFSET", 
+                str(antimeridian_offset).encode('utf-8'))
+    if antimeridian_cutting:
+        options = _csl.CSLSetNameValue(options, "WRAPDATELINE", "YES")
+
+    factory = new OGRGeometryFactory()
+
+    if isinstance(geom, DICT_TYPES):
+        out_geom = _transform_single_geom(geom, factory, transform, options, precision)
+    else:
+        out_geom = [
+            _transform_single_geom(single_geom, factory, transform, options, precision)
+            for single_geom in geom
+        ]
+
+    _crs.OCTDestroyCoordinateTransformation(transform)
+    if options != NULL:
+        _csl.CSLDestroy(options)
+    _crs.OSRRelease(src)
+    _crs.OSRRelease(dst)
+    return out_geom

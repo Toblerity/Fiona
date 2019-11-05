@@ -13,6 +13,7 @@ environment:
         GDAL_HOME: "C:\\gdal"
         PYTHONWARNINGS: "ignore:DEPRECATION::pip._internal.cli.base_command"
 
+
     # PYTHON_VERSION and PYTHON_ARCH are required by run_with_env.cmd
     matrix:
         - PYTHON: "C:\\Python27-x64"
@@ -59,6 +60,7 @@ environment:
           GIS_INTERNALS_LIBS: "release-1911-x64-gdal-3-0-mapserver-7-4-libs.zip"
           PROJ_LIB: "C:\\gdal\\bin\\proj6\\share"
 
+
 install:
 
   - ECHO "Filesystem root:"
@@ -81,17 +83,6 @@ install:
   - "python --version"
   - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
 
-
-  # https://code.google.com/p/pymat2/wiki/WindowsTips
-  #- ps: (Get-Content "%VS90COMNTOOLS%\..\..\VC\vcvarsall.bat) | ForEach-Object { $_ -replace "vcvarsamd64.bat", "vcvars64.bat" } | Set-Content "%VS90COMNTOOLS%\..\..\VC\vcvarsall.bat
-  # - '%CMD_IN_ENV% echo "conv env"'
-  # - ps: 'ls "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin"'
-  # - if "%platform%" == "x86" call "%VS90COMNTOOLS%\..\..\VC\vcvarsall.bat"
-  #- if "%platform%" == "x64" echo f | xcopy /f /y "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat" "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\amd64\vcvarsamd64.bat"
-  # - if "%platform%" == "x64" call "%VS90COMNTOOLS%\..\..\VC\vcvarsall.bat" amd64
-  # - if "%platform%" == "x64" set WIN64_ARG="WIN64=YES"
-
-
   - ps: mkdir C:\build | out-null
   - ps: mkdir C:\gdal | out-null
 
@@ -110,9 +101,9 @@ install:
   - cd C:\projects\fiona
   # Upgrade to the latest version of pip to avoid it displaying warnings
   # about it being out of date.
-  # - "python -m pip install --disable-pip-version-check --user --upgrade pip"
+  - cmd: python -m pip install --disable-pip-version-check --user --upgrade pip
 
-  - pip --version
+  - cmd: pip --version
 
   # Install the build dependencies of the project. If some dependencies contain
   # compiled extensions and are not provided as pre-built wheel packages,

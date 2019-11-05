@@ -30,7 +30,7 @@ from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
     FionaDeprecationWarning)
-from fiona.compat import OrderedDict
+from fiona.compat import OrderedDict, strencode
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 from fiona.schema import FIELD_TYPES, FIELD_TYPES_MAP, normalize_field_type
@@ -220,8 +220,8 @@ cdef class FeatureBuilder:
                 props[key] = OGR_F_GetFieldAsDouble(feature, i)
 
             elif fieldtype is text_type:
+                val = OGR_F_GetFieldAsString(feature, i)
                 try:
-                    val = OGR_F_GetFieldAsString(feature, i)
                     val = val.decode(encoding)
                 except UnicodeDecodeError:
                     log.warning(
@@ -258,7 +258,6 @@ cdef class FeatureBuilder:
                 props[key] = data[:l]
 
             else:
-                log.debug("%s: None, fieldtype: %r, %r" % (key, fieldtype, fieldtype in string_types))
                 props[key] = None
 
         cdef void *cogr_geometry = NULL
@@ -333,19 +332,11 @@ cdef class OGRFeatureBuilder:
         encoding = session._get_internal_encoding()
 
         for key, value in feature['properties'].items():
-            log.debug(
-                "Looking up %s in %s", key, repr(session._schema_mapping))
             ogr_key = session._schema_mapping[key]
 
             schema_type = normalize_field_type(collection.schema['properties'][key])
 
-            log.debug("Normalizing schema type for key %r in schema %r to %r", key, collection.schema['properties'], schema_type)
-
-            try:
-                key_bytes = ogr_key.encode(encoding)
-            except UnicodeDecodeError:
-                log.warning("Failed to encode %s using %s codec", key, encoding)
-                key_bytes = ogr_key
+            key_bytes = strencode(ogr_key, encoding)
             key_c = key_bytes
             i = OGR_F_GetFieldIndex(cogr_feature, key_c)
             if i < 0:
@@ -357,9 +348,6 @@ cdef class OGRFeatureBuilder:
 
             # Continue over the standard OGR types.
             if isinstance(value, integer_types):
-
-                log.debug("Setting field %r, type %r, to value %r", i, schema_type, value)
-
                 if schema_type == 'int32':
                     OGR_F_SetFieldInteger(cogr_feature, i, value)
                 else:
@@ -398,19 +386,13 @@ cdef class OGRFeatureBuilder:
                 OGR_F_SetFieldBinary(cogr_feature, i, len(value),
                     <unsigned char*>string_c)
             elif isinstance(value, string_types):
-                try:
-                    value_bytes = value.encode(encoding)
-                except UnicodeDecodeError:
-                    log.warning(
-                        "Failed to encode %s using %s codec", value, encoding)
-                    value_bytes = value
+                value_bytes = strencode(value, encoding)
                 string_c = value_bytes
                 OGR_F_SetFieldString(cogr_feature, i, string_c)
             elif value is None:
                 set_field_null(cogr_feature, i)
             else:
                 raise ValueError("Invalid field type %s" % type(value))
-            log.debug("Set field %s: %r" % (key, value))
         return cogr_feature
 
 
@@ -619,7 +601,6 @@ cdef class Session:
             key = key_b.decode(encoding)
 
             if key in ignore_fields:
-                log.debug("By request, ignoring field %r", key)
                 continue
 
             fieldtypename = FIELD_TYPES[OGR_Fld_GetType(cogr_fielddefn)]
@@ -840,7 +821,6 @@ cdef class Session:
         if isinstance(item, slice):
             warnings.warn("Collection slicing is deprecated and will be disabled in a future version.", FionaDeprecationWarning)
             itr = Iterator(self.collection, item.start, item.stop, item.step)
-            log.debug("Slice: %r", item)
             return list(itr)
         elif isinstance(item, int):
             index = item
@@ -895,11 +875,7 @@ cdef class WritingSession(Session):
 
             if not os.path.exists(path):
                 raise OSError("No such file or directory %s" % path)
-
-            try:
-                path_b = path.encode('utf-8')
-            except UnicodeDecodeError:
-                path_b = path
+            path_b = strencode(path)
             path_c = path_b
 
             try:
@@ -923,11 +899,7 @@ cdef class WritingSession(Session):
                 self._fileencoding = userencoding or self._get_fallback_encoding()
 
         elif collection.mode == 'w':
-
-            try:
-                path_b = path.encode('utf-8')
-            except UnicodeDecodeError:
-                path_b = path
+            path_b = strencode(path)
             path_c = path_b
 
             driver_b = collection.driver.encode()
@@ -1211,20 +1183,18 @@ cdef class WritingSession(Session):
 
         schema_props_keys = set(collection.schema['properties'].keys())
         for record in records:
-            log.debug("Creating feature in layer: %s" % record)
-            # Validate against collection's schema.
-            if set(record['properties'].keys()) != schema_props_keys:
-                raise ValueError(
-                    "Record does not match collection schema: %r != %r" % (
-                        record['properties'].keys(),
-                        list(schema_props_keys) ))
             if not validate_geometry_type(record):
                 raise GeometryTypeValidationError(
                     "Record's geometry type does not match "
                     "collection schema's geometry type: %r != %r" % (
-                         record['geometry']['type'],
-                         collection.schema['geometry'] ))
-
+                        record['geometry']['type'],
+                        collection.schema['geometry'] ))
+            # Validate against collection's schema to give useful message
+            if set(record['properties'].keys()) != schema_props_keys:
+                raise SchemaError(
+                    "Record does not match collection schema: %r != %r" % (
+                        record['properties'].keys(),
+                        list(schema_props_keys) ))
             cogr_feature = OGRFeatureBuilder().build(record, collection)
             result = OGR_L_CreateFeature(cogr_layer, cogr_feature)
             if result != OGRERR_NONE:
@@ -1335,7 +1305,6 @@ cdef class Iterator:
         self.step = step
 
         self.next_index = start
-        log.debug("Index: %d", self.next_index)
         OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
 
     def __iter__(self):
@@ -1537,10 +1506,7 @@ def _listlayers(path, **kwargs):
     cdef const char *name_c
 
     # Open OGR data source.
-    try:
-        path_b = path.encode('utf-8')
-    except UnicodeDecodeError:
-        path_b = path
+    path_b = strencode(path)
     path_c = path_b
     cogr_ds = gdal_open_vector(path_c, 0, None, kwargs)
 

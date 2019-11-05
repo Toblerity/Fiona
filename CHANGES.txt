@@ -3,10 +3,29 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.8.9 (TBD)
------------
 
-- A shim module and support for GDAL 3.0 has been added.
+1.8.9.post2 (2019-10-22)
+------------------------
+
+- The 1.8.9.post1 release introduced a bug affecting builds of the package from
+  a source distribution using GDAL 2.x. This bug has been fixed in commit
+  960568d.
+
+1.8.9.post1 (2019-10-22)
+------------------------
+
+- A change has been made to the package setup script so that the shim module
+  for GDAL 3 is used when building the package from a source distribution.
+  There are no other changes to the package.
+
+1.8.9 (2019-10-21)
+------------------
+
+- A shim module and support for GDAL 3.0 has been added. The package can now be
+  built and used with GDAL 3.0 and PROJ 6.1 or 6.2. Note that the 1.8.9 wheels
+  we will upload to PyPI will contain GDAL 2.4.2 and PROJ 4.9.3 as in the 1.8.8
+  wheels.
+>>>>>>> upstream/maint-1.9
 
 1.8.8 (2019-09-25)
 ------------------

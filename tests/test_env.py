@@ -7,11 +7,9 @@ try:
 except ImportError:
     import mock
 
-import pytest
-
 import fiona
 from fiona import _env
-from fiona.env import getenv, ensure_env, ensure_env_with_credentials
+from fiona.env import getenv, hasenv, ensure_env, ensure_env_with_credentials
 from fiona.session import AWSSession, GSSession
 
 
@@ -100,6 +98,10 @@ def test_ensure_env_crs(path_coutwildrnp_shp):
     """Decoration of .crs works"""
     assert fiona.open(path_coutwildrnp_shp).crs
 
+
+def test_env_default_env(path_coutwildrnp_shp):
+    with fiona.open(path_coutwildrnp_shp):
+        assert hasenv()
 
 def test_nested_gs_credentials(monkeypatch):
     """Check that rasterio.open() doesn't wipe out surrounding credentials"""
