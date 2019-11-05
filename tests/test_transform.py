@@ -6,6 +6,8 @@ import pytest
 
 from fiona import transform
 
+from .conftest import requires_gdal_lt_3
+
 
 @pytest.mark.parametrize(
     "geom",
@@ -47,9 +49,10 @@ from fiona import transform
 )
 def test_transform_geom_with_z(geom):
     """Transforming a geom with Z succeeds"""
-    g2 = transform.transform_geom("epsg:4326", "epsg:3857", geom, precision=3)
+    transform.transform_geom("epsg:4326", "epsg:3857", geom, precision=3)
 
 
+@requires_gdal_lt_3
 def test_transform_geom_null_dest():
     failed_geom = {
         'type': 'Polygon',
