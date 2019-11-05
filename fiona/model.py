@@ -1,9 +1,9 @@
 """Fiona data model"""
 
-from collections.abc import MutableMapping
 from warnings import warn
 
 from fiona.errors import FionaDeprecationWarning
+from fiona.compat import MutableMapping
 
 
 class Object(MutableMapping):

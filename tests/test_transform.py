@@ -67,10 +67,11 @@ def test_transform_geom_null_dest():
         ),)
     }
     with pytest.warns(UserWarning):
-        assert transform.transform_geom(
+        transformed_geom = transform.transform_geom(
             src_crs="epsg:4326",
             dst_crs="epsg:32628",
-            geom=failed_geom,
+            geom=None,
             antimeridian_cutting=True,
             precision=2,
-        ) is None
+        )
+        assert transformed_geom is None
