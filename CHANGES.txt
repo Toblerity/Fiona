@@ -3,7 +3,6 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-
 1.8.9.post2 (2019-10-22)
 ------------------------
 
@@ -25,7 +24,6 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
   built and used with GDAL 3.0 and PROJ 6.1 or 6.2. Note that the 1.8.9 wheels
   we will upload to PyPI will contain GDAL 2.4.2 and PROJ 4.9.3 as in the 1.8.8
   wheels.
->>>>>>> upstream/maint-1.9
 
 1.8.8 (2019-09-25)
 ------------------
