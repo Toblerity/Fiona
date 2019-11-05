@@ -1204,7 +1204,7 @@ cdef class WritingSession(Session):
 
             features_in_transaction += 1
             if features_in_transaction == DEFAULT_TRANSACTION_SIZE:
-                log.debug("Comitting transaction (intermediate)")
+                log.debug("Committing transaction (intermediate)")
                 result = gdal_commit_transaction(self.cogr_ds)
                 if result == OGRERR_FAILURE:
                     raise TransactionError("Failed to commit transaction")
@@ -1214,7 +1214,7 @@ cdef class WritingSession(Session):
                     raise TransactionError("Failed to start transaction")
                 features_in_transaction = 0
 
-        log.debug("Comitting transaction (final)")
+        log.debug("Committing transaction (final)")
         result = gdal_commit_transaction(self.cogr_ds)
         if result == OGRERR_FAILURE:
             raise TransactionError("Failed to commit transaction")

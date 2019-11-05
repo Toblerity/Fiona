@@ -348,7 +348,11 @@ class Collection(object):
         self._bounds = self.session.get_extent()
 
     def write(self, record):
-        """Stages a record for writing to disk."""
+        """Stages a record for writing to disk.
+        
+        Note: Each call of this method will start and commit a
+        unique transaction with the data source.
+        """
         self.writerecords([record])
 
     def validate_record(self, record):

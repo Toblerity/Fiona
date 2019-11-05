@@ -276,7 +276,8 @@ requirements = [
     'cligj>=0.5',
     'click-plugins>=1.0',
     'six>=1.7',
-    'munch']
+    'munch',
+]
 
 extras_require = {
     'calc': ['shapely'],

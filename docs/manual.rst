@@ -815,6 +815,20 @@ iterator) of records.
    write 3 duplicate records to the file, and they will be given unique
    sequential ids.
 
+.. admonition:: Transactions
+
+   Fiona uses transactions during write operations to ensure data integrity.
+   :py:meth:`writerecords` will start and commit one transaction. If there
+   are lots of records, intermediate commits will be performed at reasonable
+   intervals.
+   
+   Depending on the driver, a transaction can be a very costly operation.
+   Since :py:meth:`write` is just a thin convenience wrapper that calls
+   :py:meth:`writerecords` with a single record, you may experience significant
+   performance issue if you write lots of features one by one using this method.
+   Consider preparing your data first and then writing it in a single call to
+   :py:meth:`writerecords`.
+
 .. admonition:: Buffering
 
    Fiona's output is buffered. The records passed to :py:meth:`write` and

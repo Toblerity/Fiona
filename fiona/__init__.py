@@ -101,7 +101,7 @@ import uuid
 
 
 __all__ = ['bounds', 'listlayers', 'open', 'prop_type', 'prop_width']
-__version__ = "1.8.6"
+__version__ = "1.8.8"
 __gdal_version__ = get_gdal_release_name()
 
 gdal_version = get_gdal_version_tuple()
@@ -202,7 +202,10 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
         @contextmanager
         def fp_reader(fp):
             memfile = MemoryFile(fp.read())
-            dataset = memfile.open()
+            dataset = memfile.open(
+                driver=driver, crs=crs, schema=schema, layer=layer,
+                encoding=encoding, enabled_drivers=enabled_drivers,
+                **kwargs)
             try:
                 yield dataset
             finally:
