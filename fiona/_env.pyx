@@ -295,18 +295,18 @@ class GDALDataFinder(object):
         if prefix is None:
             prefix = __file__
         datadir = os.path.abspath(os.path.join(os.path.dirname(prefix), "gdal_data"))
-        return datadir if os.path.exists(os.path.join(datadir, 'pcs.csv')) else None
+        return datadir if os.path.exists(os.path.join(datadir, 'header.dxf')) else None
 
     def search_prefix(self, prefix=sys.prefix):
         """Check sys.prefix location"""
         datadir = os.path.join(prefix, 'share', 'gdal')
-        return datadir if os.path.exists(os.path.join(datadir, 'pcs.csv')) else None
+        return datadir if os.path.exists(os.path.join(datadir, 'header.dxf')) else None
 
     def search_debian(self, prefix=sys.prefix):
         """Check Debian locations"""
         gdal_release_name = GDALVersionInfo("RELEASE_NAME")
         datadir = os.path.join(prefix, 'share', 'gdal', '{}.{}'.format(*gdal_release_name.split('.')[:2]))
-        return datadir if os.path.exists(os.path.join(datadir, 'pcs.csv')) else None
+        return datadir if os.path.exists(os.path.join(datadir, 'header.dxf')) else None
 
 
 class PROJDataFinder(object):
@@ -326,7 +326,7 @@ class PROJDataFinder(object):
         cdef OGRSpatialReferenceH osr = OSRNewSpatialReference(NULL)
 
         try:
-            exc_wrap_ogrerr(exc_wrap_int(OSRImportFromProj4(osr, "+init=epsg:4326")))
+            exc_wrap_ogrerr(exc_wrap_int(OSRImportFromEPSG(osr, 4326)))
         except CPLE_BaseError:
             return False
         else:
