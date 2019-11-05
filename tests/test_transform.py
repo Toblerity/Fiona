@@ -70,7 +70,7 @@ def test_transform_geom_null_dest():
         transformed_geom = transform.transform_geom(
             src_crs="epsg:4326",
             dst_crs="epsg:32628",
-            geom=None,
+            geom=failed_geom,
             antimeridian_cutting=True,
             precision=2,
         )
