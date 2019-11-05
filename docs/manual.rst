@@ -1054,7 +1054,7 @@ If you write 3D coordinates, ones having (x, y, z) tuples, to a 2D file
 
   schema_props = OrderedDict([('foo', 'str')])
 
-  record = {
+  feature = {
       'geometry': {
           'type': 'Point',
           'coordinates': (-1, 1, 5)
@@ -1068,11 +1068,11 @@ If you write 3D coordinates, ones having (x, y, z) tuples, to a 2D file
           '/tmp/file.shp',
           'w',
           driver='ESRI Shapefile',
-          schema={'geometry': 'Point', 'properties': schema_props}) as c:
-      c.write(record)
+          schema={'geometry': 'Point', 'properties': schema_props}) as collection:
+      collection.write(feature)
 
-  with fiona.open('/tmp/file.shp') as c:
-      print(c[0]['geometry'])
+  with fiona.open('/tmp/file.shp') as collection:
+      print(next(collection)['geometry'])
 
   # {'type': 'Point', 'coordinates': (-1.0, 1.0)}
 
@@ -1081,7 +1081,7 @@ Point' schema geometry, for example) a default z value of 0 will be provided.
 
 .. sourcecode:: python
 
-  record = {
+  feature = {
       'geometry': {
           'type': 'Point',
           'coordinates': (-1, 1)
@@ -1095,11 +1095,11 @@ Point' schema geometry, for example) a default z value of 0 will be provided.
           '/tmp/file.shp',
           'w',
           driver='ESRI Shapefile',
-          schema={'geometry': '3D Point', 'properties': schema_props}) as c:
-      c.write(record)
+          schema={'geometry': '3D Point', 'properties': schema_props}) as collection:
+      collection.write(feature)
 
-  with fiona.open('/tmp/file.shp') as c:
-      print(c[0]['geometry'])
+  with fiona.open('/tmp/file.shp') as collection:
+      print(next(collection)['geometry'])
 
   # {'type': 'Point', 'coordinates': (-1.0, 1.0, 0.0)}
 
