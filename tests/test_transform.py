@@ -6,6 +6,8 @@ import pytest
 
 from fiona import transform
 
+from .conftest import requires_gdal_lt_3
+
 
 TEST_GEOMS = [
     {"type": "Point", "coordinates": [0.0, 0.0, 1000.0]},
@@ -47,7 +49,7 @@ TEST_GEOMS = [
 @pytest.mark.parametrize("geom", TEST_GEOMS)
 def test_transform_geom_with_z(geom):
     """Transforming a geom with Z succeeds"""
-    g2 = transform.transform_geom("epsg:4326", "epsg:3857", geom, precision=3)
+    transform.transform_geom("epsg:4326", "epsg:3857", geom, precision=3)
 
 
 @pytest.mark.parametrize("geom", TEST_GEOMS)
@@ -63,6 +65,7 @@ def test_transform_geom_array_z(geom):
     assert len(g2) == 5
 
 
+@requires_gdal_lt_3
 def test_transform_geom_null_dest():
     failed_geom = {
         'type': 'Polygon',
@@ -80,10 +83,11 @@ def test_transform_geom_null_dest():
         ),)
     }
     with pytest.warns(UserWarning):
-        assert transform.transform_geom(
+        transformed_geom = transform.transform_geom(
             src_crs="epsg:4326",
             dst_crs="epsg:32628",
             geom=failed_geom,
             antimeridian_cutting=True,
             precision=2,
-        ) is None
+        )
+        assert transformed_geom is None

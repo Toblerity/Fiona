@@ -50,17 +50,18 @@ before_install:
   - pip install wheel
   - . ./scripts/travis_proj_install.sh
   - . ./scripts/travis_gdal_install.sh
+  - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$PATH
+  - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$LD_LIBRARY_PATH
   - export GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal
-  - export PROJ_LIB=$GDALINST/proj-$PROJVERSION/share/proj
+  - export PROJ_LIB=$GDALINST/gdal-$GDALVERSION/share/proj
   - gdal-config --version
 
 install:
-  - if [ "$GDALVERSION" = "trunk" ]; then echo "Using gdal trunk"; elif [ $(gdal-config --version) == "$GDALVERSION" ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
+  - if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $(gdal-config --version) == "$GDALVERSION" ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
   - "python -m pip wheel -r requirements-dev.txt"
   - "python -m pip install -r requirements-dev.txt"
   - "GDAL_CONFIG=$GDALINST/gdal-$GDALVERSION/bin/gdal-config python -m pip install --upgrade --force-reinstall --no-use-pep517 -e .[test]"
   - fio --version
-  - gdal-config --version
   - fio --gdal-version
   - "python -m pip list"
 
