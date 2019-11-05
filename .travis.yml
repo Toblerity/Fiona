@@ -17,14 +17,6 @@ env:
 
 matrix:
   include:
-    - python: "2.7"
-      env:
-      - GDALVERSION="2.2.4"
-
-    - python: "3.5"
-      env:
-      - GDALVERSION="2.2.4"
-
     - python: "3.6"
       env:
       - GDALVERSION="2.2.4"
@@ -35,22 +27,26 @@ matrix:
 
     - python: "3.7"
       env:
-      - GDALVERSION="2.4.2"
+      - GDALVERSION="2.4.3"
 
     - python: "3.7"
       env:
-      - GDALVERSION="3.0.1"
+      - GDALVERSION="3.0.2"
 
-    - python: "3.7"
+    - python: "3.8"
+      env:
+      - GDALVERSION="3.0.2"
+
+    - python: "3.8"
       env:
       - GDALVERSION="trunk"
 
   allow_failures:
-    - python: "3.7"
+    - python: "3.8"
       env:
-      - GDALVERSION="3.0.1"
+      - GDALVERSION="3.0.2"
 
-    - python: "3.7"
+    - python: "3.8"
       env:
       - GDALVERSION="trunk"
 
