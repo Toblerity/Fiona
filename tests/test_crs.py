@@ -1,4 +1,7 @@
+import pytest
+
 from fiona import crs, _crs
+from fiona.errors import CRSError
 
 from .conftest import requires_gdal_lt_3
 
@@ -119,3 +122,13 @@ def test_towgs84_wkt():
     wkt = _crs.crs_to_wkt(proj4)
     assert 'towgs84' in wkt
     assert 'wktext' in _crs.crs_to_wkt(proj4)
+
+
+@pytest.mark.parametrize("invalid_input", [
+    "a random string that is invalid",
+    ("a", "tuple"),
+    "-48567=409 =2095"
+])
+def test_invalid_crs(invalid_input):
+    with pytest.raises(CRSError):
+        _crs.crs_to_wkt(invalid_input)

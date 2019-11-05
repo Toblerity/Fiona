@@ -11,6 +11,7 @@ from fiona.ogrext import Session, WritingSession
 from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file, GEOMETRY_TYPES
 from fiona.errors import (DriverError, SchemaError, CRSError, UnsupportedGeometryTypeError, DriverSupportError)
 from fiona.logutils import FieldSkipLogFilter
+from fiona._crs import crs_to_wkt
 from fiona._env import get_gdal_release_name, get_gdal_version_tuple
 from fiona.env import env_ctx_if_needed
 from fiona.errors import FionaDeprecationWarning
@@ -147,7 +148,7 @@ class Collection(object):
                 if 'init' in crs or 'proj' in crs or 'epsg' in crs.lower():
                     self._crs = crs
                 else:
-                    raise CRSError("crs lacks init or proj parameter")
+                    self._crs_wkt = crs_to_wkt(crs)
 
         self._driver = driver
         kwargs.update(encoding=encoding)

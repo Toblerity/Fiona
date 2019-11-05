@@ -4,7 +4,7 @@ import re
 import fiona
 import fiona.crs
 
-from .conftest import WGS84PATTERN, requires_gdal2
+from .conftest import WGS84PATTERN, requires_gdal2, requires_gdal3
 
 
 def test_collection_crs_wkt(path_coutwildrnp_shp):
@@ -27,10 +27,21 @@ def test_collection_no_crs_wkt(tmpdir, path_coutwildrnp_shp):
 @requires_gdal2
 def test_collection_create_crs_wkt(tmpdir):
     """A collection can be created using crs_wkt"""
-    filename = str(tmpdir.join("test.shp"))
+    filename = str(tmpdir.join("test.geojson"))
     wkt = 'GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295],AUTHORITY["EPSG","4326"]]'
     with fiona.open(filename, 'w', schema={'geometry': 'Point', 'properties': {'foo': 'int'}}, crs_wkt=wkt, driver='GeoJSON') as dst:
         assert dst.crs_wkt == wkt
+
+    with fiona.open(filename) as col:
+        assert col.crs_wkt.startswith('GEOGCS["WGS 84')
+
+
+@requires_gdal3
+def test_collection_urn_crs(tmpdir):
+    filename = str(tmpdir.join("test.geojson"))
+    crs = "urn:ogc:def:crs:OGC:1.3:CRS84"
+    with fiona.open(filename, 'w', schema={'geometry': 'Point', 'properties': {'foo': 'int'}}, crs=crs, driver='GeoJSON') as dst:
+        assert dst.crs_wkt.startswith('GEOGCS["WGS 84')
 
     with fiona.open(filename) as col:
         assert col.crs_wkt.startswith('GEOGCS["WGS 84')
