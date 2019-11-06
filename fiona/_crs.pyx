@@ -11,7 +11,7 @@ from six import string_types
 
 from fiona cimport _cpl
 from fiona._shim cimport osr_get_name, osr_set_traditional_axis_mapping_strategy
-
+from fiona.compat import DICT_TYPES
 from fiona.errors import CRSError
 
 
@@ -36,7 +36,7 @@ def crs_to_wkt(crs):
         proj_c = proj_b
         OSRSetFromUserInput(cogr_srs, proj_c)
 
-    elif isinstance(crs, dict):
+    elif isinstance(crs, DICT_TYPES):
         # EPSG is a special case.
         init = crs.get('init')
         if init:
