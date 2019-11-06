@@ -141,14 +141,8 @@ class Collection(object):
             self._schema = schema
 
             self._check_schema_driver_support()
-
-            if crs_wkt:
-                self._crs_wkt = crs_wkt
-            elif crs:
-                if 'init' in crs or 'proj' in crs or 'epsg' in crs.lower():
-                    self._crs = crs
-                else:
-                    self._crs_wkt = crs_to_wkt(crs)
+            if crs_wkt or crs:
+                self._crs_wkt = crs_to_wkt(crs_wkt or crs)
 
         self._driver = driver
         kwargs.update(encoding=encoding)
