@@ -4,13 +4,14 @@ cdef extern from "ogr_api.h":
 
     int OGR_F_IsFieldNull(void *feature, int n)
 
+import logging
+import os
 
 from fiona.ogrext2 cimport *
 from fiona._err cimport exc_wrap_pointer
+
 from fiona._err import cpl_errs, CPLE_BaseError, FionaNullPointerError
 from fiona.errors import DriverError
-
-import logging
 
 
 log = logging.getLogger(__name__)
@@ -133,8 +134,13 @@ cdef bint check_capability_create_layer(void *cogr_ds):
 cdef void *get_linear_geometry(void *geom):
     return OGR_G_GetLinearGeometry(geom, 0.0, NULL)
 
+
 cdef const char* osr_get_name(OGRSpatialReferenceH hSrs):
     return ''
 
+
 cdef void osr_set_traditional_axis_mapping_strategy(OGRSpatialReferenceH hSrs):
     OSRFixup(hSrs)
+
+cdef void set_proj_search_path(object path)
+    os.environ["PROJ_LIB"] = path

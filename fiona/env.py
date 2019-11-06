@@ -12,7 +12,8 @@ from six import string_types
 
 from fiona._env import (
     GDALEnv, calc_gdal_version_num, get_gdal_version_num, get_gdal_config,
-    set_gdal_config, get_gdal_release_name, GDALDataFinder, PROJDataFinder)
+    set_gdal_config, get_gdal_release_name, GDALDataFinder, PROJDataFinder,
+    set_proj_data_search_path)
 from fiona.compat import getargspec
 from fiona.errors import EnvError, GDALVersionError
 from fiona.session import Session, DummySession
@@ -609,5 +610,5 @@ if 'PROJ_LIB' not in os.environ:
         path = PROJDataFinder().search()
 
         if path:
-            os.environ['PROJ_LIB'] = path
-            log.debug("PROJ data not found in environment, set to %r.", path)
+            log.debug("PROJ data not found in environment, setting to %r.", path)
+            set_proj_data_search_path(path)

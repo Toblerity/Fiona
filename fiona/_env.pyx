@@ -18,6 +18,7 @@ import sys
 import threading
 
 from fiona._err cimport exc_wrap_int, exc_wrap_ogrerr
+from fiona._shim cimport set_proj_search_path
 from fiona._err import CPLE_BaseError
 from fiona.errors import EnvError
 
@@ -410,8 +411,8 @@ cdef class GDALEnv(ConfigEnv):
                         path = PROJDataFinder().search()
 
                         if path:
-                            os.environ['PROJ_LIB'] = path
-                            log.debug("PROJ data not found in environment, set to %r.", path)
+                            log.debug("PROJ data not found in environment, setting to %r.", path)
+                            set_proj_data_search_path(path)
 
                     if driver_count() == 0:
                         CPLPopErrorHandler()
@@ -447,3 +448,8 @@ cdef class GDALEnv(ConfigEnv):
             result[key] = val
 
         return result
+
+
+def set_proj_data_search_path(path):
+    """Set PROJ data search path"""
+    set_proj_search_path(path)
