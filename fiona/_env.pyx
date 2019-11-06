@@ -403,6 +403,8 @@ cdef class GDALEnv(ConfigEnv):
 
                     if 'PROJ_LIB' in os.environ:
                         log.debug("PROJ_LIB found in environment: %r.", os.environ['PROJ_LIB'])
+                        path = os.environ["PROJ_LIB"]
+                        set_proj_data_search_path(path)
 
                     elif PROJDataFinder().has_data():
                         log.debug("PROJ data files are available at built-in paths")
