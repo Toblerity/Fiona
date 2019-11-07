@@ -1,5 +1,4 @@
 -r requirements.txt
-attrs==19.1.0
 coverage==4.5.1
 cython==0.28.3
 pytest==3.4.2
