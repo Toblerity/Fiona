@@ -8,6 +8,7 @@ import logging
 
 from fiona cimport _cpl, _crs, _csl, _geometry
 from fiona._crs cimport OGRSpatialReferenceH
+from fiona._shim cimport osr_set_traditional_axis_mapping_strategy
 
 from fiona.compat import UserDict
 
@@ -52,6 +53,7 @@ cdef void *_crs_from_crs(object crs):
             auth, val = init.split(':')
             if auth.upper() == 'EPSG':
                 _crs.OSRImportFromEPSG(osr, int(val))
+                osr_set_traditional_axis_mapping_strategy(osr)
         else:
             crs['wktext'] = True
             for k, v in crs.items():
@@ -64,6 +66,7 @@ cdef void *_crs_from_crs(object crs):
             proj_b = proj.encode('utf-8')
             proj_c = proj_b
             _crs.OSRImportFromProj4(osr, proj_c)
+            osr_set_traditional_axis_mapping_strategy(osr)
     # Fall back for CRS strings like "EPSG:3857."
     else:
         proj_b = crs.encode('utf-8')

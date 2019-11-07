@@ -15,26 +15,26 @@ env:
     - PIP_FIND_LINKS=file://$HOME/.cache/pip/wheels
     - GDALINST=$HOME/gdalinstall
     - GDALBUILD=$HOME/gdalbuild
+    - PROJINST=$HOME/gdalinstall
     - PROJBUILD=$HOME/projbuild
-    - PROJVERSION="6.0.0"
-    
   matrix:
-
-    - GDALVERSION="2.2.4"
-    - GDALVERSION="2.3.3"
-    - GDALVERSION="2.4.1"
-    - GDALVERSION="3.0.0"
-    - GDALVERSION="trunk"
+    - GDALVERSION="1.11.5" PROJVERSION="4.8.0"
+    - GDALVERSION="2.0.3" PROJVERSION="4.9.3"
+    - GDALVERSION="2.1.4" PROJVERSION="4.9.3"
+    - GDALVERSION="2.2.4" PROJVERSION="4.9.3"
+    - GDALVERSION="2.3.3" PROJVERSION="4.9.3"
+    - GDALVERSION="2.4.2" PROJVERSION="4.9.3"
+    - GDALVERSION="3.0.1" PROJVERSION="6.1.1"
+    - GDALVERSION="master" PROJVERSION="6.1.1"
 
 matrix:
   allow_failures:
-    - env: GDALVERSION="trunk"
-    - env: GDALVERSION="3.0.0"
+    - env: GDALVERSION="master" PROJVERSION="6.1.1"
 
 addons:
   apt:
     packages:
-    - libhdf5-serial-dev
+    - libgdal-dev
     - libatlas-dev
     - libatlas-base-dev
     - gfortran
@@ -54,14 +54,14 @@ before_install:
   - . ./scripts/travis_proj_install.sh
   - . ./scripts/travis_gdal_install.sh
   - export GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal
-  - export PROJ_LIB=$GDALINST/proj-$PROJVERSION/share/proj
+  - export PROJ_LIB=$GDALINST/gdal-$GDALVERSION/share/proj
   - gdal-config --version
 
 install:
-  - pip install --upgrade --force-reinstall -r requirements-dev.txt
-  - pip uninstall -y fiona
-  - if [ "$GDALVERSION" = "trunk" ]; then echo "Using gdal trunk"; elif [ $(gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
-  - pip install --global-option=build_ext --global-option='-I$GDALINST/gdal-$GDALVERSION/include' --global-option='-L$GDALINST/gdal-$GDALVERSION/lib' --global-option='-R$GDALINST/gdal-$GDALVERSION/lib' -e .[test]
+  - if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $(gdal-config --version) == "$GDALVERSION" ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
+  - "python -m pip wheel -r requirements-dev.txt"
+  - "python -m pip install -r requirements-dev.txt"
+  - "GDAL_CONFIG=$GDALINST/gdal-$GDALVERSION/bin/gdal-config python -m pip install --upgrade --force-reinstall --no-use-pep517 -e .[test]"
   - fio --version
   - gdal-config --version
   - fio --gdal-version

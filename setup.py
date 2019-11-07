@@ -77,7 +77,8 @@ class sdist_multi_gdal(sdist):
         sources = {
             "_shim1": "_shim",
             "_shim2": "_shim",
-            "_shim22": "_shim"
+            "_shim22": "_shim",
+            "_shim3": "_shim"
         }
         for src_a, src_b in sources.items():
             shutil.copy('fiona/{}.pyx'.format(src_a), 'fiona/{}.pyx'.format(src_b))
@@ -182,6 +183,8 @@ if 'clean' not in sys.argv:
     gdal_major_version = int(gdal_version_parts[0])
     gdal_minor_version = int(gdal_version_parts[1])
 
+log.info("GDAL version major=%r minor=%r", gdal_major_version, gdal_minor_version)
+
 ext_options = dict(
     include_dirs=include_dirs,
     library_dirs=library_dirs,
@@ -223,6 +226,9 @@ if source_is_repo and "clean" not in sys.argv:
             log.info("Building Fiona for gdal 2.0.x-2.1.x: {0}".format(gdalversion))
             shutil.copy('fiona/_shim2.pyx', 'fiona/_shim.pyx')
             shutil.copy('fiona/_shim2.pxd', 'fiona/_shim.pxd')
+    elif gdal_major_version == 3:
+        shutil.copy('fiona/_shim3.pyx', 'fiona/_shim.pyx')
+        shutil.copy('fiona/_shim3.pxd', 'fiona/_shim.pxd')
 
     ext_modules = cythonize([
         Extension('fiona._geometry', ['fiona/_geometry.pyx'], **ext_options),
@@ -230,7 +236,6 @@ if source_is_repo and "clean" not in sys.argv:
         Extension('fiona._transform', ['fiona/_transform.pyx'], **ext_options_cpp),
         Extension('fiona._crs', ['fiona/_crs.pyx'], **ext_options),
         Extension('fiona._env', ['fiona/_env.pyx'], **ext_options),
-        Extension('fiona._drivers', ['fiona/_drivers.pyx'], **ext_options),
         Extension('fiona._err', ['fiona/_err.pyx'], **ext_options),
         Extension('fiona._shim', ['fiona/_shim.pyx'], **ext_options),
         Extension('fiona.ogrext', ['fiona/ogrext.pyx'], **ext_options)
@@ -246,7 +251,6 @@ elif "clean" not in sys.argv:
         Extension('fiona._geometry', ['fiona/_geometry.c'], **ext_options),
         Extension('fiona._crs', ['fiona/_crs.c'], **ext_options),
         Extension('fiona._env', ['fiona/_env.c'], **ext_options),
-        Extension('fiona._drivers', ['fiona/_drivers.c'], **ext_options),
         Extension('fiona._err', ['fiona/_err.c'], **ext_options),
         Extension('fiona.ogrext', ['fiona/ogrext.c'], **ext_options),
     ]
@@ -255,7 +259,7 @@ elif "clean" not in sys.argv:
         log.info("Building Fiona for gdal 1.x: {0}".format(gdalversion))
         ext_modules.append(
             Extension('fiona._shim', ['fiona/_shim1.c'], **ext_options))
-    else:
+    elif gdal_major_version == 2:
         if gdal_minor_version >= 2:
             log.info("Building Fiona for gdal 2.2+: {0}".format(gdalversion))
             ext_modules.append(
@@ -264,6 +268,10 @@ elif "clean" not in sys.argv:
             log.info("Building Fiona for gdal 2.0.x-2.1.x: {0}".format(gdalversion))
             ext_modules.append(
                 Extension('fiona._shim', ['fiona/_shim2.c'], **ext_options))
+    elif gdal_major_version == 3:
+        log.info("Building Fiona for gdal >= 3.0.x: {0}".format(gdalversion))
+        ext_modules.append(
+            Extension('fiona._shim', ['fiona/_shim3.c'], **ext_options))
 
 requirements = [
     'attrs>=17',
