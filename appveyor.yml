@@ -127,7 +127,7 @@ build_script:
 
   # install the wheel
   - ps: python -m pip install --upgrade pip
-  - ps: python -m pip install --upgrade --force-reinstall (gci dist\*.whl | % { "$_" })
+  - ps: python -m pip install (gci dist\*.whl | % { "$_" })
   - ps: python -m pip freeze
   - ps: move fiona fiona.build
 

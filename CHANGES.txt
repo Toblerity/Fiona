@@ -3,6 +3,26 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.10 (2019-11-07)
+-------------------
+
+Deprecations:
+
+- Use of vfs keyword argument with open or listlayers has been previously noted
+  as deprecated, but now triggers a deprecation warning.
+
+Bug fixes:
+
+- fiona.open() can now create new datasets using CRS URNs (#823).
+- listlayers() now accepts file and Path objects, like open() (#825).
+- Use new set_proj_search_path() function to set the PROJ data search path. For
+  GDAL versions before 3.0 this sets the PROJ_LIB environment variable. For
+  GDAL version 3.0 this calls OSRSetPROJSearchPaths(), which overrides
+  PROJ_LIB.
+- Remove old and unused _drivers extension module.
+- Check for header.dxf file instead of pcs.csv when looking for installed GDAL
+  data. The latter is gone with GDAL 3.0 but the former remains (#818).
+
 1.8.9.post2 (2019-10-22)
 ------------------------
 

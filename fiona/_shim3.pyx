@@ -12,6 +12,7 @@ cdef extern from "ogr_srs_api.h" nogil:
 
     const char* OSRGetName(OGRSpatialReferenceH hSRS)
     void OSRSetAxisMappingStrategy(OGRSpatialReferenceH hSRS, OSRAxisMappingStrategy)
+    void OSRSetPROJSearchPaths(const char *const *papszPaths)
 
 
 from fiona.ogrext2 cimport *
@@ -142,8 +143,19 @@ cdef bint check_capability_create_layer(void *cogr_ds):
 cdef void *get_linear_geometry(void *geom):
     return OGR_G_GetLinearGeometry(geom, 0.0, NULL)
 
+
 cdef const char* osr_get_name(OGRSpatialReferenceH hSrs):
         return OSRGetName(hSrs)
 
+
 cdef void osr_set_traditional_axis_mapping_strategy(OGRSpatialReferenceH hSrs):
     OSRSetAxisMappingStrategy(hSrs, OAMS_TRADITIONAL_GIS_ORDER)
+
+
+cdef void set_proj_search_path(object path):
+    cdef const char *const *paths = NULL
+    cdef const char *path_c = NULL
+    path_b = path.encode("utf-8")
+    path_c = path_b
+    paths = CSLAddString(paths, path_c)
+    OSRSetPROJSearchPaths(paths)

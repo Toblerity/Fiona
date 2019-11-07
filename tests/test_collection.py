@@ -9,7 +9,7 @@ import pytest
 import fiona
 from fiona.collection import Collection, supported_drivers
 from fiona.env import getenv
-from fiona.errors import FionaValueError, DriverError
+from fiona.errors import FionaValueError, DriverError, FionaDeprecationWarning
 
 from .conftest import WGS84PATTERN
 
@@ -80,7 +80,7 @@ class TestCollectionArgs(object):
 class TestOpenException(object):
 
     def test_no_archive(self):
-        with pytest.raises(DriverError):
+        with pytest.warns(FionaDeprecationWarning), pytest.raises(DriverError):
             fiona.open("/", mode='r', vfs="zip:///foo.zip")
 
 
