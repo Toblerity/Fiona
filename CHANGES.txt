@@ -13,6 +13,7 @@ Deprecations:
 
 Bug fixes:
 
+- fiona.open() can now create new datasets using CRS URNs (#823).
 - listlayers() now accepts file and Path objects, like open() (#825).
 - Use new set_proj_search_path() function to set the PROJ data search path. For
   GDAL versions before 3.0 this sets the PROJ_LIB environment variable. For
