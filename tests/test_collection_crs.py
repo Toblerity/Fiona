@@ -32,10 +32,10 @@ def test_collection_create_crs_wkt(tmpdir):
     filename = str(tmpdir.join("test.geojson"))
     wkt = 'GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295],AUTHORITY["EPSG","4326"]]'
     with fiona.open(filename, 'w', schema={'geometry': 'Point', 'properties': {'foo': 'int'}}, crs_wkt=wkt, driver='GeoJSON') as dst:
-        assert dst.crs_wkt.startswith('GEOGCS["WGS 84')
+        assert dst.crs_wkt.startswith('GEOGCS["WGS 84') or dst.crs_wkt.startswith('GEOGCS["GCS_WGS_1984')
 
     with fiona.open(filename) as col:
-        assert col.crs_wkt.startswith('GEOGCS["WGS 84')
+        assert col.crs_wkt.startswith('GEOGCS["WGS 84') or col.crs_wkt.startswith('GEOGCS["GCS_WGS_1984')
 
 
 @requires_gdal3

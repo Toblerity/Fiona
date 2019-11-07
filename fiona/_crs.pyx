@@ -10,6 +10,8 @@ import logging
 from six import string_types
 
 from fiona cimport _cpl
+from fiona._err cimport exc_wrap_pointer
+from fiona._err import CPLE_BaseError
 from fiona._shim cimport osr_get_name, osr_set_traditional_axis_mapping_strategy
 from fiona.compat import DICT_TYPES
 from fiona.errors import CRSError
@@ -26,9 +28,10 @@ def crs_to_wkt(crs):
     cdef OGRSpatialReferenceH cogr_srs = NULL
     cdef char *proj_c = NULL
 
-    cogr_srs = OSRNewSpatialReference(NULL)
-    if cogr_srs == NULL:
-        raise CRSError("NULL spatial reference")
+    try:
+        cogr_srs = exc_wrap_pointer(OSRNewSpatialReference(NULL))
+    except CPLE_BaseError as exc:
+        raise CRSError(u"{}".format(exc))
 
     # First, check for CRS strings like "EPSG:3857".
     if isinstance(crs, string_types):
