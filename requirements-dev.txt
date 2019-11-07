@@ -1,8 +1,11 @@
 -r requirements.txt
-coverage==4.5.1
-cython==0.28.3
-pytest==3.4.2
-pytest-cov==2.5.1
+coverage==4.5.4
+cython==0.29.7
+# mock was added with python 3.3
+mock ; python_version < '3.3'
+# pytest >= 5.0 drops support for python 2.7
+pytest==4.6.6
+pytest-cov==2.8.1
 setuptools==39.0.1
 boto3==1.9.19
 wheel==0.31.1

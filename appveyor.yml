@@ -11,41 +11,55 @@ environment:
         # See: http://stackoverflow.com/a/13751649/163740
         CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_env.cmd"
         GDAL_HOME: "C:\\gdal"
-        PYTHON_ARCH: "64"
+        PYTHONWARNINGS: "ignore:DEPRECATION::pip._internal.cli.base_command"
 
+
+    # PYTHON_VERSION and PYTHON_ARCH are required by run_with_env.cmd
     matrix:
-        # The 4-digit number in the GISInternals archives is the MSVC version used to build
-        # the libraries. It does not need to match the version of MSVC used to build Python.
-        # https://en.wikipedia.org/wiki/Microsoft_Visual_C%2B%2B#Internal_version_numbering
+        - PYTHON: "C:\\Python27-x64"
+          PYTHON_VERSION: "2.7"
+          PYTHON_ARCH: "64"
+          GDAL_VERSION: "1.11.4"
+          GIS_INTERNALS: "release-1800-x64-gdal-1-11-4-mapserver-6-4-3.zip"
+          GIS_INTERNALS_LIBS: "release-1800-x64-gdal-1-11-4-mapserver-6-4-3-libs.zip"
 
-        # Python 3.6, GDAL 2.2
         - PYTHON: "C:\\Python36-x64"
-          PYTHON_VERSION: "3.6.4"
+          PYTHON_VERSION: "3.6"
+          PYTHON_ARCH: "64"
+          GDAL_VERSION: "1.11.4"
+          GIS_INTERNALS: "release-1800-x64-gdal-1-11-4-mapserver-6-4-3.zip"
+          GIS_INTERNALS_LIBS: "release-1800-x64-gdal-1-11-4-mapserver-6-4-3-libs.zip"
+
+        - PYTHON: "C:\\Python36-x64"
+          PYTHON_VERSION: "3.6"
+          PYTHON_ARCH: "64"
           GDAL_VERSION: "2.2.3"
           GIS_INTERNALS: "release-1911-x64-gdal-2-2-3-mapserver-7-0-7.zip"
           GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-2-3-mapserver-7-0-7-libs.zip"
 
-        # Python 3.6, GDAL 2.3
         - PYTHON: "C:\\Python36-x64"
-          PYTHON_VERSION: "3.6.4"
-          GDAL_VERSION: "2.3.0"
-          GIS_INTERNALS: "release-1911-x64-gdal-2-3-0-mapserver-7-0-7.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-3-0-mapserver-7-0-7-libs.zip"
+          PYTHON_VERSION: "3.6"
+          PYTHON_ARCH: "64"
+          GDAL_VERSION: "2.3.3"
+          GIS_INTERNALS: "release-1911-x64-gdal-2-3-3-mapserver-7-2-1.zip"
+          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-3-3-mapserver-7-2-1-libs.zip"
 
-        # Python 3.7, GDAL 2.3
-        - PYTHON: "C:\\Python37-x64"
-          PYTHON_VERSION: "3.7.2"
-          GDAL_VERSION: "2.3.0"
-          GIS_INTERNALS: "release-1911-x64-gdal-2-3-0-mapserver-7-0-7.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-3-0-mapserver-7-0-7-libs.zip"
+        - PYTHON: "C:\\Python36-x64"
+          PYTHON_VERSION: "3.6"
+          PYTHON_ARCH: "64"
+          GDAL_VERSION: "2.4.2"
+          GIS_INTERNALS: "release-1911-x64-gdal-2-4-2-mapserver-7-4-0.zip"
+          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-4-2-mapserver-7-4-0-libs.zip"
 
-        # Python 3.7, GDAL trunk
-        # TODO: 2.4 has been released, 2.5 is new trunk but does not have builds on GISInternals (yet)
-        - PYTHON: "C:\\Python37-x64"
-          PYTHON_VERSION: "3.7.2"
-          GDAL_VERSION: "2.4.0"
-          GIS_INTERNALS: "release-1911-x64-gdal-2-4-0-mapserver-7-2-2.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-4-0-mapserver-7-2-2-libs.zip"
+        # Use daily stable branch of gdal 3.0.x series until release with gdal >= 3.0.1 is released
+        - PYTHON: "C:\\Python36-x64"
+          PYTHON_VERSION: "3.6"
+          PYTHON_ARCH: "64"
+          GDAL_VERSION: "3.0.0"
+          GIS_INTERNALS: "release-1911-x64-gdal-3-0-mapserver-7-4.zip"
+          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-3-0-mapserver-7-4-libs.zip"
+          PROJ_LIB: "C:\\gdal\\bin\\proj6\\share"
+
 
 install:
 
@@ -113,7 +127,8 @@ build_script:
 
   # install the wheel
   - ps: python -m pip install --upgrade pip
-  - ps: python -m pip install --force-reinstall --ignore-installed (gci dist\*.whl | % { "$_" })
+  - ps: python -m pip install --upgrade --force-reinstall (gci dist\*.whl | % { "$_" })
+  - ps: python -m pip freeze
   - ps: move fiona fiona.build
 
 
@@ -128,7 +143,7 @@ test_script:
 
 matrix:
   allow_failures:
-    - PYTHON_VERSION: "2.7.14"
+    - GDAL_VERSION: "3.0.0"
 
 artifacts:
   - path: dist\*.whl
