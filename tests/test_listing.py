@@ -71,4 +71,4 @@ def test_listing_file(path_coutwildrnp_json):
 def test_listing_pathobj(path_coutwildrnp_json):
     """list layers from a Path object"""
     pathlib = pytest.importorskip("pathlib")
-    assert fiona.listlayers(pathlib.Path(path_coutwildrnp_json)) == ["coutwildrnp"]
+    assert len(fiona.listlayers(pathlib.Path(path_coutwildrnp_json))) == 1
