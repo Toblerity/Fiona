@@ -8,7 +8,7 @@ import pytest
 
 import fiona
 import fiona.ogrext
-from fiona.errors import DriverError
+from fiona.errors import DriverError, FionaDeprecationWarning
 
 
 def test_single_file_private(path_coutwildrnp_shp):
@@ -36,7 +36,8 @@ def test_zip_path(path_coutwildrnp_zip):
 
 def test_zip_path_arch(path_coutwildrnp_zip):
     vfs = 'zip://{}'.format(path_coutwildrnp_zip)
-    assert fiona.listlayers('/coutwildrnp.shp', vfs=vfs) == ['coutwildrnp']
+    with pytest.warns(FionaDeprecationWarning):
+        assert fiona.listlayers('/coutwildrnp.shp', vfs=vfs) == ['coutwildrnp']
 
 
 def test_list_not_existing(data_dir):
@@ -59,3 +60,15 @@ def test_invalid_vfs():
 def test_invalid_path_ioerror():
     with pytest.raises(DriverError):
         fiona.listlayers("foobar")
+
+
+def test_listing_file(path_coutwildrnp_gpkg):
+    """list layers from an open file object"""
+    with open(path_coutwildrnp_gpkg, "rb") as f:
+        assert fiona.listlayers(f) == ["coutwildrnp"]
+
+
+def test_listing_pathobj(path_coutwildrnp_gpkg):
+    """list layers from a Path object"""
+    pathlib = pytest.importorskip("pathlib")
+    assert fiona.listlayers(pathlib.Path(path_coutwildrnp_gpkg)) == ["coutwildrnp"]

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Fiona is OGR's neat, nimble, no-nonsense API.
+Fiona is OGR's neat, nimble API.
 
 Fiona provides a minimal, uncomplicated Python interface to the open
 source GIS community's most trusted geodata access library and
@@ -76,6 +76,7 @@ except ImportError:  # pragma: no cover
     class Path:
         pass
 
+# TODO: remove this? Or at least move it, flake8 complains.
 if sys.platform == "win32":
     libdir = os.path.join(os.path.dirname(__file__), ".libs")
     os.environ["PATH"] = os.environ["PATH"] + ";" + libdir
@@ -242,7 +243,7 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
             fp = str(fp)
 
         if vfs:
-            # Parse the vfs into a vsi and an archive path.
+            warnings.warn("The vfs keyword argument is deprecated. Instead, pass a URL that uses a zip or tar (for example) scheme.", FionaDeprecationWarning, stacklevel=2)
             path, scheme, archive = vfs_parse_paths(fp, vfs=vfs)
             path = ParsedPath(path, archive, scheme)
         else:
@@ -266,6 +267,7 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
                 "mode string must be one of 'r', 'w', or 'a', not %s" % mode)
 
         return c
+
 
 collection = open
 
@@ -299,30 +301,47 @@ def remove(path_or_collection, driver=None, layer=None):
 
 
 @ensure_env_with_credentials
-def listlayers(path, vfs=None):
-    """Returns a list of layer names in their index order.
+def listlayers(fp, vfs=None):
+    """List layer names in their index order
 
-    The required ``path`` argument may be an absolute or relative file or
-    directory path.
+    Parameters
+    ----------
+    fp : URI (str or pathlib.Path), or file-like object
+        A dataset resource identifier or file object.
+    vfs : str
+        This is a deprecated parameter. A URI scheme such as "zip://"
+        should be used instead.
 
-    A virtual filesystem can be specified. The ``vfs`` parameter may be
-    an Apache Commons VFS style string beginning with "zip://" or
-    "tar://"". In this case, the ``path`` must be an absolute path within
-    that container.
+    Returns
+    -------
+    list
+        A list of layer name strings.
+
     """
-    if not isinstance(path, string_types):
-        raise TypeError("invalid path: %r" % path)
-    if vfs and not isinstance(vfs, string_types):
-        raise TypeError("invalid vfs: %r" % vfs)
+    if hasattr(fp, 'read'):
 
-    if vfs:
-        pobj_vfs = parse_path(vfs)
-        pobj_path = parse_path(path)
-        pobj = ParsedPath(pobj_path.path, pobj_vfs.path, pobj_vfs.scheme)
+        with MemoryFile(fp.read()) as memfile:
+            return  _listlayers(memfile.name)
+
     else:
-        pobj = parse_path(path)
 
-    return _listlayers(vsi_path(pobj))
+        if isinstance(fp, Path):
+            fp = str(fp)
+
+        if not isinstance(fp, string_types):
+            raise TypeError("invalid path: %r" % fp)
+        if vfs and not isinstance(vfs, string_types):
+            raise TypeError("invalid vfs: %r" % vfs)
+
+        if vfs:
+            warnings.warn("The vfs keyword argument is deprecated. Instead, pass a URL that uses a zip or tar (for example) scheme.", FionaDeprecationWarning, stacklevel=2)
+            pobj_vfs = parse_path(vfs)
+            pobj_path = parse_path(fp)
+            pobj = ParsedPath(pobj_path.path, pobj_vfs.path, pobj_vfs.scheme)
+        else:
+            pobj = parse_path(fp)
+
+        return _listlayers(vsi_path(pobj))
 
 
 def prop_width(val):

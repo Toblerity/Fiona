@@ -3,9 +3,17 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.8.10 (TBD)
-------------
+1.8.10 (2019-11-07)
+-------------------
 
+Deprecations:
+
+- Use of vfs keyword argument with open or listlayers has been previously noted
+  as deprecated, but now triggers a deprecation warning.
+
+Bug fixes:
+
+- listlayers() now accepts file and Path objects, like open() (#825).
 - Use new set_proj_search_path() function to set the PROJ data search path. For
   GDAL versions before 3.0 this sets the PROJ_LIB environment variable. For
   GDAL version 3.0 this calls OSRSetPROJSearchPaths(), which overrides
