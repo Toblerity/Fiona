@@ -62,13 +62,13 @@ def test_invalid_path_ioerror():
         fiona.listlayers("foobar")
 
 
-def test_listing_file(path_coutwildrnp_gpkg):
+def test_listing_file(path_coutwildrnp_json):
     """list layers from an open file object"""
-    with open(path_coutwildrnp_gpkg, "rb") as f:
-        assert fiona.listlayers(f) == ["coutwildrnp"]
+    with open(path_coutwildrnp_json, "rb") as f:
+        assert len(fiona.listlayers(f)) == 1
 
 
-def test_listing_pathobj(path_coutwildrnp_gpkg):
+def test_listing_pathobj(path_coutwildrnp_json):
     """list layers from a Path object"""
     pathlib = pytest.importorskip("pathlib")
-    assert fiona.listlayers(pathlib.Path(path_coutwildrnp_gpkg)) == ["coutwildrnp"]
+    assert fiona.listlayers(pathlib.Path(path_coutwildrnp_json)) == ["coutwildrnp"]
