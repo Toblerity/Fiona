@@ -970,51 +970,18 @@ cdef class WritingSession(Session):
             self.cogr_ds = cogr_ds
 
             # Set the spatial reference system from the crs given to the
-            # collection constructor. We by-pass the crs_wkt and crs
+            # collection constructor. We by-pass the crs_wkt
             # properties because they aren't accessible until the layer
             # is constructed (later).
             try:
-
-                col_crs = collection._crs_wkt or collection._crs
-
+                col_crs = collection._crs_wkt
                 if col_crs:
                     cogr_srs = exc_wrap_pointer(OSRNewSpatialReference(NULL))
-
-                    # First, check for CRS strings like "EPSG:3857".
-                    if isinstance(col_crs, string_types):
-                        proj_b = col_crs.encode('utf-8')
-                        proj_c = proj_b
-                        OSRSetFromUserInput(cogr_srs, proj_c)
-
-                    elif isinstance(col_crs, compat.DICT_TYPES):
-                        # EPSG is a special case.
-                        init = col_crs.get('init')
-                        if init:
-                            log.debug("Init: %s", init)
-                            auth, val = init.split(':')
-                            if auth.upper() == 'EPSG':
-                                log.debug("Setting EPSG: %s", val)
-                                OSRImportFromEPSG(cogr_srs, int(val))
-                                osr_set_traditional_axis_mapping_strategy(cogr_srs)
-                        else:
-                            params = []
-                            col_crs['wktext'] = True
-                            for k, v in col_crs.items():
-                                if v is True or (k in ('no_defs', 'wktext') and v):
-                                    params.append("+%s" % k)
-                                else:
-                                    params.append("+%s=%s" % (k, v))
-                            proj = " ".join(params)
-                            log.debug("PROJ.4 to be imported: %r", proj)
-                            proj_b = proj.encode('utf-8')
-                            proj_c = proj_b
-                            OSRImportFromProj4(cogr_srs, proj_c)
-                            osr_set_traditional_axis_mapping_strategy(cogr_srs)
-
-                    else:
-                        raise ValueError("Invalid CRS")
-
-            except (ValueError, CPLE_BaseError) as exc:
+                    proj_b = col_crs.encode('utf-8')
+                    proj_c = proj_b
+                    OSRSetFromUserInput(cogr_srs, proj_c)
+                    osr_set_traditional_axis_mapping_strategy(cogr_srs)
+            except CPLE_BaseError as exc:
                 OGRReleaseDataSource(self.cogr_ds)
                 self.cogr_ds = NULL
                 self.cogr_layer = NULL
