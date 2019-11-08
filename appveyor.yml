@@ -11,6 +11,7 @@ environment:
         # See: http://stackoverflow.com/a/13751649/163740
         CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_env.cmd"
         GDAL_HOME: "C:\\gdal"
+        PYTHONWARNINGS: "ignore:DEPRECATION::pip._internal.cli.base_command"
 
     matrix:
         - PYTHON: "C:\\Python27-x64"
@@ -99,9 +100,8 @@ install:
   - cd C:\projects\fiona
   # Upgrade to the latest version of pip to avoid it displaying warnings
   # about it being out of date.
-  # - "python -m pip install --disable-pip-version-check --user --upgrade pip"
-
-  - pip --version
+  - cmd: python -m pip install --disable-pip-version-check --user --upgrade pip
+  - cmd: python -m pip --version
 
   # Install the build dependencies of the project. If some dependencies contain
   # compiled extensions and are not provided as pre-built wheel packages,
@@ -113,7 +113,6 @@ install:
 build_script:
   # Build the compiled extension
   - cmd: echo %PATH%
-
   - cmd: echo %PYTHONPATH%
 
   # copy gisinternal gdal librarys into .libs
@@ -126,6 +125,7 @@ build_script:
   # install the wheel
   - ps: python -m pip install --upgrade pip
   - ps: python -m pip install (gci dist\*.whl | % { "$_" })
+  - ps: python -m pip freeze
   - ps: move fiona fiona.build
 
 
@@ -137,10 +137,6 @@ test_script:
 
   # Our Windows GDAL doesn't have iconv and can't support certain tests.
   - "%CMD_IN_ENV% python -m pytest -m \"not iconv\" --cov fiona --cov-report term-missing"
-
-matrix:
-  allow_failures:
-    - PYTHON_VERSION: "2.7.14"
 
 artifacts:
   - path: dist\*.whl
