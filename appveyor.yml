@@ -38,16 +38,16 @@ environment:
         - PYTHON: "C:\\Python36-x64"
           PYTHON_VERSION: "3.6"
           PYTHON_ARCH: "64"
-          GDAL_VERSION: "2.3.0"
-          GIS_INTERNALS: "release-1911-x64-gdal-2-3-0-mapserver-7-0-7.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-3-0-mapserver-7-0-7-libs.zip"
+          GDAL_VERSION: "2.3.3"
+          GIS_INTERNALS: "release-1911-x64-gdal-2-3-3-mapserver-7-2-1.zip"
+          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-3-3-mapserver-7-2-1-libs.zip"
 
         - PYTHON: "C:\\Python36-x64"
           PYTHON_VERSION: "3.6"
           PYTHON_ARCH: "64"
-          GDAL_VERSION: "2.4.0"
-          GIS_INTERNALS: "release-1911-x64-gdal-2-4-0-mapserver-7-2-2.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-4-0-mapserver-7-2-2-libs.zip"
+          GDAL_VERSION: "2.4.2"
+          GIS_INTERNALS: "release-1911-x64-gdal-2-4-2-mapserver-7-4-0.zip"
+          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-4-2-mapserver-7-4-0-libs.zip"
 
 install:
 
@@ -70,17 +70,6 @@ install:
   # Check that we have the expected version and architecture for Python
   - "python --version"
   - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
-
-
-  # https://code.google.com/p/pymat2/wiki/WindowsTips
-  #- ps: (Get-Content "%VS90COMNTOOLS%\..\..\VC\vcvarsall.bat) | ForEach-Object { $_ -replace "vcvarsamd64.bat", "vcvars64.bat" } | Set-Content "%VS90COMNTOOLS%\..\..\VC\vcvarsall.bat
-  # - '%CMD_IN_ENV% echo "conv env"'
-  # - ps: 'ls "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin"'
-  # - if "%platform%" == "x86" call "%VS90COMNTOOLS%\..\..\VC\vcvarsall.bat"
-  #- if "%platform%" == "x64" echo f | xcopy /f /y "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat" "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\amd64\vcvarsamd64.bat"
-  # - if "%platform%" == "x64" call "%VS90COMNTOOLS%\..\..\VC\vcvarsall.bat" amd64
-  # - if "%platform%" == "x64" set WIN64_ARG="WIN64=YES"
-
 
   - ps: mkdir C:\build | out-null
   - ps: mkdir C:\gdal | out-null
@@ -136,7 +125,7 @@ test_script:
   - ps: python -c "import fiona"
 
   # Our Windows GDAL doesn't have iconv and can't support certain tests.
-  - "%CMD_IN_ENV% python -m pytest -m \"not iconv\" --cov fiona --cov-report term-missing"
+  - "%CMD_IN_ENV% python -m pytest -m \"not iconv and not wheel\" --cov fiona --cov-report term-missing"
 
 artifacts:
   - path: dist\*.whl
