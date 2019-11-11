@@ -26,7 +26,6 @@ env:
 matrix:
   allow_failures:
     - env: GDALVERSION="master" PROJVERSION="6.1.1"
-    - python: "3.8"
 
 addons:
   apt:
