@@ -42,7 +42,7 @@ python:
   - "3.8"
 
 before_install:
-  - pip install -U pip
+  - python -m pip install -U pip
   - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$GDALINST/proj-$PROJVERSION/bin:$PATH
   - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$GDALINST/proj-$PROJVERSION/lib:$LD_LIBRARY_PATH
   - . ./scripts/travis_proj_install.sh
@@ -56,6 +56,7 @@ before_install:
 install:
   - if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $(gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
   - "GDAL_CONFIG=$GDALINST/gdal-$GDALVERSION/bin/gdal-config python -m pip install --no-deps --force-reinstall --no-use-pep517 -e ."
+  - python -m pip freeze
   - fio --version
   - fio --gdal-version
 
