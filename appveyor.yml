@@ -174,7 +174,6 @@ test_script:
 
 matrix:
   allow_failures:
-    - GDAL_VERSION: "3.0.0"
     - GDAL_VERSION: "3.1.0"
 
 artifacts:
