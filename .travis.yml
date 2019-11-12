@@ -30,7 +30,6 @@ matrix:
 addons:
   apt:
     packages:
-    - libgdal-dev
     - libatlas-dev
     - libatlas-base-dev
     - gfortran
