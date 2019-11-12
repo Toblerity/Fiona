@@ -17,13 +17,23 @@ env:
     - GDALBUILD=$HOME/gdalbuild
     - PROJINST=$HOME/gdalinstall
     - PROJBUILD=$HOME/projbuild
-  matrix:
-    - GDALVERSION="2.3.3" PROJVERSION="4.9.3"
-    - GDALVERSION="2.4.2" PROJVERSION="4.9.3"
-    - GDALVERSION="3.0.1" PROJVERSION="6.1.1"
-    - GDALVERSION="master" PROJVERSION="6.1.1"
 
 matrix:
+  include:
+    - python: "3.6"
+      env: GDALVERSION="2.3.3" PROJVERSION="4.9.3"
+    - python: "3.6"
+      env: GDALVERSION="2.4.2" PROJVERSION="4.9.3"
+    - python: "3.7"
+      env: GDALVERSION="2.4.2" PROJVERSION="4.9.3"
+    - python: "3.6"
+      env: GDALVERSION="3.0.1" PROJVERSION="6.1.1"
+    - python: "3.7"
+      env: GDALVERSION="3.0.1" PROJVERSION="6.1.1"
+    - python: "3.8"
+      env: GDALVERSION="3.0.1" PROJVERSION="6.1.1"
+    - python: "3.8"
+      env: GDALVERSION="master" PROJVERSION="6.1.1"
   allow_failures:
     - env: GDALVERSION="master" PROJVERSION="6.1.1"
 
@@ -35,11 +45,6 @@ addons:
     - gfortran
     - libsqlite3-dev
     - sqlite3
-
-python:
-  - "3.6"
-  - "3.7"
-  - "3.8"
 
 before_install:
   - python -m pip install -U pip
