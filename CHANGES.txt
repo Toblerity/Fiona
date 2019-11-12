@@ -3,6 +3,11 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.11 (2019-11-07)
+-------------------
+
+- Fix an access violation on Windows (#826).
+
 1.8.10 (2019-11-07)
 -------------------
 
