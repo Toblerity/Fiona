@@ -14,8 +14,11 @@ environment:
         PYTHONWARNINGS: "ignore:DEPRECATION::pip._internal.cli.base_command"
 
 
-    # PYTHON_VERSION and PYTHON_ARCH are required by run_with_env.cmd
     matrix:
+        # PYTHON_VERSION and PYTHON_ARCH are required by run_with_env.cmd.
+        # The 4-digit number in the GISInternals archives is the MSVC version used to build
+        # the libraries. It does not need to match the version of MSVC used to build Python.
+        # https://en.wikipedia.org/wiki/Microsoft_Visual_C%2B%2B#Internal_version_numbering
         - PYTHON: "C:\\Python36-x64"
           PYTHON_VERSION: "3.6"
           PYTHON_ARCH: "64"
