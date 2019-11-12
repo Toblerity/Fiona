@@ -42,7 +42,10 @@ GDALOPTS="  --with-ogr \
             --without-ruby \
             --without-perl \
             --without-php \
-            --without-python"
+            --without-python \
+            --with-oci=no \
+            --without-mrf \
+            --with-webp=no"
 
 # Create build dir if not exists
 if [ ! -d "$GDALBUILD" ]; then

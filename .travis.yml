@@ -2,12 +2,6 @@ dist: xenial
 
 language: python
 
-python:
-  - "2.7"
-  - "3.6"
-  - "3.7"
-  - "3.8"
-
 cache:
   directories:
     - $GDALINST
@@ -21,24 +15,35 @@ env:
     - GDALBUILD=$HOME/gdalbuild
     - PROJINST=$HOME/gdalinstall
     - PROJBUILD=$HOME/projbuild
-  matrix:
-    - GDALVERSION="1.11.5" PROJVERSION="4.8.0"
-    - GDALVERSION="2.0.3" PROJVERSION="4.9.3"
-    - GDALVERSION="2.1.4" PROJVERSION="4.9.3"
-    - GDALVERSION="2.2.4" PROJVERSION="4.9.3"
-    - GDALVERSION="2.3.3" PROJVERSION="4.9.3"
-    - GDALVERSION="2.4.2" PROJVERSION="4.9.3"
-    - GDALVERSION="3.0.1" PROJVERSION="6.1.1"
-    - GDALVERSION="master" PROJVERSION="6.1.1"
 
-matrix:
+jobs:
+  include:
+    - python: "2.7"
+      env: GDALVERSION="1.11.5" PROJVERSION="4.8.0"
+    - python: "2.7"
+      env: GDALVERSION="2.2.4" PROJVERSION="4.9.3"
+    - python: "3.6"
+      env: GDALVERSION="2.2.4" PROJVERSION="4.9.3"
+    - python: "3.6"
+      env: GDALVERSION="2.3.3" PROJVERSION="4.9.3"
+    - python: "3.6"
+      env: GDALVERSION="2.4.2" PROJVERSION="4.9.3"
+    - python: "3.7"
+      env: GDALVERSION="2.4.2" PROJVERSION="4.9.3"
+    - python: "3.6"
+      env: GDALVERSION="3.0.1" PROJVERSION="6.1.1"
+    - python: "3.7"
+      env: GDALVERSION="3.0.1" PROJVERSION="6.1.1"
+    - python: "3.8"
+      env: GDALVERSION="3.0.1" PROJVERSION="6.1.1"
+    - python: "3.8"
+      env: GDALVERSION="master" PROJVERSION="6.1.1"
   allow_failures:
     - env: GDALVERSION="master" PROJVERSION="6.1.1"
 
 addons:
   apt:
     packages:
-    - libgdal-dev
     - libatlas-dev
     - libatlas-base-dev
     - gfortran
@@ -46,6 +51,7 @@ addons:
     - sqlite3
 
 before_install:
+  - python -m pip install -U pip
   - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$GDALINST/proj-$PROJVERSION/bin:$PATH
   - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$GDALINST/proj-$PROJVERSION/lib:$LD_LIBRARY_PATH
   - . ./scripts/travis_proj_install.sh
@@ -57,8 +63,9 @@ before_install:
   - python -m pip install -r requirements-dev.txt
 
 install:
-  - if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $(gdal-config --version) == "$GDALVERSION" ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
+  - if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $(gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
   - "GDAL_CONFIG=$GDALINST/gdal-$GDALVERSION/bin/gdal-config python -m pip install --no-deps --force-reinstall --no-use-pep517 -e ."
+  - python -m pip freeze
   - fio --version
   - fio --gdal-version
 
@@ -69,4 +76,4 @@ after_success:
   - coveralls || echo "!! intermittent coveralls failure"
 
 before_cache:
-  - if [ "$GDALVERSION" = "trunk" ]; then rm -rf $GDALINST/gdal-$GDALVERSION; fi
+  - if [ "$GDALVERSION" = "master" ]; then rm -rf $GDALINST/gdal-$GDALVERSION; fi
