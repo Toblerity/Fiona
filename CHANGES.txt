@@ -3,6 +3,53 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.11 (2019-11-07)
+-------------------
+
+- Fix an access violation on Windows (#826).
+
+1.8.10 (2019-11-07)
+-------------------
+
+Deprecations:
+
+- Use of vfs keyword argument with open or listlayers has been previously noted
+  as deprecated, but now triggers a deprecation warning.
+
+Bug fixes:
+
+- fiona.open() can now create new datasets using CRS URNs (#823).
+- listlayers() now accepts file and Path objects, like open() (#825).
+- Use new set_proj_search_path() function to set the PROJ data search path. For
+  GDAL versions before 3.0 this sets the PROJ_LIB environment variable. For
+  GDAL version 3.0 this calls OSRSetPROJSearchPaths(), which overrides
+  PROJ_LIB.
+- Remove old and unused _drivers extension module.
+- Check for header.dxf file instead of pcs.csv when looking for installed GDAL
+  data. The latter is gone with GDAL 3.0 but the former remains (#818).
+
+1.8.9.post2 (2019-10-22)
+------------------------
+
+- The 1.8.9.post1 release introduced a bug affecting builds of the package from
+  a source distribution using GDAL 2.x. This bug has been fixed in commit
+  960568d.
+
+1.8.9.post1 (2019-10-22)
+------------------------
+
+- A change has been made to the package setup script so that the shim module
+  for GDAL 3 is used when building the package from a source distribution.
+  There are no other changes to the package.
+
+1.8.9 (2019-10-21)
+------------------
+
+- A shim module and support for GDAL 3.0 has been added. The package can now be
+  built and used with GDAL 3.0 and PROJ 6.1 or 6.2. Note that the 1.8.9 wheels
+  we will upload to PyPI will contain GDAL 2.4.2 and PROJ 4.9.3 as in the 1.8.8
+  wheels.
+
 1.8.8 (2019-09-25)
 ------------------
 

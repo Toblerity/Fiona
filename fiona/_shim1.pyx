@@ -1,14 +1,12 @@
 """Shims on top of ogrext for GDAL versions < 2"""
 
-import logging
+import os
 
 from fiona.ogrext1 cimport *
 from fiona._err cimport exc_wrap_pointer
 from fiona._err import cpl_errs, CPLE_BaseError, FionaNullPointerError
 from fiona.errors import DriverError
 
-
-log = logging.getLogger(__name__)
 
 cdef int OGRERR_NONE = 0
 
@@ -80,7 +78,6 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except NU
             v = ('ON' if v else 'OFF').encode('utf-8')
         else:
             v = str(v).encode('utf-8')
-        log.debug("Set option %r: %r", k, v)
         opts = CSLAddNameValue(opts, <const char *>k, <const char *>v)
 
     try:
@@ -123,3 +120,15 @@ cdef bint check_capability_create_layer(void *cogr_ds):
 
 cdef void *get_linear_geometry(void *geom):
     return geom
+
+
+cdef const char* osr_get_name(OGRSpatialReferenceH hSrs):
+    return ''
+
+
+cdef void osr_set_traditional_axis_mapping_strategy(OGRSpatialReferenceH hSrs):
+    OSRFixup(hSrs)
+
+
+cdef void set_proj_search_path(object path):
+    os.environ["PROJ_LIB"] = path

@@ -56,7 +56,7 @@ def test_ensure_env_decorator_sets_gdal_data_prefix(find_file, gdalenv, monkeypa
         return getenv()['GDAL_DATA']
 
     find_file.return_value = None
-    tmpdir.ensure("share/gdal/pcs.csv")
+    tmpdir.ensure("share/gdal/header.dxf")
     monkeypatch.delenv('GDAL_DATA', raising=False)
     monkeypatch.setattr(_env, '__file__', str(tmpdir.join("fake.py")))
     monkeypatch.setattr(sys, 'prefix', str(tmpdir))
@@ -72,7 +72,7 @@ def test_ensure_env_decorator_sets_gdal_data_wheel(find_file, gdalenv, monkeypat
         return getenv()['GDAL_DATA']
 
     find_file.return_value = None
-    tmpdir.ensure("gdal_data/pcs.csv")
+    tmpdir.ensure("gdal_data/header.dxf")
     monkeypatch.delenv('GDAL_DATA', raising=False)
     monkeypatch.setattr(_env, '__file__', str(tmpdir.join(os.path.basename(_env.__file__))))
 
@@ -87,7 +87,7 @@ def test_ensure_env_with_decorator_sets_gdal_data_wheel(find_file, gdalenv, monk
         return getenv()['GDAL_DATA']
 
     find_file.return_value = None
-    tmpdir.ensure("gdal_data/pcs.csv")
+    tmpdir.ensure("gdal_data/header.dxf")
     monkeypatch.delenv('GDAL_DATA', raising=False)
     monkeypatch.setattr(_env, '__file__', str(tmpdir.join(os.path.basename(_env.__file__))))
 

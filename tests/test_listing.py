@@ -1,9 +1,6 @@
 """Test listing a datasource's layers."""
 
-try:
-    from pathlib import Path
-except ImportError:
-    Path = None
+from pathlib import Path
 
 import logging
 import sys
@@ -13,7 +10,7 @@ import pytest
 
 import fiona
 import fiona.ogrext
-from fiona.errors import DriverError
+from fiona.errors import DriverError, FionaDeprecationWarning
 
 
 def test_single_file_private(path_coutwildrnp_shp):
@@ -39,11 +36,6 @@ def test_zip_path(path_coutwildrnp_zip):
         'zip://{}'.format(path_coutwildrnp_zip)) == ['coutwildrnp']
 
 
-def test_zip_path_arch(path_coutwildrnp_zip):
-    vfs = 'zip://{}'.format(path_coutwildrnp_zip)
-    assert fiona.listlayers('/coutwildrnp.shp', vfs=vfs) == ['coutwildrnp']
-
-
 def test_list_not_existing(data_dir):
     """Test underlying Cython function correctly raises"""
     path = os.path.join(data_dir, "does_not_exist.geojson")
@@ -66,14 +58,23 @@ def test_invalid_path_ioerror():
         fiona.listlayers("foobar")
 
 
-@pytest.mark.skipif(Path is None, reason='No pathlib.Path')
 def test_path_object(path_coutwildrnp_shp):
     path_obj = Path(path_coutwildrnp_shp)
     assert fiona.listlayers(path_obj) == ['coutwildrnp']
 
 
-@pytest.mark.skipif(Path is None, reason='No pathlib.Path')
-@pytest.mark.skipif(sys.platform == "win32", reason="Path doesn't support URI-style locations on Windows")
 def test_zip_path_arch(path_coutwildrnp_zip):
     vfs = Path('zip://{}'.format(path_coutwildrnp_zip))
     assert fiona.listlayers('/coutwildrnp.shp', vfs=vfs) == ['coutwildrnp']
+
+
+def test_listing_file(path_coutwildrnp_json):
+    """list layers from an open file object"""
+    with open(path_coutwildrnp_json, "rb") as f:
+        assert len(fiona.listlayers(f)) == 1
+
+
+def test_listing_pathobj(path_coutwildrnp_json):
+    """list layers from a Path object"""
+    pathlib = pytest.importorskip("pathlib")
+    assert len(fiona.listlayers(pathlib.Path(path_coutwildrnp_json))) == 1

@@ -18,6 +18,7 @@ import sys
 import threading
 
 from fiona._err cimport exc_wrap_int, exc_wrap_ogrerr
+from fiona._shim cimport set_proj_search_path
 from fiona._err import CPLE_BaseError
 from fiona.errors import EnvError
 
@@ -295,18 +296,18 @@ class GDALDataFinder(object):
         if prefix is None:
             prefix = __file__
         datadir = os.path.abspath(os.path.join(os.path.dirname(prefix), "gdal_data"))
-        return datadir if os.path.exists(os.path.join(datadir, 'pcs.csv')) else None
+        return datadir if os.path.exists(os.path.join(datadir, 'header.dxf')) else None
 
     def search_prefix(self, prefix=sys.prefix):
         """Check sys.prefix location"""
         datadir = os.path.join(prefix, 'share', 'gdal')
-        return datadir if os.path.exists(os.path.join(datadir, 'pcs.csv')) else None
+        return datadir if os.path.exists(os.path.join(datadir, 'header.dxf')) else None
 
     def search_debian(self, prefix=sys.prefix):
         """Check Debian locations"""
         gdal_release_name = GDALVersionInfo("RELEASE_NAME")
         datadir = os.path.join(prefix, 'share', 'gdal', '{}.{}'.format(*gdal_release_name.split('.')[:2]))
-        return datadir if os.path.exists(os.path.join(datadir, 'pcs.csv')) else None
+        return datadir if os.path.exists(os.path.join(datadir, 'header.dxf')) else None
 
 
 class PROJDataFinder(object):
@@ -326,7 +327,7 @@ class PROJDataFinder(object):
         cdef OGRSpatialReferenceH osr = OSRNewSpatialReference(NULL)
 
         try:
-            exc_wrap_ogrerr(exc_wrap_int(OSRImportFromProj4(osr, "+init=epsg:4326")))
+            exc_wrap_ogrerr(exc_wrap_int(OSRImportFromEPSG(osr, 4326)))
         except CPLE_BaseError:
             return False
         else:
@@ -402,6 +403,8 @@ cdef class GDALEnv(ConfigEnv):
 
                     if 'PROJ_LIB' in os.environ:
                         log.debug("PROJ_LIB found in environment: %r.", os.environ['PROJ_LIB'])
+                        path = os.environ["PROJ_LIB"]
+                        set_proj_data_search_path(path)
 
                     elif PROJDataFinder().has_data():
                         log.debug("PROJ data files are available at built-in paths")
@@ -410,8 +413,8 @@ cdef class GDALEnv(ConfigEnv):
                         path = PROJDataFinder().search()
 
                         if path:
-                            os.environ['PROJ_LIB'] = path
-                            log.debug("PROJ data not found in environment, set to %r.", path)
+                            log.debug("PROJ data not found in environment, setting to %r.", path)
+                            set_proj_data_search_path(path)
 
                     if driver_count() == 0:
                         CPLPopErrorHandler()
@@ -447,3 +450,8 @@ cdef class GDALEnv(ConfigEnv):
             result[key] = val
 
         return result
+
+
+def set_proj_data_search_path(path):
+    """Set PROJ data search path"""
+    set_proj_search_path(path)

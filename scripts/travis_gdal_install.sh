@@ -1,10 +1,13 @@
-#!/bin/sh
+#!/bin/bash
+#
+# originally contributed by @rbuffat to Toblerity/Fiona
 set -e
 
 GDALOPTS="  --with-ogr \
             --with-geos \
             --with-expat \
             --without-libtool \
+            --with-libz=internal \
             --with-libtiff=internal \
             --with-geotiff=internal \
             --without-gif \
@@ -13,7 +16,7 @@ GDALOPTS="  --with-ogr \
             --without-libgrass \
             --without-cfitsio \
             --without-pcraster \
-            --without-netcdf \
+            --with-netcdf \
             --with-png=internal \
             --with-jpeg=internal \
             --without-gif \
@@ -34,17 +37,16 @@ GDALOPTS="  --with-ogr \
             --without-odbc \
             --with-curl \
             --with-sqlite3 \
-            --without-dwgdirect \
             --without-idb \
             --without-sde \
+            --without-ruby \
             --without-perl \
             --without-php \
-            --without-ruby \
-            --without-python
+            --without-python \
             --with-oci=no \
             --without-mrf \
-            --with-webp=no \
-            --with-proj=$GDALINST/proj-$PROJVERSION"
+            --with-webp=no"
+
 
 # Create build dir if not exists
 if [ ! -d "$GDALBUILD" ]; then
@@ -57,39 +59,62 @@ fi
 
 ls -l $GDALINST
 
-if [ "$GDALVERSION" = "trunk" ]; then
-  # always rebuild trunk
-  git clone -b master --single-branch --depth=1 https://github.com/OSGeo/gdal.git $GDALBUILD/trunk
-  cd $GDALBUILD/trunk/gdal
-  ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS
-  make -j 2
-  make install
-  rm -rf $GDALBUILD
-  
-elif [ ! -d "$GDALINST/gdal-$GDALVERSION" ]; then
-  # only build if not already installed
-  cd $GDALBUILD
+if [ "$GDALVERSION" = "master" ]; then
+    PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
+    cd $GDALBUILD
+    git clone --depth 1 https://github.com/OSGeo/gdal gdal-$GDALVERSION
+    cd gdal-$GDALVERSION/gdal
+    git rev-parse HEAD > newrev.txt
+    BUILD=no
+    # Only build if nothing cached or if the GDAL revision changed
+    if test ! -f $GDALINST/gdal-$GDALVERSION/rev.txt; then
+        BUILD=yes
+    elif ! diff newrev.txt $GDALINST/gdal-$GDALVERSION/rev.txt >/dev/null; then
+        BUILD=yes
+    fi
+    if test "$BUILD" = "yes"; then
+        mkdir -p $GDALINST/gdal-$GDALVERSION
+        cp newrev.txt $GDALINST/gdal-$GDALVERSION/rev.txt
+        ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT
+        make -j 4
+        make install
+    fi
 
-  BASE_GDALVERSION=$(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION)
+else
+    case "$GDALVERSION" in
+        3*)
+            PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
+            ;;
+        2.4*)
+            PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
+            ;;
+        2.3*)
+            PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
+            ;;
+        2.2*)
+            PROJOPT="--with-static-proj4=$GDALINST/gdal-$GDALVERSION"
+            ;;
+        2.1*)
+            PROJOPT="--with-static-proj4=$GDALINST/gdal-$GDALVERSION"
+            ;;
+        2.0*)
+            PROJOPT="--with-static-proj4=$GDALINST/gdal-$GDALVERSION"
+            ;;
+        1*)
+            PROJOPT="--with-static-proj4=$GDALINST/gdal-$GDALVERSION"
+            ;;
+    esac
 
-  if ( curl -o/dev/null -sfI "http://download.osgeo.org/gdal/$BASE_GDALVERSION/gdal-$GDALVERSION.tar.gz" ); then
-    wget http://download.osgeo.org/gdal/$BASE_GDALVERSION/gdal-$GDALVERSION.tar.gz
-  else
-    wget http://download.osgeo.org/gdal/old_releases/gdal-$GDALVERSION.tar.gz
-  fi
-  tar -xzf gdal-$GDALVERSION.tar.gz
-
-  
-  if [ -d "gdal-$BASE_GDALVERSION" ]; then
-    cd gdal-$BASE_GDALVERSION
-  elif [ -d "gdal-$GDALVERSION" ]; then
-    cd gdal-$GDALVERSION
-  fi
-  
-  ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS
-  make -j 2
-  make install
-  rm -rf $GDALBUILD
+    if [ ! -d "$GDALINST/gdal-$GDALVERSION/share/gdal" ]; then
+        cd $GDALBUILD
+        gdalver=$(expr "$GDALVERSION" : '\([0-9]*.[0-9]*.[0-9]*\)')
+        wget -q http://download.osgeo.org/gdal/$gdalver/gdal-$GDALVERSION.tar.gz
+        tar -xzf gdal-$GDALVERSION.tar.gz
+        cd gdal-$gdalver
+        ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT
+        make -j 4
+        make install
+    fi
 fi
 
 # change back to travis build dir
