@@ -69,6 +69,7 @@ import sys
 import warnings
 
 from six import string_types
+from collections import OrderedDict
 
 try:
     from pathlib import Path
@@ -89,7 +90,6 @@ from fiona._env import driver_count
 from fiona._env import (
     calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name,
     get_gdal_version_tuple)
-from fiona.compat import OrderedDict
 from fiona.io import MemoryFile
 from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove, _remove_layer
 from fiona.path import ParsedPath, parse_path, vsi_path
