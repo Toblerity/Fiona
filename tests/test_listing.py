@@ -36,6 +36,12 @@ def test_zip_path(path_coutwildrnp_zip):
         'zip://{}'.format(path_coutwildrnp_zip)) == ['coutwildrnp']
 
 
+def test_zip_path_arch(path_coutwildrnp_zip):
+    vfs = 'zip://{}'.format(path_coutwildrnp_zip)
+    with pytest.warns(FionaDeprecationWarning):
+        assert fiona.listlayers('/coutwildrnp.shp', vfs=vfs) == ['coutwildrnp']
+
+
 def test_list_not_existing(data_dir):
     """Test underlying Cython function correctly raises"""
     path = os.path.join(data_dir, "does_not_exist.geojson")
@@ -61,11 +67,6 @@ def test_invalid_path_ioerror():
 def test_path_object(path_coutwildrnp_shp):
     path_obj = Path(path_coutwildrnp_shp)
     assert fiona.listlayers(path_obj) == ['coutwildrnp']
-
-
-def test_zip_path_arch(path_coutwildrnp_zip):
-    vfs = Path('zip://{}'.format(path_coutwildrnp_zip))
-    assert fiona.listlayers('/coutwildrnp.shp', vfs=vfs) == ['coutwildrnp']
 
 
 def test_listing_file(path_coutwildrnp_json):

@@ -19,7 +19,7 @@ matrix:
   include:
     - python: "3.6"
       env:
-        GDALVERSION="2.3.4"
+        GDALVERSION="2.3.3"
         PROJVERSION="4.9.3"
     - python: "3.6"
       env:

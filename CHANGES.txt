@@ -81,7 +81,6 @@ Upcoming changes:
 
 - The advertisement for JSON driver enablement in 1.8.5 was false (#176), but
   in this release they are ready for use.
-- Establish support for Python versions 2.7, 3.5, 3.6, and 3.7 (#770).
 
 1.8.5 (2019-03-15)
 ------------------

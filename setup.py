@@ -11,9 +11,8 @@ from setuptools.extension import Extension
 
 
 # Ensure minimum version of Python is running
-py_version = sys.version_info[0:2]
-if not (py_version == (2, 7) or py_version >= (3, 5)):
-    raise RuntimeError('Fiona requires Python 2.7, >=3.5')
+if sys.version_info[0:2] < (3, 6):
+    raise RuntimeError('Fiona requires Python>=3.6')
 
 # Use Cython if available.
 try:
@@ -23,18 +22,7 @@ except ImportError:
 
 
 def check_output(cmd):
-    # since subprocess.check_output doesn't exist in 2.6
-    # we wrap it here.
-    try:
-        out = subprocess.check_output(cmd)
-        return out.decode('utf')
-    except AttributeError:
-        # For some reasone check_output doesn't exist
-        # So fall back on Popen
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        out, err = p.communicate()
-        return out
-
+    return subprocess.check_output(cmd).decode('utf')
 
 def copy_data_tree(datadir, destdir):
     try:
@@ -48,16 +36,11 @@ def copy_data_tree(datadir, destdir):
 with open('fiona/__init__.py', 'r') as f:
     for line in f:
         if line.find("__version__") >= 0:
-            version = line.split("=")[1].strip()
-            version = version.strip('"')
-            version = version.strip("'")
+            version = line.split("=")[1].strip().strip('"').strip("'")
             break
 
-# Fiona's auxiliary files are UTF-8 encoded and we'll specify this when
-# reading with Python 3+
-open_kwds = {}
-if sys.version_info > (3,):
-    open_kwds['encoding'] = 'utf-8'
+# Fiona's auxiliary files are UTF-8 encoded
+open_kwds = {'encoding': 'utf-8'}
 
 with open('VERSION.txt', 'w', **open_kwds) as f:
     f.write(version)
@@ -301,7 +284,7 @@ setup_args = dict(
     metadata_version='1.2',
     name='Fiona',
     version=version,
-    requires_python='>=2.6',
+    requires_python='>=3.6',
     requires_external='GDAL (>=1.8)',
     description="Fiona reads and writes spatial data files",
     license='BSD',
