@@ -3,6 +3,12 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.12 (2019-12-04)
+-------------------
+
+- Specify Python versions for argparse, enum34, and ordereddict requirements
+  (#842).
+
 1.8.11 (2019-11-07)
 -------------------
 
