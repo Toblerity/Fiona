@@ -280,8 +280,8 @@ requirements = [
     'click-plugins>=1.0',
     'six>=1.7',
     'munch',
-    'argparse; python_version <= "3.4"',
-    'ordereddict; python_version <= "2.7"',
+    'argparse; python_version < "2.7"',
+    'ordereddict; python_version < "2.7"',
     'enum34; python_version < "3.4"'
 ]
 
