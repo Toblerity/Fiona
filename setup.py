@@ -279,19 +279,16 @@ requirements = [
     'cligj>=0.5',
     'click-plugins>=1.0',
     'six>=1.7',
-    'munch']
-
-if sys.version_info < (2, 7):
-    requirements.append('argparse')
-    requirements.append('ordereddict')
-
-if sys.version_info < (3, 4):
-    requirements.append('enum34')
+    'munch',
+    'argparse; python_version <= "3.4"',
+    'ordereddict; python_version <= "2.7"',
+    'enum34; python_version < "3.4"'
+]
 
 extras_require = {
     'calc': ['shapely'],
     's3': ['boto3>=1.2.4'],
-    'test': ['pytest>=3', 'pytest-cov', 'boto3>=1.2.4', 'mock; python_version<"3.4"']
+    'test': ['pytest>=3', 'pytest-cov', 'boto3>=1.2.4', 'mock; python_version < "3.4"']
 }
 
 extras_require['all'] = list(set(it.chain(*extras_require.values())))
