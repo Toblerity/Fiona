@@ -88,7 +88,6 @@ if platform.system() == 'Windows' and (3, 8) <= sys.version_info:
         os.add_dll_directory(os.path.join(gdal_home, "bin"))
 
 
-
 # TODO: remove this? Or at least move it, flake8 complains.
 if sys.platform == "win32":
     libdir = os.path.join(os.path.dirname(__file__), ".libs")
