@@ -67,7 +67,7 @@ import logging
 import os
 import sys
 import warnings
-
+import platform
 from six import string_types
 from collections import OrderedDict
 
@@ -76,6 +76,18 @@ try:
 except ImportError:  # pragma: no cover
     class Path:
         pass
+
+
+# Add gdal dll directory on Windows and Python >= 3.8, see https://github.com/Toblerity/Fiona/issues/851
+if platform.system() == 'Windows' and (3, 8) <= sys.version_info:
+
+    # Add GDAL_HOME/bin, if present
+    gdal_home = os.getenv('GDAL_HOME', None)
+
+    if gdal_home is not None and os.path.exists(gdal_home):
+        os.add_dll_directory(os.path.join(gdal_home, "bin"))
+
+
 
 # TODO: remove this? Or at least move it, flake8 complains.
 if sys.platform == "win32":
