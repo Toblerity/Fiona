@@ -71,28 +71,58 @@ import platform
 from six import string_types
 from collections import OrderedDict
 
-try:
-    from pathlib import Path
-except ImportError:  # pragma: no cover
-    class Path:
-        pass
-
-
-# Add gdal dll directory on Windows and Python >= 3.8, see https://github.com/Toblerity/Fiona/issues/851
-if platform.system() == 'Windows' and (3, 8) <= sys.version_info:
-
-    # Add GDAL_HOME/bin, if present
-    gdal_home = os.getenv('GDAL_HOME', None)
-
-    if gdal_home is not None and os.path.exists(gdal_home):
-        os.add_dll_directory(os.path.join(gdal_home, "bin"))
-
 
 # TODO: remove this? Or at least move it, flake8 complains.
 if sys.platform == "win32":
     libdir = os.path.join(os.path.dirname(__file__), ".libs")
     os.environ["PATH"] = os.environ["PATH"] + ";" + libdir
 
+try:
+
+    from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove, \
+        _remove_layer
+
+except ImportError as e:
+    """
+    With Python >= 3.8 on Windows directories in PATH are not automatically
+    searched for DLL dependencies and must be added manually with
+    os.add_dll_directory.
+
+    see https://github.com/Toblerity/Fiona/issues/851
+
+    We check if a */gdal/bin directory is found in PATH and
+    if none is found if GDAL_HOME is set.
+    """
+    if platform.system() == 'Windows' and (3, 8) <= sys.version_info:
+
+        dll_directory = None
+
+        # Parse PATH for gdal/bin
+        for path in os.getenv('PATH', '').split(';'):
+            p = Path(path.lower())
+
+            if p.parts[-2:] == ('gdal', 'bin') and os.path.exists(path):
+                dll_directory = path
+                break
+        del path, p
+
+        # Use GDAL_HOME if present
+        if dll_directory is not None:
+            gdal_home = os.getenv('GDAL_HOME', None)
+
+            if gdal_home is not None and os.path.exists(gdal_home):
+                dll_directory = os.path.join(gdal_home, "bin")
+            del gdal_home
+
+        if dll_directory is not None:
+            os.add_dll_directory(dll_directory)
+        del dll_directory
+
+        from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, \
+            _remove, _remove_layer
+
+    else:
+        raise e
 from fiona.collection import BytesCollection, Collection
 from fiona.drvsupport import supported_drivers
 from fiona.env import ensure_env_with_credentials, Env
@@ -102,7 +132,6 @@ from fiona._env import (
     calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name,
     get_gdal_version_tuple)
 from fiona.io import MemoryFile
-from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove, _remove_layer
 from fiona.path import ParsedPath, parse_path, vsi_path
 from fiona.vfs import parse_paths as vfs_parse_paths
 
