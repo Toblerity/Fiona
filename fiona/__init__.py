@@ -70,7 +70,7 @@ import warnings
 import platform
 from six import string_types
 from collections import OrderedDict
-
+from pathlib import Path
 
 # TODO: remove this? Or at least move it, flake8 complains.
 if sys.platform == "win32":
