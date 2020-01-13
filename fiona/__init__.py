@@ -104,8 +104,7 @@ except ImportError as e:
             if p.parts[-2:] == ('gdal', 'bin') and os.path.exists(path):
                 dll_directory = path
                 break
-            del p
-        del path
+            del path, p
 
         # Use GDAL_HOME if present
         if dll_directory is not None:
