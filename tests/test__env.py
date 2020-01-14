@@ -34,7 +34,7 @@ def mock_fhs(tmpdir):
 def mock_debian(tmpdir):
     """A fake Debian multi-install system"""
     tmpdir.ensure("share/gdal/{}.{}/header.dxf".format(gdal_version.major,
-                                                       gdal_version.minor)
+                                                       gdal_version.minor))
     tmpdir.ensure("share/proj/epsg")
     return tmpdir
 
