@@ -64,46 +64,32 @@ if [ "$GDALVERSION" = "master" ]; then
     cd $GDALBUILD
     git clone --depth 1 https://github.com/OSGeo/gdal gdal-$GDALVERSION
     cd gdal-$GDALVERSION/gdal
+    echo $PROJVERSION > newproj.txt
     git rev-parse HEAD > newrev.txt
     BUILD=no
     # Only build if nothing cached or if the GDAL revision changed
     if test ! -f $GDALINST/gdal-$GDALVERSION/rev.txt; then
         BUILD=yes
-    elif ! diff newrev.txt $GDALINST/gdal-$GDALVERSION/rev.txt >/dev/null; then
+    elif [! diff newrev.txt $GDALINST/gdal-$GDALVERSION/rev.txt >/dev/null] || [! diff newproj.txt $GDALINST/gdal-$GDALVERSION/newproj.txt >/dev/null ]; then
         BUILD=yes
     fi
     if test "$BUILD" = "yes"; then
         mkdir -p $GDALINST/gdal-$GDALVERSION
         cp newrev.txt $GDALINST/gdal-$GDALVERSION/rev.txt
+        cp newproj.txt $GDALINST/gdal-$GDALVERSION/newproj.txt
         ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT
         make -j 4
         make install
     fi
 
 else
-    case "$GDALVERSION" in
-        3*)
-            PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
-            ;;
-        2.4*)
-            PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
-            ;;
-        2.3*)
-            PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
-            ;;
-        2.2*)
-            PROJOPT="--with-static-proj4=$GDALINST/gdal-$GDALVERSION"
-            ;;
-        2.1*)
-            PROJOPT="--with-static-proj4=$GDALINST/gdal-$GDALVERSION"
-            ;;
-        2.0*)
-            PROJOPT="--with-static-proj4=$GDALINST/gdal-$GDALVERSION"
-            ;;
-        1*)
-            PROJOPT="--with-static-proj4=$GDALINST/gdal-$GDALVERSION"
-            ;;
-    esac
+
+    if $(dpkg --compare-versions "$GDALVERSION" "lt" "2.3"); then
+        PROJOPT="--with-static-proj4=$PROJINST/proj-$PROJVERSION";
+    else
+        PROJOPT="--with-proj=$PROJINST/proj-$PROJVERSION";
+
+    fi
 
     if [ ! -d "$GDALINST/gdal-$GDALVERSION/share/gdal" ]; then
         cd $GDALBUILD
