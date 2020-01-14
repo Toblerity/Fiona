@@ -70,7 +70,7 @@ if [ "$GDALVERSION" = "master" ]; then
     # Only build if nothing cached or if the GDAL revision changed
     if test ! -f $GDALINST/gdal-$GDALVERSION/rev.txt; then
         BUILD=yes
-    elif [! diff newrev.txt $GDALINST/gdal-$GDALVERSION/rev.txt >/dev/null] || [! diff newproj.txt $GDALINST/gdal-$GDALVERSION/newproj.txt >/dev/null ]; then
+    elif [ ! diff newrev.txt $GDALINST/gdal-$GDALVERSION/rev.txt >/dev/null] || [ ! diff newproj.txt $GDALINST/gdal-$GDALVERSION/newproj.txt >/dev/null ]; then
         BUILD=yes
     fi
     if test "$BUILD" = "yes"; then
