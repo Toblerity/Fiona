@@ -78,7 +78,7 @@ if [ "$GDALVERSION" = "master" ]; then
         cp newrev.txt $GDALINST/gdal-$GDALVERSION/rev.txt
         cp newproj.txt $GDALINST/gdal-$GDALVERSION/newproj.txt
         ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT
-        make -j 4
+        make
         make install
     fi
 
@@ -98,7 +98,7 @@ else
         tar -xzf gdal-$GDALVERSION.tar.gz
         cd gdal-$gdalver
         ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT
-        make -j 4
+        make
         make install
     fi
 fi

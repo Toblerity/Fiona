@@ -20,7 +20,7 @@ if [ ! -d "$PROJINST/gdal-$GDALVERSION/share/proj" ]; then
     tar -xzf proj-$PROJVERSION.tar.gz
     cd proj-$PROJVERSION
     ./configure --prefix=$PROJINST/gdal-$GDALVERSION
-    make -s -j 2
+    make -s
     make install
 fi
 
