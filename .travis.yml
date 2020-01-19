@@ -79,7 +79,7 @@ before_install:
   - gdal-config --version
   - python -m pip wheel -r requirements-dev.txt
   - python -m pip install -r requirements-dev.txt
-  - if [ "$PIP_UNPIN" = "yes" ]; then pip install pur; pur; pip install --upgrade -r requirements.txt; fi
+  - if [ "$PIP_UNPIN" = "yes" ]; then python -m pip install pur; pur; python -m pip install --upgrade -r requirements.txt; fi
 
 install:
   - if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $(gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
