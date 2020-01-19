@@ -27,7 +27,6 @@ environment:
         - PYTHON_VERSION: "3.6"
           GDAL_VERSION: "2.3.3"
           PYTHON: "C:\\Python36-x64"
-          PYTHON_VERSION: "3.6"
           PYTHON_ARCH: "64"
           GIS_INTERNALS: "release-1911-x64-gdal-2-3-3-mapserver-7-2-1.zip"
           GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-3-3-mapserver-7-2-1-libs.zip"
