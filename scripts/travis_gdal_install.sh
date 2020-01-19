@@ -84,12 +84,32 @@ if [ "$GDALVERSION" = "master" ]; then
 
 else
 
-    if $(dpkg --compare-versions "$GDALVERSION" "lt" "2.3"); then
-        PROJOPT="--with-static-proj4=$PROJINST/proj-$PROJVERSION";
-    else
-        PROJOPT="--with-proj=$PROJINST/proj-$PROJVERSION";
-
-    fi
+    case "$GDALVERSION" in
+        3*)
+            PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
+            ;;
+        2.4*)
+            PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
+            ;;
+        2.3*)
+            PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
+            ;;
+        2.2*)
+            PROJOPT="--with-static-proj4=$GDALINST/gdal-$GDALVERSION"
+            ;;
+        2.1*)
+            PROJOPT="--with-static-proj4=$GDALINST/gdal-$GDALVERSION"
+            ;;
+        2.0*)
+            PROJOPT="--with-static-proj4=$GDALINST/gdal-$GDALVERSION"
+            ;;
+        1*)
+            PROJOPT="--with-static-proj4=$GDALINST/gdal-$GDALVERSION"
+            ;;
+        *)
+            PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
+            ;;
+    esac
 
     if [ ! -d "$GDALINST/gdal-$GDALVERSION/share/gdal" ]; then
         cd $GDALBUILD
