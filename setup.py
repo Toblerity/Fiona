@@ -262,18 +262,18 @@ elif "clean" not in sys.argv:
             Extension('fiona._shim', ['fiona/_shim3.c'], **ext_options))
 
 requirements = [
-    'attrs>=17',
-    'click>=4.0,<8',
-    'cligj>=0.5',
+    'attrs>=17.4',
+    'click>=5.0,<8',
     'click-plugins>=1.0',
-    'six>=1.7',
-    'munch',
+    'cligj>=0.5',
+    'six>=1.9',
+    'munch>=2.2.0',
 ]
 
 extras_require = {
     'calc': ['shapely'],
-    's3': ['boto3>=1.2.4'],
-    'test': ['pytest>=3', 'pytest-cov', 'boto3>=1.2.4', 'mock; python_version<"3.4"']
+    's3': ['boto3>=1.5.0'],
+    'test': ['pytest>=5', 'pytest-cov>=2.7', 'boto3>=1.5.0']
 }
 
 extras_require['all'] = list(set(it.chain(*extras_require.values())))
