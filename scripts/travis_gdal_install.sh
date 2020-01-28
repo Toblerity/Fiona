@@ -3,9 +3,7 @@
 # originally contributed by @rbuffat to Toblerity/Fiona
 set -e
 
-GDALOPTS="  --with-ogr \
-            --with-geos \
-            --with-expat \
+GDALOPTS="  --with-geos \
             --without-libtool \
             --with-libz=internal \
             --with-libtiff=internal \
@@ -16,9 +14,8 @@ GDALOPTS="  --with-ogr \
             --without-libgrass \
             --without-cfitsio \
             --without-pcraster \
-            --with-netcdf \
-            --with-png=internal \
-            --with-jpeg=internal \
+            --without-netcdf \
+            --without-openjpeg \
             --without-gif \
             --without-ogdi \
             --without-fme \
@@ -29,24 +26,65 @@ GDALOPTS="  --with-ogr \
             --without-kakadu \
             --without-mrsid \
             --without-jp2mrsid \
-            --without-bsb \
-            --without-grib \
             --without-mysql \
             --without-ingres \
             --without-xerces \
             --without-odbc \
             --with-curl \
-            --with-sqlite3 \
             --without-idb \
             --without-sde \
-            --without-ruby \
             --without-perl \
-            --without-php \
             --without-python \
             --with-oci=no \
-            --without-mrf \
             --with-webp=no"
 
+# Version specific gdal build options
+case "$GDALVERSION" in
+    2.3*)
+        GDALOPTS="$GDALOPTS \
+        --without-php \
+        --without-bsb \
+        --without-mrf \
+        --without-grib \
+        --without-png \
+        --without-jpeg"
+        ;;
+    2.4*)
+        GDALOPTS="$GDALOPTS \
+        --without-bsb \
+        --without-mrf \
+        --without-grib \
+        --without-lerc \
+        --without-png \
+        --without-jpeg"
+        ;;
+    3*)
+        GDALOPTS="$GDALOPTS \
+        --without-lerc \
+        --with-png=internal \
+        --with-jpeg=internal"
+        ;;
+    *)
+        GDALOPTS="$GDALOPTS \
+        --without-lerc \
+        --with-png=internal \
+        --with-jpeg=internal"
+        ;;
+esac
+
+# OS specific gdal build options
+if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+
+    GDALOPTS="$GDALOPTS \
+                --with-expat \
+                --with-sqlite3"
+
+elif [ $TRAVIS_OS_NAME = 'osx' ]; then
+
+    GDALOPTS="$GDALOPTS \
+                --with-expat=/usr/local/opt/expat \
+                --with-sqlite3=/usr/local/opt/sqlite"
+fi
 
 # Create build dir if not exists
 if [ ! -d "$GDALBUILD" ]; then
@@ -77,6 +115,7 @@ if [ "$GDALVERSION" = "master" ]; then
         mkdir -p $GDALINST/gdal-$GDALVERSION
         cp newrev.txt $GDALINST/gdal-$GDALVERSION/rev.txt
         cp newproj.txt $GDALINST/gdal-$GDALVERSION/newproj.txt
+        echo "./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT"
         ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT
         make
         make install
@@ -94,18 +133,6 @@ else
         2.3*)
             PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
             ;;
-        2.2*)
-            PROJOPT="--with-static-proj4=$GDALINST/gdal-$GDALVERSION"
-            ;;
-        2.1*)
-            PROJOPT="--with-static-proj4=$GDALINST/gdal-$GDALVERSION"
-            ;;
-        2.0*)
-            PROJOPT="--with-static-proj4=$GDALINST/gdal-$GDALVERSION"
-            ;;
-        1*)
-            PROJOPT="--with-static-proj4=$GDALINST/gdal-$GDALVERSION"
-            ;;
         *)
             PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
             ;;
@@ -117,11 +144,15 @@ else
         wget -q http://download.osgeo.org/gdal/$gdalver/gdal-$GDALVERSION.tar.gz
         tar -xzf gdal-$GDALVERSION.tar.gz
         cd gdal-$gdalver
+        echo "./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT"
         ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT
         make
         make install
     fi
 fi
+
+# Remove gdalbuild to emulate travis cache
+rm -rf $GDALBUILD
 
 # change back to travis build dir
 cd $TRAVIS_BUILD_DIR
