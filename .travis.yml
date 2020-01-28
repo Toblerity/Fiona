@@ -117,7 +117,7 @@ before_install:
   - python3 -m pip install -r requirements-dev.txt
 
 install:
-  - if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $(gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
+  - if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $($GDALINST/gdal-$GDALVERSION/bin/gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
   - GDAL_CONFIG=$GDALINST/gdal-$GDALVERSION/bin/gdal-config python3 -m pip install -v -v -v --no-deps --force-reinstall --no-use-pep517 -e .
   - python3 -m pip freeze
   - fio --version
