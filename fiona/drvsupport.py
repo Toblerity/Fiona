@@ -49,7 +49,7 @@ supported_drivers = dict([
     ("ESRI Shapefile", "raw"),
     # FMEObjects Gateway 	FMEObjects Gateway 	No 	Yes 	No, needs FME
     # GeoJSON 	GeoJSON 	Yes 	Yes 	Yes
-    ("GeoJSON", "rw"),
+    ("GeoJSON", "raw"),
     # GeoJSONSeq 	GeoJSON sequences 	Yes 	Yes 	Yes 
     ("GeoJSONSeq", "rw"),
     # Géoconcept Export 	Geoconcept 	Yes 	Yes 	Yes
@@ -57,7 +57,7 @@ supported_drivers = dict([
     #   ("Geoconcept", "raw"),
     # Geomedia .mdb 	Geomedia 	No 	No 	No, needs ODBC library
     # GeoPackage	GPKG	Yes	Yes	No, needs libsqlite3
-    ("GPKG", "rw"),
+    ("GPKG", "raw"),
     # GeoRSS 	GeoRSS 	Yes 	Yes 	Yes (read support needs libexpat)
     # Google Fusion Tables 	GFT 	Yes 	Yes 	No, needs libcurl
     # GML 	GML 	Yes 	Yes 	Yes (read support needs Xerces or libexpat)
