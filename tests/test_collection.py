@@ -8,10 +8,9 @@ import pytest
 
 import fiona
 from fiona.collection import Collection, supported_drivers
-from fiona.env import getenv
+from fiona.env import getenv, GDALVersion
 from fiona.errors import FionaValueError, DriverError, FionaDeprecationWarning
-
-from .conftest import WGS84PATTERN
+from .conftest import WGS84PATTERN, driver_extensions, requires_gdal2
 
 
 class TestSupportedDrivers(object):
@@ -899,3 +898,101 @@ def test_collection_env(path_coutwildrnp_shp):
     """We have a GDAL env within collection context"""
     with fiona.open(path_coutwildrnp_shp):
         assert 'FIONA_ENV' in getenv()
+
+
+blacklist_append_drivers = set(['CSV', 'GPX', 'GPSTrackMaker', 'DXF', 'DGN'])
+append_drivers = [driver for driver, raw in supported_drivers.items() if 'a' in raw and driver not in blacklist_append_drivers]
+
+@pytest.mark.parametrize('driver', append_drivers)
+def test_append_works(tmpdir, driver):
+    """ Test if driver supports append mode.
+    
+    Some driver only allow a specific schema. These drivers can be excluded by adding them to blacklist_append_drivers.
+    
+    """
+    extension = driver_extensions.get(driver, "bar")
+    path = str(tmpdir.join('foo.{}'.format(extension)))
+
+    with fiona.open(path, 'w',
+                    driver=driver,
+                    schema={'geometry': 'LineString',
+                            'properties': [('title', 'str')]}) as c:
+
+        c.writerecords([{'geometry': {'type': 'LineString', 'coordinates': [
+                       (1.0, 0.0), (0.0, 0.0)]}, 'properties': {'title': 'One'}}])
+
+    # Some driver gained append support over time
+    mingdal_drivers = {
+        "GeoJSON": (2, 1, 0),
+        "MapInfo File": (2, 0, 0),
+        "GMT": (2, 0, 0),
+        "GeoJSONSeq": (2, 0, 0)
+    }
+
+
+    if driver in mingdal_drivers and GDALVersion.runtime() < GDALVersion(*mingdal_drivers[driver][:2]):
+        with pytest.raises(DriverError):
+            with fiona.open(path, 'a',
+                        driver=driver) as c:
+                c.writerecords([{'geometry': {'type': 'LineString', 'coordinates': [
+                            (2.0, 0.0), (0.0, 0.0)]}, 'properties': {'title': 'Two'}}])
+
+    else:
+        with fiona.open(path, 'a',
+                        driver=driver) as c:
+            c.writerecords([{'geometry': {'type': 'LineString', 'coordinates': [
+                        (2.0, 0.0), (0.0, 0.0)]}, 'properties': {'title': 'Two'}}])
+
+        with fiona.open(path) as c:
+            assert len([f for f in c]) == 2
+
+
+write_not_append_drivers = [driver for driver, raw in supported_drivers.items() if 'w' in raw and not 'a' in raw]
+
+# Segfault with gdal 1.11, thus only enabling test with gdal2 and above
+@requires_gdal2
+@pytest.mark.parametrize('driver', write_not_append_drivers)
+def test_append_does_not_work(tmpdir, driver):
+    """Test if driver supports append but it is not enabled
+    
+    If this test fails, it should be considered to enable append for the respective driver in drvsupport.py. 
+    
+    """
+    extension = driver_extensions.get(driver, "bar")
+    path = str(tmpdir.join('foo.{}'.format(extension)))
+
+    with fiona.open(path, 'w',
+                    driver=driver,
+                    schema={'geometry': 'LineString',
+                            'properties': [('title', 'str')]}) as c:
+
+        c.writerecords([{'geometry': {'type': 'LineString', 'coordinates': [
+                       (1.0, 0.0), (0.0, 0.0)]}, 'properties': {'title': 'One'}}])
+
+    with pytest.raises(Exception):
+        with fiona.open(path, 'a',
+                    driver=driver) as c:
+            c.writerecords([{'geometry': {'type': 'LineString', 'coordinates': [
+                        (2.0, 0.0), (0.0, 0.0)]}, 'properties': {'title': 'Two'}}])
+
+
+only_read_drivers = [driver for driver, raw in supported_drivers.items() if raw == 'r']
+@requires_gdal2
+@pytest.mark.parametrize('driver', only_read_drivers)
+def test_readonly_drivers_can_not_write(tmpdir, driver):
+    """Test if read only driver cannot write
+    
+    If this test fails, it should be considered to enable write support for the respective driver in drvsupport.py. 
+    
+    """
+    extension = driver_extensions.get(driver, "bar")
+    path = str(tmpdir.join('foo.{}'.format(extension)))
+
+    with pytest.raises(Exception):
+        with fiona.open(path, 'w',
+                        driver=driver,
+                        schema={'geometry': 'LineString',
+                                'properties': [('title', 'str')]}) as c:
+
+            c.writerecords([{'geometry': {'type': 'LineString', 'coordinates': [
+                        (1.0, 0.0), (0.0, 0.0)]}, 'properties': {'title': 'One'}}])

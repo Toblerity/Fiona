@@ -25,7 +25,7 @@ supported_drivers = dict([
     # Arc/Info Generate 	ARCGEN 	No 	No 	Yes
     ("ARCGEN", "r"),
     # Atlas BNA 	BNA 	Yes 	No 	Yes
-    ("BNA", "raw"),
+    ("BNA", "rw"),
     # AutoCAD DWG 	DWG 	No 	No 	No
     # AutoCAD DXF 	DXF 	Yes 	No 	Yes
     ("DXF", "raw"),
@@ -49,19 +49,19 @@ supported_drivers = dict([
     ("ESRI Shapefile", "raw"),
     # FMEObjects Gateway 	FMEObjects Gateway 	No 	Yes 	No, needs FME
     # GeoJSON 	GeoJSON 	Yes 	Yes 	Yes
-    ("GeoJSON", "rw"),
+    ("GeoJSON", "raw"),
     # GeoJSONSeq 	GeoJSON sequences 	Yes 	Yes 	Yes 
-    ("GeoJSONSeq", "rw"),
+    ("GeoJSONSeq", "raw"),
     # Géoconcept Export 	Geoconcept 	Yes 	Yes 	Yes
     # multi-layers
     #   ("Geoconcept", "raw"),
     # Geomedia .mdb 	Geomedia 	No 	No 	No, needs ODBC library
     # GeoPackage	GPKG	Yes	Yes	No, needs libsqlite3
-    ("GPKG", "rw"),
+    ("GPKG", "raw"),
     # GeoRSS 	GeoRSS 	Yes 	Yes 	Yes (read support needs libexpat)
     # Google Fusion Tables 	GFT 	Yes 	Yes 	No, needs libcurl
     # GML 	GML 	Yes 	Yes 	Yes (read support needs Xerces or libexpat)
-    ("GML", "raw"),
+    ("GML", "rw"),
     # GMT 	GMT 	Yes 	Yes 	Yes
     ("GMT", "raw"),
     # GPSBabel 	GPSBabel 	Yes 	Yes 	Yes (needs GPSBabel and GPX driver)
