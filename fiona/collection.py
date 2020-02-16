@@ -75,24 +75,42 @@ class Collection(object):
         if archive and not isinstance(archive, string_types):
             raise TypeError("invalid archive: %r" % archive)
 
+        self.force_mode = kwargs.pop("fiona_force_driver", False)
+
         # Check GDAL version against drivers
         if (driver == "GPKG" and get_gdal_version_tuple() < (1, 11, 0)):
             raise DriverError(
                 "GPKG driver requires GDAL 1.11.0, Fiona was compiled "
                 "against: {}".format(get_gdal_release_name()))
 
-        # Check if append mode is supported
-        if mode == 'a':
+        # Check mode compatibility with gdal version
+        if mode == 'w' and not self.force_mode:
 
-            mingdal_drivers = {
+            mingdal_write = {
+                "PCIDSK": (2, 0, 0)
+            } 
+
+            if driver in mingdal_write and get_gdal_version_tuple() < mingdal_write[driver]:
+                min_gdal_version = ".".join(list(map(str, mingdal_write[driver])))
+
+                raise DriverError(
+                    "{driver} driver requires at least GDAL {min_gdal_version} to write files, "
+                    "Fiona was compiled against: {gdal}".format(driver=driver,
+                                                                min_gdal_version=min_gdal_version,
+                                                                gdal=get_gdal_release_name()))
+
+        elif mode == 'a' and not self.force_mode:
+
+            mingdal_append = {
                 "GeoJSON": (2, 1, 0),
                 "MapInfo File": (2, 0, 0),
                 "GMT": (2, 0, 0),
-                "GeoJSONSeq": (2, 0, 0)
+                "GeoJSONSeq": (2, 0, 0),
+                "PCIDSK": (2, 0, 0)
             }
 
-            if driver in mingdal_drivers and get_gdal_version_tuple() < mingdal_drivers[driver]:
-                min_gdal_version = ".".join(list(map(str, mingdal_drivers[driver])))
+            if driver in mingdal_append and get_gdal_version_tuple() < mingdal_append[driver]:
+                min_gdal_version = ".".join(list(map(str, mingdal_append[driver])))
 
                 raise DriverError(
                     "{driver} driver requires at least GDAL {min_gdal_version} to append to existing files, "
@@ -143,10 +161,10 @@ class Collection(object):
                 driver = 'ESRI Shapefile'
             if not driver:
                 raise DriverError("no driver")
-            elif driver not in supported_drivers:
+            elif driver not in supported_drivers and not self.force_mode:
                 raise DriverError(
                     "unsupported driver: %r" % driver)
-            elif self.mode not in supported_drivers[driver]:
+            elif self.mode not in supported_drivers[driver] and not self.force_mode:
                 raise DriverError(
                     "unsupported mode: %r" % self.mode)
             self._driver = driver
@@ -195,9 +213,9 @@ class Collection(object):
 
     def guard_driver_mode(self):
         driver = self.session.get_driver()
-        if driver not in supported_drivers:
+        if driver not in supported_drivers and not self.force_mode:
             raise DriverError("unsupported driver: %r" % driver)
-        if self.mode not in supported_drivers[driver]:
+        if self.mode not in supported_drivers[driver] and not self.force_mode:
             raise DriverError("unsupported mode: %r" % self.mode)
 
     @property

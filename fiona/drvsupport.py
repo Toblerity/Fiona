@@ -96,7 +96,7 @@ supported_drivers = dict([
     # multi-layer
     #   ("OpenAir", "r"),
     # PCI Geomatics Database File 	PCIDSK 	No 	No 	Yes, using internal PCIDSK SDK (from GDAL 1.7.0)
-    ("PCIDSK", "r"),
+    ("PCIDSK", "raw"),
     # PDS 	PDS 	No 	Yes 	Yes
     ("PDS", "r"),
     # PGDump 	PostgreSQL SQL dump 	Yes 	Yes 	Yes
