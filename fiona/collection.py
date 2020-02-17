@@ -78,31 +78,15 @@ class Collection(object):
         self.force_mode = kwargs.pop("fiona_force_driver", False)
 
         # Check GDAL version against drivers
-        if (driver == "GPKG" and get_gdal_version_tuple() < (1, 11, 0)):
-            raise DriverError(
-                "GPKG driver requires GDAL 1.11.0, Fiona was compiled "
-                "against: {}".format(get_gdal_release_name()))
+        if not self.force_mode:
 
-        # Check mode compatibility with gdal version
-        if mode == 'w' and not self.force_mode:
-
-            if driver in driver_mode_mingdal['w'] and get_gdal_version_tuple() < driver_mode_mingdal['w'][driver]:
-                min_gdal_version = ".".join(list(map(str, driver_mode_mingdal['w'][driver])))
+            if driver in driver_mode_mingdal[mode] and get_gdal_version_tuple() < driver_mode_mingdal[mode][driver]:
+                min_gdal_version = ".".join(list(map(str, driver_mode_mingdal[mode][driver])))
 
                 raise DriverError(
-                    "{driver} driver requires at least GDAL {min_gdal_version} to write files, "
+                    "{driver} driver requires at least GDAL {min_gdal_version} for mode '{mode}', "
                     "Fiona was compiled against: {gdal}".format(driver=driver,
-                                                                min_gdal_version=min_gdal_version,
-                                                                gdal=get_gdal_release_name()))
-
-        elif mode == 'a' and not self.force_mode:
-
-            if driver in driver_mode_mingdal['a'] and get_gdal_version_tuple() < driver_mode_mingdal['a'][driver]:
-                min_gdal_version = ".".join(list(map(str, driver_mode_mingdal['a'][driver])))
-
-                raise DriverError(
-                    "{driver} driver requires at least GDAL {min_gdal_version} to append to existing files, "
-                    "Fiona was compiled against: {gdal}".format(driver=driver,
+                                                                mode=mode,
                                                                 min_gdal_version=min_gdal_version,
                                                                 gdal=get_gdal_release_name()))
 
