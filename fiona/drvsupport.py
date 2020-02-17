@@ -141,6 +141,19 @@ supported_drivers = dict([
 ])
 
 
+# Mininmal gdal version for write mode
+driver_mode_mingdal = {
+
+    'a': {'GMT': (2, 0, 0),
+          'GeoJSON': (2, 1, 0),
+          'GeoJSONSeq': (2, 0, 0),
+          'MapInfo File': (2, 0, 0),
+          'PCIDSK': (2, 0, 0)},
+
+    'w': {'PCIDSK': (2, 0, 0)}
+}
+
+
 # Removes drivers in the supported_drivers dictionary that the
 # machine's installation of OGR due to how it is compiled.
 # OGR may not have optional libararies compiled or installed.

@@ -15,7 +15,7 @@ from fiona._crs import crs_to_wkt
 from fiona._env import get_gdal_release_name, get_gdal_version_tuple
 from fiona.env import env_ctx_if_needed
 from fiona.errors import FionaDeprecationWarning
-from fiona.drvsupport import supported_drivers
+from fiona.drvsupport import supported_drivers, driver_mode_mingdal
 from fiona.path import Path, vsi_path, parse_path
 from six import string_types, binary_type
 
@@ -86,12 +86,8 @@ class Collection(object):
         # Check mode compatibility with gdal version
         if mode == 'w' and not self.force_mode:
 
-            mingdal_write = {
-                "PCIDSK": (2, 0, 0)
-            } 
-
-            if driver in mingdal_write and get_gdal_version_tuple() < mingdal_write[driver]:
-                min_gdal_version = ".".join(list(map(str, mingdal_write[driver])))
+            if driver in driver_mode_mingdal['w'] and get_gdal_version_tuple() < driver_mode_mingdal['w'][driver]:
+                min_gdal_version = ".".join(list(map(str, driver_mode_mingdal['w'][driver])))
 
                 raise DriverError(
                     "{driver} driver requires at least GDAL {min_gdal_version} to write files, "
@@ -101,16 +97,8 @@ class Collection(object):
 
         elif mode == 'a' and not self.force_mode:
 
-            mingdal_append = {
-                "GeoJSON": (2, 1, 0),
-                "MapInfo File": (2, 0, 0),
-                "GMT": (2, 0, 0),
-                "GeoJSONSeq": (2, 0, 0),
-                "PCIDSK": (2, 0, 0)
-            }
-
-            if driver in mingdal_append and get_gdal_version_tuple() < mingdal_append[driver]:
-                min_gdal_version = ".".join(list(map(str, mingdal_append[driver])))
+            if driver in driver_mode_mingdal['a'] and get_gdal_version_tuple() < driver_mode_mingdal['a'][driver]:
+                min_gdal_version = ".".join(list(map(str, driver_mode_mingdal['a'][driver])))
 
                 raise DriverError(
                     "{driver} driver requires at least GDAL {min_gdal_version} to append to existing files, "

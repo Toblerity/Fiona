@@ -7,7 +7,8 @@ import re
 import pytest
 
 import fiona
-from fiona.collection import Collection, supported_drivers
+from fiona.collection import Collection
+from fiona.drvsupport import supported_drivers, driver_mode_mingdal
 from fiona.env import getenv, GDALVersion
 from fiona.errors import FionaValueError, DriverError, FionaDeprecationWarning
 from .conftest import WGS84PATTERN, driver_extensions, requires_gdal2
@@ -913,11 +914,8 @@ def test_append_works(tmpdir, driver):
     extension = driver_extensions.get(driver, "bar")
     path = str(tmpdir.join('foo.{}'.format(extension)))
 
-    mingdal_write = {
-        "PCIDSK": (2, 0, 0)
-    }
     # If driver is not able to write, we cannot test append
-    if driver in mingdal_write and GDALVersion.runtime() < GDALVersion(*mingdal_write[driver][:2]):
+    if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(*driver_mode_mingdal['w'][driver][:2]):
         return
 
     with fiona.open(path, 'w',
@@ -938,7 +936,7 @@ def test_append_works(tmpdir, driver):
     }
 
 
-    if driver in mingdal_append and GDALVersion.runtime() < GDALVersion(*mingdal_append[driver][:2]):
+    if driver in driver_mode_mingdal['a'] and GDALVersion.runtime() < GDALVersion(*driver_mode_mingdal['a'][driver][:2]):
         with pytest.raises(DriverError):
             with fiona.open(path, 'a',
                         driver=driver) as c:
