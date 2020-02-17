@@ -995,3 +995,24 @@ def test_readonly_driver_cannot_write(tmpdir, driver):
 
             c.writerecords([{'geometry': {'type': 'LineString', 'coordinates': [
                         (1.0, 0.0), (0.0, 0.0)]}, 'properties': {'title': 'One'}}])
+
+
+@pytest.mark.parametrize('driver', driver_mode_mingdal['w'].keys())
+def test_write_mode_not_supported(tmpdir, driver):
+        """ Test if DriverError is raised when write mode is not supported for old versions of GDAL
+        """
+
+        if GDALVersion.runtime() >= GDALVersion(*driver_mode_mingdal['w'][driver][:2]):
+            return
+
+        extension = driver_extensions.get(driver, "bar")
+        path = str(tmpdir.join('foo.{}'.format(extension)))
+
+        with pytest.raises(DriverError):
+            with fiona.open(path, 'w',
+                    driver=driver,
+                    schema={'geometry': 'LineString',
+                            'properties': [('title', 'str')]}) as c:
+
+                c.writerecords([{'geometry': {'type': 'LineString', 'coordinates': [
+                        (1.0, 0.0), (0.0, 0.0)]}, 'properties': {'title': 'One'}}])
