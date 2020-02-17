@@ -926,16 +926,6 @@ def test_append_works(tmpdir, driver):
         c.writerecords([{'geometry': {'type': 'LineString', 'coordinates': [
                        (1.0, 0.0), (0.0, 0.0)]}, 'properties': {'title': 'One'}}])
 
-    # Some driver gained append support over time
-    mingdal_append = {
-        "GeoJSON": (2, 1, 0),
-        "MapInfo File": (2, 0, 0),
-        "GMT": (2, 0, 0),
-        "GeoJSONSeq": (2, 0, 0),
-        "PCIDSK": (2, 0, 0)
-    }
-
-
     if driver in driver_mode_mingdal['a'] and GDALVersion.runtime() < GDALVersion(*driver_mode_mingdal['a'][driver][:2]):
         with pytest.raises(DriverError):
             with fiona.open(path, 'a',
