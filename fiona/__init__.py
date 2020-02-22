@@ -102,7 +102,7 @@ import uuid
 
 
 __all__ = ['bounds', 'listlayers', 'open', 'prop_type', 'prop_width']
-__version__ = "1.8.13"
+__version__ = "1.8.13.post1"
 __gdal_version__ = get_gdal_release_name()
 
 gdal_version = get_gdal_version_tuple()

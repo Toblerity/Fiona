@@ -3,6 +3,12 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.13.post1 (2020-02-21)
+-------------------------
+
+- This release is being made to improve binary wheel compatibility with shapely
+  1.7.0. There have been no changes to the fiona package code since 1.8.13.
+
 1.8.13 (2019-12-05)
 -------------------
 
