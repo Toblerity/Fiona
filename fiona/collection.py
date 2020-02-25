@@ -340,7 +340,7 @@ class Collection(object):
             raise IOError("collection not open for writing")
         self.session.writerecs(records, self)
         self._len = self.session.get_length()
-        self._bounds = self.session.get_extent()
+        self._bounds = None
 
     def write(self, record):
         """Stages a record for writing to disk."""
@@ -428,7 +428,8 @@ class Collection(object):
             self.session.sync(self)
             new_len = self.session.get_length()
             self._len = new_len > self._len and new_len or self._len
-            self._bounds = self.session.get_extent()
+            self._bounds = None
+
 
     def close(self):
         """In append or write mode, flushes data to disk, then ends
