@@ -774,7 +774,7 @@ cdef class Session:
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
 
-        result = exc_wrap_int(OGR_L_GetExtent(self.cogr_layer, &extent, 1))
+        result = OGR_L_GetExtent(self.cogr_layer, &extent, 1)
         return (extent.MinX, extent.MinY, extent.MaxX, extent.MaxY)
 
     def has_feature(self, fid):
