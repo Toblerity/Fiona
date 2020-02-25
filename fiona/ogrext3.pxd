@@ -295,7 +295,7 @@ cdef extern from "ogr_api.h":
     double  OGR_G_GetX (void *geometry, int n)
     double  OGR_G_GetY (void *geometry, int n)
     double  OGR_G_GetZ (void *geometry, int n)
-    void    OGR_G_ImportFromWkb (void *geometry, unsigned char *bytes, int nbytes)
+    OGRErr  OGR_G_ImportFromWkb (void *geometry, unsigned char *bytes, int nbytes)
     int     OGR_G_WkbSize (void *geometry)
     void *  OGR_G_ForceToMultiPolygon (void *geometry)
     void *  OGR_G_ForceToPolygon (void *geometry)

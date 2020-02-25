@@ -326,7 +326,7 @@ cdef class OGRFeatureBuilder:
         if feature['geometry'] is not None:
             cogr_geometry = OGRGeomBuilder().build(
                                 feature['geometry'])
-        OGR_F_SetGeometryDirectly(cogr_feature, cogr_geometry)
+        exc_wrap_int(OGR_F_SetGeometryDirectly(cogr_feature, cogr_geometry))
 
         # OGR_F_SetFieldString takes encoded strings ('bytes' in Python 3).
         encoding = session._get_internal_encoding()
@@ -488,7 +488,7 @@ cdef class Session:
                     except AttributeError:
                         raise TypeError("Ignored field \"{}\" has type \"{}\", expected string".format(name, name.__class__.__name__))
                     ignore_fields = CSLAddString(ignore_fields, <const char *>name_b)
-                OGR_L_SetIgnoredFields(self.cogr_layer, <const char**>ignore_fields)
+                exc_wrap_int(OGR_L_SetIgnoredFields(self.cogr_layer, <const char**>ignore_fields))
             finally:
                 CSLDestroy(ignore_fields)
 
@@ -774,7 +774,7 @@ cdef class Session:
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
 
-        result = OGR_L_GetExtent(self.cogr_layer, &extent, 1)
+        result = exc_wrap_int(OGR_L_GetExtent(self.cogr_layer, &extent, 1))
         return (extent.MinX, extent.MinY, extent.MaxX, extent.MaxY)
 
     def has_feature(self, fid):
@@ -1163,7 +1163,7 @@ cdef class WritingSession(Session):
                         record['properties'].keys(),
                         list(schema_props_keys) ))
             cogr_feature = OGRFeatureBuilder().build(record, collection)
-            result = OGR_L_CreateFeature(cogr_layer, cogr_feature)
+            result = exc_wrap_int(OGR_L_CreateFeature(cogr_layer, cogr_feature))
             if result != OGRERR_NONE:
                 raise RuntimeError("Failed to write record: %s" % record)
             _deleteOgrFeature(cogr_feature)
@@ -1272,7 +1272,7 @@ cdef class Iterator:
         self.step = step
 
         self.next_index = start
-        OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
+        exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
 
     def __iter__(self):
         return self
@@ -1296,7 +1296,7 @@ cdef class Iterator:
 
         # Set read cursor to next_item position
         if self.step > 1 and self.fastindex:
-            OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
+            exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
 
         elif self.step > 1 and not self.fastindex and not self.next_index == self.start:
             for _ in range(self.step - 1):
@@ -1305,13 +1305,13 @@ cdef class Iterator:
                 if cogr_feature == NULL:
                     raise StopIteration
         elif self.step > 1 and not self.fastindex and self.next_index == self.start:
-            OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
+            exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
 
         elif self.step == 0:
             # OGR_L_GetNextFeature increments read cursor by one
             pass
         elif self.step < 0:
-            OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
+            exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
 
         # set the next index
         self.next_index += self.step
@@ -1454,7 +1454,7 @@ def _remove_layer(path, layer, driver=None):
     except (DriverError, FionaNullPointerError):
         raise DatasetDeleteError("Failed to remove data source {}".format(path))
 
-    result = OGR_DS_DeleteLayer(cogr_ds, layer_index)
+    result = exc_wrap_int(OGR_DS_DeleteLayer(cogr_ds, layer_index))
     GDALClose(cogr_ds)
     if result == OGRERR_UNSUPPORTED_OPERATION:
         raise DatasetDeleteError("Removal of layer {} not supported by driver".format(layer_str))
