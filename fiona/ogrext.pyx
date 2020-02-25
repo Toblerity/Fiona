@@ -1454,7 +1454,7 @@ def _remove_layer(path, layer, driver=None):
     except (DriverError, FionaNullPointerError):
         raise DatasetDeleteError("Failed to remove data source {}".format(path))
 
-    result = exc_wrap_int(OGR_DS_DeleteLayer(cogr_ds, layer_index))
+    result = OGR_DS_DeleteLayer(cogr_ds, layer_index)
     GDALClose(cogr_ds)
     if result == OGRERR_UNSUPPORTED_OPERATION:
         raise DatasetDeleteError("Removal of layer {} not supported by driver".format(layer_str))
