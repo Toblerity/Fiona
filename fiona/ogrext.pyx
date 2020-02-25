@@ -488,7 +488,7 @@ cdef class Session:
                     except AttributeError:
                         raise TypeError("Ignored field \"{}\" has type \"{}\", expected string".format(name, name.__class__.__name__))
                     ignore_fields = CSLAddString(ignore_fields, <const char *>name_b)
-                exc_wrap_int(OGR_L_SetIgnoredFields(self.cogr_layer, <const char**>ignore_fields))
+                OGR_L_SetIgnoredFields(self.cogr_layer, <const char**>ignore_fields)
             finally:
                 CSLDestroy(ignore_fields)
 
