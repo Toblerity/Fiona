@@ -19,7 +19,7 @@ from fiona._shim cimport *
 from fiona._geometry cimport (
     GeomBuilder, OGRGeomBuilder, geometry_type_code,
     normalize_geometry_type_code, base_geometry_type_code)
-from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile
+from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile, get_last_error_msg
 
 import fiona
 from fiona._env import GDALVersion, get_gdal_version_num
@@ -1168,9 +1168,11 @@ cdef class WritingSession(Session):
                         record['properties'].keys(),
                         list(schema_props_keys) ))
             cogr_feature = OGRFeatureBuilder().build(record, collection)
-            result = exc_wrap_int(OGR_L_CreateFeature(cogr_layer, cogr_feature))
+            result = OGR_L_CreateFeature(cogr_layer, cogr_feature)
             if result != OGRERR_NONE:
-                raise RuntimeError("Failed to write record: %s" % record)
+                msg = get_last_error_msg()
+                raise RuntimeError("GDAL Error: {msg} \n \n Failed to write record: "
+                                   "{record}".format(msg=msg, record=record))
             _deleteOgrFeature(cogr_feature)
 
             features_in_transaction += 1

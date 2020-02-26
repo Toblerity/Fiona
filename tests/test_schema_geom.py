@@ -6,7 +6,6 @@ import fiona
 import pytest
 
 from fiona.errors import GeometryTypeValidationError, UnsupportedGeometryTypeError
-from fiona._err import CPLE_AppDefinedError
 
 @pytest.fixture
 def filename_shp(tmpdir):
@@ -134,7 +133,7 @@ def test_invalid_schema(filename_shp):
     with fiona.open(filename_shp, "w", driver="ESRI Shapefile", schema=schema) as collection:
         write_linestring(collection)
 
-        with pytest.raises(CPLE_AppDefinedError):
+        with pytest.raises(RuntimeError):
             # ESRI Shapefile can only store a single geometry type
             write_point(collection)
 
