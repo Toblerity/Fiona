@@ -78,6 +78,7 @@ cdef const char * OLC_ALTERFIELDDEFN = "AlterFieldDefn"
 cdef const char * OLC_DELETEFEATURE = "DeleteFeature"
 cdef const char * OLC_STRINGSASUTF8 = "StringsAsUTF8"
 cdef const char * OLC_TRANSACTIONS = "Transactions"
+cdef const char * OLC_IGNOREFIELDS =  "IgnoreFields"
 
 # OGR integer error types.
 
@@ -481,6 +482,10 @@ cdef class Session:
         encoding = self._get_internal_encoding()
 
         if collection.ignore_fields:
+
+            if not OGR_L_TestCapability(self.cogr_layer, OLC_IGNOREFIELDS):
+                raise DriverError("Driver does not support ignore_fields")
+
             try:
                 for name in collection.ignore_fields:
                     try:
