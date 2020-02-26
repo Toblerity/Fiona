@@ -24,7 +24,7 @@ def test_bounds_z():
     assert fiona.bounds(g) == (10, 10, 10, 10)
 
 
-blacklist_write_drivers = set(['CSV', 'GPX', 'GPSTrackMaker', 'DXF', 'DGN'])
+blacklist_write_drivers = set(['CSV', 'GPX', 'GPSTrackMaker', 'DXF', 'DGN', 'MapInfo File'])
 write_drivers = [driver for driver, raw in supported_drivers.items() if 'w' in raw and driver not in blacklist_write_drivers]
 @pytest.mark.parametrize('driver', write_drivers)
 def test_bounds(tmpdir, driver):
@@ -50,7 +50,7 @@ def test_bounds(tmpdir, driver):
             assert isinstance(e, DriverError) 
 
         c.writerecords([{'geometry': {'type': 'Point', 'coordinates': (2.0, 20.0)},
-                            'properties': {'title': 'One'}}])
+                            'properties': {'title': 'Two'}}])
         
         try: 
             bounds = c.bounds
