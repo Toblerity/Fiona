@@ -775,11 +775,7 @@ cdef class Session:
             raise ValueError("Null layer")
 
         result = OGR_L_GetExtent(self.cogr_layer, &extent, 1)
-        
-        if result == OGRERR_NONE:
-            return (extent.MinX, extent.MinY, extent.MaxX, extent.MaxY)
-        else:
-            return None
+        return (extent.MinX, extent.MinY, extent.MaxX, extent.MaxY)
 
     def has_feature(self, fid):
         """Provides access to feature data by FID.
