@@ -1,6 +1,7 @@
-import fiona
 import pytest
+import fiona
 from fiona.drvsupport import supported_drivers
+from fiona.errors import DriverError
 from .conftest import driver_extensions
 
 def test_bounds_point():
@@ -42,9 +43,17 @@ def test_bounds(tmpdir, driver):
         c.writerecords([{'geometry': {'type': 'Point', 'coordinates': (1.0, 10.0)},
                             'properties': {'title': 'One'}}])
 
-        assert c.bounds == (1.0, 10.0, 1.0, 10.0)
+        try: 
+            bounds = c.bounds
+            assert bounds == (1.0, 10.0, 1.0, 10.0)
+        except Exception as e:
+            assert isinstance(e, DriverError) 
 
         c.writerecords([{'geometry': {'type': 'Point', 'coordinates': (2.0, 20.0)},
                             'properties': {'title': 'One'}}])
         
-        assert c.bounds == (1.0, 10.0, 2.0, 20.0)
+        try: 
+            bounds = c.bounds
+            assert bounds == (1.0, 10.0, 2.0, 20.0)
+        except Exception as e:
+            assert isinstance(e, DriverError) 
