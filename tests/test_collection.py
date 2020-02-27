@@ -11,7 +11,7 @@ from fiona.collection import Collection
 from fiona.drvsupport import supported_drivers, driver_mode_mingdal
 from fiona.env import getenv, GDALVersion
 from fiona.errors import FionaValueError, DriverError, FionaDeprecationWarning
-from .conftest import WGS84PATTERN, driver_extensions, requires_gdal2
+from .conftest import WGS84PATTERN, get_temp_filename
 
 
 class TestSupportedDrivers(object):
@@ -912,8 +912,7 @@ def test_append_works(tmpdir, driver):
     
     """
 
-    extension = driver_extensions.get(driver, "bar")
-    path = str(tmpdir.join('foo.{}'.format(extension)))
+    path = str(tmpdir.join(get_temp_filename(driver)))
 
     # If driver is not able to write, we cannot test append
     if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(*driver_mode_mingdal['w'][driver][:2]):
@@ -941,12 +940,12 @@ def test_append_works(tmpdir, driver):
                         (2.0, 0.0), (0.0, 0.0)]}, 'properties': {'title': 'Two'}}])
 
         with fiona.open(path) as c:
+            assert c.driver == driver
             assert len([f for f in c]) == 2
 
 
 
 write_not_append_drivers = [driver for driver, raw in supported_drivers.items() if 'w' in raw and not 'a' in raw]
-
 @pytest.mark.parametrize('driver', write_not_append_drivers)
 def test_append_does_not_work(tmpdir, driver):
     """Test if driver supports append but it is not enabled
@@ -960,11 +959,9 @@ def test_append_does_not_work(tmpdir, driver):
         return
 
     backup_mode = supported_drivers[driver]
-
     supported_drivers[driver] = 'raw'
 
-    extension = driver_extensions.get(driver, "bar")
-    path = str(tmpdir.join('foo.{}'.format(extension)))
+    path = str(tmpdir.join(get_temp_filename(driver)))
 
     with fiona.open(path, 'w',
                     driver=driver,
@@ -997,11 +994,9 @@ def test_readonly_driver_cannot_write(tmpdir, driver):
         return
 
     backup_mode = supported_drivers[driver]
-
     supported_drivers[driver] = 'rw'
 
-    extension = driver_extensions.get(driver, "bar")
-    path = str(tmpdir.join('foo.{}'.format(extension)))
+    path = str(tmpdir.join(get_temp_filename(driver)))
 
     with pytest.raises(Exception):
         with fiona.open(path, 'w',
@@ -1017,20 +1012,19 @@ def test_readonly_driver_cannot_write(tmpdir, driver):
 
 @pytest.mark.parametrize('driver', driver_mode_mingdal['w'].keys())
 def test_write_mode_not_supported(tmpdir, driver):
-        """ Test if DriverError is raised when write mode is not supported for old versions of GDAL
-        """
+    """ Test if DriverError is raised when write mode is not supported for old versions of GDAL
+    """
 
-        if GDALVersion.runtime() >= GDALVersion(*driver_mode_mingdal['w'][driver][:2]):
-            return
+    if GDALVersion.runtime() >= GDALVersion(*driver_mode_mingdal['w'][driver][:2]):
+        return
 
-        extension = driver_extensions.get(driver, "bar")
-        path = str(tmpdir.join('foo.{}'.format(extension)))
+    path = str(tmpdir.join(get_temp_filename(driver)))
 
-        with pytest.raises(DriverError):
-            with fiona.open(path, 'w',
-                    driver=driver,
-                    schema={'geometry': 'LineString',
-                            'properties': [('title', 'str')]}) as c:
+    with pytest.raises(DriverError):
+        with fiona.open(path, 'w',
+                driver=driver,
+                schema={'geometry': 'LineString',
+                        'properties': [('title', 'str')]}) as c:
 
-                c.writerecords([{'geometry': {'type': 'LineString', 'coordinates': [
-                        (1.0, 0.0), (0.0, 0.0)]}, 'properties': {'title': 'One'}}])
+            c.writerecords([{'geometry': {'type': 'LineString', 'coordinates': [
+                    (1.0, 0.0), (0.0, 0.0)]}, 'properties': {'title': 'One'}}])

@@ -23,6 +23,7 @@ driver_extensions = {'DXF': 'dxf',
                      'DGN': 'dgn',
                      'GPKG': 'gpkg',
                      'GeoJSON': 'json',
+                     'GeoJSONSeq': 'geojsons',
                      'GMT': 'gmt'}
 
 def pytest_report_header(config):
@@ -34,6 +35,19 @@ def pytest_report_header(config):
     # supported drivers
     headers.append("Supported drivers: {}".format(supported_drivers))
     return '\n'.join(headers)
+
+
+def get_temp_filename(driver):
+
+    basename = "foo"
+    extension = driver_extensions.get(driver, "bar")
+    prefix = ""
+    if driver == 'GeoJSONSeq':
+        prefix = "GeoJSONSeq:"
+
+    return "{prefix}{basename}.{extension}".format(prefix=prefix,
+                                                   basename=basename,
+                                                   extension=extension)
 
 
 _COUTWILDRNP_FILES = [
@@ -294,3 +308,4 @@ def unittest_data_dir(data_dir, request):
 def unittest_path_coutwildrnp_shp(path_coutwildrnp_shp, request):
     """Makes shapefile path available to unittest tests"""
     request.cls.path_coutwildrnp_shp = path_coutwildrnp_shp
+

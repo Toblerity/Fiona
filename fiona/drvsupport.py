@@ -51,7 +51,7 @@ supported_drivers = dict([
     # GeoJSON 	GeoJSON 	Yes 	Yes 	Yes
     ("GeoJSON", "raw"),
     # GeoJSONSeq 	GeoJSON sequences 	Yes 	Yes 	Yes 
-    ("GeoJSONSeq", "raw"),
+    ("GeoJSONSeq", "rw"),
     # Géoconcept Export 	Geoconcept 	Yes 	Yes 	Yes
     # multi-layers
     #   ("Geoconcept", "raw"),
