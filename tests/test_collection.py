@@ -947,8 +947,6 @@ def test_append_works(tmpdir, driver):
 
 write_not_append_drivers = [driver for driver, raw in supported_drivers.items() if 'w' in raw and not 'a' in raw]
 
-# Segfault with gdal 1.11, thus only enabling test with gdal2 and above
-@requires_gdal2
 @pytest.mark.parametrize('driver', write_not_append_drivers)
 def test_append_does_not_work(tmpdir, driver):
     """Test if driver supports append but it is not enabled
@@ -956,6 +954,10 @@ def test_append_does_not_work(tmpdir, driver):
     If this test fails, it should be considered to enable append for the respective driver in drvsupport.py. 
     
     """
+    
+    if driver == 'BNA' and GDALVersion.runtime() < GDALVersion(2, 0):
+        # BNA driver segfaults with gdal 1.11
+        return
 
     backup_mode = supported_drivers[driver]
 
@@ -982,7 +984,6 @@ def test_append_does_not_work(tmpdir, driver):
 
 
 only_read_drivers = [driver for driver, raw in supported_drivers.items() if raw == 'r']
-@requires_gdal2
 @pytest.mark.parametrize('driver', only_read_drivers)
 def test_readonly_driver_cannot_write(tmpdir, driver):
     """Test if read only driver cannot write
@@ -990,6 +991,10 @@ def test_readonly_driver_cannot_write(tmpdir, driver):
     If this test fails, it should be considered to enable write support for the respective driver in drvsupport.py. 
     
     """
+    
+    if driver == 'BNA' and GDALVersion.runtime() < GDALVersion(2, 0):
+        # BNA driver segfaults with gdal 1.11
+        return
 
     backup_mode = supported_drivers[driver]
 
