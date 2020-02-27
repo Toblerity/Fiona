@@ -957,8 +957,8 @@ def test_append_does_not_work(tmpdir, driver):
     
     """
 
-    backup_supported_drivers = dict(fiona.drvsupport.supported_drivers)
-    
+    backup_mode = supported_drivers[driver]
+
     supported_drivers[driver] = 'raw'
 
     extension = driver_extensions.get(driver, "bar")
@@ -978,7 +978,7 @@ def test_append_does_not_work(tmpdir, driver):
             c.writerecords([{'geometry': {'type': 'LineString', 'coordinates': [
                         (2.0, 0.0), (0.0, 0.0)]}, 'properties': {'title': 'Two'}}])
 
-    fiona.drvsupport.supported_drivers = backup_supported_drivers
+    supported_drivers[driver] = backup_mode
 
 
 only_read_drivers = [driver for driver, raw in supported_drivers.items() if raw == 'r']
@@ -991,8 +991,8 @@ def test_readonly_driver_cannot_write(tmpdir, driver):
     
     """
 
-    backup_supported_drivers = dict(fiona.drvsupport.supported_drivers)
-    
+    backup_mode = supported_drivers[driver]
+
     supported_drivers[driver] = 'rw'
 
     extension = driver_extensions.get(driver, "bar")
@@ -1007,7 +1007,7 @@ def test_readonly_driver_cannot_write(tmpdir, driver):
             c.writerecords([{'geometry': {'type': 'LineString', 'coordinates': [
                         (1.0, 0.0), (0.0, 0.0)]}, 'properties': {'title': 'One'}}])
     
-    fiona.drvsupport.supported_drivers = backup_supported_drivers
+    supported_drivers[driver] = backup_mode
 
 
 @pytest.mark.parametrize('driver', driver_mode_mingdal['w'].keys())
