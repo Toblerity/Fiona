@@ -243,8 +243,6 @@ cdef get_last_error_msg():
     An error message or empty string
     """
 
-    err_type = CPLGetLastErrorType()
-    err_no = CPLGetLastErrorNo()
     err_msg = CPLGetLastErrorMsg()
 
     if err_msg != NULL:
