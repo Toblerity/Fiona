@@ -3,6 +3,7 @@ import fiona
 from fiona.drvsupport import supported_drivers
 from fiona.errors import DriverError
 from .conftest import driver_extensions, requires_gdal2
+from fiona.env import GDALVersion
 
 def test_bounds_point():
     g = {'type': 'Point', 'coordinates': [10, 10]}
@@ -27,13 +28,18 @@ def test_bounds_z():
 blacklist_write_drivers = set(['CSV', 'GPX', 'GPSTrackMaker', 'DXF', 'DGN', 'MapInfo File'])
 write_drivers = [driver for driver, raw in supported_drivers.items() if 'w' in raw and driver not in blacklist_write_drivers]
 
-# Segfault with gdal 1.11, thus only enabling test with gdal2 and above
-@requires_gdal2
+
 @pytest.mark.parametrize('driver', write_drivers)
 def test_bounds(tmpdir, driver):
     """Test if bounds are correctly calculated after writing
     
     """
+
+    if driver == 'BNA' and GDALVersion.runtime() < GDALVersion(2, 0):
+        # BNA driver segfaults with gdal 1.11
+        return
+
+
     extension = driver_extensions.get(driver, "bar")
     path = str(tmpdir.join('foo.{}'.format(extension)))
 
