@@ -911,6 +911,7 @@ def test_append_works(tmpdir, driver):
     Some driver only allow a specific schema. These drivers can be excluded by adding them to blacklist_append_drivers.
     
     """
+
     extension = driver_extensions.get(driver, "bar")
     path = str(tmpdir.join('foo.{}'.format(extension)))
 
@@ -943,6 +944,7 @@ def test_append_works(tmpdir, driver):
             assert len([f for f in c]) == 2
 
 
+
 write_not_append_drivers = [driver for driver, raw in supported_drivers.items() if 'w' in raw and not 'a' in raw]
 
 # Segfault with gdal 1.11, thus only enabling test with gdal2 and above
@@ -954,24 +956,29 @@ def test_append_does_not_work(tmpdir, driver):
     If this test fails, it should be considered to enable append for the respective driver in drvsupport.py. 
     
     """
+
+    backup_supported_drivers = dict(fiona.drvsupport.supported_drivers)
+    
+    supported_drivers[driver] = 'raw'
+
     extension = driver_extensions.get(driver, "bar")
     path = str(tmpdir.join('foo.{}'.format(extension)))
 
     with fiona.open(path, 'w',
                     driver=driver,
                     schema={'geometry': 'LineString',
-                            'properties': [('title', 'str')]},
-                    fiona_force_driver=True) as c:
+                            'properties': [('title', 'str')]}) as c:
 
         c.writerecords([{'geometry': {'type': 'LineString', 'coordinates': [
                        (1.0, 0.0), (0.0, 0.0)]}, 'properties': {'title': 'One'}}])
 
     with pytest.raises(Exception):
         with fiona.open(path, 'a',
-                    driver=driver,
-                    fiona_force_driver=True) as c:
+                    driver=driver) as c:
             c.writerecords([{'geometry': {'type': 'LineString', 'coordinates': [
                         (2.0, 0.0), (0.0, 0.0)]}, 'properties': {'title': 'Two'}}])
+
+    fiona.drvsupport.supported_drivers = backup_supported_drivers
 
 
 only_read_drivers = [driver for driver, raw in supported_drivers.items() if raw == 'r']
@@ -983,6 +990,11 @@ def test_readonly_driver_cannot_write(tmpdir, driver):
     If this test fails, it should be considered to enable write support for the respective driver in drvsupport.py. 
     
     """
+
+    backup_supported_drivers = dict(fiona.drvsupport.supported_drivers)
+    
+    supported_drivers[driver] = 'rw'
+
     extension = driver_extensions.get(driver, "bar")
     path = str(tmpdir.join('foo.{}'.format(extension)))
 
@@ -990,11 +1002,12 @@ def test_readonly_driver_cannot_write(tmpdir, driver):
         with fiona.open(path, 'w',
                         driver=driver,
                         schema={'geometry': 'LineString',
-                                'properties': [('title', 'str')]},
-                        fiona_force_driver=True) as c:
+                                'properties': [('title', 'str')]}) as c:
 
             c.writerecords([{'geometry': {'type': 'LineString', 'coordinates': [
                         (1.0, 0.0), (0.0, 0.0)]}, 'properties': {'title': 'One'}}])
+    
+    fiona.drvsupport.supported_drivers = backup_supported_drivers
 
 
 @pytest.mark.parametrize('driver', driver_mode_mingdal['w'].keys())

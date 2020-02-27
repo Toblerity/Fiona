@@ -75,20 +75,18 @@ class Collection(object):
         if archive and not isinstance(archive, string_types):
             raise TypeError("invalid archive: %r" % archive)
 
-        self.force_mode = kwargs.pop("fiona_force_driver", False)
 
         # Check GDAL version against drivers
-        if not self.force_mode:
 
-            if driver in driver_mode_mingdal[mode] and get_gdal_version_tuple() < driver_mode_mingdal[mode][driver]:
-                min_gdal_version = ".".join(list(map(str, driver_mode_mingdal[mode][driver])))
+        if driver in driver_mode_mingdal[mode] and get_gdal_version_tuple() < driver_mode_mingdal[mode][driver]:
+            min_gdal_version = ".".join(list(map(str, driver_mode_mingdal[mode][driver])))
 
-                raise DriverError(
-                    "{driver} driver requires at least GDAL {min_gdal_version} for mode '{mode}', "
-                    "Fiona was compiled against: {gdal}".format(driver=driver,
-                                                                mode=mode,
-                                                                min_gdal_version=min_gdal_version,
-                                                                gdal=get_gdal_release_name()))
+            raise DriverError(
+                "{driver} driver requires at least GDAL {min_gdal_version} for mode '{mode}', "
+                "Fiona was compiled against: {gdal}".format(driver=driver,
+                                                            mode=mode,
+                                                            min_gdal_version=min_gdal_version,
+                                                            gdal=get_gdal_release_name()))
 
         self.session = None
         self.iterator = None
@@ -133,10 +131,10 @@ class Collection(object):
                 driver = 'ESRI Shapefile'
             if not driver:
                 raise DriverError("no driver")
-            elif driver not in supported_drivers and not self.force_mode:
+            elif driver not in supported_drivers:
                 raise DriverError(
                     "unsupported driver: %r" % driver)
-            elif self.mode not in supported_drivers[driver] and not self.force_mode:
+            elif self.mode not in supported_drivers[driver]:
                 raise DriverError(
                     "unsupported mode: %r" % self.mode)
             self._driver = driver
@@ -185,9 +183,9 @@ class Collection(object):
 
     def guard_driver_mode(self):
         driver = self.session.get_driver()
-        if driver not in supported_drivers and not self.force_mode:
+        if driver not in supported_drivers:
             raise DriverError("unsupported driver: %r" % driver)
-        if self.mode not in supported_drivers[driver] and not self.force_mode:
+        if self.mode not in supported_drivers[driver]:
             raise DriverError("unsupported mode: %r" % self.mode)
 
     @property
