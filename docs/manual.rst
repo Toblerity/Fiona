@@ -1323,8 +1323,11 @@ Unsupported drivers
 -------------------
 
 In :py:attr:`fiona.supported_drivers` a selection of GDAL/OGR's
-drivers that is tested to work with Fiona is maintained. Not supported 
-drivers can be added by updating :py:attr:`fiona.supported_drivers`:
+drivers that is tested to work with Fiona is maintained. By default, Fiona 
+allows only these drivers with their listed access modes:  r for read support,
+respectively a for append and w for write.
+
+These restrictions can be circumvented by modifying :py:attr:`fiona.supported_drivers`:
 
 .. sourcecode:: python
 
@@ -1334,7 +1337,7 @@ drivers can be added by updating :py:attr:`fiona.supported_drivers`:
   with fiona.open("file.kmz") as collection:
 
 It should, however, first be verified, if the local installation of GDAL/OGR 
-supports the required driver:
+includes the required driver:
 
 .. sourcecode:: python
 
