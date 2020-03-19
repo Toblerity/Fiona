@@ -2,7 +2,7 @@ import pytest
 import fiona
 from fiona.drvsupport import supported_drivers
 from fiona.errors import DriverError
-from .conftest import driver_extensions, requires_gdal2
+from .conftest import driver_extensions
 from fiona.env import GDALVersion
 
 def test_bounds_point():
