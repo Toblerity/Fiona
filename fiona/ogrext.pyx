@@ -776,10 +776,9 @@ cdef class Session:
 
         result = OGR_L_GetExtent(self.cogr_layer, &extent, 1)
         
-        if result == OGRERR_NONE:
-            return (extent.MinX, extent.MinY, extent.MaxX, extent.MaxY)
-        else:
+        if result != OGRERR_NONE:
             raise DriverError("Driver was not able to calculate extent")
+        return (extent.MinX, extent.MinY, extent.MaxX, extent.MaxY)
 
     def has_feature(self, fid):
         """Provides access to feature data by FID.
