@@ -944,7 +944,6 @@ def test_append_works(tmpdir, driver):
             assert len([f for f in c]) == 2
 
 
-
 write_not_append_drivers = [driver for driver, raw in supported_drivers.items() if 'w' in raw and not 'a' in raw]
 @pytest.mark.parametrize('driver', write_not_append_drivers)
 def test_append_does_not_work(tmpdir, driver):
