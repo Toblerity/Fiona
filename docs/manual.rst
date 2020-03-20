@@ -719,7 +719,7 @@ Features Access) installed, you can see this in by verifying the following.
    clean dirty data, so make sure you're getting yours from a clean source.
 
 Writing Vector Data
-===================with fiona.open("file.kmz", layer="QFESCurrentIncidents") as collection:
+===================
 
 A vector file can be opened for writing in mode ``'a'`` (append) or mode
 ``'w'`` (write).
@@ -1405,4 +1405,3 @@ References
 .. [GeoJSON] http://geojson.org
 .. [JSON] http://www.ietf.org/rfc/rfc4627
 .. [SFA] http://en.wikipedia.org/wiki/Simple_feature_access
-
