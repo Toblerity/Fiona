@@ -6,7 +6,7 @@ from .conftest import requires_gdal24, get_temp_filename
 from fiona.drvsupport import supported_drivers, driver_mode_mingdal
 import fiona.drvsupport
 from fiona.env import getenv, GDALVersion
-
+from fiona.errors import DriverError
 
 @requires_gdal24
 @pytest.mark.parametrize('format', ['GeoJSON', 'ESRIJSON', 'TopoJSON', 'GeoJSONSeq'])
