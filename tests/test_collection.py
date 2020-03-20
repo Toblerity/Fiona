@@ -1027,3 +1027,14 @@ def test_write_mode_not_supported(tmpdir, driver):
 
             c.writerecords([{'geometry': {'type': 'LineString', 'coordinates': [
                     (1.0, 0.0), (0.0, 0.0)]}, 'properties': {'title': 'One'}}])
+
+
+def test_driver_mode_mingdal():
+    """
+        Test if mode and driver is enabled in supported_drivers
+    """
+    
+    for mode in driver_mode_mingdal:
+        for driver in driver_mode_mingdal[mode]:
+            if driver in supported_drivers:
+                assert mode in supported_drivers[driver]
