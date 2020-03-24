@@ -26,7 +26,6 @@ def get_schema(driver):
                           'geometry': 'Point'},
         'DXF': {'properties': OrderedDict(
             [('Layer', 'str'),
-             ('PaperSpace', 'int'),
              ('SubClasses', 'str'),
              ('Linetype', 'str'),
              ('EntityHandle', 'str'),
@@ -54,7 +53,6 @@ def get_records_1(driver):
                           'geometry': {'type': 'Point', 'coordinates': (8.306711, 47.475623)}},
         'DXF': {'properties': OrderedDict(
             [('Layer', '0'),
-             ('PaperSpace', None),
              ('SubClasses', 'AcDbEntity:AcDbPoint'),
              ('Linetype', None),
              ('EntityHandle', '20000'),
@@ -86,7 +84,6 @@ def get_records_2(driver):
                           'geometry': {'type': 'Point', 'coordinates': (8.307451, 47.474996)}},
         'DXF': {'properties': OrderedDict(
             [('Layer', '0'),
-             ('PaperSpace', None),
              ('SubClasses', 'AcDbEntity:AcDbPoint'),
              ('Linetype', None),
              ('EntityHandle', '20000'),
