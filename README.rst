@@ -302,8 +302,8 @@ the ``GDAL_VERSION`` environment variable (e.g. ``set GDAL_VERSION=2.1``).
 
 
 Note: The directory containing the GDAL DLL (``gdal111.dll`` or similar) needs to be in your Windows ``PATH``
-(e.g. ``C:\gdal\bin``). Alternatively, ``GDAL_HOME`` needs to be set (e.g. ``C:\gdal``). A ``*\gdal\bin`` directory in ``Path`` 
-has priority over ``GDAL_HOME``. Furthermore, the gdal-data directory needs to be in your Windows PATH or the environment variable
+(e.g. ``C:\gdal\bin``). Alternatively, ``GDAL_HOME`` needs to be set (e.g. ``C:\gdal``). A ``*\gdal\bin`` directory in ``PATH`` 
+has priority over ``GDAL_HOME``. Furthermore, the gdal-data directory needs to be in your Windows ``PATH`` or the environment variable
 ``GDAL_DATA`` must be set (e.g. ``C:\gdal\bin\gdal-data``), otherwise Fiona will fail to work.
 
 The `Appveyor CI build <https://ci.appveyor.com/project/sgillies/fiona/history>`__
