@@ -17,7 +17,7 @@ def get_schema(driver):
     schemas = {
         'GPX': {'properties': OrderedDict([('ele', 'float'), ('time', 'datetime')]),
                 'geometry': 'Point'},
-        'GPSTrackMaker': {'properties': OrderedDict([('ele', 'float'), ('time', 'datetime')]),
+        'GPSTrackMaker': {'properties': OrderedDict([]),
                           'geometry': 'Point'}
     }
     default_schema = {'geometry': 'LineString',
@@ -30,7 +30,7 @@ def get_records_1(driver):
         'GPX': {'type': 'Feature', 'properties': OrderedDict([('ele', 386.3), ('time', '2020-03-24T16:08:40')]),
                 'geometry': {'type': 'Point', 'coordinates': (8.306711, 47.475623)}},
         'GPSTrackMaker': {'type': 'Feature',
-                          'properties': OrderedDict([('ele', 386.3), ('time', '2020-03-24T16:08:40')]),
+                          'properties': OrderedDict([]),
                           'geometry': {'type': 'Point', 'coordinates': (8.306711, 47.475623)}}
     }
 
@@ -43,8 +43,8 @@ def get_records_1(driver):
 def get_records_2(driver):
     records = {
         'GPX': {'properties': OrderedDict([('ele', 386.3), ('time', '2020-03-24T16:19:14')]),
-                'geometry': {'type': 'Point', 'coordinates': (8.307451, 47.474996)}}
-        'GPSTrackMaker': {'properties': OrderedDict([('ele', 386.3), ('time', '2020-03-24T16:19:14')]),
+                'geometry': {'type': 'Point', 'coordinates': (8.307451, 47.474996)}},
+        'GPSTrackMaker': {'properties': OrderedDict([]),
                           'geometry': {'type': 'Point', 'coordinates': (8.307451, 47.474996)}}
     }
 
