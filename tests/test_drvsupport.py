@@ -226,7 +226,7 @@ def test_readonly_driver_cannot_write(tmpdir, driver):
 
 
 @pytest.mark.parametrize('driver', [driver for driver, raw in supported_drivers.items() if
-                                    'w' in raw and driver not in blacklist_append_drivers])
+                                    'w' in raw and 'a' not in raw and driver not in blacklist_append_drivers])
 def test_write_driver_cannot_append(tmpdir, driver):
     """
     Test if a driver that supports write cannot also append
@@ -247,7 +247,7 @@ def test_write_driver_cannot_append(tmpdir, driver):
         return
 
     backup_mode = supported_drivers[driver]
-    supported_drivers[driver] = 'rw'
+    supported_drivers[driver] = 'raw'
 
     # Create test file to append to
     with fiona.open(path, 'w',
