@@ -161,7 +161,7 @@ driver_mode_mingdal = {
 
 # Removes drivers in the supported_drivers dictionary that the
 # machine's installation of OGR due to how it is compiled.
-# OGR may not have optional libararies compiled or installed.
+# OGR may not have optional libraries compiled or installed.
 def _filter_supported_drivers():
     global supported_drivers
 
@@ -173,5 +173,6 @@ def _filter_supported_drivers():
                 del supported_drivers_copy[drv]
 
     supported_drivers = supported_drivers_copy
+
 
 _filter_supported_drivers()
