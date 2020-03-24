@@ -120,6 +120,8 @@ except ImportError as e:
 
         add_dll_directory_win()
 
+        import  fiona.ogrext
+
     else:
         raise e
 
