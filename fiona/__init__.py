@@ -90,7 +90,7 @@ except ImportError as e:
 
     see https://github.com/Toblerity/Fiona/issues/851
     """
-    if platform.system() == 'Windows' and (3, 8) <= sys.version_info:
+    if platform.system() == 'Windows':
         
         def add_dll_directory_win():
             """
