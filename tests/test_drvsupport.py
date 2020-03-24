@@ -41,7 +41,7 @@ def get_schema(driver):
     return schemas.get(driver, default_schema)
 
 
-def get_records_1(driver):
+def get_record1(driver):
     """
     Generate first record to write depending on driver
     """
@@ -72,7 +72,7 @@ def get_records_1(driver):
     return records.get(driver, default_record)
 
 
-def get_records_2(driver):
+def get_record2(driver):
     """
     Generate second record to write depending on driver
     """
@@ -140,7 +140,7 @@ def test_write_or_driver_error(tmpdir, driver):
             with fiona.open(path, 'w',
                             driver=driver,
                             schema=get_schema(driver)) as c:
-                c.write(get_records_1(driver))
+                c.write(get_record1(driver))
 
     else:
 
@@ -149,7 +149,7 @@ def test_write_or_driver_error(tmpdir, driver):
                         driver=driver,
                         schema=get_schema(driver)) as c:
 
-            c.write(get_records_1(driver))
+            c.write(get_record1(driver))
 
         with fiona.open(path) as c:
             assert c.driver == driver
@@ -182,7 +182,7 @@ def test_write_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver):
             with fiona.open(path, 'w',
                             driver=driver,
                             schema=get_schema(driver)) as c:
-                c.write(get_records_1(driver))
+                c.write(get_record1(driver))
 
         driver_mode_mingdal['w'][driver] = min_version_backup
 
@@ -212,7 +212,7 @@ def test_append_or_driver_error(tmpdir, driver):
                     driver=driver,
                     schema=get_schema(driver)) as c:
 
-        c.write(get_records_1(driver))
+        c.write(get_record1(driver))
 
     if driver in driver_mode_mingdal['a'] and GDALVersion.runtime() < GDALVersion(
             *driver_mode_mingdal['a'][driver][:2]):
@@ -221,13 +221,13 @@ def test_append_or_driver_error(tmpdir, driver):
         with pytest.raises(DriverError):
             with fiona.open(path, 'a',
                             driver=driver) as c:
-                c.write(get_records_2(driver))
+                c.write(get_record2(driver))
 
     else:
         # Test if we can append
         with fiona.open(path, 'a',
                         driver=driver) as c:
-            c.write(get_records_2(driver))
+            c.write(get_record2(driver))
 
         with fiona.open(path) as c:
             assert c.driver == driver
@@ -262,7 +262,7 @@ def test_append_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver):
                     driver=driver,
                     schema=get_schema(driver)) as c:
 
-        c.write(get_records_1(driver))
+        c.write(get_record1(driver))
 
     if driver in driver_mode_mingdal['a'] and GDALVersion.runtime() < GDALVersion(
             *driver_mode_mingdal['a'][driver][:2]):
@@ -273,7 +273,7 @@ def test_append_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver):
         with pytest.raises(Exception):
             with fiona.open(path, 'a',
                             driver=driver) as c:
-                c.write(get_records_2(driver))
+                c.write(get_record2(driver))
 
             with fiona.open(path) as c:
                 assert c.driver == driver
@@ -304,7 +304,7 @@ def test_no_write_driver_cannot_write(tmpdir, driver):
         with fiona.open(path, 'w',
                         driver=driver,
                         schema=get_schema(driver)) as c:
-            c.write(get_records_1(driver))
+            c.write(get_record1(driver))
 
     supported_drivers[driver] = backup_mode
 
@@ -338,12 +338,12 @@ def test_no_append_driver_cannot_append(tmpdir, driver):
                     driver=driver,
                     schema=get_schema(driver)) as c:
 
-        c.write(get_records_1(driver))
+        c.write(get_record1(driver))
 
     with pytest.raises(Exception):
         with fiona.open(path, 'a',
                         driver=driver) as c:
-            c.write(get_records_2(driver))
+            c.write(get_record2(driver))
 
         with fiona.open(path) as c:
             assert c.driver == driver
