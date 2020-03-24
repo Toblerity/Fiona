@@ -21,7 +21,7 @@ def test_geojsonseq(format):
 
 @pytest.mark.parametrize('driver', [driver for driver, raw in supported_drivers.items() if 'w' in raw
                                     and driver not in blacklist_write_drivers])
-def test_write(tmpdir, driver):
+def test_write_or_driver_error(tmpdir, driver):
     """
         Test if write mode works.
 
@@ -64,7 +64,7 @@ def test_write(tmpdir, driver):
 @pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['w'].keys()
                                     if driver not in blacklist_append_drivers
                                     and driver in supported_drivers])
-def test_write_mingdal(tmpdir, driver):
+def test_write_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver):
     """
         Test if driver really can't write for gdal < driver_mode_mingdal
 
@@ -96,7 +96,7 @@ def test_write_mingdal(tmpdir, driver):
 
 @pytest.mark.parametrize('driver', [driver for driver, raw in supported_drivers.items() if 'a' in raw
                                     and driver not in blacklist_append_drivers])
-def test_append(tmpdir, driver):
+def test_append_or_driver_error(tmpdir, driver):
     """ Test if driver supports append mode.
     
     Some driver only allow a specific schema. These drivers can be excluded by adding them to blacklist_append_drivers.
@@ -148,7 +148,7 @@ def test_append(tmpdir, driver):
 @pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['a'].keys()
                                     if driver not in blacklist_append_drivers
                                     and driver in supported_drivers])
-def test_append_mingdal(tmpdir, driver):
+def test_append_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver):
     """ Test if driver supports append mode.
 
     Some driver only allow a specific schema. These drivers can be excluded by adding them to blacklist_append_drivers.
@@ -198,7 +198,7 @@ def test_append_mingdal(tmpdir, driver):
 
 @pytest.mark.parametrize('driver', [driver for driver, raw in supported_drivers.items() if
                                     raw == 'r' and driver not in blacklist_write_drivers])
-def test_readonly_driver_cannot_write(tmpdir, driver):
+def test_no_write_driver_cannot_write(tmpdir, driver):
     """Test if read only driver cannot write
     
     If this test fails, it should be considered to enable write support for the respective driver in drvsupport.py. 
@@ -227,7 +227,7 @@ def test_readonly_driver_cannot_write(tmpdir, driver):
 
 @pytest.mark.parametrize('driver', [driver for driver, raw in supported_drivers.items() if
                                     'w' in raw and 'a' not in raw and driver not in blacklist_append_drivers])
-def test_write_driver_cannot_append(tmpdir, driver):
+def test_no_append_driver_cannot_append(tmpdir, driver):
     """
     Test if a driver that supports write cannot also append
 
@@ -271,7 +271,7 @@ def test_write_driver_cannot_append(tmpdir, driver):
     supported_drivers[driver] = backup_mode
 
 
-def test_driver_mode_mingdal():
+def test_mingdal_drivers_are_supported():
     """
         Test if mode and driver is enabled in supported_drivers
     """
