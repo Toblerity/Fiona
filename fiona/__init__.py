@@ -77,10 +77,10 @@ if sys.platform == "win32":
     libdir = os.path.join(os.path.dirname(__file__), ".libs")
     os.environ["PATH"] = os.environ["PATH"] + ";" + libdir
 
+
 try:
 
-    from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove, \
-        _remove_layer
+    import fiona.ogrext
 
 except ImportError as e:
     """
@@ -89,40 +89,43 @@ except ImportError as e:
     os.add_dll_directory.
 
     see https://github.com/Toblerity/Fiona/issues/851
-
-    We check if a */gdal/bin directory is found in PATH and
-    if none is found if GDAL_HOME is set.
     """
     if platform.system() == 'Windows' and (3, 8) <= sys.version_info:
+        
+        def add_dll_directory_win():
+            """
+                Check if a */gdal/bin directory is found in PATH.
+                If none is found, use GDAL_HOME if present.
+            """
 
-        dll_directory = None
+            dll_directory = None
 
-        # Parse PATH for gdal/bin
-        for path in os.getenv('PATH', '').split(';'):
-            p = Path(path.lower())
+            # Parse PATH for gdal/bin
+            for _path in os.getenv('PATH', '').split(';'):
+                p = Path(_path.lower())
 
-            if p.parts[-2:] == ('gdal', 'bin') and os.path.exists(path):
-                dll_directory = path
-                break
-            del path, p
+                if p.parts[-2:] == ('gdal', 'bin') and os.path.exists(_path):
+                    dll_directory = _path
+                    break
 
-        # Use GDAL_HOME if present
-        if dll_directory is not None:
-            gdal_home = os.getenv('GDAL_HOME', None)
+            # Use GDAL_HOME if present
+            if dll_directory is not None:
+                gdal_home = os.getenv('GDAL_HOME', None)
 
-            if gdal_home is not None and os.path.exists(gdal_home):
-                dll_directory = os.path.join(gdal_home, "bin")
-            del gdal_home
+                if gdal_home is not None and os.path.exists(gdal_home):
+                    dll_directory = os.path.join(gdal_home, "bin")
 
-        if dll_directory is not None:
-            os.add_dll_directory(dll_directory)
-        del dll_directory
+            if dll_directory is not None:
+                os.add_dll_directory(dll_directory)
 
-        from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, \
-            _remove, _remove_layer
+        add_dll_directory_win()
 
     else:
         raise e
+
+from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove, \
+    _remove_layer
+
 from fiona.collection import BytesCollection, Collection
 from fiona.drvsupport import supported_drivers
 from fiona.env import ensure_env_with_credentials, Env
