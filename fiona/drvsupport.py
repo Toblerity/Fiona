@@ -28,7 +28,7 @@ supported_drivers = dict([
     ("BNA", "rw"),
     # AutoCAD DWG 	DWG 	No 	No 	No
     # AutoCAD DXF 	DXF 	Yes 	No 	Yes
-    ("DXF", "raw"),
+    ("DXF", "rw"),
     # Comma Separated Value (.csv) 	CSV 	Yes 	No 	Yes
     ("CSV", "raw"),
     # CouchDB / GeoCouch 	CouchDB 	Yes 	Yes 	No, needs libcurl

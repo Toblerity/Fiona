@@ -9,16 +9,33 @@ from fiona.env import GDALVersion
 from fiona.errors import DriverError
 from collections import OrderedDict
 
-blacklist_append_drivers = {'CSV', 'DXF', 'DGN'}
-blacklist_write_drivers = {'CSV', 'DXF', 'DGN'}
+# Add drivers to blacklist while testing write or append
+blacklist_write_drivers = {}
+blacklist_append_drivers = {}
 
 
 def get_schema(driver):
+    """
+    Generate schema for each driver
+    """
     schemas = {
-        'GPX': {'properties': OrderedDict([('ele', 'float'), ('time', 'datetime')]),
+        'GPX': {'properties': OrderedDict([('ele', 'float'),
+                                           ('time', 'datetime')]),
                 'geometry': 'Point'},
         'GPSTrackMaker': {'properties': OrderedDict([]),
-                          'geometry': 'Point'}
+                          'geometry': 'Point'},
+        'DXF': {'properties': OrderedDict(
+            [('Layer', 'str'),
+             ('PaperSpace', 'int'),
+             ('SubClasses', 'str'),
+             ('Linetype', 'str'),
+             ('EntityHandle', 'str'),
+             ('Text', 'str')]),
+            'geometry': 'Point'},
+        'CSV': {'properties': OrderedDict([('ele', 'float')]),
+                'geometry': None},
+        'DGN': {'properties': OrderedDict([]),
+                'geometry': 'LineString'}
     }
     default_schema = {'geometry': 'LineString',
                       'properties': [('title', 'str')]}
@@ -26,12 +43,29 @@ def get_schema(driver):
 
 
 def get_records_1(driver):
+    """
+    Generate first record to write depending on driver
+    """
     records = {
-        'GPX': {'type': 'Feature', 'properties': OrderedDict([('ele', 386.3), ('time', '2020-03-24T16:08:40')]),
+        'GPX': {'properties': OrderedDict([('ele', 386.3),
+                                           ('time', '2020-03-24T16:08:40')]),
                 'geometry': {'type': 'Point', 'coordinates': (8.306711, 47.475623)}},
-        'GPSTrackMaker': {'type': 'Feature',
-                          'properties': OrderedDict([]),
-                          'geometry': {'type': 'Point', 'coordinates': (8.306711, 47.475623)}}
+        'GPSTrackMaker': {'properties': OrderedDict([]),
+                          'geometry': {'type': 'Point', 'coordinates': (8.306711, 47.475623)}},
+        'DXF': {'properties': OrderedDict(
+            [('Layer', '0'),
+             ('PaperSpace', None),
+             ('SubClasses', 'AcDbEntity:AcDbPoint'),
+             ('Linetype', None),
+             ('EntityHandle', '20000'),
+             ('Text', None)]),
+            'geometry': {'type': 'Point', 'coordinates': (8.306711, 47.475623)}},
+        'CSV': {'properties': OrderedDict([('ele', 386.3)]),
+                'geometry': None},
+        'DGN': {'properties': OrderedDict(
+            []),
+            'geometry': {'type': 'LineString', 'coordinates': [
+                (1.0, 0.0), (0.0, 0.0)]}}
     }
 
     default_record = {'geometry': {'type': 'LineString', 'coordinates': [
@@ -41,11 +75,37 @@ def get_records_1(driver):
 
 
 def get_records_2(driver):
+    """
+    Generate second record to write depending on driver
+    """
     records = {
-        'GPX': {'properties': OrderedDict([('ele', 386.3), ('time', '2020-03-24T16:19:14')]),
+        'GPX': {'properties': OrderedDict([('ele', 386.3),
+                                           ('time', '2020-03-24T16:19:14')]),
                 'geometry': {'type': 'Point', 'coordinates': (8.307451, 47.474996)}},
         'GPSTrackMaker': {'properties': OrderedDict([]),
-                          'geometry': {'type': 'Point', 'coordinates': (8.307451, 47.474996)}}
+                          'geometry': {'type': 'Point', 'coordinates': (8.307451, 47.474996)}},
+        'DXF': {'properties': OrderedDict(
+            [('Layer', '0'),
+             ('PaperSpace', None),
+             ('SubClasses', 'AcDbEntity:AcDbPoint'),
+             ('Linetype', None),
+             ('EntityHandle', '20000'),
+             ('Text', None)]),
+            'geometry': {'type': 'Point', 'coordinates': (8.307451, 47.474996)}},
+        'CSV': {'properties': OrderedDict([('ele', 386.8)]),
+                'geometry': None},
+        'DGN': {'properties': OrderedDict(
+            [('Type', 3),
+             ('Level', 0),
+             ('GraphicGroup', 0),
+             ('ColorIndex', 0),
+             ('Weight', 0),
+             ('Style', 0),
+             ('EntityNum', None),
+             ('MSLink', None),
+             ('Text', None)]),
+            'geometry': {'type': 'LineString', 'coordinates': [
+                (2.0, 0.0), (0.0, 0.0)]}}
     }
 
     default_record = {'geometry': {'type': 'LineString', 'coordinates': [
