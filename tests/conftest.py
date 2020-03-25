@@ -13,6 +13,18 @@ import pytest
 import fiona
 from fiona.env import GDALVersion
 
+driver_extensions = {'DXF': 'dxf',
+                     'CSV': 'csv',
+                     'ESRI Shapefile': 'shp',
+                     'GML': 'gml',
+                     'GPX': 'gpx',
+                     'GPSTrackMaker': 'gtm',
+                     'MapInfo File': 'tab',
+                     'DGN': 'dgn',
+                     'GPKG': 'gpkg',
+                     'GeoJSON': 'json',
+                     'GMT': 'gmt'}
+
 
 def pytest_report_header(config):
     headers = []

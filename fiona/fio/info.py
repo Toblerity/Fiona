@@ -10,7 +10,7 @@ from cligj import indent_opt
 import fiona
 import fiona.crs
 from fiona.fio import options, with_context_env
-
+from fiona.errors import DriverError
 
 @click.command()
 # One or more files.
@@ -47,7 +47,16 @@ def info(ctx, input, indent, meta_member, layer):
     try:
         with fiona.open(input, layer=layer) as src:
             info = src.meta
-            info.update(bounds=src.bounds, name=src.name)
+
+            info.update(name=src.name)
+            
+            try:
+                info.update(bounds=src.bounds)
+            except DriverError:
+                info.update(bounds=None)
+                logger.debug("Setting 'bounds' to None - driver "
+                             "was not able to calculate bounds")
+
             try:
                 info.update(count=len(src))
             except TypeError:
