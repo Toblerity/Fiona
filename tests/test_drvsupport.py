@@ -159,7 +159,7 @@ def test_write_or_driver_error(tmpdir, driver):
 @pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['w'].keys()
                                     if driver not in blacklist_append_drivers
                                     and driver in supported_drivers])
-def test_write_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver):
+def test_write_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver, monkeypatch):
     """
         Test if driver really can't write for gdal < driver_mode_mingdal
 
@@ -175,16 +175,13 @@ def test_write_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver):
 
     if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
             *driver_mode_mingdal['w'][driver][:2]):
-        min_version_backup = driver_mode_mingdal['w'][driver]
-        driver_mode_mingdal['w'].pop(driver)
+        monkeypatch.delitem(fiona.drvsupport.driver_mode_mingdal['w'], driver)
 
         with pytest.raises(Exception):
             with fiona.open(path, 'w',
                             driver=driver,
                             schema=get_schema(driver)) as c:
                 c.write(get_record1(driver))
-
-        driver_mode_mingdal['w'][driver] = min_version_backup
 
 
 @pytest.mark.parametrize('driver', [driver for driver, raw in supported_drivers.items() if 'a' in raw
@@ -237,7 +234,7 @@ def test_append_or_driver_error(tmpdir, driver):
 @pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['a'].keys()
                                     if driver not in blacklist_append_drivers
                                     and driver in supported_drivers])
-def test_append_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver):
+def test_append_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver, monkeypatch):
     """ Test if driver supports append mode.
 
     Some driver only allow a specific schema. These drivers can be excluded by adding them to blacklist_append_drivers.
@@ -267,8 +264,8 @@ def test_append_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver):
     if driver in driver_mode_mingdal['a'] and GDALVersion.runtime() < GDALVersion(
             *driver_mode_mingdal['a'][driver][:2]):
         # Test if driver really can't append for gdal < driver_mode_mingdal
-        min_version_backup = driver_mode_mingdal['a'][driver]
-        driver_mode_mingdal['a'].pop(driver)
+
+        monkeypatch.delitem(fiona.drvsupport.driver_mode_mingdal['a'], driver)
 
         with pytest.raises(Exception):
             with fiona.open(path, 'a',
@@ -279,24 +276,21 @@ def test_append_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver):
                 assert c.driver == driver
                 assert len([f for f in c]) == 2
 
-        driver_mode_mingdal['a'] = min_version_backup
-
 
 @pytest.mark.parametrize('driver', [driver for driver, raw in supported_drivers.items() if
                                     raw == 'r' and driver not in blacklist_write_drivers])
-def test_no_write_driver_cannot_write(tmpdir, driver):
+def test_no_write_driver_cannot_write(tmpdir, driver, monkeypatch):
     """Test if read only driver cannot write
     
     If this test fails, it should be considered to enable write support for the respective driver in drvsupport.py. 
     
     """
 
+    monkeypatch.setitem(fiona.drvsupport.supported_drivers, driver, 'rw')
+
     if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
         # BNA driver segfaults with gdal 1.11
         return
-
-    backup_mode = supported_drivers[driver]
-    supported_drivers[driver] = 'rw'
 
     path = str(tmpdir.join(get_temp_filename(driver)))
 
@@ -306,18 +300,18 @@ def test_no_write_driver_cannot_write(tmpdir, driver):
                         schema=get_schema(driver)) as c:
             c.write(get_record1(driver))
 
-    supported_drivers[driver] = backup_mode
-
 
 @pytest.mark.parametrize('driver', [driver for driver, raw in supported_drivers.items() if
                                     'w' in raw and 'a' not in raw and driver not in blacklist_append_drivers])
-def test_no_append_driver_cannot_append(tmpdir, driver):
+def test_no_append_driver_cannot_append(tmpdir, driver, monkeypatch):
     """
     Test if a driver that supports write cannot also append
 
     If this test fails, it should be considered to enable append support for the respective driver in drvsupport.py.
 
     """
+
+    monkeypatch.setitem(fiona.drvsupport.supported_drivers, driver, 'raw')
 
     if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
         # BNA driver segfaults with gdal 1.11
@@ -329,9 +323,6 @@ def test_no_append_driver_cannot_append(tmpdir, driver):
     if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
             *driver_mode_mingdal['w'][driver][:2]):
         return
-
-    backup_mode = supported_drivers[driver]
-    supported_drivers[driver] = 'raw'
 
     # Create test file to append to
     with fiona.open(path, 'w',
@@ -348,8 +339,6 @@ def test_no_append_driver_cannot_append(tmpdir, driver):
         with fiona.open(path) as c:
             assert c.driver == driver
             assert len([f for f in c]) == 2
-
-    supported_drivers[driver] = backup_mode
 
 
 def test_mingdal_drivers_are_supported():
