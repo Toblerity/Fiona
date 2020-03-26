@@ -823,7 +823,7 @@ Writing a new file is more complex than appending to an existing file because
 the file CRS, format, and schema have not yet been defined and must be done so
 by the programmer. Still, it's not very complicated. A schema is just
 a mapping, as described above. A CRS is also just a mapping, and the possible
-formats are enumerated in the :py:attr:`fiona.supported_drivers` list.
+formats are enumerated in the :py:attr:`fiona.supported_drivers` dictionary.
 
 Review the parameters of our demo file.
 
@@ -1318,6 +1318,34 @@ The single shapefile may also be accessed like so:
   ...
   48
 
+
+Unsupported drivers
+-------------------
+
+In :py:attr:`fiona.supported_drivers` a selection of GDAL/OGR's
+drivers that is tested to work with Fiona is maintained. By default, Fiona 
+allows only these drivers with their listed access modes:  r for read support,
+respectively a for append and w for write.
+
+These restrictions can be circumvented by modifying :py:attr:`fiona.supported_drivers`:
+
+.. sourcecode:: python
+
+  import fiona
+  fiona.drvsupport.supported_drivers["LIBKML"] = "raw"
+  
+  with fiona.open("file.kmz") as collection:
+
+It should, however, first be verified, if the local installation of GDAL/OGR 
+includes the required driver:
+
+.. sourcecode:: python
+
+    from fiona.env import Env
+
+    with Env() as gdalenv:
+        print(gdalenv.drivers().keys())
+
 Dumpgj
 ======
 
@@ -1377,4 +1405,3 @@ References
 .. [GeoJSON] http://geojson.org
 .. [JSON] http://www.ietf.org/rfc/rfc4627
 .. [SFA] http://en.wikipedia.org/wiki/Simple_feature_access
-

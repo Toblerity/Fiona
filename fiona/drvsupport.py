@@ -25,10 +25,10 @@ supported_drivers = dict([
     # Arc/Info Generate 	ARCGEN 	No 	No 	Yes
     ("ARCGEN", "r"),
     # Atlas BNA 	BNA 	Yes 	No 	Yes
-    ("BNA", "raw"),
+    ("BNA", "rw"),
     # AutoCAD DWG 	DWG 	No 	No 	No
     # AutoCAD DXF 	DXF 	Yes 	No 	Yes
-    ("DXF", "raw"),
+    ("DXF", "rw"),
     # Comma Separated Value (.csv) 	CSV 	Yes 	No 	Yes
     ("CSV", "raw"),
     # CouchDB / GeoCouch 	CouchDB 	Yes 	Yes 	No, needs libcurl
@@ -49,7 +49,7 @@ supported_drivers = dict([
     ("ESRI Shapefile", "raw"),
     # FMEObjects Gateway 	FMEObjects Gateway 	No 	Yes 	No, needs FME
     # GeoJSON 	GeoJSON 	Yes 	Yes 	Yes
-    ("GeoJSON", "rw"),
+    ("GeoJSON", "raw"),
     # GeoJSONSeq 	GeoJSON sequences 	Yes 	Yes 	Yes 
     ("GeoJSONSeq", "rw"),
     # Géoconcept Export 	Geoconcept 	Yes 	Yes 	Yes
@@ -57,19 +57,19 @@ supported_drivers = dict([
     #   ("Geoconcept", "raw"),
     # Geomedia .mdb 	Geomedia 	No 	No 	No, needs ODBC library
     # GeoPackage	GPKG	Yes	Yes	No, needs libsqlite3
-    ("GPKG", "rw"),
+    ("GPKG", "raw"),
     # GeoRSS 	GeoRSS 	Yes 	Yes 	Yes (read support needs libexpat)
     # Google Fusion Tables 	GFT 	Yes 	Yes 	No, needs libcurl
     # GML 	GML 	Yes 	Yes 	Yes (read support needs Xerces or libexpat)
-    ("GML", "raw"),
+    ("GML", "rw"),
     # GMT 	GMT 	Yes 	Yes 	Yes
     ("GMT", "raw"),
     # GPSBabel 	GPSBabel 	Yes 	Yes 	Yes (needs GPSBabel and GPX driver)
     # GPX 	GPX 	Yes 	Yes 	Yes (read support needs libexpat)
-    ("GPX", "raw"),
+    ("GPX", "rw"),
     # GRASS 	GRASS 	No 	Yes 	No, needs libgrass
     # GPSTrackMaker (.gtm, .gtz) 	GPSTrackMaker 	Yes 	Yes 	Yes
-    ("GPSTrackMaker", "raw"),
+    ("GPSTrackMaker", "rw"),
     # Hydrographic Transfer Format 	HTF 	No 	Yes 	Yes
     # TODO: Fiona is not ready for multi-layer formats: ("HTF", "r"),
     # Idrisi Vector (.VCT) 	Idrisi 	No 	Yes 	Yes
@@ -96,7 +96,7 @@ supported_drivers = dict([
     # multi-layer
     #   ("OpenAir", "r"),
     # PCI Geomatics Database File 	PCIDSK 	No 	No 	Yes, using internal PCIDSK SDK (from GDAL 1.7.0)
-    ("PCIDSK", "r"),
+    ("PCIDSK", "raw"),
     # PDS 	PDS 	No 	Yes 	Yes
     ("PDS", "r"),
     # PGDump 	PostgreSQL SQL dump 	Yes 	Yes 	Yes
@@ -141,9 +141,27 @@ supported_drivers = dict([
 ])
 
 
+# Mininmal gdal version for different modes
+driver_mode_mingdal = {
+
+    'r': {'GPKG': (1, 11, 0),
+          'GeoJSONSeq': (2, 4, 0)},
+
+    'w': {'GPKG': (1, 11, 0),
+          'PCIDSK': (2, 0, 0),
+          'GeoJSONSeq': (2, 4, 0)},
+
+    'a': {'GMT': (2, 0, 0),
+          'GPKG': (1, 11, 0),
+          'GeoJSON': (2, 1, 0),
+          'MapInfo File': (2, 0, 0),
+          'PCIDSK': (2, 0, 0)}    
+}
+
+
 # Removes drivers in the supported_drivers dictionary that the
 # machine's installation of OGR due to how it is compiled.
-# OGR may not have optional libararies compiled or installed.
+# OGR may not have optional libraries compiled or installed.
 def _filter_supported_drivers():
     global supported_drivers
 
@@ -155,5 +173,6 @@ def _filter_supported_drivers():
                 del supported_drivers_copy[drv]
 
     supported_drivers = supported_drivers_copy
+
 
 _filter_supported_drivers()

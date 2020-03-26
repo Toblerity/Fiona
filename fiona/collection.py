@@ -15,7 +15,7 @@ from fiona._crs import crs_to_wkt
 from fiona._env import get_gdal_release_name, get_gdal_version_tuple
 from fiona.env import env_ctx_if_needed
 from fiona.errors import FionaDeprecationWarning
-from fiona.drvsupport import supported_drivers
+from fiona.drvsupport import supported_drivers, driver_mode_mingdal
 from fiona.path import Path, vsi_path, parse_path
 from six import string_types, binary_type
 
@@ -75,11 +75,18 @@ class Collection(object):
         if archive and not isinstance(archive, string_types):
             raise TypeError("invalid archive: %r" % archive)
 
+
         # Check GDAL version against drivers
-        if (driver == "GPKG" and get_gdal_version_tuple() < (1, 11, 0)):
+
+        if driver in driver_mode_mingdal[mode] and get_gdal_version_tuple() < driver_mode_mingdal[mode][driver]:
+            min_gdal_version = ".".join(list(map(str, driver_mode_mingdal[mode][driver])))
+
             raise DriverError(
-                "GPKG driver requires GDAL 1.11.0, fiona was compiled "
-                "against: {}".format(get_gdal_release_name()))
+                "{driver} driver requires at least GDAL {min_gdal_version} for mode '{mode}', "
+                "Fiona was compiled against: {gdal}".format(driver=driver,
+                                                            mode=mode,
+                                                            min_gdal_version=min_gdal_version,
+                                                            gdal=get_gdal_release_name()))
 
         self.session = None
         self.iterator = None

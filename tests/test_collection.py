@@ -7,10 +7,10 @@ import re
 import pytest
 
 import fiona
-from fiona.collection import Collection, supported_drivers
+from fiona.collection import Collection
+from fiona.drvsupport import supported_drivers
 from fiona.env import getenv
 from fiona.errors import FionaValueError, DriverError, FionaDeprecationWarning
-
 from .conftest import WGS84PATTERN
 
 
@@ -899,3 +899,4 @@ def test_collection_env(path_coutwildrnp_shp):
     """We have a GDAL env within collection context"""
     with fiona.open(path_coutwildrnp_shp):
         assert 'FIONA_ENV' in getenv()
+
