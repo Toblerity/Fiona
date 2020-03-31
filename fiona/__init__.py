@@ -77,31 +77,30 @@ if sys.platform == "win32":
     libdir = os.path.join(os.path.dirname(__file__), ".libs")
     os.environ["PATH"] = os.environ["PATH"] + ";" + libdir
 
-
 try:
 
     import fiona.ogrext
 
 except ImportError as e:
-    """
-    With Python >= 3.8 on Windows directories in PATH are not automatically
-    searched for DLL dependencies and must be added manually with
-    os.add_dll_directory.
 
-    see https://github.com/Toblerity/Fiona/issues/851
-    """
-    if platform.system() == 'Windows':
-        
+    # With Python >= 3.8 on Windows directories in PATH are not automatically
+    # searched for DLL dependencies and must be added manually with
+    # os.add_dll_directory.
+    # see https://github.com/Toblerity/Fiona/issues/851
+
+    if platform.system() == 'Windows' and (3, 8) <= sys.version_info:
+
         def add_dll_directory_win():
-            """
-                Check if a */gdal/bin directory is found in PATH.
-                If none is found, use GDAL_HOME if present.
+            """ Finds and adds dll directories on Windows
+
+                Checks if a */gdal/bin directory is present in PATH.
+                If none is found, GDAL_HOME is used if available.
             """
 
             dll_directory = None
 
             # Parse PATH for gdal/bin
-            for _path in os.getenv('PATH', '').split(';'):
+            for _path in os.getenv('PATH', '').split(os.pathsep):
                 p = Path(_path.lower())
 
                 if p.parts[-2:] == ('gdal', 'bin') and os.path.exists(_path):
@@ -109,7 +108,8 @@ except ImportError as e:
                     break
 
             # Use GDAL_HOME if present
-            if dll_directory is not None:
+            if dll_directory is None:
+
                 gdal_home = os.getenv('GDAL_HOME', None)
 
                 if gdal_home is not None and os.path.exists(gdal_home):
@@ -120,7 +120,7 @@ except ImportError as e:
 
         add_dll_directory_win()
 
-        import  fiona.ogrext
+        import fiona.ogrext
 
     else:
         raise e
