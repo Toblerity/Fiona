@@ -303,10 +303,11 @@ the ``GDAL_VERSION`` environment variable (e.g. ``set GDAL_VERSION=2.1``).
 
 Note: The following environment variables needs to be set so that Fiona works correctly:
 
-* The directory containing the GDAL DLL (``gdal300.dll`` or similar) needs to be in your
-  Windows ``PATH`` (e.g. ``C:\gdal\bin``). Alternatively, the environment variable
-  ``GDAL_HOME`` can be used (e.g. ``C:\gdal``). A ``*\gdal\bin`` directory in ``PATH`` has
-  priority over ``GDAL_HOME``.
+* The directory containing the GDAL DLL (``gdal304.dll`` or similar) needs to be in your
+  Windows ``PATH`` (e.g. ``C:\gdal\bin``). Only directories containing ``gdal`` in
+  their names are considered.  Alternatively, the environment variable ``GDAL_HOME`` can
+  be used (e.g. ``C:\gdal``). A ``*\*gdal*\*`` directory in ``PATH`` has priority over
+  ``GDAL_HOME``.
 * The gdal-data directory needs to be in your Windows ``PATH`` or the environment variable
   ``GDAL_DATA`` must be set (e.g. ``C:\gdal\bin\gdal-data``).
 * The environment variable ``PROJ_LIB`` must be set to the proj library directory (e.g.
