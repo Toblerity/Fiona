@@ -183,7 +183,7 @@ if 'clean' not in sys.argv:
     gdal_major_version = int(gdal_version_parts[0])
     gdal_minor_version = int(gdal_version_parts[1])
 
-log.info("GDAL version major=%r minor=%r", gdal_major_version, gdal_minor_version)
+    log.info("GDAL version major=%r minor=%r", gdal_major_version, gdal_minor_version)
 
 ext_options = dict(
     include_dirs=include_dirs,
