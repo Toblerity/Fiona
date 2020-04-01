@@ -71,6 +71,7 @@ import platform
 from six import string_types
 from collections import OrderedDict
 from pathlib import Path
+import glob
 
 # TODO: remove this? Or at least move it, flake8 complains.
 if sys.platform == "win32":
@@ -90,21 +91,25 @@ except ImportError as e:
 
     if platform.system() == 'Windows' and (3, 8) <= sys.version_info:
 
+        def directory_contains_gdal_dll(path):
+            """ Checks if a directory contains a gdal dll """
+            return len(glob.glob(os.path.join(path, "gdal*.dll"))) > 0
+
         def add_dll_directory_win():
             """ Finds and adds dll directories on Windows
 
-                Checks if a */gdal/bin directory is present in PATH.
+                Checks if a */gdal/* directory is present in PATH
+                and contains a gdal*.dll file.
                 If none is found, GDAL_HOME is used if available.
             """
 
             dll_directory = None
 
             # Parse PATH for gdal/bin
-            for _path in os.getenv('PATH', '').split(os.pathsep):
-                p = Path(_path.lower())
+            for path in os.getenv('PATH', '').split(os.pathsep):
 
-                if p.parts[-2:] == ('gdal', 'bin') and os.path.exists(_path):
-                    dll_directory = _path
+                if "gdal" in path.lower() and directory_contains_gdal_dll(path):
+                    dll_directory = path
                     break
 
             # Use GDAL_HOME if present
@@ -113,7 +118,11 @@ except ImportError as e:
                 gdal_home = os.getenv('GDAL_HOME', None)
 
                 if gdal_home is not None and os.path.exists(gdal_home):
-                    dll_directory = os.path.join(gdal_home, "bin")
+
+                    if directory_contains_gdal_dll(gdal_home):
+                        dll_directory = gdal_home
+                    elif directory_contains_gdal_dll(os.path.join(gdal_home, "bin")):
+                        dll_directory = os.path.join(gdal_home, "bin")
 
             if dll_directory is not None:
                 os.add_dll_directory(dll_directory)
