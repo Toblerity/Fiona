@@ -73,6 +73,9 @@ from collections import OrderedDict
 from pathlib import Path
 import glob
 
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
 # TODO: remove this? Or at least move it, flake8 complains.
 if sys.platform == "win32":
     libdir = os.path.join(os.path.dirname(__file__), ".libs")
@@ -124,8 +127,14 @@ except ImportError as e:
                     elif directory_contains_gdal_dll(os.path.join(gdal_home, "bin")):
                         dll_directory = os.path.join(gdal_home, "bin")
 
+                elif gdal_home is not None and not os.path.exists(gdal_home):
+                    log.warn("GDAL_HOME directory does not exist.")
+
             if dll_directory is not None:
+                log.info("Adding dll directory: {}".format(dll_directory))
                 os.add_dll_directory(dll_directory)
+            else:
+                log.warn("No dll directory found to add.")
 
         add_dll_directory_win()
 
@@ -160,10 +169,6 @@ __version__ = "2.0dev"
 __gdal_version__ = get_gdal_release_name()
 
 gdal_version = get_gdal_version_tuple()
-
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-
 
 @ensure_env_with_credentials
 def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
