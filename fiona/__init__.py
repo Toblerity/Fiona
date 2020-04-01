@@ -128,7 +128,7 @@ except ImportError as e:
                         dll_directory = os.path.join(gdal_home, "bin")
 
                 elif gdal_home is not None and not os.path.exists(gdal_home):
-                    log.warn("GDAL_HOME directory does not exist.")
+                    log.warn("GDAL_HOME directory ({}) does not exist.".format(gdal_home))
 
             if dll_directory is not None:
                 log.info("Adding dll directory: {}".format(dll_directory))
