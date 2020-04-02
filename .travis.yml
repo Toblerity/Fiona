@@ -66,6 +66,9 @@ install:
 script:
   - python -m pytest -m "not wheel" --cov fiona --cov-report term-missing
 
+after_script:
+  - python setup.py clean
+
 after_success:
   - coveralls || echo "!! intermittent coveralls failure"
 
