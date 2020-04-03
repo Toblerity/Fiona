@@ -71,7 +71,7 @@ import platform
 from six import string_types
 from collections import OrderedDict
 from pathlib import Path
-import glob
+import fiona._loading
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -84,64 +84,16 @@ if sys.platform == "win32":
 try:
 
     import fiona.ogrext
+    import fiona._env
 
 except ImportError as e:
 
-    # With Python >= 3.8 on Windows directories in PATH are not automatically
-    # searched for DLL dependencies and must be added manually with
-    # os.add_dll_directory.
-    # see https://github.com/Toblerity/Fiona/issues/851
+    import fiona._loading
 
-    if platform.system() == 'Windows' and (3, 8) <= sys.version_info:
+    with fiona._loading.add_gdal_dll_directories():
 
-        def directory_contains_gdal_dll(path):
-            """ Checks if a directory contains a gdal dll """
-            return len(glob.glob(os.path.join(path, "gdal*.dll"))) > 0
-
-        def add_dll_directory_win():
-            """ Finds and adds dll directories on Windows
-
-                Checks if a */gdal/* directory is present in PATH
-                and contains a gdal*.dll file.
-                If none is found, GDAL_HOME is used if available.
-            """
-
-            dll_directory = None
-
-            # Parse PATH for gdal/bin
-            for path in os.getenv('PATH', '').split(os.pathsep):
-
-                if "gdal" in path.lower() and directory_contains_gdal_dll(path):
-                    dll_directory = path
-                    break
-
-            # Use GDAL_HOME if present
-            if dll_directory is None:
-
-                gdal_home = os.getenv('GDAL_HOME', None)
-
-                if gdal_home is not None and os.path.exists(gdal_home):
-
-                    if directory_contains_gdal_dll(gdal_home):
-                        dll_directory = gdal_home
-                    elif directory_contains_gdal_dll(os.path.join(gdal_home, "bin")):
-                        dll_directory = os.path.join(gdal_home, "bin")
-
-                elif gdal_home is not None and not os.path.exists(gdal_home):
-                    log.warn("GDAL_HOME directory ({}) does not exist.".format(gdal_home))
-
-            if dll_directory is not None:
-                log.info("Adding dll directory: {}".format(dll_directory))
-                os.add_dll_directory(dll_directory)
-            else:
-                log.warn("No dll directory found to add.")
-
-        add_dll_directory_win()
-
-        import fiona.ogrext
-
-    else:
-        raise e
+            import fiona.ogrext
+            import fiona._env
 
 from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove, \
     _remove_layer
@@ -157,6 +109,7 @@ from fiona._env import (
 from fiona.io import MemoryFile
 from fiona.path import ParsedPath, parse_path, vsi_path
 from fiona.vfs import parse_paths as vfs_parse_paths
+
 
 # These modules are imported by fiona.ogrext, but are also import here to
 # help tools like cx_Freeze find them automatically
