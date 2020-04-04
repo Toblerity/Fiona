@@ -67,49 +67,34 @@ import logging
 import os
 import sys
 import warnings
-import platform
+
 from six import string_types
 from collections import OrderedDict
-from pathlib import Path
-import fiona._loading
 
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+try:
+    from pathlib import Path
+except ImportError:  # pragma: no cover
+    class Path:
+        pass
 
 # TODO: remove this? Or at least move it, flake8 complains.
 if sys.platform == "win32":
     libdir = os.path.join(os.path.dirname(__file__), ".libs")
     os.environ["PATH"] = os.environ["PATH"] + ";" + libdir
 
-try:
-
-    import fiona.ogrext
-    import fiona._env
-
-except ImportError as e:
-
-    import fiona._loading
-
-    with fiona._loading.add_gdal_dll_directories():
-
-            import fiona.ogrext
-            import fiona._env
-
-from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove, \
-    _remove_layer
-
+import fiona._loading
+with fiona._loading.add_gdal_dll_directories():
+    from fiona._env import (
+        calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name,
+        get_gdal_version_tuple, driver_count)
+    from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove, _remove_layer
 from fiona.collection import BytesCollection, Collection
 from fiona.drvsupport import supported_drivers
 from fiona.env import ensure_env_with_credentials, Env
 from fiona.errors import FionaDeprecationWarning
-from fiona._env import driver_count
-from fiona._env import (
-    calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name,
-    get_gdal_version_tuple)
 from fiona.io import MemoryFile
 from fiona.path import ParsedPath, parse_path, vsi_path
 from fiona.vfs import parse_paths as vfs_parse_paths
-
 
 # These modules are imported by fiona.ogrext, but are also import here to
 # help tools like cx_Freeze find them automatically
@@ -122,6 +107,10 @@ __version__ = "2.0dev"
 __gdal_version__ = get_gdal_release_name()
 
 gdal_version = get_gdal_version_tuple()
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
 
 @ensure_env_with_credentials
 def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,

@@ -51,11 +51,16 @@ def search_gdal_dll_directories():
             log.warning("GDAL_HOME directory ({}) does not exist.".format(gdal_home))
 
     if len(dll_directories) == 0:
-        log.warning("No dll directory found.")
+        log.warning("No dll directories found.")
 
 
 if platform.system() == 'Windows' and (3, 8) <= sys.version_info:
-    search_gdal_dll_directories()
+
+    # if loading of extension modules fails, search for gdal dll directories
+    try:
+        import fiona.ogrext
+    except ImportError as e:
+        search_gdal_dll_directories()
 
 
 @contextlib.contextmanager
@@ -64,12 +69,8 @@ def add_gdal_dll_directories():
     dll_dirs = []
     for dll_directory in dll_directories:
         dll_dirs.append(os.add_dll_directory(dll_directory))
-
     try:
-
         yield None
-
     finally:
-
         for dll_dir in dll_dirs:
             dll_dir.close()
