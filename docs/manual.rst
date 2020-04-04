@@ -1070,7 +1070,7 @@ If you write 3D coordinates, ones having (x, y, z) tuples, to a 2D file
   with fiona.open("/tmp/file.shp") as collection:
       print(next(collection)["geometry"])
 
-  # {'type': 'Point', 'coordinates': (-1.0, 1.0)}
+  # {"type": "Point", "coordinates": (-1.0, 1.0)}
 
 If you write 2D coordinates, ones having only (x, y) tuples, to a 3D file ('3D
 Point' schema geometry, for example) a default z value of 0 will be provided.
@@ -1093,7 +1093,7 @@ Point' schema geometry, for example) a default z value of 0 will be provided.
   with fiona.open("/tmp/file.shp") as collection:
       print(next(collection)["geometry"])
 
-  # {'type': 'Point', 'coordinates': (-1.0, 1.0, 0.0)}
+  # {"type": "Point", "coordinates": (-1.0, 1.0, 0.0)}
 
 Advanced Topics
 ===============
@@ -1132,7 +1132,7 @@ The following extra messages will appear in the Python logger's output.::
 If you call ``fiona.open()`` with no surrounding ``Env`` environment, one will
 be created for you.
 
-When your program exits the environent's with block the configuration reverts
+When your program exits the environment's with block the configuration reverts
 to its previous state.
 
 Cloud storage credentials
@@ -1147,7 +1147,7 @@ accessing data stored in AWS S3 or another cloud storage system.
         import fiona
 
         with fiona.Env(
-            session=AWSSession(aws_access_key_id="key", aws_secret_access_key="secret",)
+            session=AWSSession(aws_access_key_id="key", aws_secret_access_key="secret")
         ):
             fiona.open("zip+s3://example-bucket/example.zip")
 
