@@ -10,13 +10,15 @@ import threading
 import attr
 from six import string_types
 
-from fiona._env import (
-    GDALEnv, calc_gdal_version_num, get_gdal_version_num, get_gdal_config,
-    set_gdal_config, get_gdal_release_name, GDALDataFinder, PROJDataFinder,
-    set_proj_data_search_path)
-from fiona.compat import getargspec
-from fiona.errors import EnvError, GDALVersionError
-from fiona.session import Session, DummySession
+import fiona._loading
+with fiona._loading.add_gdal_dll_directories():
+    from fiona._env import (
+        GDALEnv, calc_gdal_version_num, get_gdal_version_num, get_gdal_config,
+        set_gdal_config, get_gdal_release_name, GDALDataFinder, PROJDataFinder,
+        set_proj_data_search_path)
+    from fiona.compat import getargspec
+    from fiona.errors import EnvError, GDALVersionError
+    from fiona.session import Session, DummySession
 
 
 class ThreadEnv(threading.local):
