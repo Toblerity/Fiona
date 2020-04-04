@@ -24,15 +24,14 @@ def directory_contains_gdal_dll(path):
 def search_gdal_dll_directories():
     """ Search for gdal dlls
 
-        Checks if a */*gdal*/* directory is present in PATH
-        and contains a gdal*.dll file.
-        If none is found, GDAL_HOME is used if available.
+        Checks if a gdal dll is present in PATH directory.
+        If no directory is found, GDAL_HOME is used if available.
     """
 
     # Parse PATH for gdal/bin
     for path in os.getenv('PATH', '').split(os.pathsep):
 
-        if "gdal" in path.lower() and directory_contains_gdal_dll(path):
+        if directory_contains_gdal_dll(path):
             dll_directories.append(path)
 
     # Use GDAL_HOME if present
