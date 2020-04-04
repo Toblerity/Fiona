@@ -67,7 +67,6 @@ import logging
 import os
 import sys
 import warnings
-
 from six import string_types
 from collections import OrderedDict
 
@@ -98,7 +97,8 @@ from fiona.vfs import parse_paths as vfs_parse_paths
 
 # These modules are imported by fiona.ogrext, but are also import here to
 # help tools like cx_Freeze find them automatically
-from fiona import _geometry, _err, rfc3339
+with fiona._loading.add_gdal_dll_directories():
+    from fiona import _geometry, _err, rfc3339
 import uuid
 
 
