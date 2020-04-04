@@ -11,6 +11,7 @@ environment:
         # See: http://stackoverflow.com/a/13751649/163740
         CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_env.cmd"
         GDAL_HOME: "C:\\gdal"
+        PYTHONWARNINGS: "ignore:DEPRECATION::pip._internal.cli.base_command"
 
     matrix:
         # PYTHON_VERSION and PYTHON_ARCH are required by run_with_env.cmd.
