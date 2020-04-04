@@ -59,7 +59,6 @@ def test_write_gpkg(tmpdir):
 
     with fiona.open(path) as src:
         assert src.schema['geometry'] == 'Point'
-        assert src.crs == example_crs
         assert len(src) == 3
 
 @requires_gpkg
@@ -86,10 +85,8 @@ def test_write_multilayer_gpkg(tmpdir):
 
     with fiona.open(path, layer="layer1") as src:
         assert src.schema['geometry'] == 'Point'
-        assert src.crs == example_crs
         assert len(src) == 2
 
     with fiona.open(path, layer="layer2") as src:
         assert src.schema['geometry'] == 'Point'
-        assert src.crs == example_crs
         assert len(src) == 1

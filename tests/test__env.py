@@ -17,7 +17,7 @@ def mock_wheel(tmpdir):
     moduledir = tmpdir.mkdir("rasterio")
     moduledir.ensure("__init__.py")
     moduledir.ensure("_env.py")
-    moduledir.ensure("gdal_data/pcs.csv")
+    moduledir.ensure("gdal_data/header.dxf")
     moduledir.ensure("proj_data/epsg")
     return moduledir
 
@@ -25,7 +25,7 @@ def mock_wheel(tmpdir):
 @pytest.fixture
 def mock_fhs(tmpdir):
     """A fake FHS system"""
-    tmpdir.ensure("share/gdal/pcs.csv")
+    tmpdir.ensure("share/gdal/header.dxf")
     tmpdir.ensure("share/proj/epsg")
     return tmpdir
 
@@ -33,12 +33,8 @@ def mock_fhs(tmpdir):
 @pytest.fixture
 def mock_debian(tmpdir):
     """A fake Debian multi-install system"""
-    tmpdir.ensure("share/gdal/1.11/pcs.csv")
-    tmpdir.ensure("share/gdal/2.0/pcs.csv")
-    tmpdir.ensure("share/gdal/2.1/pcs.csv")
-    tmpdir.ensure("share/gdal/2.2/pcs.csv")
-    tmpdir.ensure("share/gdal/2.3/pcs.csv")
-    tmpdir.ensure("share/gdal/2.4/pcs.csv")
+    tmpdir.ensure("share/gdal/{}.{}/header.dxf".format(gdal_version.major,
+                                                       gdal_version.minor))
     tmpdir.ensure("share/proj/epsg")
     return tmpdir
 

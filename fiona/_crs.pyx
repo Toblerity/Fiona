@@ -10,28 +10,36 @@ import logging
 from six import string_types
 
 from fiona cimport _cpl
+from fiona._err cimport exc_wrap_pointer
+from fiona._err import CPLE_BaseError
+from fiona._shim cimport osr_get_name, osr_set_traditional_axis_mapping_strategy
+from fiona.compat import DICT_TYPES
 from fiona.errors import CRSError
 
 
 logger = logging.getLogger(__name__)
 
+cdef int OAMS_TRADITIONAL_GIS_ORDER = 0
+
 
 # Export a WKT string from input crs.
 def crs_to_wkt(crs):
     """Convert a Fiona CRS object to WKT format"""
-    cdef void *cogr_srs = NULL
+    cdef OGRSpatialReferenceH cogr_srs = NULL
     cdef char *proj_c = NULL
 
-    cogr_srs = OSRNewSpatialReference(NULL)
-    if cogr_srs == NULL:
-        raise CRSError("NULL spatial reference")
+    try:
+        cogr_srs = exc_wrap_pointer(OSRNewSpatialReference(NULL))
+    except CPLE_BaseError as exc:
+        raise CRSError(u"{}".format(exc))
 
     # First, check for CRS strings like "EPSG:3857".
     if isinstance(crs, string_types):
         proj_b = crs.encode('utf-8')
         proj_c = proj_b
         OSRSetFromUserInput(cogr_srs, proj_c)
-    elif isinstance(crs, dict):
+
+    elif isinstance(crs, DICT_TYPES):
         # EPSG is a special case.
         init = crs.get('init')
         if init:
@@ -53,18 +61,20 @@ def crs_to_wkt(crs):
             proj_b = proj.encode('utf-8')
             proj_c = proj_b
             OSRImportFromProj4(cogr_srs, proj_c)
+
     else:
-        raise ValueError("Invalid CRS")
+        raise CRSError("Invalid input to create CRS: {}".format(crs))
 
-    # Fixup, export to WKT, and set the GDAL dataset's projection.
-    OSRFixup(cogr_srs)
-
+    osr_set_traditional_axis_mapping_strategy(cogr_srs)
     OSRExportToWkt(cogr_srs, &proj_c)
 
     if proj_c == NULL:
-        raise CRSError("Null projection")
+        raise CRSError("Invalid input to create CRS: {}".format(crs))
 
     proj_b = proj_c
     _cpl.CPLFree(proj_c)
+
+    if not proj_b:
+        raise CRSError("Invalid input to create CRS: {}".format(crs))
 
     return proj_b.decode('utf-8')

@@ -10,7 +10,7 @@ import os
 import warnings
 import math
 import uuid
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 
 from six import integer_types, string_types, text_type
 
@@ -30,13 +30,13 @@ from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
     FionaDeprecationWarning)
-from fiona.compat import OrderedDict, strencode
+from fiona.compat import strencode
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 from fiona.schema import FIELD_TYPES, FIELD_TYPES_MAP, normalize_field_type
 from fiona.path import vsi_path
 
-from fiona._shim cimport is_field_null
+from fiona._shim cimport is_field_null, osr_get_name, osr_set_traditional_axis_mapping_strategy
 
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
@@ -857,7 +857,7 @@ cdef class WritingSession(Session):
     cdef object _schema_mapping
 
     def start(self, collection, **kwargs):
-        cdef void *cogr_srs = NULL
+        cdef OGRSpatialReferenceH cogr_srs = NULL
         cdef char **options = NULL
         cdef const char *path_c = NULL
         cdef const char *driver_c = NULL
@@ -942,52 +942,18 @@ cdef class WritingSession(Session):
             self.cogr_ds = cogr_ds
 
             # Set the spatial reference system from the crs given to the
-            # collection constructor. We by-pass the crs_wkt and crs
+            # collection constructor. We by-pass the crs_wkt
             # properties because they aren't accessible until the layer
             # is constructed (later).
             try:
-
-                col_crs = collection._crs_wkt or collection._crs
-
+                col_crs = collection._crs_wkt
                 if col_crs:
                     cogr_srs = exc_wrap_pointer(OSRNewSpatialReference(NULL))
-
-                    # First, check for CRS strings like "EPSG:3857".
-                    if isinstance(col_crs, string_types):
-                        proj_b = col_crs.encode('utf-8')
-                        proj_c = proj_b
-                        OSRSetFromUserInput(cogr_srs, proj_c)
-
-                    elif isinstance(col_crs, compat.DICT_TYPES):
-                        # EPSG is a special case.
-                        init = col_crs.get('init')
-                        if init:
-                            log.debug("Init: %s", init)
-                            auth, val = init.split(':')
-                            if auth.upper() == 'EPSG':
-                                log.debug("Setting EPSG: %s", val)
-                                OSRImportFromEPSG(cogr_srs, int(val))
-                        else:
-                            params = []
-                            col_crs['wktext'] = True
-                            for k, v in col_crs.items():
-                                if v is True or (k in ('no_defs', 'wktext') and v):
-                                    params.append("+%s" % k)
-                                else:
-                                    params.append("+%s=%s" % (k, v))
-                            proj = " ".join(params)
-                            log.debug("PROJ.4 to be imported: %r", proj)
-                            proj_b = proj.encode('utf-8')
-                            proj_c = proj_b
-                            OSRImportFromProj4(cogr_srs, proj_c)
-
-                    else:
-                        raise ValueError("Invalid CRS")
-
-                    # Fixup, export to WKT, and set the GDAL dataset's projection.
-                    OSRFixup(cogr_srs)
-
-            except (ValueError, CPLE_BaseError) as exc:
+                    proj_b = col_crs.encode('utf-8')
+                    proj_c = proj_b
+                    OSRSetFromUserInput(cogr_srs, proj_c)
+                    osr_set_traditional_axis_mapping_strategy(cogr_srs)
+            except CPLE_BaseError as exc:
                 OGRReleaseDataSource(self.cogr_ds)
                 self.cogr_ds = NULL
                 self.cogr_layer = NULL

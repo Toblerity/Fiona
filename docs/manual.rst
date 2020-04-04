@@ -6,8 +6,9 @@ The Fiona User Manual
 :Version: |release|
 :Date: |today|
 :Copyright:
-  This work is licensed under a `Creative Commons Attribution 3.0
-  United States License`__.
+  This work, with the exception of code examples, is licensed under a `Creative Commons Attribution 3.0
+  United States License`__. The code examples are licensed under the BSD 3-clause license (see
+  LICENSE.txt in the repository root).
 
 .. __: http://creativecommons.org/licenses/by/3.0/us/
 

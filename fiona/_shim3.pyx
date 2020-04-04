@@ -1,17 +1,26 @@
-"""Shims on top of ogrext for GDAL versions >= 2.2"""
+"""Shims on top of ogrext for GDAL versions >= 3.0"""
 
 cdef extern from "ogr_api.h":
 
     int OGR_F_IsFieldNull(void *feature, int n)
 
-import logging
-import os
+
+cdef extern from "ogr_srs_api.h" nogil:
+
+    ctypedef enum OSRAxisMappingStrategy:
+        OAMS_TRADITIONAL_GIS_ORDER
+
+    const char* OSRGetName(OGRSpatialReferenceH hSRS)
+    void OSRSetAxisMappingStrategy(OGRSpatialReferenceH hSRS, OSRAxisMappingStrategy)
+    void OSRSetPROJSearchPaths(const char *const *papszPaths)
+
 
 from fiona.ogrext2 cimport *
 from fiona._err cimport exc_wrap_pointer
-
 from fiona._err import cpl_errs, CPLE_BaseError, FionaNullPointerError
 from fiona.errors import DriverError
+
+import logging
 
 
 log = logging.getLogger(__name__)
@@ -72,7 +81,7 @@ cdef void* gdal_open_vector(char* path_c, int mode, drivers, options) except NUL
 
     try:
         cogr_ds = exc_wrap_pointer(
-            GDALOpenEx(path_c, flags, <const char *const *>drvs, open_opts, NULL)
+            GDALOpenEx(path_c, flags, <const char *const *>drvs, <const char *const *>open_opts, NULL)
         )
         return cogr_ds
     except FionaNullPointerError:
@@ -136,11 +145,17 @@ cdef void *get_linear_geometry(void *geom):
 
 
 cdef const char* osr_get_name(OGRSpatialReferenceH hSrs):
-    return ''
+        return OSRGetName(hSrs)
 
 
 cdef void osr_set_traditional_axis_mapping_strategy(OGRSpatialReferenceH hSrs):
-    OSRFixup(hSrs)
+    OSRSetAxisMappingStrategy(hSrs, OAMS_TRADITIONAL_GIS_ORDER)
+
 
 cdef void set_proj_search_path(object path):
-    os.environ["PROJ_LIB"] = path
+    cdef char **paths = NULL
+    cdef const char *path_c = NULL
+    path_b = path.encode("utf-8")
+    path_c = path_b
+    paths = CSLAddString(paths, path_c)
+    OSRSetPROJSearchPaths(paths)

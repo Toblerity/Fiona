@@ -6,22 +6,22 @@ if [ ! -d "$PROJBUILD" ]; then
   mkdir $PROJBUILD;
 fi
 
-if [ ! -d "$GDALINST" ]; then
-  mkdir $GDALINST;
+if [ ! -d "$PROJINST" ]; then
+  mkdir $PROJINST;
 fi
 
-ls -l $GDALINST
+ls -l $PROJINST
 
-if [ ! -d "$GDALINST/proj-$PROJVERSION" ]; then
+echo "PROJ VERSION: $PROJVERSION"
+
+if [ ! -d "$PROJINST/gdal-$GDALVERSION/share/proj" ]; then
     cd $PROJBUILD
-
-    wget http://download.osgeo.org/proj/proj-$PROJVERSION.tar.gz
+    wget -q https://download.osgeo.org/proj/proj-$PROJVERSION.tar.gz
     tar -xzf proj-$PROJVERSION.tar.gz
     cd proj-$PROJVERSION
-    ./configure --prefix=$GDALINST/proj-$PROJVERSION
-    make -j 2
+    ./configure --prefix=$PROJINST/gdal-$GDALVERSION
+    make -s
     make install
-    rm -rf $PROJBUILD
 fi
 
 # change back to travis build dir
