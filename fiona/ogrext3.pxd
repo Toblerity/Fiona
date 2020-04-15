@@ -232,6 +232,8 @@ cdef extern from "ogr_srs_api.h":
     void *  OCTNewCoordinateTransformation (OGRSpatialReferenceH source, OGRSpatialReferenceH dest)
     void    OCTDestroyCoordinateTransformation (void *source)
     int     OCTTransform (void *ct, int nCount, double *x, double *y, double *z)
+    void OSRGetPROJVersion	(int *pnMajor, int *pnMinor, int *pnPatch)
+
 
 cdef extern from "ogr_api.h":
 

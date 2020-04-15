@@ -67,7 +67,7 @@ import logging
 import os
 import sys
 import warnings
-
+import platform
 from six import string_types
 
 try:
@@ -88,7 +88,7 @@ from fiona.errors import FionaDeprecationWarning
 from fiona._env import driver_count
 from fiona._env import (
     calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name,
-    get_gdal_version_tuple)
+    get_gdal_version_tuple, get_proj_version_tuple)
 from fiona.compat import OrderedDict
 from fiona.io import MemoryFile
 from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove, _remove_layer
@@ -394,3 +394,33 @@ def bounds(ob):
     The ``ob`` may be a feature record or geometry."""
     geom = ob.get('geometry') or ob
     return _bounds(geom)
+
+
+def print_debug_information():
+    """
+    Prints information useful for bug reports
+    """
+
+    fiona_version = __version__
+    gdal_release_name = get_gdal_release_name()
+    proj_version_tuple = get_proj_version_tuple()
+    if proj_version_tuple is not None:
+        proj_version = ".".join(map(str, get_proj_version_tuple()))
+    else:
+        proj_version = "Proj version not available"
+    os_info = "{system} {release}".format(system=platform.system(),
+                                          release=platform.release())
+    python_version = platform.python_version()
+
+    msg = ("Fiona version: {fiona_version}"
+           "\nGDAL version: {gdal_release_name}"
+           "\nPROJ version: {proj_version}"
+           "\n"
+           "\nOS: {os_info}"
+           "\nPython: {python_version}")
+
+    print(msg.format(fiona_version=fiona_version,
+                     gdal_release_name=gdal_release_name,
+                     proj_version=proj_version,
+                     os_info=os_info,
+                     python_version=python_version))
