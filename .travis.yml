@@ -71,6 +71,7 @@ before_install:
   - gdal-config --version
   - python -m pip wheel -r requirements-dev.txt
   - python -m pip install -r requirements-dev.txt
+  - python -m pip install coveralls>=1.1 --upgrade
 
 install:
   - if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $(gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
@@ -81,6 +82,9 @@ install:
 
 script:
   - python -m pytest -m "not wheel" --cov fiona --cov-report term-missing
+
+after_script:
+  - python setup.py clean
 
 after_success:
   - coveralls || echo "!! intermittent coveralls failure"
