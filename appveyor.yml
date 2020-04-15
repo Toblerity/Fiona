@@ -118,8 +118,8 @@ install:
   - cd C:\projects\fiona
   # Upgrade to the latest version of pip to avoid it displaying warnings
   # about it being out of date.
-  - cmd: python -m pip install --disable-pip-version-check --user --upgrade pip
-  - cmd: python -m pip --version
+  - ps: python -m pip install --upgrade pip
+  - ps: python -m pip --version
 
   # Install the build dependencies of the project. If some dependencies contain
   # compiled extensions and are not provided as pre-built wheel packages,
@@ -130,11 +130,9 @@ install:
   # Install coverage testing dependencies
   - ps: python -m pip install coveralls>=1.1 --upgrade
 
-
 build_script:
   # Build the compiled extension
   - cmd: echo %PATH%
-
   - cmd: echo %PYTHONPATH%
 
   # copy gisinternal gdal librarys into .libs
@@ -145,7 +143,6 @@ build_script:
   - "%CMD_IN_ENV% python setup.py build_ext -IC:\\gdal\\include -lgdal_i -LC:\\gdal\\lib bdist_wheel --gdalversion %GDAL_VERSION%"
 
   # install the wheel
-  - ps: python -m pip install --upgrade pip
   - ps: python -m pip install --no-deps --ignore-installed (gci dist\*.whl | % { "$_" })
   - ps: python -m pip freeze
   - ps: move fiona fiona.build
