@@ -128,7 +128,7 @@ install:
   - "%CMD_IN_ENV% pip install -r requirements-dev.txt"
 
   # Install coverage testing dependencies
-  - ps: python -m pip install coveralls>=1.1 --upgrade
+#  - ps: python -m pip install coveralls>=1.1 --upgrade
 
 build_script:
   # Build the compiled extension
@@ -158,7 +158,7 @@ test_script:
   - "%CMD_IN_ENV% python -m pytest -m \"not iconv and not wheel\" --cov fiona --cov-report term-missing"
 
 after_test:
-  - coveralls || echo "!! intermittent coveralls failure"
+#  - coveralls || echo "!! intermittent coveralls failure"
 
 matrix:
   allow_failures:
