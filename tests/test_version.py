@@ -3,6 +3,7 @@ from fiona.ogrext import GDALVersion
 import platform
 import re
 import os
+import sys
 from tests.conftest import travis_only
 
 
@@ -19,7 +20,7 @@ def test_version_comparison():
     assert GDALVersion(2, 0, 0) < GDALVersion(3, 2, 1)
     assert GDALVersion(3, 2, 2) > GDALVersion(3, 2, 1)
     assert GDALVersion(3, 2, 0) < GDALVersion(3, 2, 1)
-    
+
     # tuple against version
     assert (4, 0, 0) > GDALVersion(3, 2, 1)
     assert (2, 0, 0) < GDALVersion(3, 2, 1)
@@ -28,20 +29,24 @@ def test_version_comparison():
 
 
 @travis_only
-def test_debug_information(capsys):
-
+def test_show_versions(capsys):
     version_pattern = re.compile(r"(\d+).(\d+).(\d+)")
 
     os_info = "{system} {release}".format(system=platform.system(),
                                           release=platform.release())
     python_version = platform.python_version()
+    python_exec = sys.executable
 
     msg = ("Fiona version: {fiona_version}"
            "\nGDAL version: {gdal_release_name}"
            "\nPROJ version: {proj_version}"
+           "\nGDAL_DATA: '{gdal_data}' Directory exists: {gdal_data_exists}"
+           "\nPROJ_LIB: '{proj_lib}' Directory exists: {proj_lib_exists}"
            "\n"
            "\nOS: {os_info}"
-           "\nPython: {python_version}")
+           "\nPython: {python_version}"
+           "\nPython executable: '{python_exec}'"
+           "\n")
 
     if fiona.gdal_version < GDALVersion(3, 0, 1):
         proj_version = "Proj version not available"
@@ -52,13 +57,28 @@ def test_debug_information(capsys):
     gdal_version = os.getenv("GDALVERSION")
     gdal_version = re.match(version_pattern, gdal_version).group(0)
 
+    gdal_data = os.getenv("GDAL_DATA")
+    proj_lib = os.getenv("PROJ_LIB")
+
+    try:
+        gdal_data_exists = os.path.exists(gdal_data)
+        proj_lib_exists = os.path.exists(proj_lib)
+    except:
+        gdal_data_exists = "?"
+        proj_lib_exists = "?"
+
     msg_formatted = msg.format(fiona_version=fiona.__version__,
                                gdal_release_name=gdal_version,
                                proj_version=proj_version,
                                os_info=os_info,
-                               python_version=python_version)
+                               python_version=python_version,
+                               python_exec=python_exec,
+                               gdal_data=gdal_data,
+                               proj_lib=proj_lib,
+                               gdal_data_exists=gdal_data_exists,
+                               proj_lib_exists=proj_lib_exists)
 
-    fiona.print_debug_information()
+    fiona.show_versions()
     captured = capsys.readouterr()
 
     assert captured.out.strip() == msg_formatted.strip()
