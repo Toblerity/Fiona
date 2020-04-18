@@ -256,7 +256,14 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
             if schema:
                 # Make an ordered dict of schema properties.
                 this_schema = schema.copy()
-                this_schema['properties'] = OrderedDict(schema['properties'])
+                if 'properties' in schema:
+                    this_schema['properties'] = OrderedDict(schema['properties'])
+                else:
+                    this_schema['properties'] = OrderedDict()
+
+                if 'geometry' not in this_schema:
+                    this_schema['geometry'] = None
+
             else:
                 this_schema = None
             c = Collection(path, mode, crs=crs, driver=driver, schema=this_schema,
