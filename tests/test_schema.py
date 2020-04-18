@@ -323,6 +323,8 @@ def test_property_only_schema_write(tmpdir, driver):
         assert len(data) == 1
         assert len(data[0].get('properties', {})) == 1
         assert 'prop1' in data[0]['properties'] and data[0]['properties']['prop1'] == 'one'
+        for f in data:
+            assert 'geometry' not in data[0] or data[0]['geometry'] is None
 
 
 @pytest.mark.parametrize('driver', ['GPKG', 'GeoJSON'])
@@ -363,5 +365,6 @@ def test_property_only_schema_update(tmpdir, driver):
         assert len(data) == 2
         for f in data:
             assert len(f.get('properties', {})) == 1
+            assert 'geometry' not in data[0] or data[0]['geometry'] is None
         assert 'prop1' in data[0]['properties'] and data[0]['properties']['prop1'] == 'one'
         assert 'prop1' in data[1]['properties'] and data[1]['properties']['prop1'] == 'two'
