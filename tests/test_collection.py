@@ -923,7 +923,7 @@ def test_filter_range(tmpdir, driver, slice):
     schema = {'geometry': 'Point', 'properties': [('position', 'int')]}
     path = str(tmpdir.join(get_temp_filename(driver)))
 
-    # If driver is not able to write, we cannot test append
+    # We only test driver with write capabilities
     if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
             *driver_mode_mingdal['w'][driver][:2]):
         return
