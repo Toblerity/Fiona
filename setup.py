@@ -5,7 +5,6 @@ import os
 import shutil
 import subprocess
 import sys
-import glob
 from setuptools import setup
 from setuptools.extension import Extension
 
