@@ -19,6 +19,7 @@ env:
     - GDALBUILD=$HOME/gdalbuild
     - PROJINST=$HOME/gdalinstall
     - PROJBUILD=$HOME/projbuild
+    - CYTHON_TRACING="true"
   matrix:
     - GDALVERSION="1.11.5" PROJVERSION="4.8.0"
     - GDALVERSION="2.0.3" PROJVERSION="4.9.3"
