@@ -1239,6 +1239,7 @@ cdef class Iterator:
     cdef start
     cdef step
     cdef fastindex
+    cdef fastcount
     cdef stepsign
 
     def __cinit__(self, collection, start=None, stop=None, step=None,
@@ -1273,7 +1274,23 @@ cdef class Iterator:
         self.fastindex = OGR_L_TestCapability(
             session.cogr_layer, OLC_FASTSETNEXTBYINDEX)
 
-        ftcount = OGR_L_GetFeatureCount(session.cogr_layer, 0)
+        self.fastcount = OGR_L_TestCapability(
+            session.cogr_layer, OLC_FASTFEATURECOUNT)
+
+        # In some cases we need to force count of all features
+        # We need to check if start is not greater ftcount: (start is not None and start > 0)
+        # If start is a negative index: (start is not None and start < 0)
+        # If stop is a negative index: (stop is not None and stop < 0)
+        if ((start is not None and not start == 0) or
+                (stop is not None and stop < 0)):
+            if not self.fastcount:
+                warnings.warn("Layer does not support" \
+                        " OLC_FASTFEATURECOUNT, negative slices or start values other than zero" \
+                        " may be slow.", RuntimeWarning)
+            ftcount = OGR_L_GetFeatureCount(session.cogr_layer, 1)
+        else:
+            ftcount = OGR_L_GetFeatureCount(session.cogr_layer, 0)
+
         if ftcount == -1 and ((start is not None and start < 0) or
                               (stop is not None and stop < 0)):
             raise IndexError(
@@ -1294,8 +1311,19 @@ cdef class Iterator:
             raise ValueError("slice step cannot be zero")
         if step < 0 and not self.fastindex:
             warnings.warn("Layer does not support" \
-                    "OLCFastSetNextByIndex, negative step size may" \
-                    " be slow", RuntimeWarning)
+                    " OLCFastSetNextByIndex, negative step size may" \
+                    " be slow.", RuntimeWarning)
+
+        # Check if we are outside of the range:
+        if not ftcount == -1:
+            if start > ftcount and step > 0:
+                start = -1
+            if start > ftcount and step < 0:
+                start = ftcount - 1
+        elif ftcount == -1 and not start == 0:
+            warnings.warn("Layer is unable to check if slice is within range of data.",
+             RuntimeWarning)
+
         self.stepsign = int(math.copysign(1, step))
         self.stop = stop
         self.start = start
