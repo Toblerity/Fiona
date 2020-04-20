@@ -480,9 +480,13 @@ cdef class Session:
 
         encoding = self._get_internal_encoding()
 
-        if collection.ignore_fields:
+        self.collection = collection
+
+        if self.collection.include_fields is not None:
+            self.collection.ignore_fields = list(set(self.get_schema()["properties"]) - set(collection.include_fields))
+        if self.collection.ignore_fields:
             try:
-                for name in collection.ignore_fields:
+                for name in self.collection.ignore_fields:
                     try:
                         name_b = name.encode(encoding)
                     except AttributeError:
@@ -491,8 +495,6 @@ cdef class Session:
                 OGR_L_SetIgnoredFields(self.cogr_layer, <const char**>ignore_fields)
             finally:
                 CSLDestroy(ignore_fields)
-
-        self.collection = collection
 
     cpdef stop(self):
         self.cogr_layer = NULL

@@ -35,7 +35,7 @@ class Collection(object):
     def __init__(self, path, mode='r', driver=None, schema=None, crs=None,
                  encoding=None, layer=None, vsi=None, archive=None,
                  enabled_drivers=None, crs_wkt=None, ignore_fields=None,
-                 ignore_geometry=False,
+                 ignore_geometry=False, include_fields=None,
                  **kwargs):
 
         """The required ``path`` is the absolute or relative path to
@@ -74,7 +74,8 @@ class Collection(object):
                 raise TypeError("invalid vsi: %r" % vsi)
         if archive and not isinstance(archive, string_types):
             raise TypeError("invalid archive: %r" % archive)
-
+        if ignore_fields is not None and include_fields is not None:
+            raise ValueError("Cannot specify both 'ignore_fields' and 'include_fields'")
         # Check GDAL version against drivers
         if (driver == "GPKG" and get_gdal_version_tuple() < (1, 11, 0)):
             raise DriverError(
@@ -90,6 +91,7 @@ class Collection(object):
         self._crs = None
         self._crs_wkt = None
         self.enabled_drivers = enabled_drivers
+        self.include_fields = include_fields
         self.ignore_fields = ignore_fields
         self.ignore_geometry = bool(ignore_geometry)
 

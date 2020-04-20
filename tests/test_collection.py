@@ -305,6 +305,31 @@ class TestIgnoreFieldsAndGeometry(object):
             with fiona.open(self.path_coutwildrnp_shp, "r", ignore_fields=[42]):
                 pass
 
+    def test_include_fields(self):
+        with fiona.open(self.path_coutwildrnp_shp, "r", include_fields=["AREA", "STATE"]) as collection:
+            assert sorted(collection.schema["properties"]) == ["AREA", "STATE"]
+            assert("geometry" in collection.schema.keys())
+
+            feature = next(iter(collection))
+            assert sorted(feature["properties"]) == ["AREA", "STATE"]
+            assert(feature["properties"]["AREA"] is not None)
+            assert(feature["properties"]["STATE"] is not None)
+            assert(feature["geometry"] is not None)
+
+    def test_include_fields__geom_only(self):
+        with fiona.open(self.path_coutwildrnp_shp, "r", include_fields=()) as collection:
+            assert sorted(collection.schema["properties"]) == []
+            assert("geometry" in collection.schema.keys())
+
+            feature = next(iter(collection))
+            assert sorted(feature["properties"]) == []
+            assert(feature["geometry"] is not None)
+
+    def test_include_fields__ignore_fields_error(self):
+        with pytest.raises(ValueError):
+            with fiona.open(self.path_coutwildrnp_shp, "r", include_fields=["AREA"], ignore_fields=["STATE"]) as collection:
+                pass
+
     def test_ignore_geometry(self):
         with fiona.open(self.path_coutwildrnp_shp, "r", ignore_geometry=True) as collection:
             assert("AREA" in collection.schema["properties"].keys())
