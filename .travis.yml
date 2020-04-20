@@ -43,9 +43,9 @@ addons:
 
 before_install:
   - pip install -U pip
-  - pip install wheel coveralls>=1.1 --upgrade
   - pip install setuptools==36.0.1
   - pip install wheel
+  - "python -m pip install -r requirements-ci.txt"
   - . ./scripts/travis_proj_install.sh
   - . ./scripts/travis_gdal_install.sh
   - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$PATH
@@ -65,6 +65,9 @@ install:
 
 script:
   - python -m pytest -m "not wheel" --cov fiona --cov-report term-missing
+
+  # Check documentation
+  - rstcheck -r --ignore-directives automodule --ignore-substitutions version,release,today .
 
 after_script:
   - python setup.py clean
