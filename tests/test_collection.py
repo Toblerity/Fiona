@@ -10,7 +10,7 @@ import fiona
 from fiona.collection import Collection
 from fiona.drvsupport import supported_drivers
 from fiona.env import getenv
-from fiona.errors import FionaValueError, DriverError, FionaDeprecationWarning
+from fiona.errors import FionaValueError, DriverError, FionaDeprecationWarning, SequentialReadInterrupted
 from .conftest import WGS84PATTERN
 
 
@@ -230,16 +230,6 @@ class TestReading(object):
         f = self.c[0]
         assert f['id'] == "0"
         assert f['properties']['STATE'] == 'UT'
-
-    def test_getitem_iter_combo(self):
-        i = iter(self.c)
-        f = next(i)
-        f = next(i)
-        assert f['id'] == "1"
-        f = self.c[0]
-        assert f['id'] == "0"
-        f = next(i)
-        assert f['id'] == "2"
 
     def test_no_write(self):
         with pytest.raises(IOError):
@@ -900,3 +890,15 @@ def test_collection_env(path_coutwildrnp_shp):
     with fiona.open(path_coutwildrnp_shp):
         assert 'FIONA_ENV' in getenv()
 
+
+def test_interrupted_sequential_read(path_coutwildrnp_json):
+    with pytest.raises(SequentialReadInterrupted):
+        with fiona.open(path_coutwildrnp_json) as c:
+            for key in c.keys():
+                c[key]
+
+
+def test_membership_releases_lock(path_coutwildrnp_json):
+    with fiona.open(path_coutwildrnp_json) as c:
+        5 in c.keys()
+        assert (0 in c)

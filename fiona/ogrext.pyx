@@ -29,7 +29,7 @@ from fiona import compat
 from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
-    FionaDeprecationWarning)
+    FionaDeprecationWarning, SequentialReadInterrupted)
 from fiona.compat import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -439,6 +439,26 @@ def featureRT(feature, collection):
 
 # Collection-related extension classes and functions
 
+
+cdef inline void * wrap_get_feature(object collection, void *cogr_layer, int index) except *:
+    """Check if it is safe to execute OGR_L_GetFeature"""
+    if collection._is_sequential_read_locked():
+        raise SequentialReadInterrupted("Sequential read already in progress.")
+    return OGR_L_GetFeature(cogr_layer, index)
+
+
+cdef inline int wrap_get_feature_count(object collection, void *cogr_layer, int force) except *:
+    """Check if it is safe to execute OGR_L_GetFeatureCount"""
+    if collection._is_sequential_read_locked():
+        raise SequentialReadInterrupted("Sequential read already in progress.")
+    return OGR_L_GetFeatureCount(cogr_layer, force)
+
+
+cdef inline void wrap_stop_iteration(object collection) except *:
+    collection._release_sequential_read_lock()
+    raise StopIteration
+
+
 cdef class Session:
 
     cdef void *cogr_ds
@@ -569,9 +589,11 @@ cdef class Session:
             return self._fileencoding or self._get_fallback_encoding()
 
     def get_length(self):
+        log.debug("Session.get_length()")
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
-        return OGR_L_GetFeatureCount(self.cogr_layer, 0)
+        return wrap_get_feature_count(self.collection, self.cogr_layer, 0)
+
 
     def get_driver(self):
         cdef void *cogr_driver = GDALGetDatasetDriver(self.cogr_ds)
@@ -803,7 +825,7 @@ cdef class Session:
         """
         cdef void * cogr_feature
         fid = int(fid)
-        cogr_feature = OGR_L_GetFeature(self.cogr_layer, fid)
+        cogr_feature = wrap_get_feature(self.collection, self.cogr_layer, fid)
         if cogr_feature != NULL:
             _deleteOgrFeature(cogr_feature)
             return True
@@ -817,7 +839,7 @@ cdef class Session:
         """
         cdef void * cogr_feature
         fid = int(fid)
-        cogr_feature = OGR_L_GetFeature(self.cogr_layer, fid)
+        cogr_feature = wrap_get_feature(self.collection, self.cogr_layer, fid)
         if cogr_feature != NULL:
             feature = FeatureBuilder().build(
                 cogr_feature,
@@ -846,12 +868,12 @@ cdef class Session:
             index = item
             # from the back
             if index < 0:
-                ftcount = OGR_L_GetFeatureCount(self.cogr_layer, 0)
+                ftcount = wrap_get_feature_count(self.collection, self.cogr_layer, 0)
                 if ftcount == -1:
                     raise IndexError(
                         "collection's dataset does not support negative indexes")
                 index += ftcount
-            cogr_feature = OGR_L_GetFeature(self.cogr_layer, index)
+            cogr_feature = wrap_get_feature(self.collection, self.cogr_layer, index)
             if cogr_feature == NULL:
                 return None
             feature = FeatureBuilder().build(
@@ -1222,7 +1244,6 @@ cdef class WritingSession(Session):
         if cogr_ds == NULL:
             raise ValueError("Null data source")
 
-
         gdal_flush_cache(cogr_ds)
         log.debug("Flushed data source cache")
 
@@ -1250,6 +1271,10 @@ cdef class Iterator:
         cdef void *cogr_geometry
         session = self.collection.session
         cdef void *cogr_layer = session.cogr_layer
+
+        if self.collection._is_sequential_read_locked():
+            raise SequentialReadInterrupted("Sequential read already in progress.")
+
         if cogr_layer == NULL:
             raise ValueError("Null layer")
         OGR_L_ResetReading(cogr_layer)
@@ -1273,7 +1298,7 @@ cdef class Iterator:
         self.fastindex = OGR_L_TestCapability(
             session.cogr_layer, OLC_FASTSETNEXTBYINDEX)
 
-        ftcount = OGR_L_GetFeatureCount(session.cogr_layer, 0)
+        ftcount = wrap_get_feature_count(self.collection, session.cogr_layer, 0)
         if ftcount == -1 and ((start is not None and start < 0) or
                               (stop is not None and stop < 0)):
             raise IndexError(
@@ -1302,11 +1327,23 @@ cdef class Iterator:
         self.step = step
 
         self.next_index = start
-        log.debug("Index: %d", self.next_index)
+        self.collection._lock_sequential_read()
         OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
+        log.debug("Index: %d", self.next_index)
+
 
     def __iter__(self):
         return self
+
+
+    def __contains__(self, key):
+        """Implement __contains__ to ensure release of sequential read lock"""
+        for element in self:
+            if element == key:
+                self.collection._release_sequential_read_lock()
+                return True
+        return False
+
 
     def _next(self):
         """Internal method to set read cursor to next item"""
@@ -1316,14 +1353,14 @@ cdef class Iterator:
 
         # Check if next_index is valid
         if self.next_index < 0:
-            raise StopIteration
+            wrap_stop_iteration(self.collection)
 
         if self.stepsign == 1:
             if self.next_index < self.start or (self.stop is not None and self.next_index >= self.stop):
-                raise StopIteration
+                wrap_stop_iteration(self.collection)
         else:
             if self.next_index > self.start or (self.stop is not None and self.next_index <= self.stop):
-                raise StopIteration
+                wrap_stop_iteration(self.collection)
 
         # Set read cursor to next_item position
         if self.step > 1 and self.fastindex:
@@ -1334,7 +1371,7 @@ cdef class Iterator:
                 # TODO rbuffat add test -> OGR_L_GetNextFeature increments cursor by 1, therefore self.step - 1 as one increment was performed when feature is read
                 cogr_feature = OGR_L_GetNextFeature(session.cogr_layer)
                 if cogr_feature == NULL:
-                    raise StopIteration
+                    wrap_stop_iteration(self.collection)
         elif self.step > 1 and not self.fastindex and self.next_index == self.start:
             OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
 
@@ -1346,6 +1383,7 @@ cdef class Iterator:
 
         # set the next index
         self.next_index += self.step
+        log.debug("Index: %d", self.next_index)
 
     def __next__(self):
         cdef OGRFeatureH cogr_feature = NULL
@@ -1363,7 +1401,7 @@ cdef class Iterator:
         # Get the next feature.
         cogr_feature = OGR_L_GetNextFeature(session.cogr_layer)
         if cogr_feature == NULL:
-            raise StopIteration
+            wrap_stop_iteration(self.collection)
 
         try:
             return FeatureBuilder().build(
@@ -1393,7 +1431,7 @@ cdef class ItemsIterator(Iterator):
         # Get the next feature.
         cogr_feature = OGR_L_GetNextFeature(session.cogr_layer)
         if cogr_feature == NULL:
-            raise StopIteration
+            wrap_stop_iteration(self.collection)
 
         fid = OGR_F_GetFID(cogr_feature)
         feature = FeatureBuilder().build(
@@ -1423,7 +1461,7 @@ cdef class KeysIterator(Iterator):
         # Get the next feature.
         cogr_feature = OGR_L_GetNextFeature(session.cogr_layer)
         if cogr_feature == NULL:
-            raise StopIteration
+            wrap_stop_iteration(self.collection)
 
         fid = OGR_F_GetFID(cogr_feature)
         _deleteOgrFeature(cogr_feature)

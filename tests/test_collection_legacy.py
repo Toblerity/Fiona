@@ -156,16 +156,6 @@ class ReadingTest(unittest.TestCase):
         assert f['id'] == "0"
         assert f['properties']['STATE'] == 'UT'
 
-    def test_getitem_iter_combo(self):
-        i = iter(self.c)
-        f = next(i)
-        f = next(i)
-        assert f['id'] == "1"
-        f = self.c[0]
-        assert f['id'] == "0"
-        f = next(i)
-        assert f['id'] == "2"
-
     def test_no_write(self):
         with pytest.raises(IOError):
             self.c.write({})

@@ -65,3 +65,7 @@ class GDALVersionError(FionaError):
 
 class FionaDeprecationWarning(UserWarning):
     """A warning about deprecation of Fiona features"""
+
+
+class SequentialReadInterrupted(FionaError):
+    """Raised if a sequential read is interrupted."""

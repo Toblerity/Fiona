@@ -75,9 +75,7 @@ class Collection(object):
         if archive and not isinstance(archive, string_types):
             raise TypeError("invalid archive: %r" % archive)
 
-
         # Check GDAL version against drivers
-
         if driver in driver_mode_mingdal[mode] and get_gdal_version_tuple() < driver_mode_mingdal[mode][driver]:
             min_gdal_version = ".".join(list(map(str, driver_mode_mingdal[mode][driver])))
 
@@ -100,6 +98,7 @@ class Collection(object):
         self.enabled_drivers = enabled_drivers
         self.ignore_fields = ignore_fields
         self.ignore_geometry = bool(ignore_geometry)
+        self._sequential_read_lock = False
 
         if vsi:
             self.path = vfs.vsi_path(path, vsi, archive)
@@ -386,7 +385,7 @@ class Collection(object):
                 self.schema['geometry'].lstrip("3D "))
 
     def __len__(self):
-        if self._len <= 0 and self.session is not None:
+        if self._len <= 0 and self.session is not None and not self._is_sequential_read_locked():
             self._len = self.session.get_length()
         if self._len < 0:
             # Raise TypeError when we don't know the length so that Python
@@ -472,6 +471,23 @@ class Collection(object):
         # Note: you can't count on this being called. Call close() explicitly
         # or use the context manager protocol ("with").
         self.close()
+
+    def _lock_sequential_read(self):
+        """ Internal method to lock collection when sequential read has started.
+
+        Typically used to block a call to OGR_L_GetFeatureCount or OGR_L_GetFeature
+        after a sequential read using OGR_L_GetNextFeature is started"""
+        log.debug("lock sequential read")
+        self._sequential_read_lock = True
+
+    def _release_sequential_read_lock(self):
+        """ Internal method to release lock of a sequential read"""
+        log.debug("release sequential read")
+        self._sequential_read_lock = False
+
+    def _is_sequential_read_locked(self):
+        """ Internal method to query if collection is locked by a sequential read"""
+        return self._sequential_read_lock
 
 
 ALL_GEOMETRY_TYPES = set([
