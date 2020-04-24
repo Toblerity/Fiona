@@ -2,8 +2,7 @@
 import pytest
 
 import fiona
-from fiona.errors import DataIOError
-
+from fiona.errors import DataIOError, GDALVersionError
 from .conftest import gdal_version
 
 
@@ -23,7 +22,7 @@ def test_get(path_coutwildrnp_shp):
     ("layer", None, {}),
     ("layer", "test", {}),  
 ])
-@pytest.mark.xfail(gdal_version.major < 2, reason="Broken on GDAL 1.x")
+@pytest.mark.skipif(gdal_version.major < 2, reason="Broken on GDAL 1.x")
 def test_set_tags(layer, namespace, tags, tmpdir):
     test_geopackage = str(tmpdir.join("test.gpkg"))
     schema = {'properties': {'CDATA1': 'str:254'}, 'geometry': 'Polygon'}
@@ -46,7 +45,7 @@ def test_set_tags(layer, namespace, tags, tmpdir):
     ("test", None),
     ("test", "test"),
 ])
-@pytest.mark.xfail(gdal_version.major < 2, reason="Broken on GDAL 1.x")
+@pytest.mark.skipif(gdal_version.major < 2, reason="Broken on GDAL 1.x")
 def test_set_tag_item(layer, namespace, tmpdir):
     test_geopackage = str(tmpdir.join("test.gpkg"))
     schema = {'properties': {'CDATA1': 'str:254'}, 'geometry': 'Polygon'}
@@ -61,3 +60,19 @@ def test_set_tag_item(layer, namespace, tmpdir):
         assert gpkg.get_tag_item("test_tag1", ns=namespace) == "test_value1"
         with pytest.raises(DataIOError):
             gpkg.set_tag_item("test_tag1", "test_value1", ns=namespace)
+
+
+@pytest.mark.skipif(gdal_version.major >= 2, reason="Only raises on GDAL 1.x")
+def test_gdal_version_error(tmpdir):
+    test_geopackage = str(tmpdir.join("test.gpkg"))
+    schema = {'properties': {'CDATA1': 'str:254'}, 'geometry': 'Polygon'}
+    with fiona.Env(), fiona.open(
+            test_geopackage, "w", driver="GPKG", schema=schema, layer="layer") as gpkg:
+        with pytest.raises(GDALVersionError):
+            gpkg.set_tags({"test_tag1": "test_value1"}, ns="test")
+        with pytest.raises(GDALVersionError):
+            gpkg.set_tag_item("test_tag1", "test_value1", ns="test")
+        with pytest.raises(GDALVersionError):
+            gpkg.tags()
+        with pytest.raises(GDALVersionError):
+            gpkg.get_tag_item("test_tag1")

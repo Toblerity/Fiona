@@ -14,11 +14,14 @@ from fiona.logutils import FieldSkipLogFilter
 from fiona._crs import crs_to_wkt
 from fiona._env import get_gdal_release_name, get_gdal_version_tuple
 from fiona.env import env_ctx_if_needed
-from fiona.errors import FionaDeprecationWarning, DataIOError
+from fiona.errors import FionaDeprecationWarning, GDALVersionError, DataIOError
 from fiona.drvsupport import supported_drivers
 from fiona.path import Path, vsi_path, parse_path
 from six import string_types, binary_type
 
+
+_GDAL_VERSION_TUPLE = get_gdal_version_tuple()
+_GDAL_RELEASE_NAME = get_gdal_release_name()
 
 log = logging.getLogger(__name__)
 
@@ -76,10 +79,10 @@ class Collection(object):
             raise TypeError("invalid archive: %r" % archive)
 
         # Check GDAL version against drivers
-        if (driver == "GPKG" and get_gdal_version_tuple() < (1, 11, 0)):
+        if (driver == "GPKG" and _GDAL_VERSION_TUPLE < (1, 11, 0)):
             raise DriverError(
                 "GPKG driver requires GDAL 1.11.0, fiona was compiled "
-                "against: {}".format(get_gdal_release_name()))
+                "against: {}".format(_GDAL_RELEASE_NAME))
 
         self.session = None
         self.iterator = None
@@ -229,6 +232,11 @@ class Collection(object):
         -------
         dict
         """
+        if _GDAL_VERSION_TUPLE.major < 2:
+            raise GDALVersionError(
+                "tags requires GDAL 2+, fiona was compiled "
+                "against: {}".format(_GDAL_RELEASE_NAME)
+            )
         if self.session:
             return self.session.tags(ns=ns)
         return None
@@ -247,6 +255,11 @@ class Collection(object):
         -------
         str
         """
+        if _GDAL_VERSION_TUPLE.major < 2:
+            raise GDALVersionError(
+                "get_tag_item requires GDAL 2+, fiona was compiled "
+                "against: {}".format(_GDAL_RELEASE_NAME)
+            )
         if self.session:
             return self.session.get_tag_item(key=key, ns=ns)
         return None
@@ -269,6 +282,11 @@ class Collection(object):
         -------
         int
         """
+        if _GDAL_VERSION_TUPLE.major < 2:
+            raise GDALVersionError(
+                "set_tags requires GDAL 2+, fiona was compiled "
+                "against: {}".format(_GDAL_RELEASE_NAME)
+            )
         if not isinstance(self.session, WritingSession):
             raise DataIOError("Unable to set tags as not in writing mode.")
         return self.session.set_tags(tags, ns=ns)
@@ -289,6 +307,11 @@ class Collection(object):
         -------
         int
         """
+        if _GDAL_VERSION_TUPLE.major < 2:
+            raise GDALVersionError(
+                "set_tag_item requires GDAL 2+, fiona was compiled "
+                "against: {}".format(_GDAL_RELEASE_NAME)
+            )
         if not isinstance(self.session, WritingSession):
             raise DataIOError("Unable to set tags as not in writing mode.")
         return self.session.set_tag_item(key=key, tag=tag, ns=ns)
@@ -478,7 +501,7 @@ class Collection(object):
 
         See GH#572 for discussion.
         """
-        gdal_version_major = get_gdal_version_tuple().major
+        gdal_version_major = _GDAL_VERSION_TUPLE.major
 
         for field in self._schema["properties"].values():
             field_type = field.split(":")[0]
