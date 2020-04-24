@@ -301,7 +301,12 @@ Features of a collection may also be accessed by index.
      'properties': OrderedDict([(u'CAT', 232.0), (u'FIPS_CNTRY', u'UK'), (u'CNTRY_NAME', u'United Kingdom'), (u'AREA', 244820.0), (u'POP_CNTRY', 60270708.0)]),
      'type': 'Feature'}
 
-Note that these indices are controlled by GDAL, and do not always follow Python conventions. They can start from 0, 1 (e.g. geopackages), or even other values, and have no guarantee of contiguity. Negative indices will only function correctly if indices start from 0 and are contiguous.
+.. admonition:: Note
+
+    Note that these indices are controlled by GDAL, and do not always follow Python conventions. They can start from 0, 1 (e.g. geopackages), or even other values, and have no guarantee of contiguity. Negative indices will only function correctly if indices start from 0 and are contiguous.
+
+    Important: do not use collection indexing while simultaneously accessing a collection using next().
+
 
 Closing Files
 -------------
