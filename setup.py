@@ -191,7 +191,7 @@ ext_options = dict(
     extra_link_args=extra_link_args)
 
 # Enable coverage for cython pyx files.
-if os.getenv("CYTHON_TRACING", "False").lower() == "true":
+if os.environ.get('CYTHON_COVERAGE'):
     from Cython.Compiler.Options import get_directive_defaults
     directive_defaults = get_directive_defaults()
     directive_defaults['linetrace'] = True

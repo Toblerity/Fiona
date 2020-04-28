@@ -15,7 +15,7 @@ env:
     - GDALBUILD=$HOME/gdalbuild
     - PROJINST=$HOME/gdalinstall
     - PROJBUILD=$HOME/projbuild
-    - CYTHON_TRACING="true"
+    - CYTHON_COVERAGE="true"
     - MAKEFLAGS="-j 2"
 
 matrix:
