@@ -1,10 +1,6 @@
-dist: trusty
-
 language: python
-
-python:
-  - "2.7"
-  - "3.6"
+dist: xenial
+# default gcc of bionic does not compile gdal 1.x
 
 cache:
   directories:
@@ -20,49 +16,94 @@ env:
     - PROJINST=$HOME/gdalinstall
     - PROJBUILD=$HOME/projbuild
     - CYTHON_TRACING="true"
-  matrix:
-    - GDALVERSION="1.11.5" PROJVERSION="4.8.0"
-    - GDALVERSION="2.0.3" PROJVERSION="4.9.3"
-    - GDALVERSION="2.1.4" PROJVERSION="4.9.3"
-    - GDALVERSION="2.2.4" PROJVERSION="4.9.3"
-    - GDALVERSION="2.3.3" PROJVERSION="4.9.3"
-    - GDALVERSION="2.4.2" PROJVERSION="4.9.3"
-    - GDALVERSION="3.0.1" PROJVERSION="6.1.1"
-    - GDALVERSION="master" PROJVERSION="6.1.1"
+    - MAKEFLAGS="-j 2"
 
 matrix:
+  include:
+    # Test all supported gdal minor versions (except latest stable) with one python version
+    - python: "3.6"
+      env:
+        GDALVERSION="1.11.5"
+        PROJVERSION="4.8.0"
+    - python: "3.6"
+      env:
+        GDALVERSION="2.0.3"
+        PROJVERSION="4.9.3"
+    - python: "3.6"
+      env:
+        GDALVERSION="2.1.4"
+        PROJVERSION="4.9.3"
+    - python: "3.6"
+      env:
+        GDALVERSION="2.2.4"
+        PROJVERSION="4.9.3"
+    - python: "3.6"
+      env:
+        GDALVERSION="2.3.3"
+        PROJVERSION="4.9.3"
+    - python: "3.6"
+      env:
+        GDALVERSION="2.4.4"
+        PROJVERSION="4.9.3"
+
+    # Test all supported python versions with latest stable gdal release
+    - python: "2.7"
+      env:
+        GDALVERSION="3.0.4"
+        PROJVERSION="6.2.1"
+    - python: "3.6"
+      env:
+        GDALVERSION="3.0.4"
+        PROJVERSION="6.2.1"
+    - python: "3.7"
+      env:
+        GDALVERSION="3.0.4"
+        PROJVERSION="6.2.1"
+    - python: "3.8"
+      env:
+        GDALVERSION="3.0.4"
+        PROJVERSION="6.2.1"
+
+    # Test master
+    - python: "3.8"
+      env:
+        GDALVERSION="master"
+        PROJVERSION="6.3.1"
+
   allow_failures:
-    - env: GDALVERSION="master" PROJVERSION="6.1.1"
+    - env:
+        GDALVERSION="master"
+        PROJVERSION="6.3.1"
 
 addons:
   apt:
     packages:
-    - libgdal-dev
     - libatlas-dev
     - libatlas-base-dev
     - gfortran
+    - libsqlite3-dev
+    - sqlite3
 
 before_install:
-  - pip install -U pip
-  - pip install wheel coveralls>=1.1 --upgrade
-  - pip install setuptools==36.0.1
-  - pip install wheel
+  - python -m pip install -U pip
+  - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$GDALINST/proj-$PROJVERSION/bin:$PATH
+  - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$GDALINST/proj-$PROJVERSION/lib:$LD_LIBRARY_PATH
   - . ./scripts/travis_proj_install.sh
   - . ./scripts/travis_gdal_install.sh
-  - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$PATH
-  - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$LD_LIBRARY_PATH
   - export GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal
   - export PROJ_LIB=$GDALINST/gdal-$GDALVERSION/share/proj
   - gdal-config --version
+  - python -m pip wheel -r requirements-dev.txt
+  - python -m pip install -r requirements-dev.txt
+  - python -m pip install wheel coveralls>=1.1 --upgrade
 
 install:
-  - if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $(gdal-config --version) == "$GDALVERSION" ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
-  - "python -m pip wheel -r requirements-dev.txt"
-  - "python -m pip install -r requirements-dev.txt"
-  - "GDAL_CONFIG=$GDALINST/gdal-$GDALVERSION/bin/gdal-config python -m pip install --upgrade --force-reinstall --no-use-pep517 -e .[test]"
+  - if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $(gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
+  - "GDAL_CONFIG=$GDALINST/gdal-$GDALVERSION/bin/gdal-config python -m pip install --no-deps --force-reinstall --no-use-pep517 -e ."
+  - python -m pip freeze
   - fio --version
-  - gdal-config --version
   - fio --gdal-version
+  - python -c "import fiona; fiona.show_versions()"
 
 script:
   - python -m pytest -m "not wheel" --cov fiona --cov-report term-missing
@@ -72,6 +113,3 @@ after_script:
 
 after_success:
   - coveralls || echo "!! intermittent coveralls failure"
-
-before_cache:
-  - if [ "$GDALVERSION" = "trunk" ]; then rm -rf $GDALINST/gdal-$GDALVERSION; fi
