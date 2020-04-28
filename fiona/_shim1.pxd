@@ -22,6 +22,8 @@ cdef void *get_linear_geometry(void *geom)
 cdef const char* osr_get_name(OGRSpatialReferenceH hSrs)
 cdef void osr_set_traditional_axis_mapping_strategy(OGRSpatialReferenceH hSrs)
 cdef void set_proj_search_path(object path)
+cdef (int, int, int) get_proj_version()
+
 
 from fiona._shim cimport OGR_F_GetFieldAsInteger as OGR_F_GetFieldAsInteger64
 from fiona._shim cimport OGR_F_SetFieldInteger as OGR_F_SetFieldInteger64

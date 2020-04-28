@@ -62,6 +62,7 @@ install:
   - fio --version
   - gdal-config --version
   - fio --gdal-version
+  - python -c "import fiona; fiona.show_versions()"
 
 script:
   - python -m pytest -m "not wheel" --cov fiona --cov-report term-missing

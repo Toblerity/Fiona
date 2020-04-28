@@ -67,7 +67,7 @@ import logging
 import os
 import sys
 import warnings
-
+import platform
 from six import string_types
 
 try:
@@ -94,6 +94,7 @@ from fiona.io import MemoryFile
 from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove, _remove_layer
 from fiona.path import ParsedPath, parse_path, vsi_path
 from fiona.vfs import parse_paths as vfs_parse_paths
+from fiona._show_versions import show_versions
 
 # These modules are imported by fiona.ogrext, but are also import here to
 # help tools like cx_Freeze find them automatically

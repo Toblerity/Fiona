@@ -18,7 +18,7 @@ import sys
 import threading
 
 from fiona._err cimport exc_wrap_int, exc_wrap_ogrerr
-from fiona._shim cimport set_proj_search_path
+from fiona._shim cimport set_proj_search_path, get_proj_version
 from fiona._err import CPLE_BaseError
 from fiona.errors import EnvError
 
@@ -112,6 +112,17 @@ def get_gdal_version_tuple():
         minor = (gdal_version_num - (major * 1000)) // 100
         revision = (gdal_version_num - (major * 1000) - (minor * 100)) // 10
         return GDALVersion(major, minor, revision)
+
+
+def get_proj_version_tuple():
+    """
+    Returns proj version tuple for gdal >= 3.0.1, otherwise None
+    """
+    gdal_version_num = get_gdal_version_num()
+    if gdal_version_num < calc_gdal_version_num(3, 0, 1):
+        proj_version = None
+    else:
+        return get_proj_version()
 
 
 cdef void log_error(CPLErr err_class, int err_no, const char* msg) with gil:
