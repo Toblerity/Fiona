@@ -291,8 +291,8 @@ class Collection(object):
             raise DataIOError("Unable to update tags as not in writing mode.")
         return self.session.update_tags(tags, ns=ns)
 
-    def set_tag_item(self, key, tag, ns=None):
-        """Sets the tag item value
+    def update_tag_item(self, key, tag, ns=None):
+        """Updates the tag item value
 
         Parameters
         ----------
@@ -309,12 +309,12 @@ class Collection(object):
         """
         if _GDAL_VERSION_TUPLE.major < 2:
             raise GDALVersionError(
-                "set_tag_item requires GDAL 2+, fiona was compiled "
+                "update_tag_item requires GDAL 2+, fiona was compiled "
                 "against: {}".format(_GDAL_RELEASE_NAME)
             )
         if not isinstance(self.session, WritingSession):
-            raise DataIOError("Unable to set tags as not in writing mode.")
-        return self.session.set_tag_item(key=key, tag=tag, ns=ns)
+            raise DataIOError("Unable to update tag as not in writing mode.")
+        return self.session.update_tag_item(key=key, tag=tag, ns=ns)
 
     @property
     def meta(self):

@@ -46,20 +46,20 @@ def test_update_tags(layer, namespace, tags, tmpdir):
     ("test", "test"),
 ])
 @pytest.mark.skipif(gdal_version.major < 2, reason="Broken on GDAL 1.x")
-def test_set_tag_item(layer, namespace, tmpdir):
+def test_update_tag_item(layer, namespace, tmpdir):
     test_geopackage = str(tmpdir.join("test.gpkg"))
     schema = {'properties': {'CDATA1': 'str:254'}, 'geometry': 'Polygon'}
     with fiona.Env(), fiona.open(
             test_geopackage, "w", driver="GPKG", schema=schema, layer=layer) as gpkg:
         assert gpkg.get_tag_item("test_tag1", ns=namespace) is None
-        gpkg.set_tag_item("test_tag1", "test_value1", ns=namespace)
+        gpkg.update_tag_item("test_tag1", "test_value1", ns=namespace)
 
     with fiona.Env(), fiona.open(test_geopackage, layer=layer) as gpkg:
         if namespace is not None:
             assert gpkg.get_tag_item("test_tag1") is None
         assert gpkg.get_tag_item("test_tag1", ns=namespace) == "test_value1"
         with pytest.raises(DataIOError):
-            gpkg.set_tag_item("test_tag1", "test_value1", ns=namespace)
+            gpkg.update_tag_item("test_tag1", "test_value1", ns=namespace)
 
 
 @pytest.mark.skipif(gdal_version.major >= 2, reason="Only raises on GDAL 1.x")
@@ -71,7 +71,7 @@ def test_gdal_version_error(tmpdir):
         with pytest.raises(GDALVersionError):
             gpkg.update_tags({"test_tag1": "test_value1"}, ns="test")
         with pytest.raises(GDALVersionError):
-            gpkg.set_tag_item("test_tag1", "test_value1", ns="test")
+            gpkg.update_tag_item("test_tag1", "test_value1", ns="test")
         with pytest.raises(GDALVersionError):
             gpkg.tags()
         with pytest.raises(GDALVersionError):

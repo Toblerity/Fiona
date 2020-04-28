@@ -1317,8 +1317,8 @@ cdef class WritingSession(Session):
         finally:
             CSLDestroy(metadata)
 
-    def set_tag_item(self, key, tag, ns=None):
-        """Sets the tag item value
+    def update_tag_item(self, key, tag, ns=None):
+        """Updates the tag item value
 
         Parameters
         ----------
