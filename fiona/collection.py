@@ -264,7 +264,7 @@ class Collection(object):
             return self.session.get_tag_item(key=key, ns=ns)
         return None
 
-    def set_tags(self, tags, ns=None):
+    def update_tags(self, tags, ns=None):
         """Writes a dict containing the dataset or layers's tags.
         Tags are pairs of key and value strings. Tags belong to
         namespaces.  The standard namespaces are: default (None) and
@@ -284,12 +284,12 @@ class Collection(object):
         """
         if _GDAL_VERSION_TUPLE.major < 2:
             raise GDALVersionError(
-                "set_tags requires GDAL 2+, fiona was compiled "
+                "update_tags requires GDAL 2+, fiona was compiled "
                 "against: {}".format(_GDAL_RELEASE_NAME)
             )
         if not isinstance(self.session, WritingSession):
-            raise DataIOError("Unable to set tags as not in writing mode.")
-        return self.session.set_tags(tags, ns=ns)
+            raise DataIOError("Unable to update tags as not in writing mode.")
+        return self.session.update_tags(tags, ns=ns)
 
     def set_tag_item(self, key, tag, ns=None):
         """Sets the tag item value

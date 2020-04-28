@@ -23,20 +23,20 @@ def test_get(path_coutwildrnp_shp):
     ("layer", "test", {}),  
 ])
 @pytest.mark.skipif(gdal_version.major < 2, reason="Broken on GDAL 1.x")
-def test_set_tags(layer, namespace, tags, tmpdir):
+def test_update_tags(layer, namespace, tags, tmpdir):
     test_geopackage = str(tmpdir.join("test.gpkg"))
     schema = {'properties': {'CDATA1': 'str:254'}, 'geometry': 'Polygon'}
     with fiona.Env(), fiona.open(
             test_geopackage, "w", driver="GPKG", schema=schema, layer=layer) as gpkg:
         assert gpkg.tags() == {}
-        gpkg.set_tags(tags, ns=namespace)
+        gpkg.update_tags(tags, ns=namespace)
 
     with fiona.Env(), fiona.open(test_geopackage, layer=layer) as gpkg:
         assert gpkg.tags(ns=namespace) == tags
         if namespace is not None:
             assert gpkg.tags() == {}
         with pytest.raises(DataIOError):
-            gpkg.set_tags({}, ns=namespace)
+            gpkg.update_tags({}, ns=namespace)
 
 
 @pytest.mark.parametrize("layer, namespace", [
@@ -69,7 +69,7 @@ def test_gdal_version_error(tmpdir):
     with fiona.Env(), fiona.open(
             test_geopackage, "w", driver="GPKG", schema=schema, layer="layer") as gpkg:
         with pytest.raises(GDALVersionError):
-            gpkg.set_tags({"test_tag1": "test_value1"}, ns="test")
+            gpkg.update_tags({"test_tag1": "test_value1"}, ns="test")
         with pytest.raises(GDALVersionError):
             gpkg.set_tag_item("test_tag1", "test_value1", ns="test")
         with pytest.raises(GDALVersionError):

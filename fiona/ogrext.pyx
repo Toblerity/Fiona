@@ -1278,7 +1278,7 @@ cdef class WritingSession(Session):
         gdal_flush_cache(cogr_ds)
         log.debug("Flushed data source cache")
 
-    def set_tags(self, tags, ns=None):
+    def update_tags(self, tags, ns=None):
         """Writes a dict containing the dataset or layers's tags.
         Tags are pairs of key and value strings. Tags belong to
         namespaces.  The standard namespaces are: default (None) and
