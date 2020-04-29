@@ -1,6 +1,7 @@
 # These are extension functions and classes using the OGR C API.
-
 from __future__ import absolute_import
+
+include "gdal.pxi"
 
 import datetime
 import json
@@ -861,6 +862,76 @@ cdef class Session:
             return 0
 
 
+    def tags(self, ns=None):
+        """Returns a dict containing copies of the dataset or layers's
+        tags. Tags are pairs of key and value strings. Tags belong to
+        namespaces.  The standard namespaces are: default (None) and
+        'IMAGE_STRUCTURE'.  Applications can create their own additional
+        namespaces.
+
+        Parameters
+        ----------
+        ns: str, optional
+            Can be used to select a namespace other than the default.
+
+        Returns
+        -------
+        dict
+        """
+        cdef GDALMajorObjectH obj = NULL
+        if self.cogr_layer != NULL:
+            obj = self.cogr_layer
+        else:
+            obj = self.cogr_ds
+
+        cdef const char *domain = NULL
+        if ns:
+            ns = ns.encode('utf-8')
+            domain = ns
+
+        cdef char **metadata = NULL
+        metadata = GDALGetMetadata(obj, domain)
+        num_items = CSLCount(metadata)
+
+        return dict(metadata[i].decode('utf-8').split('=', 1) for i in range(num_items))
+
+
+    def get_tag_item(self, key, ns=None):
+        """Returns tag item value
+
+        Parameters
+        ----------
+        key: str
+            The key for the metadata item to fetch.
+        ns: str, optional
+            Used to select a namespace other than the default.
+
+        Returns
+        -------
+        str
+        """
+
+        key = key.encode('utf-8')
+        cdef const char *name = key
+
+        cdef const char *domain = NULL
+        if ns:
+            ns = ns.encode('utf-8')
+            domain = ns
+
+        cdef GDALMajorObjectH obj = NULL
+        if self.cogr_layer != NULL:
+            obj = self.cogr_layer
+        else:
+            obj = self.cogr_ds
+
+        cdef char *value = NULL
+        value = GDALGetMetadataItem(obj, name, domain)
+        if value == NULL:
+            return None
+        return value.decode("utf-8")
+
+
 cdef class WritingSession(Session):
 
     cdef object _schema_mapping
@@ -1206,6 +1277,80 @@ cdef class WritingSession(Session):
 
         gdal_flush_cache(cogr_ds)
         log.debug("Flushed data source cache")
+
+    def update_tags(self, tags, ns=None):
+        """Writes a dict containing the dataset or layers's tags.
+        Tags are pairs of key and value strings. Tags belong to
+        namespaces.  The standard namespaces are: default (None) and
+        'IMAGE_STRUCTURE'.  Applications can create their own additional
+        namespaces.
+
+        Parameters
+        ----------
+        tags: dict
+            The dict of metadata items to set.
+        ns: str, optional
+            Used to select a namespace other than the default.
+
+        Returns
+        -------
+        int
+        """
+        cdef GDALMajorObjectH obj = NULL
+        if self.cogr_layer != NULL:
+            obj = self.cogr_layer
+        else:
+            obj = self.cogr_ds
+
+        cdef const char *domain = NULL
+        if ns:
+            ns = ns.encode('utf-8')
+            domain = ns
+
+        cdef char **metadata = NULL
+        try:
+            for key, value in tags.items():
+                key = key.encode("utf-8")
+                value = value.encode("utf-8")
+                metadata = CSLAddNameValue(metadata, <const char *>key, <const char *>value)
+            return GDALSetMetadata(obj, metadata, domain)
+        finally:
+            CSLDestroy(metadata)
+
+    def update_tag_item(self, key, tag, ns=None):
+        """Updates the tag item value
+
+        Parameters
+        ----------
+        key: str
+            The key for the metadata item to set.
+        tag: str
+            The value of the metadata item to set.
+        ns: str
+            Used to select a namespace other than the default.
+
+        Returns
+        -------
+        int
+        """
+        key = key.encode('utf-8')
+        cdef const char *name = key
+        tag = tag.encode("utf-8")
+        cdef char *value = tag
+
+        cdef const char *domain = NULL
+        if ns:
+            ns = ns.encode('utf-8')
+            domain = ns
+
+        cdef GDALMajorObjectH obj = NULL
+        if self.cogr_layer != NULL:
+            obj = self.cogr_layer
+        else:
+            obj = self.cogr_ds
+
+        return GDALSetMetadataItem(obj, name, value, domain)
+
 
 cdef class Iterator:
 
