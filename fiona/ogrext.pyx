@@ -1179,6 +1179,13 @@ cdef class WritingSession(Session):
         schema_props_keys = set(collection.schema['properties'].keys())
         for record in records:
             log.debug("Creating feature in layer: %s" % record)
+
+            # Check for optional elements
+            if 'properties' not in record:
+                record['properties'] = {}
+            if 'geometry' not in record:
+                record['geometry'] = None
+
             # Validate against collection's schema.
             if set(record['properties'].keys()) != schema_props_keys:
                 raise ValueError(

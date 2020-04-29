@@ -134,3 +134,7 @@ cdef void osr_set_traditional_axis_mapping_strategy(OGRSpatialReferenceH hSrs):
 
 cdef void set_proj_search_path(object path):
     os.environ["PROJ_LIB"] = path
+
+
+cdef (int, int, int) get_proj_version():
+    return (-1, -1, -1)

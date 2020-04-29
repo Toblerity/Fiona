@@ -159,3 +159,11 @@ cdef void set_proj_search_path(object path):
     path_c = path_b
     paths = CSLAddString(paths, path_c)
     OSRSetPROJSearchPaths(paths)
+
+
+cdef (int, int, int) get_proj_version():
+    cdef int major
+    cdef int minor
+    cdef int patch
+    OSRGetPROJVersion(&major, &minor, &patch)
+    return (major, minor, patch)
