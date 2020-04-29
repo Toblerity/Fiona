@@ -33,5 +33,5 @@ class TestNonCountingLayer(object):
             assert len(features) == 3
 
     def test_warn_slice_negative_index(self):
-        with pytest.warns((FionaDeprecationWarning, RuntimeWarning)) as record:
+        with pytest.warns((FionaDeprecationWarning, RuntimeWarning)):
             self.c[2:-4]
