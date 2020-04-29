@@ -910,6 +910,8 @@ def test_collection_env(path_coutwildrnp_shp):
                                    (5, 0, -1),
                                    (15, 5, -1),
                                    (30, 15, -1)])
+@pytest.mark.filterwarnings('ignore:.*OLC_FASTFEATURECOUNT*')
+@pytest.mark.filterwarnings('ignore:.*OLCFastSetNextByIndex*')
 def test_filter_range(tmpdir, driver, slice):
     """ Test if c.filter(start, stop) returns the correct features.
 
