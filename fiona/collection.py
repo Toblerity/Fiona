@@ -14,7 +14,7 @@ from fiona.logutils import FieldSkipLogFilter
 from fiona._crs import crs_to_wkt
 from fiona._env import get_gdal_release_name, get_gdal_version_tuple
 from fiona.env import env_ctx_if_needed
-from fiona.errors import FionaDeprecationWarning, GDALVersionError, DataIOError
+from fiona.errors import FionaDeprecationWarning, GDALVersionError, UnsupportedOperation
 from fiona.drvsupport import supported_drivers
 from fiona.path import Path, vsi_path, parse_path
 from six import string_types, binary_type
@@ -288,7 +288,7 @@ class Collection(object):
                 "against: {}".format(_GDAL_RELEASE_NAME)
             )
         if not isinstance(self.session, WritingSession):
-            raise DataIOError("Unable to update tags as not in writing mode.")
+            raise UnsupportedOperation("Unable to update tags as not in writing mode.")
         return self.session.update_tags(tags, ns=ns)
 
     def update_tag_item(self, key, tag, ns=None):
@@ -313,7 +313,7 @@ class Collection(object):
                 "against: {}".format(_GDAL_RELEASE_NAME)
             )
         if not isinstance(self.session, WritingSession):
-            raise DataIOError("Unable to update tag as not in writing mode.")
+            raise UnsupportedOperation("Unable to update tag as not in writing mode.")
         return self.session.update_tag_item(key=key, tag=tag, ns=ns)
 
     @property

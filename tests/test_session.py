@@ -2,7 +2,7 @@
 import pytest
 
 import fiona
-from fiona.errors import DataIOError, GDALVersionError
+from fiona.errors import GDALVersionError, UnsupportedOperation
 from .conftest import gdal_version
 
 
@@ -35,7 +35,7 @@ def test_update_tags(layer, namespace, tags, tmpdir):
         assert gpkg.tags(ns=namespace) == tags
         if namespace is not None:
             assert gpkg.tags() == {}
-        with pytest.raises(DataIOError):
+        with pytest.raises(UnsupportedOperation):
             gpkg.update_tags({}, ns=namespace)
 
 
@@ -58,7 +58,7 @@ def test_update_tag_item(layer, namespace, tmpdir):
         if namespace is not None:
             assert gpkg.get_tag_item("test_tag1") is None
         assert gpkg.get_tag_item("test_tag1", ns=namespace) == "test_value1"
-        with pytest.raises(DataIOError):
+        with pytest.raises(UnsupportedOperation):
             gpkg.update_tag_item("test_tag1", "test_value1", ns=namespace)
 
 
