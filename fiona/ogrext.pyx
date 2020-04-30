@@ -1381,9 +1381,6 @@ cdef class Iterator:
                     raise StopIteration
         elif self.step > 1 and not self.fastindex and self.next_index == self.start:
             OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
-        elif self.step == 0:
-            # OGR_L_GetNextFeature increments read cursor by one
-            pass
         elif self.step < 0:
             OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
 
