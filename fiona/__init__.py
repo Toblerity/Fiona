@@ -67,7 +67,7 @@ import logging
 import os
 import sys
 import warnings
-
+import platform
 from six import string_types
 
 try:
@@ -83,18 +83,20 @@ if sys.platform == "win32":
 
 import fiona._loading
 with fiona._loading.add_gdal_dll_directories():
-    from fiona._env import (
-        calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name,
-        get_gdal_version_tuple, driver_count)
-    from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove, _remove_layer
     from fiona.collection import BytesCollection, Collection
     from fiona.drvsupport import supported_drivers
     from fiona.env import ensure_env_with_credentials, Env
     from fiona.errors import FionaDeprecationWarning
+    from fiona._env import driver_count
+    from fiona._env import (
+        calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name,
+        get_gdal_version_tuple)
     from fiona.compat import OrderedDict
     from fiona.io import MemoryFile
+    from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove, _remove_layer
     from fiona.path import ParsedPath, parse_path, vsi_path
     from fiona.vfs import parse_paths as vfs_parse_paths
+    from fiona._show_versions import show_versions
 
     # These modules are imported by fiona.ogrext, but are also import here to
     # help tools like cx_Freeze find them automatically
@@ -257,7 +259,14 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
             if schema:
                 # Make an ordered dict of schema properties.
                 this_schema = schema.copy()
-                this_schema['properties'] = OrderedDict(schema['properties'])
+                if 'properties' in schema:
+                    this_schema['properties'] = OrderedDict(schema['properties'])
+                else:
+                    this_schema['properties'] = OrderedDict()
+
+                if 'geometry' not in this_schema:
+                    this_schema['geometry'] = None
+
             else:
                 this_schema = None
             c = Collection(path, mode, crs=crs, driver=driver, schema=this_schema,
