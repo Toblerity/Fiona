@@ -68,7 +68,7 @@ def slice_dataset_path(request):
                         driver=driver,
                         schema=schema) as c:
             c.writerecords(records)
-    yield path
+        yield path
     shutil.rmtree(tmpdir)
 
 
