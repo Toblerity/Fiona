@@ -44,31 +44,28 @@ def test_collection_iterator_next(path_coutwildrnp_shp):
 
 
 @pytest.fixture(scope="module", params=[driver for driver, raw in supported_drivers.items() if 'w' in raw
-                                    and driver not in {'DGN', 'MapInfo File', 'GPSTrackMaker', 'GPX', 'BNA', 'DXF',
-                                                       'GML'}])
+                                        and (driver not in driver_mode_mingdal['w'] or
+                                             gdal_version >= GDALVersion(*driver_mode_mingdal['w'][driver][:2]))
+                                        and driver not in {'DGN', 'MapInfo File', 'GPSTrackMaker', 'GPX', 'BNA', 'DXF',
+                                                           'GML'}])
 def slice_dataset_path(request):
     """ Create temporary datasets for test_collection_iterator_items_slice()"""
 
     driver = request.param
     min_id = 0
     max_id = 9
+    schema = {'geometry': 'Point', 'properties': [('position', 'int')]}
+    records = [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))}, 'properties': {'position': i}} for i
+               in range(min_id, max_id + 1)]
+
     tmpdir = tempfile.mkdtemp()
+    path = os.path.join(tmpdir, get_temp_filename(driver))
 
-    # We only test driver with write capabilities
-    if driver in driver_mode_mingdal['w'] and gdal_version < GDALVersion(
-            *driver_mode_mingdal['w'][driver][:2]):
-        yield None
-    else:
-        schema = {'geometry': 'Point', 'properties': [('position', 'int')]}
-        path = os.path.join(tmpdir, get_temp_filename(driver))
-
-        records = [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))}, 'properties': {'position': i}} for i
-                   in range(min_id, max_id + 1)]
-        with fiona.open(path, 'w',
-                        driver=driver,
-                        schema=schema) as c:
-            c.writerecords(records)
-        yield path
+    with fiona.open(path, 'w',
+                    driver=driver,
+                    schema=schema) as c:
+        c.writerecords(records)
+    yield path
     shutil.rmtree(tmpdir)
 
 
@@ -118,13 +115,8 @@ def test_collection_iterator_items_slice(slice_dataset_path, args):
     """
 
     start, stop, step = args
-
     min_id = 0
     max_id = 9
-
-    # if slice_dataset_path is None it was not possible to create a dataset for this test
-    if slice_dataset_path is None:
-        return
 
     positions = list(range(min_id, max_id + 1))[start:stop:step]
 
