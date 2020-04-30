@@ -46,15 +46,14 @@ def test_collection_iterator_next(path_coutwildrnp_shp):
 @pytest.fixture(scope="module", params=[driver for driver, raw in supported_drivers.items() if 'w' in raw
                                     and driver not in {'DGN', 'MapInfo File', 'GPSTrackMaker', 'GPX', 'BNA', 'DXF',
                                                        'GML'}])
-def dataset_path(request):
+def slice_dataset_path(request):
     """ Create temporary datasets for test_collection_iterator_items_slice()"""
 
     driver = request.param
-
     min_id = 0
     max_id = 9
-
     tmpdir = tempfile.mkdtemp()
+
     # We only test driver with write capabilities
     if driver in driver_mode_mingdal['w'] and gdal_version < GDALVersion(
             *driver_mode_mingdal['w'][driver][:2]):
@@ -63,8 +62,8 @@ def dataset_path(request):
         schema = {'geometry': 'Point', 'properties': [('position', 'int')]}
         path = os.path.join(tmpdir, get_temp_filename(driver))
 
-        records = [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))}, 'properties': {'position': i}} for i in
-                   range(min_id, max_id + 1)]
+        records = [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))}, 'properties': {'position': i}} for i
+                   in range(min_id, max_id + 1)]
         with fiona.open(path, 'w',
                         driver=driver,
                         schema=schema) as c:
@@ -114,8 +113,8 @@ def dataset_path(request):
                                   ])
 @pytest.mark.filterwarnings('ignore:.*OLC_FASTFEATURECOUNT*')
 @pytest.mark.filterwarnings('ignore:.*OLCFastSetNextByIndex*')
-def test_collection_iterator_items_slice(dataset_path, args):
-    """ Test if c.filter(start, stop) returns the correct features.
+def test_collection_iterator_items_slice(slice_dataset_path, args):
+    """ Test if c.items(start, stop, step) returns the correct features.
     """
 
     start, stop, step = args
@@ -123,13 +122,13 @@ def test_collection_iterator_items_slice(dataset_path, args):
     min_id = 0
     max_id = 9
 
-    # if dataset_path is None it was not possible to create a dataset for this test
-    if dataset_path is None:
+    # if slice_dataset_path is None it was not possible to create a dataset for this test
+    if slice_dataset_path is None:
         return
 
     positions = list(range(min_id, max_id + 1))[start:stop:step]
 
-    with fiona.open(dataset_path, 'r') as c:
+    with fiona.open(slice_dataset_path, 'r') as c:
         items = list(c.items(start, stop, step))
         assert len(items) == len(positions)
         record_positions = [int(item[1]['properties']['position']) for item in items]
