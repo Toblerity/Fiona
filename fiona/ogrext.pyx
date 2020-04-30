@@ -1446,7 +1446,7 @@ cdef class ItemsIterator(Iterator):
             ignore_fields=self.collection.ignore_fields,
             ignore_geometry=self.collection.ignore_geometry,
         )
-        log.debug("{}".format(feature))
+
         _deleteOgrFeature(cogr_feature)
 
         return fid, feature
