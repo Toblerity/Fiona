@@ -52,7 +52,7 @@ def dataset_path(request):
     driver = request.param
 
     min_id = 0
-    max_id = 10
+    max_id = 9
 
     tmpdir = tempfile.mkdtemp()
     # We only test driver with write capabilities
@@ -121,7 +121,7 @@ def test_collection_iterator_items_slice(dataset_path, args):
     start, stop, step = args
 
     min_id = 0
-    max_id = 10
+    max_id = 9
 
     # if dataset_path is None it was not possible to create a dataset for this test
     if dataset_path is None:
