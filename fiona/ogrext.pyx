@@ -1406,18 +1406,17 @@ cdef class Iterator:
         if cogr_feature == NULL:
             raise StopIteration
 
-        feature = FeatureBuilder().build(
-            cogr_feature,
-            encoding=self.collection.session._get_internal_encoding(),
-            bbox=False,
-            driver=self.collection.driver,
-            ignore_fields=self.collection.ignore_fields,
-            ignore_geometry=self.collection.ignore_geometry,
-        )
-
-        _deleteOgrFeature(cogr_feature)
-
-        return feature
+        try:
+            return FeatureBuilder().build(
+                cogr_feature,
+                encoding=self.collection.session._get_internal_encoding(),
+                bbox=False,
+                driver=self.collection.driver,
+                ignore_fields=self.collection.ignore_fields,
+                ignore_geometry=self.collection.ignore_geometry,
+            )
+        finally:
+            _deleteOgrFeature(cogr_feature)
 
 
 cdef class ItemsIterator(Iterator):
