@@ -151,13 +151,6 @@ cdef class FeatureBuilder:
         """
         cdef void *fdefn = NULL
         cdef int i
-        cdef int y = 0
-        cdef int m = 0
-        cdef int d = 0
-        cdef int hh = 0
-        cdef int mm = 0
-        cdef int ss = 0
-        cdef int tz = 0
         cdef unsigned char *data = NULL
         cdef int l
         cdef int retval
@@ -239,16 +232,14 @@ cdef class FeatureBuilder:
                 props[key] = val
 
             elif fieldtype in (FionaDateType, FionaTimeType, FionaDateTimeType):
-                retval = OGR_F_GetFieldAsDateTime(
-                    feature, i, &y, &m, &d, &hh, &mm, &ss, &tz)
+                retval, y, m, d, hh, mm, ss, ms, tz = get_field_as_datetime(feature, i)
                 try:
                     if fieldtype is FionaDateType:
                         props[key] = datetime.date(y, m, d).isoformat()
                     elif fieldtype is FionaTimeType:
-                        props[key] = datetime.time(hh, mm, ss).isoformat()
+                        props[key] = datetime.time(hh, mm, ss, ms).isoformat()
                     else:
-                        props[key] = datetime.datetime(
-                            y, m, d, hh, mm, ss).isoformat()
+                        props[key] = datetime.datetime(y, m, d, hh, mm, ss, ms).isoformat()
                 except ValueError as err:
                     log.exception(err)
                     props[key] = None
@@ -375,24 +366,23 @@ cdef class OGRFeatureBuilder:
                     y, m, d, hh, mm, ss, ff = parse_time(value)
                 else:
                     y, m, d, hh, mm, ss, ff = parse_datetime(value)
-                OGR_F_SetFieldDateTime(
-                    cogr_feature, i, y, m, d, hh, mm, ss, 0)
+
+                set_field_datetime(cogr_feature, i, y, m, d, hh, mm, ss, ff, 0)
             elif (isinstance(value, datetime.date)
             and schema_type == 'date'):
                 y, m, d = value.year, value.month, value.day
-                OGR_F_SetFieldDateTime(
-                    cogr_feature, i, y, m, d, 0, 0, 0, 0)
+                set_field_datetime(cogr_feature, i, y, m, d, 0, 0, 0, 0, 0)
             elif (isinstance(value, datetime.datetime)
             and schema_type == 'datetime'):
                 y, m, d = value.year, value.month, value.day
                 hh, mm, ss = value.hour, value.minute, value.second
-                OGR_F_SetFieldDateTime(
-                    cogr_feature, i, y, m, d, hh, mm, ss, 0)
+                ff = value.microsecond
+                set_field_datetime(cogr_feature, i, y, m, d, hh, mm, ss, ff, 0)
             elif (isinstance(value, datetime.time)
             and schema_type == 'time'):
                 hh, mm, ss = value.hour, value.minute, value.second
-                OGR_F_SetFieldDateTime(
-                    cogr_feature, i, 0, 0, 0, hh, mm, ss, 0)
+                ff = value.microsecond
+                set_field_datetime(cogr_feature, i, 0, 0, 0, hh, mm, ss, ff, 0)
             elif isinstance(value, bytes) and schema_type == "bytes":
                 string_c = value
                 OGR_F_SetFieldBinary(cogr_feature, i, len(value),

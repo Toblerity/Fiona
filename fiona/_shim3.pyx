@@ -15,7 +15,7 @@ cdef extern from "ogr_srs_api.h" nogil:
     void OSRSetPROJSearchPaths(const char *const *papszPaths)
 
 
-from fiona.ogrext2 cimport *
+from fiona.ogrext3 cimport *
 from fiona._err cimport exc_wrap_pointer
 from fiona._err import cpl_errs, CPLE_BaseError, FionaNullPointerError
 from fiona.errors import DriverError
@@ -167,3 +167,28 @@ cdef (int, int, int) get_proj_version():
     cdef int patch
     OSRGetPROJVersion(&major, &minor, &patch)
     return (major, minor, patch)
+
+
+cdef void set_field_datetime(void *cogr_feature, int iField, int nYear, int nMonth, int nDay, int nHour, int nMinute, int nSecond, int nMicrosecond, int nTZFlag):
+    if nMicrosecond > 0:
+        fSecond = float(nSecond + nMicrosecond / 10**6)
+    else:
+        fSecond = float(nSecond)
+    OGR_F_SetFieldDateTimeEx(cogr_feature, iField, nYear, nMonth, nDay, nHour, nMinute, fSecond, nTZFlag)
+
+
+cdef (int, int, int, int, int, int, int, int, int) get_field_as_datetime(void *cogr_feature, int iField):
+    cdef int retval
+    cdef int nYear = 0
+    cdef int nMonth = 0
+    cdef int nDay = 0
+    cdef int nHour = 0
+    cdef int nMinute = 0
+    cdef float fSecond = 0.0
+    cdef int nTZFlag = 0
+
+    retval = OGR_F_GetFieldAsDateTimeEx(cogr_feature, iField, &nYear, &nMonth, &nDay, &nHour, &nMinute, &fSecond, &nTZFlag)
+    nSecond = int(fSecond)
+    nMicrosecond = int(round((fSecond%1) * 10**6))
+
+    return (retval, nYear, nMonth, nDay, nHour, nMinute, nSecond, nMicrosecond, nTZFlag)

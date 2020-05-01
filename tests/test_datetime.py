@@ -4,265 +4,151 @@ See also test_rfc3339.py for datetime parser tests.
 
 import fiona
 import pytest
-import tempfile, shutil
-import os
+
 from fiona.errors import DriverSupportError
-from .conftest import requires_gpkg
+from .conftest import get_temp_filename
+from fiona.env import GDALVersion
+import datetime
+from fiona.drvsupport import supported_drivers, driver_mode_mingdal
 
-GDAL_MAJOR_VER = fiona.get_gdal_version_num() // 1000000
+gdal_version = GDALVersion.runtime()
 
-GEOMETRY_TYPE = "Point"
-GEOMETRY_EXAMPLE = {"type": "Point", "coordinates": [1, 2]}
 
-DRIVER_FILENAME = {
-    "ESRI Shapefile": "test.shp",
-    "GPKG": "test.gpkg",
-    "GeoJSON": "test.geojson",
-    "MapInfo File": "test.tab",
-}
+def converts_to_str(driver, data_type):
+    """ Returns True if the driver converts the data_type silently to str """
+    if ((driver in {'CSV', 'PCIDSK'}) or
+            (driver == 'GeoJSON' and gdal_version.major < 2) or
+            (driver == 'GMT' and gdal_version.major < 2 and data_type in {'date', 'time'})):
+        return True
+    else:
+        return False
 
-DATE_EXAMPLE = "2018-03-25"
-DATETIME_EXAMPLE = "2018-03-25T22:49:05"
-TIME_EXAMPLE = "22:49:05"
 
-class TestDateFieldSupport:
-    def write_data(self, driver):
-        filename = DRIVER_FILENAME[driver]
-        temp_dir = tempfile.mkdtemp()
-        path = os.path.join(temp_dir, filename)
-        schema = {
-            "geometry": GEOMETRY_TYPE,
-            "properties": {
-                "date": "date",
-            }
+def generate_testdata(data_type, driver):
+    """ Generate test cases for test_datefield
+
+    Each test case has the format [(in_value1, out_value1), (in_value2, out_value2), ...]
+    """
+
+    # Test data for 'date' data type
+    if data_type == 'date':
+        return [("2018-03-25", "2018-03-25"),
+                (datetime.date(2018, 3, 25), "2018-03-25"),
+                (None, None)]
+
+    # Test data for 'datetime' data type
+    if data_type == 'datetime':
+        if gdal_version.major < 2:
+            return [("2018-03-25T22:49:05", "2018-03-25T22:49:05"),
+                    (datetime.datetime(2018, 3, 25, 22, 49, 5), "2018-03-25T22:49:05"),
+                    ("2018-03-25T22:49:05.22", "2018-03-25T22:49:05"),
+                    (datetime.datetime(2018, 3, 25, 22, 49, 5, 220000), "2018-03-25T22:49:05"),
+                    ("2018-03-25T22:49:05.123456", "2018-03-25T22:49:05"),
+                    (datetime.datetime(2018, 3, 25, 22, 49, 5, 123456), "2018-03-25T22:49:05"),
+                    (None, None)]
+        else:
+            return [("2018-03-25T22:49:05", "2018-03-25T22:49:05"),
+                    (datetime.datetime(2018, 3, 25, 22, 49, 5), "2018-03-25T22:49:05"),
+                    ("2018-03-25T22:49:05.22", "2018-03-25T22:49:05.220000"),
+                    (datetime.datetime(2018, 3, 25, 22, 49, 5, 220000), "2018-03-25T22:49:05.220000"),
+                    ("2018-03-25T22:49:05.123456", "2018-03-25T22:49:05.123000"),
+                    (datetime.datetime(2018, 3, 25, 22, 49, 5, 123456), "2018-03-25T22:49:05.123000"),
+                    (None, None)]
+
+    # Test data for 'time' data type
+    if data_type == 'time' and driver == 'MapInfo File':
+        if gdal_version.major < 2:
+            return [("22:49:05", "22:49:05"),
+                    (datetime.time(22, 49, 5), "22:49:05"),
+                    ("22:49:05.22", "22:49:05"),
+                    (datetime.time(22, 49, 5, 220000), "22:49:05"),
+                    ("22:49:05.123456", "22:49:05"),
+                    (datetime.time(22, 49, 5, 123456), "22:49:05"),
+                    (None, None)]
+        else:
+            return [("22:49:05", "22:49:05"),
+                    (datetime.time(22, 49, 5), "22:49:05"),
+                    ("22:49:05.22", "22:49:05.220000"),
+                    (datetime.time(22, 49, 5, 220000), "22:49:05.220000"),
+                    ("22:49:05.123456", "22:49:05.123000"),
+                    (datetime.time(22, 49, 5, 123456), "22:49:05.123000"),
+                    (None, '00:00:00')]
+    elif data_type == 'time' and driver in {'GeoJSON', 'GeoJSONSeq'}:
+        return [("22:49:05", "22:49:05"),
+                (datetime.time(22, 49, 5), "22:49:05"),
+                ("22:49:05.22", "22:49:05.220000"),
+                (datetime.time(22, 49, 5, 220000), "22:49:05.220000"),
+                ("22:49:05.123456", "22:49:05.123000"),
+                (datetime.time(22, 49, 5, 123456), "22:49:05.123000"),
+                (None, None)]
+    elif data_type == 'time':
+        if gdal_version.major < 2:
+            return [("22:49:05", "22:49:05"),
+                    (datetime.time(22, 49, 5), "22:49:05"),
+                    ("22:49:05.22", "22:49:05"),
+                    (datetime.time(22, 49, 5, 220000), "22:49:05"),
+                    ("22:49:05.123456", "22:49:05"),
+                    (datetime.time(22, 49, 5, 123456), "22:49:05"),
+                    (None, None)]
+        else:
+            return [("22:49:05", "22:49:05"),
+                    (datetime.time(22, 49, 5), "22:49:05"),
+                    ("22:49:05.22", "22:49:05.220"),
+                    (datetime.time(22, 49, 5, 220000), "22:49:05.220"),
+                    ("22:49:05.123456", "22:49:05.123000"),
+                    (datetime.time(22, 49, 5, 123456), "22:49:05.123000"),
+                    (None, None)]
+
+
+@pytest.mark.parametrize("driver", [driver for driver, raw in supported_drivers.items() if 'w' in raw
+                                    and (driver not in driver_mode_mingdal['w'] or
+                                         gdal_version >= GDALVersion(*driver_mode_mingdal['w'][driver][:2]))
+                                    and driver not in {'DGN', 'GPSTrackMaker', 'GPX', 'BNA', 'DXF', 'GML'}])
+@pytest.mark.parametrize("data_type", ['date', 'datetime', 'time'])
+def test_datefield(tmpdir, driver, data_type):
+    schema = {
+        "geometry": "Point",
+        "properties": {
+            "datefield": data_type,
         }
-        records = [
-            {
-                "geometry": GEOMETRY_EXAMPLE,
-                "properties": {
-                    "date": DATE_EXAMPLE,
-                }
-            },
-            {
-                "geometry": GEOMETRY_EXAMPLE,
-                "properties": {
-                    "date": None,
-                }
-            },
-        ]
-        with fiona.Env(), fiona.open(path, "w", driver=driver, schema=schema) as collection:
-            collection.writerecords(records)
+    }
+    path = str(tmpdir.join(get_temp_filename(driver)))
 
-        with fiona.Env(), fiona.open(path, "r") as collection:
-            schema = collection.schema
-            features = list(collection)
+    # Some driver do not support date, datetime or time
+    if ((driver == 'ESRI Shapefile' and data_type in {'datetime', 'time'}) or
+            (driver == 'GPKG' and data_type == 'time') or
+            (driver == 'GPKG' and gdal_version.major < 2 and data_type in {'datetime', 'time'})):
+        with pytest.raises(DriverSupportError):
+            with fiona.open(path, 'w',
+                            driver=driver,
+                            schema=schema) as c:
+                pass
 
-        shutil.rmtree(temp_dir)
+    else:
+        values_in, values_out = zip(*generate_testdata(data_type, driver))
 
-        return schema, features
-
-    def test_shapefile(self):
-        driver = "ESRI Shapefile"
-        schema, features = self.write_data(driver)
-
-        assert schema["properties"]["date"] == "date"
-        assert features[0]["properties"]["date"] == DATE_EXAMPLE
-        assert features[1]["properties"]["date"] is None
-
-    @requires_gpkg
-    def test_gpkg(self):
-        driver = "GPKG"
-        schema, features = self.write_data(driver)
-
-        assert schema["properties"]["date"] == "date"
-        assert features[0]["properties"]["date"] == DATE_EXAMPLE
-        assert features[1]["properties"]["date"] is None
-
-    def test_geojson(self):
-        # GDAL 1: date field silently converted to string
-        # GDAL 1: date string format uses / instead of -
-        driver = "GeoJSON"
-        schema, features = self.write_data(driver)
-
-        if GDAL_MAJOR_VER >= 2:
-            assert schema["properties"]["date"] == "date"
-            assert features[0]["properties"]["date"] == DATE_EXAMPLE
-        else:
-            assert schema["properties"]["date"] == "str"
-            assert features[0]["properties"]["date"] == "2018/03/25"
-        assert features[1]["properties"]["date"] is None
-
-    def test_mapinfo(self):
-        driver = "MapInfo File"
-        schema, features = self.write_data(driver)
-
-        assert schema["properties"]["date"] == "date"
-        assert features[0]["properties"]["date"] == DATE_EXAMPLE
-        assert features[1]["properties"]["date"] is None
-
-
-class TestDatetimeFieldSupport:
-    def write_data(self, driver):
-        filename = DRIVER_FILENAME[driver]
-        temp_dir = tempfile.mkdtemp()
-        path = os.path.join(temp_dir, filename)
-        schema = {
-            "geometry": GEOMETRY_TYPE,
+        records = [{
+            "geometry": {"type": "Point", "coordinates": [1, 2]},
             "properties": {
-                "datetime": "datetime",
+                "datefield": val_in,
             }
-        }
-        records = [
-            {
-                "geometry": GEOMETRY_EXAMPLE,
-                "properties": {
-                    "datetime": DATETIME_EXAMPLE,
-                }
-            },
-            {
-                "geometry": GEOMETRY_EXAMPLE,
-                "properties": {
-                    "datetime": None,
-                }
-            },
-        ]
-        with fiona.Env(), fiona.open(path, "w", driver=driver, schema=schema) as collection:
-            collection.writerecords(records)
+        } for val_in in values_in]
 
-        with fiona.Env(), fiona.open(path, "r") as collection:
-            schema = collection.schema
-            features = list(collection)
+        with fiona.open(path, 'w',
+                        driver=driver,
+                        schema=schema) as c:
+            c.writerecords(records)
 
-        shutil.rmtree(temp_dir)
+        with fiona.open(path, 'r') as c:
 
-        return schema, features
+            # Some drivers convert data types to str
+            if converts_to_str(driver, data_type):
+                assert c.schema["properties"]["datefield"] == 'str'
+            else:
+                assert c.schema["properties"]["datefield"] == data_type
 
-    def test_shapefile(self):
-        # datetime is silently converted to date
-        driver = "ESRI Shapefile"
+                items = [f['properties']['datefield'] for f in c]
 
-        with pytest.raises(DriverSupportError):
-            schema, features = self.write_data(driver)
-
-        # assert schema["properties"]["datetime"] == "date"
-        # assert features[0]["properties"]["datetime"] == "2018-03-25"
-        # assert features[1]["properties"]["datetime"] is None
-
-    @requires_gpkg
-    def test_gpkg(self):
-        # GDAL 1: datetime silently downgraded to date
-        driver = "GPKG"
-
-        if GDAL_MAJOR_VER >= 2:
-            schema, features = self.write_data(driver)
-            assert schema["properties"]["datetime"] == "datetime"
-            assert features[0]["properties"]["datetime"] == DATETIME_EXAMPLE
-            assert features[1]["properties"]["datetime"] is None
-        else:
-            with pytest.raises(DriverSupportError):
-                schema, features = self.write_data(driver)
-
-    def test_geojson(self):
-        # GDAL 1: datetime silently converted to string
-        # GDAL 1: date string format uses / instead of -
-        driver = "GeoJSON"
-        schema, features = self.write_data(driver)
-
-        if GDAL_MAJOR_VER >= 2:
-            assert schema["properties"]["datetime"] == "datetime"
-            assert features[0]["properties"]["datetime"] == DATETIME_EXAMPLE
-        else:
-            assert schema["properties"]["datetime"] == "str"
-            assert features[0]["properties"]["datetime"] == "2018/03/25 22:49:05"
-        assert features[1]["properties"]["datetime"] is None
-
-    def test_mapinfo(self):
-        driver = "MapInfo File"
-        schema, features = self.write_data(driver)
-
-        assert schema["properties"]["datetime"] == "datetime"
-        assert features[0]["properties"]["datetime"] == DATETIME_EXAMPLE
-        assert features[1]["properties"]["datetime"] is None
-
-
-class TestTimeFieldSupport:
-    def write_data(self, driver):
-        filename = DRIVER_FILENAME[driver]
-        temp_dir = tempfile.mkdtemp()
-        path = os.path.join(temp_dir, filename)
-        schema = {
-            "geometry": GEOMETRY_TYPE,
-            "properties": {
-                "time": "time",
-            }
-        }
-        records = [
-            {
-                "geometry": GEOMETRY_EXAMPLE,
-                "properties": {
-                    "time": TIME_EXAMPLE,
-                }
-            },
-            {
-                "geometry": GEOMETRY_EXAMPLE,
-                "properties": {
-                    "time": None,
-                }
-            },
-        ]
-        with fiona.Env(), fiona.open(path, "w", driver=driver, schema=schema) as collection:
-            collection.writerecords(records)
-
-        with fiona.Env(), fiona.open(path, "r") as collection:
-            schema = collection.schema
-            features = list(collection)
-
-        shutil.rmtree(temp_dir)
-
-        return schema, features
-
-    def test_shapefile(self):
-        # no support for time fields
-        driver = "ESRI Shapefile"
-        with pytest.raises(DriverSupportError):
-            self.write_data(driver)
-
-    @requires_gpkg
-    def test_gpkg(self):
-        # GDAL 2: time field is silently converted to string
-        # GDAL 1: time field dropped completely
-        driver = "GPKG"
-
-        with pytest.raises(DriverSupportError):
-            schema, features = self.write_data(driver)
-
-        # if GDAL_MAJOR_VER >= 2:
-        #     assert schema["properties"]["time"] == "str"
-        #     assert features[0]["properties"]["time"] == TIME_EXAMPLE
-        #     assert features[1]["properties"]["time"] is None
-        # else:
-        #     assert "time" not in schema["properties"]
-
-    def test_geojson(self):
-        # GDAL 1: time field silently converted to string
-        driver = "GeoJSON"
-        schema, features = self.write_data(driver)
-
-        if GDAL_MAJOR_VER >= 2:
-            assert schema["properties"]["time"] == "time"
-        else:
-            assert schema["properties"]["time"] == "str"
-        assert features[0]["properties"]["time"] == TIME_EXAMPLE
-        assert features[1]["properties"]["time"] is None
-
-    def test_mapinfo(self):
-        # GDAL 2: null time is converted to 00:00:00 (regression?)
-        driver = "MapInfo File"
-        schema, features = self.write_data(driver)
-
-        assert schema["properties"]["time"] == "time"
-        assert features[0]["properties"]["time"] == TIME_EXAMPLE
-        if GDAL_MAJOR_VER >= 2:
-            assert features[1]["properties"]["time"] == "00:00:00"
-        else:
-            assert features[1]["properties"]["time"] is None
+                assert len(items) == len(values_in)
+                for val_in, val_out in zip(items, values_out):
+                    assert val_in == val_out
