@@ -25,11 +25,6 @@ class FionaDateTimeType(str):
     """Dates and times."""
 
 
-# pattern_date = re.compile(r"(\d\d\d\d)(-)?(\d\d)(-)?(\d\d)")
-# pattern_time = re.compile(
-#     r"(\d\d)(:)?(\d\d)(:)?(\d\d)?(\.\d+)?(Z|([+-])?(\d\d)?(:)?(\d\d(\.\d+)?))?")
-# pattern_datetime = re.compile(
-#     r"(\d\d\d\d)(-)?(\d\d)(-)?(\d\d)(T)?(\d\d)(:)?(\d\d)(:)?(\d\d(\.\d+)?)?(\.\d+)?(Z|([+-])?(\d\d)?(:)?(\d\d))?")
 pattern_date = re.compile(r"(\d\d\d\d)(-)?(\d\d)(-)?(\d\d)")
 pattern_time = re.compile(
     r"(\d\d)(:)?(\d\d)(:)?(\d\d)?(\.\d+)?(Z|([+-])?(\d\d)?(:)?(\d\d))?")
