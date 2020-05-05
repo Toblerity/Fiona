@@ -175,8 +175,8 @@ def test_datefield(tmpdir, driver, data_type):
                 else:
                     assert get_schema_field(c.schema) == data_type
 
-                    items = [get_field(f) for f in c]
+                items = [get_field(f) for f in c]
 
-                    assert len(items) == len(values_in)
-                    for val_in, val_out in zip(items, values_out):
-                        assert val_in == val_out
+                assert len(items) == len(values_in)
+                for val_in, val_out in zip(items, values_out):
+                    assert val_in == val_out
