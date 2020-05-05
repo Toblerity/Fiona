@@ -12,10 +12,10 @@ from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file, GEOMETRY_T
 from fiona.errors import (DriverError, SchemaError, CRSError, UnsupportedGeometryTypeError, DriverSupportError)
 from fiona.logutils import FieldSkipLogFilter
 from fiona._crs import crs_to_wkt
-from fiona._env import get_gdal_release_name, get_gdal_version_tuple
+from fiona._env import get_gdal_release_name, get_gdal_version_tuple, GDALVersion
 from fiona.env import env_ctx_if_needed
 from fiona.errors import FionaDeprecationWarning
-from fiona.drvsupport import supported_drivers, driver_mode_mingdal
+from fiona.drvsupport import supported_drivers, driver_mode_mingdal, driver_converts_field_type_silently_to_str
 from fiona.path import Path, vsi_path, parse_path
 from six import string_types, binary_type
 
@@ -421,14 +421,17 @@ class Collection(object):
                 elif gdal_version_major == 1:
                     if field_type == "datetime":
                         raise DriverSupportError("GDAL 1.x GPKG driver does not support datetime fields")
-            elif self._driver == "GeoJSON":
-                if gdal_version_major == 1:
-                    if field_type == "date":
-                        warnings.warn("GeoJSON driver in GDAL 1.x silently converts date to string in non-standard format")
-                    elif field_type == "datetime":
-                        warnings.warn("GeoJSON driver in GDAL 1.x silently converts datetime to string in non-standard format")
-                    elif field_type == "time":
-                        warnings.warn("GeoJSON driver in GDAL 1.x silently converts time to string")
+            elif self._driver == 'GML' and field_type == "time" and get_gdal_version_tuple() < GDALVersion(3, 1, 0):
+                raise DriverSupportError("GML driver does not support time field")
+            elif field_type in {'time', 'datetime', 'date'} and driver_converts_field_type_silently_to_str(self.driver,
+                                                                                                           field_type):
+                if self._driver == "GeoJSON" and gdal_version_major == 1 and field_type in {'datetime', 'date'}:
+                    warnings.warn("GeoJSON driver in GDAL 1.x silently converts {} to string"
+                                  " in non-standard format".format(field_type))
+                else:
+                    warnings.warn("{driver} driver silently converts {field_type} "
+                                  "to string".format(driver=self.driver,
+                                                     field_type=field_type))
 
     def flush(self):
         """Flush the buffer."""

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from fiona.env import Env
-
+from fiona.env import Env, GDALVersion
 
 # Here is the list of available drivers as (name, modes) tuples. Currently,
 # we only expose the defaults (excepting FileGDB). We also don't expose
@@ -176,3 +175,17 @@ def _filter_supported_drivers():
 
 
 _filter_supported_drivers()
+
+
+def driver_converts_field_type_silently_to_str(driver, data_type):
+    """ Returns True if the driver converts the data_type silently to str """
+
+    gdal_version = GDALVersion.runtime()
+
+    if ((driver in {'CSV', 'PCIDSK'}) or
+            (driver == 'GeoJSON' and gdal_version.major < 2) or
+            (driver == 'GMT' and gdal_version.major < 2 and data_type in {'date', 'time'}) or
+            (driver == 'GML' and data_type in {'date', 'datetime'})):
+        return True
+    else:
+        return False
