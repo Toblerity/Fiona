@@ -2,6 +2,8 @@
 
 from fiona.env import Env, GDALVersion
 
+gdal_version = GDALVersion.runtime()
+
 # Here is the list of available drivers as (name, modes) tuples. Currently,
 # we only expose the defaults (excepting FileGDB). We also don't expose
 # the CSV or GeoJSON drivers. Use Python's csv and json modules instead.
@@ -42,14 +44,14 @@ supported_drivers = dict([
     ("OpenFileGDB", "r"),
     # ESRI Personal GeoDatabase 	PGeo 	No 	Yes 	No, needs ODBC library
     # ESRI ArcSDE 	SDE 	No 	Yes 	No, needs ESRI SDE
-    # ESRIJSON 	ESRIJSON 	No 	Yes 	Yes 
+    # ESRIJSON 	ESRIJSON 	No 	Yes 	Yes
     ("ESRIJSON", "r"),
     # ESRI Shapefile 	ESRI Shapefile 	Yes 	Yes 	Yes
     ("ESRI Shapefile", "raw"),
     # FMEObjects Gateway 	FMEObjects Gateway 	No 	Yes 	No, needs FME
     # GeoJSON 	GeoJSON 	Yes 	Yes 	Yes
     ("GeoJSON", "raw"),
-    # GeoJSONSeq 	GeoJSON sequences 	Yes 	Yes 	Yes 
+    # GeoJSONSeq 	GeoJSON sequences 	Yes 	Yes 	Yes
     ("GeoJSONSeq", "rw"),
     # Géoconcept Export 	Geoconcept 	Yes 	Yes 	Yes
     # multi-layers
@@ -117,7 +119,7 @@ supported_drivers = dict([
     # SUA 	SUA 	No 	Yes 	Yes
     ("SUA", "r"),
     # SVG 	SVG 	No 	Yes 	No, needs libexpat
-    # TopoJSON 	TopoJSON 	No 	Yes 	Yes 
+    # TopoJSON 	TopoJSON 	No 	Yes 	Yes
     ("TopoJSON", "r"),
     # UK .NTF 	UK. NTF 	No 	Yes 	Yes
     # multi-layer
@@ -154,7 +156,7 @@ driver_mode_mingdal = {
           'GPKG': (1, 11, 0),
           'GeoJSON': (2, 1, 0),
           'MapInfo File': (2, 0, 0),
-          'PCIDSK': (2, 0, 0)}    
+          'PCIDSK': (2, 0, 0)}
 }
 
 
@@ -177,15 +179,55 @@ def _filter_supported_drivers():
 _filter_supported_drivers()
 
 
-def driver_converts_field_type_silently_to_str(driver, data_type):
-    """ Returns True if the driver converts the data_type silently to str """
-
-    gdal_version = GDALVersion.runtime()
+def driver_converts_field_type_silently_to_str(driver, field_type):
+    """ Returns True if the driver converts the field_type silently to str, False otherwise """
 
     if ((driver in {'CSV', 'PCIDSK'}) or
             (driver == 'GeoJSON' and gdal_version.major < 2) or
-            (driver == 'GMT' and gdal_version.major < 2 and data_type in {'date', 'time'}) or
-            (driver == 'GML' and data_type in {'date', 'datetime'})):
+            (driver == 'GPKG' and field_type == 'time') or
+            (driver == 'GMT' and gdal_version.major < 2 and field_type in {'date', 'time'}) or
+            (driver == 'GML' and field_type in {'date', 'datetime'} and gdal_version < GDALVersion(3, 1))):
         return True
-    else:
-        return False
+
+    return False
+
+
+# None: field type is never supported, GDALVersion(2, 0) field type is supported starting with gdal 2.0
+driver_field_type_unsupported = {
+    'time': {
+        'ESRI Shapefile': None,
+        'GPKG': GDALVersion(2, 0),
+        'GPX': None,
+        'GPSTrackMaker': None,
+        'GML': GDALVersion(3, 1),
+        'DGN': None,
+        'BNA': None,
+        'DXF': None
+    },
+    'datetime': {
+        'ESRI Shapefile': None,
+        'GPKG': GDALVersion(2, 0),
+        'DGN': None,
+        'BNA': None,
+        'DXF': None
+    },
+    'date': {
+        'GPX': None,
+        'GPSTrackMaker': None,
+        'DGN': None,
+        'BNA': None,
+        'DXF': None
+    }
+}
+
+
+def driver_supports_field(driver, field_type):
+    """ Returns True if driver support the field_type, False otherwise"""
+
+    if field_type in driver_field_type_unsupported and driver in driver_field_type_unsupported[field_type]:
+        if driver_field_type_unsupported[field_type][driver] is None:
+            return False
+        elif driver_field_type_unsupported[field_type][driver] > gdal_version:
+            return False
+
+    return True
