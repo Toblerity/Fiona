@@ -11,6 +11,7 @@ import warnings
 import math
 import uuid
 from collections import namedtuple
+import weakref
 
 from six import integer_types, string_types, text_type
 
@@ -439,6 +440,17 @@ def featureRT(feature, collection):
 
 # Collection-related extension classes and functions
 
+cdef inline void * wrap_get_feature(object collection, void *cogr_layer, int index) except *:
+    """Check if it is safe to execute OGR_L_GetFeature"""
+    collection._interrupt_sequential_read()
+    return OGR_L_GetFeature(cogr_layer, index)
+
+
+cdef inline int wrap_get_feature_count(object collection, void *cogr_layer, int force) except *:
+    """Check if it is safe to execute OGR_L_GetFeatureCount"""
+    collection._interrupt_sequential_read()
+    return OGR_L_GetFeatureCount(cogr_layer, force)
+
 cdef class Session:
 
     cdef void *cogr_ds
@@ -571,7 +583,7 @@ cdef class Session:
     def get_length(self):
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
-        return OGR_L_GetFeatureCount(self.cogr_layer, 0)
+        return wrap_get_feature_count(self.collection, self.cogr_layer, 0)
 
     def get_driver(self):
         cdef void *cogr_driver = GDALGetDatasetDriver(self.cogr_ds)
@@ -803,7 +815,7 @@ cdef class Session:
         """
         cdef void * cogr_feature
         fid = int(fid)
-        cogr_feature = OGR_L_GetFeature(self.cogr_layer, fid)
+        cogr_feature = wrap_get_feature(self.collection, self.cogr_layer, fid)
         if cogr_feature != NULL:
             _deleteOgrFeature(cogr_feature)
             return True
@@ -817,7 +829,7 @@ cdef class Session:
         """
         cdef void * cogr_feature
         fid = int(fid)
-        cogr_feature = OGR_L_GetFeature(self.cogr_layer, fid)
+        cogr_feature = wrap_get_feature(self.collection, self.cogr_layer, fid)
         if cogr_feature != NULL:
             feature = FeatureBuilder().build(
                 cogr_feature,
@@ -846,12 +858,12 @@ cdef class Session:
             index = item
             # from the back
             if index < 0:
-                ftcount = OGR_L_GetFeatureCount(self.cogr_layer, 0)
+                ftcount = wrap_get_feature_count(self.collection, self.cogr_layer, 0)
                 if ftcount == -1:
                     raise IndexError(
                         "collection's dataset does not support negative indexes")
                 index += ftcount
-            cogr_feature = OGR_L_GetFeature(self.cogr_layer, index)
+            cogr_feature = wrap_get_feature(self.collection, self.cogr_layer, index)
             if cogr_feature == NULL:
                 return None
             feature = FeatureBuilder().build(
@@ -1247,12 +1259,15 @@ cdef class Iterator:
     cdef step
     cdef fastindex
     cdef stepsign
+    cdef is_interrupted
+    cdef object __weakref__
 
     def __cinit__(self, collection, start=None, stop=None, step=None,
                   bbox=None, mask=None):
         if collection.session is None:
             raise ValueError("I/O operation on closed collection")
         self.collection = collection
+        self.collection.iterators.append(weakref.ref(self))
         cdef Session session
         cdef void *cogr_geometry
         session = self.collection.session
@@ -1280,7 +1295,7 @@ cdef class Iterator:
         self.fastindex = OGR_L_TestCapability(
             session.cogr_layer, OLC_FASTSETNEXTBYINDEX)
 
-        ftcount = OGR_L_GetFeatureCount(session.cogr_layer, 0)
+        ftcount = wrap_get_feature_count(self.collection, session.cogr_layer, 0)
         if ftcount == -1 and ((start is not None and start < 0) or
                               (stop is not None and stop < 0)):
             raise IndexError(
@@ -1311,6 +1326,10 @@ cdef class Iterator:
         self.next_index = start
         log.debug("Index: %d", self.next_index)
         OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
+        self.is_interrupted = False
+
+    def interrupt_sequential_read(self):
+        self.is_interrupted = True
 
     def __iter__(self):
         return self
@@ -1332,24 +1351,29 @@ cdef class Iterator:
             if self.next_index > self.start or (self.stop is not None and self.next_index <= self.stop):
                 raise StopIteration
 
-        # Set read cursor to next_item position
-        if self.step > 1 and self.fastindex:
+        if self.is_interrupted:
+            # TODO WARNING potential slow operation
             OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
+            self.is_interrupted = False
+        else:
+            # Set read cursor to next_item position
+            if self.step > 1 and self.fastindex:
+                OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
 
-        elif self.step > 1 and not self.fastindex and not self.next_index == self.start:
-            for _ in range(self.step - 1):
-                # TODO rbuffat add test -> OGR_L_GetNextFeature increments cursor by 1, therefore self.step - 1 as one increment was performed when feature is read
-                cogr_feature = OGR_L_GetNextFeature(session.cogr_layer)
-                if cogr_feature == NULL:
-                    raise StopIteration
-        elif self.step > 1 and not self.fastindex and self.next_index == self.start:
-            OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
+            elif self.step > 1 and not self.fastindex and not self.next_index == self.start:
+                for _ in range(self.step - 1):
+                    # TODO rbuffat add test -> OGR_L_GetNextFeature increments cursor by 1, therefore self.step - 1 as one increment was performed when feature is read
+                    cogr_feature = OGR_L_GetNextFeature(session.cogr_layer)
+                    if cogr_feature == NULL:
+                        raise StopIteration
+            elif self.step > 1 and not self.fastindex and self.next_index == self.start:
+                OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
 
-        elif self.step == 0:
-            # OGR_L_GetNextFeature increments read cursor by one
-            pass
-        elif self.step < 0:
-            OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
+            elif self.step == 0:
+                # OGR_L_GetNextFeature increments read cursor by one
+                pass
+            elif self.step < 0:
+                OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
 
         # set the next index
         self.next_index += self.step

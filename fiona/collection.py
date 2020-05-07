@@ -89,7 +89,6 @@ class Collection(object):
                                                             gdal=get_gdal_release_name()))
 
         self.session = None
-        self.iterator = None
         self._len = 0
         self._bounds = None
         self._driver = None
@@ -100,6 +99,7 @@ class Collection(object):
         self.enabled_drivers = enabled_drivers
         self.ignore_fields = ignore_fields
         self.ignore_geometry = bool(ignore_geometry)
+        self.iterators = []
 
         if vsi:
             self.path = vfs.vsi_path(path, vsi, archive)
@@ -254,9 +254,8 @@ class Collection(object):
         mask = kwds.get('mask')
         if bbox and mask:
             raise ValueError("mask and bbox can not be set together")
-        self.iterator = Iterator(
-            self, start, stop, step, bbox, mask)
-        return self.iterator
+        iterator = Iterator(self, start, stop, step, bbox, mask)
+        return iterator
 
     def items(self, *args, **kwds):
         """Returns an iterator over FID, record pairs, optionally
@@ -282,9 +281,8 @@ class Collection(object):
         mask = kwds.get('mask')
         if bbox and mask:
             raise ValueError("mask and bbox can not be set together")
-        self.iterator = ItemsIterator(
-            self, start, stop, step, bbox, mask)
-        return self.iterator
+        iterator = ItemsIterator(self, start, stop, step, bbox, mask)
+        return iterator
 
     def keys(self, *args, **kwds):
         """Returns an iterator over FIDs, optionally
@@ -310,9 +308,8 @@ class Collection(object):
         mask = kwds.get('mask')
         if bbox and mask:
             raise ValueError("mask and bbox can not be set together")
-        self.iterator = KeysIterator(
-            self, start, stop, step, bbox, mask)
-        return self.iterator
+        iterator = KeysIterator(self, start, stop, step, bbox, mask)
+        return iterator
 
     def __contains__(self, fid):
         return self.session.has_feature(fid)
@@ -323,16 +320,16 @@ class Collection(object):
         """Returns an iterator over records."""
         return self.filter()
 
-    def __next__(self):
-        """Returns next record from iterator."""
-        warnings.warn("Collection.__next__() is buggy and will be removed in "
-                      "Fiona 2.0. Switch to `next(iter(collection))`.",
-                      FionaDeprecationWarning, stacklevel=2)
-        if not self.iterator:
-            iter(self)
-        return next(self.iterator)
-
-    next = __next__
+    # def __next__(self):
+    #     """Returns next record from iterator."""
+    #     warnings.warn("Collection.__next__() is buggy and will be removed in "
+    #                   "Fiona 2.0. Switch to `next(iter(collection))`.",
+    #                   FionaDeprecationWarning, stacklevel=2)
+    #     if not self.iterator:
+    #         iter(self)
+    #     return next(self.iterator)
+    #
+    # next = __next__
 
     def __getitem__(self, item):
         return self.session.__getitem__(item)
@@ -448,7 +445,7 @@ class Collection(object):
             self.session.stop()
             log.debug("Stopped session")
             self.session = None
-            self.iterator = None
+            # todo del self.iterators
         if self.env:
             self.env.__exit__()
 
@@ -472,6 +469,12 @@ class Collection(object):
         # Note: you can't count on this being called. Call close() explicitly
         # or use the context manager protocol ("with").
         self.close()
+
+    def _interrupt_sequential_read(self):
+        for ref in self.iterators:
+            iterator = ref()
+            if iterator is not None:
+                iterator.interrupt_sequential_read()
 
 
 ALL_GEOMETRY_TYPES = set([

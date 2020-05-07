@@ -8,10 +8,16 @@ import pytest
 
 import fiona
 from fiona.collection import Collection
-from fiona.drvsupport import supported_drivers
-from fiona.env import getenv
+from fiona.env import getenv, GDALVersion
 from fiona.errors import FionaValueError, DriverError, FionaDeprecationWarning
-from .conftest import WGS84PATTERN
+from .conftest import WGS84PATTERN, get_temp_filename
+from fiona.drvsupport import supported_drivers, driver_mode_mingdal
+import tempfile
+import os
+import shutil
+
+
+gdal_version = GDALVersion.runtime()
 
 
 class TestSupportedDrivers(object):
@@ -900,3 +906,71 @@ def test_collection_env(path_coutwildrnp_shp):
     with fiona.open(path_coutwildrnp_shp):
         assert 'FIONA_ENV' in getenv()
 
+
+def test_interrupted_sequential_read(path_coutwildrnp_json):
+        with fiona.open(path_coutwildrnp_json) as c:
+            for key in c.keys():
+                c[key]
+
+
+def test_membership_releases_lock(path_coutwildrnp_json):
+    with fiona.open(path_coutwildrnp_json) as c:
+        5 in c.keys()
+        assert (0 in c)
+
+
+@pytest.fixture(scope="module", params=[driver for driver, raw in supported_drivers.items() if 'w' in raw
+                                        and (driver not in driver_mode_mingdal['w'] or
+                                             gdal_version >= GDALVersion(*driver_mode_mingdal['w'][driver][:2]))
+                                        and driver not in {'DGN', 'MapInfo File', 'GPSTrackMaker', 'GPX', 'BNA', 'DXF',
+                                                           'GML'}])
+def slice_dataset_path(request):
+    """ Create temporary datasets for test_collection_iterator_items_slice()"""
+
+    driver = request.param
+    min_id = 0
+    max_id = 9
+    schema = {'geometry': 'Point', 'properties': [('position', 'int')]}
+    records = [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))}, 'properties': {'position': i}} for i
+               in range(min_id, max_id + 1)]
+
+    tmpdir = tempfile.mkdtemp()
+    path = os.path.join(tmpdir, get_temp_filename(driver))
+
+    with fiona.open(path, 'w',
+                    driver=driver,
+                    schema=schema) as c:
+        c.writerecords(records)
+    yield path
+    shutil.rmtree(tmpdir)
+
+
+@pytest.mark.parametrize("args", [(0, None, None, 4),
+                                  ])
+@pytest.mark.filterwarnings('ignore:.*OLC_FASTFEATURECOUNT*')
+@pytest.mark.filterwarnings('ignore:.*OLCFastSetNextByIndex*')
+def test_collection_iterator_items_slice(slice_dataset_path, args):
+    """ Test if c.items(start, stop, step) returns the correct features.
+    """
+
+    start, stop, step, interrupted_index = args
+    min_id = 0
+    max_id = 9
+
+    positions = list(range(min_id, max_id + 1))[start:stop:step]
+
+    with fiona.open(slice_dataset_path, 'r') as c:
+
+        iterator = c.items(start, stop, step)
+        for _ in range(interrupted_index):
+            _ = next(iterator)
+        iterator.interrupt_sequential_read()
+        item = next(iterator)
+
+        assert int(item[1]['properties']['position']) == positions[interrupted_index]
+
+
+def test_collection_iterator_keys_next(path_coutwildrnp_shp):
+    with fiona.open(path_coutwildrnp_shp) as src:
+        k = next(src.keys(5, None))
+        assert k == 5
