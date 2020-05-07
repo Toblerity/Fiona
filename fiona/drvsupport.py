@@ -142,7 +142,7 @@ supported_drivers = dict([
 ])
 
 
-# Mininmal gdal version for different modes
+# Minimal gdal version for different modes
 driver_mode_mingdal = {
 
     'r': {'GPKG': (1, 11, 0),
@@ -182,8 +182,8 @@ _filter_supported_drivers()
 def driver_converts_field_type_silently_to_str(driver, field_type):
     """ Returns True if the driver converts the field_type silently to str, False otherwise """
 
-    if ((driver in {'CSV', 'PCIDSK'}) or
-            (driver == 'GeoJSON' and gdal_version.major < 2) or
+    if ((driver in {'CSV', 'PCIDSK'} and field_type in {'date', 'datetime', 'time'}) or
+            (driver == 'GeoJSON' and gdal_version.major < 2 and field_type in {'date', 'datetime', 'time'}) or
             (driver == 'GPKG' and field_type == 'time') or
             (driver == 'GMT' and gdal_version.major < 2 and field_type in {'date', 'time'}) or
             (driver == 'GML' and field_type in {'date', 'datetime'} and gdal_version < GDALVersion(3, 1))):
