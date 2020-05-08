@@ -9,7 +9,7 @@ import pytest
 import fiona
 from fiona.collection import Collection
 from fiona.env import getenv, GDALVersion
-from fiona.errors import FionaValueError, DriverError, FionaDeprecationWarning
+from fiona.errors import FionaValueError, DriverError, FionaDeprecationWarning, IteratorStoppedError
 from .conftest import WGS84PATTERN, get_temp_filename
 from fiona.drvsupport import supported_drivers, driver_mode_mingdal
 import tempfile
@@ -946,11 +946,12 @@ def slice_dataset_path(request):
 
 
 @pytest.mark.parametrize("args", [(0, None, None, 4),
+                                  (0, None, 2, 3),
                                   ])
 @pytest.mark.filterwarnings('ignore:.*OLC_FASTFEATURECOUNT*')
 @pytest.mark.filterwarnings('ignore:.*OLCFastSetNextByIndex*')
-def test_collection_iterator_items_slice(slice_dataset_path, args):
-    """ Test if c.items(start, stop, step) returns the correct features.
+def test_iterator_sequential_read_interrupted(slice_dataset_path, args):
+    """ Test if iterator resumes at correct position after sequential read is interrupted
     """
 
     start, stop, step, interrupted_index = args
@@ -970,7 +971,22 @@ def test_collection_iterator_items_slice(slice_dataset_path, args):
         assert int(item[1]['properties']['position']) == positions[interrupted_index]
 
 
+def test_multiple_iterators(slice_dataset_path):
+    """Test that only one iterator at any time can be active"""
+
+    with fiona.open(slice_dataset_path, 'r') as c:
+
+        item_iterator = c.items()
+        item = next(item_iterator)
+        item = next(item_iterator)
+        filter_iterator = c.filter()
+        with pytest.raises(IteratorStoppedError):
+            item = next(item_iterator)
+
+
 def test_collection_iterator_keys_next(path_coutwildrnp_shp):
     with fiona.open(path_coutwildrnp_shp) as src:
         k = next(src.keys(5, None))
         assert k == 5
+
+

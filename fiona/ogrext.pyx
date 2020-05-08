@@ -11,7 +11,6 @@ import warnings
 import math
 import uuid
 from collections import namedtuple
-import weakref
 
 from six import integer_types, string_types, text_type
 
@@ -30,7 +29,7 @@ from fiona import compat
 from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
-    FionaDeprecationWarning)
+    FionaDeprecationWarning, IteratorStoppedError)
 from fiona.compat import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -1260,14 +1259,13 @@ cdef class Iterator:
     cdef fastindex
     cdef stepsign
     cdef is_interrupted
-    cdef object __weakref__
+    cdef is_stopped
 
     def __cinit__(self, collection, start=None, stop=None, step=None,
                   bbox=None, mask=None):
         if collection.session is None:
             raise ValueError("I/O operation on closed collection")
         self.collection = collection
-        self.collection.iterators.append(weakref.ref(self))
         cdef Session session
         cdef void *cogr_geometry
         session = self.collection.session
@@ -1327,9 +1325,13 @@ cdef class Iterator:
         log.debug("Index: %d", self.next_index)
         OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
         self.is_interrupted = False
+        self.is_stopped = False
 
     def interrupt_sequential_read(self):
         self.is_interrupted = True
+
+    def stop_iterator(self):
+        self.is_stopped = True
 
     def __iter__(self):
         return self
@@ -1351,8 +1353,14 @@ cdef class Iterator:
             if self.next_index > self.start or (self.stop is not None and self.next_index <= self.stop):
                 raise StopIteration
 
+        # Check if iterator is stopped
+        if self.is_stopped:
+            log.warning("Iterator was stopped, possible due to the creation of another iterator for the same collection.")
+            raise IteratorStoppedError
+
         if self.is_interrupted:
-            # TODO WARNING potential slow operation
+            if not self.fastindex:
+                log.warning("Sequential read of iterator was interrupted. Resetting iterator. This can negatively impact the performance.")
             OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
             self.is_interrupted = False
         else:

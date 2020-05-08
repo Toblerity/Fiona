@@ -63,5 +63,9 @@ class GDALVersionError(FionaError):
     """
 
 
+class IteratorStoppedError(FionaError):
+    """Raised if iterator is accessed after it was stopped."""
+
+
 class FionaDeprecationWarning(UserWarning):
     """A warning about deprecation of Fiona features"""

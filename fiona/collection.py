@@ -99,7 +99,7 @@ class Collection(object):
         self.enabled_drivers = enabled_drivers
         self.ignore_fields = ignore_fields
         self.ignore_geometry = bool(ignore_geometry)
-        self.iterators = []
+        self.iterator = None
 
         if vsi:
             self.path = vfs.vsi_path(path, vsi, archive)
@@ -173,6 +173,12 @@ class Collection(object):
             self._valid_geom_types = _get_valid_geom_types(self.schema, self.driver)
 
         self.field_skip_log_filter = FieldSkipLogFilter()
+
+    def _add_iterator(self, iterator):
+        """Internal method to handle new iterator"""
+        if self.iterator is not None:
+            self.iterator.stop_iterator()
+        self.iterator = iterator
 
     def __repr__(self):
         return "<%s Collection '%s', mode '%s' at %s>" % (
@@ -255,6 +261,7 @@ class Collection(object):
         if bbox and mask:
             raise ValueError("mask and bbox can not be set together")
         iterator = Iterator(self, start, stop, step, bbox, mask)
+        self._add_iterator(iterator)
         return iterator
 
     def items(self, *args, **kwds):
@@ -282,6 +289,7 @@ class Collection(object):
         if bbox and mask:
             raise ValueError("mask and bbox can not be set together")
         iterator = ItemsIterator(self, start, stop, step, bbox, mask)
+        self._add_iterator(iterator)
         return iterator
 
     def keys(self, *args, **kwds):
@@ -309,6 +317,7 @@ class Collection(object):
         if bbox and mask:
             raise ValueError("mask and bbox can not be set together")
         iterator = KeysIterator(self, start, stop, step, bbox, mask)
+        self._add_iterator(iterator)
         return iterator
 
     def __contains__(self, fid):
@@ -320,16 +329,16 @@ class Collection(object):
         """Returns an iterator over records."""
         return self.filter()
 
-    # def __next__(self):
-    #     """Returns next record from iterator."""
-    #     warnings.warn("Collection.__next__() is buggy and will be removed in "
-    #                   "Fiona 2.0. Switch to `next(iter(collection))`.",
-    #                   FionaDeprecationWarning, stacklevel=2)
-    #     if not self.iterator:
-    #         iter(self)
-    #     return next(self.iterator)
-    #
-    # next = __next__
+    def __next__(self):
+        """Returns next record from iterator."""
+        warnings.warn("Collection.__next__() is buggy and will be removed in "
+                      "Fiona 2.0. Switch to `next(iter(collection))`.",
+                      FionaDeprecationWarning, stacklevel=2)
+        if not self.iterator:
+            iter(self)
+        return next(self.iterator)
+
+    next = __next__
 
     def __getitem__(self, item):
         return self.session.__getitem__(item)
@@ -445,7 +454,9 @@ class Collection(object):
             self.session.stop()
             log.debug("Stopped session")
             self.session = None
-            # todo del self.iterators
+            if self.iterator is not None:
+                self.iterator.stop_iterator()
+            self.iterator = None
         if self.env:
             self.env.__exit__()
 
@@ -471,10 +482,9 @@ class Collection(object):
         self.close()
 
     def _interrupt_sequential_read(self):
-        for ref in self.iterators:
-            iterator = ref()
-            if iterator is not None:
-                iterator.interrupt_sequential_read()
+        """ Notify iterator that sequential read is interrupted"""
+        if self.iterator is not None:
+            self.iterator.interrupt_sequential_read()
 
 
 ALL_GEOMETRY_TYPES = set([
