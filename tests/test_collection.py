@@ -858,15 +858,15 @@ def test_open_kwargs(tmpdir, path_coutwildrnp_shp):
 
 @pytest.mark.network
 def test_collection_http():
-    ds = fiona.Collection('http://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.shp', vsi='http')
-    assert ds.path == '/vsicurl/http://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.shp'
+    ds = fiona.Collection('https://github.com/OSGeo/gdal/raw/master/autotest/ogr/data/shp/testshp/poly.shp', vsi='http')
+    assert ds.path == '/vsicurl/https://github.com/OSGeo/gdal/raw/master/autotest/ogr/data/shp/testshp/poly.shp'
     assert len(ds) == 10
 
 
 @pytest.mark.network
 def test_collection_zip_http():
-    ds = fiona.Collection('http://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip', vsi='zip+http')
-    assert ds.path == '/vsizip/vsicurl/http://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip'
+    ds = fiona.Collection('https://github.com/OSGeo/gdal/raw/master/autotest/ogr/data/shp/poly.zip', vsi='zip+http')
+    assert ds.path == '/vsizip/vsicurl/https://github.com/OSGeo/gdal/raw/master/autotest/ogr/data/shp/poly.zip'
     assert len(ds) == 10
 
 
