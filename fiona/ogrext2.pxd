@@ -182,13 +182,14 @@ cdef extern from "cpl_conv.h":
     void    CPLFree (void *ptr)
     void    CPLSetThreadLocalConfigOption (char *key, char *val)
     const char *CPLGetConfigOption (char *, char *)
-
+    int CPLCheckForFile(char *pszFilename, char **papszSiblingList)
 
 cdef extern from "cpl_string.h":
     char ** CSLAddNameValue (char **list, const char *name, const char *value)
     char ** CSLSetNameValue (char **list, const char *name, const char *value)
     void CSLDestroy (char **list)
     char ** CSLAddString(char **list, const char *string)
+    int CSLCount(char **papszStrList)
 
 
 cdef extern from "cpl_vsi.h" nogil:
@@ -203,14 +204,13 @@ cdef extern from "cpl_vsi.h" nogil:
     VSILFILE* VSIFOpenL(const char *path, const char *mode)
     int VSIFCloseL(VSILFILE *fp)
     int VSIUnlink(const char *path)
-
+    char** VSIReadDir(const char* pszPath)
     int VSIFFlushL(VSILFILE *fp)
     size_t VSIFReadL(void *buffer, size_t nSize, size_t nCount, VSILFILE *fp)
     int VSIFSeekL(VSILFILE *fp, vsi_l_offset nOffset, int nWhence)
     vsi_l_offset VSIFTellL(VSILFILE *fp)
     int VSIFTruncateL(VSILFILE *fp, vsi_l_offset nNewSize)
     size_t VSIFWriteL(void *buffer, size_t nSize, size_t nCount, VSILFILE *fp)
-    int VSIUnlink (const char * pathname)
 
 
 cdef extern from "ogr_srs_api.h":

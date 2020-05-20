@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from fiona.env import Env
+from fiona.env import Env, GDALVersion
 
+gdal_version = GDALVersion.runtime()
 
 # Here is the list of available drivers as (name, modes) tuples. Currently,
 # we only expose the defaults (excepting FileGDB). We also don't expose
@@ -176,3 +177,73 @@ def _filter_supported_drivers():
 
 
 _filter_supported_drivers()
+
+
+# zip_memoryfile_not_supported['/vsizip/']['w']['GMT'] = GDALVersion(2, 0): write mode is not supported for '/vsizip/'
+# before GDAL 2.0
+# zip_memoryfile_not_supported['/vsizip/']['w']['GPKG'] = None: write mode is not supported for '/vsizip/' for all
+# versions of GDAL
+#
+# Reasons for missing support:
+# BNA: segfault with GDAL 1.x
+# DGN: Failed to open output file (<= GDAL 2.2), segfault (GDAL > 2.2)
+# GPKG,DXF,ESRI Shapefile,GPX,MapInfo File,PCIDSK': Random access not supported for writable file in /vsizip
+# GMT: Random access not supported for /vsizip for gdal 1.x
+# GPSTrackMaker: VSIFSeekL() is not supported on writable Zip files
+zip_memoryfile_not_supported = {
+    '/vsizip/': {
+        'w': {
+            'BNA': GDALVersion(2, 0),
+            'GMT': GDALVersion(2, 0),
+            'DGN': None,
+            'GPKG': None,
+            'DXF': None,
+            'ESRI Shapefile': None,
+            'GPX': None,
+            'MapInfo File': None,
+            'PCIDSK': None,
+            'GPSTrackMaker': None,
+        }
+    }
+}
+
+
+def zip_memoryfile_supports_mode(vsi, driver, mode):
+    """ Returns True if mode is supported for /vsizip/vsimem/"""
+
+    if (vsi in zip_memoryfile_not_supported and mode in zip_memoryfile_not_supported[vsi] and driver in
+            zip_memoryfile_not_supported[vsi][mode]):
+        if zip_memoryfile_not_supported[vsi][mode][driver] is None:
+            return False
+        elif gdal_version < zip_memoryfile_not_supported[vsi][mode][driver]:
+            return False
+
+    return True
+
+
+memoryfile_not_supported = {
+    'w': {
+        'BNA': GDALVersion(2, 0),
+        'DGN': GDALVersion(2, 3),
+        'GPKG': GDALVersion(2, 0),
+        'MapInfo File': GDALVersion(2, 0)
+    },
+    'a': {
+        'BNA': GDALVersion(2, 0),
+        'DGN': GDALVersion(2, 3),
+        # Test fails for GPKG with sqlite3_open(/vsimem/...) failed: out of memory for gdal 1.x
+        'GPKG': GDALVersion(2, 0),
+        'MapInfo File': GDALVersion(2, 0),
+        'PCIDSK': None
+    }
+}
+
+
+def memoryfile_supports_mode(driver, mode):
+    """ Returns True if mode is supported for /vsimem/"""
+    if mode in memoryfile_not_supported and driver in memoryfile_not_supported[mode]:
+        if memoryfile_not_supported[mode][driver] is None:
+            return False
+        elif gdal_version < memoryfile_not_supported[mode][driver]:
+            return False
+    return True

@@ -26,6 +26,13 @@ CURLSCHEMES = set([k for k, v in SCHEMES.items() if v == 'curl'])
 # TODO: extend for other cloud plaforms.
 REMOTESCHEMES = set([k for k, v in SCHEMES.items() if v in ('curl', 's3', 'gs')])
 
+ARCHIVESCHEMES = {
+    'zip': 'zip',
+    'tar': 'tar',
+    'tgz': 'tar',
+    'tar.gz': 'tar'
+}
+
 
 class Path(object):
     """Base class for dataset paths"""

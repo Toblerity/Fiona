@@ -1289,11 +1289,11 @@ distributed with Fiona.
 
 .. sourcecode:: console
 
-  $ zip /tmp/zed.zip docs/data/test_uk.*
-  adding: docs/data/test_uk.shp (deflated 48%)
-  adding: docs/data/test_uk.shx (deflated 37%)
-  adding: docs/data/test_uk.dbf (deflated 98%)
-  adding: docs/data/test_uk.prj (deflated 15%)
+  $ zip /tmp/coutwildrnp.zip tests/data/coutwildrnp.dbf tests/data/coutwildrnp.prj tests/data/coutwildrnp.shp tests/data/coutwildrnp.shx
+  adding: tests/data/coutwildrnp.dbf (deflated 94%)
+  adding: tests/data/coutwildrnp.prj (deflated 15%)
+  adding: tests/data/coutwildrnp.shp (deflated 62%)
+  adding: tests/data/coutwildrnp.shx (deflated 34%)
 
 The `vfs` keyword parameter for :py:func:`fiona.listlayers` and
 :py:func:`fiona.open` may be an Apache Commons VFS style string beginning with
@@ -1304,19 +1304,78 @@ absolute path within that archive. The layers in that Zip archive are:
 .. sourcecode:: pycon
 
   >>> import fiona
-  >>> fiona.listlayers('/docs/data', vfs='zip:///tmp/zed.zip')
-  ['test_uk']
+  >>> fiona.listlayers('zip:///tmp/coutwildrnp.zip/tests/data/coutwildrnp.shp')
+  ['coutwildrnp']
 
 The single shapefile may also be accessed like so:
 
 .. sourcecode:: pycon
 
-  >>> with fiona.open(
-  ...         '/docs/data/test_uk.shp', 
-  ...         vfs='zip:///tmp/zed.zip') as c:
-  ...     print(len(c))
-  ...
-  48
+    >>> with fiona.open('zip:///tmp/coutwildrnp.zip/tests/data/coutwildrnp.shp') as c:
+    ...     print(len(c))
+    ...
+    67
+
+The files of an archive can be listed with :py:func:`fiona.listdir`.
+
+.. sourcecode:: pycon
+
+    >>> fiona.listdir('zip:///tmp/coutwildrnp.zip/tests/data')
+    ['coutwildrnp.dbf', 'coutwildrnp.prj', 'coutwildrnp.shp', 'coutwildrnp.shx']
+
+
+MemoryFile and ZipMemoryFile
+----------------------------
+
+:py:class:`fiona.io.MemoryFile` and :py:class:`fiona.io.ZipMemoryFile` allow
+formatted feature collections, even zipped feature collections, to be read or
+written in memory, with no filesystem access required. For example, you may
+have a zipped shapefile in a stream of bytes coming from a web upload or
+download.
+
+.. code-block:: pycon
+
+    >>> data = open('tests/data/coutwildrnp.zip', 'rb').read()
+    >>> len(data)
+    154006
+    >>> data[:20]
+    b'PK\x03\x04\x14\x00\x00\x00\x00\x00\xaa~VM\xech\xae\x1e\xec\xab'
+
+The feature collection in this stream of bytes can be accessed by wrapping it
+in an instance of ZipMemoryFile.
+
+.. code-block:: pycon
+
+    >>> from fiona.io import ZipMemoryFile
+    >>> with ZipMemoryFile(data) as zip:
+    ...     with zip.open('coutwildrnp.shp') as collection:
+    ...         print(len(collection))
+    ...         print(collection.schema)
+    ...
+    67
+    {'properties': OrderedDict([('PERIMETER', 'float:24.15'), ('FEATURE2', 'str:80'), ('NAME', 'str:80'), ('FEATURE1', 'str:80'), ('URL', 'str:101'), ('AGBUR', 'str:80'), ('AREA', 'float:24.15'), ('STATE_FIPS', 'str:80'), ('WILDRNP020', 'int:10'), ('STATE', 'str:80')]), 'geometry': 'Polygon'}
+
+*New in 1.8.0*
+
+Files in a ZipMemoryFile can be listed using `listdir()`.
+
+.. code-block:: pycon
+
+    >>> from fiona.io import ZipMemoryFile
+    >>> with ZipMemoryFile(data) as zip:
+    ...     print(zip.listdir('/'))
+    ...
+    ['coutwildrnp.shp', 'coutwildrnp.shx', 'coutwildrnp.dbf', 'coutwildrnp.prj']
+
+
+Similarly, layers can be listed using `listlayers()`.
+
+.. code-block:: pycon
+
+    >>> with ZipMemoryFile(data) as zip:
+    ...     print(zip.listlayers('/coutwildrnp.shp'))
+    ...
+    ['coutwildrnp']
 
 
 Unsupported drivers

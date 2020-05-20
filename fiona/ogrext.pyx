@@ -327,7 +327,7 @@ cdef class OGRFeatureBuilder:
         if feature['geometry'] is not None:
             cogr_geometry = OGRGeomBuilder().build(
                                 feature['geometry'])
-        OGR_F_SetGeometryDirectly(cogr_feature, cogr_geometry)
+            exc_wrap_int(OGR_F_SetGeometryDirectly(cogr_feature, cogr_geometry))
 
         # OGR_F_SetFieldString takes encoded strings ('bytes' in Python 3).
         encoding = session._get_internal_encoding()
@@ -893,7 +893,7 @@ cdef class WritingSession(Session):
 
         if collection.mode == 'a':
 
-            if not os.path.exists(path):
+            if not path.startswith('/vsi') and not os.path.exists(path):
                 raise OSError("No such file or directory %s" % path)
 
             try:
@@ -1533,6 +1533,32 @@ def _listlayers(path, **kwargs):
     cogr_ds = NULL
 
     return layer_names
+
+
+def _listdir(path):
+    """List all files in path, if path points to a directory"""
+    cdef const char *path_c
+    cdef int n
+    cdef char** papszFiles
+
+    # Open OGR data source.
+    try:
+        path_b = path.encode('utf-8')
+    except UnicodeDecodeError:
+        path_b = path
+    path_c = path_b
+
+    if not CPLCheckForFile(path_c, NULL):
+        raise FionaValueError("Path '{}' does not exist.".format(path))
+
+    papszFiles = VSIReadDir(path_c)
+    n = CSLCount(papszFiles)
+    files = []
+    for i in range(n):
+        files.append(papszFiles[i].decode("utf-8"))
+    CSLDestroy(papszFiles)
+
+    return files
 
 
 def buffer_to_virtual_file(bytesbuf, ext=''):

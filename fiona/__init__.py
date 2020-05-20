@@ -91,7 +91,7 @@ from fiona._env import (
     get_gdal_version_tuple)
 from fiona.compat import OrderedDict
 from fiona.io import MemoryFile
-from fiona.ogrext import _bounds, _listlayers, FIELD_TYPES_MAP, _remove, _remove_layer
+from fiona.ogrext import _bounds, _listdir, _listlayers, FIELD_TYPES_MAP, _remove, _remove_layer
 from fiona.path import ParsedPath, parse_path, vsi_path
 from fiona.vfs import parse_paths as vfs_parse_paths
 from fiona._show_versions import show_versions
@@ -102,7 +102,7 @@ from fiona import _geometry, _err, rfc3339
 import uuid
 
 
-__all__ = ['bounds', 'listlayers', 'open', 'prop_type', 'prop_width']
+__all__ = ['bounds', 'listlayers', 'listdir', 'open', 'prop_type', 'prop_width']
 __version__ = "1.8.13.post1"
 __gdal_version__ = get_gdal_release_name()
 
@@ -329,7 +329,7 @@ def listlayers(fp, vfs=None):
     if hasattr(fp, 'read'):
 
         with MemoryFile(fp.read()) as memfile:
-            return  _listlayers(memfile.name)
+            return _listlayers(memfile.name)
 
     else:
 
@@ -350,6 +350,33 @@ def listlayers(fp, vfs=None):
             pobj = parse_path(fp)
 
         return _listlayers(vsi_path(pobj))
+
+
+@ensure_env_with_credentials
+def listdir(path):
+
+    """List files in a directory
+
+    Parameters
+    ----------
+    path : URI (str or pathlib.Path)
+        A dataset resource identifier.
+
+    Returns
+    -------
+    list
+        A list of filename strings.
+
+    """
+
+    if isinstance(path, Path):
+        path = str(path)
+
+    if not isinstance(path, string_types):
+        raise TypeError("invalid path: %r" % path)
+
+    pobj = parse_path(path)
+    return _listdir(vsi_path(pobj))
 
 
 def prop_width(val):
