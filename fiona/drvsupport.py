@@ -64,6 +64,7 @@ supported_drivers = dict([
     ("GML", "rw"),
     # GMT 	GMT 	Yes 	Yes 	Yes
     ("GMT", "rw"),
+    # GMT renamed to OGR_GMT for GDAL 2.x
     ("OGR_GMT", "rw"),
     # GPSBabel 	GPSBabel 	Yes 	Yes 	Yes (needs GPSBabel and GPX driver)
     # GPX 	GPX 	Yes 	Yes 	Yes (read support needs libexpat)
@@ -100,6 +101,8 @@ supported_drivers = dict([
     ("PCIDSK", "rw"),
     # PDS 	PDS 	No 	Yes 	Yes
     ("PDS", "r"),
+    # PDS renamed to OGR_PDS for GDAL 2.x
+    ("OGR_PDS", "r"),
     # PGDump 	PostgreSQL SQL dump 	Yes 	Yes 	Yes
     # PostgreSQL/PostGIS 	PostgreSQL/PostGIS 	Yes 	Yes 	No, needs PostgreSQL client library (libpq)
     # EPIInfo .REC 	REC 	No 	No 	Yes
