@@ -63,7 +63,8 @@ supported_drivers = dict([
     # GML 	GML 	Yes 	Yes 	Yes (read support needs Xerces or libexpat)
     ("GML", "rw"),
     # GMT 	GMT 	Yes 	Yes 	Yes
-    ("GMT", "raw"),
+    ("GMT", "rw"),
+    ("OGR_GMT", "rw"),
     # GPSBabel 	GPSBabel 	Yes 	Yes 	Yes (needs GPSBabel and GPX driver)
     # GPX 	GPX 	Yes 	Yes 	Yes (read support needs libexpat)
     ("GPX", "rw"),
@@ -96,7 +97,7 @@ supported_drivers = dict([
     # multi-layer
     #   ("OpenAir", "r"),
     # PCI Geomatics Database File 	PCIDSK 	No 	No 	Yes, using internal PCIDSK SDK (from GDAL 1.7.0)
-    ("PCIDSK", "raw"),
+    ("PCIDSK", "rw"),
     # PDS 	PDS 	No 	Yes 	Yes
     ("PDS", "r"),
     # PGDump 	PostgreSQL SQL dump 	Yes 	Yes 	Yes
@@ -151,11 +152,9 @@ driver_mode_mingdal = {
           'PCIDSK': (2, 0, 0),
           'GeoJSONSeq': (2, 4, 0)},
 
-    'a': {'GMT': (2, 0, 0),
-          'GPKG': (1, 11, 0),
+    'a': {'GPKG': (1, 11, 0),
           'GeoJSON': (2, 1, 0),
-          'MapInfo File': (2, 0, 0),
-          'PCIDSK': (2, 0, 0)}    
+          'MapInfo File': (2, 0, 0)}
 }
 
 

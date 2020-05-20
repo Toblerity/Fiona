@@ -15,100 +15,77 @@ blacklist_append_drivers = {}
 
 
 def get_schema(driver):
-    """
-    Generate schema for each driver
-    """
-    schemas = {
-        'GPX': {'properties': OrderedDict([('ele', 'float'),
-                                           ('time', 'datetime')]),
-                'geometry': 'Point'},
-        'GPSTrackMaker': {'properties': OrderedDict([]),
-                          'geometry': 'Point'},
-        'DXF': {'properties': OrderedDict(
-            [('Layer', 'str'),
-             ('SubClasses', 'str'),
-             ('Linetype', 'str'),
-             ('EntityHandle', 'str'),
-             ('Text', 'str')]),
-            'geometry': 'Point'},
-        'CSV': {'properties': OrderedDict([('ele', 'float')]),
-                'geometry': None},
-        'DGN': {'properties': OrderedDict([]),
-                'geometry': 'LineString'}
+    special_schemas = {'CSV': {'geometry': None, 'properties': OrderedDict([('position', 'int')])},
+                       'BNA': {'geometry': 'Point', 'properties': {}},
+                       'DXF': {'properties': OrderedDict(
+                           [('Layer', 'str'),
+                            ('SubClasses', 'str'),
+                            ('Linetype', 'str'),
+                            ('EntityHandle', 'str'),
+                            ('Text', 'str')]),
+                           'geometry': 'Point'},
+                       'GPX': {'geometry': 'Point',
+                               'properties': OrderedDict([('ele', 'float'), ('time', 'datetime')])},
+                       'GPSTrackMaker': {'properties': OrderedDict([]), 'geometry': 'Point'},
+                       'DGN': {'properties': OrderedDict([]), 'geometry': 'LineString'},
+                       'MapInfo File': {'geometry': 'Point', 'properties': OrderedDict([('position', 'str')])}
+                       }
+
+    return special_schemas.get(driver, {'geometry': 'Point', 'properties': OrderedDict([('position', 'int')])})
+
+
+def get_records(driver, range):
+    special_records1 = {'CSV': [{'geometry': None, 'properties': {'position': i}} for i in range],
+                        'BNA': [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))}, 'properties': {}} for i
+                                in range],
+                        'DXF': [
+                            {'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))}, 'properties': OrderedDict(
+                                [('Layer', '0'),
+                                 ('SubClasses', 'AcDbEntity:AcDbPoint'),
+                                 ('Linetype', None),
+                                 ('EntityHandle', '20000'),
+                                 ('Text', None)])} for i in range],
+                        'GPX': [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))},
+                                 'properties': {'ele': 0.0, 'time': '2020-03-24T16:08:40'}} for i
+                                in range],
+                        'GPSTrackMaker': [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))},
+                                           'properties': {}} for i in range],
+                        'DGN': [
+                            {'geometry': {'type': 'LineString', 'coordinates': [(float(i), 0.0), (0.0, 0.0)]},
+                             'properties': {}} for i in range],
+                        'MapInfo File': [
+                            {'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))},
+                             'properties': {'position': str(i)}} for i in range],
+                        }
+    return special_records1.get(driver, [
+        {'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))}, 'properties': {'position': i}} for i in
+        range])
+
+
+def get_records2(driver, range):
+    special_records2 = {'DGN': [
+        {'geometry': {'type': 'LineString', 'coordinates': [(float(i), 0.0), (0.0, 0.0)]},
+         'properties': OrderedDict(
+             [('Type', 3),
+              ('Level', 0),
+              ('GraphicGroup', 0),
+              ('ColorIndex', 0),
+              ('Weight', 0),
+              ('Style', 0),
+              ('EntityNum', None),
+              ('MSLink', None),
+              ('Text', None)])} for i in range],
     }
-    default_schema = {'geometry': 'LineString',
-                      'properties': [('title', 'str')]}
-    return schemas.get(driver, default_schema)
+    return special_records2.get(driver, get_records(driver, range))
 
 
-def get_record1(driver):
-    """
-    Generate first record to write depending on driver
-    """
-    records = {
-        'GPX': {'properties': OrderedDict([('ele', 386.3),
-                                           ('time', '2020-03-24T16:08:40')]),
-                'geometry': {'type': 'Point', 'coordinates': (8.306711, 47.475623)}},
-        'GPSTrackMaker': {'properties': OrderedDict([]),
-                          'geometry': {'type': 'Point', 'coordinates': (8.306711, 47.475623)}},
-        'DXF': {'properties': OrderedDict(
-            [('Layer', '0'),
-             ('SubClasses', 'AcDbEntity:AcDbPoint'),
-             ('Linetype', None),
-             ('EntityHandle', '20000'),
-             ('Text', None)]),
-            'geometry': {'type': 'Point', 'coordinates': (8.306711, 47.475623)}},
-        'CSV': {'properties': OrderedDict([('ele', 386.3)]),
-                'geometry': None},
-        'DGN': {'properties': OrderedDict(
-            []),
-            'geometry': {'type': 'LineString', 'coordinates': [
-                (1.0, 0.0), (0.0, 0.0)]}}
-    }
-
-    default_record = {'geometry': {'type': 'LineString', 'coordinates': [
-        (1.0, 0.0), (0.0, 0.0)]}, 'properties': {'title': 'One'}}
-
-    return records.get(driver, default_record)
-
-
-def get_record2(driver):
-    """
-    Generate second record to write depending on driver
-    """
-    records = {
-        'GPX': {'properties': OrderedDict([('ele', 386.3),
-                                           ('time', '2020-03-24T16:19:14')]),
-                'geometry': {'type': 'Point', 'coordinates': (8.307451, 47.474996)}},
-        'GPSTrackMaker': {'properties': OrderedDict([]),
-                          'geometry': {'type': 'Point', 'coordinates': (8.307451, 47.474996)}},
-        'DXF': {'properties': OrderedDict(
-            [('Layer', '0'),
-             ('SubClasses', 'AcDbEntity:AcDbPoint'),
-             ('Linetype', None),
-             ('EntityHandle', '20000'),
-             ('Text', None)]),
-            'geometry': {'type': 'Point', 'coordinates': (8.307451, 47.474996)}},
-        'CSV': {'properties': OrderedDict([('ele', 386.8)]),
-                'geometry': None},
-        'DGN': {'properties': OrderedDict(
-            [('Type', 3),
-             ('Level', 0),
-             ('GraphicGroup', 0),
-             ('ColorIndex', 0),
-             ('Weight', 0),
-             ('Style', 0),
-             ('EntityNum', None),
-             ('MSLink', None),
-             ('Text', None)]),
-            'geometry': {'type': 'LineString', 'coordinates': [
-                (2.0, 0.0), (0.0, 0.0)]}}
-    }
-
-    default_record = {'geometry': {'type': 'LineString', 'coordinates': [
-        (2.0, 0.0), (0.0, 0.0)]}, 'properties': {'title': 'Two'}}
-
-    return records.get(driver, default_record)
+def get_pos(f, driver):
+    if driver in {'DXF', 'BNA', 'GPX', 'GPSTrackMaker'}:
+        return f['geometry']['coordinates'][1]
+    elif driver == 'DGN':
+        return f['geometry']['coordinates'][0][0]
+    else:
+        return f['properties']['position']
 
 
 @requires_gdal24
@@ -130,6 +107,7 @@ def test_write_or_driver_error(tmpdir, driver):
         # BNA driver segfaults with gdal 1.11
         return
 
+    positions = list(range(0, 10))
     path = str(tmpdir.join(get_temp_filename(driver)))
 
     if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
@@ -140,7 +118,7 @@ def test_write_or_driver_error(tmpdir, driver):
             with fiona.open(path, 'w',
                             driver=driver,
                             schema=get_schema(driver)) as c:
-                c.write(get_record1(driver))
+                c.writerecords(get_records(driver, positions))
 
     else:
 
@@ -149,11 +127,14 @@ def test_write_or_driver_error(tmpdir, driver):
                         driver=driver,
                         schema=get_schema(driver)) as c:
 
-            c.write(get_record1(driver))
+            c.writerecords(get_records(driver, positions))
 
         with fiona.open(path) as c:
             assert c.driver == driver
-            assert len([f for f in c]) == 1
+            items = list(c)
+            assert len(items) == len(positions)
+            for val_in, val_out in zip(positions, items):
+                assert val_in == int(get_pos(val_out, driver))
 
 
 @pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['w'].keys()
@@ -171,6 +152,7 @@ def test_write_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver, monkeypat
         # BNA driver segfaults with gdal 1.11
         return
 
+    positions = list(range(0, 10))
     path = str(tmpdir.join(get_temp_filename(driver)))
 
     if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
@@ -181,7 +163,7 @@ def test_write_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver, monkeypat
             with fiona.open(path, 'w',
                             driver=driver,
                             schema=get_schema(driver)) as c:
-                c.write(get_record1(driver))
+                c.writerecords(get_records(driver, positions))
 
 
 @pytest.mark.parametrize('driver', [driver for driver, raw in supported_drivers.items() if 'a' in raw
@@ -198,6 +180,11 @@ def test_append_or_driver_error(tmpdir, driver):
         return
 
     path = str(tmpdir.join(get_temp_filename(driver)))
+    range1 = list(range(0, 5))
+    range2 = list(range(5, 10))
+    records1 = get_records(driver, range1)
+    records2 = get_records2(driver, range2)
+    positions = range1 + range2
 
     # If driver is not able to write, we cannot test append
     if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
@@ -209,7 +196,7 @@ def test_append_or_driver_error(tmpdir, driver):
                     driver=driver,
                     schema=get_schema(driver)) as c:
 
-        c.write(get_record1(driver))
+        c.writerecords(records1)
 
     if driver in driver_mode_mingdal['a'] and GDALVersion.runtime() < GDALVersion(
             *driver_mode_mingdal['a'][driver][:2]):
@@ -218,17 +205,20 @@ def test_append_or_driver_error(tmpdir, driver):
         with pytest.raises(DriverError):
             with fiona.open(path, 'a',
                             driver=driver) as c:
-                c.write(get_record2(driver))
+                c.writerecords(records2)
 
     else:
         # Test if we can append
         with fiona.open(path, 'a',
                         driver=driver) as c:
-            c.write(get_record2(driver))
+            c.writerecords(records2)
 
         with fiona.open(path) as c:
             assert c.driver == driver
-            assert len([f for f in c]) == 2
+            items = list(c)
+            assert len(items) == len(positions)
+            for val_in, val_out in zip(positions, items):
+                assert val_in == int(get_pos(val_out, driver))
 
 
 @pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['a'].keys()
@@ -248,6 +238,11 @@ def test_append_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver, monkeypa
         return
 
     path = str(tmpdir.join(get_temp_filename(driver)))
+    range1 = list(range(0, 5))
+    range2 = list(range(5, 10))
+    records1 = get_records(driver, range1)
+    records2 = get_records2(driver, range2)
+    positions = range1 + range2
 
     # If driver is not able to write, we cannot test append
     if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
@@ -259,7 +254,7 @@ def test_append_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver, monkeypa
                     driver=driver,
                     schema=get_schema(driver)) as c:
 
-        c.write(get_record1(driver))
+        c.writerecords(records1)
 
     if driver in driver_mode_mingdal['a'] and GDALVersion.runtime() < GDALVersion(
             *driver_mode_mingdal['a'][driver][:2]):
@@ -270,11 +265,14 @@ def test_append_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver, monkeypa
         with pytest.raises(Exception):
             with fiona.open(path, 'a',
                             driver=driver) as c:
-                c.write(get_record2(driver))
+                c.writerecords(records2)
 
             with fiona.open(path) as c:
                 assert c.driver == driver
-                assert len([f for f in c]) == 2
+                items = list(c)
+                assert len(items) == len(positions)
+                for val_in, val_out in zip(positions, items):
+                    assert val_in == int(get_pos(val_out, driver))
 
 
 @pytest.mark.parametrize('driver', [driver for driver, raw in supported_drivers.items() if
@@ -298,7 +296,7 @@ def test_no_write_driver_cannot_write(tmpdir, driver, monkeypatch):
         with fiona.open(path, 'w',
                         driver=driver,
                         schema=get_schema(driver)) as c:
-            c.write(get_record1(driver))
+            c.writerecords(get_records(driver, range(0, 10)))
 
 
 @pytest.mark.parametrize('driver', [driver for driver, raw in supported_drivers.items() if
@@ -318,6 +316,11 @@ def test_no_append_driver_cannot_append(tmpdir, driver, monkeypatch):
         return
 
     path = str(tmpdir.join(get_temp_filename(driver)))
+    range1 = list(range(0, 5))
+    range2 = list(range(5, 10))
+    records1 = get_records(driver, range1)
+    records2 = get_records2(driver, range2)
+    positions = range1 + range2
 
     # If driver is not able to write, we cannot test append
     if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
@@ -329,16 +332,19 @@ def test_no_append_driver_cannot_append(tmpdir, driver, monkeypatch):
                     driver=driver,
                     schema=get_schema(driver)) as c:
 
-        c.write(get_record1(driver))
+        c.writerecords(records1)
 
     with pytest.raises(Exception):
         with fiona.open(path, 'a',
                         driver=driver) as c:
-            c.write(get_record2(driver))
+            c.writerecords(records2)
 
         with fiona.open(path) as c:
             assert c.driver == driver
-            assert len([f for f in c]) == 2
+            items = list(c)
+            assert len(items) == len(positions)
+            for val_in, val_out in zip(positions, items):
+                assert val_in == int(get_pos(val_out, driver))
 
 
 def test_mingdal_drivers_are_supported():

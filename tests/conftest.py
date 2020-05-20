@@ -25,6 +25,7 @@ driver_extensions = {'DXF': 'dxf',
                      'GeoJSON': 'json',
                      'GeoJSONSeq': 'geojsons',
                      'GMT': 'gmt',
+                     'OGR_GMT': 'gmt',
                      'BNA': 'bna'}
 
 
