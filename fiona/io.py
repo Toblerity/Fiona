@@ -4,8 +4,10 @@
 from collections import OrderedDict
 import logging
 
-from fiona.ogrext import MemoryFileBase
-from fiona.collection import Collection
+import fiona._loading
+with fiona._loading.add_gdal_dll_directories():
+    from fiona.ogrext import MemoryFileBase
+    from fiona.collection import Collection
 
 
 log = logging.getLogger(__name__)
