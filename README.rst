@@ -24,7 +24,7 @@ readily with other Python GIS packages such as pyproj_, Rtree_, and Shapely_.
 
 Fiona is supported only on CPython versions 3.6+.
 
-Why the name "Fiona"? Because Fiona is OGR's neat and nimble API for Python programmers.
+Why the name "Fiona"? Because Fiona is OGR's neat and nimble API for Python programmers. And a Shrek reference made us laugh.
 
 For more details, see:
 
