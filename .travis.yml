@@ -65,7 +65,7 @@ matrix:
       dist: xenial
       python: "3.8"
       env:
-        GDALVERSION="3.0.3"
+        GDALVERSION="3.0.4"
         PROJVERSION="6.2.1"
 
     - os: linux
@@ -115,6 +115,7 @@ before_install:
   - $GDALINST/gdal-$GDALVERSION/bin/gdal-config --version
   - python3 -m pip wheel -r requirements-dev.txt
   - python3 -m pip install -r requirements-dev.txt
+  - python3 -m pip install coveralls>=1.1 --upgrade
 
 install:
   - if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $($GDALINST/gdal-$GDALVERSION/bin/gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
@@ -125,6 +126,9 @@ install:
 
 script:
   - python3 -m pytest -m "not wheel" --cov fiona --cov-report term-missing
+
+after_script:
+  - python setup.py clean
 
 after_success:
   - coveralls || echo "!! intermittent coveralls failure"
