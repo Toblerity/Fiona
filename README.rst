@@ -10,7 +10,7 @@ Fiona is OGR's neat and nimble API for Python programmers.
 .. image:: https://ci.appveyor.com/api/projects/status/github/Toblerity/Fiona?svg=true
    :target: https://ci.appveyor.com/project/sgillies/fiona/branch/master
 
-.. image:: https://coveralls.io/repos/Toblerity/Fiona/badge.png
+.. image:: https://coveralls.io/repos/Toblerity/Fiona/badge.svg
    :target: https://coveralls.io/r/Toblerity/Fiona
 
 Fiona is designed to be simple and dependable. It focuses on reading and
