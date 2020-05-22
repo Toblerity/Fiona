@@ -17,6 +17,8 @@ env:
     - PROJBUILD=$HOME/projbuild
     - CYTHON_COVERAGE="true"
     - MAKEFLAGS="-j 2"
+    - CXXFLAGS="-O0"
+    - CFLAGS="-O0"
 
 matrix:
   include:
@@ -45,35 +47,39 @@ matrix:
       env:
         GDALVERSION="2.4.4"
         PROJVERSION="4.9.3"
-
-    # Test all supported python versions with latest stable gdal release
-    - python: "2.7"
-      env:
-        GDALVERSION="3.0.4"
-        PROJVERSION="6.2.1"
     - python: "3.6"
       env:
         GDALVERSION="3.0.4"
         PROJVERSION="6.2.1"
+
+    # Test all supported python versions with latest stable gdal release
+    - python: "2.7"
+      env:
+        GDALVERSION="3.1.0"
+        PROJVERSION="6.3.2"
+    - python: "3.6"
+      env:
+        GDALVERSION="3.1.0"
+        PROJVERSION="6.3.2"
     - python: "3.7"
       env:
-        GDALVERSION="3.0.4"
-        PROJVERSION="6.2.1"
+        GDALVERSION="3.1.0"
+        PROJVERSION="6.3.2"
     - python: "3.8"
       env:
-        GDALVERSION="3.0.4"
-        PROJVERSION="6.2.1"
+        GDALVERSION="3.1.0"
+        PROJVERSION="6.3.2"
 
     # Test master
     - python: "3.8"
       env:
         GDALVERSION="master"
-        PROJVERSION="6.3.1"
+        PROJVERSION="7.0.1"
 
   allow_failures:
     - env:
         GDALVERSION="master"
-        PROJVERSION="6.3.1"
+        PROJVERSION="7.0.1"
 
 addons:
   apt:
@@ -89,6 +95,8 @@ before_install:
   - pip install setuptools==36.0.1
   - pip install wheel
   - "python -m pip install -r requirements-ci.txt"
+  - python -m pip wheel -r requirements-dev.txt
+  - python -m pip install -r requirements-dev.txt
   - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$GDALINST/proj-$PROJVERSION/bin:$PATH
   - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$GDALINST/proj-$PROJVERSION/lib:$LD_LIBRARY_PATH
   - . ./scripts/travis_proj_install.sh
@@ -96,9 +104,6 @@ before_install:
   - export GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal
   - export PROJ_LIB=$GDALINST/gdal-$GDALVERSION/share/proj
   - gdal-config --version
-  - python -m pip wheel -r requirements-dev.txt
-  - python -m pip install -r requirements-dev.txt
-  - python -m pip install wheel coveralls>=1.1 --upgrade
 
 install:
   - if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $(gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
