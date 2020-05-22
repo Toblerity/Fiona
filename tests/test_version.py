@@ -5,6 +5,7 @@ import re
 import os
 import sys
 from tests.conftest import travis_only
+from fiona._env import get_gdal_release_name
 
 
 def test_version_tuple():
@@ -54,7 +55,10 @@ def test_show_versions(capsys):
         proj_version = re.match(version_pattern, proj_version).group(0)
 
     gdal_version = os.getenv("GDALVERSION")
-    gdal_version = re.match(version_pattern, gdal_version).group(0)
+    if not gdal_version == "master":
+        gdal_version = re.match(version_pattern, gdal_version).group(0)
+    else:
+        gdal_version = get_gdal_release_name()
 
     msg_formatted = msg.format(fiona_version=fiona.__version__,
                                gdal_release_name=gdal_version,
