@@ -236,7 +236,7 @@ cdef class FeatureBuilder:
                 ms, ss = math.modf(ss)
                 ss = int(ss)
                 ms = int(round(ms * 10**6))
-                print(ss, ms)
+
                 try:
                     if fieldtype is FionaDateType:
                         props[key] = datetime.date(y, m, d).isoformat()

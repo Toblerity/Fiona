@@ -222,7 +222,7 @@ driver_field_type_unsupported = {
 
 
 def driver_supports_field(driver, field_type):
-    """ Returns True if driver support the field_type, False otherwise"""
+    """ Returns True if driver supports the field_type, False otherwise"""
 
     if field_type in driver_field_type_unsupported and driver in driver_field_type_unsupported[field_type]:
         if driver_field_type_unsupported[field_type][driver] is None:
