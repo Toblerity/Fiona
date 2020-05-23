@@ -139,7 +139,7 @@ cdef (int, int, int) get_proj_version():
 
 
 cdef void set_field_datetime(void *cogr_feature, int iField, int nYear, int nMonth, int nDay, int nHour, int nMinute, float fSecond, int nTZFlag):
-    int nSecond
+    cdef int nSecond
     nSecond = int(fSecond)
     OGR_F_SetFieldDateTime(cogr_feature, iField, nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZFlag)
 

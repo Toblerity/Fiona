@@ -186,4 +186,3 @@ cdef (int, int, int, int, int, int, float, int) get_field_as_datetime(void *cogr
     retval = OGR_F_GetFieldAsDateTimeEx(cogr_feature, iField, &nYear, &nMonth, &nDay, &nHour, &nMinute, &fSecond, &nTZFlag)
 
     return (retval, nYear, nMonth, nDay, nHour, nMinute, fSecond, nTZFlag)
-

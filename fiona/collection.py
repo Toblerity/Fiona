@@ -4,14 +4,14 @@
 import logging
 import os
 import warnings
-import fiona
 
+import fiona._loading
 with fiona._loading.add_gdal_dll_directories():
     from fiona import compat, vfs
     from fiona.ogrext import Iterator, ItemsIterator, KeysIterator
     from fiona.ogrext import Session, WritingSession
     from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file, GEOMETRY_TYPES
-    from fiona.errors import (DriverError, SchemaError, UnsupportedGeometryTypeError, DriverSupportError)
+    from fiona.errors import (DriverError, SchemaError, CRSError, UnsupportedGeometryTypeError, DriverSupportError)
     from fiona.logutils import FieldSkipLogFilter
     from fiona._crs import crs_to_wkt
     from fiona._env import get_gdal_release_name, get_gdal_version_tuple
