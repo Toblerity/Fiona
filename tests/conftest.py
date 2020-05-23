@@ -6,11 +6,13 @@ import os.path
 import shutil
 import tarfile
 import zipfile
-
+from collections import OrderedDict
+import pprint
 from click.testing import CliRunner
 import pytest
 
 import fiona
+from fiona.crs import from_epsg
 from fiona.env import GDALVersion
 
 driver_extensions = {'DXF': 'dxf',
@@ -317,3 +319,94 @@ def unittest_path_coutwildrnp_shp(path_coutwildrnp_shp, request):
     """Makes shapefile path available to unittest tests"""
     request.cls.path_coutwildrnp_shp = path_coutwildrnp_shp
 
+
+@pytest.fixture()
+def testdata_generator():
+    """ Helper function to create test datasets for ideally all supported drivers
+    """
+
+    def get_schema(driver):
+        special_schemas = {'CSV': {'geometry': None, 'properties': OrderedDict([('position', 'int')])},
+                           'BNA': {'geometry': 'Point', 'properties': {}},
+                           'DXF': {'properties': OrderedDict(
+                               [('Layer', 'str'),
+                                ('SubClasses', 'str'),
+                                ('Linetype', 'str'),
+                                ('EntityHandle', 'str'),
+                                ('Text', 'str')]),
+                               'geometry': 'Point'},
+                           'GPX': {'geometry': 'Point',
+                                   'properties': OrderedDict([('ele', 'float'), ('time', 'datetime')])},
+                           'GPSTrackMaker': {'properties': OrderedDict([]), 'geometry': 'Point'},
+                           'DGN': {'properties': OrderedDict([]), 'geometry': 'LineString'},
+                           'MapInfo File': {'geometry': 'Point', 'properties': OrderedDict([('position', 'str')])}
+                           }
+
+        return special_schemas.get(driver, {'geometry': 'Point', 'properties': OrderedDict([('position', 'int')])})
+
+    def get_crs(driver):
+        special_crs = {'MapInfo File': from_epsg(4326)}
+        return special_crs.get(driver, None)
+
+    def get_records(driver, range):
+        special_records1 = {'CSV': [{'geometry': None, 'properties': {'position': i}} for i in range],
+                            'BNA': [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))}, 'properties': {}}
+                                    for i
+                                    in range],
+                            'DXF': [
+                                {'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))},
+                                 'properties': OrderedDict(
+                                     [('Layer', '0'),
+                                      ('SubClasses', 'AcDbEntity:AcDbPoint'),
+                                      ('Linetype', None),
+                                      ('EntityHandle', str(i + 20000)),
+                                      ('Text', None)])} for i in range],
+                            'GPX': [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))},
+                                     'properties': {'ele': 0.0, 'time': '2020-03-24T16:08:40'}} for i
+                                    in range],
+                            'GPSTrackMaker': [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))},
+                                               'properties': {}} for i in range],
+                            'DGN': [
+                                {'geometry': {'type': 'LineString', 'coordinates': [(float(i), 0.0), (0.0, 0.0)]},
+                                 'properties': {}} for i in range],
+                            'MapInfo File': [
+                                {'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))},
+                                 'properties': {'position': str(i)}} for i in range],
+                            'PCIDSK': [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i), 0.0)},
+                                        'properties': {'position': i}} for i in range]
+                            }
+        return special_records1.get(driver, [
+            {'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))}, 'properties': {'position': i}} for i in
+            range])
+
+    def get_records2(driver, range):
+        special_records2 = {'DGN': [
+            {'geometry': {'type': 'LineString', 'coordinates': [(float(i), 0.0), (0.0, 0.0)]},
+             'properties': OrderedDict(
+                 [('Type', 4),
+                  ('Level', 0),
+                  ('GraphicGroup', 0),
+                  ('ColorIndex', 0),
+                  ('Weight', 0),
+                  ('Style', 0),
+                  ('EntityNum', None),
+                  ('MSLink', None),
+                  ('Text', None)])} for i in range],
+        }
+        return special_records2.get(driver, get_records(driver, range))
+
+    def test_equal(driver, val_in, val_out):
+        is_good = True
+        is_good = is_good and val_in['geometry'] == val_out['geometry']
+        for key in val_in['properties']:
+            if key in val_out['properties']:
+                is_good = is_good and str(val_in['properties'][key]) == str(val_out['properties'][key])
+            else:
+                is_good = False
+        return is_good
+
+    def _testdata_generator(driver, range1, range2):
+        return get_schema(driver), get_crs(driver), get_records(driver, range1), get_records2(driver, range2),\
+               test_equal
+
+    return _testdata_generator
