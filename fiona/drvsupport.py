@@ -8,7 +8,7 @@ gdal_version = GDALVersion.runtime()
 # we only expose the defaults (excepting FileGDB). We also don't expose
 # the CSV or GeoJSON drivers. Use Python's csv and json modules instead.
 # Might still exclude a few more of these after making a pass through the
-# entries for each at http://www.gdal.org/ogr/ogr_formats.html to screen
+# entries for each at https://gdal.org/drivers/vector/index.html to screen
 # out the multi-layer formats.
 
 supported_drivers = dict([
