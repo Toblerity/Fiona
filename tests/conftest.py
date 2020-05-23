@@ -322,7 +322,7 @@ def unittest_path_coutwildrnp_shp(path_coutwildrnp_shp, request):
 
 @pytest.fixture()
 def testdata_generator():
-    """ Helper function to create test datasets for ideally all supported drivers
+    """ Helper function to create test data sets for ideally all supported drivers
     """
 
     def get_schema(driver):
@@ -406,6 +406,33 @@ def testdata_generator():
         return is_good
 
     def _testdata_generator(driver, range1, range2):
+        """ Generate test data and helper methods for a specific driver. Each set of generated set of records
+        contains the position specified with range. These positions are either encoded as field or in the geometry
+        of the record, depending of the driver characteristics.
+
+        Parameters
+        ----------
+            driver: str
+                Name of drive to generate tests for
+            range1: list of integer
+                Range of positions for first set of records
+            range2: list of integer
+                Range  of positions for second set of records
+
+        Returns
+        -------
+        schema
+            A schema for the records
+        crs
+            A crs for the records
+        records1
+            A set of records containing the positions of range1
+        records2
+            A set of records containing the positions of range2
+        test_equal
+            A function that returns True if the geometry is equal between the generated records and a record and if
+            the properties of the generated records can be found in a record
+        """
         return get_schema(driver), get_crs(driver), get_records(driver, range1), get_records2(driver, range2),\
                test_equal
 
