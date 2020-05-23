@@ -178,17 +178,41 @@ def _filter_supported_drivers():
 
 _filter_supported_drivers()
 
+# driver_converts_to_str contains field type, driver combinations that are silently converted to string
+# None: field type is always converted to str
+# GDALVersion(2, 0): starting from gdal 2.0 field type is not converted to string
+driver_converts_to_str = {
+    'time': {
+        'CSV': None,
+        'PCIDSK': None,
+        'GeoJSON': GDALVersion(2, 0),
+        'GPKG': None,
+        'GMT': None,
+    },
+    'datetime': {
+        'CSV': None,
+        'PCIDSK': None,
+        'GeoJSON': GDALVersion(2, 0),
+        'GML': GDALVersion(3, 1),
+    },
+    'date': {
+        'CSV': None,
+        'PCIDSK': None,
+        'GeoJSON': GDALVersion(2, 0),
+        'GMT': None,
+        'GML': GDALVersion(3, 1),
+    }
+}
+
 
 def driver_converts_field_type_silently_to_str(driver, field_type):
     """ Returns True if the driver converts the field_type silently to str, False otherwise """
 
-    if ((driver in {'CSV', 'PCIDSK'} and field_type in {'date', 'datetime', 'time'}) or
-            (driver == 'GeoJSON' and gdal_version.major < 2 and field_type in {'date', 'datetime', 'time'}) or
-            (driver == 'GPKG' and field_type == 'time') or
-            (driver == 'GMT' and gdal_version.major < 2 and field_type in {'date', 'time'}) or
-            (driver == 'GML' and field_type in {'date', 'datetime'} and gdal_version < GDALVersion(3, 1))):
-        return True
-
+    if field_type in driver_converts_to_str and driver in driver_converts_to_str[field_type]:
+        if driver_converts_to_str[field_type][driver] is None:
+            return True
+        elif gdal_version < driver_converts_to_str[field_type][driver]:
+            return True
     return False
 
 
