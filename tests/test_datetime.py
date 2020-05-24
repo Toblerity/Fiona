@@ -11,7 +11,7 @@ from .conftest import get_temp_filename
 from fiona.env import GDALVersion
 import datetime
 from fiona.drvsupport import (supported_drivers, driver_mode_mingdal, driver_converts_field_type_silently_to_str,
-                              driver_supports_field)
+                              driver_supports_field, driver_converts_to_str)
 
 gdal_version = GDALVersion.runtime()
 drivers_not_supporting_milliseconds = {'GPSTrackMaker'}
@@ -209,3 +209,39 @@ def test_datetime_field_type_marked_not_supported_is_not_supported(tmpdir, drive
     except:
         is_good = False
     assert not is_good
+
+
+def generate_tostr_testcases():
+    """ Flatten driver_converts_to_str to a list of (field_type, driver) tuples"""
+    cases = []
+    for field_type in driver_converts_to_str:
+        for driver in driver_converts_to_str[field_type]:
+            if (driver in supported_drivers and (driver_converts_to_str[field_type][driver] is None or
+                                                 gdal_version < driver_converts_to_str[field_type][driver])):
+                cases.append((field_type, driver))
+    return cases
+
+
+@pytest.mark.parametrize("field_type,driver", generate_tostr_testcases())
+def test_driver_marked_as_silently_converts_to_str_converts_silently_to_str(tmpdir, driver, field_type, monkeypatch):
+    """ Test if a driver and field_type is marked in fiona.drvsupport.driver_converts_to_str to convert to str really
+      silently converts to str
+
+      If this test fails, it should be considered to replace the respective None value in
+      fiona.drvsupport.driver_converts_to_str with a GDALVersion(major, minor) value.
+      """
+
+    monkeypatch.delitem(fiona.drvsupport.driver_converts_to_str[field_type], driver)
+
+    schema = get_schema(driver, field_type)
+    path = str(tmpdir.join(get_temp_filename(driver)))
+    values_in, values_out = zip(*generate_testdata(field_type, driver))
+    records = get_records(driver, values_in)
+
+    with fiona.open(path, 'w',
+                    driver=driver,
+                    schema=schema) as c:
+        c.writerecords(records)
+
+    with fiona.open(path, 'r') as c:
+        assert get_schema_field(driver, c.schema) == 'str'
