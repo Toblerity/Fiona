@@ -47,7 +47,7 @@ def test_collection_iterator_next(path_coutwildrnp_shp):
                                         and (driver not in driver_mode_mingdal['w'] or
                                              gdal_version >= GDALVersion(*driver_mode_mingdal['w'][driver][:2]))
                                         and driver not in {'DGN', 'MapInfo File', 'GPSTrackMaker', 'GPX', 'BNA', 'DXF',
-                                                           'GML'}])
+                                                           'GML', 'CSV'}])
 def slice_dataset_path(request):
     """ Create temporary datasets for test_collection_iterator_items_slice()"""
 
