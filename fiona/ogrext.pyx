@@ -29,7 +29,7 @@ from fiona import compat
 from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
-    FionaDeprecationWarning, IteratorStoppedError)
+    FionaDeprecationWarning)
 from fiona.compat import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -1261,7 +1261,7 @@ cdef class Iterator:
     cdef ftcount
     cdef stepsign
     cdef is_interrupted
-    cdef is_stopped
+
 
     def __cinit__(self, collection, start=None, stop=None, step=None,
                   bbox=None, mask=None):
@@ -1310,15 +1310,15 @@ cdef class Iterator:
                 warnings.warn("Layer does not support" \
                         " OLC_FASTFEATURECOUNT, negative slices or start values other than zero" \
                         " may be slow.", RuntimeWarning)
-            self.ftcount = OGR_L_GetFeatureCount(session.cogr_layer, 1)
+            self.ftcount = wrap_get_feature_count(self.collection, session.cogr_layer, 1)
         else:
-            self.ftcount = OGR_L_GetFeatureCount(session.cogr_layer, 0)
+            self.ftcount = wrap_get_feature_count(self.collection, session.cogr_layer, 0)
+
 
         if self.ftcount == -1 and ((start is not None and start < 0) or
                               (stop is not None and stop < 0)):
             raise IndexError(
                 "collection's dataset does not support negative slice indexes")
-
 
         if stop is not None and stop < 0:
             stop += self.ftcount
@@ -1357,13 +1357,11 @@ cdef class Iterator:
         log.debug("Next index: %d", self.next_index)
         OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
         self.is_interrupted = False
-        self.is_stopped = False
+
 
     def interrupt_sequential_read(self):
+        """ Notify iterator that sequential read is interrupted"""
         self.is_interrupted = True
-
-    def stop_iterator(self):
-        self.is_stopped = True
 
     def __iter__(self):
         return self

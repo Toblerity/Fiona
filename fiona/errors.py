@@ -63,8 +63,8 @@ class GDALVersionError(FionaError):
     """
 
 
-class IteratorStoppedError(FionaError):
-    """Raised if iterator is accessed after it was stopped."""
+class IteratorAlreadyExistsError(FionaError):
+    """Raised if multiple Iterators per Session are attempted to be created."""
 
 
 class FionaDeprecationWarning(UserWarning):

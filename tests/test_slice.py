@@ -1,14 +1,10 @@
 """Note well: collection slicing is deprecated!
 """
-import tempfile
-import shutil
-import os
+
 import pytest
 from fiona.env import GDALVersion
 import fiona
 from fiona.errors import FionaDeprecationWarning
-from .conftest import get_temp_filename
-from fiona.drvsupport import supported_drivers, driver_mode_mingdal
 
 gdal_version = GDALVersion.runtime()
 
@@ -41,32 +37,6 @@ def test_collection_iterator_next(path_coutwildrnp_shp):
         k, v = next(src.items(5, None))
         assert k == 5
         assert v['id'] == '5'
-
-
-@pytest.fixture(scope="module", params=[driver for driver, raw in supported_drivers.items() if 'w' in raw
-                                        and (driver not in driver_mode_mingdal['w'] or
-                                             gdal_version >= GDALVersion(*driver_mode_mingdal['w'][driver][:2]))
-                                        and driver not in {'DGN', 'MapInfo File', 'GPSTrackMaker', 'GPX', 'BNA', 'DXF',
-                                                           'GML'}])
-def slice_dataset_path(request):
-    """ Create temporary datasets for test_collection_iterator_items_slice()"""
-
-    driver = request.param
-    min_id = 0
-    max_id = 9
-    schema = {'geometry': 'Point', 'properties': [('position', 'int')]}
-    records = [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))}, 'properties': {'position': i}} for i
-               in range(min_id, max_id + 1)]
-
-    tmpdir = tempfile.mkdtemp()
-    path = os.path.join(tmpdir, get_temp_filename(driver))
-
-    with fiona.open(path, 'w',
-                    driver=driver,
-                    schema=schema) as c:
-        c.writerecords(records)
-    yield path
-    shutil.rmtree(tmpdir)
 
 
 @pytest.mark.parametrize("args", [(0, 5, None),
@@ -110,13 +80,12 @@ def slice_dataset_path(request):
                                   ])
 @pytest.mark.filterwarnings('ignore:.*OLC_FASTFEATURECOUNT*')
 @pytest.mark.filterwarnings('ignore:.*OLCFastSetNextByIndex*')
-def test_collection_iterator_items_slice(slice_dataset_path, args):
+def test_collection_iterator_items_slice(slice_dataset, args):
     """ Test if c.items(start, stop, step) returns the correct features.
     """
 
     start, stop, step = args
-    min_id = 0
-    max_id = 9
+    slice_dataset_path, min_id, max_id = slice_dataset
 
     positions = list(range(min_id, max_id + 1))[start:stop:step]
 

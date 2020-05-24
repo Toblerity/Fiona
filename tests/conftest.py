@@ -5,12 +5,15 @@ import json
 import os.path
 import shutil
 import tarfile
+import tempfile
 import zipfile
 
 from click.testing import CliRunner
 import pytest
 
 import fiona
+from fiona import supported_drivers
+from fiona.drvsupport import driver_mode_mingdal
 from fiona.env import GDALVersion
 
 driver_extensions = {'DXF': 'dxf',
@@ -316,3 +319,28 @@ def unittest_path_coutwildrnp_shp(path_coutwildrnp_shp, request):
     """Makes shapefile path available to unittest tests"""
     request.cls.path_coutwildrnp_shp = path_coutwildrnp_shp
 
+
+@pytest.fixture(scope="session", params=[driver for driver, raw in supported_drivers.items() if 'w' in raw
+                                        and (driver not in driver_mode_mingdal['w'] or
+                                             gdal_version >= GDALVersion(*driver_mode_mingdal['w'][driver][:2]))
+                                        and driver not in {'DGN', 'MapInfo File', 'GPSTrackMaker', 'GPX', 'BNA', 'DXF',
+                                                           'GML'}])
+def slice_dataset(request):
+    """ Create temporary datasets to test slices"""
+
+    driver = request.param
+    min_id = 0
+    max_id = 9
+    schema = {'geometry': 'Point', 'properties': [('position', 'int')]}
+    records = [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))}, 'properties': {'position': i}} for i
+               in range(min_id, max_id + 1)]
+
+    tmpdir = tempfile.mkdtemp()
+    path = os.path.join(tmpdir, get_temp_filename(driver))
+
+    with fiona.open(path, 'w',
+                    driver=driver,
+                    schema=schema) as c:
+        c.writerecords(records)
+    yield path, min_id, max_id
+    shutil.rmtree(tmpdir)

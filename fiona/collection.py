@@ -11,7 +11,8 @@ with fiona._loading.add_gdal_dll_directories():
     from fiona.ogrext import Iterator, ItemsIterator, KeysIterator
     from fiona.ogrext import Session, WritingSession
     from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file, GEOMETRY_TYPES
-    from fiona.errors import (DriverError, SchemaError, CRSError, UnsupportedGeometryTypeError, DriverSupportError)
+    from fiona.errors import (DriverError, SchemaError, CRSError, UnsupportedGeometryTypeError, DriverSupportError,
+                              IteratorAlreadyExistsError)
     from fiona.logutils import FieldSkipLogFilter
     from fiona._crs import crs_to_wkt
     from fiona._env import get_gdal_release_name, get_gdal_version_tuple
@@ -91,6 +92,7 @@ class Collection(object):
                                                             gdal=get_gdal_release_name()))
 
         self.session = None
+        self.iterator = None
         self._len = 0
         self._bounds = None
         self._driver = None
@@ -101,7 +103,6 @@ class Collection(object):
         self.enabled_drivers = enabled_drivers
         self.ignore_fields = ignore_fields
         self.ignore_geometry = bool(ignore_geometry)
-        self.iterator = None
 
         if vsi:
             self.path = vfs.vsi_path(path, vsi, archive)
@@ -176,11 +177,6 @@ class Collection(object):
 
         self.field_skip_log_filter = FieldSkipLogFilter()
 
-    def _add_iterator(self, iterator):
-        """Internal method to handle new iterator"""
-        if self.iterator is not None:
-            self.iterator.stop_iterator()
-        self.iterator = iterator
 
     def __repr__(self):
         return "<%s Collection '%s', mode '%s' at %s>" % (
@@ -262,9 +258,10 @@ class Collection(object):
         mask = kwds.get('mask')
         if bbox and mask:
             raise ValueError("mask and bbox can not be set together")
-        iterator = Iterator(self, start, stop, step, bbox, mask)
-        self._add_iterator(iterator)
-        return iterator
+        if self.iterator is not None:
+            raise IteratorAlreadyExistsError("Only one Iterator per Session is allowed.")
+        self.iterator = Iterator(self, start, stop, step, bbox, mask)
+        return self.iterator
 
     def items(self, *args, **kwds):
         """Returns an iterator over FID, record pairs, optionally
@@ -290,9 +287,10 @@ class Collection(object):
         mask = kwds.get('mask')
         if bbox and mask:
             raise ValueError("mask and bbox can not be set together")
-        iterator = ItemsIterator(self, start, stop, step, bbox, mask)
-        self._add_iterator(iterator)
-        return iterator
+        if self.iterator is not None:
+            raise IteratorAlreadyExistsError("Only one Iterator per Session is allowed.")
+        self.iterator = ItemsIterator(self, start, stop, step, bbox, mask)
+        return self.iterator
 
     def keys(self, *args, **kwds):
         """Returns an iterator over FIDs, optionally
@@ -318,9 +316,10 @@ class Collection(object):
         mask = kwds.get('mask')
         if bbox and mask:
             raise ValueError("mask and bbox can not be set together")
-        iterator = KeysIterator(self, start, stop, step, bbox, mask)
-        self._add_iterator(iterator)
-        return iterator
+        if self.iterator is not None:
+            raise IteratorAlreadyExistsError("Only one Iterator per Session is allowed.")
+        self.iterator = KeysIterator(self, start, stop, step, bbox, mask)
+        return self.iterator
 
     def __contains__(self, fid):
         return self.session.has_feature(fid)
@@ -456,8 +455,6 @@ class Collection(object):
             self.session.stop()
             log.debug("Stopped session")
             self.session = None
-            if self.iterator is not None:
-                self.iterator.stop_iterator()
             self.iterator = None
         if self.env:
             self.env.__exit__()
