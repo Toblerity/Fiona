@@ -10,13 +10,15 @@ import threading
 import attr
 from six import string_types
 
-from fiona._env import (
-    GDALEnv, calc_gdal_version_num, get_gdal_version_num, get_gdal_config,
-    set_gdal_config, get_gdal_release_name, GDALDataFinder, PROJDataFinder,
-    set_proj_data_search_path)
-from fiona.compat import getargspec
-from fiona.errors import EnvError, GDALVersionError
-from fiona.session import Session, DummySession
+import fiona._loading
+with fiona._loading.add_gdal_dll_directories():
+    from fiona._env import (
+        GDALEnv, calc_gdal_version_num, get_gdal_version_num, get_gdal_config,
+        set_gdal_config, get_gdal_release_name, GDALDataFinder, PROJDataFinder,
+        set_proj_data_search_path)
+    from fiona.compat import getargspec
+    from fiona.errors import EnvError, GDALVersionError
+    from fiona.session import Session, DummySession
 
 
 class ThreadEnv(threading.local):
@@ -589,8 +591,14 @@ def require_gdal_version(version, param=None, values=None, is_max_version=False,
 
 if "GDAL_DATA" not in os.environ:
 
+    path = GDALDataFinder().search_wheel()
+
+    if path:
+        os.environ['GDAL_DATA'] = path
+        log.debug("GDAL data found in package, GDAL_DATA set to %r.", path)
+
     # See https://github.com/mapbox/rasterio/issues/1631.
-    if GDALDataFinder().find_file("header.dxf"):
+    elif GDALDataFinder().find_file("header.dxf"):
         log.debug("GDAL data files are available at built-in paths")
 
     else:

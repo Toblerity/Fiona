@@ -5,7 +5,6 @@ import os
 import shutil
 import subprocess
 import sys
-
 from setuptools import setup
 from setuptools.extension import Extension
 
@@ -190,6 +189,16 @@ ext_options = dict(
     library_dirs=library_dirs,
     libraries=libraries,
     extra_link_args=extra_link_args)
+
+# Enable coverage for cython pyx files.
+if os.environ.get('CYTHON_COVERAGE'):
+    from Cython.Compiler.Options import get_directive_defaults
+    directive_defaults = get_directive_defaults()
+    directive_defaults['linetrace'] = True
+    directive_defaults['binding'] = True
+
+    ext_options.update(dict(
+        define_macros=[("CYTHON_TRACE_NOGIL", "1")]))
 
 # GDAL 2.3+ requires C++11
 

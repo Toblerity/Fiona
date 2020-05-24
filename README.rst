@@ -2,7 +2,7 @@
 Fiona
 =====
 
-Fiona is OGR's neat and nimble API for Python programmers.
+Fiona is GDAL_'s neat and nimble vector API for Python programmers.
 
 .. image:: https://travis-ci.org/Toblerity/Fiona.png?branch=master
    :target: https://travis-ci.org/Toblerity/Fiona
@@ -10,7 +10,7 @@ Fiona is OGR's neat and nimble API for Python programmers.
 .. image:: https://ci.appveyor.com/api/projects/status/github/Toblerity/Fiona?svg=true
    :target: https://ci.appveyor.com/project/sgillies/fiona/branch/master
 
-.. image:: https://coveralls.io/repos/Toblerity/Fiona/badge.png
+.. image:: https://coveralls.io/repos/Toblerity/Fiona/badge.svg
    :target: https://coveralls.io/r/Toblerity/Fiona
 
 Fiona is designed to be simple and dependable. It focuses on reading and
@@ -155,8 +155,7 @@ and write zipped Shapefiles.
 
 .. code-block:: python
 
-    for i, layername in enumerate(
-            fiona.listlayers('zip://tests/data/coutwildrnp.zip'):
+    for i, layername in enumerate(fiona.listlayers('zip://tests/data/coutwildrnp.zip')):
         with fiona.open('zip://tests/data/coutwildrnp.zip', layer=i) as src:
             print(i, layername, len(src))
 
@@ -173,6 +172,7 @@ zipped shape file in S3 can be accessed like so:
 
    # Output:
    # 67
+
 
 Fiona CLI
 =========
@@ -275,7 +275,7 @@ Windows
 -------
 
 Binary installers are available at
-http://www.lfd.uci.edu/~gohlke/pythonlibs/#fiona and coming eventually to PyPI.
+https://www.lfd.uci.edu/~gohlke/pythonlibs/#fiona and coming eventually to PyPI.
 
 You can download a binary distribution of GDAL from `here
 <http://www.gisinternals.com/release.php>`_.  You will also need to download
@@ -294,14 +294,20 @@ the ``GDAL_VERSION`` environment variable (e.g. ``set GDAL_VERSION=2.1``).
 
     $ python setup.py build_ext -I<path to gdal include files> -lgdal_i -L<path to gdal library> install --gdalversion 2.1
 
-Note: The GDAL DLL (``gdal111.dll`` or similar) and gdal-data directory need to
-be in your Windows PATH otherwise Fiona will fail to work.
+Note: The following environment variables needs to be set so that Fiona works correctly:
 
-The [Appveyor CI build](https://ci.appveyor.com/project/sgillies/fiona/history)
+* The directory containing the GDAL DLL (``gdal304.dll`` or similar) needs to be in your
+  Windows ``PATH`` (e.g. ``C:\gdal\bin``).
+* The gdal-data directory needs to be in your Windows ``PATH`` or the environment variable
+  ``GDAL_DATA`` must be set (e.g. ``C:\gdal\bin\gdal-data``).
+* The environment variable ``PROJ_LIB`` must be set to the proj library directory (e.g.
+  ``C:\gdal\bin\proj6\share``)
+
+The  `Appveyor CI build <https://ci.appveyor.com/project/sgillies/fiona/history/>`_
 uses the GISInternals GDAL binaries to build Fiona. This produces a binary wheel
 for successful builds, which includes GDAL and other dependencies, for users
 wanting to try an unstable development version.
-The [Appveyor configuration file](appveyor.yml) may be a useful example for
+The `Appveyor configuration file <appveyor.yml>`_ may be a useful example for
 users building from source on Windows.
 
 Development and testing
@@ -329,7 +335,7 @@ lib dirs and GDAL library on the command line::
   (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal --gdalversion 2 develop
   (fiona_env)$ py.test
 
-.. _OGR: http://www.gdal.org/ogr
+.. _GDAL: http://www.gdal.org
 .. _pyproj: http://pypi.python.org/pypi/pyproj/
 .. _Rtree: http://pypi.python.org/pypi/Rtree/
 .. _Shapely: http://pypi.python.org/pypi/Shapely/

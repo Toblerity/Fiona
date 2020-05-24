@@ -1257,6 +1257,8 @@ cdef class Iterator:
     cdef start
     cdef step
     cdef fastindex
+    cdef fastcount
+    cdef ftcount
     cdef stepsign
     cdef is_interrupted
     cdef is_stopped
@@ -1292,20 +1294,39 @@ cdef class Iterator:
 
         self.fastindex = OGR_L_TestCapability(
             session.cogr_layer, OLC_FASTSETNEXTBYINDEX)
+        log.debug("OLC_FASTSETNEXTBYINDEX: {}".format(self.fastindex))
 
-        ftcount = wrap_get_feature_count(self.collection, session.cogr_layer, 0)
-        if ftcount == -1 and ((start is not None and start < 0) or
+        self.fastcount = OGR_L_TestCapability(
+            session.cogr_layer, OLC_FASTFEATURECOUNT)
+        log.debug("OLC_FASTFEATURECOUNT: {}".format(self.fastcount))
+
+        # In some cases we need to force count of all features
+        # We need to check if start is not greater ftcount: (start is not None and start > 0)
+        # If start is a negative index: (start is not None and start < 0)
+        # If stop is a negative index: (stop is not None and stop < 0)
+        if ((start is not None and not start == 0) or
+                (stop is not None and stop < 0)):
+            if not self.fastcount:
+                warnings.warn("Layer does not support" \
+                        " OLC_FASTFEATURECOUNT, negative slices or start values other than zero" \
+                        " may be slow.", RuntimeWarning)
+            self.ftcount = OGR_L_GetFeatureCount(session.cogr_layer, 1)
+        else:
+            self.ftcount = OGR_L_GetFeatureCount(session.cogr_layer, 0)
+
+        if self.ftcount == -1 and ((start is not None and start < 0) or
                               (stop is not None and stop < 0)):
             raise IndexError(
                 "collection's dataset does not support negative slice indexes")
 
+
         if stop is not None and stop < 0:
-            stop += ftcount
+            stop += self.ftcount
 
         if start is None:
             start = 0
         if start is not None and start < 0:
-            start += ftcount
+            start += self.ftcount
 
         # step size
         if step is None:
@@ -1314,15 +1335,26 @@ cdef class Iterator:
             raise ValueError("slice step cannot be zero")
         if step < 0 and not self.fastindex:
             warnings.warn("Layer does not support" \
-                    "OLCFastSetNextByIndex, negative step size may" \
-                    " be slow", RuntimeWarning)
+                    " OLCFastSetNextByIndex, negative step size may" \
+                    " be slow.", RuntimeWarning)
+
+        # Check if we are outside of the range:
+        if not self.ftcount == -1:
+            if start > self.ftcount and step > 0:
+                start = -1
+            if start > self.ftcount and step < 0:
+                start = self.ftcount - 1
+        elif self.ftcount == -1 and not start == 0:
+            warnings.warn("Layer is unable to check if slice is within range of data.",
+             RuntimeWarning)
+
         self.stepsign = int(math.copysign(1, step))
         self.stop = stop
         self.start = start
         self.step = step
 
         self.next_index = start
-        log.debug("Index: %d", self.next_index)
+        log.debug("Next index: %d", self.next_index)
         OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
         self.is_interrupted = False
         self.is_stopped = False
@@ -1346,17 +1378,17 @@ cdef class Iterator:
         if self.next_index < 0:
             raise StopIteration
 
+        # GeoJSON driver with gdal 2.1 - 2.2 returns last feature
+        # if index greater than number of features
+        if self.ftcount >= 0 and self.next_index >= self.ftcount:
+            raise StopIteration
+
         if self.stepsign == 1:
             if self.next_index < self.start or (self.stop is not None and self.next_index >= self.stop):
                 raise StopIteration
         else:
             if self.next_index > self.start or (self.stop is not None and self.next_index <= self.stop):
                 raise StopIteration
-
-        # Check if iterator is stopped
-        if self.is_stopped:
-            log.warning("Iterator was stopped, possible due to the creation of another iterator for the same collection.")
-            raise IteratorStoppedError
 
         if self.is_interrupted:
             if not self.fastindex:
@@ -1367,24 +1399,22 @@ cdef class Iterator:
             # Set read cursor to next_item position
             if self.step > 1 and self.fastindex:
                 OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
-
             elif self.step > 1 and not self.fastindex and not self.next_index == self.start:
+                # GDALs default implementation of SetNextByIndex is calling ResetReading() and then
+                # calling GetNextFeature n times. We can shortcut that if we know the previous index.
+                # OGR_L_GetNextFeature increments cursor by 1, therefore self.step - 1 as one increment was performed when feature is read
                 for _ in range(self.step - 1):
-                    # TODO rbuffat add test -> OGR_L_GetNextFeature increments cursor by 1, therefore self.step - 1 as one increment was performed when feature is read
                     cogr_feature = OGR_L_GetNextFeature(session.cogr_layer)
                     if cogr_feature == NULL:
                         raise StopIteration
             elif self.step > 1 and not self.fastindex and self.next_index == self.start:
                 OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
-
-            elif self.step == 0:
-                # OGR_L_GetNextFeature increments read cursor by one
-                pass
             elif self.step < 0:
                 OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
 
         # set the next index
         self.next_index += self.step
+        log.debug("Next index: %d", self.next_index)
 
     def __next__(self):
         cdef OGRFeatureH cogr_feature = NULL
@@ -1443,6 +1473,7 @@ cdef class ItemsIterator(Iterator):
             ignore_fields=self.collection.ignore_fields,
             ignore_geometry=self.collection.ignore_geometry,
         )
+
         _deleteOgrFeature(cogr_feature)
 
         return fid, feature
