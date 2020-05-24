@@ -4,14 +4,15 @@
 from collections import OrderedDict
 import logging
 
-from fiona.ogrext import MemoryFileBase
-from fiona.collection import Collection
-from fiona.ogrext import _listdir, _listlayers
-
-from fiona.drvsupport import memoryfile_supports_mode, zip_memoryfile_supports_mode
-from fiona.errors import FionaValueError, DriverError
-from fiona.path import ARCHIVESCHEMES
-from fiona.env import GDALVersion
+import fiona._loading
+with fiona._loading.add_gdal_dll_directories():
+    from fiona.ogrext import MemoryFileBase
+    from fiona.collection import Collection
+    from fiona.ogrext import _listdir, _listlayers
+    from fiona.drvsupport import memoryfile_supports_mode, zip_memoryfile_supports_mode
+    from fiona.errors import FionaValueError, DriverError
+    from fiona.path import ARCHIVESCHEMES
+    from fiona.env import GDALVersion
 
 log = logging.getLogger(__name__)
 gdal_version = GDALVersion.runtime()

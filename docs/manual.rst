@@ -19,7 +19,6 @@ The Fiona User Manual
 
 .. sectnum::
 
-.. _intro:
 
 Introduction
 ============
@@ -35,8 +34,8 @@ The kinds of data in GIS are roughly divided into :dfn:`rasters` representing
 continuous scalar fields (land surface temperature or elevation, for example)
 and :dfn:`vectors` representing discrete entities like roads and administrative
 boundaries. Fiona is concerned exclusively with the latter. It is a Python
-wrapper for vector data access functions from the `OGR
-<http://www.gdal.org/ogr/>`_ library.  A very simple wrapper for minimalists.
+wrapper for vector data access functions from the `GDAL/OGR
+<http://www.gdal.org>`_ library.  A very simple wrapper for minimalists.
 It reads data records from files as GeoJSON-like mappings and writes the same
 kind of mappings as records back to files. That's it. There are no layers, no
 cursors, no geometric operations, no transformations between coordinate
@@ -156,7 +155,7 @@ the Fiona repository for use in this and other examples.
   
                   sink.write(f)
               
-              except Exception, e:
+              except Exception as e:
                   logging.exception("Error processing feature %s:", f['id'])
 
           # The sink file is written to disk and closed when its block ends.
@@ -171,7 +170,7 @@ geographic data: records have a single type, all records of that type have the
 same fields, and a record's fields concern a single geographic feature.
 Different systems model records in different ways, but the various models have
 enough in common that programmers have been able to create useful abstract data
-models.  The `OGR model <http://www.gdal.org/ogr/ogr_arch.html>`__ is one. Its
+models.  The `OGR model <https://gdal.org/user/vector_data_model.html>`__ is one. Its
 primary entities are :dfn:`Data Sources`, :dfn:`Layers`, and :dfn:`Features`.
 Features have not fields, but attributes and a :dfn:`Geometry`. An OGR Layer
 contains Features of a single type ("roads" or "wells", for example). The
@@ -271,10 +270,6 @@ collection to get back to the beginning.
 Collection indexing
 -------------------
 
-.. admonition::
-
-   New in version 1.1.6
-
 Features of a collection may also be accessed by index.
 
 .. code-block:: pycon
@@ -303,13 +298,15 @@ Features of a collection may also be accessed by index.
 
 Note that these indices are controlled by GDAL, and do not always follow Python conventions. They can start from 0, 1 (e.g. geopackages), or even other values, and have no guarantee of contiguity. Negative indices will only function correctly if indices start from 0 and are contiguous.
 
+New in version 1.1.6
+
 Closing Files
 -------------
 
 A :py:class:`~fiona.collection.Collection` involves external resources. There's
 no guarantee that these will be released unless you explicitly
 :py:meth:`~fiona.collection.Collection.close` the object or use
-a :py:keyword:`with` statement. When a :py:class:`~fiona.collection.Collection`
+a :keyword:`with` statement. When a :py:class:`~fiona.collection.Collection`
 is a context guard, it is closed no matter what happens within the block.
 
 .. sourcecode:: pycon
@@ -1001,7 +998,7 @@ a schema of ``{'properties': {'bar': 'int', 'foo': 'str'}}`` will produce
 a shapefile where the first field is 'foo' and the second field is 'bar'. If
 you want 'bar' to be the first field, you must use a list of property items
 
-.. sourcecode:: python
+.. sourcecode:: pycon
 
   c = fiona.open(
       '/tmp/file.shp', 
@@ -1011,7 +1008,7 @@ you want 'bar' to be the first field, you must use a list of property items
 
 or an ordered dict.
 
-.. sourcecode:: python
+.. sourcecode:: pycon
 
   from collections import OrderedDict
 
@@ -1151,7 +1148,7 @@ indexes.
     3
 
 To filter features by property values, use Python's builtin :py:func:`filter` and
-:py:keyword:`lambda` or your own filter function that takes a single feature
+:keyword:`lambda` or your own filter function that takes a single feature
 record and returns ``True`` or ``False``.
 
 .. sourcecode:: pycon
@@ -1171,7 +1168,7 @@ Up to this point, only simple datasets with one thematic layer or feature type
 per file have been shown and the venerable Esri Shapefile has been the primary
 example. Other GIS data formats can encode multiple layers or feature types
 within a single file or directory. Esri's `File Geodatabase
-<http://www.gdal.org/ogr/drv_filegdb.html>`__ is one example of such a format.
+<https://gdal.org/drivers/vector/filegdb.html#vector-filegdb>`__ is one example of such a format.
 A more useful example, for the purpose of this manual, is a directory
 comprising multiple shapefiles. The following three shell commands will create
 just such a two layered data source from the test data distributed with Fiona.
@@ -1392,8 +1389,8 @@ These restrictions can be circumvented by modifying :py:attr:`fiona.supported_dr
 
   import fiona
   fiona.drvsupport.supported_drivers["LIBKML"] = "raw"
-  
   with fiona.open("file.kmz") as collection:
+    pass
 
 It should, however, first be verified, if the local installation of GDAL/OGR 
 includes the required driver:
