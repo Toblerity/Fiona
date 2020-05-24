@@ -219,8 +219,9 @@ def generate_tostr_testcases():
             driver_supported = driver in supported_drivers
             driver_can_write = (driver not in driver_mode_mingdal['w'] or
                                 gdal_version >= GDALVersion(*driver_mode_mingdal['w'][driver][:2]))
+            field_supported = driver_supports_field(driver, field_type)
             converts_to_str = driver_converts_field_type_silently_to_str(driver, field_type)
-            if driver_supported and driver_can_write and converts_to_str:
+            if driver_supported and driver_can_write and converts_to_str and field_supported:
                 cases.append((field_type, driver))
     return cases
 
