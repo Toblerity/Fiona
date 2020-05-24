@@ -934,9 +934,10 @@ def test_iterator_sequential_read_interrupted(slice_dataset, args):
         iterator = c.items(start, stop, step)
         for _ in range(interrupted_index):
             _ = next(iterator)
-        iterator.interrupt_sequential_read()
+        # Interrupt sequential read
+        c[-1]
+        assert iterator.is_interrupted()
         item = next(iterator)
-
         assert int(item[1]['properties']['position']) == positions[interrupted_index]
 
 

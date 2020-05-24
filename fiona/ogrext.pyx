@@ -440,13 +440,15 @@ def featureRT(feature, collection):
 # Collection-related extension classes and functions
 
 cdef inline void * wrap_get_feature(object collection, void *cogr_layer, int index) except *:
-    """Check if it is safe to execute OGR_L_GetFeature"""
+    """Helper method to ensure that collection is notified of a sequential read interrupt
+        if OGR_L_GetFeature is called"""
     collection._interrupt_sequential_read()
     return OGR_L_GetFeature(cogr_layer, index)
 
 
 cdef inline int wrap_get_feature_count(object collection, void *cogr_layer, int force) except *:
-    """Check if it is safe to execute OGR_L_GetFeatureCount"""
+    """Helper method to ensure that collection is notified of a sequential read interrupt
+        if OGR_L_GetFeatureCount is called"""
     collection._interrupt_sequential_read()
     return OGR_L_GetFeatureCount(cogr_layer, force)
 
@@ -1260,7 +1262,7 @@ cdef class Iterator:
     cdef fastcount
     cdef ftcount
     cdef stepsign
-    cdef is_interrupted
+    cdef _is_interrupted
 
 
     def __cinit__(self, collection, start=None, stop=None, step=None,
@@ -1356,12 +1358,15 @@ cdef class Iterator:
         self.next_index = start
         log.debug("Next index: %d", self.next_index)
         OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
-        self.is_interrupted = False
-
+        self._is_interrupted = False
 
     def interrupt_sequential_read(self):
         """ Notify iterator that sequential read is interrupted"""
-        self.is_interrupted = True
+        self._is_interrupted = True
+
+    def is_interrupted(self):
+        """ Returns True if iterator is interrupted."""
+        return self._is_interrupted
 
     def __iter__(self):
         return self
@@ -1388,11 +1393,11 @@ cdef class Iterator:
             if self.next_index > self.start or (self.stop is not None and self.next_index <= self.stop):
                 raise StopIteration
 
-        if self.is_interrupted:
+        if self._is_interrupted:
             if not self.fastindex:
                 log.warning("Sequential read of iterator was interrupted. Resetting iterator. This can negatively impact the performance.")
             OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
-            self.is_interrupted = False
+            self._is_interrupted = False
         else:
             # Set read cursor to next_item position
             if self.step > 1 and self.fastindex:
