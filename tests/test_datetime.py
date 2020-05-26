@@ -223,7 +223,7 @@ def generate_testdata(data_type, driver):
                     ("22:49:05.123456", "22:49:05"),
                     (datetime.time(22, 49, 5, 123456), "22:49:05"),
                     (None, None)]
-        else:
+        elif GDALVersion(2, 0) <= gdal_version < GDALVersion(3, 2):
             return [("22:49:05", "22:49:05"),
                     (datetime.time(22, 49, 5), "22:49:05"),
                     ("22:49:05.22", "22:49:05.220000"),
@@ -231,6 +231,14 @@ def generate_testdata(data_type, driver):
                     ("22:49:05.123456", "22:49:05.123000"),
                     (datetime.time(22, 49, 5, 123456), "22:49:05.123000"),
                     (None, '00:00:00')]
+        else:
+            return [("22:49:05", "22:49:05"),
+                    (datetime.time(22, 49, 5), "22:49:05"),
+                    ("22:49:05.22", "22:49:05.220000"),
+                    (datetime.time(22, 49, 5, 220000), "22:49:05.220000"),
+                    ("22:49:05.123456", "22:49:05.123000"),
+                    (datetime.time(22, 49, 5, 123456), "22:49:05.123000"),
+                    (None, None)]
     elif data_type == 'time' and driver == 'CSV':
         if gdal_version.major < 2:
             return [("22:49:05", "22:49:05"),
