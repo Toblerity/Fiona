@@ -4,6 +4,7 @@ cache:
   directories:
     - $GDALINST
     - ~/.cache/pip
+    - $HOME/.pyenv
 
 env:
   global:
@@ -13,12 +14,14 @@ env:
     - GDALBUILD=$HOME/gdalbuild
     - PROJINST=$HOME/gdalinstall
     - PROJBUILD=$HOME/projbuild
+    - CYTHON_COVERAGE="true"
     - MAKEFLAGS="-j 2"
+    - CXXFLAGS="-O0"
+    - CFLAGS="-O0"
 
 addons:
   apt:
     packages:
-      - libatlas-dev
       - libatlas-base-dev
       - gfortran
       - libsqlite3-dev
@@ -29,82 +32,138 @@ addons:
       - libspatialite
       - sqlite
       - geos
+      - pyenv
 
 matrix:
   fast_finish: true
   include:
+
+    # Linux: Test all supported GDAL minor versions (except latest stable) with one Python version
     - os: linux
       dist: xenial
       python: "3.6"
       env:
         GDALVERSION="2.3.3"
         PROJVERSION="4.9.3"
-
     - os: linux
       dist: xenial
       python: "3.6"
       env:
         GDALVERSION="2.4.4"
         PROJVERSION="4.9.3"
-
     - os: linux
       dist: xenial
       python: "3.6"
-      env:
-        GDALVERSION="3.0.3"
-        PROJVERSION="6.2.1"
- 
-    - os: linux
-      dist: xenial
-      python: "3.7"
-      env:
-        GDALVERSION="3.0.3"
-        PROJVERSION="6.2.1"
-
-    - os: linux
-      dist: xenial
-      python: "3.8"
       env:
         GDALVERSION="3.0.4"
         PROJVERSION="6.2.1"
 
+     # Linux: Test all supported Python versions with latest stable GDAL release
+    - os: linux
+      dist: xenial
+      python: "3.6"
+      env:
+        GDALVERSION="3.1.0"
+        PROJVERSION="6.3.2"
+    - os: linux
+      dist: xenial
+      python: "3.7"
+      env:
+        GDALVERSION="3.1.0"
+        PROJVERSION="6.3.2"
+    - os: linux
+      dist: xenial
+      python: "3.8"
+      env:
+        GDALVERSION="3.1.0"
+        PROJVERSION="6.3.2"
+
+    # Linux: Test master and Python dev
     - os: linux
       dist: xenial
       python: "3.8"
       env:
         GDALVERSION="master"
-        PROJVERSION="6.3.0"
-        
-    - os: osx
-      osx_image: xcode11.2
+        PROJVERSION="7.0.1"
+    - os: linux
+      dist: xenial
+      python: "3.9-dev"
+      env:
+        GDALVERSION="3.1.0"
+        PROJVERSION="6.3.2"
+
+    # OS X: Test all supported GDAL minor versions (except latest stable) with one Python version
+    - name: "Python 3.6 / GDAL 2.3 / PROJ 4.9"
+      os: osx
+      osx_image: xcode9.4
       language: shell
       env:
         GDALVERSION="2.3.3"
         PROJVERSION="4.9.3"
-
-    - os: osx
-      osx_image: xcode11.2
+        PYTHON="3.6.9"
+    - name: "Python 3.6 / GDAL 2.4 / PROJ 4.9"
+      os: osx
+      osx_image: xcode9.4
       language: shell
       env:
         GDALVERSION="2.4.4"
         PROJVERSION="4.9.3"
-
-    - os: osx
-      osx_image: xcode11.2
+        PYTHON="3.6.9"
+    - name: "Python 3.6 / GDAL 3.0 / PROJ 6.2"
+      os: osx
+      osx_image: xcode9.4
       language: shell
       env:
         GDALVERSION="3.0.3"
         PROJVERSION="6.2.1"
+        PYTHON="3.6.9"
+
+     # OS X: Test all supported python versions with latest stable GDAL release
+    - name: "Python 3.6 / GDAL 3.1 / PROJ 6.3"
+      os: osx
+      osx_image: xcode9.4
+      language: shell
+      env:
+        GDALVERSION="3.1.0"
+        PROJVERSION="6.3.2"
+        PYTHON="3.6.9"
+    - name: "Python 3.7 / GDAL 3.1 / PROJ 6.3"
+      os: osx
+      osx_image: xcode9.4
+      language: shell
+      env:
+        GDALVERSION="3.1.0"
+        PROJVERSION="6.3.2"
+        PYTHON="3.7.5"
+    - name: "Python 3.8 / GDAL 3.1 / PROJ 6.3"
+      os: osx
+      osx_image: xcode9.4
+      language: shell
+      env:
+        GDALVERSION="3.1.0"
+        PROJVERSION="6.3.2"
+        PYTHON="3.8.0"
+
 
   allow_failures:
     - env:
         GDALVERSION="master"
-        PROJVERSION="6.3.0"
-
+        PROJVERSION="7.0.1"
+    - python: "3.9-dev"
+      env:
+        GDALVERSION="3.1.0"
+        PROJVERSION="6.3.2"
 
 before_install:
-  - python3 -m pip install -U pip
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then echo 'eval "$(pyenv init -)"' >> ~/.bash_profile; source ~/.bash_profile; pyenv install --list;pyenv install --skip-existing $PYTHON; pyenv global $PYTHON; pyenv version; which python; fi
+  - python --version
+  - python -m pip install -U pip wheel==0.33.6
+  - python -m pip install -r requirements-ci.txt
+  - python -m pip wheel -r requirements-dev.txt
+  - python -m pip install -r requirements-dev.txt
+  - python -m pip install coveralls>=1.1 --upgrade
   - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$GDALINST/proj-$PROJVERSION/bin:$PATH
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then PATH=/Users/travis/.pyenv/versions/$PYTHON/bin:$PATH; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$GDALINST/proj-$PROJVERSION/lib:$LD_LIBRARY_PATH; fi
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then export DYLD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$GDALINST/proj-$PROJVERSION/lib:$DYLD_LIBRARY_PATH; fi
   - chmod +x scripts/travis_proj_install.sh && ./scripts/travis_proj_install.sh
@@ -113,19 +172,19 @@ before_install:
   - export PROJ_LIB=$GDALINST/gdal-$GDALVERSION/share/proj
   - gdal-config --version
   - $GDALINST/gdal-$GDALVERSION/bin/gdal-config --version
-  - python3 -m pip wheel -r requirements-dev.txt
-  - python3 -m pip install -r requirements-dev.txt
-  - python3 -m pip install coveralls>=1.1 --upgrade
+
 
 install:
   - if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $($GDALINST/gdal-$GDALVERSION/bin/gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
-  - GDAL_CONFIG=$GDALINST/gdal-$GDALVERSION/bin/gdal-config python3 -m pip install -v -v -v --no-deps --force-reinstall --no-use-pep517 -e .
-  - python3 -m pip freeze
+  - GDAL_CONFIG=$GDALINST/gdal-$GDALVERSION/bin/gdal-config python -m pip install -v -v -v --no-deps --force-reinstall --no-use-pep517 -e .
+  - python -m pip freeze
   - fio --version
   - fio --gdal-version
 
 script:
-  - python3 -m pytest -m "not wheel" --cov fiona --cov-report term-missing
+  - python -m pytest -m "not wheel" --cov fiona --cov-report term-missing
+  # Check documentation
+  #- rstcheck -r --ignore-directives automodule --ignore-substitutions version,release,today .
 
 after_script:
   - python setup.py clean
