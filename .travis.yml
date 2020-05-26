@@ -92,7 +92,7 @@ matrix:
         GDALVERSION="3.1.0"
         PROJVERSION="6.3.2"
 
-    # OS X: Test all supported GDAL minor versions (except latest stable) with one Python version
+    # OS X: Test all supported GDAL minor versions with one Python version
     - name: "Python 3.6 / GDAL 2.3 / PROJ 4.9"
       os: osx
       osx_image: xcode9.4
@@ -118,7 +118,6 @@ matrix:
         PROJVERSION="6.2.1"
         PYTHON="3.6.9"
 
-     # OS X: Test all supported python versions with latest stable GDAL release
     - name: "Python 3.6 / GDAL 3.1 / PROJ 6.3"
       os: osx
       osx_image: xcode9.4
@@ -127,23 +126,6 @@ matrix:
         GDALVERSION="3.1.0"
         PROJVERSION="6.3.2"
         PYTHON="3.6.9"
-    - name: "Python 3.7 / GDAL 3.1 / PROJ 6.3"
-      os: osx
-      osx_image: xcode9.4
-      language: shell
-      env:
-        GDALVERSION="3.1.0"
-        PROJVERSION="6.3.2"
-        PYTHON="3.7.5"
-    - name: "Python 3.8 / GDAL 3.1 / PROJ 6.3"
-      os: osx
-      osx_image: xcode9.4
-      language: shell
-      env:
-        GDALVERSION="3.1.0"
-        PROJVERSION="6.3.2"
-        PYTHON="3.8.0"
-
 
   allow_failures:
     - env:
