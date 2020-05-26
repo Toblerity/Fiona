@@ -6,7 +6,7 @@ import fiona
 from fiona.errors import FionaValueError, DriverError
 from fiona.io import MemoryFile, ZipMemoryFile
 from fiona.drvsupport import supported_drivers, driver_mode_mingdal, memoryfile_supports_mode, memoryfile_not_supported, \
-    zip_memoryfile_supports_mode, zip_memoryfile_not_supported
+    zip_memoryfile_supports_mode, zip_memoryfile_not_supported, driver_supports_mode
 from fiona.env import GDALVersion
 from fiona.path import ARCHIVESCHEMES
 from tests.conftest import driver_extensions, get_temp_filename
@@ -139,10 +139,8 @@ def test_tar_memoryfile_listlayers(bytes_coutwildrnp_tar):
         assert memfile.listlayers('/testing/coutwildrnp.shp') == ['coutwildrnp']
 
 
-@pytest.mark.parametrize('driver', [driver for driver, raw in supported_drivers.items() if 'w' in raw and (
-        driver not in driver_mode_mingdal['w'] or
-        gdal_version >= GDALVersion(*driver_mode_mingdal['w'][driver][:2]))
-                                    and driver not in {}])
+@pytest.mark.parametrize('driver', [driver for driver in supported_drivers if
+                                    driver_supports_mode(driver, 'w')])
 @pytest.mark.parametrize('ext', ARCHIVESCHEMES.keys())
 def test_zip_memoryfile_write(ext, driver):
     """In-memory zipped Shapefile can be written to"""
@@ -174,12 +172,14 @@ def test_zip_memoryfile_write(ext, driver):
                 c.writerecords(records2)
 
             with memfile.open(path=file1_path, mode='r', driver=driver, schema=schema) as c:
+                assert driver == c.driver
                 items = list(c)
                 assert len(items) == len(range1)
                 for val_in, val_out in zip(range1, items):
                     assert val_in == int(get_pos(val_out, driver))
 
             with memfile.open(path=file2_path, mode='r') as c:
+                assert driver == c.driver
                 items = list(c)
                 assert len(items) == len(range2)
                 for val_in, val_out in zip(range2, items):
@@ -227,6 +227,7 @@ def test_zip_memoryfile_write_notsupported(driver, monkeypatch):
                 c.writerecords(records2)
 
             with memfile.open(path=file1_path, mode='r', driver=driver, schema=schema) as c:
+                assert driver == c.driver
                 items = list(c)
                 is_good = is_good and (len(items) == len(range1))
                 for val_in, val_out in zip(range1, items):
@@ -262,16 +263,15 @@ def test_zip_memoryfile_append(ext):
                 c.writerecords(records2)
 
             with memfile.open(path="/test1.geojson", mode='r', driver='GeoJSON', schema=schema) as c:
+                assert driver == c.driver
                 items = list(c)
                 assert len(items) == len(range(0, 10))
                 for val_in, val_out in zip(range(0, 10), items):
                     assert val_in == int(val_out['properties']['position'])
 
 
-@pytest.mark.parametrize('driver', [driver for driver, raw in supported_drivers.items() if 'w' in raw and (
-        driver not in driver_mode_mingdal['w'] or
-        gdal_version >= GDALVersion(*driver_mode_mingdal['w'][driver][:2]))
-                                    and driver not in {}])
+@pytest.mark.parametrize('driver', [driver for driver in supported_drivers if
+                                    driver_supports_mode(driver, 'w')])
 def test_write_memoryfile(driver):
     """In-memory can be written"""
 
@@ -291,11 +291,13 @@ def test_write_memoryfile(driver):
                     for val_in, val_out in zip(positions, items):
                         assert val_in == int(get_pos(val_out, driver))
     else:
+        # BNA requires extension: fiona.errors.DriverError: '/vsimem/...' not recognized as a supported file format.
         with MemoryFile(ext=driver_extensions.get(driver, '')) as memfile:
             with memfile.open(driver=driver, schema=schema) as c:
                 c.writerecords(records1)
 
             with memfile.open(driver=driver) as c:
+                assert driver == c.driver
                 items = list(c)
                 assert len(items) == len(positions)
                 for val_in, val_out in zip(positions, items):
@@ -331,7 +333,7 @@ def test_write_memoryfile_notsupported(driver, monkeypatch):
     is_good = True
 
     try:
-        with MemoryFile(ext=driver_extensions.get(driver, '')) as memfile:
+        with MemoryFile() as memfile:
             with memfile.open(driver=driver, schema=schema) as c:
                 c.writerecords(records1)
 
@@ -346,9 +348,7 @@ def test_write_memoryfile_notsupported(driver, monkeypatch):
     assert not is_good
 
 
-@pytest.mark.parametrize('driver', [driver for driver, raw in supported_drivers.items() if 'a' in raw and (
-        driver not in driver_mode_mingdal['a'] or
-        gdal_version >= GDALVersion(*driver_mode_mingdal['a'][driver][:2]))])
+@pytest.mark.parametrize('driver', [driver for driver in supported_drivers if driver_supports_mode(driver, 'a')])
 def test_append_memoryfile(driver):
     """In-memory can be appended"""
 
@@ -360,7 +360,6 @@ def test_append_memoryfile(driver):
     positions = range1 + range2
 
     if not memoryfile_supports_mode(driver, 'a'):
-        print("1", driver, memoryfile_supports_mode(driver, 'a'))
         with pytest.raises(FionaValueError):
             with MemoryFile(ext=driver_extensions.get(driver, '')) as memfile:
                 with memfile.open(driver=driver, schema=schema) as c:
@@ -368,8 +367,7 @@ def test_append_memoryfile(driver):
                 with memfile.open(driver=driver, schema=schema, mode='a') as c:
                     c.writerecords(records2)
     else:
-        #  Shapfile needs file extensions so that exists() returns True
-        #  GPKG requires extensions for gdal 2.0, otherwise sqlite driver is used
+        # GPKG driver for gdal 2.0 needs extensions, otherwise SQLite driver is used
         with MemoryFile(ext=driver_extensions.get(driver, '')) as memfile:
             with memfile.open(driver=driver, schema=schema) as c:
                 c.writerecords(records1)
@@ -414,7 +412,7 @@ def test_append_memoryfile_notsupported(driver, monkeypatch):
     is_good = True
 
     try:
-        with MemoryFile(ext=driver_extensions.get(driver, '')) as memfile:
+        with MemoryFile() as memfile:
             with memfile.open(driver=driver, schema=schema) as c:
                 c.writerecords(records1)
             with memfile.open(driver=driver, schema=schema, mode='a') as c:
@@ -471,3 +469,31 @@ def test_memoryfilebase_write():
                           schema=schema) as c:
             record_positions = [int(f['properties']['position']) for f in c]
             assert record_positions == list(range(5))
+
+
+@pytest.mark.parametrize('driver', [driver for driver in supported_drivers if
+                                    driver_supports_mode(driver, 'w') and memoryfile_supports_mode(driver, 'w')])
+def test_memoryfile_exists_no_extension(driver):
+    schema = get_schema(driver)
+    positions = list(range(0, 5))
+    records1 = get_records(driver, positions)
+
+    with MemoryFile() as memfile:
+        with memfile.open(driver=driver, schema=schema) as c:
+            c.writerecords(records1)
+        assert memfile.exists()
+
+
+@pytest.mark.parametrize('driver', [driver for driver in supported_drivers if
+                                    driver_supports_mode(driver, 'w') and memoryfile_supports_mode(driver, 'w')])
+def test_memoryfile_exists_with_extension(driver):
+    schema = get_schema(driver)
+    positions = list(range(0, 5))
+    records1 = get_records(driver, positions)
+
+    with MemoryFile(ext=driver_extensions.get(driver, '')) as memfile:
+        with memfile.open(driver=driver, schema=schema) as c:
+            c.writerecords(records1)
+        assert memfile.exists()
+
+

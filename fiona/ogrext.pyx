@@ -1657,6 +1657,7 @@ cdef class MemoryFileBase(object):
         else:
             # GDAL 2.1 requires a .zip extension for zipped files.
             self.name = '/vsimem/{0}.{1}'.format(uuid.uuid4(), ext.lstrip('.'))
+        log.debug("MemoryFileBase name: {}".format(self.name))
 
         self.path = self.name.encode('utf-8')
         self._len = 0
@@ -1691,14 +1692,10 @@ cdef class MemoryFileBase(object):
         cdef VSILFILE *fp = NULL
         cdef const char *cypath = self.path
 
-        with nogil:
-            fp = VSIFOpenL(cypath, 'r')
-
-        if fp != NULL:
-            VSIFCloseL(fp)
+        if CPLCheckForFile(cypath, NULL):
             return True
-        else:
-            return False
+
+        return False
 
     def __len__(self):
         """Length of the file's buffer in number of bytes.
