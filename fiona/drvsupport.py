@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from fiona._env import get_gdal_version_num, calc_gdal_version_num
 
 from fiona.env import Env
 
@@ -159,6 +160,19 @@ driver_mode_mingdal = {
           'GeoJSON': (2, 1, 0),
           'MapInfo File': (2, 0, 0)}
 }
+
+
+def driver_supports_mode(driver, mode):
+    """ Returns True if driver supports mode, False otherwise"""
+
+    if driver not in supported_drivers:
+        return False
+    if mode not in supported_drivers[driver]:
+        return False
+    if driver in driver_mode_mingdal[mode]:
+        if get_gdal_version_num() < calc_gdal_version_num(*driver_mode_mingdal[mode][driver]):
+            return False
+    return True
 
 
 # Removes drivers in the supported_drivers dictionary that the

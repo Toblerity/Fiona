@@ -8,7 +8,7 @@ from fiona.env import GDALVersion
 import fiona
 from fiona.errors import FionaDeprecationWarning
 from .conftest import get_temp_filename
-from fiona.drvsupport import supported_drivers, driver_mode_mingdal
+from fiona.drvsupport import supported_drivers, driver_mode_mingdal, driver_supports_mode
 
 gdal_version = GDALVersion.runtime()
 
@@ -43,9 +43,8 @@ def test_collection_iterator_next(path_coutwildrnp_shp):
         assert v['id'] == '5'
 
 
-@pytest.fixture(scope="module", params=[driver for driver, raw in supported_drivers.items() if 'w' in raw
-                                        and (driver not in driver_mode_mingdal['w'] or
-                                             gdal_version >= GDALVersion(*driver_mode_mingdal['w'][driver][:2]))
+@pytest.fixture(scope="module", params=[driver for driver in supported_drivers if
+                                        driver_supports_mode(driver, 'w')
                                         and driver not in {'DGN', 'MapInfo File', 'GPSTrackMaker', 'GPX', 'BNA', 'DXF',
                                                            'GML'}])
 def slice_dataset_path(request):
