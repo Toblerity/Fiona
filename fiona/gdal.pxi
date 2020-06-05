@@ -11,6 +11,7 @@ cdef extern from "cpl_conv.h" nogil:
     void CPLSetConfigOption(const char* key, const char* val)
     const char* CPLGetConfigOption(const char* key, const char* default)
     const char *CPLFindFile(const char *pszClass, const char *pszBasename)
+    int CPLCheckForFile(char *pszFilename, char **papszSiblingList)
 
 
 cdef extern from "cpl_error.h" nogil:
@@ -47,6 +48,7 @@ cdef extern from "cpl_string.h" nogil:
     char **CSLSetNameValue(char **list, char *name, char *val)
     void CSLDestroy(char **list)
     char **CSLMerge(char **first, char **second)
+    const char* CSLGetField (char **papszStrList, int)
 
 
 cdef extern from "cpl_vsi.h" nogil:
@@ -224,6 +226,7 @@ cdef extern from "gdal.h" nogil:
                                 GDALDatasetH hds, int strict, char **options,
                                 void *progress_func, void *progress_data)
     char** GDALGetMetadata(GDALMajorObjectH obj, const char *pszDomain)
+    char** GDALGetMetadataDomainList(GDALMajorObjectH obj)
     int GDALSetMetadata(GDALMajorObjectH obj, char **papszMD,
                         const char *pszDomain)
     const char* GDALGetMetadataItem(GDALMajorObjectH obj, const char *pszName,

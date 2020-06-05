@@ -1,7 +1,10 @@
+import os
+
 import pytest
 
 import fiona
 from fiona.collection import supported_drivers
+from fiona.crs import from_epsg
 from fiona.errors import FionaValueError, DriverError, SchemaError, CRSError
 
 
@@ -12,7 +15,7 @@ def test_json_read(path_coutwildrnp_json):
 
 def test_json(tmpdir):
     """Write a simple GeoJSON file"""
-    path = str(tmpdir.join('foo.json'))
+    path = tmpdir.join('foo.json').strpath
     with fiona.open(path, 'w',
                     driver='GeoJSON',
                     schema={'geometry': 'Unknown',
@@ -30,7 +33,7 @@ def test_json(tmpdir):
 
 def test_json_overwrite(tmpdir):
     """Overwrite an existing GeoJSON file"""
-    path = str(tmpdir.join('foo.json'))
+    path = tmpdir.join('foo.json').strpath
 
     driver = "GeoJSON"
     schema1 = {"geometry": "Unknown", "properties": [("title", "str")]}
@@ -78,7 +81,7 @@ def test_json_overwrite_invalid(tmpdir):
     """Overwrite an existing file that isn't a valid GeoJSON"""
 
     # write some invalid data to a file
-    path = str(tmpdir.join('foo.json'))
+    path = tmpdir.join('foo.json').strpath
     with open(path, "w") as f:
         f.write("This isn't a valid GeoJSON file!!!")
 
@@ -105,7 +108,92 @@ def test_json_overwrite_invalid(tmpdir):
 
 def test_write_json_invalid_directory(tmpdir):
     """Attempt to create a file in a directory that doesn't exist"""
-    path = str(tmpdir.join('does-not-exist', 'foo.json'))
+    path = tmpdir.join('does-not-exist', 'foo.json').strpath
     schema = {"geometry": "Unknown", "properties": [("title", "str")]}
     with pytest.raises(DriverError):
         fiona.open(path, "w", driver="GeoJSON", schema=schema)
+
+
+def test_overwrite_shp_with_json_clears_auxiliary_files(tmpdir):
+    """ Test that auxiliary files are also removed if dataset is overwritten"""
+    schema1 = {"geometry": "Point", "properties": [("title", "str")]}
+    features1 = [
+        {
+            "geometry": {"type": "Point", "coordinates": [0.0, 0.0]},
+            "properties": {"title": "One"},
+        },
+        {
+            "geometry": {"type": "Point", "coordinates": [0.0, 0.0]},
+            "properties": {"title": "Two"},
+        }
+    ]
+
+    path = tmpdir.join('foo.shp').strpath
+    # attempt to overwrite it with a valid file
+    with fiona.open(path, "w", driver="ESRI Shapefile", schema=schema1) as dst:
+        dst.writerecords(features1)
+
+    assert set(os.listdir(tmpdir.strpath)) == {'foo.cpg', 'foo.dbf', 'foo.shx', 'foo.shp'}
+
+    # attempt to overwrite it with a GeoJSON file
+    with fiona.open(path, "w", driver="GeoJSON", schema=schema1) as dst:
+        dst.writerecords(features1)
+
+    assert os.listdir(tmpdir.strpath) == ['foo.shp']
+
+
+def test_overwrite_shp_with_json_clears_auxiliary_files_different_extension(tmpdir):
+    """ Test that auxiliary files are also removed if dataset is overwritten"""
+    schema1 = {"geometry": "Point", "properties": [("title", "str")]}
+    features1 = [
+        {
+            "geometry": {"type": "Point", "coordinates": [0.0, 0.0]},
+            "properties": {"title": "One"},
+        },
+        {
+            "geometry": {"type": "Point", "coordinates": [0.0, 0.0]},
+            "properties": {"title": "Two"},
+        }
+    ]
+
+    path = tmpdir.join('foo.shp').strpath
+    # attempt to overwrite it with a valid file
+    with fiona.open(path, "w", driver="ESRI Shapefile", schema=schema1) as dst:
+        dst.writerecords(features1)
+
+    assert set(os.listdir(tmpdir.strpath)) == {'foo.cpg', 'foo.dbf', 'foo.shx', 'foo.shp'}
+
+    # attempt to overwrite it with a GeoJSON file
+    path = tmpdir.join('foo.shx').strpath
+    with fiona.open(path, "w", driver="GeoJSON", schema=schema1) as dst:
+        dst.writerecords(features1)
+
+    assert os.listdir(tmpdir.strpath) == ['foo.shx']
+
+
+def test_overwrite_no(tmpdir, caplog):
+    """ Test that no "ERROR:fiona._env:/tmp/test.geojson: No such file or directory" message
+        is shown if geojson is overwritten"""
+
+    schema = {"geometry": "Point", "properties": [("title", "str")]}
+    features = [
+        {
+            "geometry": {"type": "Point", "coordinates": [0.0, 0.0]},
+            "properties": {"title": "One"},
+        },
+        {
+            "geometry": {"type": "Point", "coordinates": [0.0, 0.0]},
+            "properties": {"title": "Two"},
+        }
+    ]
+
+    path = tmpdir.join('foo.json').strpath
+
+    for i in range(2):
+        with fiona.open(path, "w",
+                        driver="GeoJSON",
+                        schema=schema,
+                        crs=from_epsg(4326)) as sink:
+            sink.writerecords(features)
+
+    assert "No such file or directory" not in caplog.text

@@ -89,3 +89,4 @@ fiona/_env.c
 fiona/ogrext1.c
 fiona/ogrext2.c
 fiona/schema.c
+fiona/_meta.c

@@ -23,7 +23,7 @@ from fiona._geometry cimport (
 from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile, get_last_error_msg
 
 import fiona
-from fiona._env import GDALVersion, get_gdal_version_num
+from fiona._env import GDALVersion, get_gdal_version_num, calc_gdal_version_num
 from fiona._err import cpl_errs, FionaNullPointerError, CPLE_BaseError, CPLE_OpenFailedError
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
@@ -36,7 +36,7 @@ from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 from fiona.schema import FIELD_TYPES, FIELD_TYPES_MAP, normalize_field_type
 from fiona.path import vsi_path
-
+from fiona.meta import dataset_open_options, dataset_creation_options, layer_creation_options
 from fiona._shim cimport is_field_null, osr_get_name, osr_set_traditional_axis_mapping_strategy
 
 from libc.stdlib cimport malloc, free
@@ -984,31 +984,57 @@ cdef class WritingSession(Session):
             path_b = strencode(path)
             path_c = path_b
 
-            driver_b = collection.driver.encode()
-            driver_c = driver_b
-            cogr_driver = exc_wrap_pointer(GDALGetDriverByName(driver_c))
+            cogr_driver = exc_wrap_pointer(GDALGetDriverByName(collection.driver.encode("utf-8")))
 
-            # Our most common use case is the creation of a new data
-            # file and historically we've assumed that it's a file on
-            # the local filesystem and queryable via os.path.
-            #
-            # TODO: remove the assumption.
-            if not os.path.exists(path):
-                log.debug("File doesn't exist. Creating a new one...")
-                cogr_ds = gdal_create(cogr_driver, path_c, {})
-
-            # TODO: revisit the logic in the following blocks when we
-            # change the assumption above.
+            if get_gdal_version_num() < calc_gdal_version_num(2, 0, 0):
+                open_kwargs = create_kwargs = layer_kwargs = kwargs
             else:
-                if collection.driver == "GeoJSON" and os.path.exists(path):
-                    # manually remove geojson file as GDAL doesn't do this for us
-                    os.unlink(path)
+                driver_dataset_open_options = dataset_open_options(collection.driver)
+                driver_dataset_creation_options = dataset_creation_options(collection.driver)
+                driver_layer_creation_options = layer_creation_options(collection.driver)
+
+                # filter options not supported by driver
+                open_kwargs = {}
+                for k, v in kwargs.items():
+                    if k.upper() in driver_dataset_open_options:
+                        open_kwargs[k] = v
+                    else:
+                        log.debug("Ignore '{}' as dataset open option.".format(k))
+                create_kwargs = {}
+                for k, v in kwargs.items():
+                    if k.upper() in driver_dataset_creation_options:
+                        create_kwargs[k] = v
+                    else:
+                        log.debug("Ignore '{}' as dataset creation option.".format(k))
+                layer_kwargs = {}
+                for k, v in kwargs.items():
+                    if k.upper() in driver_layer_creation_options:
+                        layer_kwargs[k] = v
+                    else:
+                        log.debug("Ignore '{}' as layer creation option.".format(k))
+
+
+            # If file exists & we can open it => test if it is possible to add layer
+            #                                    if not possible => recreate file
+            # If file exists & we can not open it => recreate file
+            # If file does not exists => create file
+            if CPLCheckForFile(path_c, NULL):
                 try:
-                    # attempt to open existing dataset in write mode
-                    cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
+                    cogr_ds = gdal_open_vector(path_c, 1, [collection.driver], open_kwargs)
                 except DriverError:
-                    # failed, attempt to create it
-                    cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
+
+                    try:
+                        # Existing file could be from a different file format. Let first _remove try to guess the
+                        # correct driver
+                        _remove(path)
+                    except:
+                        # Some drivers cannot be guessed, but files can be removed when a driver is specified
+                        try:
+                            _remove(path, collection.driver)
+                        except:
+                            raise DatasetDeleteError("File '{path}' exists and must be deleted "
+                                                     "manually.".format(path=path))
+                    cogr_ds = gdal_create(cogr_driver, path_c, create_kwargs)
                 else:
                     # check capability of creating a new layer in the existing dataset
                     capability = check_capability_create_layer(cogr_ds)
@@ -1019,7 +1045,14 @@ cdef class WritingSession(Session):
                         # unable to use existing dataset, recreate it
                         GDALClose(cogr_ds)
                         cogr_ds = NULL
-                        cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
+                        try:
+                            _remove(path, collection.driver)
+                        except:
+                            raise DatasetDeleteError("File '{path}' exists and must be deleted "
+                                                     "manually.".format(path=path))
+                        cogr_ds = gdal_create(cogr_driver, path_c, create_kwargs)
+            else:
+                cogr_ds = gdal_create(cogr_driver, path_c, create_kwargs)
 
             self.cogr_ds = cogr_ds
 
@@ -1078,15 +1111,16 @@ cdef class WritingSession(Session):
             name_b = collection.name.encode('utf-8')
             name_c = name_b
 
-            for k, v in kwargs.items():
+            for k, v in layer_kwargs.items():
 
                 if v is None:
                     continue
 
-                # We need to remove encoding from the layer creation
-                # options if we're not creating a shapefile.
-                if k == 'encoding' and "Shapefile" not in collection.driver:
-                    continue
+                if get_gdal_version_num() < calc_gdal_version_num(2, 0, 0):
+                    # We need to remove encoding from the layer creation
+                    # options if we're not creating a shapefile.
+                    if k == 'encoding' and "Shapefile" not in collection.driver:
+                        continue
 
                 k = k.upper().encode('utf-8')
 
@@ -1575,7 +1609,7 @@ def _remove(path, driver=None):
         cogr_driver = GDALGetDatasetDriver(cogr_ds)
         GDALClose(cogr_ds)
     else:
-        cogr_driver = OGRGetDriverByName(driver.encode("utf-8"))
+        cogr_driver = exc_wrap_pointer(GDALGetDriverByName(driver.encode("utf-8")))
 
     if cogr_driver == NULL:
         raise DatasetDeleteError("Null driver when attempting to delete {}".format(path))

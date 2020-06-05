@@ -46,8 +46,7 @@ def test_bounds(tmpdir, driver):
     with fiona.open(path, 'w',
                     driver=driver,
                     schema={'geometry': 'Point',
-                            'properties': [('title', 'str')]},
-                    fiona_force_driver=True) as c:
+                            'properties': [('title', 'str')]}) as c:
 
         c.writerecords([{'geometry': {'type': 'Point', 'coordinates': (1.0, 10.0)},
                             'properties': {'title': 'One'}}])

@@ -237,6 +237,7 @@ if source_is_repo and "clean" not in sys.argv:
         Extension('fiona._crs', ['fiona/_crs.pyx'], **ext_options),
         Extension('fiona._env', ['fiona/_env.pyx'], **ext_options),
         Extension('fiona._err', ['fiona/_err.pyx'], **ext_options),
+        Extension('fiona._meta', ['fiona/_meta.pyx'], **ext_options),
         Extension('fiona._shim', ['fiona/_shim.pyx'], **ext_options),
         Extension('fiona.ogrext', ['fiona/ogrext.pyx'], **ext_options)
         ],
@@ -252,6 +253,7 @@ elif "clean" not in sys.argv:
         Extension('fiona._crs', ['fiona/_crs.c'], **ext_options),
         Extension('fiona._env', ['fiona/_env.c'], **ext_options),
         Extension('fiona._err', ['fiona/_err.c'], **ext_options),
+        Extension('fiona._meta', ['fiona/_meta.c'], **ext_options),
         Extension('fiona.ogrext', ['fiona/ogrext.c'], **ext_options),
     ]
 
