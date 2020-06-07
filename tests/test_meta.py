@@ -15,9 +15,18 @@ def test_print_driver_options(driver):
 
 @requires_gdal2
 @pytest.mark.parametrize("driver", supported_drivers)
+def test_extension(driver):
+    # do not fail
+    extension = fiona.meta.extension(driver)
+    assert extension is None or isinstance(extension, str)
+
+
+@requires_gdal2
+@pytest.mark.parametrize("driver", supported_drivers)
 def test_extensions(driver):
     # do not fail
-    isinstance(fiona.meta.extensions(driver), list)
+    extensions = fiona.meta.extensions(driver)
+    assert extensions is None or isinstance(extensions, list)
 
 
 @requires_gdal2
@@ -31,4 +40,13 @@ def test_supports_vsi(driver):
 @pytest.mark.parametrize("driver", supported_drivers)
 def test_supported_field_types(driver):
     # do not fail
-    isinstance(fiona.meta.extensions(driver), list)
+    field_types = fiona.meta.supported_field_types(driver)
+    assert field_types is None or isinstance(field_types, list)
+
+
+@requires_gdal2
+@pytest.mark.parametrize("driver", supported_drivers)
+def test_supported_field_types(driver):
+    # do not fail
+    sub_field_types = fiona.meta.supported_sub_field_types(driver)
+    assert sub_field_types is None or isinstance(sub_field_types, list)

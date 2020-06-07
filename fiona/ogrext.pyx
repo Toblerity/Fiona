@@ -994,24 +994,33 @@ cdef class WritingSession(Session):
                 driver_layer_creation_options = layer_creation_options(collection.driver)
 
                 # filter options not supported by driver
-                open_kwargs = {}
-                for k, v in kwargs.items():
-                    if k.upper() in driver_dataset_open_options:
-                        open_kwargs[k] = v
-                    else:
-                        log.debug("Ignore '{}' as dataset open option.".format(k))
-                create_kwargs = {}
-                for k, v in kwargs.items():
-                    if k.upper() in driver_dataset_creation_options:
-                        create_kwargs[k] = v
-                    else:
-                        log.debug("Ignore '{}' as dataset creation option.".format(k))
-                layer_kwargs = {}
-                for k, v in kwargs.items():
-                    if k.upper() in driver_layer_creation_options:
-                        layer_kwargs[k] = v
-                    else:
-                        log.debug("Ignore '{}' as layer creation option.".format(k))
+                def filter_options(kwargs, driver_options):
+                    # If driver does not specify options we cannot filter
+                    if driver_options is None:
+                        return kwargs, []
+
+                    filtered_options = {}
+
+                    invalid_options = []
+                    for k, v in kwargs.items():
+                        if k.upper() in driver_options:
+                            filtered_options[k] = v
+                        else:
+                            invalid_options.append(k)
+                    return filtered_options, invalid_options
+
+                open_kwargs, ignored = filter_options(kwargs, driver_dataset_open_options)
+                if len(ignored) > 0:
+                    log.debug("{} options are ignored for dataset open.".format(",".join(ignored)))
+
+                create_kwargs, ignored = filter_options(kwargs, driver_dataset_creation_options)
+                if len(ignored) > 0:
+                    log.debug("{} options are ignored for dataset creation.".format(",".join(ignored)))
+
+                layer_kwargs, ignored = filter_options(kwargs, driver_layer_creation_options)
+                if len(ignored) > 0:
+                    log.debug("{} options are ignored for layer creation.".format(",".join(ignored)))
+                del ignored
 
 
             # If file exists & we can open it => test if it is possible to add layer

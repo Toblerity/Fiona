@@ -1,7 +1,9 @@
 import xml.etree.ElementTree as ET
 from fiona._meta import _get_metadata_item
 from fiona.env import require_gdal_version, GDALVersion
+import logging
 
+log = logging.getLogger(__name__)
 
 class MetadataItem:
     # since GDAL 2.0
@@ -33,20 +35,24 @@ def _parse_options(xml):
     options = {}
     if len(xml) > 0:
 
-        root = ET.fromstring(xml)
-        for option in root.iter('Option'):
+        try:
+            root = ET.fromstring(xml)
+            for option in root.iter('Option'):
 
-            option_name = option.attrib['name']
-            opt = {}
-            opt.update((k, v) for k, v in option.attrib.items() if not k == 'name')
+                option_name = option.attrib['name']
+                opt = {}
+                opt.update((k, v) for k, v in option.attrib.items() if not k == 'name')
 
-            values = []
-            for value in option.iter('Value'):
-                values.append(value.text)
-            if len(values) > 0:
-                opt['values'] = values
+                values = []
+                for value in option.iter('Value'):
+                    values.append(value.text)
+                if len(values) > 0:
+                    opt['values'] = values
 
-            options[option_name] = opt
+                options[option_name] = opt
+        except Exception as e:
+            log.warning("XML options parsing failed: {}: {}".format(str(e), xml))
+            return None
 
     return options
 
@@ -62,20 +68,50 @@ def dataset_creation_options(driver):
     Returns
     -------
     dict
-        Dataset creation options
+        Dataset creation options or None if not specified by driver
 
     """
 
     xml = _get_metadata_item(driver, MetadataItem.CREATION_OPTION_LIST)
 
+    if xml is None:
+        return None
+
+    if len(xml) == 0:
+        return None
+
     # Fix XML
     if driver == 'GML':
         xml = xml.replace("<gml:boundedBy>", "&lt;gml:boundedBy&gt;")
     elif driver == 'GPX':
+        print("replace")
         xml = xml.replace("<extensions>", "&lt;extensions&gt;")
+    elif driver == 'KML':
+        xml = xml.replace("<extensions>", "&lt;extensions&gt;")
+        xml = xml.replace("<name>", "&lt;name&gt;")
+        xml = xml.replace("<description>", "&lt;description&gt;")
+        xml = xml.replace("<AltitudeMode>", "&lt;AltitudeMode&gt;")
+    elif driver == 'GeoRSS':
+        xml = xml.replace("<item>", "&lt;item&gt;")
+        xml = xml.replace("<entry>", "&lt;entry&gt;")
+        xml = xml.replace("<channel>", "&lt;channel&gt;")
+        xml = xml.replace("<title>", "&lt;title&gt;")
+        xml = xml.replace("<description>", "&lt;description&gt;")
+        xml = xml.replace("<link>", "&lt;link&gt;")
+        xml = xml.replace("<updated>", "&lt;updated&gt;")
+        xml = xml.replace("<author>", "&lt;author&gt;")
+        xml = xml.replace("<name>", "&lt;name&gt;")
+        xml = xml.replace("<id>", "&lt;id&gt;")
+    elif driver == 'ISIS3':
+        xml = xml.replace("'boolean'", "'boolean' ")
+        xml = xml.replace("'string'", "'string' ")
+    elif driver == 'GRIB':
+        xml = xml.replace("max='100'", "max='100' ")
+    elif driver == 'Rasterlite':
+        xml = xml.replace("default='(GTiff", "description='(GTiff")
+        xml = xml.replace("type='string' default='GTiff'", "type='string'")
 
-    options = _parse_options(xml)
-    return options
+    return _parse_options(xml)
 
 
 @require_gdal_version('2.0')
@@ -89,12 +125,18 @@ def layer_creation_options(driver):
     Returns
     -------
     dict
-        Layer creation options
+        Layer creation options or None if not specified by driver
 
     """
     xml = _get_metadata_item(driver, MetadataItem.LAYER_CREATION_OPTION_LIST)
-    options = _parse_options(xml)
-    return options
+
+    if xml is None:
+        return None
+
+    if len(xml) == 0:
+        return None
+
+    return _parse_options(xml)
 
 
 @require_gdal_version('2.0')
@@ -108,12 +150,18 @@ def dataset_open_options(driver):
     Returns
     -------
     dict
-        Dataset open options
+        Dataset open options or None if not specified by driver
 
     """
     xml = _get_metadata_item(driver, MetadataItem.DATASET_OPEN_OPTIONS)
-    options = _parse_options(xml)
-    return options
+
+    if xml is None:
+        return None
+
+    if len(xml) == 0:
+        return None
+
+    return _parse_options(xml)
 
 
 @require_gdal_version('2.0')
@@ -131,9 +179,10 @@ def print_driver_options(driver):
                                  ("Layer Creation Options", layer_creation_options(driver))]:
 
         print("{option_type}:".format(option_type=option_type))
-        if len(options) == 0:
+        if options is None:
+            print("\tNo options specified by GDAL. Please consult GDAL's driver documentation.")
+        elif len(options) == 0:
             print("\tNo options available.")
-
         else:
             for option_name in options:
                 print("\t{option_name}:".format(option_name=option_name))
@@ -159,18 +208,33 @@ def extensions(driver):
     Returns
     -------
     list
-        List with file extensions
+        List with file extensions or None if not specified by driver
 
     """
-    driver_extensions = set()
-    if GDALVersion().runtime().at_least((2, 0)):
-        for ext in _get_metadata_item(driver, MetadataItem.EXTENSIONS).split(" "):
-            if len(ext) > 0:
-                driver_extensions.add(ext)
-    for ext in _get_metadata_item(driver, MetadataItem.EXTENSION).split(" "):
-        if len(ext) > 0:
-            driver_extensions.add(ext)
-    return list(driver_extensions)
+
+    exts = _get_metadata_item(driver, MetadataItem.EXTENSIONS)
+
+    if exts is None:
+        return None
+
+    return [ext for ext in exts.split(" ") if len(ext) > 0]
+
+
+def extension(driver):
+    """ Returns file extension of driver
+
+    Parameters
+    ----------
+    driver : str
+
+    Returns
+    -------
+    str
+        File extensions or None if not specified by driver
+
+    """
+
+    return _get_metadata_item(driver, MetadataItem.EXTENSION)
 
 
 @require_gdal_version('2.0')
@@ -186,12 +250,13 @@ def supports_vsi(driver):
     bool
 
     """
-    return _get_metadata_item(driver, MetadataItem.VIRTUAL_IO).upper() == "YES"
+    virutal_io = _get_metadata_item(driver, MetadataItem.VIRTUAL_IO)
+    return virutal_io is not None and virutal_io.upper() == "YES"
 
 
 @require_gdal_version('2.0')
 def supported_field_types(driver):
-    """ Returns supported field and sub field types
+    """ Returns supported field types
 
     Parameters
     ----------
@@ -200,15 +265,34 @@ def supported_field_types(driver):
     Returns
     -------
     list
-        List with supported field types
+        List with supported field types or None if not specified by driver
 
     """
-    field_types = set()
-    for field_type in _get_metadata_item(driver, MetadataItem.CREATION_FIELD_DATA_TYPES).split(" "):
-        field_types.add(field_type)
+    field_types_str = _get_metadata_item(driver, MetadataItem.CREATION_FIELD_DATA_TYPES)
 
-    if GDALVersion().runtime().at_least((2, 3)):
-        for field_type in _get_metadata_item(driver, MetadataItem.CREATION_FIELD_DATA_SUB_TYPES).split(" "):
-            field_types.add(field_type)
+    if field_types_str is None:
+        return None
 
-    return list(field_types)
+    return [field_type for field_type in field_types_str.split(" ") if len(field_type) > 0]
+
+
+@require_gdal_version('2.3')
+def supported_sub_field_types(driver):
+    """ Returns supported sub field types
+
+    Parameters
+    ----------
+    driver : str
+
+    Returns
+    -------
+    list
+        List with supported field types or None if not specified by driver
+
+    """
+    field_types_str = _get_metadata_item(driver, MetadataItem.CREATION_FIELD_DATA_SUB_TYPES)
+
+    if field_types_str is None:
+        return None
+
+    return [field_type for field_type in field_types_str.split(" ") if len(field_type) > 0]

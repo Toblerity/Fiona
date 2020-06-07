@@ -34,10 +34,15 @@ def _get_metadata_item(driver, metadata_item):
     cdef char* metadata_c = NULL
     cdef void *cogr_driver
 
-    metadata = ""
     cogr_driver = exc_wrap_pointer(GDALGetDriverByName(driver.encode('utf-8')))
     metadata_c = GDALGetMetadataItem(cogr_driver, strencode(metadata_item), NULL)
+
+    metadata = None
     if metadata_c != NULL:
         metadata = metadata_c
         metadata = metadata.decode('utf-8')
+
+        if len(metadata) == 0:
+            metadata = None
+
     return metadata
