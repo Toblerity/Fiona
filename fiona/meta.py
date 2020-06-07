@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
 from fiona._meta import _get_metadata_item
-from fiona.env import require_gdal_version, GDALVersion
+from fiona.env import require_gdal_version
 import logging
 
 log = logging.getLogger(__name__)
@@ -80,11 +80,10 @@ def dataset_creation_options(driver):
     if len(xml) == 0:
         return None
 
-    # Fix XML
+    # Fix GDALs XML
     if driver == 'GML':
         xml = xml.replace("<gml:boundedBy>", "&lt;gml:boundedBy&gt;")
     elif driver == 'GPX':
-        print("replace")
         xml = xml.replace("<extensions>", "&lt;extensions&gt;")
     elif driver == 'KML':
         xml = xml.replace("<extensions>", "&lt;extensions&gt;")
@@ -92,16 +91,18 @@ def dataset_creation_options(driver):
         xml = xml.replace("<description>", "&lt;description&gt;")
         xml = xml.replace("<AltitudeMode>", "&lt;AltitudeMode&gt;")
     elif driver == 'GeoRSS':
-        xml = xml.replace("<item>", "&lt;item&gt;")
-        xml = xml.replace("<entry>", "&lt;entry&gt;")
-        xml = xml.replace("<channel>", "&lt;channel&gt;")
-        xml = xml.replace("<title>", "&lt;title&gt;")
-        xml = xml.replace("<description>", "&lt;description&gt;")
-        xml = xml.replace("<link>", "&lt;link&gt;")
-        xml = xml.replace("<updated>", "&lt;updated&gt;")
-        xml = xml.replace("<author>", "&lt;author&gt;")
-        xml = xml.replace("<name>", "&lt;name&gt;")
-        xml = xml.replace("<id>", "&lt;id&gt;")
+        for tag in ['item', 'entry', 'channel', 'title', 'description', 'link', 'updated', 'author', 'name', 'id']:
+            xml = xml.replace("<{}>".format(tag),
+                              "&lt;{}&gt;".format(tag))
+    elif driver == 'LIBKML':
+        for tag in ['BallonStyle', 'ItemIcon', 'NetworkLinkControl', 'Update', 'atom:Author', 'atom:link', 'cookie',
+                    'description', 'expires', 'linkDescription', 'linkName', 'linkSnippet', 'listItemType',
+                    'maxSessionLength', 'message', 'minRefreshPeriod', 'name', 'open', 'phoneNumber', 'snippet',
+                    'visibility']:
+            xml = xml.replace("<{}>".format(tag),
+                              "&lt;{}&gt;".format(tag))
+    elif driver == "FileGDB":
+        xml = xml.replace("<esri:DataElement>", "&lt;esri:DataElement&gt;")
     elif driver == 'ISIS3':
         xml = xml.replace("'boolean'", "'boolean' ")
         xml = xml.replace("'string'", "'string' ")
@@ -135,6 +136,16 @@ def layer_creation_options(driver):
 
     if len(xml) == 0:
         return None
+
+    # Fix GDALs XML
+    if driver == "LIBKML":
+        for tag in ['BallonStyle', 'Camera', 'Document', 'Folder', 'ItemIcon', 'LookAt', 'NetworkLinkControl', 'Region',
+                    'ScreenOverlay', 'Update', 'altitude', 'altitudeMode', 'atom:Author', 'atom:link', 'description',
+                    'expires', 'heading', 'latitude', 'linkDescription', 'linkSnippet', 'listItemType', 'longitude',
+                    'maxSessionLengthcookie', 'message', 'minRefreshPeriod', 'name', 'open', 'overlayXY', 'phoneNumber',
+                    'range', 'roll', 'screenXY', 'sizeXY', 'snippet', 'tilt', 'visibility']:
+            xml = xml.replace("<{}>".format(tag),
+                              "&lt;{}&gt;".format(tag))
 
     return _parse_options(xml)
 
