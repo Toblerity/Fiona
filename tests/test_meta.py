@@ -3,7 +3,7 @@ import fiona
 import fiona.drvsupport
 import fiona.meta
 from fiona.drvsupport import supported_drivers
-from .conftest import requires_gdal2
+from .conftest import requires_gdal2, requires_gdal23
 
 
 @requires_gdal2
@@ -21,7 +21,7 @@ def test_extension(driver):
     assert extension is None or isinstance(extension, str)
 
 
-@requires_gdal2
+@requires_gdal23
 @pytest.mark.parametrize("driver", supported_drivers)
 def test_extensions(driver):
     # do not fail
