@@ -4,6 +4,7 @@ import fiona.drvsupport
 import fiona.meta
 from fiona.drvsupport import supported_drivers
 from .conftest import requires_gdal2, requires_gdal23
+from six import string_types
 
 
 @requires_gdal2
@@ -19,7 +20,7 @@ def test_extension(driver):
     # do not fail
     extension = fiona.meta.extension(driver)
     print(extension, type(extension))
-    assert extension is None or isinstance(extension, str)
+    assert extension is None or isinstance(extension, string_types)
 
 
 @requires_gdal2
