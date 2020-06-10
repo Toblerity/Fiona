@@ -303,7 +303,7 @@ the ``GDAL_VERSION`` environment variable (e.g. ``set GDAL_VERSION=2.1``).
 .. code-block:: console
    
    $ set GDAL_VERSION=3.0
-   $ pip install --install-option="-I<drive letter>:\\<path to gdal include files>\\include" --install-option="-lgdal_i" --install-option="-L<drive letter>:\\<path to gdal lib files>\\libs" fiona
+   $ pip install --install-option=build_ext --install-option="-I<drive letter>:\\<path to gdal include files>\\include" --install-option="-lgdal_i" --install-option="-L<drive letter>:\\<path to gdal lib files>\\libs" fiona
 
 Note: The GDAL DLL (``gdal111.dll`` or similar) and gdal-data directory need to
 be in your Windows PATH otherwise Fiona will fail to work.
