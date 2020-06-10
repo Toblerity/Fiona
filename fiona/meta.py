@@ -5,6 +5,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 class MetadataItem:
     # since GDAL 2.0
     CREATION_FIELD_DATA_TYPES = "DMD_CREATIONFIELDDATATYPES"
@@ -81,36 +82,43 @@ def dataset_creation_options(driver):
         return None
 
     # Fix GDALs XML
+    # Same changes as in https://github.com/OSGeo/gdal/commit/f447a31822e26ddf0cabcee0ce673a028550a2a0
     if driver == 'GML':
         xml = xml.replace("<gml:boundedBy>", "&lt;gml:boundedBy&gt;")
+        xml = xml.replace(">Space separated list of filenames of XML schemas that apply to the data file'/>", ">")
     elif driver == 'GPX':
         xml = xml.replace("<extensions>", "&lt;extensions&gt;")
-    elif driver == 'KML':
-        xml = xml.replace("<extensions>", "&lt;extensions&gt;")
-        xml = xml.replace("<name>", "&lt;name&gt;")
-        xml = xml.replace("<description>", "&lt;description&gt;")
-        xml = xml.replace("<AltitudeMode>", "&lt;AltitudeMode&gt;")
-    elif driver == 'GeoRSS':
-        for tag in ['item', 'entry', 'channel', 'title', 'description', 'link', 'updated', 'author', 'name', 'id']:
-            xml = xml.replace("<{}>".format(tag),
-                              "&lt;{}&gt;".format(tag))
-    elif driver == 'LIBKML':
-        for tag in ['BallonStyle', 'ItemIcon', 'NetworkLinkControl', 'Update', 'atom:Author', 'atom:link', 'cookie',
-                    'description', 'expires', 'linkDescription', 'linkName', 'linkSnippet', 'listItemType',
-                    'maxSessionLength', 'message', 'minRefreshPeriod', 'name', 'open', 'phoneNumber', 'snippet',
-                    'visibility']:
-            xml = xml.replace("<{}>".format(tag),
-                              "&lt;{}&gt;".format(tag))
     elif driver == "FileGDB":
         xml = xml.replace("<esri:DataElement>", "&lt;esri:DataElement&gt;")
-    elif driver == 'ISIS3':
-        xml = xml.replace("'boolean'", "'boolean' ")
-        xml = xml.replace("'string'", "'string' ")
-    elif driver == 'GRIB':
-        xml = xml.replace("max='100'", "max='100' ")
-    elif driver == 'Rasterlite':
-        xml = xml.replace("default='(GTiff", "description='(GTiff")
-        xml = xml.replace("type='string' default='GTiff'", "type='string'")
+    # elif driver == 'KML':
+    #     xml = xml.replace("<extensions>", "&lt;extensions&gt;")
+    #     xml = xml.replace("<name>", "&lt;name&gt;")
+    #     xml = xml.replace("<description>", "&lt;description&gt;")
+    #     xml = xml.replace("<AltitudeMode>", "&lt;AltitudeMode&gt;")
+    # elif driver == 'GeoRSS':
+    #     for tag in ['item', 'entry', 'channel', 'title', 'description', 'link', 'updated', 'author', 'name', 'id']:
+    #         xml = xml.replace("<{}>".format(tag),
+    #                           "&lt;{}&gt;".format(tag))
+    # elif driver == 'LIBKML':
+    #     for tag in ['BallonStyle', 'ItemIcon', 'NetworkLinkControl', 'Update', 'atom:Author', 'atom:link', 'cookie',
+    #                 'description', 'expires', 'linkDescription', 'linkName', 'linkSnippet', 'listItemType',
+    #                 'maxSessionLength', 'message', 'minRefreshPeriod', 'name', 'open', 'phoneNumber', 'snippet',
+    #                 'visibility']:
+    #         xml = xml.replace("<{}>".format(tag),
+    #                           "&lt;{}&gt;".format(tag))
+    #     xml = xml.replace("root_doc'/>'", "root_doc'/>")
+    # elif driver == 'KML':
+    #     xml = xml.replace("'root_doc'/>'", "'root_doc'/>")
+    # elif driver == 'ISIS3':
+    #     xml = xml.replace("'boolean'", "'boolean' ")
+    #     xml = xml.replace("'string'", "'string' ")
+    # elif driver == 'GRIB':
+    #     xml = xml.replace("max='100'", "max='100' ")
+    # elif driver == 'Rasterlite':
+    #     xml = xml.replace("default='(GTiff", "description='(GTiff")
+    #     xml = xml.replace("type='string' default='GTiff'", "type='string'")
+    # elif driver == 'PDF':
+    #     xml = xml.replace("alt_config_option=", " alt_config_option=")
 
     return _parse_options(xml)
 
@@ -138,14 +146,19 @@ def layer_creation_options(driver):
         return None
 
     # Fix GDALs XML
-    if driver == "LIBKML":
-        for tag in ['BallonStyle', 'Camera', 'Document', 'Folder', 'ItemIcon', 'LookAt', 'NetworkLinkControl', 'Region',
-                    'ScreenOverlay', 'Update', 'altitude', 'altitudeMode', 'atom:Author', 'atom:link', 'description',
-                    'expires', 'heading', 'latitude', 'linkDescription', 'linkSnippet', 'listItemType', 'longitude',
-                    'maxSessionLengthcookie', 'message', 'minRefreshPeriod', 'name', 'open', 'overlayXY', 'phoneNumber',
-                    'range', 'roll', 'screenXY', 'sizeXY', 'snippet', 'tilt', 'visibility']:
-            xml = xml.replace("<{}>".format(tag),
-                              "&lt;{}&gt;".format(tag))
+    # Same changes as in https://github.com/OSGeo/gdal/commit/f447a31822e26ddf0cabcee0ce673a028550a2a0
+    # if driver == "LIBKML":
+    #     for tag in ['BallonStyle', 'Camera', 'Document', 'Folder', 'ItemIcon', 'LookAt', 'NetworkLinkControl', 'Region',
+    #                 'ScreenOverlay', 'Update', 'altitude', 'altitudeMode', 'atom:Author', 'atom:link', 'description',
+    #                 'expires', 'heading', 'latitude', 'linkDescription', 'linkSnippet', 'listItemType', 'longitude',
+    #                 'maxSessionLengthcookie', 'message', 'minRefreshPeriod', 'name', 'open', 'overlayXY', 'phoneNumber',
+    #                 'range', 'roll', 'screenXY', 'sizeXY', 'snippet', 'tilt', 'visibility']:
+    #         xml = xml.replace("<{}>".format(tag),
+    #                           "&lt;{}&gt;".format(tag))
+    # elif driver == 'ElasticSearch':
+    #     xml = xml.replace("FeatureCollection'/>.", "FeatureCollection'/>")
+    # elif driver in {'CouchDB', 'Cloudant'}:
+    #     xml = xml.replace("'GEOJSON '", "'GEOJSON'")
 
     return _parse_options(xml)
 
@@ -201,10 +214,19 @@ def print_driver_options(driver):
                     print("\t\tDescription: {description}".format(description=options[option_name]['description']))
                 if 'type' in options[option_name]:
                     print("\t\tType: {type}".format(type=options[option_name]['type']))
-                if 'default' in options[option_name]:
-                    print("\t\tDefault value: {default}".format(default=options[option_name]['default']))
                 if 'values' in options[option_name] and len(options[option_name]['values']) > 0:
                     print("\t\tAccepted values: {values}".format(values=",".join(options[option_name]['values'])))
+                for attr_text, attribute in [('Default value', 'default'),
+                                             ('Required', 'required'),
+                                             ('Alias', 'aliasOf'),
+                                             ('Min', 'min'),
+                                             ('Max', 'max'),
+                                             ('Max size', 'maxsize'),
+                                             ('Scope', 'scope'),
+                                             ('Alternative configuration option', 'alt_config_option')]:
+                    if attribute in options[option_name]:
+                        print("\t\t{attr_text}: {attribute}".format(attr_text=attr_text,
+                                                                    attribute=options[option_name][attribute]))
         print("")
 
 

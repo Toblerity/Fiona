@@ -18,10 +18,11 @@ def test_print_driver_options(driver):
 def test_extension(driver):
     # do not fail
     extension = fiona.meta.extension(driver)
+    print(extension, type(extension))
     assert extension is None or isinstance(extension, str)
 
 
-@requires_gdal23
+@requires_gdal2
 @pytest.mark.parametrize("driver", supported_drivers)
 def test_extensions(driver):
     # do not fail
@@ -44,9 +45,9 @@ def test_supported_field_types(driver):
     assert field_types is None or isinstance(field_types, list)
 
 
-@requires_gdal2
+@requires_gdal23
 @pytest.mark.parametrize("driver", supported_drivers)
-def test_supported_field_types(driver):
+def test_supported_sub_field_types(driver):
     # do not fail
     sub_field_types = fiona.meta.supported_sub_field_types(driver)
     assert sub_field_types is None or isinstance(sub_field_types, list)
