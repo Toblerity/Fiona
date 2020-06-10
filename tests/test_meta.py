@@ -19,7 +19,6 @@ def test_print_driver_options(driver):
 def test_extension(driver):
     # do not fail
     extension = fiona.meta.extension(driver)
-    print(extension, type(extension))
     assert extension is None or isinstance(extension, string_types)
 
 
