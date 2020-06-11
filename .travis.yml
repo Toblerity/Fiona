@@ -112,6 +112,7 @@ install:
   - fio --version
   - fio --gdal-version
   - python -c "import fiona; fiona.show_versions()"
+  - python scripts/check_deprecated.py
 
 script:
   - python -m pytest -m "not wheel" --cov fiona --cov-report term-missing
