@@ -36,4 +36,3 @@ from fiona._shim cimport OGR_DS_GetLayerCount as GDALDatasetGetLayerCount
 from fiona._shim cimport OGR_DS_DeleteLayer as GDALDatasetDeleteLayer
 from fiona._shim cimport OGR_DS_CreateLayer as GDALDatasetCreateLayer
 from fiona._shim cimport OGR_Dr_DeleteDataSource as GDALDeleteDataset
-from fiona._shim cimport OGRReleaseDataSource as GDALClose
