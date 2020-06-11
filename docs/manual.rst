@@ -27,7 +27,6 @@ Introduction
 understand changes in our physical, political, economic, and cultural
 landscapes. A generation ago, GIS was something done only by major institutions
 like nations and cities, but it's become ubiquitous today thanks to accurate
-like nations and cities, but it's become ubiquitous today thanks to accurate
 and inexpensive global positioning systems, commoditization of satellite
 imagery, and open source software.
 
