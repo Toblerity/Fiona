@@ -238,11 +238,7 @@ cdef extern from "ogr_srs_api.h":
 cdef extern from "ogr_api.h":
 
     const char * OGR_Dr_GetName (void *driver)
-    void *  OGR_Dr_CreateDataSource (void *driver, const char *path, char **options)
-    int     OGR_Dr_DeleteDataSource (void *driver, char *)
-    void *  OGR_Dr_Open (void *driver, const char *path, int bupdate)
     int     OGR_Dr_TestCapability (void *driver, const char *)
-    int     OGR_DS_DeleteLayer (void *datasource, int n)
     void *  OGR_F_Create (void *featuredefn)
     void    OGR_F_Destroy (void *feature)
     long    OGR_F_GetFID (void *feature)
@@ -288,7 +284,6 @@ cdef extern from "ogr_api.h":
     void    OGR_G_DestroyGeometry (void *geometry)
     unsigned char *  OGR_G_ExportToJson (void *geometry)
     void    OGR_G_ExportToWkb (void *geometry, int endianness, char *buffer)
-    int     OGR_G_GetCoordinateDimension (void *geometry)
     int     OGR_G_GetGeometryCount (void *geometry)
     unsigned char *  OGR_G_GetGeometryName (void *geometry)
     int     OGR_G_GetGeometryType (void *geometry)
@@ -319,10 +314,6 @@ cdef extern from "ogr_api.h":
                 void *layer, double minx, double miny, double maxx, double maxy
                 )
     int     OGR_L_TestCapability (void *layer, char *name)
-    void *  OGRGetDriverByName (char *)
-    void *  OGROpen (char *path, int mode, void *x)
-    void *  OGROpenShared (char *path, int mode, void *x)
-    int     OGRReleaseDataSource (void *datasource)
     OGRErr  OGR_L_SetIgnoredFields (void *layer, const char **papszFields)
     OGRErr  OGR_L_SetNextByIndex (void *layer, long nIndex)
     long long OGR_F_GetFieldAsInteger64 (void *feature, int n)
