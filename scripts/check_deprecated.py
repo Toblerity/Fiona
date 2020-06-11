@@ -1,6 +1,7 @@
 import glob
 import os
 from collections import defaultdict
+import re
 
 ignored_files = {'_shim.pyx', '_shim1.pyx', '_shim1.pxd', 'ogrext1.pxd'}
 
@@ -36,7 +37,6 @@ deprecated = {
     'OGRReleaseDataSource',
 }
 
-
 found_lines = defaultdict(list)
 files = glob.glob('fiona/*.pyx') + glob.glob('fiona/*.pxd')
 for path in files:
@@ -46,7 +46,8 @@ for path in files:
     with open(path, 'r') as f:
         for i, line in enumerate(f):
             for deprecated_method in deprecated:
-                if deprecated_method + "(" in line or deprecated_method + " (" in line:
+                match = re.search('{}\s*\('.format(deprecated_method), line)
+                if match:
                     found_lines[path].append((i+1, line.strip(), deprecated_method))
 
 for path in sorted(found_lines):
