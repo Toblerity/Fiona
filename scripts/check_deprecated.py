@@ -5,7 +5,7 @@ import re
 
 ignored_files = {'_shim.pyx', '_shim1.pyx', '_shim1.pxd', 'ogrext1.pxd'}
 
-# Listofdeprecatedmethodsfromhttps://gdal.org/doxygen/deprecated.html#_deprecated000028
+# List of deprecated methods from https://gdal.org/doxygen/deprecated.html#_deprecated000028
 deprecated = {
     'CPL_LSBINT16PTR',
     'CPL_LSBINT32PTR(x)',
@@ -53,4 +53,5 @@ for path in files:
 for path in sorted(found_lines):
     print(path)
     for line_nr, line, method in found_lines[path]:
-        print("\t", line_nr, line)
+        print("\t{}\t{}".format(line_nr, line))
+    print("")
