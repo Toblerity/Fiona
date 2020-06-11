@@ -1,8 +1,11 @@
 # Testing collections and workspaces
 
 import datetime
+import os
+import random
 import sys
 import re
+from collections import OrderedDict
 
 import pytest
 
@@ -911,3 +914,28 @@ def test_collection_env(path_coutwildrnp_shp):
     """We have a GDAL env within collection context"""
     with fiona.open(path_coutwildrnp_shp):
         assert 'FIONA_ENV' in getenv()
+
+
+@pytest.mark.parametrize('driver,filename', [('ESRI Shapefile', 'test.shp'),
+                                             ('GeoJSON', 'test.json'),
+                                             ('GPKG', 'test.gpkg')])
+def test_mask_polygon_triangle(tmpdir, driver, filename):
+    """ Test if mask works for non trivial geometries"""
+    schema = {'geometry': 'Polygon', 'properties': OrderedDict([('position_i', 'int'), ('position_j', 'int')])}
+    records = [{'geometry': {'type': 'Polygon', 'coordinates': (((float(i), float(j)), (float(i + 1), float(j)),
+                                                                 (float(i + 1), float(j + 1)), (float(i), float(j + 1)),
+                                                                 (float(i), float(j))),)},
+                'properties': {'position_i': i, 'position_j': j}} for i in range(10) for j in range(10)]
+    random.shuffle(records)
+
+    path = os.path.join(tmpdir, filename)
+
+    with fiona.open(path, 'w',
+                    driver=driver,
+                    schema=schema,) as c:
+        c.writerecords(records)
+
+    with fiona.open(path) as c:
+        items = list(
+            c.items(mask={'type': 'Polygon', 'coordinates': (((2.0, 2.0), (4.0, 4.0), (4.0, 6.0), (2.0, 2.0)),)}))
+        assert len(items) == 15
