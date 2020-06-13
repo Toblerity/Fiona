@@ -928,7 +928,7 @@ def test_mask_polygon_triangle(tmpdir, driver, filename):
                 'properties': {'position_i': i, 'position_j': j}} for i in range(10) for j in range(10)]
     random.shuffle(records)
 
-    path = os.path.join(tmpdir, filename)
+    path = str(tmpdir.join(tmpdir, filename))
 
     with fiona.open(path, 'w',
                     driver=driver,
