@@ -15,6 +15,8 @@ contains extension modules that link the Geospatial Data Abstraction Library (GD
 .. image:: https://coveralls.io/repos/Toblerity/Fiona/badge.svg
    :target: https://coveralls.io/r/Toblerity/Fiona
 
+.. image:: https://github.com/Toblerity/Fiona/workflows/MacOS%20CI/badge.svg
+
 Fiona is designed to be simple and dependable. It focuses on reading and
 writing data in standard Python IO style and relies upon familiar Python types
 and protocols such as files, dictionaries, mappings, and iterators instead of
