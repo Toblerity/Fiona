@@ -91,8 +91,6 @@ def test_write_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver, testdata_
 def test_append_or_driver_error(tmpdir, testdata_generator, driver):
     """ Test if driver supports append mode.
 
-    Some driver only allow a specific schema. These drivers can be excluded by adding them to blacklist_append_drivers.
-
     """
 
     if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
@@ -143,8 +141,6 @@ def test_append_or_driver_error(tmpdir, testdata_generator, driver):
                                     if driver in supported_drivers])
 def test_append_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver, testdata_generator, monkeypatch):
     """ Test if driver supports append mode.
-
-    Some driver only allow a specific schema. These drivers can be excluded by adding them to blacklist_append_drivers.
 
     If this test fails, it should be considered to update driver_mode_mingdal in drvsupport.py.
 
