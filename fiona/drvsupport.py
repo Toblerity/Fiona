@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-
 from fiona.env import Env
+from fiona._env import get_gdal_version_num, calc_gdal_version_num
 
 
 # Here is the list of available drivers as (name, modes) tuples. Currently,
@@ -63,7 +63,9 @@ supported_drivers = dict([
     # GML 	GML 	Yes 	Yes 	Yes (read support needs Xerces or libexpat)
     ("GML", "rw"),
     # GMT 	GMT 	Yes 	Yes 	Yes
-    ("GMT", "raw"),
+    ("GMT", "rw"),
+    # GMT renamed to OGR_GMT for GDAL 2.x
+    ("OGR_GMT", "rw"),
     # GPSBabel 	GPSBabel 	Yes 	Yes 	Yes (needs GPSBabel and GPX driver)
     # GPX 	GPX 	Yes 	Yes 	Yes (read support needs libexpat)
     ("GPX", "rw"),
@@ -96,9 +98,11 @@ supported_drivers = dict([
     # multi-layer
     #   ("OpenAir", "r"),
     # PCI Geomatics Database File 	PCIDSK 	No 	No 	Yes, using internal PCIDSK SDK (from GDAL 1.7.0)
-    ("PCIDSK", "raw"),
+    ("PCIDSK", "rw"),
     # PDS 	PDS 	No 	Yes 	Yes
     ("PDS", "r"),
+    # PDS renamed to OGR_PDS for GDAL 2.x
+    ("OGR_PDS", "r"),
     # PGDump 	PostgreSQL SQL dump 	Yes 	Yes 	Yes
     # PostgreSQL/PostGIS 	PostgreSQL/PostGIS 	Yes 	Yes 	No, needs PostgreSQL client library (libpq)
     # EPIInfo .REC 	REC 	No 	No 	Yes
@@ -141,7 +145,7 @@ supported_drivers = dict([
 ])
 
 
-# Mininmal gdal version for different modes
+# Minimal gdal version for different modes
 driver_mode_mingdal = {
 
     'r': {'GPKG': (1, 11, 0),
@@ -151,12 +155,23 @@ driver_mode_mingdal = {
           'PCIDSK': (2, 0, 0),
           'GeoJSONSeq': (2, 4, 0)},
 
-    'a': {'GMT': (2, 0, 0),
-          'GPKG': (1, 11, 0),
+    'a': {'GPKG': (1, 11, 0),
           'GeoJSON': (2, 1, 0),
-          'MapInfo File': (2, 0, 0),
-          'PCIDSK': (2, 0, 0)}    
+          'MapInfo File': (2, 0, 0)}
 }
+
+
+def driver_supports_mode(driver, mode):
+    """ Returns True if driver supports mode, False otherwise"""
+
+    if driver not in supported_drivers:
+        return False
+    if mode not in supported_drivers[driver]:
+        return False
+    if driver in driver_mode_mingdal[mode]:
+        if get_gdal_version_num() < calc_gdal_version_num(*driver_mode_mingdal[mode][driver]):
+            return False
+    return True
 
 
 # Removes drivers in the supported_drivers dictionary that the
@@ -176,3 +191,161 @@ def _filter_supported_drivers():
 
 
 _filter_supported_drivers()
+
+# driver_converts_to_str contains field type, driver combinations that are silently converted to string
+# None: field type is always converted to str
+# (2, 0, 0): starting from gdal 2.0 field type is not converted to string
+_driver_converts_to_str = {
+    'time': {
+        'CSV': None,
+        'PCIDSK': None,
+        'GeoJSON': (2, 0, 0),
+        'GPKG': None,
+        'GMT': None,
+        'OGR_GMT': None
+    },
+    'datetime': {
+        'CSV': None,
+        'PCIDSK': None,
+        'GeoJSON': (2, 0, 0),
+        'GML': (3, 1, 0),
+    },
+    'date': {
+        'CSV': None,
+        'PCIDSK': None,
+        'GeoJSON': (2, 0, 0),
+        'GMT': None,
+        'OGR_GMT': None,
+        'GML': (3, 1, 0),
+    }
+}
+
+
+def _driver_converts_field_type_silently_to_str(driver, field_type):
+    """ Returns True if the driver converts the field_type silently to str, False otherwise """
+
+    if field_type in _driver_converts_to_str and driver in _driver_converts_to_str[field_type]:
+        if _driver_converts_to_str[field_type][driver] is None:
+            return True
+        elif get_gdal_version_num() < calc_gdal_version_num(*_driver_converts_to_str[field_type][driver]):
+            return True
+    return False
+
+
+# None: field type is never supported, (2, 0, 0) field type is supported starting with gdal 2.0
+_driver_field_type_unsupported = {
+    'time': {
+        'ESRI Shapefile': None,
+        'GPKG': (2, 0, 0),
+        'GPX': None,
+        'GPSTrackMaker': None,
+        'GML': (3, 1, 0),
+        'DGN': None,
+        'BNA': None,
+        'DXF': None,
+        'PCIDSK': (2, 1, 0)
+    },
+    'datetime': {
+        'ESRI Shapefile': None,
+        'GPKG': (2, 0, 0),
+        'DGN': None,
+        'BNA': None,
+        'DXF': None,
+        'PCIDSK': (2, 1, 0)
+    },
+    'date': {
+        'GPX': None,
+        'GPSTrackMaker': None,
+        'DGN': None,
+        'BNA': None,
+        'DXF': None,
+        'PCIDSK': (2, 1, 0)
+    }
+}
+
+
+def _driver_supports_field(driver, field_type):
+    """ Returns True if the driver supports the field_type, False otherwise"""
+
+    if field_type in _driver_field_type_unsupported and driver in _driver_field_type_unsupported[field_type]:
+        if _driver_field_type_unsupported[field_type][driver] is None:
+            return False
+        elif get_gdal_version_num() < calc_gdal_version_num(*_driver_field_type_unsupported[field_type][driver]):
+            return False
+
+    return True
+
+
+# None: field type never supports timezones, (2, 0, 0): field type supports timezones with GDAL 2.0.0
+_drivers_not_supporting_timezones = {
+    'datetime': {
+        'MapInfo File': None,
+        'GPKG': (3, 1, 0),
+        'GPSTrackMaker': (3, 1, 1)
+    },
+    'time': {
+        'MapInfo File': None,
+        'GPKG': None,
+        'GPSTrackMaker': None,
+        'GeoJSON': None,
+        'GeoJSONSeq': None,
+        'GML': None,
+        'CSV': None,
+        'GMT': None,
+        'OGR_GMT': None
+    }
+}
+
+
+def _driver_supports_timezones(driver, field_type):
+    """ Returns True if the driver supports timezones for field_type, False otherwise"""
+
+    if field_type in _drivers_not_supporting_timezones and driver in _drivers_not_supporting_timezones[field_type]:
+        if _drivers_not_supporting_timezones[field_type][driver] is None:
+            return False
+        elif get_gdal_version_num() < calc_gdal_version_num(*_drivers_not_supporting_timezones[field_type][driver]):
+            return False
+    return True
+
+
+# None: driver never supports timezones, (2, 0, 0): driver supports timezones with GDAL 2.0.0
+_drivers_not_supporting_milliseconds = {
+    'GPSTrackMaker': None
+}
+
+
+def _driver_supports_milliseconds(driver):
+    """ Returns True if the driver supports milliseconds, False otherwise"""
+
+    # GDAL 2.0 introduced support for milliseconds
+    if get_gdal_version_num() < calc_gdal_version_num(2, 0, 0):
+        return False
+
+    if driver in _drivers_not_supporting_milliseconds:
+        if _drivers_not_supporting_milliseconds[driver] is None:
+            return False
+        elif calc_gdal_version_num(*_drivers_not_supporting_milliseconds[driver]) < get_gdal_version_num():
+            return False
+
+    return True
+
+
+# None: field type never supports unknown timezones, (2, 0, 0): field type supports unknown timezones with GDAL 2.0.0
+_drivers_not_supporting_unknown_timezone = {
+    'datetime':
+        {'GPKG': None,
+         'GPX': (2, 4, 0)
+         }
+}
+
+
+def _driver_supports_unknown_timezones(driver, field_type):
+    """ Returns True if the driver supports timezones for field_type, False otherwise"""
+
+    if (field_type in _drivers_not_supporting_unknown_timezone and
+            driver in _drivers_not_supporting_unknown_timezone[field_type]):
+        if _drivers_not_supporting_unknown_timezone[field_type][driver] is None:
+            return False
+        elif get_gdal_version_num() < calc_gdal_version_num(*_drivers_not_supporting_unknown_timezone[field_type][driver]):
+            return False
+    return True
