@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import fiona
 from fiona.errors import SchemaError, UnsupportedGeometryTypeError, \
     DriverSupportError
@@ -368,3 +370,17 @@ def test_property_only_schema_update(tmpdir, driver):
             assert 'geometry' not in f or f['geometry'] is None
         assert 'prop1' in data[0]['properties'] and data[0]['properties']['prop1'] == 'one'
         assert 'prop1' in data[1]['properties'] and data[1]['properties']['prop1'] == 'two'
+
+
+def test_schema_default_fields_wrong_type(tmpdir):
+    """ Test for SchemaError if a default field is specified with a different type"""
+
+    name = str(tmpdir.join('test.gpx'))
+    schema = {'properties': OrderedDict([('ele', 'str'), ('time', 'datetime')]),
+              'geometry': 'Point'}
+
+    with pytest.raises(SchemaError):
+        with fiona.open(name, 'w',
+                        driver="GPX",
+                        schema=schema) as c:
+            pass

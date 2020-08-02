@@ -921,6 +921,8 @@ cdef class WritingSession(Session):
 
             else:
                 self._fileencoding = userencoding or self._get_fallback_encoding()
+                
+            before_fields = self.get_schema()['properties']
 
         elif collection.mode == 'w':
 
@@ -1083,7 +1085,20 @@ cdef class WritingSession(Session):
 
             encoding = self._get_internal_encoding()
 
-            for key, value in collection.schema['properties'].items():
+            # Test if default fields are included in provided schema
+            schema_fields = collection.schema['properties']
+            default_fields = self.get_schema()['properties']
+            for key, value in default_fields.items():
+                if key in schema_fields and not schema_fields[key] == value:
+                    raise SchemaError("Property '{}' must have type '{}' "
+                    "for driver '{}'".format(key, value, self.collection.driver))
+
+            new_fields = OrderedDict([(key, value) for key, value in schema_fields.items()
+                                      if key not in default_fields])
+            before_fields = default_fields.copy()
+            before_fields.update(new_fields)
+
+            for key, value in new_fields.items():
 
                 log.debug("Begin creating field: %r value: %r", key, value)
 
@@ -1144,10 +1159,9 @@ cdef class WritingSession(Session):
 
         # Mapping of the Python collection schema to the munged
         # OGR schema.
-        ogr_schema = self.get_schema()
-        self._schema_mapping = dict(zip(
-            collection.schema['properties'].keys(),
-            ogr_schema['properties'].keys() ))
+        after_fields = self.get_schema()['properties']
+        self._schema_mapping = dict(zip(before_fields.keys(),
+                                        after_fields.keys()))
 
         log.debug("Writing started")
 
