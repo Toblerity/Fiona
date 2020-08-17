@@ -688,4 +688,4 @@ def test_read_timezone_geojson(path_test_tz_geojson):
     """Test if timezones are read correctly"""
     with fiona.open(path_test_tz_geojson) as c:
         items = list(c)
-        assert items[0]['properties']['datetime'] == '2015-04-22T00:00:00+07:00'
+        assert items[0]['properties']['test'] == '2015-04-22T00:00:00+07:00'
