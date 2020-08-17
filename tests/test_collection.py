@@ -877,7 +877,7 @@ def test_collection_zip_http():
     )
     assert (
         ds.path
-        == "/vsizip/vsicurl/https://raw.githubusercontent.com/Toblerity/Fiona/master/tests/data/coutwildrnp.zip",
+        == "/vsizip/vsicurl/https://raw.githubusercontent.com/Toblerity/Fiona/master/tests/data/coutwildrnp.zip"
     )
     assert len(ds) == 67
 

@@ -136,3 +136,23 @@ cdef void set_proj_search_path(object path):
 
 cdef (int, int, int) get_proj_version():
     return (-1, -1, -1)
+
+
+cdef void set_field_datetime(void *cogr_feature, int iField, int nYear, int nMonth, int nDay, int nHour, int nMinute, float fSecond, int nTZFlag):
+    cdef int nSecond
+    nSecond = int(fSecond)
+    OGR_F_SetFieldDateTime(cogr_feature, iField, nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZFlag)
+
+
+cdef (int, int, int, int, int, int, float, int) get_field_as_datetime(void *cogr_feature, int iField):
+    cdef int retval
+    cdef int nYear = 0
+    cdef int nMonth = 0
+    cdef int nDay = 0
+    cdef int nHour = 0
+    cdef int nMinute = 0
+    cdef int nSecond = 0
+    cdef int nTZFlag = 0
+
+    retval = OGR_F_GetFieldAsDateTime(cogr_feature, iField, &nYear, &nMonth, &nDay, &nHour, &nMinute, &nSecond, &nTZFlag)
+    return (retval, nYear, nMonth, nDay, nHour, nMinute, float(nSecond), nTZFlag)
