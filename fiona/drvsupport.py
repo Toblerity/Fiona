@@ -161,9 +161,11 @@ driver_mode_mingdal = {
 }
 
 
-def driver_supports_mode(driver, mode):
-    """ Returns True if driver supports mode, False otherwise"""
+def _driver_supports_mode(driver, mode):
+    """ Returns True if driver supports mode, False otherwise
 
+        Note: this function is not part of Fiona's public API.
+    """
     if driver not in supported_drivers:
         return False
     if mode not in supported_drivers[driver]:
@@ -222,8 +224,10 @@ _driver_converts_to_str = {
 
 
 def _driver_converts_field_type_silently_to_str(driver, field_type):
-    """ Returns True if the driver converts the field_type silently to str, False otherwise """
+    """ Returns True if the driver converts the field_type silently to str, False otherwise
 
+        Note: this function is not part of Fiona's public API.
+    """
     if field_type in _driver_converts_to_str and driver in _driver_converts_to_str[field_type]:
         if _driver_converts_to_str[field_type][driver] is None:
             return True
@@ -265,8 +269,10 @@ _driver_field_type_unsupported = {
 
 
 def _driver_supports_field(driver, field_type):
-    """ Returns True if the driver supports the field_type, False otherwise"""
+    """ Returns True if the driver supports the field_type, False otherwise
 
+        Note: this function is not part of Fiona's public API.
+    """
     if field_type in _driver_field_type_unsupported and driver in _driver_field_type_unsupported[field_type]:
         if _driver_field_type_unsupported[field_type][driver] is None:
             return False
@@ -298,8 +304,10 @@ _drivers_not_supporting_timezones = {
 
 
 def _driver_supports_timezones(driver, field_type):
-    """ Returns True if the driver supports timezones for field_type, False otherwise"""
+    """ Returns True if the driver supports timezones for field_type, False otherwise
 
+        Note: this function is not part of Fiona's public API.
+    """
     if field_type in _drivers_not_supporting_timezones and driver in _drivers_not_supporting_timezones[field_type]:
         if _drivers_not_supporting_timezones[field_type][driver] is None:
             return False
@@ -315,8 +323,10 @@ _drivers_not_supporting_milliseconds = {
 
 
 def _driver_supports_milliseconds(driver):
-    """ Returns True if the driver supports milliseconds, False otherwise"""
+    """ Returns True if the driver supports milliseconds, False otherwise
 
+        Note: this function is not part of Fiona's public API.
+    """
     # GDAL 2.0 introduced support for milliseconds
     if get_gdal_version_num() < calc_gdal_version_num(2, 0, 0):
         return False
@@ -340,8 +350,10 @@ _drivers_not_supporting_unknown_timezone = {
 
 
 def _driver_supports_unknown_timezones(driver, field_type):
-    """ Returns True if the driver supports timezones for field_type, False otherwise"""
+    """ Returns True if the driver supports timezones for field_type, False otherwise
 
+        Note: this function is not part of Fiona's public API.
+    """
     if (field_type in _drivers_not_supporting_unknown_timezone and
             driver in _drivers_not_supporting_unknown_timezone[field_type]):
         if _drivers_not_supporting_unknown_timezone[field_type][driver] is None:
