@@ -117,6 +117,7 @@ cdef extern from "ogr_core.h":
 
     char * ODsCCreateLayer = "CreateLayer"
     char * ODsCDeleteLayer = "DeleteLayer"
+    char * ODsCTransactions = "Transactions"
 
 
 cdef extern from "gdal.h":

@@ -15,6 +15,7 @@ env:
     - GDALBUILD=$HOME/gdalbuild
     - PROJINST=$HOME/gdalinstall
     - PROJBUILD=$HOME/projbuild
+    - FILEGDB=$HOME/gdalinstall/filegdb
     - CYTHON_COVERAGE="true"
     - MAKEFLAGS="-j 2"
     - CXXFLAGS="-O0"
@@ -55,19 +56,19 @@ matrix:
     # Test all supported python versions with latest stable gdal release
     - python: "2.7"
       env:
-        GDALVERSION="3.1.0"
+        GDALVERSION="3.1.2"
         PROJVERSION="6.3.2"
     - python: "3.6"
       env:
-        GDALVERSION="3.1.0"
+        GDALVERSION="3.1.2"
         PROJVERSION="6.3.2"
     - python: "3.7"
       env:
-        GDALVERSION="3.1.0"
+        GDALVERSION="3.1.2"
         PROJVERSION="6.3.2"
     - python: "3.8"
       env:
-        GDALVERSION="3.1.0"
+        GDALVERSION="3.1.2"
         PROJVERSION="6.3.2"
 
     # Test master
@@ -100,6 +101,7 @@ before_install:
   - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$GDALINST/proj-$PROJVERSION/bin:$PATH
   - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$GDALINST/proj-$PROJVERSION/lib:$LD_LIBRARY_PATH
   - . ./scripts/travis_proj_install.sh
+  - . ./scripts/travis_filegdb_install.sh
   - . ./scripts/travis_gdal_install.sh
   - export GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal
   - export PROJ_LIB=$GDALINST/gdal-$GDALVERSION/share/proj
