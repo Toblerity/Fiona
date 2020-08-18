@@ -957,7 +957,7 @@ cdef class WritingSession(Session):
                     self.cogr_layer = exc_wrap_pointer(GDALDatasetGetLayer(self.cogr_ds, collection.name))
 
             except CPLE_BaseError as exc:
-                OGRReleaseDataSource(self.cogr_ds)
+                GDALClose(self.cogr_ds)
                 self.cogr_ds = NULL
                 self.cogr_layer = NULL
                 raise DriverError(u"{}".format(exc))
@@ -1027,7 +1027,7 @@ cdef class WritingSession(Session):
                     OSRSetFromUserInput(cogr_srs, proj_c)
                     osr_set_traditional_axis_mapping_strategy(cogr_srs)
             except CPLE_BaseError as exc:
-                OGRReleaseDataSource(self.cogr_ds)
+                GDALClose(self.cogr_ds)
                 self.cogr_ds = NULL
                 self.cogr_layer = NULL
                 raise CRSError(u"{}".format(exc))
@@ -1106,7 +1106,7 @@ cdef class WritingSession(Session):
                         <OGRwkbGeometryType>geometry_code, options))
 
             except Exception as exc:
-                OGRReleaseDataSource(self.cogr_ds)
+                GDALClose(self.cogr_ds)
                 self.cogr_ds = NULL
                 raise DriverIOError(u"{}".format(exc))
 
@@ -1191,7 +1191,7 @@ cdef class WritingSession(Session):
                     exc_wrap_int(OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1))
 
                 except (UnicodeEncodeError, CPLE_BaseError) as exc:
-                    OGRReleaseDataSource(self.cogr_ds)
+                    GDALClose(self.cogr_ds)
                     self.cogr_ds = NULL
                     self.cogr_layer = NULL
                     raise SchemaError(u"{}".format(exc))
@@ -1547,7 +1547,7 @@ def _remove(path, driver=None):
         cogr_driver = GDALGetDatasetDriver(cogr_ds)
         GDALClose(cogr_ds)
     else:
-        cogr_driver = OGRGetDriverByName(driver.encode("utf-8"))
+        cogr_driver = GDALGetDriverByName(driver.encode("utf-8"))
 
     if cogr_driver == NULL:
         raise DatasetDeleteError("Null driver when attempting to delete {}".format(path))
@@ -1584,7 +1584,7 @@ def _remove_layer(path, layer, driver=None):
     except (DriverError, FionaNullPointerError):
         raise DatasetDeleteError("Failed to remove data source {}".format(path))
 
-    result = OGR_DS_DeleteLayer(cogr_ds, layer_index)
+    result = GDALDatasetDeleteLayer(cogr_ds, layer_index)
     GDALClose(cogr_ds)
     if result == OGRERR_UNSUPPORTED_OPERATION:
         raise DatasetDeleteError("Removal of layer {} not supported by driver".format(layer_str))
