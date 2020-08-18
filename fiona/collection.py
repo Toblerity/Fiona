@@ -241,6 +241,10 @@ class Collection(object):
 
         Positional arguments ``stop`` or ``start, stop[, step]`` allows
         iteration to skip over items or stop at a specific item.
+
+        Note: spatial filtering using ``mask`` may be inaccurate and returning
+        all features overlapping the envelope of ``mask``.
+
         """
         if self.closed:
             raise ValueError("I/O operation on closed collection")
@@ -269,6 +273,10 @@ class Collection(object):
 
         Positional arguments ``stop`` or ``start, stop[, step]`` allows
         iteration to skip over items or stop at a specific item.
+
+        Note: spatial filtering using ``mask`` may be inaccurate and returning
+        all features overlapping the envelope of ``mask``.
+
         """
         if self.closed:
             raise ValueError("I/O operation on closed collection")
@@ -297,6 +305,9 @@ class Collection(object):
 
         Positional arguments ``stop`` or ``start, stop[, step]`` allows
         iteration to skip over items or stop at a specific item.
+
+        Note: spatial filtering using ``mask`` may be inaccurate and returning
+        all features overlapping the envelope of ``mask``.
         """
         if self.closed:
             raise ValueError("I/O operation on closed collection")
