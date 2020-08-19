@@ -15,7 +15,7 @@ cdef extern from "ogr_srs_api.h" nogil:
     void OSRSetPROJSearchPaths(const char *const *papszPaths)
 
 
-from fiona.ogrext2 cimport *
+from fiona.ogrext3 cimport *
 from fiona._err cimport exc_wrap_pointer
 from fiona._err import cpl_errs, CPLE_BaseError, FionaNullPointerError
 from fiona.errors import DriverError
@@ -116,6 +116,10 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except NU
         CSLDestroy(creation_opts)
 
 
+cdef bint check_capability_transaction(void *cogr_ds):
+    return GDALDatasetTestCapability(cogr_ds, ODsCTransactions)
+
+
 cdef OGRErr gdal_start_transaction(void* cogr_ds, int force):
     return GDALDatasetStartTransaction(cogr_ds, force)
 
@@ -167,3 +171,22 @@ cdef (int, int, int) get_proj_version():
     cdef int patch
     OSRGetPROJVersion(&major, &minor, &patch)
     return (major, minor, patch)
+
+
+cdef void set_field_datetime(void *cogr_feature, int iField, int nYear, int nMonth, int nDay, int nHour, int nMinute, float fSecond, int nTZFlag):
+    OGR_F_SetFieldDateTimeEx(cogr_feature, iField, nYear, nMonth, nDay, nHour, nMinute, fSecond, nTZFlag)
+
+
+cdef (int, int, int, int, int, int, float, int) get_field_as_datetime(void *cogr_feature, int iField):
+    cdef int retval
+    cdef int nYear = 0
+    cdef int nMonth = 0
+    cdef int nDay = 0
+    cdef int nHour = 0
+    cdef int nMinute = 0
+    cdef float fSecond = 0.0
+    cdef int nTZFlag = 0
+
+    retval = OGR_F_GetFieldAsDateTimeEx(cogr_feature, iField, &nYear, &nMonth, &nDay, &nHour, &nMinute, &fSecond, &nTZFlag)
+
+    return (retval, nYear, nMonth, nDay, nHour, nMinute, fSecond, nTZFlag)

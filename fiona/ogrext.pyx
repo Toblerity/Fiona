@@ -22,7 +22,7 @@ from fiona._geometry cimport (
 from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile
 
 import fiona
-from fiona._env import GDALVersion, get_gdal_version_num
+from fiona._env import GDALVersion, get_gdal_version_num, calc_gdal_version_num
 from fiona._err import cpl_errs, FionaNullPointerError, CPLE_BaseError, CPLE_OpenFailedError
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
@@ -41,7 +41,8 @@ from fiona._shim cimport is_field_null, osr_get_name, osr_set_traditional_axis_m
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
 from cpython cimport PyBytes_FromStringAndSize, PyBytes_AsString
-
+from fiona.drvsupport import _driver_supports_timezones
+  
 
 cdef extern from "ogr_api.h" nogil:
 
@@ -117,6 +118,15 @@ def _bounds(geometry):
 cdef int GDAL_VERSION_NUM = get_gdal_version_num()
 
 
+class TZ(datetime.tzinfo):
+
+    def __init__(self, minutes):
+        self.minutes = minutes
+
+    def utcoffset(self, dt):
+        return datetime.timedelta(minutes=self.minutes)
+   
+
 # Feature extension classes and functions follow.
 
 cdef class FeatureBuilder:
@@ -151,13 +161,6 @@ cdef class FeatureBuilder:
         """
         cdef void *fdefn = NULL
         cdef int i
-        cdef int y = 0
-        cdef int m = 0
-        cdef int d = 0
-        cdef int hh = 0
-        cdef int mm = 0
-        cdef int ss = 0
-        cdef int tz = 0
         cdef unsigned char *data = NULL
         cdef int l
         cdef int retval
@@ -239,16 +242,26 @@ cdef class FeatureBuilder:
                 props[key] = val
 
             elif fieldtype in (FionaDateType, FionaTimeType, FionaDateTimeType):
-                retval = OGR_F_GetFieldAsDateTime(
-                    feature, i, &y, &m, &d, &hh, &mm, &ss, &tz)
+                retval, y, m, d, hh, mm, ss, tz = get_field_as_datetime(feature, i)
+
+                ms, ss = math.modf(ss)
+                ss = int(ss)
+                ms = int(round(ms * 10**6))
+
+                # OGR_F_GetFieldAsDateTimeEx: (0=unknown, 1=localtime, 100=GMT, see data model for details)
+                # CPLParseRFC822DateTime: (0=unknown, 100=GMT, 101=GMT+15minute, 99=GMT-15minute), or NULL
+                tzinfo = None
+                if tz > 1:
+                    tz_minutes = (tz - 100) * 15
+                    tzinfo = TZ(tz_minutes)
+
                 try:
                     if fieldtype is FionaDateType:
                         props[key] = datetime.date(y, m, d).isoformat()
                     elif fieldtype is FionaTimeType:
-                        props[key] = datetime.time(hh, mm, ss).isoformat()
+                        props[key] = datetime.time(hh, mm, ss, ms, tzinfo).isoformat()
                     else:
-                        props[key] = datetime.datetime(
-                            y, m, d, hh, mm, ss).isoformat()
+                        props[key] = datetime.datetime(y, m, d, hh, mm, ss, ms, tzinfo).isoformat()
                 except ValueError as err:
                     log.exception(err)
                     props[key] = None
@@ -367,32 +380,62 @@ cdef class OGRFeatureBuilder:
 
             elif isinstance(value, float):
                 OGR_F_SetFieldDouble(cogr_feature, i, value)
-            elif (isinstance(value, string_types)
-            and schema_type in ['date', 'time', 'datetime']):
-                if schema_type == 'date':
-                    y, m, d, hh, mm, ss, ff = parse_date(value)
-                elif schema_type == 'time':
-                    y, m, d, hh, mm, ss, ff = parse_time(value)
+            elif schema_type in ['date', 'time', 'datetime'] and value is not None:
+                if isinstance(value, string_types):
+                    if schema_type == 'date':
+                        y, m, d, hh, mm, ss, ms, tz = parse_date(value)
+                    elif schema_type == 'time':
+                        y, m, d, hh, mm, ss, ms, tz = parse_time(value)
+                    else:
+                        y, m, d, hh, mm, ss, ms, tz = parse_datetime(value)
+                elif (isinstance(value, datetime.date) and schema_type == 'date'):
+                        y, m, d = value.year, value.month, value.day
+                        hh = mm = ss = ms = 0
+                        tz = None
+                elif (isinstance(value, datetime.datetime) and schema_type == 'datetime'):
+                        y, m, d = value.year, value.month, value.day
+                        hh, mm, ss, ms = value.hour, value.minute, value.second, value.microsecond
+                        if value.utcoffset() is None:
+                            tz = None
+                        else:
+                            tz = value.utcoffset().total_seconds() / 60
+                elif (isinstance(value, datetime.time) and schema_type == 'time'):
+                        y = m = d = 0
+                        hh, mm, ss, ms = value.hour, value.minute, value.second, value.microsecond
+                        if value.utcoffset() is None:
+                            tz = None
+                        else:
+                            tz = value.utcoffset().total_seconds() / 60
+
+                # Convert to UTC if driver does not support timezones
+                if tz is not None and not _driver_supports_timezones(collection.driver, schema_type):
+
+                    if schema_type == 'datetime':
+                        d_tz = datetime.datetime(y, m, d, hh, mm, ss, int(ms), TZ(tz))
+                        d_utc = d_tz - d_tz.utcoffset()
+                        y, m, d = d_utc.year, d_utc.month, d_utc.day
+                        hh, mm, ss, ms = d_utc.hour, d_utc.minute, d_utc.second, d_utc.microsecond
+                        tz = 0
+                        del d_utc, d_tz
+                    elif schema_type == 'time':
+                        d_tz = datetime.datetime(1900, 1, 1, hh, mm, ss, int(ms), TZ(tz))
+                        d_utc = d_tz - d_tz.utcoffset()
+                        y = m = d = 0
+                        hh, mm, ss, ms = d_utc.hour, d_utc.minute, d_utc.second, d_utc.microsecond
+                        tz = 0
+                        del d_utc, d_tz
+
+                # tzinfo: (0=unknown, 100=GMT, 101=GMT+15minute, 99=GMT-15minute), or NULL
+                if tz is not None:               
+                    tzinfo = int(tz / 15.0 + 100)
                 else:
-                    y, m, d, hh, mm, ss, ff = parse_datetime(value)
-                OGR_F_SetFieldDateTime(
-                    cogr_feature, i, y, m, d, hh, mm, ss, 0)
-            elif (isinstance(value, datetime.date)
-            and schema_type == 'date'):
-                y, m, d = value.year, value.month, value.day
-                OGR_F_SetFieldDateTime(
-                    cogr_feature, i, y, m, d, 0, 0, 0, 0)
-            elif (isinstance(value, datetime.datetime)
-            and schema_type == 'datetime'):
-                y, m, d = value.year, value.month, value.day
-                hh, mm, ss = value.hour, value.minute, value.second
-                OGR_F_SetFieldDateTime(
-                    cogr_feature, i, y, m, d, hh, mm, ss, 0)
-            elif (isinstance(value, datetime.time)
-            and schema_type == 'time'):
-                hh, mm, ss = value.hour, value.minute, value.second
-                OGR_F_SetFieldDateTime(
-                    cogr_feature, i, 0, 0, 0, hh, mm, ss, 0)
+                    tzinfo = 0
+
+                # Add microseconds to seconds
+                ss += ms / 10**6
+
+                set_field_datetime(cogr_feature, i, y, m, d, hh, mm, ss, tzinfo)
+
             elif isinstance(value, bytes) and schema_type == "bytes":
                 string_c = value
                 OGR_F_SetFieldBinary(cogr_feature, i, len(value),
@@ -927,13 +970,15 @@ cdef class WritingSession(Session):
                     self.cogr_layer = exc_wrap_pointer(GDALDatasetGetLayer(self.cogr_ds, collection.name))
 
             except CPLE_BaseError as exc:
-                OGRReleaseDataSource(self.cogr_ds)
+                GDALClose(self.cogr_ds)
                 self.cogr_ds = NULL
                 self.cogr_layer = NULL
                 raise DriverError(u"{}".format(exc))
 
             else:
                 self._fileencoding = userencoding or self._get_fallback_encoding()
+                
+            before_fields = self.get_schema()['properties']
 
         elif collection.mode == 'w':
 
@@ -995,7 +1040,7 @@ cdef class WritingSession(Session):
                     OSRSetFromUserInput(cogr_srs, proj_c)
                     osr_set_traditional_axis_mapping_strategy(cogr_srs)
             except CPLE_BaseError as exc:
-                OGRReleaseDataSource(self.cogr_ds)
+                GDALClose(self.cogr_ds)
                 self.cogr_ds = NULL
                 self.cogr_layer = NULL
                 raise CRSError(u"{}".format(exc))
@@ -1074,7 +1119,7 @@ cdef class WritingSession(Session):
                         <OGRwkbGeometryType>geometry_code, options))
 
             except Exception as exc:
-                OGRReleaseDataSource(self.cogr_ds)
+                GDALClose(self.cogr_ds)
                 self.cogr_ds = NULL
                 raise DriverIOError(u"{}".format(exc))
 
@@ -1096,7 +1141,20 @@ cdef class WritingSession(Session):
 
             encoding = self._get_internal_encoding()
 
-            for key, value in collection.schema['properties'].items():
+            # Test if default fields are included in provided schema
+            schema_fields = collection.schema['properties']
+            default_fields = self.get_schema()['properties']
+            for key, value in default_fields.items():
+                if key in schema_fields and not schema_fields[key] == value:
+                    raise SchemaError("Property '{}' must have type '{}' "
+                    "for driver '{}'".format(key, value, self.collection.driver))
+
+            new_fields = OrderedDict([(key, value) for key, value in schema_fields.items()
+                                      if key not in default_fields])
+            before_fields = default_fields.copy()
+            before_fields.update(new_fields)
+
+            for key, value in new_fields.items():
 
                 log.debug("Begin creating field: %r value: %r", key, value)
 
@@ -1146,7 +1204,7 @@ cdef class WritingSession(Session):
                     exc_wrap_int(OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1))
 
                 except (UnicodeEncodeError, CPLE_BaseError) as exc:
-                    OGRReleaseDataSource(self.cogr_ds)
+                    GDALClose(self.cogr_ds)
                     self.cogr_ds = NULL
                     self.cogr_layer = NULL
                     raise SchemaError(u"{}".format(exc))
@@ -1157,10 +1215,9 @@ cdef class WritingSession(Session):
 
         # Mapping of the Python collection schema to the munged
         # OGR schema.
-        ogr_schema = self.get_schema()
-        self._schema_mapping = dict(zip(
-            collection.schema['properties'].keys(),
-            ogr_schema['properties'].keys() ))
+        after_fields = self.get_schema()['properties']
+        self._schema_mapping = dict(zip(before_fields.keys(),
+                                        after_fields.keys()))
 
         log.debug("Writing started")
 
@@ -1183,11 +1240,13 @@ cdef class WritingSession(Session):
             if record["geometry"] is None:
                 return True
             return record["geometry"]["type"].lstrip("3D ") in valid_geom_types
-
-        log.debug("Starting transaction (initial)")
-        result = gdal_start_transaction(self.cogr_ds, 0)
-        if result == OGRERR_FAILURE:
-            raise TransactionError("Failed to start transaction")
+        transactions_supported = check_capability_transaction(self.cogr_ds)
+        log.debug("Transaction supported: {}".format(transactions_supported))
+        if transactions_supported:
+            log.debug("Starting transaction (initial)")
+            result = gdal_start_transaction(self.cogr_ds, 0)
+            if result == OGRERR_FAILURE:
+                raise TransactionError("Failed to start transaction")
 
         schema_props_keys = set(collection.schema['properties'].keys())
         for record in records:
@@ -1218,22 +1277,24 @@ cdef class WritingSession(Session):
                 raise RuntimeError("Failed to write record: %s" % record)
             _deleteOgrFeature(cogr_feature)
 
-            features_in_transaction += 1
-            if features_in_transaction == DEFAULT_TRANSACTION_SIZE:
-                log.debug("Comitting transaction (intermediate)")
-                result = gdal_commit_transaction(self.cogr_ds)
-                if result == OGRERR_FAILURE:
-                    raise TransactionError("Failed to commit transaction")
-                log.debug("Starting transaction (intermediate)")
-                result = gdal_start_transaction(self.cogr_ds, 0)
-                if result == OGRERR_FAILURE:
-                    raise TransactionError("Failed to start transaction")
-                features_in_transaction = 0
+            if transactions_supported:
+                features_in_transaction += 1
+                if features_in_transaction == DEFAULT_TRANSACTION_SIZE:
+                    log.debug("Comitting transaction (intermediate)")
+                    result = gdal_commit_transaction(self.cogr_ds)
+                    if result == OGRERR_FAILURE:
+                        raise TransactionError("Failed to commit transaction")
+                    log.debug("Starting transaction (intermediate)")
+                    result = gdal_start_transaction(self.cogr_ds, 0)
+                    if result == OGRERR_FAILURE:
+                        raise TransactionError("Failed to start transaction")
+                    features_in_transaction = 0
 
-        log.debug("Comitting transaction (final)")
-        result = gdal_commit_transaction(self.cogr_ds)
-        if result == OGRERR_FAILURE:
-            raise TransactionError("Failed to commit transaction")
+        if transactions_supported:
+            log.debug("Comitting transaction (final)")
+            result = gdal_commit_transaction(self.cogr_ds)
+            if result == OGRERR_FAILURE:
+                raise TransactionError("Failed to commit transaction")
 
     def sync(self, collection):
         """Syncs OGR to disk."""
@@ -1521,7 +1582,7 @@ def _remove(path, driver=None):
         cogr_driver = GDALGetDatasetDriver(cogr_ds)
         GDALClose(cogr_ds)
     else:
-        cogr_driver = OGRGetDriverByName(driver.encode("utf-8"))
+        cogr_driver = GDALGetDriverByName(driver.encode("utf-8"))
 
     if cogr_driver == NULL:
         raise DatasetDeleteError("Null driver when attempting to delete {}".format(path))
@@ -1558,7 +1619,7 @@ def _remove_layer(path, layer, driver=None):
     except (DriverError, FionaNullPointerError):
         raise DatasetDeleteError("Failed to remove data source {}".format(path))
 
-    result = OGR_DS_DeleteLayer(cogr_ds, layer_index)
+    result = GDALDatasetDeleteLayer(cogr_ds, layer_index)
     GDALClose(cogr_ds)
     if result == OGRERR_UNSUPPORTED_OPERATION:
         raise DatasetDeleteError("Removal of layer {} not supported by driver".format(layer_str))

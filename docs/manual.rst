@@ -1116,7 +1116,8 @@ With some vector data formats a spatial index accompanies the data file,
 allowing efficient bounding box searches. A collection's
 :py:meth:`~fiona.collection.Collection.items` method returns an iterator over
 pairs of FIDs and records that intersect a given ``(minx, miny, maxx, maxy)``
-bounding box or geometry object. The
+bounding box or geometry object. Spatial filtering may be inaccurate and returning
+all features overlapping the envelope of the geometry. The
 collection's own coordinate reference system (see below) is used to interpret
 the box's values. If you want a list of the iterator's items, pass it to Python's
 builtin :py:func:`list` as shown below.

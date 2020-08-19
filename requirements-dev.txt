@@ -7,3 +7,4 @@ pytest-cov==2.8.1
 setuptools==41.6.0
 boto3==1.9.19
 wheel==0.33.6
+pytz==2020.1

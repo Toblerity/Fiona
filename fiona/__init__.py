@@ -229,7 +229,7 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
             dataset = memfile.open(
                 driver=driver, crs=crs, schema=schema, layer=layer,
                 encoding=encoding, enabled_drivers=enabled_drivers,
-                **kwargs)
+                crs_wkt=crs_wkt, **kwargs)
             try:
                 yield dataset
             finally:

@@ -5,6 +5,8 @@ import pytest
 from fiona.env import GDALVersion
 import fiona
 from fiona.errors import FionaDeprecationWarning
+from .conftest import get_temp_filename
+from fiona.drvsupport import supported_drivers, driver_mode_mingdal, _driver_supports_mode
 
 gdal_version = GDALVersion.runtime()
 
@@ -37,6 +39,31 @@ def test_collection_iterator_next(path_coutwildrnp_shp):
         k, v = next(src.items(5, None))
         assert k == 5
         assert v['id'] == '5'
+
+
+@pytest.fixture(scope="module", params=[driver for driver in supported_drivers if
+                                        _driver_supports_mode(driver, 'w')
+                                        and driver not in {'DGN', 'MapInfo File', 'GPSTrackMaker', 'GPX', 'BNA', 'DXF',
+                                                           'GML'}])
+def slice_dataset_path(request):
+    """ Create temporary datasets for test_collection_iterator_items_slice()"""
+
+    driver = request.param
+    min_id = 0
+    max_id = 9
+    schema = {'geometry': 'Point', 'properties': [('position', 'int')]}
+    records = [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))}, 'properties': {'position': i}} for i
+               in range(min_id, max_id + 1)]
+
+    tmpdir = tempfile.mkdtemp()
+    path = os.path.join(tmpdir, get_temp_filename(driver))
+
+    with fiona.open(path, 'w',
+                    driver=driver,
+                    schema=schema) as c:
+        c.writerecords(records)
+    yield path
+    shutil.rmtree(tmpdir)
 
 
 @pytest.mark.parametrize("args", [(0, 5, None),

@@ -3,6 +3,10 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+TBD (TBD)
+---------
+- Fix "Failed to commit transaction" TransactionError for FileGDB driver
+
 1.8.13.post1 (2020-02-21)
 -------------------------
 
