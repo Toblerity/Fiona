@@ -48,6 +48,7 @@ supported_drivers = dict([
     # ESRI Shapefile 	ESRI Shapefile 	Yes 	Yes 	Yes
     ("ESRI Shapefile", "raw"),
     # FMEObjects Gateway 	FMEObjects Gateway 	No 	Yes 	No, needs FME
+    ("FlatGeobuf", "rw"),
     # GeoJSON 	GeoJSON 	Yes 	Yes 	Yes
     ("GeoJSON", "raw"),
     # GeoJSONSeq 	GeoJSON sequences 	Yes 	Yes 	Yes 
