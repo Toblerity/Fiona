@@ -50,7 +50,11 @@ def test_write_or_driver_error(tmpdir, driver, testdata_generator):
 
             c.writerecords(records1)
 
-        with fiona.open(path) as c:
+        if driver in {'FileGDB', 'OpenFileGDB'}:
+            open_driver = driver
+        else:
+            open_driver = None
+        with fiona.open(path, driver=open_driver) as c:
             assert c.driver == driver
             items = list(c)
             assert len(items) == len(records1)
@@ -130,7 +134,11 @@ def test_append_or_driver_error(tmpdir, testdata_generator, driver):
                         driver=driver) as c:
             c.writerecords(records2)
 
-        with fiona.open(path) as c:
+        if driver in {'FileGDB', 'OpenFileGDB'}:
+            open_driver = driver
+        else:
+            open_driver = None
+        with fiona.open(path, driver=open_driver) as c:
             assert c.driver == driver
             items = list(c)
             assert len(items) == len(records1) + len(records2)
@@ -179,7 +187,11 @@ def test_append_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver, testdata
                             driver=driver) as c:
                 c.writerecords(records2)
 
-            with fiona.open(path) as c:
+            if driver in {'FileGDB', 'OpenFileGDB'}:
+                open_driver = driver
+            else:
+                open_driver = None
+            with fiona.open(path, driver=open_driver) as c:
                 assert c.driver == driver
                 items = list(c)
                 assert len(items) == len(records1) + len(records2)
@@ -250,7 +262,11 @@ def test_no_append_driver_cannot_append(tmpdir, driver, testdata_generator, monk
                         driver=driver) as c:
             c.writerecords(records2)
 
-        with fiona.open(path) as c:
+        if driver in {'FileGDB', 'OpenFileGDB'}:
+            open_driver = driver
+        else:
+            open_driver = None
+        with fiona.open(path, driver=open_driver) as c:
             assert c.driver == driver
             items = list(c)
             is_good = is_good and len(items) == len(records1) + len(records2)

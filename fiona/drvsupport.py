@@ -247,7 +247,8 @@ _driver_field_type_unsupported = {
         'DGN': None,
         'BNA': None,
         'DXF': None,
-        'PCIDSK': (2, 1, 0)
+        'PCIDSK': (2, 1, 0),
+        'FileGDB': None
     },
     'datetime': {
         'ESRI Shapefile': None,
@@ -263,7 +264,8 @@ _driver_field_type_unsupported = {
         'DGN': None,
         'BNA': None,
         'DXF': None,
-        'PCIDSK': (2, 1, 0)
+        'PCIDSK': (2, 1, 0),
+        'FileGDB': None
     }
 }
 
@@ -287,7 +289,8 @@ _drivers_not_supporting_timezones = {
     'datetime': {
         'MapInfo File': None,
         'GPKG': (3, 1, 0),
-        'GPSTrackMaker': (3, 1, 1)
+        'GPSTrackMaker': (3, 1, 1),
+        'FileGDB': None
     },
     'time': {
         'MapInfo File': None,
@@ -318,7 +321,8 @@ def _driver_supports_timezones(driver, field_type):
 
 # None: driver never supports timezones, (2, 0, 0): driver supports timezones with GDAL 2.0.0
 _drivers_not_supporting_milliseconds = {
-    'GPSTrackMaker': None
+    'GPSTrackMaker': None,
+    'FileGDB': None
 }
 
 

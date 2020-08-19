@@ -47,6 +47,9 @@ GDALOPTS="  --with-ogr \
             --without-mrf \
             --with-webp=no"
 
+if [ -d "$FILEGDB" ]; then
+  GDALOPTS="$GDALOPTS --with-fgdb=$FILEGDB"
+fi
 
 # Create build dir if not exists
 if [ ! -d "$GDALBUILD" ]; then

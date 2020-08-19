@@ -116,6 +116,10 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except NU
         CSLDestroy(creation_opts)
 
 
+cdef bint check_capability_transaction(void *cogr_ds):
+    return GDALDatasetTestCapability(cogr_ds, ODsCTransactions)
+
+
 cdef OGRErr gdal_start_transaction(void* cogr_ds, int force):
     return GDALDatasetStartTransaction(cogr_ds, force)
 

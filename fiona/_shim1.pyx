@@ -93,6 +93,12 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except NU
 
 
 # transactions are not supported in GDAL 1.x
+
+
+cdef bint check_capability_transaction(void *cogr_ds):
+    return False
+
+
 cdef OGRErr gdal_start_transaction(void* cogr_ds, int force):
     return OGRERR_NONE
 

@@ -1227,11 +1227,13 @@ cdef class WritingSession(Session):
             if record["geometry"] is None:
                 return True
             return record["geometry"]["type"].lstrip("3D ") in valid_geom_types
-
-        log.debug("Starting transaction (initial)")
-        result = gdal_start_transaction(self.cogr_ds, 0)
-        if result == OGRERR_FAILURE:
-            raise TransactionError("Failed to start transaction")
+        transactions_supported = check_capability_transaction(self.cogr_ds)
+        log.debug("Transaction supported: {}".format(transactions_supported))
+        if transactions_supported:
+            log.debug("Starting transaction (initial)")
+            result = gdal_start_transaction(self.cogr_ds, 0)
+            if result == OGRERR_FAILURE:
+                raise TransactionError("Failed to start transaction")
 
         schema_props_keys = set(collection.schema['properties'].keys())
         for record in records:
@@ -1262,22 +1264,24 @@ cdef class WritingSession(Session):
                 raise RuntimeError("Failed to write record: %s" % record)
             _deleteOgrFeature(cogr_feature)
 
-            features_in_transaction += 1
-            if features_in_transaction == DEFAULT_TRANSACTION_SIZE:
-                log.debug("Comitting transaction (intermediate)")
-                result = gdal_commit_transaction(self.cogr_ds)
-                if result == OGRERR_FAILURE:
-                    raise TransactionError("Failed to commit transaction")
-                log.debug("Starting transaction (intermediate)")
-                result = gdal_start_transaction(self.cogr_ds, 0)
-                if result == OGRERR_FAILURE:
-                    raise TransactionError("Failed to start transaction")
-                features_in_transaction = 0
+            if transactions_supported:
+                features_in_transaction += 1
+                if features_in_transaction == DEFAULT_TRANSACTION_SIZE:
+                    log.debug("Comitting transaction (intermediate)")
+                    result = gdal_commit_transaction(self.cogr_ds)
+                    if result == OGRERR_FAILURE:
+                        raise TransactionError("Failed to commit transaction")
+                    log.debug("Starting transaction (intermediate)")
+                    result = gdal_start_transaction(self.cogr_ds, 0)
+                    if result == OGRERR_FAILURE:
+                        raise TransactionError("Failed to start transaction")
+                    features_in_transaction = 0
 
-        log.debug("Comitting transaction (final)")
-        result = gdal_commit_transaction(self.cogr_ds)
-        if result == OGRERR_FAILURE:
-            raise TransactionError("Failed to commit transaction")
+        if transactions_supported:
+            log.debug("Comitting transaction (final)")
+            result = gdal_commit_transaction(self.cogr_ds)
+            if result == OGRERR_FAILURE:
+                raise TransactionError("Failed to commit transaction")
 
     def sync(self, collection):
         """Syncs OGR to disk."""
