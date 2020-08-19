@@ -150,11 +150,13 @@ supported_drivers = dict([
 driver_mode_mingdal = {
 
     'r': {'GPKG': (1, 11, 0),
-          'GeoJSONSeq': (2, 4, 0)},
+          'GeoJSONSeq': (2, 4, 0),
+          'FlatGeobuf': (3, 1, 0)},
 
     'w': {'GPKG': (1, 11, 0),
           'PCIDSK': (2, 0, 0),
-          'GeoJSONSeq': (2, 4, 0)},
+          'GeoJSONSeq': (2, 4, 0),
+          'FlatGeobuf': (3, 1, 0)},
 
     'a': {'GPKG': (1, 11, 0),
           'GeoJSON': (2, 1, 0),
