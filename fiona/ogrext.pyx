@@ -836,7 +836,10 @@ cdef class Session:
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
 
+        log.debug("CAPI:OGR_L_GetExtent")
         result = OGR_L_GetExtent(self.cogr_layer, &extent, 1)
+        if result != OGRERR_NONE:
+            raise DriverError("Driver was not able to calculate bounds")
         return (extent.MinX, extent.MinY, extent.MaxX, extent.MaxY)
 
     def has_feature(self, fid):
