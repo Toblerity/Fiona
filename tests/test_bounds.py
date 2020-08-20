@@ -1,6 +1,6 @@
 import pytest
 import fiona
-from fiona.drvsupport import supported_drivers
+from fiona.drvsupport import supported_drivers, _driver_supports_mode
 from fiona.errors import DriverError
 from .conftest import driver_extensions
 from fiona.env import GDALVersion
@@ -28,7 +28,7 @@ def test_bounds_z():
 
 ignore_write_drivers = set(['CSV', 'GPX', 'GPSTrackMaker', 'DXF', 'DGN', 'MapInfo File'])
 write_drivers = [driver for driver, raw in supported_drivers.items() if
-                 'w' in raw and driver not in ignore_write_drivers]
+                 _driver_supports_mode(driver, 'w') and driver not in ignore_write_drivers]
 
 
 @pytest.mark.parametrize('driver', write_drivers)
