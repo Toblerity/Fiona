@@ -26,7 +26,7 @@ def test_write_or_driver_error(tmpdir, driver, testdata_generator):
         # BNA driver segfaults with gdal 1.11
         return
 
-    schema, crs, records1, _, test_equal = testdata_generator(driver, range(0, 10), [])
+    schema, crs, records1, _, test_equal, create_kwargs = testdata_generator(driver, range(0, 10), [])
     path = str(tmpdir.join(get_temp_filename(driver)))
 
     if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
@@ -37,16 +37,17 @@ def test_write_or_driver_error(tmpdir, driver, testdata_generator):
             with fiona.open(path, 'w',
                             driver=driver,
                             crs=crs,
-                            schema=schema) as c:
+                            schema=schema,
+                            **create_kwargs) as c:
                 c.writerecords(records1)
 
     else:
-
         # Test if we can write
         with fiona.open(path, 'w',
                         driver=driver,
                         crs=crs,
-                        schema=schema) as c:
+                        schema=schema,
+                        **create_kwargs) as c:
 
             c.writerecords(records1)
 
@@ -76,7 +77,7 @@ def test_write_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver, testdata_
         # BNA driver segfaults with gdal 1.11
         return
 
-    schema, crs, records1, _, test_equal = testdata_generator(driver, range(0, 10), [])
+    schema, crs, records1, _, test_equal, create_kwargs = testdata_generator(driver, range(0, 10), [])
     path = str(tmpdir.join(get_temp_filename(driver)))
 
     if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
@@ -87,7 +88,8 @@ def test_write_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver, testdata_
             with fiona.open(path, 'w',
                             driver=driver,
                             crs=crs,
-                            schema=schema) as c:
+                            schema=schema,
+                            **create_kwargs) as c:
                 c.writerecords(records1)
 
 
@@ -104,7 +106,7 @@ def test_append_or_driver_error(tmpdir, testdata_generator, driver):
         return
 
     path = str(tmpdir.join(get_temp_filename(driver)))
-    schema, crs, records1, records2, test_equal = testdata_generator(driver, range(0, 5), range(5, 10))
+    schema, crs, records1, records2, test_equal, create_kwargs = testdata_generator(driver, range(0, 5), range(5, 10))
 
     # If driver is not able to write, we cannot test append
     if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
@@ -115,7 +117,8 @@ def test_append_or_driver_error(tmpdir, testdata_generator, driver):
     with fiona.open(path, 'w',
                     driver=driver,
                     crs=crs,
-                    schema=schema) as c:
+                    schema=schema,
+                    **create_kwargs) as c:
 
         c.writerecords(records1)
 
@@ -161,7 +164,7 @@ def test_append_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver, testdata
         return
 
     path = str(tmpdir.join(get_temp_filename(driver)))
-    schema, crs, records1, records2, test_equal = testdata_generator(driver, range(0, 5), range(5, 10))
+    schema, crs, records1, records2, test_equal, create_kwargs = testdata_generator(driver, range(0, 5), range(5, 10))
 
     # If driver is not able to write, we cannot test append
     if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
@@ -172,7 +175,8 @@ def test_append_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver, testdata
     with fiona.open(path, 'w',
                     driver=driver,
                     crs=crs,
-                    schema=schema) as c:
+                    schema=schema,
+                    **create_kwargs) as c:
 
         c.writerecords(records1)
 
@@ -208,7 +212,7 @@ def test_no_write_driver_cannot_write(tmpdir, driver, testdata_generator, monkey
     """
 
     monkeypatch.setitem(fiona.drvsupport.supported_drivers, driver, 'rw')
-    schema, crs, records1, _, test_equal = testdata_generator(driver, range(0, 5), [])
+    schema, crs, records1, _, test_equal, create_kwargs = testdata_generator(driver, range(0, 5), [])
 
     if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
         # BNA driver segfaults with gdal 1.11
@@ -220,7 +224,8 @@ def test_no_write_driver_cannot_write(tmpdir, driver, testdata_generator, monkey
         with fiona.open(path, 'w',
                         driver=driver,
                         crs=crs,
-                        schema=schema) as c:
+                        schema=schema,
+                        **create_kwargs) as c:
             c.writerecords(records1)
 
 
@@ -241,7 +246,7 @@ def test_no_append_driver_cannot_append(tmpdir, driver, testdata_generator, monk
         return
 
     path = str(tmpdir.join(get_temp_filename(driver)))
-    schema, crs, records1, records2, test_equal = testdata_generator(driver, range(0, 5), range(5, 10))
+    schema, crs, records1, records2, test_equal, create_kwargs = testdata_generator(driver, range(0, 5), range(5, 10))
 
     # If driver is not able to write, we cannot test append
     if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
@@ -252,7 +257,8 @@ def test_no_append_driver_cannot_append(tmpdir, driver, testdata_generator, monk
     with fiona.open(path, 'w',
                     driver=driver,
                     crs=crs,
-                    schema=schema) as c:
+                    schema=schema,
+                    **create_kwargs) as c:
 
         c.writerecords(records1)
 
