@@ -147,6 +147,12 @@ def test_read_getfeaturecount(tmpdir, driver, testdata_generator):
         for _ in range(len(records1)):
             f = next(c)
             data.add(int(f['properties']['position']))
+
+        try:
+            assert len(data) == len(records1 + records2)
+        except TypeError:
+            pass
+
         assert len(positions) == len(data)
         for p in positions:
             assert p in data
