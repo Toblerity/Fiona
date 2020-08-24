@@ -1,11 +1,12 @@
 import fiona
 import pytest
-from fiona.drvsupport import driver_mode_mingdal
+from fiona.drvsupport import driver_mode_mingdal, _driver_supports_mode
 from fiona.errors import DriverError
 from tests.conftest import get_temp_filename
 
 
-@pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['w'].keys()])
+@pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['w'].keys()
+                                    if _driver_supports_mode(driver, 'w')])
 def test_write_getextent(tmpdir, driver, testdata_generator):
     """
         Test if a call to OGR_L_GetExtent has side effects for writing
@@ -38,7 +39,8 @@ def test_write_getextent(tmpdir, driver, testdata_generator):
             assert p in data
 
 
-@pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['w'].keys()])
+@pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['w'].keys()
+                                    if _driver_supports_mode(driver, 'w')])
 def test_read_getextent(tmpdir, driver, testdata_generator):
     """
         Test if a call to OGR_L_GetExtent has side effects for reading
@@ -77,7 +79,8 @@ def test_read_getextent(tmpdir, driver, testdata_generator):
             assert p in data
 
 
-@pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['w'].keys()])
+@pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['w'].keys()
+                                    if _driver_supports_mode(driver, 'w')])
 def test_write_getfeaturecount(tmpdir, driver, testdata_generator):
     """
         Test if a call to OGR_L_GetFeatureCount has side effects for writing
@@ -109,7 +112,8 @@ def test_write_getfeaturecount(tmpdir, driver, testdata_generator):
             assert p in data
 
 
-@pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['w'].keys()])
+@pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['w'].keys()
+                                    if _driver_supports_mode(driver, 'w')])
 def test_read_getfeaturecount(tmpdir, driver, testdata_generator):
     """
         Test if a call to OGR_L_GetFeatureCount has side effects for reading
