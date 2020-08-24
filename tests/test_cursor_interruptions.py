@@ -140,7 +140,7 @@ def test_read_getfeaturecount(tmpdir, driver, testdata_generator):
 
         # Call to OGR_L_GetFeatureCount
         try:
-            assert len(c) == len(records1)
+            assert len(data) == len(records1)
         except TypeError:
             pass
 
