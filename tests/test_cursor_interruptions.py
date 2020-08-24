@@ -8,7 +8,7 @@ from tests.conftest import get_temp_filename
 @pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['w'].keys()])
 def test_write_getextent(tmpdir, driver, testdata_generator):
     """
-        Test if a call to GetExtent has side effects for writing
+        Test if a call to OGR_L_GetExtent has side effects for writing
 
     """
 
@@ -41,7 +41,7 @@ def test_write_getextent(tmpdir, driver, testdata_generator):
 @pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['w'].keys()])
 def test_read_getextent(tmpdir, driver, testdata_generator):
     """
-        Test if a call to GetExtent has side effects for writing
+        Test if a call to OGR_L_GetExtent has side effects for reading
 
     """
 
@@ -80,7 +80,7 @@ def test_read_getextent(tmpdir, driver, testdata_generator):
 @pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['w'].keys()])
 def test_write_getfeaturecount(tmpdir, driver, testdata_generator):
     """
-        Test if a call to GetExtent has side effects for writing
+        Test if a call to OGR_L_GetFeatureCount has side effects for writing
 
     """
 
@@ -112,7 +112,7 @@ def test_write_getfeaturecount(tmpdir, driver, testdata_generator):
 @pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['w'].keys()])
 def test_read_getfeaturecount(tmpdir, driver, testdata_generator):
     """
-        Test if a call to GetExtent has side effects for writing
+        Test if a call to OGR_L_GetFeatureCount has side effects for reading
 
     """
 
