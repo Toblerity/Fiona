@@ -33,6 +33,13 @@ def test_zip_memoryfile(bytes_coutwildrnp_zip):
             assert len(collection) == 67
 
 
+def test_zip_memoryfile_infer_layer_name(bytes_coutwildrnp_zip):
+    """In-memory zipped Shapefile can be read with the default layer"""
+    with ZipMemoryFile(bytes_coutwildrnp_zip) as memfile:
+        with memfile.open() as collection:
+            assert len(collection) == 67
+
+
 def test_write_memoryfile(profile_first_coutwildrnp_shp):
     """In-memory Shapefile can be written"""
     profile, first = profile_first_coutwildrnp_shp
