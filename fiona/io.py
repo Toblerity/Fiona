@@ -82,7 +82,7 @@ class ZipMemoryFile(MemoryFile):
     def __init__(self, file_or_bytes=None):
         super(ZipMemoryFile, self).__init__(file_or_bytes, ext='zip')
 
-    def open(self, path, driver=None, encoding=None, layer=None,
+    def open(self, path=None, driver=None, encoding=None, layer=None,
              enabled_drivers=None, **kwargs):
         """Open a dataset within the zipped stream.
 
@@ -96,7 +96,10 @@ class ZipMemoryFile(MemoryFile):
         -------
         A Fiona collection object
         """
-        vsi_path = '/vsizip{0}/{1}'.format(self.name, path.lstrip('/'))
+        if path:
+            vsi_path = '/vsizip{0}/{1}'.format(self.name, path.lstrip('/'))
+        else:
+            vsi_path = '/vsizip{0}'.format(self.name)
 
         if self.closed:
             raise IOError("I/O operation on closed file.")
