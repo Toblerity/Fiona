@@ -6,6 +6,8 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 TBD (TBD)
 ---------
 
+- Axis ordering for results of fiona.transform was wrong when CRS were passed
+  in the "EPSG:dddd" form (#919). This has been fixed by (#926).
 - Allow implicit access to the only dataset in a ZipMemoryFile. The path
   argument of ZipMemoryFile.open() is now optional (#928).
 - Improve support for datetime types: support milliseconds (#744), timezones (#914)
