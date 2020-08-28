@@ -3,8 +3,8 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-TBD (TBD)
----------
+1.8.14 (TBD)
+------------
 
 - Axis ordering for results of fiona.transform was wrong when CRS were passed
   in the "EPSG:dddd" form (#919). This has been fixed by (#926).

@@ -26,6 +26,7 @@ from fiona._env import GDALVersion, get_gdal_version_num, calc_gdal_version_num
 from fiona._err import cpl_errs, FionaNullPointerError, CPLE_BaseError, CPLE_OpenFailedError
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
+from fiona.env import Env
 from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
@@ -964,7 +965,7 @@ cdef class WritingSession(Session):
 
             else:
                 self._fileencoding = userencoding or self._get_fallback_encoding()
-                
+
             before_fields = self.get_schema()['properties']
 
         elif collection.mode == 'w':
@@ -991,26 +992,33 @@ cdef class WritingSession(Session):
             # TODO: revisit the logic in the following blocks when we
             # change the assumption above.
             else:
-                if collection.driver == "GeoJSON" and os.path.exists(path):
-                    # manually remove geojson file as GDAL doesn't do this for us
+                if collection.driver == "GeoJSON":
+                    # We must manually remove geojson files as GDAL doesn't do this for us.
+                    log.debug("Removing GeoJSON file")
                     os.unlink(path)
-                try:
-                    # attempt to open existing dataset in write mode
-                    cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
-                except DriverError:
-                    # failed, attempt to create it
-                    cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
-                else:
-                    # check capability of creating a new layer in the existing dataset
-                    capability = check_capability_create_layer(cogr_ds)
-                    if GDAL_VERSION_NUM < 2000000 and collection.driver == "GeoJSON":
-                        # GeoJSON driver tells lies about it's capability
-                        capability = False
-                    if not capability or collection.name is None:
-                        # unable to use existing dataset, recreate it
-                        GDALClose(cogr_ds)
-                        cogr_ds = NULL
+                    with Env(GDAL_VALIDATE_CREATION_OPTIONS="NO"):
                         cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
+
+                else:
+                    try:
+                        # Attempt to open existing dataset in write mode,
+                        # letting GDAL/OGR handle the overwriting.
+                        cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
+                    except DriverError:
+                        # log.exception("Caught DriverError")
+                        # failed, attempt to create it
+                        with Env(GDAL_VALIDATE_CREATION_OPTIONS="NO"):
+                            cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
+                    else:
+                        # check capability of creating a new layer in the existing dataset
+                        capability = check_capability_create_layer(cogr_ds)
+                        if not capability or collection.name is None:
+                            # unable to use existing dataset, recreate it
+                            log.debug("Unable to use existing dataset: capability=%r, name=%r", capability, collection.name)
+                            GDALClose(cogr_ds)
+                            cogr_ds = NULL
+                            with Env(GDAL_VALIDATE_CREATION_OPTIONS="NO"):
+                                cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
 
             self.cogr_ds = cogr_ds
 
