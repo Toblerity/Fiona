@@ -992,8 +992,6 @@ cdef class WritingSession(Session):
             # TODO: revisit the logic in the following blocks when we
             # change the assumption above.
             else:
-                log.debug("Path exists: path=%r, driver=%r", path, collection.driver)
-
                 if collection.driver == "GeoJSON":
                     # We must manually remove geojson files as GDAL doesn't do this for us.
                     log.debug("Removing GeoJSON file")
