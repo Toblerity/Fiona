@@ -6,11 +6,10 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 TBD (TBD)
 ---------
 
+- Allow implicit access to the only dataset in a ZipMemoryFile. The path
+  argument of ZipMemoryFile.open() is now optional (#928).
 - Improve support for datetime types: support milliseconds (#744), timezones (#914)
   and improve warnings if type is not supported by driver (#572).
-
-Bug fixes:
-
 - Fix "Failed to commit transaction" TransactionError for FileGDB driver.
 - Load GDAL DLL dependencies on Python 3.8+ / Windows with add_dll_directory() (#851).
 - Do not require optional properties (#848).
