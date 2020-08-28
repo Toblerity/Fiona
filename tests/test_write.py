@@ -1,7 +1,5 @@
 """New tests of writing feature collections."""
 
-import logging
-
 import fiona
 from fiona.crs import from_epsg
 
@@ -17,12 +15,12 @@ def test_issue771(tmpdir, caplog):
 
     outputfile = tmpdir.join("test.geojson")
 
-    with caplog.at_level(logging.INFO):
-        for i in range(2):
-            with fiona.open(
-                str(outputfile), "w", driver="GeoJSON", schema=schema, crs=from_epsg(4326)
-            ) as collection:
-                collection.write(feature)
-            assert outputfile.exists()
+    for i in range(2):
+        with fiona.open(
+            str(outputfile), "w", driver="GeoJSON", schema=schema, crs=from_epsg(4326)
+        ) as collection:
+            collection.write(feature)
+        assert outputfile.exists()
 
-    assert not caplog.records
+    for record in caplog.records:
+        assert record.levelname != "ERROR"
