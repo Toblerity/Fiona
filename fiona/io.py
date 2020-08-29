@@ -26,7 +26,9 @@ class MemoryFile(MemoryFileBase):
     --------
 
     """
-    def __init__(self, file_or_bytes=None, filename=None, ext=''):
+    def __init__(self, file_or_bytes=None, filename=None, ext=""):
+        if ext and not ext.startswith("."):
+            ext = "." + ext
         super(MemoryFile, self).__init__(
             file_or_bytes=file_or_bytes, filename=filename, ext=ext)
 
