@@ -19,6 +19,16 @@ def data_coutwildrnp_json(path_coutwildrnp_json):
         return f.read()
 
 
+def test_memoryfile_ext():
+    """File extensions are handled"""
+    assert MemoryFile(ext=".geojson").name.endswith(".geojson")
+
+
+def test_memoryfile_bare_ext():
+    """File extensions without a leading . are handled"""
+    assert MemoryFile(ext="geojson").name.endswith(".geojson")
+
+
 def test_memoryfile_init(data_coutwildrnp_json):
     """In-memory GeoJSON file can be read"""
     with MemoryFile(data_coutwildrnp_json) as memfile:
