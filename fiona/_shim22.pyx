@@ -7,7 +7,7 @@ cdef extern from "ogr_api.h":
 import logging
 import os
 
-from fiona.ogrext2 cimport *
+from fiona.ograpi2 cimport *
 from fiona._err cimport exc_wrap_pointer
 
 from fiona._err import cpl_errs, CPLE_BaseError, FionaNullPointerError
