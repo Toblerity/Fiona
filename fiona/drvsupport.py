@@ -41,6 +41,7 @@ supported_drivers = dict([
     # multi-layer
     ("FileGDB", "raw"),
     ("OpenFileGDB", "r"),
+    ("FlatGeobuf", "rw"),
     # ESRI Personal GeoDatabase 	PGeo 	No 	Yes 	No, needs ODBC library
     # ESRI ArcSDE 	SDE 	No 	Yes 	No, needs ESRI SDE
     # ESRIJSON 	ESRIJSON 	No 	Yes 	Yes 
