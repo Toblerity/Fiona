@@ -1,4 +1,4 @@
-include "ograpi1.pxd"
+include "ogrext1.pxd"
 
 ctypedef enum OGRFieldSubType:
     OFSTNone = 0

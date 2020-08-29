@@ -15,7 +15,7 @@ cdef extern from "ogr_srs_api.h" nogil:
     void OSRSetPROJSearchPaths(const char *const *papszPaths)
 
 
-from fiona.ograpi3 cimport *
+from fiona.ogrext3 cimport *
 from fiona._err cimport exc_wrap_pointer
 from fiona._err import cpl_errs, CPLE_BaseError, FionaNullPointerError
 from fiona.errors import DriverError

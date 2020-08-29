@@ -1,4 +1,4 @@
-include "ograpi2.pxd"
+include "ogrext2.pxd"
 
 cdef bint is_field_null(void *feature, int n)
 cdef void set_field_null(void *feature, int n)
