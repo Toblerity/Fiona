@@ -183,6 +183,7 @@ cdef extern from "cpl_conv.h":
     void    CPLFree (void *ptr)
     void    CPLSetThreadLocalConfigOption (char *key, char *val)
     const char *CPLGetConfigOption (char *, char *)
+    int CPLCheckForFile(char *, char **)
 
 
 cdef extern from "cpl_string.h":
@@ -192,9 +193,16 @@ cdef extern from "cpl_string.h":
     char ** CSLAddString(char **list, const char *string)
 
 
+cdef extern from "sys/stat.h" nogil:
+    struct stat:
+        pass
+
+
 cdef extern from "cpl_vsi.h" nogil:
+
     ctypedef int vsi_l_offset
     ctypedef FILE VSILFILE
+    ctypedef stat VSIStatBufL
 
     unsigned char *VSIGetMemFileBuffer(const char *path,
                                        vsi_l_offset *data_len,
@@ -204,14 +212,15 @@ cdef extern from "cpl_vsi.h" nogil:
     VSILFILE* VSIFOpenL(const char *path, const char *mode)
     int VSIFCloseL(VSILFILE *fp)
     int VSIUnlink(const char *path)
-
+    int VSIMkdir(const char *path, long mode)
+    int VSIRmdir(const char *path)
     int VSIFFlushL(VSILFILE *fp)
     size_t VSIFReadL(void *buffer, size_t nSize, size_t nCount, VSILFILE *fp)
     int VSIFSeekL(VSILFILE *fp, vsi_l_offset nOffset, int nWhence)
     vsi_l_offset VSIFTellL(VSILFILE *fp)
     int VSIFTruncateL(VSILFILE *fp, vsi_l_offset nNewSize)
     size_t VSIFWriteL(void *buffer, size_t nSize, size_t nCount, VSILFILE *fp)
-    int VSIUnlink (const char * pathname)
+    int VSIStatL(const char *pszFilename, VSIStatBufL *psStatBuf)
 
 
 cdef extern from "ogr_srs_api.h":
