@@ -9,7 +9,7 @@ import logging
 import os
 import warnings
 import math
-import uuid
+from uuid import uuid4
 from collections import namedtuple
 
 from six import integer_types, string_types, text_type
@@ -43,7 +43,7 @@ from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
 from cpython cimport PyBytes_FromStringAndSize, PyBytes_AsString
 from fiona.drvsupport import _driver_supports_timezones
-  
+
 
 cdef extern from "ogr_api.h" nogil:
 
@@ -126,9 +126,9 @@ class TZ(datetime.tzinfo):
 
     def utcoffset(self, dt):
         return datetime.timedelta(minutes=self.minutes)
-   
 
 # Feature extension classes and functions follow.
+
 
 cdef class FeatureBuilder:
     """Build Fiona features from OGR feature pointers.
@@ -980,22 +980,18 @@ cdef class WritingSession(Session):
             driver_c = driver_b
             cogr_driver = exc_wrap_pointer(GDALGetDriverByName(driver_c))
 
-            # Our most common use case is the creation of a new data
-            # file and historically we've assumed that it's a file on
-            # the local filesystem and queryable via os.path.
-            #
-            # TODO: remove the assumption.
-            if not os.path.exists(path):
+            if not CPLCheckForFile(path_c, NULL):
                 log.debug("File doesn't exist. Creating a new one...")
                 cogr_ds = gdal_create(cogr_driver, path_c, {})
 
-            # TODO: revisit the logic in the following blocks when we
-            # change the assumption above.
             else:
                 if collection.driver == "GeoJSON":
                     # We must manually remove geojson files as GDAL doesn't do this for us.
                     log.debug("Removing GeoJSON file")
-                    os.unlink(path)
+                    if path.startswith("/vsi"):
+                        VSIUnlink(path_c)
+                    else:
+                        os.unlink(path)
                     with Env(GDAL_VALIDATE_CREATION_OPTIONS="NO"):
                         cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
 
@@ -1645,7 +1641,7 @@ def buffer_to_virtual_file(bytesbuf, ext=''):
     `ext` is empty or begins with a period and contains at most one period.
     """
 
-    vsi_filename = '/vsimem/{}'.format(uuid.uuid4().hex + ext)
+    vsi_filename = '/vsimem/{}'.format(uuid4().hex + ext)
     vsi_cfilename = vsi_filename if not isinstance(vsi_filename, string_types) else vsi_filename.encode('utf-8')
 
     vsi_handle = VSIFileFromMemBuffer(vsi_cfilename, <unsigned char *>bytesbuf, len(bytesbuf), 0)
@@ -1663,65 +1659,75 @@ def remove_virtual_file(vsi_filename):
     return VSIUnlink(vsi_cfilename)
 
 
-cdef class MemoryFileBase(object):
+cdef class MemoryFileBase:
     """Base for a BytesIO-like class backed by an in-memory file."""
 
-    def __init__(self, file_or_bytes=None, filename=None, ext=''):
+    def __init__(self, file_or_bytes=None, dirname=None, filename=None, ext=''):
         """A file in an in-memory filesystem.
 
         Parameters
         ----------
         file_or_bytes : file or bytes
-            A file opened in binary mode or bytes or a bytearray
+            A file opened in binary mode or bytes
         filename : str
             A filename for the in-memory file under /vsimem
         ext : str
             A file extension for the in-memory file under /vsimem. Ignored if
             filename was provided.
+
         """
-        cdef VSILFILE *vsi_handle = NULL
+        cdef VSILFILE *fp = NULL
 
         if file_or_bytes:
             if hasattr(file_or_bytes, 'read'):
                 initial_bytes = file_or_bytes.read()
-            else:
+            elif isinstance(file_or_bytes, bytes):
                 initial_bytes = file_or_bytes
-            if not isinstance(initial_bytes, (bytearray, bytes)):
+            else:
                 raise TypeError(
                     "Constructor argument must be a file opened in binary "
-                    "mode or bytes/bytearray.")
+                    "mode or bytes.")
         else:
             initial_bytes = b''
+
+        # Make an in-memory directory specific to this dataset to help organize
+        # auxiliary files.
+        self._dirname = dirname or str(uuid4().hex)
+        VSIMkdir("/vsimem/{0}".format(self._dirname).encode("utf-8"), 0666)
 
         if filename:
             # GDAL's SRTMHGT driver requires the filename to be "correct" (match
             # the bounds being written)
-            self.name = '/vsimem/{0}'.format(filename)
+            self.name = "/vsimem/{0}/{1}".format(self._dirname, filename)
         else:
             # GDAL 2.1 requires a .zip extension for zipped files.
-            self.name = '/vsimem/{0}.{1}'.format(uuid.uuid4(), ext.lstrip('.'))
+            self.name = "/vsimem/{0}/{0}{1}".format(self._dirname, ext)
 
-        self.path = self.name.encode('utf-8')
-        self._len = 0
-        self._pos = 0
-        self.closed = False
+        self._path = self.name.encode('utf-8')
 
         self._initial_bytes = initial_bytes
         cdef unsigned char *buffer = self._initial_bytes
 
         if self._initial_bytes:
+            self._vsif = VSIFileFromMemBuffer(
+               self._path, buffer, len(self._initial_bytes), 0)
+            self.mode = "r"
 
-            vsi_handle = VSIFileFromMemBuffer(
-                self.path, buffer, len(self._initial_bytes), 0)
-            self._len = len(self._initial_bytes)
+        else:
+            self._vsif = NULL
+            self.mode = "r+"
 
-            if vsi_handle == NULL:
-                raise IOError(
-                    "Failed to create in-memory file using initial bytes.")
+        self.closed = False
 
-            if VSIFCloseL(vsi_handle) != 0:
-                raise IOError(
-                    "Failed to properly close in-memory file.")
+    def _open(self):
+        """Ensure that the instance has a valid VSI file handle."""
+        if not self.exists():
+            self._vsif = VSIFOpenL(self.name.encode("utf-8"), "w")
+            VSIFCloseL(self._vsif)
+            self._vsif = NULL
+
+        if self._vsif == NULL:
+            self._vsif = VSIFOpenL(self.name.encode("utf-8"), self.mode.encode("utf-8"))
 
     def exists(self):
         """Test if the in-memory file exists.
@@ -1730,18 +1736,10 @@ cdef class MemoryFileBase(object):
         -------
         bool
             True if the in-memory file exists.
+
         """
-        cdef VSILFILE *fp = NULL
-        cdef const char *cypath = self.path
-
-        with nogil:
-            fp = VSIFOpenL(cypath, 'r')
-
-        if fp != NULL:
-            VSIFCloseL(fp)
-            return True
-        else:
-            return False
+        cdef VSIStatBufL st_buf
+        return VSIStatL(self._path, &st_buf) == 0
 
     def __len__(self):
         """Length of the file's buffer in number of bytes.
@@ -1750,95 +1748,74 @@ cdef class MemoryFileBase(object):
         -------
         int
         """
-        cdef unsigned char *buff = NULL
-        cdef const char *cfilename = self.path
-        cdef vsi_l_offset buff_len = 0
-        buff = VSIGetMemFileBuffer(self.path, &buff_len, 0)
-        return int(buff_len)
+        buffer = self.getbuffer()
+        if buffer is None:
+            return 0
+        else:
+            return buffer.size
+
+    def getbuffer(self):
+        """Return a view on bytes of the file, or None."""
+        cdef unsigned char *buffer = NULL
+        cdef vsi_l_offset buffer_len = 0
+        cdef unsigned char [:] buff_view
+
+        buffer = VSIGetMemFileBuffer(self._path, &buffer_len, 0)
+
+        if buffer == NULL or buffer_len == 0:
+            buff_view = None
+        else:
+            buff_view = <unsigned char [:buffer_len]>buffer
+        return buff_view
 
     def close(self):
-        """Close MemoryFile and release allocated memory."""
-        VSIUnlink(self.path)
-        self._pos = 0
-        self._initial_bytes = None
+        """Close and tear down VSI file and directory."""
+        if self._vsif != NULL:
+            VSIFCloseL(self._vsif)
+        self._vsif = NULL
+        VSIRmdir(self._dirname.encode("utf-8"))
         self.closed = True
+
+    def seek(self, offset, whence=0):
+        self._open()
+        return VSIFSeekL(self._vsif, offset, whence)
+
+    def tell(self):
+        self._open()
+        if self._vsif != NULL:
+            return VSIFTellL(self._vsif)
+        else:
+            return 0
 
     def read(self, size=-1):
         """Read size bytes from MemoryFile."""
-        cdef VSILFILE *fp = NULL
-        # Return no bytes immediately if the position is at or past the
-        # end of the file.
-        length = len(self)
-
-        if self._pos >= length:
-            self._pos = length
-            return b''
-
-        if size == -1:
-            size = length - self._pos
-        else:
-            size = min(size, length - self._pos)
-
-        cdef unsigned char *buffer = <unsigned char *>CPLMalloc(size)
         cdef bytes result
+        cdef unsigned char *buffer = NULL
+        cdef vsi_l_offset buffer_len = 0
 
-        fp = VSIFOpenL(self.path, 'r')
+        if size < 0:
+            buffer = VSIGetMemFileBuffer(self._path, &buffer_len, 0)
+            size = buffer_len
+
+        buffer = <unsigned char *>CPLMalloc(size)
+
+        self._open()
 
         try:
-            fp = exc_wrap_vsilfile(fp)
-            if VSIFSeekL(fp, self._pos, 0) < 0:
-                raise IOError(
-                    "Failed to seek to offset %s in %s.",
-                    self._pos, self.name)
-
-            objects_read = VSIFReadL(buffer, 1, size, fp)
+            objects_read = VSIFReadL(buffer, 1, size, self._vsif)
             result = <bytes>buffer[:objects_read]
+            return result
 
         finally:
-            VSIFCloseL(fp)
             CPLFree(buffer)
 
-        self._pos += len(result)
         return result
-
-    def seek(self, offset, whence=0):
-        """Seek to position in MemoryFile."""
-        if whence == 0:
-            pos = offset
-        elif whence == 1:
-            pos = self._pos + offset
-        elif whence == 2:
-            pos = len(self) - offset
-        if pos < 0:
-            raise ValueError("negative seek position: {}".format(pos))
-        if pos > len(self):
-            raise ValueError("seek position past end of file: {}".format(pos))
-        self._pos = pos
-        return self._pos
-
-    def tell(self):
-        """Tell current position in MemoryFile."""
-        return self._pos
 
     def write(self, data):
         """Write data bytes to MemoryFile"""
-        cdef VSILFILE *fp = NULL
         cdef const unsigned char *view = <bytes>data
         n = len(data)
-
-        if not self.exists():
-            fp = exc_wrap_vsilfile(VSIFOpenL(self.path, 'w'))
-        else:
-            fp = exc_wrap_vsilfile(VSIFOpenL(self.path, 'r+'))
-            if VSIFSeekL(fp, self._pos, 0) < 0:
-                raise IOError(
-                    "Failed to seek to offset %s in %s.", self._pos, self.name)
-
-        result = VSIFWriteL(view, 1, n, fp)
-        VSIFFlushL(fp)
-        VSIFCloseL(fp)
-
-        self._pos += result
-        self._len = max(self._len, self._pos)
-
+        self._open()
+        result = VSIFWriteL(view, 1, n, self._vsif)
+        VSIFFlushL(self._vsif)
         return result

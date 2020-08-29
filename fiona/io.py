@@ -47,25 +47,37 @@ class MemoryFile(MemoryFileBase):
         Other parameters are optional and have the same semantics as the
         parameters of `fiona.open()`.
         """
-        vsi_path = self.name
-
         if self.closed:
             raise IOError("I/O operation on closed file.")
-        if self.exists():
-            return Collection(vsi_path, 'r', driver=driver, encoding=encoding,
-                              layer=layer, enabled_drivers=enabled_drivers,
-                              **kwargs)
-        else:
-            if schema:
-                # Make an ordered dict of schema properties.
-                this_schema = schema.copy()
-                this_schema['properties'] = OrderedDict(schema['properties'])
-            else:
-                this_schema = None
-            return Collection(vsi_path, 'w', crs=crs, driver=driver,
-                              schema=this_schema, encoding=encoding,
-                              layer=layer, enabled_drivers=enabled_drivers,
-                              crs_wkt=crs_wkt, **kwargs)
+
+        vsi_path = self.name
+
+        if not self.exists():
+            this_schema = schema.copy()
+            this_schema["properties"] = OrderedDict(schema["properties"])
+            return Collection(
+                vsi_path,
+                "w",
+                crs=crs,
+                driver=driver,
+                schema=this_schema,
+                encoding=encoding,
+                layer=layer,
+                enabled_drivers=enabled_drivers,
+                crs_wkt=crs_wkt,
+                **kwargs
+            )
+
+        elif self.mode in ("r", "r+"):
+            return Collection(
+                vsi_path,
+                "r",
+                driver=driver,
+                encoding=encoding,
+                layer=layer,
+                enabled_drivers=enabled_drivers,
+                **kwargs
+            )
 
     def __enter__(self):
         return self
@@ -82,7 +94,7 @@ class ZipMemoryFile(MemoryFile):
     """
 
     def __init__(self, file_or_bytes=None):
-        super(ZipMemoryFile, self).__init__(file_or_bytes, ext='zip')
+        super(ZipMemoryFile, self).__init__(file_or_bytes, ext=".zip")
 
     def open(self, path=None, driver=None, encoding=None, layer=None,
              enabled_drivers=None, **kwargs):
@@ -97,14 +109,15 @@ class ZipMemoryFile(MemoryFile):
         Returns
         -------
         A Fiona collection object
+
         """
+        if self.closed:
+            raise IOError("I/O operation on closed file.")
         if path:
             vsi_path = '/vsizip{0}/{1}'.format(self.name, path.lstrip('/'))
         else:
             vsi_path = '/vsizip{0}'.format(self.name)
 
-        if self.closed:
-            raise IOError("I/O operation on closed file.")
         return Collection(vsi_path, 'r', driver=driver, encoding=encoding,
                           layer=layer, enabled_drivers=enabled_drivers,
                           **kwargs)
