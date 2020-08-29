@@ -1662,6 +1662,8 @@ def remove_virtual_file(vsi_filename):
 cdef class MemoryFileBase:
     """Base for a BytesIO-like class backed by an in-memory file."""
 
+    cdef VSILFILE * _vsif
+
     def __init__(self, file_or_bytes=None, dirname=None, filename=None, ext=''):
         """A file in an in-memory filesystem.
 
