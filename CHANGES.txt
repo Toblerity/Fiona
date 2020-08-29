@@ -6,6 +6,7 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.8.14 (TBD)
 ------------
 
+- Read support for FlatGeobuf has been enabled in the drvsupport module.
 - The MemoryFile implementation has been improved so that it can support multi-part
   S3 downloads (#906). This is largely a port of code from rasterio.
 - Axis ordering for results of fiona.transform was wrong when CRS were passed
