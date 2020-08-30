@@ -72,8 +72,8 @@ def test_tar_memoryfile_listlayers(bytes_coutwildrnp_tar):
 @pytest.mark.parametrize('driver', [driver for driver in supported_drivers if
                                     _driver_supports_mode(driver, 'w')])
 @pytest.mark.parametrize('ext', ARCHIVESCHEMES.keys())
-def test_zip_memoryfile_write(ext, driver, testdata_generator):
-    """In-memory zipped Shapefile can be written to"""
+def test_zip_memoryfile_write_or_valueerror(ext, driver, testdata_generator):
+    """ Test if it possible to write to ZipMemoryFile or FionaValueError is raised"""
 
     range1 = list(range(0, 5))
     range2 = list(range(5, 10))
@@ -118,7 +118,7 @@ def test_zip_memoryfile_write(ext, driver, testdata_generator):
 @pytest.mark.parametrize('driver', [driver for driver, mingdal in _zip_memoryfile_not_supported['/vsizip/']['w'].items()
                                     if not _zip_memoryfile_supports_mode('/vsizip/', driver, 'w')])
 def test_zip_memoryfile_write_notsupported(driver, monkeypatch, testdata_generator):
-    """In-memory zipped Shapefile, driver that are marked as not supporting write, can not write
+    """ Test driver that are marked as having no write support for /vsizip/, can not write /vsizip/
 
     Note: This driver tests only the "standard case". Success of this test does not necessarily mean that driver
           does not allow to write. (e.g. requiring a special schema)
@@ -171,7 +171,7 @@ def test_zip_memoryfile_write_notsupported(driver, monkeypatch, testdata_generat
 
 @pytest.mark.parametrize('ext', ARCHIVESCHEMES.keys())
 def test_zip_memoryfile_append(ext, testdata_generator):
-    """ In-memory zip file cannot be appended to"""
+    """ In-memory archive file cannot be appended to"""
     with pytest.raises(FionaValueError):
 
         range1 = list(range(0, 5))
@@ -194,8 +194,8 @@ def test_zip_memoryfile_append(ext, testdata_generator):
 
 @pytest.mark.parametrize('driver', [driver for driver in supported_drivers if
                                     _driver_supports_mode(driver, 'w')])
-def test_write_memoryfile(driver, testdata_generator):
-    """In-memory can be written"""
+def test_write_memoryfile_or_driver_error(driver, testdata_generator):
+    """ Test if driver can write to MemoryFile or raises DriverError if not supported """
 
     range1 = list(range(0, 5))
     schema, crs, records1, _, test_equal = testdata_generator(driver, range1, [])
@@ -228,7 +228,7 @@ def test_write_memoryfile(driver, testdata_generator):
 @pytest.mark.parametrize('driver', [driver for driver, mingdal in _memoryfile_not_supported['w'].items() if
                                     not _memoryfile_supports_mode(driver, 'w')])
 def test_write_memoryfile_notsupported(driver, monkeypatch, testdata_generator):
-    """In-memory, driver that are marked as not supporting write, can not write
+    """ Test if drivers marked to not be able to write to MemoryFile, can not write to MemoryFile
 
     Note: This driver tests only the "standard case". Success of this test does not necessarily mean that driver
           does not allow to write. (e.g. requiring a special schema)
@@ -267,10 +267,9 @@ def test_write_memoryfile_notsupported(driver, monkeypatch, testdata_generator):
 
 
 @pytest.mark.parametrize('driver', [driver for driver in supported_drivers if _driver_supports_mode(driver, 'a')])
-def test_append_memoryfile(driver, testdata_generator):
-    """In-memory can be appended"""
+def test_append_memoryfile_or_drivererror(driver, testdata_generator):
+    """ Test if driver can append to MemoryFile or raises DriverError if not supported  """
 
-    ext = 'zip'
     range1 = list(range(0, 5))
     range2 = list(range(5, 10))
     schema, crs, records1, records2, test_equal = testdata_generator(driver, range1, range2)
@@ -300,7 +299,7 @@ def test_append_memoryfile(driver, testdata_generator):
 @pytest.mark.parametrize('driver', [driver for driver, mingdal in _memoryfile_not_supported['a'].items() if
                                     not _memoryfile_supports_mode(driver, 'a')])
 def test_append_memoryfile_notsupported(driver, monkeypatch, testdata_generator):
-    """In-memory, driver that are marked as not supporting appended, can not appended
+    """ Test if drivers marked to not be able to append to MemoryFile, can not append to MemoryFile
 
     Note: This driver tests only the "standard case". Success of this test does not necessarily mean that driver
           does not allow to appended. (e.g. requiring a special schema)
@@ -384,7 +383,7 @@ def test_memoryfilebase_write():
 @pytest.mark.parametrize('driver', [driver for driver in supported_drivers if
                                     _driver_supports_mode(driver, 'w') and _memoryfile_supports_mode(driver, 'w')])
 def test_memoryfile_exists_no_extension(driver, testdata_generator):
-
+    """ Test MemoryFileBase.exists() finds dataset when file extension is not specified """
     # TODO
     if driver in {'OGR_GMT', 'GMT'}:
         pytest.skip("GMT driver adds .gmt extension, thus the VIS path is not correct")
@@ -401,12 +400,20 @@ def test_memoryfile_exists_no_extension(driver, testdata_generator):
 @pytest.mark.parametrize('driver', [driver for driver in supported_drivers if
                                     _driver_supports_mode(driver, 'w') and _memoryfile_supports_mode(driver, 'w')])
 def test_memoryfile_exists_with_extension(driver, testdata_generator):
+    """ Test MemoryFileBase.exists() finds dataset when file extension is specified """
 
     range1 = list(range(0, 5))
     schema, crs, records1, records2, test_equal = testdata_generator(driver, range1, [])
-
     with MemoryFile(ext=driver_extensions.get(driver, '')) as memfile:
         with memfile.open(driver=driver, schema=schema) as c:
             c.writerecords(records1)
         assert memfile.exists()
 
+
+def test_memoryfile_len(data_coutwildrnp_json):
+    """ Test MemoryFileBase.__len__"""
+
+    with MemoryFile() as memfile:
+        assert len(memfile) == 0
+        memfile.write(data_coutwildrnp_json)
+        assert len(memfile) == len(data_coutwildrnp_json)
