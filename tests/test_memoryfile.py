@@ -422,7 +422,8 @@ def test_memoryfile_len(data_coutwildrnp_json):
 
 
 @pytest.mark.parametrize('driver', [driver for driver in supported_drivers if
-                                    _driver_supports_mode(driver, 'w')])
+                                    _driver_supports_mode(driver, 'w') and 
+                                    _memoryfile_supports_mode(driver, 'w')])
 def test_zipmemoryfile_write(tmpdir, driver, testdata_generator):
     """ Test if it possible to write to ZipMemoryFile or FionaValueError is raised"""
 
