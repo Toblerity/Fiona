@@ -410,7 +410,8 @@ def _zip_memoryfile_supports_mode(vsi, driver, mode):
 
     return True
 
-
+# 'BNA': (2, 0, 0): BNA driver supports MemoryFile access mode starting with GDAL 2.0.0
+# 'FileGDB': None: FileGDB driver never supports MemoryFile access mode
 _memoryfile_not_supported = {
     'w': {
         'BNA': (2, 0, 0),
