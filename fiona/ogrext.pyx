@@ -1641,6 +1641,7 @@ def _listdir(path):
     cdef const char *path_c
     cdef int n
     cdef char** papszFiles
+    cdef VSIStatBufL st_buf
 
     # Open OGR data source.
     try:
@@ -1649,8 +1650,11 @@ def _listdir(path):
         path_b = path
     path_c = path_b
 
-    if not CPLCheckForFile(path_c, NULL):
+    if not VSIStatL(path_c, &st_buf) == 0:
         raise FionaValueError("Path '{}' does not exist.".format(path))
+
+    if not VSI_ISDIR(st_buf.st_mode):
+        raise FionaValueError("Path '{}' is not a directory.".format(path))
 
     papszFiles = VSIReadDir(path_c)
     n = CSLCount(papszFiles)

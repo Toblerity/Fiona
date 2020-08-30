@@ -90,3 +90,9 @@ def test_listdir_invalid_path(path_coutwildrnp_zip):
     """List directories with invalid path"""
     with pytest.raises(TypeError):
         assert fiona.listdir(1)
+
+
+def test_listdir_file(path_coutwildrnp_zip):
+    """ Test list directories of a file"""
+    with pytest.raises(FionaValueError):
+        fiona.listdir('zip://{}/coutwildrnp.shp'.format(path_coutwildrnp_zip))

@@ -32,7 +32,7 @@ cdef extern from "cpl_string.h":
 
 cdef extern from "sys/stat.h" nogil:
     struct stat:
-        pass
+        int st_mode
 
 
 cdef extern from "cpl_vsi.h" nogil:
@@ -59,7 +59,7 @@ cdef extern from "cpl_vsi.h" nogil:
     int VSIFTruncateL(VSILFILE *fp, vsi_l_offset nNewSize)
     size_t VSIFWriteL(void *buffer, size_t nSize, size_t nCount, VSILFILE *fp)
     int VSIStatL(const char *pszFilename, VSIStatBufL *psStatBuf)
-
+    int VSI_ISDIR(int mode) 
 
 ctypedef int OGRErr
 ctypedef struct OGREnvelope:
