@@ -5,8 +5,8 @@ import pytest
 import fiona
 from fiona.errors import FionaValueError, DriverError
 from fiona.io import MemoryFile, ZipMemoryFile
-from fiona.drvsupport import supported_drivers, driver_mode_mingdal, _memoryfile_supports_mode,\
-    _memoryfile_not_supported, _zip_memoryfile_supports_mode, _zip_memoryfile_not_supported, _driver_supports_mode
+from fiona.drvsupport import supported_drivers, _memoryfile_supports_mode, _memoryfile_not_supported,\
+    _zip_memoryfile_supports_mode, _zip_memoryfile_not_supported, _driver_supports_mode
 from fiona.env import GDALVersion
 from fiona.path import ARCHIVESCHEMES
 from tests.conftest import driver_extensions, get_temp_filename
@@ -472,8 +472,8 @@ def test_memoryfilebase_write():
 def test_memoryfile_exists_no_extension(driver):
 
     # TODO
-    if driver == 'OGR_GMT':
-        pytest.skip("Driver adds .gmt extension, thus the VIS path is not correct")
+    if driver in {'OGR_GMT', 'GMT'}:
+        pytest.skip("GMT driver adds .gmt extension, thus the VIS path is not correct")
 
     schema = get_schema(driver)
     positions = list(range(0, 5))
