@@ -5,8 +5,8 @@ import pytest
 import fiona
 from fiona.errors import FionaValueError, DriverError
 from fiona.io import MemoryFile, ZipMemoryFile
-from fiona.drvsupport import supported_drivers, driver_mode_mingdal, memoryfile_supports_mode, memoryfile_not_supported, \
-    zip_memoryfile_supports_mode, zip_memoryfile_not_supported, _driver_supports_mode
+from fiona.drvsupport import supported_drivers, driver_mode_mingdal, _memoryfile_supports_mode,\
+    _memoryfile_not_supported, _zip_memoryfile_supports_mode, _zip_memoryfile_not_supported, _driver_supports_mode
 from fiona.env import GDALVersion
 from fiona.path import ARCHIVESCHEMES
 from tests.conftest import driver_extensions, get_temp_filename
@@ -165,7 +165,7 @@ def test_zip_memoryfile_write(ext, driver):
             with ZipMemoryFile(ext=ext) as memfile:
                 with memfile.open(path=file1_path, mode='w', driver=driver, schema=schema) as c:
                     pass
-    elif ARCHIVESCHEMES[ext] == 'zip' and not zip_memoryfile_supports_mode('/vsizip/', driver, 'w'):
+    elif ARCHIVESCHEMES[ext] == 'zip' and not _zip_memoryfile_supports_mode('/vsizip/', driver, 'w'):
         with pytest.raises(FionaValueError):
             with ZipMemoryFile(ext=ext) as memfile:
                 with memfile.open(path=file1_path, mode='w', driver=driver, schema=schema) as c:
@@ -192,8 +192,8 @@ def test_zip_memoryfile_write(ext, driver):
                     assert val_in == int(get_pos(val_out, driver))
 
 
-@pytest.mark.parametrize('driver', [driver for driver, mingdal in zip_memoryfile_not_supported['/vsizip/']['w'].items()
-                                    if mingdal is None or gdal_version < mingdal])
+@pytest.mark.parametrize('driver', [driver for driver, mingdal in _zip_memoryfile_not_supported['/vsizip/']['w'].items()
+                                    if not _zip_memoryfile_supports_mode('/vsizip/', driver, 'w')])
 def test_zip_memoryfile_write_notsupported(driver, monkeypatch):
     """In-memory zipped Shapefile, driver that are marked as not supporting write, can not write
 
@@ -201,18 +201,16 @@ def test_zip_memoryfile_write_notsupported(driver, monkeypatch):
           does not allow to write. (e.g. requiring a special schema)
 
           If this test fails, it should be considered to update
-          fiona.drvsupport.zip_memoryfile_not_supported['/vsizip/']['w'][driver] = GDALVersion(major, minor)
+          fiona.drvsupport._zip_memoryfile_not_supported['/vsizip/']['w'][driver] = GDALVersion(major, minor)
     """
 
     if gdal_version < GDALVersion(2, 0) and driver == 'BNA':
-        # BNA driver segfaults with gdal 1.x
-        return
+        pytest.skip("BNA driver segfaults with gdal 1.x")
 
     if gdal_version > GDALVersion(2, 2) and driver == 'DGN':
-        # DGN driver segfaults with > gdal 2.2
-        return
+        pytest.skip("DGN driver segfaults with > gdal 2.2")
 
-    monkeypatch.delitem(fiona.drvsupport.zip_memoryfile_not_supported['/vsizip/']['w'], driver)
+    monkeypatch.delitem(fiona.drvsupport._zip_memoryfile_not_supported['/vsizip/']['w'], driver)
 
     ext = 'zip'
     schema = get_schema(driver)
@@ -269,7 +267,6 @@ def test_zip_memoryfile_append(ext):
                 c.writerecords(records2)
 
             with memfile.open(path="/test1.geojson", mode='r', driver='GeoJSON', schema=schema) as c:
-                assert driver == c.driver
                 items = list(c)
                 assert len(items) == len(range(0, 10))
                 for val_in, val_out in zip(range(0, 10), items):
@@ -285,7 +282,7 @@ def test_write_memoryfile(driver):
     positions = list(range(0, 5))
     records1 = get_records(driver, positions)
 
-    if not memoryfile_supports_mode(driver, 'w'):
+    if not _memoryfile_supports_mode(driver, 'w'):
         with pytest.raises(DriverError):
             with MemoryFile(ext=driver_extensions.get(driver, '')) as memfile:
                 with memfile.open(driver=driver, schema=schema) as c:
@@ -310,8 +307,8 @@ def test_write_memoryfile(driver):
                     assert val_in == int(get_pos(val_out, driver))
 
 
-@pytest.mark.parametrize('driver', [driver for driver, mingdal in memoryfile_not_supported['w'].items() if
-                                    mingdal is None or gdal_version < mingdal])
+@pytest.mark.parametrize('driver', [driver for driver, mingdal in _memoryfile_not_supported['w'].items() if
+                                    not _memoryfile_supports_mode(driver, 'w')])
 def test_write_memoryfile_notsupported(driver, monkeypatch):
     """In-memory, driver that are marked as not supporting write, can not write
 
@@ -319,18 +316,16 @@ def test_write_memoryfile_notsupported(driver, monkeypatch):
           does not allow to write. (e.g. requiring a special schema)
 
           If this test fails, it should be considered to update
-          fiona.drvsupport.memoryfile_not_supported['w'][driver] = GDALVersion(major, minor)
+          fiona.drvsupport._memoryfile_not_supported['w'][driver] = GDALVersion(major, minor)
     """
 
     if gdal_version < GDALVersion(2, 0) and driver == 'BNA':
-        # BNA driver segfaults with gdal 1.x
-        return
+        pytest.skip("BNA driver segfaults with gdal 1.x")
 
     if gdal_version > GDALVersion(2, 2) and driver == 'DGN':
-        # DGN driver segfaults with > gdal 2.2
-        return
+        pytest.skip("DGN driver segfaults with > gdal 2.2")
 
-    monkeypatch.delitem(fiona.drvsupport.memoryfile_not_supported['w'], driver)
+    monkeypatch.delitem(fiona.drvsupport._memoryfile_not_supported['w'], driver)
 
     schema = get_schema(driver)
     positions = list(range(0, 5))
@@ -365,7 +360,7 @@ def test_append_memoryfile(driver):
     records2 = get_records2(driver, range2)
     positions = range1 + range2
 
-    if not memoryfile_supports_mode(driver, 'a'):
+    if not _memoryfile_supports_mode(driver, 'a'):
         with pytest.raises(FionaValueError):
             with MemoryFile(ext=driver_extensions.get(driver, '')) as memfile:
                 with memfile.open(driver=driver, schema=schema) as c:
@@ -386,8 +381,8 @@ def test_append_memoryfile(driver):
                     assert val_in == int(get_pos(val_out, driver))
 
 
-@pytest.mark.parametrize('driver', [driver for driver, mingdal in memoryfile_not_supported['a'].items() if
-                                    mingdal is None or gdal_version < mingdal])
+@pytest.mark.parametrize('driver', [driver for driver, mingdal in _memoryfile_not_supported['a'].items() if
+                                    not _memoryfile_supports_mode(driver, 'a')])
 def test_append_memoryfile_notsupported(driver, monkeypatch):
     """In-memory, driver that are marked as not supporting appended, can not appended
 
@@ -395,18 +390,16 @@ def test_append_memoryfile_notsupported(driver, monkeypatch):
           does not allow to appended. (e.g. requiring a special schema)
 
           If this test fails, it should be considered to update
-          fiona.drvsupport.memoryfile_not_supported['a'][driver] = GDALVersion(major, minor)
+          fiona.drvsupport._memoryfile_not_supported['a'][driver] = GDALVersion(major, minor)
     """
 
     if gdal_version < GDALVersion(2, 0) and driver == 'BNA':
-        # BNA driver segfaults with gdal 1.x
-        return
+        pytest.skip("BNA driver segfaults with gdal 1.x")
 
     if gdal_version > GDALVersion(2, 2) and driver == 'DGN':
-        # DGN driver segfaults with > gdal 2.2
-        return
+        pytest.skip("DGN driver segfaults with > gdal 2.2")
 
-    monkeypatch.delitem(fiona.drvsupport.memoryfile_not_supported['a'], driver)
+    monkeypatch.delitem(fiona.drvsupport._memoryfile_not_supported['a'], driver)
 
     schema = get_schema(driver)
     range1 = list(range(0, 5))
@@ -475,7 +468,7 @@ def test_memoryfilebase_write():
 
 
 @pytest.mark.parametrize('driver', [driver for driver in supported_drivers if
-                                    _driver_supports_mode(driver, 'w') and memoryfile_supports_mode(driver, 'w')])
+                                    _driver_supports_mode(driver, 'w') and _memoryfile_supports_mode(driver, 'w')])
 def test_memoryfile_exists_no_extension(driver):
 
     # TODO
@@ -493,7 +486,7 @@ def test_memoryfile_exists_no_extension(driver):
 
 
 @pytest.mark.parametrize('driver', [driver for driver in supported_drivers if
-                                    _driver_supports_mode(driver, 'w') and memoryfile_supports_mode(driver, 'w')])
+                                    _driver_supports_mode(driver, 'w') and _memoryfile_supports_mode(driver, 'w')])
 def test_memoryfile_exists_with_extension(driver):
     schema = get_schema(driver)
     positions = list(range(0, 5))

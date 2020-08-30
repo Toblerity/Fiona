@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-from fiona.env import Env, GDALVersion
+from fiona.env import Env
 from fiona._env import get_gdal_version_num, calc_gdal_version_num
-
-gdal_version = GDALVersion.runtime()
 
 # Here is the list of available drivers as (name, modes) tuples. Currently,
 # we only expose the defaults (excepting FileGDB). We also don't expose
@@ -369,9 +367,9 @@ def _driver_supports_unknown_timezones(driver, field_type):
     return True
 
 
-# zip_memoryfile_not_supported['/vsizip/']['w']['GMT'] = GDALVersion(2, 0): write mode is not supported for '/vsizip/'
+# _zip_memoryfile_not_supported['/vsizip/']['w']['GMT'] = GDALVersion(2, 0): write mode is not supported for '/vsizip/'
 # before GDAL 2.0
-# zip_memoryfile_not_supported['/vsizip/']['w']['GPKG'] = None: write mode is not supported for '/vsizip/' for all
+# _zip_memoryfile_not_supported['/vsizip/']['w']['GPKG'] = None: write mode is not supported for '/vsizip/' for all
 # versions of GDAL
 #
 # Reasons for missing support:
@@ -380,11 +378,11 @@ def _driver_supports_unknown_timezones(driver, field_type):
 # GPKG,DXF,ESRI Shapefile,GPX,MapInfo File,PCIDSK': Random access not supported for writable file in /vsizip
 # GMT: Random access not supported for /vsizip for gdal 1.x
 # GPSTrackMaker: VSIFSeekL() is not supported on writable Zip files
-zip_memoryfile_not_supported = {
+_zip_memoryfile_not_supported = {
     '/vsizip/': {
         'w': {
-            'BNA': GDALVersion(2, 0),
-            'GMT': GDALVersion(2, 0),
+            'BNA': (2, 0, 0),
+            'GMT': (2, 0, 0),
             'DGN': None,
             'GPKG': None,
             'DXF': None,
@@ -400,44 +398,44 @@ zip_memoryfile_not_supported = {
 }
 
 
-def zip_memoryfile_supports_mode(vsi, driver, mode):
+def _zip_memoryfile_supports_mode(vsi, driver, mode):
     """ Returns True if mode is supported for /vsizip/vsimem/"""
 
-    if (vsi in zip_memoryfile_not_supported and mode in zip_memoryfile_not_supported[vsi] and driver in
-            zip_memoryfile_not_supported[vsi][mode]):
-        if zip_memoryfile_not_supported[vsi][mode][driver] is None:
+    if (vsi in _zip_memoryfile_not_supported and mode in _zip_memoryfile_not_supported[vsi] and driver in
+            _zip_memoryfile_not_supported[vsi][mode]):
+        if _zip_memoryfile_not_supported[vsi][mode][driver] is None:
             return False
-        elif gdal_version < zip_memoryfile_not_supported[vsi][mode][driver]:
+        elif get_gdal_version_num() < calc_gdal_version_num(*_zip_memoryfile_not_supported[vsi][mode][driver]):
             return False
 
     return True
 
 
-memoryfile_not_supported = {
+_memoryfile_not_supported = {
     'w': {
-        'BNA': GDALVersion(2, 0),
-        'DGN': GDALVersion(2, 3),
-        'GPKG': GDALVersion(2, 0),
-        'MapInfo File': GDALVersion(2, 0),
+        'BNA': (2, 0, 0),
+        'DGN': (2, 3, 0),
+        'GPKG': (2, 0, 0),
+        'MapInfo File': (2, 0, 0),
         'FileGDB': None
     },
     'a': {
-        'BNA': GDALVersion(2, 0),
-        'DGN': GDALVersion(2, 3),
+        'BNA': (2, 0, 0),
+        'DGN': (2, 3, 0),
         # Test fails for GPKG with sqlite3_open(/vsimem/...) failed: out of memory for gdal 1.x
-        'GPKG': GDALVersion(2, 0),
-        'MapInfo File': GDALVersion(2, 0),
+        'GPKG': (2, 0, 0),
+        'MapInfo File': (2, 0, 0),
         'PCIDSK': None,
         'FileGDB': None
     }
 }
 
 
-def memoryfile_supports_mode(driver, mode):
+def _memoryfile_supports_mode(driver, mode):
     """ Returns True if mode is supported for /vsimem/"""
-    if mode in memoryfile_not_supported and driver in memoryfile_not_supported[mode]:
-        if memoryfile_not_supported[mode][driver] is None:
+    if mode in _memoryfile_not_supported and driver in _memoryfile_not_supported[mode]:
+        if _memoryfile_not_supported[mode][driver] is None:
             return False
-        elif gdal_version < memoryfile_not_supported[mode][driver]:
+        elif get_gdal_version_num() < calc_gdal_version_num(*_memoryfile_not_supported[mode][driver]):
             return False
     return True

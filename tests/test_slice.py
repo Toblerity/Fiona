@@ -46,7 +46,7 @@ def test_collection_iterator_next(path_coutwildrnp_shp):
 @pytest.fixture(scope="module", params=[driver for driver in supported_drivers if
                                         _driver_supports_mode(driver, 'w')
                                         and driver not in {'DGN', 'MapInfo File', 'GPSTrackMaker', 'GPX', 'BNA', 'DXF',
-                                                           'GML', 'CSV'}])
+                                                           'GML'}])
 def slice_dataset_path(request):
     """ Create temporary datasets for test_collection_iterator_items_slice()"""
 

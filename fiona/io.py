@@ -9,7 +9,7 @@ with fiona._loading.add_gdal_dll_directories():
     from fiona.ogrext import MemoryFileBase
     from fiona.collection import Collection
     from fiona.ogrext import _listdir, _listlayers
-    from fiona.drvsupport import memoryfile_supports_mode, zip_memoryfile_supports_mode
+    from fiona.drvsupport import _memoryfile_supports_mode, _zip_memoryfile_supports_mode
     from fiona.errors import FionaValueError, DriverError
     from fiona.path import ARCHIVESCHEMES
     from fiona.env import GDALVersion
@@ -71,7 +71,7 @@ class MemoryFile(MemoryFileBase):
             else:
                 collection_mode = 'a'
 
-        if not memoryfile_supports_mode(driver, collection_mode):
+        if not _memoryfile_supports_mode(driver, collection_mode):
             raise DriverError("{driver} driver does not support mode '{mode}'.".format(driver=driver,
                                                                                        mode=collection_mode))
 
@@ -135,7 +135,7 @@ class ZipMemoryFile(MemoryFile):
             raise FionaValueError("GDAL Virtual File System {vsi} does not support mode '{mode}'.".format(vsi=self.vsi,
                                                                                                           mode=mode))
 
-        if not zip_memoryfile_supports_mode(self.vsi, driver, mode):
+        if not _zip_memoryfile_supports_mode(self.vsi, driver, mode):
             raise FionaValueError(
                 "Driver {driver} does not support mode '{mode}' using GDAL Virtual File System {vsi}.".format(
                     driver=driver, mode=mode, vsi=self.vsi))
