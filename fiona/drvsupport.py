@@ -382,7 +382,8 @@ _zip_memoryfile_not_supported = {
     '/vsizip/': {
         'w': {
             'BNA': (2, 0, 0),
-            'GMT': (2, 0, 0),
+            'GMT': None,
+            'OGR_GMT': None,
             'DGN': None,
             'GPKG': None,
             'DXF': None,
@@ -391,7 +392,6 @@ _zip_memoryfile_not_supported = {
             'MapInfo File': None,
             'PCIDSK': None,
             'GPSTrackMaker': None,
-            'OGR_GMT': None,
             'FileGDB': None
         }
     }
