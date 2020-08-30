@@ -1765,6 +1765,7 @@ cdef class MemoryFileBase:
         bool
             True if the in-memory file exists.
         """
+        cdef VSIStatBufL st_buf
         return VSIStatL(self._path, &st_buf) == 0
 
     def __len__(self):
