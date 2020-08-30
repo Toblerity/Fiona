@@ -393,7 +393,8 @@ zip_memoryfile_not_supported = {
             'MapInfo File': None,
             'PCIDSK': None,
             'GPSTrackMaker': None,
-            'OGR_GMT': None
+            'OGR_GMT': None,
+            'FileGDB': None
         }
     }
 }
