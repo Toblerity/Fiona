@@ -404,7 +404,8 @@ def testdata_generator():
 
     def test_equal(driver, val_in, val_out):
         is_good = True
-        is_good = is_good and val_in['geometry'] == val_out['geometry']
+        if not driver == 'MapInfo File':
+            is_good = is_good and val_in['geometry'] == val_out['geometry']
         for key in val_in['properties']:
             if key in val_out['properties']:
                 if driver == 'FileGDB' and isinstance(val_in['properties'][key], int):

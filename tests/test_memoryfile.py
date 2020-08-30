@@ -1,5 +1,4 @@
 """Tests of MemoryFile and ZippedMemoryFile"""
-from collections import OrderedDict
 from io import BytesIO
 import pytest
 import fiona
@@ -11,82 +10,7 @@ from fiona.env import GDALVersion
 from fiona.path import ARCHIVESCHEMES
 from tests.conftest import driver_extensions, get_temp_filename
 
-
 gdal_version = GDALVersion.runtime()
-
-
-def get_schema(driver):
-    special_schemas = {'CSV': {'geometry': None, 'properties': OrderedDict([('position', 'int')])},
-                       'BNA': {'geometry': 'Point', 'properties': {}},
-                       'DXF': {'properties': OrderedDict(
-                           [('Layer', 'str'),
-                            ('SubClasses', 'str'),
-                            ('Linetype', 'str'),
-                            ('EntityHandle', 'str'),
-                            ('Text', 'str')]),
-                           'geometry': 'Point'},
-                       'GPX': {'geometry': 'Point',
-                               'properties': OrderedDict([('ele', 'float'), ('time', 'datetime')])},
-                       'GPSTrackMaker': {'properties': OrderedDict([]), 'geometry': 'Point'},
-                       'DGN': {'properties': OrderedDict([]), 'geometry': 'LineString'},
-                       'MapInfo File': {'geometry': 'Point', 'properties': OrderedDict([('position', 'str')])}
-                       }
-
-    return special_schemas.get(driver, {'geometry': 'Point', 'properties': OrderedDict([('position', 'int')])})
-
-
-def get_records(driver, range):
-    special_records1 = {'CSV': [{'geometry': None, 'properties': {'position': i}} for i in range],
-                        'BNA': [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))}, 'properties': {}} for i
-                                in range],
-                        'DXF': [
-                            {'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))}, 'properties': OrderedDict(
-                                [('Layer', '0'),
-                                 ('SubClasses', 'AcDbEntity:AcDbPoint'),
-                                 ('Linetype', None),
-                                 ('EntityHandle', '20000'),
-                                 ('Text', None)])} for i in range],
-                        'GPX': [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))},
-                                 'properties': {'ele': 0.0, 'time': '2020-03-24T16:08:40'}} for i
-                                in range],
-                        'GPSTrackMaker': [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))},
-                                           'properties': {}} for i in range],
-                        'DGN': [
-                            {'geometry': {'type': 'LineString', 'coordinates': [(float(i), 0.0), (0.0, 0.0)]},
-                             'properties': {}} for i in range],
-                        'MapInfo File': [
-                            {'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))},
-                             'properties': {'position': str(i)}} for i in range],
-                        }
-    return special_records1.get(driver, [
-        {'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))}, 'properties': {'position': i}} for i in
-        range])
-
-
-def get_records2(driver, range):
-    special_records2 = {'DGN': [
-        {'geometry': {'type': 'LineString', 'coordinates': [(float(i), 0.0), (0.0, 0.0)]},
-         'properties': OrderedDict(
-             [('Type', 3),
-              ('Level', 0),
-              ('GraphicGroup', 0),
-              ('ColorIndex', 0),
-              ('Weight', 0),
-              ('Style', 0),
-              ('EntityNum', None),
-              ('MSLink', None),
-              ('Text', None)])} for i in range],
-    }
-    return special_records2.get(driver, get_records(driver, range))
-
-
-def get_pos(f, driver):
-    if driver in {'DXF', 'BNA', 'GPX', 'GPSTrackMaker'}:
-        return f['geometry']['coordinates'][1]
-    elif driver == 'DGN':
-        return f['geometry']['coordinates'][0][0]
-    else:
-        return f['properties']['position']
 
 
 @pytest.fixture(scope='session')
@@ -148,14 +72,13 @@ def test_tar_memoryfile_listlayers(bytes_coutwildrnp_tar):
 @pytest.mark.parametrize('driver', [driver for driver in supported_drivers if
                                     _driver_supports_mode(driver, 'w')])
 @pytest.mark.parametrize('ext', ARCHIVESCHEMES.keys())
-def test_zip_memoryfile_write(ext, driver):
+def test_zip_memoryfile_write(ext, driver, testdata_generator):
     """In-memory zipped Shapefile can be written to"""
 
-    schema = get_schema(driver)
     range1 = list(range(0, 5))
     range2 = list(range(5, 10))
-    records1 = get_records(driver, range1)
-    records2 = get_records(driver, range2)
+    schema, crs, records1, records2, test_equal = testdata_generator(driver, range1, range2)
+
     file1_path = "/{}".format(get_temp_filename(driver))
     file2_path = "/directory/{}".format(get_temp_filename(driver))
 
@@ -181,20 +104,20 @@ def test_zip_memoryfile_write(ext, driver):
                 assert driver == c.driver
                 items = list(c)
                 assert len(items) == len(range1)
-                for val_in, val_out in zip(range1, items):
-                    assert val_in == int(get_pos(val_out, driver))
+                for val_in, val_out in zip(records1, items):
+                    assert test_equal(driver, val_in, val_out)
 
             with memfile.open(path=file2_path, mode='r') as c:
                 assert driver == c.driver
                 items = list(c)
                 assert len(items) == len(range2)
-                for val_in, val_out in zip(range2, items):
-                    assert val_in == int(get_pos(val_out, driver))
+                for val_in, val_out in zip(records2, items):
+                    assert test_equal(driver, val_in, val_out)
 
 
 @pytest.mark.parametrize('driver', [driver for driver, mingdal in _zip_memoryfile_not_supported['/vsizip/']['w'].items()
                                     if not _zip_memoryfile_supports_mode('/vsizip/', driver, 'w')])
-def test_zip_memoryfile_write_notsupported(driver, monkeypatch):
+def test_zip_memoryfile_write_notsupported(driver, monkeypatch, testdata_generator):
     """In-memory zipped Shapefile, driver that are marked as not supporting write, can not write
 
     Note: This driver tests only the "standard case". Success of this test does not necessarily mean that driver
@@ -213,11 +136,9 @@ def test_zip_memoryfile_write_notsupported(driver, monkeypatch):
     monkeypatch.delitem(fiona.drvsupport._zip_memoryfile_not_supported['/vsizip/']['w'], driver)
 
     ext = 'zip'
-    schema = get_schema(driver)
     range1 = list(range(0, 5))
     range2 = list(range(5, 10))
-    records1 = get_records(driver, range1)
-    records2 = get_records(driver, range2)
+    schema, crs, records1, records2, test_equal = testdata_generator(driver, range1, range2)
     file1_path = "/{}".format(get_temp_filename(driver))
     file2_path = "/directory/{}".format(get_temp_filename(driver))
 
@@ -234,14 +155,14 @@ def test_zip_memoryfile_write_notsupported(driver, monkeypatch):
                 assert driver == c.driver
                 items = list(c)
                 is_good = is_good and (len(items) == len(range1))
-                for val_in, val_out in zip(range1, items):
-                    is_good = is_good and val_in == int(get_pos(val_out, driver))
+                for val_in, val_out in zip(records1, items):
+                    is_good = is_good and test_equal(driver, val_in, val_out)
 
             with memfile.open(path=file2_path, mode='r') as c:
                 items = list(c)
                 is_good = is_good and (len(items) == len(range2))
-                for val_in, val_out in zip(range2, items):
-                    is_good = is_good and val_in == int(get_pos(val_out, driver))
+                for val_in, val_out in zip(records2, items):
+                    is_good = is_good and test_equal(driver, val_in, val_out)
     except Exception as e:
         is_good = False
 
@@ -249,16 +170,14 @@ def test_zip_memoryfile_write_notsupported(driver, monkeypatch):
 
 
 @pytest.mark.parametrize('ext', ARCHIVESCHEMES.keys())
-def test_zip_memoryfile_append(ext):
+def test_zip_memoryfile_append(ext, testdata_generator):
     """ In-memory zip file cannot be appended to"""
     with pytest.raises(FionaValueError):
-        schema = {'geometry': 'Point', 'properties': OrderedDict([('position', 'int')])}
-        records1 = [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))}, 'properties': {'position': i}} for i
-                    in
-                    range(0, 5)]
-        records2 = [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))}, 'properties': {'position': i}} for i
-                    in
-                    range(5, 10)]
+
+        range1 = list(range(0, 5))
+        range2 = list(range(5, 10))
+        schema, crs, records1, records2, test_equal = testdata_generator('GeoJSON', range1, range2)
+
         with ZipMemoryFile(ext=ext) as memfile:
             with memfile.open(path="/test1.geojson", mode='w', driver='GeoJSON', schema=schema) as c:
                 c.writerecords(records1)
@@ -269,18 +188,17 @@ def test_zip_memoryfile_append(ext):
             with memfile.open(path="/test1.geojson", mode='r', driver='GeoJSON', schema=schema) as c:
                 items = list(c)
                 assert len(items) == len(range(0, 10))
-                for val_in, val_out in zip(range(0, 10), items):
-                    assert val_in == int(val_out['properties']['position'])
+                for val_in, val_out in zip(records1 + records2, items):
+                    assert test_equal('GeoJSON', val_in, val_out)
 
 
 @pytest.mark.parametrize('driver', [driver for driver in supported_drivers if
                                     _driver_supports_mode(driver, 'w')])
-def test_write_memoryfile(driver):
+def test_write_memoryfile(driver, testdata_generator):
     """In-memory can be written"""
 
-    schema = get_schema(driver)
-    positions = list(range(0, 5))
-    records1 = get_records(driver, positions)
+    range1 = list(range(0, 5))
+    schema, crs, records1, _, test_equal = testdata_generator(driver, range1, [])
 
     if not _memoryfile_supports_mode(driver, 'w'):
         with pytest.raises(DriverError):
@@ -290,9 +208,9 @@ def test_write_memoryfile(driver):
 
                 with memfile.open(driver=driver) as c:
                     items = list(c)
-                    assert len(items) == len(positions)
-                    for val_in, val_out in zip(positions, items):
-                        assert val_in == int(get_pos(val_out, driver))
+                    assert len(items) == len(range1)
+                    for val_in, val_out in zip(records1, items):
+                        assert test_equal(driver, val_in, val_out)
     else:
         # BNA requires extension: fiona.errors.DriverError: '/vsimem/...' not recognized as a supported file format.
         with MemoryFile(ext=driver_extensions.get(driver, '')) as memfile:
@@ -302,14 +220,14 @@ def test_write_memoryfile(driver):
             with memfile.open(driver=driver) as c:
                 assert driver == c.driver
                 items = list(c)
-                assert len(items) == len(positions)
-                for val_in, val_out in zip(positions, items):
-                    assert val_in == int(get_pos(val_out, driver))
+                assert len(items) == len(range1)
+                for val_in, val_out in zip(records1, items):
+                    assert test_equal(driver, val_in, val_out)
 
 
 @pytest.mark.parametrize('driver', [driver for driver, mingdal in _memoryfile_not_supported['w'].items() if
                                     not _memoryfile_supports_mode(driver, 'w')])
-def test_write_memoryfile_notsupported(driver, monkeypatch):
+def test_write_memoryfile_notsupported(driver, monkeypatch, testdata_generator):
     """In-memory, driver that are marked as not supporting write, can not write
 
     Note: This driver tests only the "standard case". Success of this test does not necessarily mean that driver
@@ -327,9 +245,8 @@ def test_write_memoryfile_notsupported(driver, monkeypatch):
 
     monkeypatch.delitem(fiona.drvsupport._memoryfile_not_supported['w'], driver)
 
-    schema = get_schema(driver)
-    positions = list(range(0, 5))
-    records1 = get_records(driver, positions)
+    range1 = list(range(0, 5))
+    schema, crs, records1, _, test_equal = testdata_generator('GeoJSON', range1, [])
 
     is_good = True
 
@@ -340,9 +257,9 @@ def test_write_memoryfile_notsupported(driver, monkeypatch):
 
             with memfile.open(driver=driver) as c:
                 items = list(c)
-                is_good = is_good and (len(items) == len(positions))
-                for val_in, val_out in zip(positions, items):
-                    is_good = is_good and (val_in == int(get_pos(val_out, driver)))
+                is_good = is_good and (len(items) == len(records1))
+                for val_in, val_out in zip(records1, items):
+                    is_good = is_good and test_equal(driver, val_in, val_out)
     except Exception as e:
         is_good = False
 
@@ -350,14 +267,13 @@ def test_write_memoryfile_notsupported(driver, monkeypatch):
 
 
 @pytest.mark.parametrize('driver', [driver for driver in supported_drivers if _driver_supports_mode(driver, 'a')])
-def test_append_memoryfile(driver):
+def test_append_memoryfile(driver, testdata_generator):
     """In-memory can be appended"""
 
-    schema = get_schema(driver)
+    ext = 'zip'
     range1 = list(range(0, 5))
     range2 = list(range(5, 10))
-    records1 = get_records(driver, range1)
-    records2 = get_records2(driver, range2)
+    schema, crs, records1, records2, test_equal = testdata_generator(driver, range1, range2)
     positions = range1 + range2
 
     if not _memoryfile_supports_mode(driver, 'a'):
@@ -377,13 +293,13 @@ def test_append_memoryfile(driver):
             with memfile.open(driver=driver) as c:
                 items = list(c)
                 assert len(items) == len(positions)
-                for val_in, val_out in zip(positions, items):
-                    assert val_in == int(get_pos(val_out, driver))
+                for val_in, val_out in zip(records1 + records2, items):
+                    assert test_equal(driver, val_in, val_out)
 
 
 @pytest.mark.parametrize('driver', [driver for driver, mingdal in _memoryfile_not_supported['a'].items() if
                                     not _memoryfile_supports_mode(driver, 'a')])
-def test_append_memoryfile_notsupported(driver, monkeypatch):
+def test_append_memoryfile_notsupported(driver, monkeypatch, testdata_generator):
     """In-memory, driver that are marked as not supporting appended, can not appended
 
     Note: This driver tests only the "standard case". Success of this test does not necessarily mean that driver
@@ -401,11 +317,9 @@ def test_append_memoryfile_notsupported(driver, monkeypatch):
 
     monkeypatch.delitem(fiona.drvsupport._memoryfile_not_supported['a'], driver)
 
-    schema = get_schema(driver)
     range1 = list(range(0, 5))
     range2 = list(range(5, 10))
-    records1 = get_records(driver, range1)
-    records2 = get_records2(driver, range2)
+    schema, crs, records1, records2, test_equal = testdata_generator(driver, range1, range2)
     positions = range1 + range2
 
     is_good = True
@@ -420,8 +334,8 @@ def test_append_memoryfile_notsupported(driver, monkeypatch):
                 items = list(c)
 
                 is_good = is_good and (len(items) == len(positions))
-                for val_in, val_out in zip(positions, items):
-                    is_good = is_good and (val_in == int(get_pos(val_out, driver)))
+                for val_in, val_out in zip(records1 + records2, items):
+                    is_good = is_good and test_equal(driver, val_in, val_out)
     except:
         is_good = False
 
@@ -469,15 +383,14 @@ def test_memoryfilebase_write():
 
 @pytest.mark.parametrize('driver', [driver for driver in supported_drivers if
                                     _driver_supports_mode(driver, 'w') and _memoryfile_supports_mode(driver, 'w')])
-def test_memoryfile_exists_no_extension(driver):
+def test_memoryfile_exists_no_extension(driver, testdata_generator):
 
     # TODO
     if driver in {'OGR_GMT', 'GMT'}:
         pytest.skip("GMT driver adds .gmt extension, thus the VIS path is not correct")
 
-    schema = get_schema(driver)
-    positions = list(range(0, 5))
-    records1 = get_records(driver, positions)
+    range1 = list(range(0, 5))
+    schema, crs, records1, records2, test_equal = testdata_generator(driver, range1, [])
 
     with MemoryFile() as memfile:
         with memfile.open(driver=driver, schema=schema) as c:
@@ -487,10 +400,10 @@ def test_memoryfile_exists_no_extension(driver):
 
 @pytest.mark.parametrize('driver', [driver for driver in supported_drivers if
                                     _driver_supports_mode(driver, 'w') and _memoryfile_supports_mode(driver, 'w')])
-def test_memoryfile_exists_with_extension(driver):
-    schema = get_schema(driver)
-    positions = list(range(0, 5))
-    records1 = get_records(driver, positions)
+def test_memoryfile_exists_with_extension(driver, testdata_generator):
+
+    range1 = list(range(0, 5))
+    schema, crs, records1, records2, test_equal = testdata_generator(driver, range1, [])
 
     with MemoryFile(ext=driver_extensions.get(driver, '')) as memfile:
         with memfile.open(driver=driver, schema=schema) as c:
