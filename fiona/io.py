@@ -14,6 +14,7 @@ with fiona._loading.add_gdal_dll_directories():
     from fiona.path import ARCHIVESCHEMES
     from fiona.env import GDALVersion
 
+
 log = logging.getLogger(__name__)
 gdal_version = GDALVersion.runtime()
 
@@ -31,12 +32,14 @@ class MemoryFile(MemoryFileBase):
     --------
 
     """
-    def __init__(self, file_or_bytes=None, filename=None, ext=''):
+    def __init__(self, file_or_bytes=None, filename=None, ext=""):
+        if ext and not ext.startswith("."):
+            ext = "." + ext
         super(MemoryFile, self).__init__(
             file_or_bytes=file_or_bytes, filename=filename, ext=ext)
 
     def open(self, mode=None, driver=None, schema=None, crs=None, encoding=None,
-             layer=None, enabled_drivers=None, crs_wkt=None,
+             layer=None, vfs=None, enabled_drivers=None, crs_wkt=None,
              **kwargs):
         """Open the file and return a Fiona collection object.
 
@@ -52,34 +55,38 @@ class MemoryFile(MemoryFileBase):
         Other parameters are optional and have the same semantics as the
         parameters of `fiona.open()`.
         """
-        vsi_path = self.name
-
         if self.closed:
             raise IOError("I/O operation on closed file.")
 
-        if self.exists():
-            if mode is None or mode == 'r':
-                mode = 'r'
-            else:
-                mode = 'a'
-        else:
+        vsi_path = self.name
 
-            if schema:
-                # Make an ordered dict of schema properties.
-                this_schema = schema.copy()
-                this_schema['properties'] = OrderedDict(schema['properties'])
-            else:
-                this_schema = None
+        if not self.exists():
+            this_schema = schema.copy()
+            this_schema["properties"] = OrderedDict(schema["properties"])
+            collection_mode = "w"
             schema = this_schema
+        elif self.mode in ("r", "r+"):
+            if mode is None or mode == 'r':
+                collection_mode = 'r'
+            else:
+                collection_mode = 'a'
 
-            mode = 'w'
-
-        if not memoryfile_supports_mode(driver, mode):
+        if not memoryfile_supports_mode(driver, collection_mode):
             raise DriverError("{driver} driver does not support mode '{mode}'.".format(driver=driver,
-                                                                                       mode=mode))
-        return Collection(vsi_path, mode=mode, driver=driver, schema=schema, crs=crs,
-                          encoding=encoding, layer=layer, enabled_drivers=enabled_drivers,
-                          crs_wkt=crs_wkt, **kwargs)
+                                                                                       mode=collection_mode))
+
+        return Collection(
+            vsi_path,
+            collection_mode,
+            crs=crs,
+            driver=driver,
+            schema=schema,
+            encoding=encoding,
+            layer=layer,
+            enabled_drivers=enabled_drivers,
+            crs_wkt=crs_wkt,
+            **kwargs
+        )
 
     def __enter__(self):
         return self

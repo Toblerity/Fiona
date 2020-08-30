@@ -3,6 +3,29 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.14 (TBD)
+------------
+
+- Read support for FlatGeobuf has been enabled in the drvsupport module.
+- The MemoryFile implementation has been improved so that it can support multi-part
+  S3 downloads (#906). This is largely a port of code from rasterio.
+- Axis ordering for results of fiona.transform was wrong when CRS were passed
+  in the "EPSG:dddd" form (#919). This has been fixed by (#926).
+- Allow implicit access to the only dataset in a ZipMemoryFile. The path
+  argument of ZipMemoryFile.open() is now optional (#928).
+- Improve support for datetime types: support milliseconds (#744), timezones (#914)
+  and improve warnings if type is not supported by driver (#572).
+- Fix "Failed to commit transaction" TransactionError for FileGDB driver.
+- Load GDAL DLL dependencies on Python 3.8+ / Windows with add_dll_directory() (#851).
+- Do not require optional properties (#848).
+- Ensure that slice does not overflow available data (#884).
+- Resolve issue when "ERROR 4: Unable to open EPSG support file gcs.csv." is raised on
+  importing fiona (#897).
+- Resolve issue resulting in possible mixed up fields names (affecting only DXF, GPX,
+  GPSTrackMacker and DGN driver) (#916).
+- Ensure crs_wkt is passed when writing to MemoryFile (#907).
+
+
 1.8.13.post1 (2020-02-21)
 -------------------------
 
