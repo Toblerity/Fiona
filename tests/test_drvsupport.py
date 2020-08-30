@@ -239,7 +239,7 @@ def test_no_append_driver_cannot_append(tmpdir, driver, testdata_generator, monk
     monkeypatch.setitem(fiona.drvsupport.supported_drivers, driver, 'raw')
 
     if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
-        # BNA driver segfaults with gdal 1.11
+        pytest.skip("BNA driver segfaults with gdal 1.11")
         return
 
     path = str(tmpdir.join(get_temp_filename(driver)))

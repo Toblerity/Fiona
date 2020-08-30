@@ -1,4 +1,6 @@
 """Tests of MemoryFile and ZippedMemoryFile"""
+import os
+import shutil
 from io import BytesIO
 import pytest
 import fiona
@@ -417,3 +419,36 @@ def test_memoryfile_len(data_coutwildrnp_json):
         assert len(memfile) == 0
         memfile.write(data_coutwildrnp_json)
         assert len(memfile) == len(data_coutwildrnp_json)
+
+
+@pytest.mark.parametrize('driver', [driver for driver in supported_drivers if
+                                    _driver_supports_mode(driver, 'w')])
+def test_zipmemoryfile_write(tmpdir, driver, testdata_generator):
+    """ Test if it possible to write to ZipMemoryFile or FionaValueError is raised"""
+
+    filename = get_temp_filename(driver)
+    path = str(tmpdir.mkdir("data").join(filename))
+    schema, crs, records1, _, test_equal = testdata_generator(driver, range(0, 5), [])
+
+    # Create dataset
+    with fiona.open(path, 'w',
+                    driver=driver,
+                    crs=crs,
+                    schema=schema) as c:
+        c.writerecords(records1)
+
+    # Create zip dataset
+    zip_path = str(tmpdir.mkdir("zip").join("data"))
+    data_path = str(tmpdir.join("data"))
+    shutil.make_archive(zip_path, 'zip', data_path)
+    with open(zip_path + ".zip", 'rb') as f:
+        data = f.read()
+
+    with ZipMemoryFile(file_or_bytes=data) as memfile:
+        assert len(memfile) == len(data)
+
+        with memfile.open(filename) as c:
+            items = list(c)
+            assert len(items) == len(records1)
+            for val_in, val_out in zip(records1, items):
+                assert test_equal(driver, val_in, val_out)
