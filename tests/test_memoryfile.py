@@ -1,5 +1,4 @@
 """Tests of MemoryFile and ZippedMemoryFile"""
-import os
 import shutil
 from io import BytesIO
 import pytest
@@ -248,7 +247,7 @@ def test_write_memoryfile_notsupported(driver, monkeypatch, testdata_generator):
     monkeypatch.delitem(fiona.drvsupport._memoryfile_not_supported['w'], driver)
 
     range1 = list(range(0, 5))
-    schema, crs, records1, _, test_equal = testdata_generator('GeoJSON', range1, [])
+    schema, crs, records1, _, test_equal = testdata_generator(driver, range1, [])
 
     is_good = True
 
