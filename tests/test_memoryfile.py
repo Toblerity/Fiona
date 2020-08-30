@@ -356,30 +356,40 @@ def test_memoryfile_fileobj(path_coutwildrnp_json):
             assert len(collection) == 67
 
 
-def test_memoryfilebase_write():
+@pytest.mark.parametrize('driver', [driver for driver in supported_drivers if
+                                    _driver_supports_mode(driver, 'w') and _memoryfile_supports_mode(driver, 'w')])
+def test_memoryfilebase_write(driver, testdata_generator):
     """Test MemoryFileBase.write """
+    range1 = list(range(0, 5))
+    schema, crs, records1, _, test_equal = testdata_generator(driver, range1, [])
 
-    schema = {'geometry': 'Point', 'properties': [('position', 'int')]}
-    records = [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))}, 'properties': {'position': i}} for i in
-               range(5)]
+    # TODO why?
+    if driver in {'CSV', 'ESRI Shapefile', 'MapInfo File'}:
+        pytest.skip("Driver {} segfaults".format(driver))
+
+    # TODO: maybe extensions are required?
+    if driver in {'BNA', 'OGR_GMT'}:
+        pytest.skip("fiona.open(fout, ...): not recognized as a supported file format.")
+
+    with BytesIO() as fout:
+        with fiona.open(fout,
+                        'w',
+                        driver=driver,
+                        schema=schema) as c:
+            c.writerecords(records1)
+        fout.seek(0)
+        data = fout.read()
 
     with MemoryFile() as memfile:
-        with BytesIO() as fout:
-            with fiona.open(fout,
-                            'w',
-                            driver="GeoJSON",
-                            schema=schema) as c:
-                c.writerecords(records)
-            fout.seek(0)
-            data = fout.read()
-
         assert memfile.tell() == 0
         memfile.write(data)
-
-        with memfile.open(driver="GeoJSON",
+        assert memfile.tell() == len(data)
+        with memfile.open(driver=driver,
                           schema=schema) as c:
-            record_positions = [int(f['properties']['position']) for f in c]
-            assert record_positions == list(range(5))
+            items = list(c)
+            assert len(items) == len(records1)
+            for val_in, val_out in zip(records1, items):
+                assert test_equal(driver, val_in, val_out)
 
 
 @pytest.mark.parametrize('driver', [driver for driver in supported_drivers if
@@ -422,7 +432,7 @@ def test_memoryfile_len(data_coutwildrnp_json):
 
 
 @pytest.mark.parametrize('driver', [driver for driver in supported_drivers if
-                                    _driver_supports_mode(driver, 'w') and 
+                                    _driver_supports_mode(driver, 'w') and
                                     _memoryfile_supports_mode(driver, 'w')])
 def test_zipmemoryfile_write(tmpdir, driver, testdata_generator):
     """ Test if it possible to write to ZipMemoryFile or FionaValueError is raised"""
