@@ -367,7 +367,7 @@ def _driver_supports_unknown_timezones(driver, field_type):
     return True
 
 
-# _zip_memoryfile_not_supported['/vsizip/']['w']['GMT'] = GDALVersion(2, 0): write mode is not supported for '/vsizip/'
+# _zip_memoryfile_not_supported['/vsizip/']['w']['GMT'] = (2, 0, 0): write mode is not supported for '/vsizip/'
 # before GDAL 2.0
 # _zip_memoryfile_not_supported['/vsizip/']['w']['GPKG'] = None: write mode is not supported for '/vsizip/' for all
 # versions of GDAL

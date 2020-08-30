@@ -143,7 +143,7 @@ def bytes_coutwildrnp_zip(path_coutwildrnp_zip):
 
 @pytest.fixture(scope='session')
 def bytes_coutwildrnp_tar(path_coutwildrnp_tar):
-    """The zip file's bytes"""
+    """The tar file's bytes"""
     with open(path_coutwildrnp_tar, 'rb') as src:
         return src.read()
 
