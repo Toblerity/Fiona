@@ -418,7 +418,8 @@ memoryfile_not_supported = {
         'BNA': GDALVersion(2, 0),
         'DGN': GDALVersion(2, 3),
         'GPKG': GDALVersion(2, 0),
-        'MapInfo File': GDALVersion(2, 0)
+        'MapInfo File': GDALVersion(2, 0),
+        'FileGDB': None
     },
     'a': {
         'BNA': GDALVersion(2, 0),
@@ -426,7 +427,8 @@ memoryfile_not_supported = {
         # Test fails for GPKG with sqlite3_open(/vsimem/...) failed: out of memory for gdal 1.x
         'GPKG': GDALVersion(2, 0),
         'MapInfo File': GDALVersion(2, 0),
-        'PCIDSK': None
+        'PCIDSK': None,
+        'FileGDB': None
     }
 }
 
