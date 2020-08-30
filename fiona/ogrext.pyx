@@ -937,14 +937,15 @@ cdef class WritingSession(Session):
 
         if collection.mode == 'a':
 
-            if not path.startswith('/vsi') and not os.path.exists(path):
-                raise OSError("No such file or directory %s" % path)
 
             try:
                 path_b = path.encode('utf-8')
             except UnicodeDecodeError:
                 path_b = path
             path_c = path_b
+
+            if not CPLCheckForFile(path_c, NULL):
+                raise OSError("No such file or directory %s" % path)
 
             try:
                 self.cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
