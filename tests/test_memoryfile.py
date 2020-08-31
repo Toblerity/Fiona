@@ -6,6 +6,8 @@ import pytest
 import fiona
 from fiona.io import MemoryFile, ZipMemoryFile
 
+from .conftest import requires_gdal2
+
 
 @pytest.fixture(scope='session')
 def profile_first_coutwildrnp_shp(path_coutwildrnp_shp):
@@ -90,6 +92,17 @@ def test_write_memoryfile(profile_first_coutwildrnp_shp):
     with MemoryFile(data) as memfile:
         with memfile.open() as col:
             assert len(col) == 1
+
+
+@requires_gdal2
+def test_memoryfile_write_extension(profile_first_coutwildrnp_shp):
+    """In-memory shapefile gets an .shp extension by default"""
+    profile, first = profile_first_coutwildrnp_shp
+    profile['driver'] = 'ESRI Shapefile'
+    with MemoryFile() as memfile:
+        with memfile.open(**profile) as col:
+            col.write(first)
+        assert memfile.name.endswith(".shp")
 
 
 def test_memoryfile_bytesio(data_coutwildrnp_json):

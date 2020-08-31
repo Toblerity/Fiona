@@ -6,6 +6,10 @@ from libc.stdio cimport FILE
 
 
 cdef extern from "gdal.h":
+    ctypedef void * GDALDriverH
+    ctypedef void * GDALMajorObjectH
+
+    const char* GDALGetMetadataItem(GDALMajorObjectH obj, const char *pszName, const char *pszDomain)
     char * GDALVersionInfo (char *pszRequest)
 
 

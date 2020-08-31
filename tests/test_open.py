@@ -52,6 +52,7 @@ def test_write_memfile_crs_wkt():
             crs_wkt=crs_to_wkt("EPSG:32611"),
         ) as dst:
             dst.writerecords(example_features)
+
         fd.seek(0)
         with fiona.open(fd) as src:
             assert src.crs == {"init": "epsg:32611"}

@@ -52,13 +52,12 @@ class MemoryFile(MemoryFileBase):
         if self.closed:
             raise IOError("I/O operation on closed file.")
 
-        vsi_path = self.name
-
         if not self.exists():
+            self._ensure_extension(driver)
             this_schema = schema.copy()
             this_schema["properties"] = OrderedDict(schema["properties"])
             return Collection(
-                vsi_path,
+                self.name,
                 "w",
                 crs=crs,
                 driver=driver,
@@ -72,7 +71,7 @@ class MemoryFile(MemoryFileBase):
 
         elif self.mode in ("r", "r+"):
             return Collection(
-                vsi_path,
+                self.name,
                 "r",
                 driver=driver,
                 encoding=encoding,
