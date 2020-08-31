@@ -22,11 +22,11 @@ from fiona._geometry cimport (
 from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile
 
 import fiona
-from fiona._env import GDALVersion, get_gdal_version_num, calc_gdal_version_num
+from fiona._env import get_gdal_version_num, calc_gdal_version_num, get_gdal_version_tuple
 from fiona._err import cpl_errs, FionaNullPointerError, CPLE_BaseError, CPLE_OpenFailedError
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
-from fiona.env import Env, GDALVersion
+from fiona.env import Env
 from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
@@ -1734,8 +1734,7 @@ cdef class MemoryFileBase:
     def _ensure_extension(self, drivername=None):
         """Ensure that the instance's name uses a file extension supported by the driver."""
         # Avoid a crashing bug with GDAL versions < 2.
-        gdal_version = GDALVersion.runtime()
-        if gdal_version.major < 2:
+        if get_gdal_version_tuple() < (2, ):
             return
 
         name_b = drivername.encode("utf-8")
