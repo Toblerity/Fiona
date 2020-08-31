@@ -26,7 +26,7 @@ from fiona._env import GDALVersion, get_gdal_version_num, calc_gdal_version_num
 from fiona._err import cpl_errs, FionaNullPointerError, CPLE_BaseError, CPLE_OpenFailedError
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
-from fiona.env import Env
+from fiona.env import Env, GDALVersion
 from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
@@ -1733,6 +1733,11 @@ cdef class MemoryFileBase:
 
     def _ensure_extension(self, drivername=None):
         """Ensure that the instance's name uses a file extension supported by the driver."""
+        # Avoid a crashing bug with GDAL versions < 2.
+        gdal_version = GDALVersion.runtime()
+        if gdal_version.major < 2:
+            return
+
         name_b = drivername.encode("utf-8")
         cdef const char *name_c = name_b
         cdef GDALDriverH driver = GDALGetDriverByName(name_c)
