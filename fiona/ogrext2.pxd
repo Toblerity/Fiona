@@ -121,6 +121,9 @@ cdef extern from "ogr_core.h":
 
 
 cdef extern from "gdal.h":
+    ctypedef void * GDALDriverH
+    ctypedef void * GDALMajorObjectH
+
     char * GDALVersionInfo (char *pszRequest)
     void * GDALGetDriverByName(const char * pszName)
     void * GDALOpenEx(const char * pszFilename,
@@ -158,7 +161,7 @@ cdef extern from "gdal.h":
     OGRErr GDALDatasetCommitTransaction (void * hDataset)
     OGRErr GDALDatasetRollbackTransaction (void * hDataset)
     int GDALDatasetTestCapability (void * hDataset, char *)
-
+    const char* GDALGetMetadataItem(GDALMajorObjectH obj, const char *pszName, const char *pszDomain)
 
     ctypedef enum GDALDataType:
         GDT_Unknown

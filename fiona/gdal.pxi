@@ -226,8 +226,7 @@ cdef extern from "gdal.h" nogil:
     char** GDALGetMetadata(GDALMajorObjectH obj, const char *pszDomain)
     int GDALSetMetadata(GDALMajorObjectH obj, char **papszMD,
                         const char *pszDomain)
-    const char* GDALGetMetadataItem(GDALMajorObjectH obj, const char *pszName,
-                                    const char *pszDomain)
+    const char* GDALGetMetadataItem(GDALMajorObjectH obj, const char *pszName, const char *pszDomain)
     int GDALSetMetadataItem(GDALMajorObjectH obj, const char *pszName,
                             const char *pszValue, const char *pszDomain)
     const GDALColorEntry *GDALGetColorEntry(GDALColorTableH table, int)

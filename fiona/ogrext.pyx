@@ -1705,14 +1705,13 @@ cdef class MemoryFileBase:
             # GDAL 2.1 requires a .zip extension for zipped files.
             self.name = "/vsimem/{0}/{0}{1}".format(self._dirname, ext)
 
-        self._path = self.name.encode('utf-8')
-
+        name_b = self.name.encode('utf-8')
         self._initial_bytes = initial_bytes
         cdef unsigned char *buffer = self._initial_bytes
 
         if self._initial_bytes:
             self._vsif = VSIFileFromMemBuffer(
-               self._path, buffer, len(self._initial_bytes), 0)
+               name_b, buffer, len(self._initial_bytes), 0)
             self.mode = "r"
 
         else:
@@ -1723,13 +1722,31 @@ cdef class MemoryFileBase:
 
     def _open(self):
         """Ensure that the instance has a valid VSI file handle."""
+        name_b = self.name.encode('utf-8')
         if not self.exists():
-            self._vsif = VSIFOpenL(self.name.encode("utf-8"), "w")
+            self._vsif = VSIFOpenL(name_b, "w")
             VSIFCloseL(self._vsif)
             self._vsif = NULL
 
         if self._vsif == NULL:
-            self._vsif = VSIFOpenL(self.name.encode("utf-8"), self.mode.encode("utf-8"))
+            self._vsif = VSIFOpenL(name_b, self.mode.encode("utf-8"))
+
+    def _ensure_extension(self, drivername=None):
+        """Ensure that the instance's name uses a file extension supported by the driver."""
+        name_b = drivername.encode("utf-8")
+        cdef const char *name_c = name_b
+        cdef GDALDriverH driver = GDALGetDriverByName(name_c)
+        cdef const char *extension_c = GDALGetMetadataItem(driver, "DMD_EXTENSION", NULL)
+
+        if extension_c != NULL:
+            extension_b = extension_c
+            recommended_extension = extension_b.decode("utf-8")
+            if not recommended_extension.startswith("."):
+                recommended_extension = "." + recommended_extension
+            root, ext = os.path.splitext(self.name)
+            if not ext:
+                log.info("Setting extension: root=%r, extension=%r", root, recommended_extension)
+                self.name = root + recommended_extension
 
     def exists(self):
         """Test if the in-memory file exists.
@@ -1741,7 +1758,8 @@ cdef class MemoryFileBase:
 
         """
         cdef VSIStatBufL st_buf
-        return VSIStatL(self._path, &st_buf) == 0
+        name_b = self.name.encode('utf-8')
+        return VSIStatL(name_b, &st_buf) == 0
 
     def __len__(self):
         """Length of the file's buffer in number of bytes.
@@ -1749,12 +1767,9 @@ cdef class MemoryFileBase:
         Returns
         -------
         int
+
         """
-        buffer = self.getbuffer()
-        if buffer is None:
-            return 0
-        else:
-            return buffer.size
+        return self.getbuffer().size
 
     def getbuffer(self):
         """Return a view on bytes of the file, or None."""
@@ -1762,10 +1777,11 @@ cdef class MemoryFileBase:
         cdef vsi_l_offset buffer_len = 0
         cdef unsigned char [:] buff_view
 
-        buffer = VSIGetMemFileBuffer(self._path, &buffer_len, 0)
+        name_b = self.name.encode('utf-8')
+        buffer = VSIGetMemFileBuffer(name_b, &buffer_len, 0)
 
         if buffer == NULL or buffer_len == 0:
-            buff_view = None
+            buff_view = memoryview(b"")
         else:
             buff_view = <unsigned char [:buffer_len]>buffer
         return buff_view
@@ -1796,7 +1812,8 @@ cdef class MemoryFileBase:
         cdef vsi_l_offset buffer_len = 0
 
         if size < 0:
-            buffer = VSIGetMemFileBuffer(self._path, &buffer_len, 0)
+            name_b = self.name.encode('utf-8')
+            buffer = VSIGetMemFileBuffer(name_b, &buffer_len, 0)
             size = buffer_len
 
         buffer = <unsigned char *>CPLMalloc(size)

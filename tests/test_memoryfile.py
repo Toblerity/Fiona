@@ -92,6 +92,16 @@ def test_write_memoryfile(profile_first_coutwildrnp_shp):
             assert len(col) == 1
 
 
+def test_memoryfile_write_extension(profile_first_coutwildrnp_shp):
+    """In-memory shapefile gets an .shp extension by default"""
+    profile, first = profile_first_coutwildrnp_shp
+    profile['driver'] = 'ESRI Shapefile'
+    with MemoryFile() as memfile:
+        with memfile.open(**profile) as col:
+            col.write(first)
+        assert memfile.name.endswith(".shp")
+
+
 def test_memoryfile_bytesio(data_coutwildrnp_json):
     """GeoJSON file stored in BytesIO can be read"""
     with fiona.open(BytesIO(data_coutwildrnp_json)) as collection:
