@@ -7,10 +7,10 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 -------------------
 
 - When creating a new Collection in a MemoryFile with a default (random) name
-  Fiona will attempt to use a format driver-supported file extension. When
-  initializing a MemoryFile with bytes of data formatted for a vector driver
-  that requires a certain file name or extension, the user should continue to
-  pass an appropriate filename and/or extension.
+  Fiona will attempt to use a format driver-supported file extension (#934).
+  When initializing a MemoryFile with bytes of data formatted for a vector
+  driver that requires a certain file name or extension, the user should
+  continue to pass an appropriate filename and/or extension.
 - Read support for FlatGeobuf has been enabled in the drvsupport module.
 - The MemoryFile implementation has been improved so that it can support multi-part
   S3 downloads (#906). This is largely a port of code from rasterio.
