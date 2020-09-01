@@ -2,6 +2,7 @@
 
 import copy
 import json
+import logging
 import os.path
 import shutil
 import tarfile
@@ -395,18 +396,38 @@ def testdata_generator():
         }
         return special_records2.get(driver, get_records(driver, range))
 
-    def test_equal(driver, val_in, val_out):
-        is_good = True
-        is_good = is_good and val_in['geometry'] == val_out['geometry']
-        for key in val_in['properties']:
-            if key in val_out['properties']:
-                if driver == 'FileGDB' and isinstance(val_in['properties'][key], int):
-                    is_good = is_good and str(val_in['properties'][key]) == str(int(val_out['properties'][key]))
-                else:
-                    is_good = is_good and str(val_in['properties'][key]) == str(val_out['properties'][key])
-            else:
-                is_good = False
-        return is_good
+    def _get_pos(driver, record):
+        if driver in {'BNA', 'DXF', 'GPX', 'GPSTrackMaker', 'PCIDSK'}:
+            return int(record['geometry']['coordinates'][1])
+        elif driver in {'DGN'}:
+            return int(record['geometry']['coordinates'][0][0])
+        else:
+            return int(record['properties']['position'])
+
+    def test_records(driver, true_data, test_data):
+        """ Test if unique elements of records are preserved"""
+
+        if not len(true_data) == len(test_data):
+            logging.error("Not the same number of records: {} != {}".format(len(true_data), len(test_data)))
+            return False
+
+        positions = set([_get_pos(driver, r) for r in true_data])
+        if not len(true_data) == len(positions):
+            logging.error("Could not extract all unique elements from true_data: {} != {}".format(len(true_data),
+                                                                                                  len(positions)))
+            return False
+
+        if not len(set([_get_pos(driver, r) for r in test_data])) == len(positions):
+            logging.error("Could not extract unique elements from test_data.")
+            return False
+
+        for test_record in test_data:
+            pos = _get_pos(driver, test_record)
+            if pos not in positions:
+                logging.error("Test record {} corresponds not to a record from true_data.".format(test_record))
+                return False
+
+        return True
 
     def _testdata_generator(driver, range1, range2):
         """ Generate test data and helper methods for a specific driver. Each set of generated set of records
@@ -436,8 +457,8 @@ def testdata_generator():
             A function that returns True if the geometry is equal between the generated records and a record and if
             the properties of the generated records can be found in a record
         """
-        return get_schema(driver), get_crs(driver), get_records(driver, range1), get_records2(driver, range2),\
-               test_equal
+        return get_schema(driver), get_crs(driver), get_records(driver, range1), get_records2(driver, range2), \
+               test_records
 
     return _testdata_generator
 

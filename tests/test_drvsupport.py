@@ -26,7 +26,7 @@ def test_write_or_driver_error(tmpdir, driver, testdata_generator):
         # BNA driver segfaults with gdal 1.11
         return
 
-    schema, crs, records1, _, test_equal = testdata_generator(driver, range(0, 10), [])
+    schema, crs, records1, _, test_records = testdata_generator(driver, range(0, 10), [])
     path = str(tmpdir.join(get_temp_filename(driver)))
 
     if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
@@ -56,11 +56,7 @@ def test_write_or_driver_error(tmpdir, driver, testdata_generator):
             open_driver = None
         with fiona.open(path, driver=open_driver) as c:
             assert c.driver == driver
-            items = list(c)
-            assert len(items) == len(records1)
-            for val_in, val_out in zip(records1, items):
-                assert test_equal(driver, val_in, val_out), "in: {val_in}, out: {val_out}".format(val_in=val_in,
-                                                                                                  val_out=val_out)
+            assert test_records(driver, records1, list(c))
 
 
 @pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['w'].keys()])
@@ -76,7 +72,7 @@ def test_write_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver, testdata_
         # BNA driver segfaults with gdal 1.11
         return
 
-    schema, crs, records1, _, test_equal = testdata_generator(driver, range(0, 10), [])
+    schema, crs, records1, _, test_records = testdata_generator(driver, range(0, 10), [])
     path = str(tmpdir.join(get_temp_filename(driver)))
 
     if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
@@ -104,7 +100,7 @@ def test_append_or_driver_error(tmpdir, testdata_generator, driver):
         return
 
     path = str(tmpdir.join(get_temp_filename(driver)))
-    schema, crs, records1, records2, test_equal = testdata_generator(driver, range(0, 5), range(5, 10))
+    schema, crs, records1, records2, test_records = testdata_generator(driver, range(0, 5), range(5, 10))
 
     # If driver is not able to write, we cannot test append
     if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
@@ -140,11 +136,7 @@ def test_append_or_driver_error(tmpdir, testdata_generator, driver):
             open_driver = None
         with fiona.open(path, driver=open_driver) as c:
             assert c.driver == driver
-            items = list(c)
-            assert len(items) == len(records1) + len(records2)
-            for val_in, val_out in zip(records1 + records2, items):
-                assert test_equal(driver, val_in, val_out), "in: {val_in}, out: {val_out}".format(val_in=val_in,
-                                                                                                  val_out=val_out)
+            assert test_records(driver, records1 + records2, list(c))
 
 
 @pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['a'].keys()
@@ -161,7 +153,7 @@ def test_append_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver, testdata
         return
 
     path = str(tmpdir.join(get_temp_filename(driver)))
-    schema, crs, records1, records2, test_equal = testdata_generator(driver, range(0, 5), range(5, 10))
+    schema, crs, records1, records2, test_records = testdata_generator(driver, range(0, 5), range(5, 10))
 
     # If driver is not able to write, we cannot test append
     if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
@@ -193,10 +185,7 @@ def test_append_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver, testdata
                 open_driver = None
             with fiona.open(path, driver=open_driver) as c:
                 assert c.driver == driver
-                items = list(c)
-                assert len(items) == len(records1) + len(records2)
-                for val_in, val_out in zip(records1 + records2, items):
-                    assert test_equal(driver, val_in, val_out)
+                assert test_records(driver, records1 + records2, list(c))
 
 
 @pytest.mark.parametrize('driver', [driver for driver, raw in supported_drivers.items() if raw == 'r'])
@@ -208,7 +197,7 @@ def test_no_write_driver_cannot_write(tmpdir, driver, testdata_generator, monkey
     """
 
     monkeypatch.setitem(fiona.drvsupport.supported_drivers, driver, 'rw')
-    schema, crs, records1, _, test_equal = testdata_generator(driver, range(0, 5), [])
+    schema, crs, records1, _, test_records = testdata_generator(driver, range(0, 5), [])
 
     if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
         pytest.skip("BNA driver segfaults with gdal 1.11")
@@ -243,7 +232,7 @@ def test_no_append_driver_cannot_append(tmpdir, driver, testdata_generator, monk
         return
 
     path = str(tmpdir.join(get_temp_filename(driver)))
-    schema, crs, records1, records2, test_equal = testdata_generator(driver, range(0, 5), range(5, 10))
+    schema, crs, records1, records2, test_records = testdata_generator(driver, range(0, 5), range(5, 10))
 
     # If driver is not able to write, we cannot test append
     if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
@@ -269,11 +258,8 @@ def test_no_append_driver_cannot_append(tmpdir, driver, testdata_generator, monk
         else:
             open_driver = None
         with fiona.open(path, driver=open_driver) as c:
-            assert c.driver == driver
-            items = list(c)
-            is_good = is_good and len(items) == len(records1) + len(records2)
-            for val_in, val_out in zip(records1 + records2, items):
-                is_good = is_good and test_equal(driver, val_in, val_out)
+            is_good = is_good and c.driver == driver
+            is_good = is_good and test_records(driver, records1 + records2, list(c))
     except:
         is_good = False
 
