@@ -3,6 +3,11 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.15 (TBD)
+------------
+
+- Raise a Python exception when VSIFOpenL fails (#937).
+
 1.8.14 (2020-08-31)
 -------------------
 

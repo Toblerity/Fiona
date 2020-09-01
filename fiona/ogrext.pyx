@@ -1678,8 +1678,6 @@ cdef class MemoryFileBase:
             filename was provided.
 
         """
-        cdef VSILFILE *fp = NULL
-
         if file_or_bytes:
             if hasattr(file_or_bytes, 'read'):
                 initial_bytes = file_or_bytes.read()
@@ -1722,14 +1720,24 @@ cdef class MemoryFileBase:
 
     def _open(self):
         """Ensure that the instance has a valid VSI file handle."""
+        cdef VSILFILE *fp = NULL
         name_b = self.name.encode('utf-8')
+
         if not self.exists():
-            self._vsif = VSIFOpenL(name_b, "w")
-            VSIFCloseL(self._vsif)
+            fp = VSIFOpenL(name_b, "w")
+            if fp == NULL:
+                raise OSError("VSIFOpenL failed")
+            else:
+                VSIFCloseL(fp)
             self._vsif = NULL
 
         if self._vsif == NULL:
-            self._vsif = VSIFOpenL(name_b, self.mode.encode("utf-8"))
+            fp = VSIFOpenL(name_b, self.mode.encode("utf-8"))
+            if fp == NULL:
+                log.error("VSIFOpenL failed: name=%r, mode=%r", self.name, self.mode)
+                raise OSError("VSIFOpenL failed")
+            else:
+                self._vsif = fp
 
     def _ensure_extension(self, drivername=None):
         """Ensure that the instance's name uses a file extension supported by the driver."""
