@@ -3,9 +3,17 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.8.14 (TBD)
-------------
+1.8.14 (2020-08-31)
+-------------------
 
+- When creating a new Collection in a MemoryFile with a default (random) name
+  Fiona will attempt to use a format driver-supported file extension (#934).
+  When initializing a MemoryFile with bytes of data formatted for a vector
+  driver that requires a certain file name or extension, the user should
+  continue to pass an appropriate filename and/or extension.
+- Read support for FlatGeobuf has been enabled in the drvsupport module.
+- The MemoryFile implementation has been improved so that it can support multi-part
+  S3 downloads (#906). This is largely a port of code from rasterio.
 - Axis ordering for results of fiona.transform was wrong when CRS were passed
   in the "EPSG:dddd" form (#919). This has been fixed by (#926).
 - Allow implicit access to the only dataset in a ZipMemoryFile. The path

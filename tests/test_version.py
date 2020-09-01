@@ -1,11 +1,10 @@
 import fiona
-from fiona.ogrext import GDALVersion
 import platform
 import re
 import os
 import sys
 from tests.conftest import travis_only
-from fiona._env import get_gdal_release_name
+from fiona._env import GDALVersion, get_gdal_release_name
 
 
 def test_version_tuple():
