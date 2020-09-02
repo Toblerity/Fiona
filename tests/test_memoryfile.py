@@ -1,6 +1,8 @@
 """Tests of MemoryFile and ZippedMemoryFile"""
 
+from collections import OrderedDict
 from io import BytesIO
+
 import pytest
 
 import fiona
@@ -131,3 +133,14 @@ def test_write_bytesio(profile_first_coutwildrnp_shp):
     with MemoryFile(data) as memfile:
         with memfile.open() as col:
             assert len(col) == 1
+
+
+def test_mapinfo_raises():
+    """Reported to be a crasher in #937"""
+    driver = 'MapInfo File'
+    schema = {'geometry': 'Point', 'properties': OrderedDict([('position', 'str')])}
+
+    with BytesIO() as fout:
+        with pytest.raises(OSError):
+            with fiona.open(fout, "w", driver=driver, schema=schema) as collection:
+                collection.write({"type": "Feature", "geometry": {"type": "Point", "coordinates": (0, 0)}, "properties": {"position": "x"}})
