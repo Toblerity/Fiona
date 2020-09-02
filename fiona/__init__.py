@@ -227,7 +227,7 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
         def fp_writer(fp):
             memfile = MemoryFile()
             dataset = memfile.open(
-                driver=driver, crs=crs, schema=schema, layer=layer,
+                driver=driver, crs=crs, schema=this_schema, layer=layer,
                 encoding=encoding, enabled_drivers=enabled_drivers,
                 crs_wkt=crs_wkt, **kwargs)
             try:
