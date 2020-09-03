@@ -13,7 +13,7 @@ from fiona.env import GDALVersion
 import datetime
 from fiona.drvsupport import (supported_drivers, driver_mode_mingdal, _driver_converts_field_type_silently_to_str,
                               _driver_supports_field, _driver_converts_to_str, _driver_supports_timezones,
-                              _driver_supports_milliseconds, _driver_supports_unknown_timezones)
+                              _driver_supports_milliseconds)
 import pytz
 from pytz import timezone
 
@@ -651,37 +651,6 @@ def test_driver_marked_as_silently_converts_to_str_converts_silently_to_str(tmpd
 
     with fiona.open(path, 'r') as c:
         assert get_schema_field(driver, c.schema) == 'str'
-
-
-@pytest.mark.filterwarnings('ignore:.*driver silently converts *:UserWarning')
-@pytest.mark.parametrize("driver,field_type", [(driver, field_type) for driver, field_type in
-                                               test_cases_datefield + test_cases_datefield_to_str
-                                               if not field_type == 'date'])
-def test_no_unknown_timezone(tmpdir, driver, field_type):
-    """ Some driver do not support unknown timezones (TZFlag=0) and convert datetimes silently to UTC"""
-
-    schema = get_schema(driver, field_type)
-    path = str(tmpdir.join(get_temp_filename(driver)))
-
-    if field_type == 'datetime':
-        values_in = ['2020-03-24T16:08:40']
-    elif field_type == 'time':
-        values_in = ['16:08:40']
-    records = get_records(driver, values_in)
-
-    with fiona.open(path, 'w',
-                    driver=driver,
-                    schema=schema) as c:
-        c.writerecords(records)
-
-    with fiona.open(path, 'r') as c:
-        items = [get_field(driver, f) for f in c]
-        assert len(items) == 1
-
-        if _driver_supports_unknown_timezones(driver, field_type):
-            assert "+" not in items[0], "{} contains a timezone".format(items[0])
-        else:
-            assert "+" in items[0], "{} contains no timezone".format(items[0])
 
 
 def test_read_timezone_geojson(path_test_tz_geojson):
