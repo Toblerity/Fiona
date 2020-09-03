@@ -215,8 +215,10 @@ def test_no_write_driver_cannot_write(tmpdir, driver, testdata_generator, monkey
     schema, crs, records1, _, test_equal, create_kwargs = testdata_generator(driver, range(0, 5), [])
 
     if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
-        # BNA driver segfaults with gdal 1.11
-        return
+        pytest.skip("BNA driver segfaults with gdal 1.11")
+
+    if driver == "FlatGeobuf":
+        pytest.xfail("FlatGeobuf doesn't raise an error but doesn't have write support")
 
     path = str(tmpdir.join(get_temp_filename(driver)))
 
