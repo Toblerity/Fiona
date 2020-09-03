@@ -3,9 +3,11 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.8.15 (TBD)
-------------
+1.8.15 (2020-09-03)
+-------------------
 
+- Change shim functions to not return tuples (#942) as a solution for the
+  packaging problem reported in #941.
 - Raise a Python exception when VSIFOpenL fails (#937).
 
 1.8.14 (2020-08-31)
