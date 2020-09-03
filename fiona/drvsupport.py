@@ -41,7 +41,6 @@ supported_drivers = dict([
     # multi-layer
     ("FileGDB", "raw"),
     ("OpenFileGDB", "r"),
-    ("FlatGeobuf", "r"),
     # ESRI Personal GeoDatabase 	PGeo 	No 	Yes 	No, needs ODBC library
     # ESRI ArcSDE 	SDE 	No 	Yes 	No, needs ESRI SDE
     # ESRIJSON 	ESRIJSON 	No 	Yes 	Yes 
@@ -157,7 +156,7 @@ driver_mode_mingdal = {
     'w': {'GPKG': (1, 11, 0),
           'PCIDSK': (2, 0, 0),
           'GeoJSONSeq': (2, 4, 0),
-          'FlatGeobuf': (3, 1, 0)},
+          'FlatGeobuf': (3, 1, 3)},
 
     'a': {'GPKG': (1, 11, 0),
           'GeoJSON': (2, 1, 0),
