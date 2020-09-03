@@ -167,6 +167,14 @@ cdef class FeatureBuilder:
         cdef int retval
         cdef int fieldsubtype
         cdef const char *key_c = NULL
+        # Parameters for get_field_as_datetime
+        cdef int y = 0
+        cdef int m = 0
+        cdef int d = 0
+        cdef int hh = 0
+        cdef int mm = 0
+        cdef float fss = 0.0
+        cdef int tz = 0
 
         # Skeleton of the feature to be returned.
         fid = OGR_F_GetFID(feature)
@@ -243,9 +251,8 @@ cdef class FeatureBuilder:
                 props[key] = val
 
             elif fieldtype in (FionaDateType, FionaTimeType, FionaDateTimeType):
-                retval, y, m, d, hh, mm, ss, tz = get_field_as_datetime(feature, i)
-
-                ms, ss = math.modf(ss)
+                retval = get_field_as_datetime(feature, i, &y, &m, &d, &hh, &mm, &fss, &tz)
+                ms, ss = math.modf(fss)
                 ss = int(ss)
                 ms = int(round(ms * 10**6))
 

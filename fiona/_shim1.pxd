@@ -23,9 +23,9 @@ cdef void *get_linear_geometry(void *geom)
 cdef const char* osr_get_name(OGRSpatialReferenceH hSrs)
 cdef void osr_set_traditional_axis_mapping_strategy(OGRSpatialReferenceH hSrs)
 cdef void set_proj_search_path(object path)
-cdef (int, int, int) get_proj_version()
+cdef void get_proj_version(int *, int *, int *)
 cdef void set_field_datetime(void *cogr_feature, int iField, int nYear, int nMonth, int nDay, int nHour, int nMinute, float fSecond, int nTZFlag)
-cdef (int, int, int, int, int, int, float, int)  get_field_as_datetime(void *cogr_feature, int iField)
+cdef int get_field_as_datetime(void *cogr_feature, int iField, int *, int *, int *, int *, int *, float *, int *)
 
 from fiona._shim cimport OGR_F_GetFieldAsInteger as OGR_F_GetFieldAsInteger64
 from fiona._shim cimport OGR_F_SetFieldInteger as OGR_F_SetFieldInteger64
