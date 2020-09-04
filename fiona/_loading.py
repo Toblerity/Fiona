@@ -41,7 +41,7 @@ if platform.system() == 'Windows' and sys.version_info >= (3, 8):
 
     # if loading of extension modules fails, search for gdal dll directories
     try:
-        import fiona.ogrext
+        import fiona._err
     except ImportError as e:
         search_gdal_dll_directories()
 
