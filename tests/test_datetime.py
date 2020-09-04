@@ -29,7 +29,8 @@ def get_schema(driver, field_type):
         return {
             'properties': OrderedDict([('name', 'str'), ('comment', 'str'), ('icon', 'int'), ('time', field_type)]),
             'geometry': 'Point'}
-
+    if driver == 'CSV':
+        return {"properties": {"datefield": field_type}}
     return {"geometry": "Point",
             "properties": {"datefield": field_type}}
 
@@ -42,6 +43,8 @@ def get_records(driver, values):
         return [{"geometry": {"type": "Point", "coordinates": [1, 2]},
                  "properties": OrderedDict([('name', ''), ('comment', ''), ('icon', 48), ('time', val)])} for
                 val in values]
+    if driver == 'CSV':
+        return [{"properties": {"datefield": val}} for val in values]
 
     return [{"geometry": {"type": "Point", "coordinates": [1, 2]},
              "properties": {"datefield": val}} for val in values]
