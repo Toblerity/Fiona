@@ -16,36 +16,11 @@ log.addHandler(logging.NullHandler())
 
 @contextlib.contextmanager
 def add_gdal_dll_directories():
-    dll_directories = []
-
-    if platform.system() == 'Windows' and sys.version_info >= (3, 8):
-
-        # if loading of extension modules fails, search for gdal dll directories
-        try:
-            import fiona._err
-        except ImportError as e:
-
-            def directory_contains_gdal_dll(path):
-                """ Checks if a directory contains a gdal dll """
-                return len(glob.glob(os.path.join(path, "gdal*.dll"))) > 0
-
-            def search_gdal_dll_directories():
-                """ Search for gdal dlls
-
-                    Finds directories in PATH containing gdal.dll.
-                """
-                # Parse PATH for gdal/bin
-                for path in os.getenv('PATH', '').split(os.pathsep):
-                    if directory_contains_gdal_dll(path):
-                        dll_directories.append(path)
-                if len(dll_directories) == 0:
-                    log.warning("No dll directories found.")
-
-            search_gdal_dll_directories()
-
     dll_dirs = []
-    for dll_directory in dll_directories:
-        dll_dirs.append(os.add_dll_directory(dll_directory))
+    if platform.system() == 'Windows' and sys.version_info >= (3, 8):
+        dll_directory = os.path.join(os.path.dirname(__file__), '.libs')
+        if os.path.exists(dll_directory):
+            dll_dirs.append(os.add_dll_directory(dll_directory))
     try:
         yield None
     finally:
