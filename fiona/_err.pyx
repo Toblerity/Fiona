@@ -235,6 +235,27 @@ cdef inline object exc_check():
         return
 
 
+cdef get_last_error_msg():
+    """Checks GDAL error stack for the latest error message
+    Returns
+    -------
+    An error message or empty string
+    """
+
+    err_msg = CPLGetLastErrorMsg()
+
+    if err_msg != NULL:
+        # Reformat messages.
+        msg_b = err_msg
+        msg = msg_b.decode('utf-8')
+        msg = msg.replace("`", "'")
+        msg = msg.replace("\n", " ")
+    else:
+        msg = ""
+
+    return msg
+
+
 cdef int exc_wrap_int(int err) except -1:
     """Wrap a GDAL/OGR function that returns CPLErr or OGRErr (int)
 
