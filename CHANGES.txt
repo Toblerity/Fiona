@@ -3,6 +3,13 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.16 (2020-09-04)
+-------------------
+
+- More OGR errors and warnings arising in calls to GDAL C API functions are
+  surfaced (#946).
+- A circular import introduced in some cases in 1.8.15 has been fixed (#945).
+
 1.8.15 (2020-09-03)
 -------------------
 
