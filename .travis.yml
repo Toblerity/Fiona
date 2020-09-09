@@ -93,7 +93,7 @@ addons:
 
 before_install:
   - pip install -U pip
-  - pip install setuptools==36.0.1
+  - pip install `cat requirements-dev.txt | grep setuptools==`
   - pip install wheel
   - "python -m pip install -r requirements-ci.txt"
   - python -m pip wheel -r requirements-dev.txt
