@@ -23,7 +23,7 @@ from fiona._geometry cimport (
 from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile, get_last_error_msg
 
 import fiona
-from fiona._env import GDALVersion, get_gdal_version_num
+from fiona._env import GDALVersion, get_gdal_version_num, get_gdal_version_tuple
 from fiona._err import cpl_errs, FionaNullPointerError, CPLE_BaseError, CPLE_OpenFailedError
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
@@ -1855,3 +1855,43 @@ cdef class MemoryFileBase(object):
         self._len = max(self._len, self._pos)
 
         return result
+
+
+def _get_metadata_item(driver, metadata_item):
+    """Query metadata items
+    Parameters
+    ----------
+    driver : str
+        Driver to query
+    metadata_item : str or None
+        Metadata item to query
+    Returns
+    -------
+    str
+        XML of metadata item or empty string
+    """
+    cdef char* metadata_c = NULL
+    cdef void *cogr_driver
+
+    if get_gdal_version_tuple() < (2, ):
+        return None
+
+    try:
+        driver_b = driver.encode('utf-8')
+    except UnicodeDecodeError:
+        driver_b = driver
+
+    cogr_driver = GDALGetDriverByName(driver_b)
+    if cogr_driver == NULL:
+        raise FionaValueError("Could not find driver '{}'".format(driver))
+
+    metadata_c = GDALGetMetadataItem(cogr_driver, metadata_item.encode('utf-8'), NULL)
+
+    metadata = None
+    if metadata_c != NULL:
+        metadata = metadata_c
+        metadata = metadata.decode('utf-8')
+        if len(metadata) == 0:
+            metadata = None
+
+    return metadata
