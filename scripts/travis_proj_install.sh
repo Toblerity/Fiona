@@ -18,9 +18,10 @@ if [ ! -d "$PROJINST/gdal-$GDALVERSION/share/proj" ]; then
     cd $PROJBUILD
     wget -q https://download.osgeo.org/proj/proj-$PROJVERSION.tar.gz
     tar -xzf proj-$PROJVERSION.tar.gz
-    cd proj-$PROJVERSION
+    projver=$(expr "$PROJVERSION" : '\([0-9]*.[0-9]*.[0-9]*\)')
+    cd proj-$projver
     ./configure --prefix=$PROJINST/gdal-$GDALVERSION
-    make -s -j 2
+    make -s
     make install
 fi
 
