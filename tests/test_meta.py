@@ -16,6 +16,7 @@ def test_print_driver_options(driver):
     fiona.meta.print_driver_options(driver)
 
 
+@requires_gdal2
 def test_metadata_wrong_driver():
     """ Test that FionaValueError is raised for non existing driver"""
     with pytest.raises(FionaValueError):
