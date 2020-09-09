@@ -490,12 +490,14 @@ cdef class Session:
     cdef object _fileencoding
     cdef object _encoding
     cdef object collection
+    cdef bint cursor_interrupted
 
     def __init__(self):
         self.cogr_ds = NULL
         self.cogr_layer = NULL
         self._fileencoding = None
         self._encoding = None
+        self.cursor_interrupted = False
 
     def __dealloc__(self):
         self.stop()
@@ -615,7 +617,7 @@ cdef class Session:
     def get_length(self):
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
-        return OGR_L_GetFeatureCount(self.cogr_layer, 0)
+        return self._get_feature_count(0)
 
     def get_driver(self):
         cdef void *cogr_driver = GDALGetDatasetDriver(self.cogr_ds)
@@ -838,9 +840,16 @@ cdef class Session:
             raise ValueError("Null layer")
 
         result = OGR_L_GetExtent(self.cogr_layer, &extent, 1)
+        self.cursor_interrupted = True
         if result != OGRERR_NONE:
             raise DriverError("Driver was not able to calculate bounds")
         return (extent.MinX, extent.MinY, extent.MaxX, extent.MaxY)
+        
+    
+    cdef int _get_feature_count(self, force=False):
+        self.cursor_interrupted = True
+        return OGR_L_GetFeatureCount(self.cogr_layer, force)
+    
 
     def has_feature(self, fid):
         """Provides access to feature data by FID.
@@ -892,7 +901,7 @@ cdef class Session:
             index = item
             # from the back
             if index < 0:
-                ftcount = OGR_L_GetFeatureCount(self.cogr_layer, 0)
+                ftcount = self._get_feature_count(0)
                 if ftcount == -1:
                     raise IndexError(
                         "collection's dataset does not support negative indexes")
@@ -1364,9 +1373,9 @@ cdef class Iterator:
                 warnings.warn("Layer does not support" \
                         " OLC_FASTFEATURECOUNT, negative slices or start values other than zero" \
                         " may be slow.", RuntimeWarning)
-            self.ftcount = OGR_L_GetFeatureCount(session.cogr_layer, 1)
+            self.ftcount = session._get_feature_count(1)
         else:
-            self.ftcount = OGR_L_GetFeatureCount(session.cogr_layer, 0)
+            self.ftcount = session._get_feature_count(0)
 
         if self.ftcount == -1 and ((start is not None and start < 0) or
                               (stop is not None and stop < 0)):
@@ -1436,20 +1445,27 @@ cdef class Iterator:
                 raise StopIteration
 
         # Set read cursor to next_item position
-        if self.step > 1 and self.fastindex:
+        if session.cursor_interrupted:
+            if not self.fastindex:
+                log.warning("Sequential read of iterator was interrupted. Resetting iterator. "
+                            "This can negatively impact the performance.")
             OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
-        elif self.step > 1 and not self.fastindex and not self.next_index == self.start:
-            # GDALs default implementation of SetNextByIndex is calling ResetReading() and then
-            # calling GetNextFeature n times. We can shortcut that if we know the previous index.
-            # OGR_L_GetNextFeature increments cursor by 1, therefore self.step - 1 as one increment was performed when feature is read
-            for _ in range(self.step - 1):
-                cogr_feature = OGR_L_GetNextFeature(session.cogr_layer)
-                if cogr_feature == NULL:
-                    raise StopIteration
-        elif self.step > 1 and not self.fastindex and self.next_index == self.start:
-            OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
-        elif self.step < 0:
-            OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
+            session.cursor_interrupted = False
+        else:
+            if self.step > 1 and self.fastindex:
+                OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
+            elif self.step > 1 and not self.fastindex and not self.next_index == self.start:
+                # GDALs default implementation of SetNextByIndex is calling ResetReading() and then
+                # calling GetNextFeature n times. We can shortcut that if we know the previous index.
+                # OGR_L_GetNextFeature increments cursor by 1, therefore self.step - 1 as one increment was performed when feature is read
+                for _ in range(self.step - 1):
+                    cogr_feature = OGR_L_GetNextFeature(session.cogr_layer)
+                    if cogr_feature == NULL:
+                        raise StopIteration
+            elif self.step > 1 and not self.fastindex and self.next_index == self.start:
+                OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
+            elif self.step < 0:
+                OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
 
         # set the next index
         self.next_index += self.step
