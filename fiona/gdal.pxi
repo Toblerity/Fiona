@@ -347,7 +347,7 @@ cdef extern from "ogr_api.h" nogil:
     OGRGeometryH OGR_G_CreateGeometryFromJson(const char *json)
     void OGR_G_DestroyGeometry(OGRGeometryH geometry)
     char *OGR_G_ExportToJson(OGRGeometryH geometry)
-    void OGR_G_ExportToWkb(OGRGeometryH geometry, int endianness, char *buffer)
+    OGRErr OGR_G_ExportToWkb(OGRGeometryH geometry, int endianness, char *buffer)
     int OGR_G_GetCoordinateDimension(OGRGeometryH geometry)
     int OGR_G_GetGeometryCount(OGRGeometryH geometry)
     const char *OGR_G_GetGeometryName(OGRGeometryH geometry)

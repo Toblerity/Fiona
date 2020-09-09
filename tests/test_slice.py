@@ -3,12 +3,13 @@
 import tempfile
 import shutil
 import os
+from collections import OrderedDict
 import pytest
 from fiona.env import GDALVersion
 import fiona
 from fiona.errors import FionaDeprecationWarning
 from .conftest import get_temp_filename
-from fiona.drvsupport import supported_drivers, driver_mode_mingdal, _driver_supports_mode
+from fiona.drvsupport import supported_drivers, _driver_supports_mode
 
 gdal_version = GDALVersion.runtime()
 
@@ -45,17 +46,29 @@ def test_collection_iterator_next(path_coutwildrnp_shp):
 
 @pytest.fixture(scope="module", params=[driver for driver in supported_drivers if
                                         _driver_supports_mode(driver, 'w')
-                                        and driver not in {'DGN', 'MapInfo File', 'GPSTrackMaker', 'GPX', 'BNA', 'DXF',
-                                                           'GML'}])
+                                        and driver not in {'DGN', 'MapInfo File', 'GPSTrackMaker', 'GPX', 'BNA', 'DXF'}])
 def slice_dataset_path(request):
     """ Create temporary datasets for test_collection_iterator_items_slice()"""
 
     driver = request.param
     min_id = 0
     max_id = 9
-    schema = {'geometry': 'Point', 'properties': [('position', 'int')]}
-    records = [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))}, 'properties': {'position': i}} for i
-               in range(min_id, max_id + 1)]
+
+    def get_schema(driver):
+        special_schemas = {'CSV': {'geometry': None, 'properties': OrderedDict([('position', 'int')])}}
+        return special_schemas.get(driver, {'geometry': 'Point', 'properties': OrderedDict([('position', 'int')])})
+
+    def get_records(driver, range):
+        special_records1 = {'CSV': [{'geometry': None, 'properties': {'position': i}} for i in range],
+                            'PCIDSK': [{'geometry': {'type': 'Point', 'coordinates': (0.0, float(i), 0.0)},
+                                        'properties': {'position': i}} for i in range]
+                            }
+        return special_records1.get(driver, [
+            {'geometry': {'type': 'Point', 'coordinates': (0.0, float(i))}, 'properties': {'position': i}} for i in
+            range])
+
+    schema = get_schema(driver)
+    records = get_records(driver, range(min_id, max_id + 1))
 
     create_kwargs = {}
     if driver == 'FlatGeobuf':
@@ -79,6 +92,9 @@ def slice_dataset_path(request):
                                   (-5, -1, None),
                                   (0, None, None),
                                   (5, None, None),
+                                  (8, None, None),
+                                  (9, None, None),
+                                  (10, None, None),
                                   (0, 5, 2),
                                   (0, 5, 2),
                                   (1, 5, 2),

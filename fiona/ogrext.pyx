@@ -19,7 +19,7 @@ from fiona._shim cimport *
 from fiona._geometry cimport (
     GeomBuilder, OGRGeomBuilder, geometry_type_code,
     normalize_geometry_type_code, base_geometry_type_code)
-from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile
+from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile, get_last_error_msg
 
 import fiona
 from fiona._env import get_gdal_version_num, calc_gdal_version_num, get_gdal_version_tuple
@@ -80,6 +80,7 @@ cdef const char * OLC_ALTERFIELDDEFN = "AlterFieldDefn"
 cdef const char * OLC_DELETEFEATURE = "DeleteFeature"
 cdef const char * OLC_STRINGSASUTF8 = "StringsAsUTF8"
 cdef const char * OLC_TRANSACTIONS = "Transactions"
+cdef const char * OLC_IGNOREFIELDS =  "IgnoreFields"
 
 # OGR integer error types.
 
@@ -167,6 +168,14 @@ cdef class FeatureBuilder:
         cdef int retval
         cdef int fieldsubtype
         cdef const char *key_c = NULL
+        # Parameters for get_field_as_datetime
+        cdef int y = 0
+        cdef int m = 0
+        cdef int d = 0
+        cdef int hh = 0
+        cdef int mm = 0
+        cdef float fss = 0.0
+        cdef int tz = 0
 
         # Skeleton of the feature to be returned.
         fid = OGR_F_GetFID(feature)
@@ -243,9 +252,8 @@ cdef class FeatureBuilder:
                 props[key] = val
 
             elif fieldtype in (FionaDateType, FionaTimeType, FionaDateTimeType):
-                retval, y, m, d, hh, mm, ss, tz = get_field_as_datetime(feature, i)
-
-                ms, ss = math.modf(ss)
+                retval = get_field_as_datetime(feature, i, &y, &m, &d, &hh, &mm, &fss, &tz)
+                ms, ss = math.modf(fss)
                 ss = int(ss)
                 ms = int(round(ms * 10**6))
 
@@ -341,7 +349,7 @@ cdef class OGRFeatureBuilder:
         if feature['geometry'] is not None:
             cogr_geometry = OGRGeomBuilder().build(
                                 feature['geometry'])
-        OGR_F_SetGeometryDirectly(cogr_feature, cogr_geometry)
+            exc_wrap_int(OGR_F_SetGeometryDirectly(cogr_feature, cogr_geometry))
 
         # OGR_F_SetFieldString takes encoded strings ('bytes' in Python 3).
         encoding = session._get_internal_encoding()
@@ -545,6 +553,8 @@ cdef class Session:
         encoding = self._get_internal_encoding()
 
         if collection.ignore_fields:
+            if not OGR_L_TestCapability(self.cogr_layer, OLC_IGNOREFIELDS):
+                raise DriverError("Driver does not support ignore_fields")
             try:
                 for name in collection.ignore_fields:
                     try:
@@ -1276,7 +1286,9 @@ cdef class WritingSession(Session):
             cogr_feature = OGRFeatureBuilder().build(record, collection)
             result = OGR_L_CreateFeature(cogr_layer, cogr_feature)
             if result != OGRERR_NONE:
-                raise RuntimeError("Failed to write record: %s" % record)
+                msg = get_last_error_msg()
+                raise RuntimeError("GDAL Error: {msg} \n \n Failed to write record: "
+                                   "{record}".format(msg=msg, record=record))
             _deleteOgrFeature(cogr_feature)
 
             if transactions_supported:
@@ -1417,7 +1429,10 @@ cdef class Iterator:
 
         self.next_index = start
         log.debug("Next index: %d", self.next_index)
-        OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
+        
+        # Set OGR_L_SetNextByIndex only if within range
+        if start >= 0 and (self.ftcount == -1 or self.start < self.ftcount):
+            exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
 
     def __iter__(self):
         return self
@@ -1427,6 +1442,7 @@ cdef class Iterator:
 
         cdef Session session
         session = self.collection.session
+
 
         # Check if next_index is valid
         if self.next_index < 0:
@@ -1445,15 +1461,16 @@ cdef class Iterator:
                 raise StopIteration
 
         # Set read cursor to next_item position
+
         if session.cursor_interrupted:
             if not self.fastindex:
                 log.warning("Sequential read of iterator was interrupted. Resetting iterator. "
                             "This can negatively impact the performance.")
-            OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
+            exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
             session.cursor_interrupted = False
         else:
             if self.step > 1 and self.fastindex:
-                OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
+                exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
             elif self.step > 1 and not self.fastindex and not self.next_index == self.start:
                 # GDALs default implementation of SetNextByIndex is calling ResetReading() and then
                 # calling GetNextFeature n times. We can shortcut that if we know the previous index.
@@ -1463,9 +1480,9 @@ cdef class Iterator:
                     if cogr_feature == NULL:
                         raise StopIteration
             elif self.step > 1 and not self.fastindex and self.next_index == self.start:
-                OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
+                exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
             elif self.step < 0:
-                OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
+                exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
 
         # set the next index
         self.next_index += self.step

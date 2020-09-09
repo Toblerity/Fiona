@@ -105,7 +105,7 @@ with fiona._loading.add_gdal_dll_directories():
 
 
 __all__ = ['bounds', 'listlayers', 'open', 'prop_type', 'prop_width']
-__version__ = "1.8.15dev"
+__version__ = "1.8.16"
 __gdal_version__ = get_gdal_release_name()
 
 gdal_version = get_gdal_version_tuple()
@@ -227,7 +227,7 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
         def fp_writer(fp):
             memfile = MemoryFile()
             dataset = memfile.open(
-                driver=driver, crs=crs, schema=schema, layer=layer,
+                driver=driver, crs=crs, schema=this_schema, layer=layer,
                 encoding=encoding, enabled_drivers=enabled_drivers,
                 crs_wkt=crs_wkt, **kwargs)
             try:
