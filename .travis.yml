@@ -116,11 +116,5 @@ install:
 script:
   - python -m pytest -m "not wheel" --cov fiona --cov-report term-missing
 
-  # Check documentation
-  # - rstcheck -r --ignore-directives automodule --ignore-substitutions version,release,today .
-
-after_script:
-  - python setup.py clean
-
 after_success:
   - coveralls || echo "!! intermittent coveralls failure"
