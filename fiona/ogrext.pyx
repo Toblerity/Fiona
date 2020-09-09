@@ -1797,6 +1797,8 @@ cdef class MemoryFileBase:
         int
 
         """
+        if not self.getbuffer():
+            return 0        
         return self.getbuffer().size
 
     def getbuffer(self):
@@ -1809,10 +1811,10 @@ cdef class MemoryFileBase:
         buffer = VSIGetMemFileBuffer(name_b, &buffer_len, 0)
 
         if buffer == NULL or buffer_len == 0:
-            buff_view = memoryview(b"")
+            return None
         else:
             buff_view = <unsigned char [:buffer_len]>buffer
-        return buff_view
+            return buff_view
 
     def close(self):
         """Close and tear down VSI file and directory."""

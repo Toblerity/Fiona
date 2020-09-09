@@ -107,6 +107,14 @@ def test_memoryfile_write_extension(profile_first_coutwildrnp_shp):
         assert memfile.name.endswith(".shp")
 
 
+def test_memoryfile_open_file_or_bytes_read(path_coutwildrnp_json):
+    """Test MemoryFile.open when file_or_bytes has a read attribute """
+    with open(path_coutwildrnp_json, 'rb') as f:
+        with MemoryFile(f) as memfile:
+            with memfile.open() as collection:
+                assert len(collection) == 67
+
+
 def test_memoryfile_bytesio(data_coutwildrnp_json):
     """GeoJSON file stored in BytesIO can be read"""
     with fiona.open(BytesIO(data_coutwildrnp_json)) as collection:
@@ -118,6 +126,22 @@ def test_memoryfile_fileobj(path_coutwildrnp_json):
     with open(path_coutwildrnp_json, 'rb') as f:
         with fiona.open(f) as collection:
             assert len(collection) == 67
+
+
+def test_memoryfile_len(data_coutwildrnp_json):
+    """Test MemoryFile.__len__ """
+    with MemoryFile() as memfile:
+        assert len(memfile) == 0
+        memfile.write(data_coutwildrnp_json)
+        assert len(memfile) == len(data_coutwildrnp_json)
+
+
+def test_memoryfile_tell(data_coutwildrnp_json):
+    """Test MemoryFile.tell() """
+    with MemoryFile() as memfile:
+        assert memfile.tell() == 0
+        memfile.write(data_coutwildrnp_json)
+        assert memfile.tell() == len(data_coutwildrnp_json)
 
 
 def test_write_bytesio(profile_first_coutwildrnp_shp):
