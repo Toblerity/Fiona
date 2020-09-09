@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-from fiona.env import Env
+import os
+
+from fiona.env import Env, require_gdal_version
 from fiona._env import get_gdal_version_tuple
 
 
@@ -148,6 +150,36 @@ supported_drivers = dict([
     #   ("XPLANE", "r")
 ])
 
+# map of extensions to drivers
+# initialized with main ones for
+# GDAL 1 as support for getting
+# extensions was added in GDAL 2
+_extension_to_driver = {
+    'shp': 'ESRI Shapefile',
+    'gpkg': 'GPKG',
+    'geojson': 'GeoJSON',
+    'json': 'GeoJSON',
+    'bna': 'BNA',
+    'dxf': 'DXF',
+    'csv': 'CSV',
+    'dbf': 'ESRI Shapefile',
+    'geojsonl': 'GeoJSONSeq',
+    'geojsons': 'GeoJSONSeq',
+    'gml': 'GML',
+    'xml': 'GML',
+    'gmt': 'OGR_GMT',
+    'gdb': 'FileGDB',
+    'gpx': 'GPX',
+    'gtm': 'GPSTrackMaker',
+    'gtz': 'GPSTrackMaker',
+    'tab': 'MapInfo File',
+    'mif': 'MapInfo File',
+    'mid': 'MapInfo File',
+    'dgn': 'DGN',
+    'pix': 'PCIDSK'
+}
+if _GDAL_VERSION.major < 2:
+    _extension_to_driver['gmt'] = 'GMT'
 
 # Minimal gdal version for different modes
 driver_mode_mingdal = {
@@ -200,6 +232,60 @@ def _filter_supported_drivers():
 
 
 _filter_supported_drivers()
+
+
+@require_gdal_version("2.0")
+def vector_driver_extensions():
+    """
+    Returns
+    -------
+    dict:
+        Map of extensions to the driver.
+    """
+    from fiona.meta import extensions  # prevent circular import
+
+    extension_to_driver = _extension_to_driver.copy()
+    for drv, modes in supported_drivers.items():
+        # update extensions based on driver suppport
+        for extension in extensions(drv) or ():
+            if "w" in modes:
+                # default to existing to preserve defaults
+                extension_to_driver[extension] = extension_to_driver.get(extension, drv)
+    return extension_to_driver
+
+
+def driver_from_extension(path):
+    """
+    Attempt to auto-detect driver based on the extension.
+
+    Parameters
+    ----------
+    path: str or pathlike object
+        The path to the dataset to write with.
+
+    Returns
+    -------
+    str:
+        The name of the driver for the extension.
+    """
+    try:
+        # in case the path is a file handle
+        # or a partsed path
+        path = path.name
+    except AttributeError:
+        pass
+
+    # dynamic driver extension lists added in GDAL 2
+    if _GDAL_VERSION.major < 2:
+        # basic list for GDAL 1
+        driver_extensions = _extension_to_driver
+    else:
+        driver_extensions = vector_driver_extensions()
+
+    try:
+        return driver_extensions[os.path.splitext(path)[-1].lstrip(".").lower()]
+    except KeyError:
+        raise ValueError("Unable to detect driver. Please specify driver.")
 
 # driver_converts_to_str contains field type, driver combinations that are silently converted to string
 # None: field type is always converted to str
