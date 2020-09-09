@@ -856,7 +856,7 @@ cdef class Session:
         return (extent.MinX, extent.MinY, extent.MaxX, extent.MaxY)
         
     
-    cdef int _get_feature_count(self, force=False):
+    cdef int _get_feature_count(self, force=0):
         self.cursor_interrupted = True
         return OGR_L_GetFeatureCount(self.cogr_layer, force)
     
