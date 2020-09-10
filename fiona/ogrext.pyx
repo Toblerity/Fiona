@@ -857,6 +857,8 @@ cdef class Session:
         
     
     cdef int _get_feature_count(self, force=0):
+        if self.cogr_layer == NULL:
+            raise ValueError("Null layer")
         self.cursor_interrupted = True
         return OGR_L_GetFeatureCount(self.cogr_layer, force)
     
