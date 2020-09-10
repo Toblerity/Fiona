@@ -4,11 +4,11 @@ import fiona.drvsupport
 import fiona.meta
 from fiona.drvsupport import supported_drivers
 from fiona.errors import FionaValueError
-from .conftest import requires_gdal2, requires_gdal23
+from .conftest import requires_gdal2, requires_gdal23, requires_gdal31
 from six import string_types
 
 
-@requires_gdal2
+@requires_gdal31
 @pytest.mark.parametrize("driver", supported_drivers)
 def test_print_driver_options(driver):
     """ Test fiona.meta.print_driver_options(driver) """
