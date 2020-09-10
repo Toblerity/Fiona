@@ -84,46 +84,6 @@ def dataset_creation_options(driver):
     if len(xml) == 0:
         return {}
 
-    # Fix errors in GDALs XML
-    # Same changes as in https://github.com/OSGeo/gdal/commit/f447a31822e26ddf0cabcee0ce673a028550a2a0
-    if get_gdal_version_num() < calc_gdal_version_num(3, 1, 1):
-        if driver == 'GML':
-            xml = xml.replace("<gml:boundedBy>", "&lt;gml:boundedBy&gt;")
-            xml = xml.replace(">Space separated list of filenames of XML schemas that apply to the data file'/>", ">")
-        elif driver == 'GPX':
-            xml = xml.replace("<extensions>", "&lt;extensions&gt;")
-        elif driver == "FileGDB":
-            xml = xml.replace("<esri:DataElement>", "&lt;esri:DataElement&gt;")
-        elif driver == 'KML':
-            xml = xml.replace("<extensions>", "&lt;extensions&gt;")
-            xml = xml.replace("<name>", "&lt;name&gt;")
-            xml = xml.replace("<description>", "&lt;description&gt;")
-            xml = xml.replace("<AltitudeMode>", "&lt;AltitudeMode&gt;")
-        elif driver == 'GeoRSS':
-            for tag in ['item', 'entry', 'channel', 'title', 'description', 'link', 'updated', 'author', 'name', 'id']:
-                xml = xml.replace("<{}>".format(tag),
-                                  "&lt;{}&gt;".format(tag))
-        elif driver == 'LIBKML':
-            for tag in ['BallonStyle', 'ItemIcon', 'NetworkLinkControl', 'Update', 'atom:Author', 'atom:link', 'cookie',
-                        'description', 'expires', 'linkDescription', 'linkName', 'linkSnippet', 'listItemType',
-                        'maxSessionLength', 'message', 'minRefreshPeriod', 'name', 'open', 'phoneNumber', 'snippet',
-                        'visibility']:
-                xml = xml.replace("<{}>".format(tag),
-                                  "&lt;{}&gt;".format(tag))
-            xml = xml.replace("root_doc'/>'", "root_doc'/>")
-        elif driver == 'KML':
-            xml = xml.replace("'root_doc'/>'", "'root_doc'/>")
-        elif driver == 'ISIS3':
-            xml = xml.replace("'boolean'", "'boolean' ")
-            xml = xml.replace("'string'", "'string' ")
-        elif driver == 'GRIB':
-            xml = xml.replace("max='100'", "max='100' ")
-        elif driver == 'Rasterlite':
-            xml = xml.replace("default='(GTiff", "description='(GTiff")
-            xml = xml.replace("type='string' default='GTiff'", "type='string'")
-        elif driver == 'PDF':
-            xml = xml.replace("alt_config_option=", " alt_config_option=")
-
     return _parse_options(xml)
 
 
@@ -148,22 +108,6 @@ def layer_creation_options(driver):
 
     if len(xml) == 0:
         return {}
-
-    # Fix GDALs XML
-    # Same changes as in https://github.com/OSGeo/gdal/commit/f447a31822e26ddf0cabcee0ce673a028550a2a0
-    if get_gdal_version_num() < calc_gdal_version_num(3, 1, 1):
-        if driver == "LIBKML":
-            for tag in ['BallonStyle', 'Camera', 'Document', 'Folder', 'ItemIcon', 'LookAt', 'NetworkLinkControl', 'Region',
-                        'ScreenOverlay', 'Update', 'altitude', 'altitudeMode', 'atom:Author', 'atom:link', 'description',
-                        'expires', 'heading', 'latitude', 'linkDescription', 'linkSnippet', 'listItemType', 'longitude',
-                        'maxSessionLengthcookie', 'message', 'minRefreshPeriod', 'name', 'open', 'overlayXY', 'phoneNumber',
-                        'range', 'roll', 'screenXY', 'sizeXY', 'snippet', 'tilt', 'visibility']:
-                xml = xml.replace("<{}>".format(tag),
-                                  "&lt;{}&gt;".format(tag))
-        elif driver == 'ElasticSearch':
-            xml = xml.replace("FeatureCollection'/>.", "FeatureCollection'/>")
-        elif driver in {'CouchDB', 'Cloudant'}:
-            xml = xml.replace("'GEOJSON '", "'GEOJSON'")
 
     return _parse_options(xml)
 
