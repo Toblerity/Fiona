@@ -3,6 +3,14 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.17 (2020-09-09)
+-------------------
+
+- To fix issue #952 the fio-cat command no longer cuts feature geometries at
+  the anti-meridian by default. A --cut-at-antimeridian option has been added
+  to allow cutting of geometries in a geographic destination coordinate
+  reference system.
+
 1.8.16 (2020-09-04)
 -------------------
 
