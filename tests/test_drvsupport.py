@@ -5,6 +5,7 @@ from .conftest import requires_gdal24, get_temp_filename
 from fiona.drvsupport import supported_drivers, driver_mode_mingdal
 import fiona.drvsupport
 from fiona.env import GDALVersion
+from fiona._env import calc_gdal_version_num, get_gdal_version_num
 from fiona.errors import DriverError
 
 
@@ -23,14 +24,13 @@ def test_write_or_driver_error(tmpdir, driver, testdata_generator):
     """
 
     if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
-        # BNA driver segfaults with gdal 1.11
-        return
+        pytest.skip("BNA driver segfaults with gdal 1.11")
 
     schema, crs, records1, _, test_equal, create_kwargs = testdata_generator(driver, range(0, 10), [])
     path = str(tmpdir.join(get_temp_filename(driver)))
 
-    if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
-            *driver_mode_mingdal['w'][driver][:2]):
+    if (driver in driver_mode_mingdal['w'] and
+            get_gdal_version_num() < calc_gdal_version_num(*driver_mode_mingdal['w'][driver])):
 
         # Test if DriverError is raised for gdal < driver_mode_mingdal
         with pytest.raises(DriverError):
@@ -74,14 +74,16 @@ def test_write_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver, testdata_
     """
 
     if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
-        # BNA driver segfaults with gdal 1.11
-        return
+        pytest.skip("BNA driver segfaults with gdal 1.11")
+    if (driver == 'FlatGeobuf' and
+            calc_gdal_version_num(3, 1, 0) <= get_gdal_version_num() < calc_gdal_version_num(3, 1, 3)):
+        pytest.skip("See https://github.com/Toblerity/Fiona/pull/924")
 
     schema, crs, records1, _, test_equal, create_kwargs = testdata_generator(driver, range(0, 10), [])
     path = str(tmpdir.join(get_temp_filename(driver)))
 
-    if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
-            *driver_mode_mingdal['w'][driver][:2]):
+    if (driver in driver_mode_mingdal['w'] and
+            get_gdal_version_num() < calc_gdal_version_num(*driver_mode_mingdal['w'][driver])):
         monkeypatch.delitem(fiona.drvsupport.driver_mode_mingdal['w'], driver)
 
         with pytest.raises(Exception):
@@ -102,15 +104,14 @@ def test_append_or_driver_error(tmpdir, testdata_generator, driver):
     """
 
     if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
-        # BNA driver segfaults with gdal 1.11
-        return
+        pytest.skip("BNA driver segfaults with gdal 1.11")
 
     path = str(tmpdir.join(get_temp_filename(driver)))
     schema, crs, records1, records2, test_equal, create_kwargs = testdata_generator(driver, range(0, 5), range(5, 10))
 
     # If driver is not able to write, we cannot test append
-    if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
-            *driver_mode_mingdal['w'][driver][:2]):
+    if (driver in driver_mode_mingdal['w']
+            and get_gdal_version_num() < calc_gdal_version_num(*driver_mode_mingdal['w'][driver])):
         return
 
     # Create test file to append to
@@ -122,8 +123,8 @@ def test_append_or_driver_error(tmpdir, testdata_generator, driver):
 
         c.writerecords(records1)
 
-    if driver in driver_mode_mingdal['a'] and GDALVersion.runtime() < GDALVersion(
-            *driver_mode_mingdal['a'][driver][:2]):
+    if (driver in driver_mode_mingdal['a']
+            and get_gdal_version_num() < calc_gdal_version_num(*driver_mode_mingdal['a'][driver])):
 
         # Test if DriverError is raised for gdal < driver_mode_mingdal
         with pytest.raises(DriverError):
@@ -160,15 +161,14 @@ def test_append_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver, testdata
     """
 
     if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
-        # BNA driver segfaults with gdal 1.11
-        return
+        pytest.skip("BNA driver segfaults with gdal 1.11")
 
     path = str(tmpdir.join(get_temp_filename(driver)))
     schema, crs, records1, records2, test_equal, create_kwargs = testdata_generator(driver, range(0, 5), range(5, 10))
 
     # If driver is not able to write, we cannot test append
-    if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
-            *driver_mode_mingdal['w'][driver][:2]):
+    if (driver in driver_mode_mingdal['w']
+            and get_gdal_version_num() < calc_gdal_version_num(*driver_mode_mingdal['w'][driver])):
         return
 
     # Create test file to append to
@@ -180,8 +180,8 @@ def test_append_does_not_work_when_gdal_smaller_mingdal(tmpdir, driver, testdata
 
         c.writerecords(records1)
 
-    if driver in driver_mode_mingdal['a'] and GDALVersion.runtime() < GDALVersion(
-            *driver_mode_mingdal['a'][driver][:2]):
+    if (driver in driver_mode_mingdal['a']
+            and get_gdal_version_num() < calc_gdal_version_num(*driver_mode_mingdal['a'][driver])):
         # Test if driver really can't append for gdal < driver_mode_mingdal
 
         monkeypatch.delitem(fiona.drvsupport.driver_mode_mingdal['a'], driver)
@@ -244,15 +244,14 @@ def test_no_append_driver_cannot_append(tmpdir, driver, testdata_generator, monk
     monkeypatch.setitem(fiona.drvsupport.supported_drivers, driver, 'raw')
 
     if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
-        # BNA driver segfaults with gdal 1.11
-        return
+        pytest.skip("BNA driver segfaults with gdal 1.11")
 
     path = str(tmpdir.join(get_temp_filename(driver)))
     schema, crs, records1, records2, test_equal, create_kwargs = testdata_generator(driver, range(0, 5), range(5, 10))
 
     # If driver is not able to write, we cannot test append
-    if driver in driver_mode_mingdal['w'] and GDALVersion.runtime() < GDALVersion(
-            *driver_mode_mingdal['w'][driver][:2]):
+    if (driver in driver_mode_mingdal['w'] and
+            get_gdal_version_num() < calc_gdal_version_num(*driver_mode_mingdal['w'][driver])):
         return
 
     # Create test file to append to
