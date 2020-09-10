@@ -78,19 +78,6 @@ class Collection(object):
         if archive and not isinstance(archive, string_types):
             raise TypeError("invalid archive: %r" % archive)
 
-
-        # Check GDAL version against drivers
-
-        if driver in driver_mode_mingdal[mode] and get_gdal_version_tuple() < driver_mode_mingdal[mode][driver]:
-            min_gdal_version = ".".join(list(map(str, driver_mode_mingdal[mode][driver])))
-
-            raise DriverError(
-                "{driver} driver requires at least GDAL {min_gdal_version} for mode '{mode}', "
-                "Fiona was compiled against: {gdal}".format(driver=driver,
-                                                            mode=mode,
-                                                            min_gdal_version=min_gdal_version,
-                                                            gdal=get_gdal_release_name()))
-
         self.session = None
         self.iterator = None
         self._len = 0
@@ -103,6 +90,17 @@ class Collection(object):
         self.enabled_drivers = enabled_drivers
         self.ignore_fields = ignore_fields
         self.ignore_geometry = bool(ignore_geometry)
+
+        # Check GDAL version against drivers
+        if driver in driver_mode_mingdal[mode] and get_gdal_version_tuple() < driver_mode_mingdal[mode][driver]:
+            min_gdal_version = ".".join(list(map(str, driver_mode_mingdal[mode][driver])))
+
+            raise DriverError(
+                "{driver} driver requires at least GDAL {min_gdal_version} for mode '{mode}', "
+                "Fiona was compiled against: {gdal}".format(driver=driver,
+                                                            mode=mode,
+                                                            min_gdal_version=min_gdal_version,
+                                                            gdal=get_gdal_release_name()))
 
         if vsi:
             self.path = vfs.vsi_path(path, vsi, archive)
