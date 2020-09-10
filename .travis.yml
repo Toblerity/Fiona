@@ -92,10 +92,8 @@ addons:
     - sqlite3
 
 before_install:
-  - pip install -U pip
-  - pip install `cat requirements-dev.txt | grep setuptools==`
-  - pip install wheel
-  - "python -m pip install -r requirements-ci.txt"
+  - python -m pip install -U pip
+  - python -m pip install -r requirements-ci.txt
   - python -m pip wheel -r requirements-dev.txt
   - python -m pip install -r requirements-dev.txt
   - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$GDALINST/proj-$PROJVERSION/bin:$PATH
