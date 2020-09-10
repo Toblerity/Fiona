@@ -2,7 +2,7 @@ import xml.etree.ElementTree as ET
 import logging
 
 # TODO with fiona._loading.add_gdal_dll_directories():
-from fiona.ogrext import _get_metadata_item
+from fiona.ogrext import _get_metadata_item, DriverError
 from fiona.env import require_gdal_version
 from fiona._env import get_gdal_version_num, calc_gdal_version_num
 
@@ -39,24 +39,20 @@ def _parse_options(xml):
     options = {}
     if len(xml) > 0:
 
-        try:
-            root = ET.fromstring(xml)
-            for option in root.iter('Option'):
+        root = ET.fromstring(xml)
+        for option in root.iter('Option'):
 
-                option_name = option.attrib['name']
-                opt = {}
-                opt.update((k, v) for k, v in option.attrib.items() if not k == 'name')
+            option_name = option.attrib['name']
+            opt = {}
+            opt.update((k, v) for k, v in option.attrib.items() if not k == 'name')
 
-                values = []
-                for value in option.iter('Value'):
-                    values.append(value.text)
-                if len(values) > 0:
-                    opt['values'] = values
+            values = []
+            for value in option.iter('Value'):
+                values.append(value.text)
+            if len(values) > 0:
+                opt['values'] = values
 
-                options[option_name] = opt
-        except Exception as e:
-            log.warning("XML options parsing failed: {}: {}".format(str(e), xml))
-            return None
+            options[option_name] = opt
 
     return options
 
