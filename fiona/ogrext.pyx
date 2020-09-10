@@ -1461,7 +1461,6 @@ cdef class Iterator:
                 raise StopIteration
 
         # Set read cursor to next_item position
-
         if session.cursor_interrupted:
             if not self.fastindex:
                 log.warning("Sequential read of iterator was interrupted. Resetting iterator. "
