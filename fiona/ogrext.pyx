@@ -666,7 +666,7 @@ cdef class Session:
 
             key_c = OGR_Fld_GetNameRef(cogr_fielddefn)
             if key_c == NULL:
-                raise ValueError("Empty field name at index: %s" % i)
+                raise ValueError("Field name NULL at index: %s" % i)
             key_b = key_c
             key = key_b.decode(encoding)
 
