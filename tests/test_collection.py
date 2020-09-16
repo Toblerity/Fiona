@@ -944,14 +944,19 @@ def test_mask_polygon_triangle(tmpdir, driver, filename):
 def test_collection__empty_column_name(tmpdir):
     """Based on pull #955"""
     tmpfile = str(tmpdir.join("test_empty.geojson"))
-    with open(tmpfile, "w") as tmpf:
-        tmpf.write(
-            '{"type": "Feature", '
-            '"geometry": {"type": "Point", "coordinates": [ 8, 49 ] }, '
-            '"properties": { "": "", "name": "test" } }"'
-        )
+    with pytest.warns(UserWarning, match="Empty field name at index 0"):
+        with fiona.open(tmpfile,  "w", driver="GeoJSON", schema={
+                "geometry": "Point",
+                "properties": {"": "str", "name": "str"}
+        }) as tmp:
+            tmp.writerecords([{
+                "geometry": {"type": "Point", "coordinates": [ 8, 49 ] },
+                "properties": { "": "", "name": "test" }
+            }])
+
     with fiona.open(tmpfile) as tmp:
-        assert tmp.schema == {
-            "geometry": "Point",
-            "properties": {"": "str", "name": "str"}
-        }
+        with pytest.warns(UserWarning, match="Empty field name at index 0"):
+            assert tmp.schema == {
+                "geometry": "Point",
+                "properties": {"": "str", "name": "str"}
+            }
