@@ -960,3 +960,5 @@ def test_collection__empty_column_name(tmpdir):
                 "geometry": "Point",
                 "properties": {"": "str", "name": "str"}
             }
+        with pytest.warns(UserWarning, match="Empty field name at index 0"):
+            next(tmp)
