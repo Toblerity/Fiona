@@ -30,7 +30,7 @@ from fiona.env import Env
 from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
-    FionaDeprecationWarning)
+    FeatureWarning, FionaDeprecationWarning)
 from fiona.compat import OrderedDict
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -672,7 +672,7 @@ cdef class Session:
             key_b = key_c
             key = key_b.decode(encoding)
             if not key:
-                warnings.warn("Empty field name at index {}".format(i))
+                warnings.warn("Empty field name at index {}".format(i), FeatureWarning)
 
             if key in ignore_fields:
                 log.debug("By request, ignoring field %r", key)

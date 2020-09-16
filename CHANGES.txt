@@ -3,6 +3,11 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.18 (TBD)
+------------
+
+- Warn when feature fields named "" are found (#955).
+
 1.8.17 (2020-09-09)
 -------------------
 
