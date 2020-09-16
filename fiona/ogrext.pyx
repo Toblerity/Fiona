@@ -192,12 +192,14 @@ cdef class FeatureBuilder:
         for i in range(OGR_F_GetFieldCount(feature)):
             fdefn = OGR_F_GetFieldDefnRef(feature, i)
             if fdefn == NULL:
-                raise ValueError("Null feature definition")
+                raise ValueError("NULL field definition at index {}".format(i))
             key_c = OGR_Fld_GetNameRef(fdefn)
             if key_c == NULL:
-                raise ValueError("Null field name reference")
+                raise ValueError("NULL field name reference at index {}".format(i))
             key_b = key_c
             key = key_b.decode(encoding)
+            if not key:
+                warnings.warn("Empty field name at index {}".format(i))
 
             if key in ignore_fields:
                 continue
@@ -662,15 +664,15 @@ cdef class Session:
         for i from 0 <= i < n:
             cogr_fielddefn = OGR_FD_GetFieldDefn(cogr_featuredefn, i)
             if cogr_fielddefn == NULL:
-                raise ValueError("Null field definition")
+                raise ValueError("NULL field definition at index {}".format(i))
 
             key_c = OGR_Fld_GetNameRef(cogr_fielddefn)
+            if key_c == NULL:
+                raise ValueError("NULL field name reference at index {}".format(i))
             key_b = key_c
-
-            if not bool(key_b):
-                raise ValueError("Invalid field name ref: %s" % key)
-
             key = key_b.decode(encoding)
+            if not key:
+                warnings.warn("Empty field name at index {}".format(i))
 
             if key in ignore_fields:
                 log.debug("By request, ignoring field %r", key)
