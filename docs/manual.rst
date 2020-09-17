@@ -1014,7 +1014,7 @@ you want 'bar' to be the first field, you must use a list of property items
 
 or an ordered dict.
 
-.. sourcecode:: pycon
+.. sourcecode:: python
 
   from collections import OrderedDict
 
