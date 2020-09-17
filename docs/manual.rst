@@ -1383,7 +1383,7 @@ in an instance of ZipMemoryFile.
 *New in 1.8.0*
 
 Fiona command line interface
-======
+============================
 
 Fiona comes with a command line interface called "fio". See the 
 `CLI Documentation <cli.html>`__ for detailed usage instructions.
