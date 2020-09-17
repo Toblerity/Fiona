@@ -1004,28 +1004,28 @@ a schema of ``{'properties': {'bar': 'int', 'foo': 'str'}}`` will produce
 a shapefile where the first field is 'foo' and the second field is 'bar'. If
 you want 'bar' to be the first field, you must use a list of property items
 
-.. code-block:: pycon
+.. code-block:: python
 
-  c = fiona.open(
-      '/tmp/file.shp', 
-      'w', 
-      schema={'properties': [('bar', 'int'), ('foo', 'str')], ...},
-      ... )
+    fiona.open(
+        "/tmp/file.shp",
+        "w",
+        schema={"properties": [("bar", "int"), ("foo", "str")]},
+        **kwargs
+    )
 
 or an ordered dict.
 
 .. code-block:: python
 
-  from collections import OrderedDict
+    from collections import OrderedDict
 
-  schema_props = OrderedDict([('bar', 'int'), ('foo', 'str')])
-
-  c = fiona.open(
-      '/tmp/file.shp', 
-      'w', 
-      schema={'properties': schema_props, ...},
-      ... )
-
+    schema_props = OrderedDict([("bar", "int"), ("foo", "str")])
+    fiona.open(
+        "/tmp/file.shp",
+        "w",
+        schema={"properties": schema_props},
+        **kwargs
+    )
 
 Coordinates and Geometry Types
 ------------------------------
