@@ -1,10 +1,14 @@
+from collections import OrderedDict
+
 import fiona
 from fiona.errors import SchemaError, UnsupportedGeometryTypeError, \
     DriverSupportError
 from fiona.schema import FIELD_TYPES, normalize_field_type
 import os
 import tempfile
-
+from .conftest import get_temp_filename
+from fiona.drvsupport import driver_mode_mingdal
+from fiona.env import GDALVersion
 import pytest
 
 from .conftest import requires_only_gdal1, requires_gdal2
@@ -222,4 +226,161 @@ def test_check_schema_driver_support_gpkg(tmpdir):
                         schema={
                             'geometry': 'LineString',
                             'properties': items}) as c:
+            pass
+
+
+@pytest.mark.parametrize('driver', ['GPKG', 'GeoJSON'])
+def test_geometry_only_schema_write(tmpdir, driver):
+    schema = {
+        "geometry": "Polygon",
+        # No properties defined here.
+    }
+
+    record = {'geometry': {'type': 'Polygon', 'coordinates': [[(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]]}}
+
+    path = str(tmpdir.join(get_temp_filename(driver)))
+
+    with fiona.open(path,
+                    mode='w',
+                    driver=driver,
+                    schema=schema) as c:
+        c.write(record)
+
+    with fiona.open(path,
+                    mode='r',
+                    driver=driver) as c:
+        data = [f for f in c]
+        assert len(data) == 1
+        assert len(data[0].get('properties', {})) == 0
+        assert data[0]['geometry'] == record['geometry']
+
+
+@pytest.mark.parametrize('driver', ['GPKG', 'GeoJSON'])
+def test_geometry_only_schema_update(tmpdir, driver):
+
+    # Guard unsupported drivers
+    if driver in driver_mode_mingdal['a'] and GDALVersion.runtime() < GDALVersion(
+            *driver_mode_mingdal['a'][driver][:2]):
+        return
+
+    schema = {
+        "geometry": "Polygon",
+        # No properties defined here.
+    }
+
+    record1 = {
+        'geometry': {'type': 'Polygon', 'coordinates': [[(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]]}}
+    record2 = {
+        'geometry': {'type': 'Polygon', 'coordinates': [[(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (2.0, 0.0), (0.0, 0.0)]]}}
+
+    path = str(tmpdir.join(get_temp_filename(driver)))
+
+    # Create file
+    with fiona.open(path,
+                    mode='w',
+                    driver=driver,
+                    schema=schema) as c:
+        c.write(record1)
+
+    # Append record
+    with fiona.open(path,
+                    mode='a',
+                    driver=driver) as c:
+        c.write(record2)
+
+    with fiona.open(path,
+                    mode='r',
+                    driver=driver) as c:
+        data = [f for f in c]
+        assert len(data) == 2
+
+        for f in data:
+            assert len(f.get('properties', {})) == 0
+        assert data[0]['geometry'] == record1['geometry']
+        assert data[1]['geometry'] == record2['geometry']
+
+
+@pytest.mark.parametrize('driver', ['GPKG', 'GeoJSON'])
+def test_property_only_schema_write(tmpdir, driver):
+
+    schema = {
+        # No geometry defined here.
+        "properties": {'prop1': 'str'}
+    }
+
+    record1 = {'properties': {'prop1': 'one'}}
+
+    path = str(tmpdir.join(get_temp_filename(driver)))
+
+    with fiona.open(path,
+                    mode='w',
+                    driver=driver,
+                    schema=schema) as c:
+        c.write(record1)
+
+    with fiona.open(path,
+                    mode='r',
+                    driver=driver) as c:
+        data = [f for f in c]
+        assert len(data) == 1
+        assert len(data[0].get('properties', {})) == 1
+        assert 'prop1' in data[0]['properties'] and data[0]['properties']['prop1'] == 'one'
+        for f in data:
+            assert 'geometry' not in f or f['geometry'] is None
+
+
+@pytest.mark.parametrize('driver', ['GPKG', 'GeoJSON'])
+def test_property_only_schema_update(tmpdir, driver):
+
+    # Guard unsupported drivers
+    if driver in driver_mode_mingdal['a'] and GDALVersion.runtime() < GDALVersion(
+            *driver_mode_mingdal['a'][driver][:2]):
+        return
+
+    schema = {
+        # No geometry defined here.
+        "properties": {'prop1': 'str'}
+    }
+
+    record1 = {'properties': {'prop1': 'one'}}
+    record2 = {'properties': {'prop1': 'two'}}
+
+    path = str(tmpdir.join(get_temp_filename(driver)))
+
+    # Create file
+    with fiona.open(path,
+                    mode='w',
+                    driver=driver,
+                    schema=schema) as c:
+        c.write(record1)
+
+    # Append record
+    with fiona.open(path,
+                    mode='a',
+                    driver=driver) as c:
+        c.write(record2)
+
+    with fiona.open(path,
+                    mode='r',
+                    driver=driver) as c:
+        data = [f for f in c]
+        assert len(data) == 2
+        for f in data:
+            assert len(f.get('properties', {})) == 1
+            assert 'geometry' not in f or f['geometry'] is None
+        assert 'prop1' in data[0]['properties'] and data[0]['properties']['prop1'] == 'one'
+        assert 'prop1' in data[1]['properties'] and data[1]['properties']['prop1'] == 'two'
+
+
+def test_schema_default_fields_wrong_type(tmpdir):
+    """ Test for SchemaError if a default field is specified with a different type"""
+
+    name = str(tmpdir.join('test.gpx'))
+    schema = {'properties': OrderedDict([('ele', 'str'), ('time', 'datetime')]),
+              'geometry': 'Point'}
+
+    with pytest.raises(SchemaError):
+        with fiona.open(name, 'w',
+                        driver="GPX",
+                        schema=schema) as c:
             pass

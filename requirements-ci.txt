@@ -1,0 +1,6 @@
+coveralls
+# sphinx 3.x does not support python 2.7
+sphinx==3.0.2 ; python_version > '3.0'
+sphinx==1.8.5 ; python_version < '3.0'
+rstcheck==3.3.1
+

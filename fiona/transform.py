@@ -1,6 +1,8 @@
 """Coordinate and geometry warping and reprojection"""
 
-from fiona._transform import _transform, _transform_geom
+import fiona._loading
+with fiona._loading.add_gdal_dll_directories():
+    from fiona._transform import _transform, _transform_geom
 
 
 def transform(src_crs, dst_crs, xs, ys):

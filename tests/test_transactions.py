@@ -5,8 +5,10 @@ import logging
 from random import uniform, randint
 from collections import defaultdict
 import pytest
+from tests.conftest import requires_gdal2
 
 has_gpkg = "GPKG" in fiona.supported_drivers.keys()
+
 
 def create_records(count):
     for n in range(count):
@@ -15,6 +17,7 @@ def create_records(count):
             "properties": {"value": randint(0, 1000)}
         }
         yield record
+
 
 class DebugHandler(logging.Handler):
     def __init__(self, pattern):
@@ -30,6 +33,7 @@ class DebugHandler(logging.Handler):
 log = logging.getLogger()
 
 
+@requires_gdal2
 @pytest.mark.skipif(not has_gpkg, reason="Requires geopackage driver")
 class TestTransaction:
     def setup_method(self):
