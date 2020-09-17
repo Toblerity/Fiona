@@ -107,6 +107,10 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except NU
         CSLDestroy(creation_opts)
 
 
+cdef bint check_capability_transaction(void *cogr_ds):
+    return GDALDatasetTestCapability(cogr_ds, ODsCTransactions)
+
+
 cdef OGRErr gdal_start_transaction(void* cogr_ds, int force):
     return GDALDatasetStartTransaction(cogr_ds, force)
 
@@ -144,3 +148,18 @@ cdef void osr_set_traditional_axis_mapping_strategy(OGRSpatialReferenceH hSrs):
 
 cdef void set_proj_search_path(object path):
     os.environ["PROJ_LIB"] = path
+
+
+cdef void get_proj_version(int* major, int* minor, int* patch):
+    cdef int val = -1
+    major[0] = val
+    minor[0] = val
+    patch[0] = val
+
+
+cdef void set_field_datetime(void *cogr_feature, int iField, int nYear, int nMonth, int nDay, int nHour, int nMinute, float fSecond, int nTZFlag):
+    OGR_F_SetFieldDateTimeEx(cogr_feature, iField, nYear, nMonth, nDay, nHour, nMinute, fSecond, nTZFlag)
+
+
+cdef int get_field_as_datetime(void *cogr_feature, int iField, int* nYear, int* nMonth, int* nDay, int* nHour, int* nMinute, float* fSecond, int* nTZFlag):
+    return OGR_F_GetFieldAsDateTimeEx(cogr_feature, iField, nYear, nMonth, nDay, nHour, nMinute, fSecond, nTZFlag)

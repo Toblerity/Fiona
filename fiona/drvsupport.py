@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-
 from fiona.env import Env
+from fiona._env import get_gdal_version_num, calc_gdal_version_num
 
 
 # Here is the list of available drivers as (name, modes) tuples. Currently,
 # we only expose the defaults (excepting FileGDB). We also don't expose
 # the CSV or GeoJSON drivers. Use Python's csv and json modules instead.
 # Might still exclude a few more of these after making a pass through the
-# entries for each at http://www.gdal.org/ogr/ogr_formats.html to screen
+# entries for each at https://gdal.org/drivers/vector/index.html to screen
 # out the multi-layer formats.
 
 supported_drivers = dict([
@@ -25,10 +25,10 @@ supported_drivers = dict([
     # Arc/Info Generate 	ARCGEN 	No 	No 	Yes
     ("ARCGEN", "r"),
     # Atlas BNA 	BNA 	Yes 	No 	Yes
-    ("BNA", "raw"),
+    ("BNA", "rw"),
     # AutoCAD DWG 	DWG 	No 	No 	No
     # AutoCAD DXF 	DXF 	Yes 	No 	Yes
-    ("DXF", "raw"),
+    ("DXF", "rw"),
     # Comma Separated Value (.csv) 	CSV 	Yes 	No 	Yes
     ("CSV", "raw"),
     # CouchDB / GeoCouch 	CouchDB 	Yes 	Yes 	No, needs libcurl
@@ -41,6 +41,7 @@ supported_drivers = dict([
     # multi-layer
     ("FileGDB", "raw"),
     ("OpenFileGDB", "r"),
+    ("FlatGeobuf", "r"),
     # ESRI Personal GeoDatabase 	PGeo 	No 	Yes 	No, needs ODBC library
     # ESRI ArcSDE 	SDE 	No 	Yes 	No, needs ESRI SDE
     # ESRIJSON 	ESRIJSON 	No 	Yes 	Yes 
@@ -49,7 +50,7 @@ supported_drivers = dict([
     ("ESRI Shapefile", "raw"),
     # FMEObjects Gateway 	FMEObjects Gateway 	No 	Yes 	No, needs FME
     # GeoJSON 	GeoJSON 	Yes 	Yes 	Yes
-    ("GeoJSON", "rw"),
+    ("GeoJSON", "raw"),
     # GeoJSONSeq 	GeoJSON sequences 	Yes 	Yes 	Yes 
     ("GeoJSONSeq", "rw"),
     # Géoconcept Export 	Geoconcept 	Yes 	Yes 	Yes
@@ -57,19 +58,21 @@ supported_drivers = dict([
     #   ("Geoconcept", "raw"),
     # Geomedia .mdb 	Geomedia 	No 	No 	No, needs ODBC library
     # GeoPackage	GPKG	Yes	Yes	No, needs libsqlite3
-    ("GPKG", "rw"),
+    ("GPKG", "raw"),
     # GeoRSS 	GeoRSS 	Yes 	Yes 	Yes (read support needs libexpat)
     # Google Fusion Tables 	GFT 	Yes 	Yes 	No, needs libcurl
     # GML 	GML 	Yes 	Yes 	Yes (read support needs Xerces or libexpat)
-    ("GML", "raw"),
+    ("GML", "rw"),
     # GMT 	GMT 	Yes 	Yes 	Yes
-    ("GMT", "raw"),
+    ("GMT", "rw"),
+    # GMT renamed to OGR_GMT for GDAL 2.x
+    ("OGR_GMT", "rw"),
     # GPSBabel 	GPSBabel 	Yes 	Yes 	Yes (needs GPSBabel and GPX driver)
     # GPX 	GPX 	Yes 	Yes 	Yes (read support needs libexpat)
-    ("GPX", "raw"),
+    ("GPX", "rw"),
     # GRASS 	GRASS 	No 	Yes 	No, needs libgrass
     # GPSTrackMaker (.gtm, .gtz) 	GPSTrackMaker 	Yes 	Yes 	Yes
-    ("GPSTrackMaker", "raw"),
+    ("GPSTrackMaker", "rw"),
     # Hydrographic Transfer Format 	HTF 	No 	Yes 	Yes
     # TODO: Fiona is not ready for multi-layer formats: ("HTF", "r"),
     # Idrisi Vector (.VCT) 	Idrisi 	No 	Yes 	Yes
@@ -96,9 +99,11 @@ supported_drivers = dict([
     # multi-layer
     #   ("OpenAir", "r"),
     # PCI Geomatics Database File 	PCIDSK 	No 	No 	Yes, using internal PCIDSK SDK (from GDAL 1.7.0)
-    ("PCIDSK", "r"),
+    ("PCIDSK", "rw"),
     # PDS 	PDS 	No 	Yes 	Yes
     ("PDS", "r"),
+    # PDS renamed to OGR_PDS for GDAL 2.x
+    ("OGR_PDS", "r"),
     # PGDump 	PostgreSQL SQL dump 	Yes 	Yes 	Yes
     # PostgreSQL/PostGIS 	PostgreSQL/PostGIS 	Yes 	Yes 	No, needs PostgreSQL client library (libpq)
     # EPIInfo .REC 	REC 	No 	No 	Yes
@@ -141,9 +146,40 @@ supported_drivers = dict([
 ])
 
 
+# Minimal gdal version for different modes
+driver_mode_mingdal = {
+
+    'r': {'GPKG': (1, 11, 0),
+          'GeoJSONSeq': (2, 4, 0)},
+
+    'w': {'GPKG': (1, 11, 0),
+          'PCIDSK': (2, 0, 0),
+          'GeoJSONSeq': (2, 4, 0)},
+
+    'a': {'GPKG': (1, 11, 0),
+          'GeoJSON': (2, 1, 0),
+          'MapInfo File': (2, 0, 0)}
+}
+
+
+def _driver_supports_mode(driver, mode):
+    """ Returns True if driver supports mode, False otherwise
+
+        Note: this function is not part of Fiona's public API.
+    """
+    if driver not in supported_drivers:
+        return False
+    if mode not in supported_drivers[driver]:
+        return False
+    if driver in driver_mode_mingdal[mode]:
+        if get_gdal_version_num() < calc_gdal_version_num(*driver_mode_mingdal[mode][driver]):
+            return False
+    return True
+
+
 # Removes drivers in the supported_drivers dictionary that the
 # machine's installation of OGR due to how it is compiled.
-# OGR may not have optional libararies compiled or installed.
+# OGR may not have optional libraries compiled or installed.
 def _filter_supported_drivers():
     global supported_drivers
 
@@ -156,4 +192,155 @@ def _filter_supported_drivers():
 
     supported_drivers = supported_drivers_copy
 
+
 _filter_supported_drivers()
+
+# driver_converts_to_str contains field type, driver combinations that are silently converted to string
+# None: field type is always converted to str
+# (2, 0, 0): starting from gdal 2.0 field type is not converted to string
+_driver_converts_to_str = {
+    'time': {
+        'CSV': None,
+        'PCIDSK': None,
+        'GeoJSON': (2, 0, 0),
+        'GPKG': None,
+        'GMT': None,
+        'OGR_GMT': None
+    },
+    'datetime': {
+        'CSV': None,
+        'PCIDSK': None,
+        'GeoJSON': (2, 0, 0),
+        'GML': (3, 1, 0),
+    },
+    'date': {
+        'CSV': None,
+        'PCIDSK': None,
+        'GeoJSON': (2, 0, 0),
+        'GMT': None,
+        'OGR_GMT': None,
+        'GML': (3, 1, 0),
+    }
+}
+
+
+def _driver_converts_field_type_silently_to_str(driver, field_type):
+    """ Returns True if the driver converts the field_type silently to str, False otherwise
+
+        Note: this function is not part of Fiona's public API.
+    """
+    if field_type in _driver_converts_to_str and driver in _driver_converts_to_str[field_type]:
+        if _driver_converts_to_str[field_type][driver] is None:
+            return True
+        elif get_gdal_version_num() < calc_gdal_version_num(*_driver_converts_to_str[field_type][driver]):
+            return True
+    return False
+
+
+# None: field type is never supported, (2, 0, 0) field type is supported starting with gdal 2.0
+_driver_field_type_unsupported = {
+    'time': {
+        'ESRI Shapefile': None,
+        'GPKG': (2, 0, 0),
+        'GPX': None,
+        'GPSTrackMaker': None,
+        'GML': (3, 1, 0),
+        'DGN': None,
+        'BNA': None,
+        'DXF': None,
+        'PCIDSK': (2, 1, 0),
+        'FileGDB': None
+    },
+    'datetime': {
+        'ESRI Shapefile': None,
+        'GPKG': (2, 0, 0),
+        'DGN': None,
+        'BNA': None,
+        'DXF': None,
+        'PCIDSK': (2, 1, 0)
+    },
+    'date': {
+        'GPX': None,
+        'GPSTrackMaker': None,
+        'DGN': None,
+        'BNA': None,
+        'DXF': None,
+        'PCIDSK': (2, 1, 0),
+        'FileGDB': None
+    }
+}
+
+
+def _driver_supports_field(driver, field_type):
+    """ Returns True if the driver supports the field_type, False otherwise
+
+        Note: this function is not part of Fiona's public API.
+    """
+    if field_type in _driver_field_type_unsupported and driver in _driver_field_type_unsupported[field_type]:
+        if _driver_field_type_unsupported[field_type][driver] is None:
+            return False
+        elif get_gdal_version_num() < calc_gdal_version_num(*_driver_field_type_unsupported[field_type][driver]):
+            return False
+
+    return True
+
+
+# None: field type never supports timezones, (2, 0, 0): field type supports timezones with GDAL 2.0.0
+_drivers_not_supporting_timezones = {
+    'datetime': {
+        'MapInfo File': None,
+        'GPKG': (3, 1, 0),
+        'GPSTrackMaker': (3, 1, 1),
+        'FileGDB': None
+    },
+    'time': {
+        'MapInfo File': None,
+        'GPKG': None,
+        'GPSTrackMaker': None,
+        'GeoJSON': None,
+        'GeoJSONSeq': None,
+        'GML': None,
+        'CSV': None,
+        'GMT': None,
+        'OGR_GMT': None
+    }
+}
+
+
+def _driver_supports_timezones(driver, field_type):
+    """ Returns True if the driver supports timezones for field_type, False otherwise
+
+        Note: this function is not part of Fiona's public API.
+    """
+    if field_type in _drivers_not_supporting_timezones and driver in _drivers_not_supporting_timezones[field_type]:
+        if _drivers_not_supporting_timezones[field_type][driver] is None:
+            return False
+        elif get_gdal_version_num() < calc_gdal_version_num(*_drivers_not_supporting_timezones[field_type][driver]):
+            return False
+    return True
+
+
+# None: driver never supports timezones, (2, 0, 0): driver supports timezones with GDAL 2.0.0
+_drivers_not_supporting_milliseconds = {
+    'GPSTrackMaker': None,
+    'FileGDB': None
+}
+
+
+def _driver_supports_milliseconds(driver):
+    """ Returns True if the driver supports milliseconds, False otherwise
+
+        Note: this function is not part of Fiona's public API.
+    """
+    # GDAL 2.0 introduced support for milliseconds
+    if get_gdal_version_num() < calc_gdal_version_num(2, 0, 0):
+        return False
+
+    if driver in _drivers_not_supporting_milliseconds:
+        if _drivers_not_supporting_milliseconds[driver] is None:
+            return False
+        elif calc_gdal_version_num(*_drivers_not_supporting_milliseconds[driver]) < get_gdal_version_num():
+            return False
+
+    return True
+

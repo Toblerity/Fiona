@@ -1,9 +1,7 @@
 """Tests of the transform submodule"""
 
 import math
-
 import pytest
-
 from fiona import transform
 
 from .conftest import requires_gdal_lt_3
@@ -91,3 +89,27 @@ def test_transform_geom_null_dest():
             precision=2,
         )
         assert transformed_geom is None
+
+
+@pytest.mark.parametrize("crs", ["epsg:4326",
+                                 "EPSG:4326",
+                                 "WGS84",
+                                 {'init': 'epsg:4326'},
+                                 {'proj': 'longlat', 'datum': 'WGS84', 'no_defs': True},
+                                 "OGC:CRS84"])
+def test_axis_ordering(crs):
+    """ Test if transform uses traditional_axis_mapping """
+
+    expected = (-8427998.647958742, 4587905.27136252)
+    t1 = transform.transform(crs, "epsg:3857", [-75.71], [38.06])
+    assert (t1[0][0], t1[1][0]) == pytest.approx(expected)
+    geom = {"type": "Point", "coordinates": [-75.71, 38.06]}
+    g1 = transform.transform_geom(crs, "epsg:3857", geom, precision=3)
+    assert g1["coordinates"] == pytest.approx(expected)
+
+    rev_expected = (-75.71, 38.06)
+    t2 = transform.transform("epsg:3857", crs, [-8427998.647958742], [4587905.27136252])
+    assert (t2[0][0], t2[1][0]) == pytest.approx(rev_expected)
+    geom = {"type": "Point", "coordinates": [-8427998.647958742, 4587905.27136252]}
+    g2 = transform.transform_geom("epsg:3857", crs, geom, precision=3)
+    assert g2["coordinates"] == pytest.approx(rev_expected)

@@ -1,0 +1,3 @@
+[run]
+plugins = Cython.Coverage
+omit = *pxd

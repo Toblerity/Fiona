@@ -47,6 +47,10 @@ GDALOPTS="  --with-ogr \
             --without-mrf \
             --with-webp=no"
 
+if [ -d "$FILEGDB" ]; then
+  GDALOPTS="$GDALOPTS --with-fgdb=$FILEGDB"
+fi
+
 # Create build dir if not exists
 if [ ! -d "$GDALBUILD" ]; then
   mkdir $GDALBUILD;
@@ -63,23 +67,26 @@ if [ "$GDALVERSION" = "master" ]; then
     cd $GDALBUILD
     git clone --depth 1 https://github.com/OSGeo/gdal gdal-$GDALVERSION
     cd gdal-$GDALVERSION/gdal
+    echo $PROJVERSION > newproj.txt
     git rev-parse HEAD > newrev.txt
     BUILD=no
     # Only build if nothing cached or if the GDAL revision changed
     if test ! -f $GDALINST/gdal-$GDALVERSION/rev.txt; then
         BUILD=yes
-    elif ! diff newrev.txt $GDALINST/gdal-$GDALVERSION/rev.txt >/dev/null; then
+    elif ( ! diff newrev.txt $GDALINST/gdal-$GDALVERSION/rev.txt >/dev/null ) || ( ! diff newproj.txt $GDALINST/gdal-$GDALVERSION/newproj.txt >/dev/null ); then
         BUILD=yes
     fi
     if test "$BUILD" = "yes"; then
         mkdir -p $GDALINST/gdal-$GDALVERSION
         cp newrev.txt $GDALINST/gdal-$GDALVERSION/rev.txt
+        cp newproj.txt $GDALINST/gdal-$GDALVERSION/newproj.txt
         ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT
-        make -j 4
+        make
         make install
     fi
 
 else
+
     case "$GDALVERSION" in
         3*)
             PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
@@ -102,6 +109,9 @@ else
         1*)
             PROJOPT="--with-static-proj4=$GDALINST/gdal-$GDALVERSION"
             ;;
+        *)
+            PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
+            ;;
     esac
 
     if [ ! -d "$GDALINST/gdal-$GDALVERSION/share/gdal" ]; then
@@ -111,7 +121,7 @@ else
         tar -xzf gdal-$GDALVERSION.tar.gz
         cd gdal-$gdalver
         ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT
-        make -j 4
+        make
         make install
     fi
 fi

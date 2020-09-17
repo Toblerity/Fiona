@@ -241,8 +241,8 @@ cdef get_last_error_msg():
     Returns
     -------
     An error message or empty string
-    """
 
+    """
     err_msg = CPLGetLastErrorMsg()
 
     if err_msg != NULL:
@@ -253,7 +253,7 @@ cdef get_last_error_msg():
         msg = msg.replace("\n", " ")
     else:
         msg = ""
-    
+
     return msg
 
 

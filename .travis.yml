@@ -1,6 +1,6 @@
-dist: xenial
-
 language: python
+dist: xenial
+# default gcc of bionic does not compile gdal 1.x
 
 cache:
   directories:
@@ -15,6 +15,11 @@ env:
     - GDALBUILD=$HOME/gdalbuild
     - PROJINST=$HOME/gdalinstall
     - PROJBUILD=$HOME/projbuild
+    - FILEGDB=$HOME/gdalinstall/filegdb
+    - CYTHON_COVERAGE="true"
+    - MAKEFLAGS="-j 2"
+    - CXXFLAGS="-O0"
+    - CFLAGS="-O0"
 
 jobs:
   include:
@@ -38,8 +43,11 @@ jobs:
       env: GDALVERSION="3.0.1" PROJVERSION="6.1.1"
     - python: "3.8"
       env: GDALVERSION="master" PROJVERSION="6.1.1"
+
   allow_failures:
-    - env: GDALVERSION="master" PROJVERSION="6.1.1"
+    - env:
+        GDALVERSION="master"
+        PROJVERSION="7.0.1"
 
 addons:
   apt:
@@ -52,9 +60,13 @@ addons:
 
 before_install:
   - python -m pip install -U pip
+  - python -m pip install -r requirements-ci.txt
+  - python -m pip wheel -r requirements-dev.txt
+  - python -m pip install -r requirements-dev.txt
   - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$GDALINST/proj-$PROJVERSION/bin:$PATH
   - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$GDALINST/proj-$PROJVERSION/lib:$LD_LIBRARY_PATH
   - . ./scripts/travis_proj_install.sh
+  - . ./scripts/travis_filegdb_install.sh
   - . ./scripts/travis_gdal_install.sh
   - export GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal
   - export PROJ_LIB=$GDALINST/gdal-$GDALVERSION/share/proj
@@ -68,9 +80,17 @@ install:
   - python -m pip freeze
   - fio --version
   - fio --gdal-version
+  - python -c "import fiona; fiona.show_versions()"
+  - python scripts/check_deprecated.py
 
 script:
   - python -m pytest -m "not wheel" --cov fiona --cov-report term-missing
+
+  # Check documentation
+  - rstcheck -r --ignore-directives automodule --ignore-substitutions version,release,today .
+
+after_script:
+  - python setup.py clean
 
 after_success:
   - coveralls || echo "!! intermittent coveralls failure"
