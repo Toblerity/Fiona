@@ -306,7 +306,7 @@ Closing Files
 A :py:class:`~fiona.collection.Collection` involves external resources. There's
 no guarantee that these will be released unless you explicitly
 :py:meth:`~fiona.collection.Collection.close` the object or use
-a :keyword:`with` statement. When a :py:class:`~fiona.collection.Collection`
+a :py:keyword:`with` statement. When a :py:class:`~fiona.collection.Collection`
 is a context guard, it is closed no matter what happens within the block.
 
 .. sourcecode:: pycon
@@ -1155,7 +1155,7 @@ indexes.
     3
 
 To filter features by property values, use Python's builtin :py:func:`filter` and
-:keyword:`lambda` or your own filter function that takes a single feature
+:py:keyword:`lambda` or your own filter function that takes a single feature
 record and returns ``True`` or ``False``.
 
 .. sourcecode:: pycon
