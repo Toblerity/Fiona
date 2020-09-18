@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from fiona.env import Env
-from fiona._env import get_gdal_version_num, calc_gdal_version_num
+from fiona._env import get_gdal_version_tuple
 
+
+_GDAL_VERSION = get_gdal_version_tuple()
 
 # Here is the list of available drivers as (name, modes) tuples. Currently,
 # we only expose the defaults (excepting FileGDB). We also don't expose
@@ -172,7 +174,7 @@ def _driver_supports_mode(driver, mode):
     if mode not in supported_drivers[driver]:
         return False
     if driver in driver_mode_mingdal[mode]:
-        if get_gdal_version_num() < calc_gdal_version_num(*driver_mode_mingdal[mode][driver]):
+        if _GDAL_VERSION < driver_mode_mingdal[mode][driver]:
             return False
     return True
 
@@ -232,7 +234,7 @@ def _driver_converts_field_type_silently_to_str(driver, field_type):
     if field_type in _driver_converts_to_str and driver in _driver_converts_to_str[field_type]:
         if _driver_converts_to_str[field_type][driver] is None:
             return True
-        elif get_gdal_version_num() < calc_gdal_version_num(*_driver_converts_to_str[field_type][driver]):
+        elif _GDAL_VERSION < _driver_converts_to_str[field_type][driver]:
             return True
     return False
 
@@ -279,7 +281,7 @@ def _driver_supports_field(driver, field_type):
     if field_type in _driver_field_type_unsupported and driver in _driver_field_type_unsupported[field_type]:
         if _driver_field_type_unsupported[field_type][driver] is None:
             return False
-        elif get_gdal_version_num() < calc_gdal_version_num(*_driver_field_type_unsupported[field_type][driver]):
+        elif _GDAL_VERSION < _driver_field_type_unsupported[field_type][driver]:
             return False
 
     return True
@@ -315,7 +317,7 @@ def _driver_supports_timezones(driver, field_type):
     if field_type in _drivers_not_supporting_timezones and driver in _drivers_not_supporting_timezones[field_type]:
         if _drivers_not_supporting_timezones[field_type][driver] is None:
             return False
-        elif get_gdal_version_num() < calc_gdal_version_num(*_drivers_not_supporting_timezones[field_type][driver]):
+        elif _GDAL_VERSION < _drivers_not_supporting_timezones[field_type][driver]:
             return False
     return True
 
@@ -333,13 +335,13 @@ def _driver_supports_milliseconds(driver):
         Note: this function is not part of Fiona's public API.
     """
     # GDAL 2.0 introduced support for milliseconds
-    if get_gdal_version_num() < calc_gdal_version_num(2, 0, 0):
+    if _GDAL_VERSION.major < 2:
         return False
 
     if driver in _drivers_not_supporting_milliseconds:
         if _drivers_not_supporting_milliseconds[driver] is None:
             return False
-        elif calc_gdal_version_num(*_drivers_not_supporting_milliseconds[driver]) < get_gdal_version_num():
+        elif _drivers_not_supporting_milliseconds[driver] < _GDAL_VERSION:
             return False
 
     return True
