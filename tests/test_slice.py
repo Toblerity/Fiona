@@ -70,12 +70,17 @@ def slice_dataset_path(request):
     schema = get_schema(driver)
     records = get_records(driver, range(min_id, max_id + 1))
 
+    create_kwargs = {}
+    if driver == 'FlatGeobuf':
+        create_kwargs['SPATIAL_INDEX'] = False
+
     tmpdir = tempfile.mkdtemp()
     path = os.path.join(tmpdir, get_temp_filename(driver))
 
     with fiona.open(path, 'w',
                     driver=driver,
-                    schema=schema) as c:
+                    schema=schema,
+                    **create_kwargs) as c:
         c.writerecords(records)
     yield path
     shutil.rmtree(tmpdir)
