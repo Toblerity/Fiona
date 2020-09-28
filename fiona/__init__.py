@@ -338,13 +338,10 @@ def listdir(path):
     list
         A list of filename strings.
     """
-
     if isinstance(path, Path):
         path = str(path)
-
     if not isinstance(path, string_types):
         raise TypeError("invalid path: %r" % path)
-
     pobj = parse_path(path)
     return _listdir(vsi_path(pobj))
 
@@ -370,7 +367,7 @@ def listlayers(fp, vfs=None):
     if hasattr(fp, 'read'):
 
         with MemoryFile(fp.read()) as memfile:
-            return  _listlayers(memfile.name)
+            return _listlayers(memfile.name)
 
     else:
 
