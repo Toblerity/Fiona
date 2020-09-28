@@ -1,10 +1,9 @@
 import xml.etree.ElementTree as ET
 import logging
-
-# TODO with fiona._loading.add_gdal_dll_directories():
-from fiona.ogrext import _get_metadata_item, DriverError
-from fiona.env import require_gdal_version
-from fiona._env import get_gdal_version_num, calc_gdal_version_num
+import fiona
+with fiona._loading.add_gdal_dll_directories():
+    from fiona.ogrext import _get_metadata_item
+    from fiona.env import require_gdal_version
 
 log = logging.getLogger(__name__)
 
