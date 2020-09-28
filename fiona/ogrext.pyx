@@ -10,7 +10,7 @@ import logging
 import os
 import warnings
 import math
-import uuid
+from uuid import uuid4
 from collections import namedtuple
 
 from six import integer_types, string_types, text_type
@@ -23,14 +23,15 @@ from fiona._geometry cimport (
 from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile, get_last_error_msg
 
 import fiona
-from fiona._env import GDALVersion, get_gdal_version_num, get_gdal_version_tuple
+from fiona._env import get_gdal_version_num, calc_gdal_version_num, get_gdal_version_tuple
 from fiona._err import cpl_errs, FionaNullPointerError, CPLE_BaseError, CPLE_OpenFailedError
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
+from fiona.env import Env
 from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
-    FionaDeprecationWarning)
+    FeatureWarning, FionaDeprecationWarning)
 from fiona.compat import OrderedDict, strencode
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -42,6 +43,7 @@ from fiona._shim cimport is_field_null, osr_get_name, osr_set_traditional_axis_m
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
 from cpython cimport PyBytes_FromStringAndSize, PyBytes_AsString
+from fiona.drvsupport import _driver_supports_timezones
 
 
 cdef extern from "ogr_api.h" nogil:
@@ -119,7 +121,16 @@ def _bounds(geometry):
 cdef int GDAL_VERSION_NUM = get_gdal_version_num()
 
 
+class TZ(datetime.tzinfo):
+
+    def __init__(self, minutes):
+        self.minutes = minutes
+
+    def utcoffset(self, dt):
+        return datetime.timedelta(minutes=self.minutes)
+
 # Feature extension classes and functions follow.
+
 
 cdef class FeatureBuilder:
     """Build Fiona features from OGR feature pointers.
@@ -153,18 +164,19 @@ cdef class FeatureBuilder:
         """
         cdef void *fdefn = NULL
         cdef int i
-        cdef int y = 0
-        cdef int m = 0
-        cdef int d = 0
-        cdef int hh = 0
-        cdef int mm = 0
-        cdef int ss = 0
-        cdef int tz = 0
         cdef unsigned char *data = NULL
         cdef int l
         cdef int retval
         cdef int fieldsubtype
         cdef const char *key_c = NULL
+        # Parameters for get_field_as_datetime
+        cdef int y = 0
+        cdef int m = 0
+        cdef int d = 0
+        cdef int hh = 0
+        cdef int mm = 0
+        cdef float fss = 0.0
+        cdef int tz = 0
 
         # Skeleton of the feature to be returned.
         fid = OGR_F_GetFID(feature)
@@ -181,12 +193,14 @@ cdef class FeatureBuilder:
         for i in range(OGR_F_GetFieldCount(feature)):
             fdefn = OGR_F_GetFieldDefnRef(feature, i)
             if fdefn == NULL:
-                raise ValueError("Null feature definition")
+                raise ValueError("NULL field definition at index {}".format(i))
             key_c = OGR_Fld_GetNameRef(fdefn)
             if key_c == NULL:
-                raise ValueError("Null field name reference")
+                raise ValueError("NULL field name reference at index {}".format(i))
             key_b = key_c
             key = key_b.decode(encoding)
+            if not key:
+                warnings.warn("Empty field name at index {}".format(i))
 
             if key in ignore_fields:
                 continue
@@ -241,16 +255,25 @@ cdef class FeatureBuilder:
                 props[key] = val
 
             elif fieldtype in (FionaDateType, FionaTimeType, FionaDateTimeType):
-                retval = OGR_F_GetFieldAsDateTime(
-                    feature, i, &y, &m, &d, &hh, &mm, &ss, &tz)
+                retval = get_field_as_datetime(feature, i, &y, &m, &d, &hh, &mm, &fss, &tz)
+                ms, ss = math.modf(fss)
+                ss = int(ss)
+                ms = int(round(ms * 10**6))
+
+                # OGR_F_GetFieldAsDateTimeEx: (0=unknown, 1=localtime, 100=GMT, see data model for details)
+                # CPLParseRFC822DateTime: (0=unknown, 100=GMT, 101=GMT+15minute, 99=GMT-15minute), or NULL
+                tzinfo = None
+                if tz > 1:
+                    tz_minutes = (tz - 100) * 15
+                    tzinfo = TZ(tz_minutes)
+
                 try:
                     if fieldtype is FionaDateType:
                         props[key] = datetime.date(y, m, d).isoformat()
                     elif fieldtype is FionaTimeType:
-                        props[key] = datetime.time(hh, mm, ss).isoformat()
+                        props[key] = datetime.time(hh, mm, ss, ms, tzinfo).isoformat()
                     else:
-                        props[key] = datetime.datetime(
-                            y, m, d, hh, mm, ss).isoformat()
+                        props[key] = datetime.datetime(y, m, d, hh, mm, ss, ms, tzinfo).isoformat()
                 except ValueError as err:
                     log.exception(err)
                     props[key] = None
@@ -328,7 +351,7 @@ cdef class OGRFeatureBuilder:
         if feature['geometry'] is not None:
             cogr_geometry = OGRGeomBuilder().build(
                                 feature['geometry'])
-        exc_wrap_int(OGR_F_SetGeometryDirectly(cogr_feature, cogr_geometry))
+            exc_wrap_int(OGR_F_SetGeometryDirectly(cogr_feature, cogr_geometry))
 
         # OGR_F_SetFieldString takes encoded strings ('bytes' in Python 3).
         encoding = session._get_internal_encoding()
@@ -357,32 +380,62 @@ cdef class OGRFeatureBuilder:
 
             elif isinstance(value, float):
                 OGR_F_SetFieldDouble(cogr_feature, i, value)
-            elif (isinstance(value, string_types)
-            and schema_type in ['date', 'time', 'datetime']):
-                if schema_type == 'date':
-                    y, m, d, hh, mm, ss, ff = parse_date(value)
-                elif schema_type == 'time':
-                    y, m, d, hh, mm, ss, ff = parse_time(value)
+            elif schema_type in ['date', 'time', 'datetime'] and value is not None:
+                if isinstance(value, string_types):
+                    if schema_type == 'date':
+                        y, m, d, hh, mm, ss, ms, tz = parse_date(value)
+                    elif schema_type == 'time':
+                        y, m, d, hh, mm, ss, ms, tz = parse_time(value)
+                    else:
+                        y, m, d, hh, mm, ss, ms, tz = parse_datetime(value)
+                elif (isinstance(value, datetime.date) and schema_type == 'date'):
+                        y, m, d = value.year, value.month, value.day
+                        hh = mm = ss = ms = 0
+                        tz = None
+                elif (isinstance(value, datetime.datetime) and schema_type == 'datetime'):
+                        y, m, d = value.year, value.month, value.day
+                        hh, mm, ss, ms = value.hour, value.minute, value.second, value.microsecond
+                        if value.utcoffset() is None:
+                            tz = None
+                        else:
+                            tz = value.utcoffset().total_seconds() / 60
+                elif (isinstance(value, datetime.time) and schema_type == 'time'):
+                        y = m = d = 0
+                        hh, mm, ss, ms = value.hour, value.minute, value.second, value.microsecond
+                        if value.utcoffset() is None:
+                            tz = None
+                        else:
+                            tz = value.utcoffset().total_seconds() / 60
+
+                # Convert to UTC if driver does not support timezones
+                if tz is not None and not _driver_supports_timezones(collection.driver, schema_type):
+
+                    if schema_type == 'datetime':
+                        d_tz = datetime.datetime(y, m, d, hh, mm, ss, int(ms), TZ(tz))
+                        d_utc = d_tz - d_tz.utcoffset()
+                        y, m, d = d_utc.year, d_utc.month, d_utc.day
+                        hh, mm, ss, ms = d_utc.hour, d_utc.minute, d_utc.second, d_utc.microsecond
+                        tz = 0
+                        del d_utc, d_tz
+                    elif schema_type == 'time':
+                        d_tz = datetime.datetime(1900, 1, 1, hh, mm, ss, int(ms), TZ(tz))
+                        d_utc = d_tz - d_tz.utcoffset()
+                        y = m = d = 0
+                        hh, mm, ss, ms = d_utc.hour, d_utc.minute, d_utc.second, d_utc.microsecond
+                        tz = 0
+                        del d_utc, d_tz
+
+                # tzinfo: (0=unknown, 100=GMT, 101=GMT+15minute, 99=GMT-15minute), or NULL
+                if tz is not None:               
+                    tzinfo = int(tz / 15.0 + 100)
                 else:
-                    y, m, d, hh, mm, ss, ff = parse_datetime(value)
-                OGR_F_SetFieldDateTime(
-                    cogr_feature, i, y, m, d, hh, mm, ss, 0)
-            elif (isinstance(value, datetime.date)
-            and schema_type == 'date'):
-                y, m, d = value.year, value.month, value.day
-                OGR_F_SetFieldDateTime(
-                    cogr_feature, i, y, m, d, 0, 0, 0, 0)
-            elif (isinstance(value, datetime.datetime)
-            and schema_type == 'datetime'):
-                y, m, d = value.year, value.month, value.day
-                hh, mm, ss = value.hour, value.minute, value.second
-                OGR_F_SetFieldDateTime(
-                    cogr_feature, i, y, m, d, hh, mm, ss, 0)
-            elif (isinstance(value, datetime.time)
-            and schema_type == 'time'):
-                hh, mm, ss = value.hour, value.minute, value.second
-                OGR_F_SetFieldDateTime(
-                    cogr_feature, i, 0, 0, 0, hh, mm, ss, 0)
+                    tzinfo = 0
+
+                # Add microseconds to seconds
+                ss += ms / 10**6
+
+                set_field_datetime(cogr_feature, i, y, m, d, hh, mm, ss, tzinfo)
+
             elif isinstance(value, bytes) and schema_type == "bytes":
                 string_c = value
                 OGR_F_SetFieldBinary(cogr_feature, i, len(value),
@@ -598,15 +651,15 @@ cdef class Session:
         for i from 0 <= i < n:
             cogr_fielddefn = OGR_FD_GetFieldDefn(cogr_featuredefn, i)
             if cogr_fielddefn == NULL:
-                raise ValueError("Null field definition")
+                raise ValueError("NULL field definition at index {}".format(i))
 
             key_c = OGR_Fld_GetNameRef(cogr_fielddefn)
+            if key_c == NULL:
+                raise ValueError("NULL field name reference at index {}".format(i))
             key_b = key_c
-
-            if not bool(key_b):
-                raise ValueError("Invalid field name ref: %s" % key)
-
             key = key_b.decode(encoding)
+            if not key:
+                warnings.warn("Empty field name at index {}".format(i), FeatureWarning)
 
             if key in ignore_fields:
                 continue
@@ -972,13 +1025,15 @@ cdef class WritingSession(Session):
                     self.cogr_layer = exc_wrap_pointer(GDALDatasetGetLayer(self.cogr_ds, collection.name))
 
             except CPLE_BaseError as exc:
-                OGRReleaseDataSource(self.cogr_ds)
+                GDALClose(self.cogr_ds)
                 self.cogr_ds = NULL
                 self.cogr_layer = NULL
                 raise DriverError(u"{}".format(exc))
 
             else:
                 self._fileencoding = userencoding or self._get_fallback_encoding()
+
+            before_fields = self.get_schema()['properties']
 
         elif collection.mode == 'w':
             path_b = strencode(path)
@@ -988,38 +1043,41 @@ cdef class WritingSession(Session):
             driver_c = driver_b
             cogr_driver = exc_wrap_pointer(GDALGetDriverByName(driver_c))
 
-            # Our most common use case is the creation of a new data
-            # file and historically we've assumed that it's a file on
-            # the local filesystem and queryable via os.path.
-            #
-            # TODO: remove the assumption.
-            if not os.path.exists(path):
+            if not CPLCheckForFile(path_c, NULL):
                 log.debug("File doesn't exist. Creating a new one...")
                 cogr_ds = gdal_create(cogr_driver, path_c, {})
 
-            # TODO: revisit the logic in the following blocks when we
-            # change the assumption above.
             else:
-                if collection.driver == "GeoJSON" and os.path.exists(path):
-                    # manually remove geojson file as GDAL doesn't do this for us
-                    os.unlink(path)
-                try:
-                    # attempt to open existing dataset in write mode
-                    cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
-                except DriverError:
-                    # failed, attempt to create it
-                    cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
-                else:
-                    # check capability of creating a new layer in the existing dataset
-                    capability = check_capability_create_layer(cogr_ds)
-                    if GDAL_VERSION_NUM < 2000000 and collection.driver == "GeoJSON":
-                        # GeoJSON driver tells lies about it's capability
-                        capability = False
-                    if not capability or collection.name is None:
-                        # unable to use existing dataset, recreate it
-                        GDALClose(cogr_ds)
-                        cogr_ds = NULL
+                if collection.driver == "GeoJSON":
+                    # We must manually remove geojson files as GDAL doesn't do this for us.
+                    log.debug("Removing GeoJSON file")
+                    if path.startswith("/vsi"):
+                        VSIUnlink(path_c)
+                    else:
+                        os.unlink(path)
+                    with Env(GDAL_VALIDATE_CREATION_OPTIONS="NO"):
                         cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
+
+                else:
+                    try:
+                        # Attempt to open existing dataset in write mode,
+                        # letting GDAL/OGR handle the overwriting.
+                        cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
+                    except DriverError:
+                        # log.exception("Caught DriverError")
+                        # failed, attempt to create it
+                        with Env(GDAL_VALIDATE_CREATION_OPTIONS="NO"):
+                            cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
+                    else:
+                        # check capability of creating a new layer in the existing dataset
+                        capability = check_capability_create_layer(cogr_ds)
+                        if not capability or collection.name is None:
+                            # unable to use existing dataset, recreate it
+                            log.debug("Unable to use existing dataset: capability=%r, name=%r", capability, collection.name)
+                            GDALClose(cogr_ds)
+                            cogr_ds = NULL
+                            with Env(GDAL_VALIDATE_CREATION_OPTIONS="NO"):
+                                cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
 
             self.cogr_ds = cogr_ds
 
@@ -1036,7 +1094,7 @@ cdef class WritingSession(Session):
                     OSRSetFromUserInput(cogr_srs, proj_c)
                     osr_set_traditional_axis_mapping_strategy(cogr_srs)
             except CPLE_BaseError as exc:
-                OGRReleaseDataSource(self.cogr_ds)
+                GDALClose(self.cogr_ds)
                 self.cogr_ds = NULL
                 self.cogr_layer = NULL
                 raise CRSError(u"{}".format(exc))
@@ -1115,7 +1173,7 @@ cdef class WritingSession(Session):
                         <OGRwkbGeometryType>geometry_code, options))
 
             except Exception as exc:
-                OGRReleaseDataSource(self.cogr_ds)
+                GDALClose(self.cogr_ds)
                 self.cogr_ds = NULL
                 raise DriverIOError(u"{}".format(exc))
 
@@ -1137,7 +1195,20 @@ cdef class WritingSession(Session):
 
             encoding = self._get_internal_encoding()
 
-            for key, value in collection.schema['properties'].items():
+            # Test if default fields are included in provided schema
+            schema_fields = collection.schema['properties']
+            default_fields = self.get_schema()['properties']
+            for key, value in default_fields.items():
+                if key in schema_fields and not schema_fields[key] == value:
+                    raise SchemaError("Property '{}' must have type '{}' "
+                    "for driver '{}'".format(key, value, self.collection.driver))
+
+            new_fields = OrderedDict([(key, value) for key, value in schema_fields.items()
+                                      if key not in default_fields])
+            before_fields = default_fields.copy()
+            before_fields.update(new_fields)
+
+            for key, value in new_fields.items():
 
                 log.debug("Begin creating field: %r value: %r", key, value)
 
@@ -1187,7 +1258,7 @@ cdef class WritingSession(Session):
                     exc_wrap_int(OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1))
 
                 except (UnicodeEncodeError, CPLE_BaseError) as exc:
-                    OGRReleaseDataSource(self.cogr_ds)
+                    GDALClose(self.cogr_ds)
                     self.cogr_ds = NULL
                     self.cogr_layer = NULL
                     raise SchemaError(u"{}".format(exc))
@@ -1198,10 +1269,9 @@ cdef class WritingSession(Session):
 
         # Mapping of the Python collection schema to the munged
         # OGR schema.
-        ogr_schema = self.get_schema()
-        self._schema_mapping = dict(zip(
-            collection.schema['properties'].keys(),
-            ogr_schema['properties'].keys() ))
+        after_fields = self.get_schema()['properties']
+        self._schema_mapping = dict(zip(before_fields.keys(),
+                                        after_fields.keys()))
 
         log.debug("Writing started")
 
@@ -1224,14 +1294,30 @@ cdef class WritingSession(Session):
             if record["geometry"] is None:
                 return True
             return record["geometry"]["type"].lstrip("3D ") in valid_geom_types
-
-        log.debug("Starting transaction (initial)")
-        result = gdal_start_transaction(self.cogr_ds, 0)
-        if result == OGRERR_FAILURE:
-            raise TransactionError("Failed to start transaction")
+        transactions_supported = check_capability_transaction(self.cogr_ds)
+        log.debug("Transaction supported: {}".format(transactions_supported))
+        if transactions_supported:
+            log.debug("Starting transaction (initial)")
+            result = gdal_start_transaction(self.cogr_ds, 0)
+            if result == OGRERR_FAILURE:
+                raise TransactionError("Failed to start transaction")
 
         schema_props_keys = set(collection.schema['properties'].keys())
         for record in records:
+            log.debug("Creating feature in layer: %s" % record)
+
+            # Check for optional elements
+            if 'properties' not in record:
+                record['properties'] = {}
+            if 'geometry' not in record:
+                record['geometry'] = None
+
+            # Validate against collection's schema.
+            if set(record['properties'].keys()) != schema_props_keys:
+                raise ValueError(
+                    "Record does not match collection schema: %r != %r" % (
+                        record['properties'].keys(),
+                        list(schema_props_keys) ))
             if not validate_geometry_type(record):
                 raise GeometryTypeValidationError(
                     "Record's geometry type does not match "
@@ -1252,22 +1338,24 @@ cdef class WritingSession(Session):
                                    "{record}".format(msg=msg, record=record))
             _deleteOgrFeature(cogr_feature)
 
-            features_in_transaction += 1
-            if features_in_transaction == DEFAULT_TRANSACTION_SIZE:
-                log.debug("Comitting transaction (intermediate)")
-                result = gdal_commit_transaction(self.cogr_ds)
-                if result == OGRERR_FAILURE:
-                    raise TransactionError("Failed to commit transaction")
-                log.debug("Starting transaction (intermediate)")
-                result = gdal_start_transaction(self.cogr_ds, 0)
-                if result == OGRERR_FAILURE:
-                    raise TransactionError("Failed to start transaction")
-                features_in_transaction = 0
+            if transactions_supported:
+                features_in_transaction += 1
+                if features_in_transaction == DEFAULT_TRANSACTION_SIZE:
+                    log.debug("Comitting transaction (intermediate)")
+                    result = gdal_commit_transaction(self.cogr_ds)
+                    if result == OGRERR_FAILURE:
+                        raise TransactionError("Failed to commit transaction")
+                    log.debug("Starting transaction (intermediate)")
+                    result = gdal_start_transaction(self.cogr_ds, 0)
+                    if result == OGRERR_FAILURE:
+                        raise TransactionError("Failed to start transaction")
+                    features_in_transaction = 0
 
-        log.debug("Comitting transaction (final)")
-        result = gdal_commit_transaction(self.cogr_ds)
-        if result == OGRERR_FAILURE:
-            raise TransactionError("Failed to commit transaction")
+        if transactions_supported:
+            log.debug("Comitting transaction (final)")
+            result = gdal_commit_transaction(self.cogr_ds)
+            if result == OGRERR_FAILURE:
+                raise TransactionError("Failed to commit transaction")
 
     def sync(self, collection):
         """Syncs OGR to disk."""
@@ -1367,6 +1455,8 @@ cdef class Iterator:
     cdef start
     cdef step
     cdef fastindex
+    cdef fastcount
+    cdef ftcount
     cdef stepsign
 
     def __cinit__(self, collection, start=None, stop=None, step=None,
@@ -1400,20 +1490,38 @@ cdef class Iterator:
 
         self.fastindex = OGR_L_TestCapability(
             session.cogr_layer, OLC_FASTSETNEXTBYINDEX)
+        log.debug("OLC_FASTSETNEXTBYINDEX: {}".format(self.fastindex))
 
-        ftcount = OGR_L_GetFeatureCount(session.cogr_layer, 0)
-        if ftcount == -1 and ((start is not None and start < 0) or
+        self.fastcount = OGR_L_TestCapability(
+            session.cogr_layer, OLC_FASTFEATURECOUNT)
+        log.debug("OLC_FASTFEATURECOUNT: {}".format(self.fastcount))
+
+        # In some cases we need to force count of all features
+        # We need to check if start is not greater ftcount: (start is not None and start > 0)
+        # If start is a negative index: (start is not None and start < 0)
+        # If stop is a negative index: (stop is not None and stop < 0)
+        if ((start is not None and not start == 0) or
+                (stop is not None and stop < 0)):
+            if not self.fastcount:
+                warnings.warn("Layer does not support" \
+                        " OLC_FASTFEATURECOUNT, negative slices or start values other than zero" \
+                        " may be slow.", RuntimeWarning)
+            self.ftcount = OGR_L_GetFeatureCount(session.cogr_layer, 1)
+        else:
+            self.ftcount = OGR_L_GetFeatureCount(session.cogr_layer, 0)
+
+        if self.ftcount == -1 and ((start is not None and start < 0) or
                               (stop is not None and stop < 0)):
             raise IndexError(
                 "collection's dataset does not support negative slice indexes")
 
         if stop is not None and stop < 0:
-            stop += ftcount
+            stop += self.ftcount
 
         if start is None:
             start = 0
         if start is not None and start < 0:
-            start += ftcount
+            start += self.ftcount
 
         # step size
         if step is None:
@@ -1422,15 +1530,30 @@ cdef class Iterator:
             raise ValueError("slice step cannot be zero")
         if step < 0 and not self.fastindex:
             warnings.warn("Layer does not support" \
-                    "OLCFastSetNextByIndex, negative step size may" \
-                    " be slow", RuntimeWarning)
+                    " OLCFastSetNextByIndex, negative step size may" \
+                    " be slow.", RuntimeWarning)
+
+        # Check if we are outside of the range:
+        if not self.ftcount == -1:
+            if start > self.ftcount and step > 0:
+                start = -1
+            if start > self.ftcount and step < 0:
+                start = self.ftcount - 1
+        elif self.ftcount == -1 and not start == 0:
+            warnings.warn("Layer is unable to check if slice is within range of data.",
+             RuntimeWarning)
+
         self.stepsign = int(math.copysign(1, step))
         self.stop = stop
         self.start = start
         self.step = step
 
         self.next_index = start
-        exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
+        log.debug("Next index: %d", self.next_index)
+
+        # Set OGR_L_SetNextByIndex only if within range
+        if start >= 0 and (self.ftcount == -1 or self.start < self.ftcount):
+            exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
 
     def __iter__(self):
         return self
@@ -1441,8 +1564,14 @@ cdef class Iterator:
         cdef Session session
         session = self.collection.session
 
+
         # Check if next_index is valid
         if self.next_index < 0:
+            raise StopIteration
+
+        # GeoJSON driver with gdal 2.1 - 2.2 returns last feature
+        # if index greater than number of features
+        if self.ftcount >= 0 and self.next_index >= self.ftcount:
             raise StopIteration
 
         if self.stepsign == 1:
@@ -1455,16 +1584,16 @@ cdef class Iterator:
         # Set read cursor to next_item position
         if self.step > 1 and self.fastindex:
             exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
-
         elif self.step > 1 and not self.fastindex and not self.next_index == self.start:
+            # GDALs default implementation of SetNextByIndex is calling ResetReading() and then
+            # calling GetNextFeature n times. We can shortcut that if we know the previous index.
+            # OGR_L_GetNextFeature increments cursor by 1, therefore self.step - 1 as one increment was performed when feature is read
             for _ in range(self.step - 1):
-                # TODO rbuffat add test -> OGR_L_GetNextFeature increments cursor by 1, therefore self.step - 1 as one increment was performed when feature is read
                 cogr_feature = OGR_L_GetNextFeature(session.cogr_layer)
                 if cogr_feature == NULL:
                     raise StopIteration
         elif self.step > 1 and not self.fastindex and self.next_index == self.start:
             exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
-
         elif self.step == 0:
             # OGR_L_GetNextFeature increments read cursor by one
             pass
@@ -1473,6 +1602,7 @@ cdef class Iterator:
 
         # set the next index
         self.next_index += self.step
+        log.debug("Next index: %d", self.next_index)
 
     def __next__(self):
         cdef OGRFeatureH cogr_feature = NULL
@@ -1531,6 +1661,7 @@ cdef class ItemsIterator(Iterator):
             ignore_fields=self.collection.ignore_fields,
             ignore_geometry=self.collection.ignore_geometry,
         )
+
         _deleteOgrFeature(cogr_feature)
 
         return fid, feature
@@ -1575,7 +1706,7 @@ def _remove(path, driver=None):
         cogr_driver = GDALGetDatasetDriver(cogr_ds)
         GDALClose(cogr_ds)
     else:
-        cogr_driver = OGRGetDriverByName(driver.encode("utf-8"))
+        cogr_driver = GDALGetDriverByName(driver.encode("utf-8"))
 
     if cogr_driver == NULL:
         raise DatasetDeleteError("Null driver when attempting to delete {}".format(path))
@@ -1612,7 +1743,7 @@ def _remove_layer(path, layer, driver=None):
     except (DriverError, FionaNullPointerError):
         raise DatasetDeleteError("Failed to remove data source {}".format(path))
 
-    result = OGR_DS_DeleteLayer(cogr_ds, layer_index)
+    result = GDALDatasetDeleteLayer(cogr_ds, layer_index)
     GDALClose(cogr_ds)
     if result == OGRERR_UNSUPPORTED_OPERATION:
         raise DatasetDeleteError("Removal of layer {} not supported by driver".format(layer_str))
@@ -1658,7 +1789,7 @@ def buffer_to_virtual_file(bytesbuf, ext=''):
     `ext` is empty or begins with a period and contains at most one period.
     """
 
-    vsi_filename = '/vsimem/{}'.format(uuid.uuid4().hex + ext)
+    vsi_filename = '/vsimem/{}'.format(uuid4().hex + ext)
     vsi_cfilename = vsi_filename if not isinstance(vsi_filename, string_types) else vsi_filename.encode('utf-8')
 
     vsi_handle = VSIFileFromMemBuffer(vsi_cfilename, <unsigned char *>bytesbuf, len(bytesbuf), 0)
@@ -1676,65 +1807,106 @@ def remove_virtual_file(vsi_filename):
     return VSIUnlink(vsi_cfilename)
 
 
-cdef class MemoryFileBase(object):
+cdef class MemoryFileBase:
     """Base for a BytesIO-like class backed by an in-memory file."""
 
-    def __init__(self, file_or_bytes=None, filename=None, ext=''):
+    cdef VSILFILE * _vsif
+
+    def __init__(self, file_or_bytes=None, dirname=None, filename=None, ext=''):
         """A file in an in-memory filesystem.
 
         Parameters
         ----------
         file_or_bytes : file or bytes
-            A file opened in binary mode or bytes or a bytearray
+            A file opened in binary mode or bytes
         filename : str
             A filename for the in-memory file under /vsimem
         ext : str
             A file extension for the in-memory file under /vsimem. Ignored if
             filename was provided.
-        """
-        cdef VSILFILE *vsi_handle = NULL
 
+        """
         if file_or_bytes:
             if hasattr(file_or_bytes, 'read'):
                 initial_bytes = file_or_bytes.read()
-            else:
+            elif isinstance(file_or_bytes, bytes):
                 initial_bytes = file_or_bytes
-            if not isinstance(initial_bytes, (bytearray, bytes)):
+            else:
                 raise TypeError(
                     "Constructor argument must be a file opened in binary "
-                    "mode or bytes/bytearray.")
+                    "mode or bytes.")
         else:
             initial_bytes = b''
+
+        # Make an in-memory directory specific to this dataset to help organize
+        # auxiliary files.
+        self._dirname = dirname or str(uuid4().hex)
+        VSIMkdir("/vsimem/{0}".format(self._dirname).encode("utf-8"), 0666)
 
         if filename:
             # GDAL's SRTMHGT driver requires the filename to be "correct" (match
             # the bounds being written)
-            self.name = '/vsimem/{0}'.format(filename)
+            self.name = "/vsimem/{0}/{1}".format(self._dirname, filename)
         else:
             # GDAL 2.1 requires a .zip extension for zipped files.
-            self.name = '/vsimem/{0}.{1}'.format(uuid.uuid4(), ext.lstrip('.'))
+            self.name = "/vsimem/{0}/{0}{1}".format(self._dirname, ext)
 
-        self.path = self.name.encode('utf-8')
-        self._len = 0
-        self._pos = 0
-        self.closed = False
-
+        name_b = self.name.encode('utf-8')
         self._initial_bytes = initial_bytes
         cdef unsigned char *buffer = self._initial_bytes
 
         if self._initial_bytes:
+            self._vsif = VSIFileFromMemBuffer(
+               name_b, buffer, len(self._initial_bytes), 0)
+            self.mode = "r"
 
-            vsi_handle = VSIFileFromMemBuffer(
-                self.path, buffer, len(self._initial_bytes), 0)
-            self._len = len(self._initial_bytes)
+        else:
+            self._vsif = NULL
+            self.mode = "r+"
 
-            if vsi_handle == NULL:
-                raise IOError(
-                    "Failed to create in-memory file using initial bytes.")
+        self.closed = False
 
-            if VSIFCloseL(vsi_handle) != 0:
-                raise IOError(
-                    "Failed to properly close in-memory file.")
+    def _open(self):
+        """Ensure that the instance has a valid VSI file handle."""
+        cdef VSILFILE *fp = NULL
+        name_b = self.name.encode('utf-8')
+
+        if not self.exists():
+            fp = VSIFOpenL(name_b, "w")
+            if fp == NULL:
+                raise OSError("VSIFOpenL failed")
+            else:
+                VSIFCloseL(fp)
+            self._vsif = NULL
+
+        if self._vsif == NULL:
+            fp = VSIFOpenL(name_b, self.mode.encode("utf-8"))
+            if fp == NULL:
+                log.error("VSIFOpenL failed: name=%r, mode=%r", self.name, self.mode)
+                raise OSError("VSIFOpenL failed")
+            else:
+                self._vsif = fp
+
+    def _ensure_extension(self, drivername=None):
+        """Ensure that the instance's name uses a file extension supported by the driver."""
+        # Avoid a crashing bug with GDAL versions < 2.
+        if get_gdal_version_tuple() < (2, ):
+            return
+
+        name_b = drivername.encode("utf-8")
+        cdef const char *name_c = name_b
+        cdef GDALDriverH driver = GDALGetDriverByName(name_c)
+        cdef const char *extension_c = GDALGetMetadataItem(driver, "DMD_EXTENSION", NULL)
+
+        if extension_c != NULL:
+            extension_b = extension_c
+            recommended_extension = extension_b.decode("utf-8")
+            if not recommended_extension.startswith("."):
+                recommended_extension = "." + recommended_extension
+            root, ext = os.path.splitext(self.name)
+            if not ext:
+                log.info("Setting extension: root=%r, extension=%r", root, recommended_extension)
+                self.name = root + recommended_extension
 
     def exists(self):
         """Test if the in-memory file exists.
@@ -1743,18 +1915,11 @@ cdef class MemoryFileBase(object):
         -------
         bool
             True if the in-memory file exists.
+
         """
-        cdef VSILFILE *fp = NULL
-        cdef const char *cypath = self.path
-
-        with nogil:
-            fp = VSIFOpenL(cypath, 'r')
-
-        if fp != NULL:
-            VSIFCloseL(fp)
-            return True
-        else:
-            return False
+        cdef VSIStatBufL st_buf
+        name_b = self.name.encode('utf-8')
+        return VSIStatL(name_b, &st_buf) == 0
 
     def __len__(self):
         """Length of the file's buffer in number of bytes.
@@ -1762,98 +1927,78 @@ cdef class MemoryFileBase(object):
         Returns
         -------
         int
+
         """
-        cdef unsigned char *buff = NULL
-        cdef const char *cfilename = self.path
-        cdef vsi_l_offset buff_len = 0
-        buff = VSIGetMemFileBuffer(self.path, &buff_len, 0)
-        return int(buff_len)
+        if not self.getbuffer():
+            return 0        
+        return self.getbuffer().size
+
+    def getbuffer(self):
+        """Return a view on bytes of the file, or None."""
+        cdef unsigned char *buffer = NULL
+        cdef vsi_l_offset buffer_len = 0
+        cdef unsigned char [:] buff_view
+
+        name_b = self.name.encode('utf-8')
+        buffer = VSIGetMemFileBuffer(name_b, &buffer_len, 0)
+
+        if buffer == NULL or buffer_len == 0:
+            return None
+        else:
+            buff_view = <unsigned char [:buffer_len]>buffer
+            return buff_view
 
     def close(self):
-        """Close MemoryFile and release allocated memory."""
-        VSIUnlink(self.path)
-        self._pos = 0
-        self._initial_bytes = None
+        """Close and tear down VSI file and directory."""
+        if self._vsif != NULL:
+            VSIFCloseL(self._vsif)
+        self._vsif = NULL
+        VSIRmdir(self._dirname.encode("utf-8"))
         self.closed = True
+
+    def seek(self, offset, whence=0):
+        self._open()
+        return VSIFSeekL(self._vsif, offset, whence)
+
+    def tell(self):
+        self._open()
+        if self._vsif != NULL:
+            return VSIFTellL(self._vsif)
+        else:
+            return 0
 
     def read(self, size=-1):
         """Read size bytes from MemoryFile."""
-        cdef VSILFILE *fp = NULL
-        # Return no bytes immediately if the position is at or past the
-        # end of the file.
-        length = len(self)
-
-        if self._pos >= length:
-            self._pos = length
-            return b''
-
-        if size == -1:
-            size = length - self._pos
-        else:
-            size = min(size, length - self._pos)
-
-        cdef unsigned char *buffer = <unsigned char *>CPLMalloc(size)
         cdef bytes result
+        cdef unsigned char *buffer = NULL
+        cdef vsi_l_offset buffer_len = 0
 
-        fp = VSIFOpenL(self.path, 'r')
+        if size < 0:
+            name_b = self.name.encode('utf-8')
+            buffer = VSIGetMemFileBuffer(name_b, &buffer_len, 0)
+            size = buffer_len
+
+        buffer = <unsigned char *>CPLMalloc(size)
+
+        self._open()
 
         try:
-            fp = exc_wrap_vsilfile(fp)
-            if VSIFSeekL(fp, self._pos, 0) < 0:
-                raise IOError(
-                    "Failed to seek to offset %s in %s.",
-                    self._pos, self.name)
-
-            objects_read = VSIFReadL(buffer, 1, size, fp)
+            objects_read = VSIFReadL(buffer, 1, size, self._vsif)
             result = <bytes>buffer[:objects_read]
+            return result
 
         finally:
-            VSIFCloseL(fp)
             CPLFree(buffer)
 
-        self._pos += len(result)
         return result
-
-    def seek(self, offset, whence=0):
-        """Seek to position in MemoryFile."""
-        if whence == 0:
-            pos = offset
-        elif whence == 1:
-            pos = self._pos + offset
-        elif whence == 2:
-            pos = len(self) - offset
-        if pos < 0:
-            raise ValueError("negative seek position: {}".format(pos))
-        if pos > len(self):
-            raise ValueError("seek position past end of file: {}".format(pos))
-        self._pos = pos
-        return self._pos
-
-    def tell(self):
-        """Tell current position in MemoryFile."""
-        return self._pos
 
     def write(self, data):
         """Write data bytes to MemoryFile"""
-        cdef VSILFILE *fp = NULL
         cdef const unsigned char *view = <bytes>data
         n = len(data)
-
-        if not self.exists():
-            fp = exc_wrap_vsilfile(VSIFOpenL(self.path, 'w'))
-        else:
-            fp = exc_wrap_vsilfile(VSIFOpenL(self.path, 'r+'))
-            if VSIFSeekL(fp, self._pos, 0) < 0:
-                raise IOError(
-                    "Failed to seek to offset %s in %s.", self._pos, self.name)
-
-        result = VSIFWriteL(view, 1, n, fp)
-        VSIFFlushL(fp)
-        VSIFCloseL(fp)
-
-        self._pos += result
-        self._len = max(self._len, self._pos)
-
+        self._open()
+        result = VSIFWriteL(view, 1, n, self._vsif)
+        VSIFFlushL(self._vsif)
         return result
 
 

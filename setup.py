@@ -5,7 +5,6 @@ import os
 import shutil
 import subprocess
 import sys
-
 from setuptools import setup
 from setuptools.extension import Extension
 
@@ -183,13 +182,23 @@ if 'clean' not in sys.argv:
     gdal_major_version = int(gdal_version_parts[0])
     gdal_minor_version = int(gdal_version_parts[1])
 
-log.info("GDAL version major=%r minor=%r", gdal_major_version, gdal_minor_version)
+    log.info("GDAL version major=%r minor=%r", gdal_major_version, gdal_minor_version)
 
 ext_options = dict(
     include_dirs=include_dirs,
     library_dirs=library_dirs,
     libraries=libraries,
     extra_link_args=extra_link_args)
+
+# Enable coverage for cython pyx files.
+if os.environ.get('CYTHON_COVERAGE'):
+    from Cython.Compiler.Options import get_directive_defaults
+    directive_defaults = get_directive_defaults()
+    directive_defaults['linetrace'] = True
+    directive_defaults['binding'] = True
+
+    ext_options.update(dict(
+        define_macros=[("CYTHON_TRACE_NOGIL", "1")]))
 
 # GDAL 2.3+ requires C++11
 
@@ -279,19 +288,16 @@ requirements = [
     'cligj>=0.5',
     'click-plugins>=1.0',
     'six>=1.7',
-    'munch']
-
-if sys.version_info < (2, 7):
-    requirements.append('argparse')
-    requirements.append('ordereddict')
-
-if sys.version_info < (3, 4):
-    requirements.append('enum34')
+    'munch',
+    'argparse; python_version < "2.7"',
+    'ordereddict; python_version < "2.7"',
+    'enum34; python_version < "3.4"'
+]
 
 extras_require = {
     'calc': ['shapely'],
     's3': ['boto3>=1.2.4'],
-    'test': ['pytest>=3', 'pytest-cov', 'boto3>=1.2.4', 'mock; python_version<"3.4"']
+    'test': ['pytest>=3', 'pytest-cov', 'boto3>=1.2.4', 'mock; python_version < "3.4"']
 }
 
 extras_require['all'] = list(set(it.chain(*extras_require.values())))

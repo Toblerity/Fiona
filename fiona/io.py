@@ -4,8 +4,10 @@
 from collections import OrderedDict
 import logging
 
-from fiona.ogrext import MemoryFileBase
-from fiona.collection import Collection
+import fiona._loading
+with fiona._loading.add_gdal_dll_directories():
+    from fiona.ogrext import MemoryFileBase
+    from fiona.collection import Collection
 
 
 log = logging.getLogger(__name__)
@@ -24,7 +26,9 @@ class MemoryFile(MemoryFileBase):
     --------
 
     """
-    def __init__(self, file_or_bytes=None, filename=None, ext=''):
+    def __init__(self, file_or_bytes=None, filename=None, ext=""):
+        if ext and not ext.startswith("."):
+            ext = "." + ext
         super(MemoryFile, self).__init__(
             file_or_bytes=file_or_bytes, filename=filename, ext=ext)
 
@@ -45,25 +49,36 @@ class MemoryFile(MemoryFileBase):
         Other parameters are optional and have the same semantics as the
         parameters of `fiona.open()`.
         """
-        vsi_path = self.name
-
         if self.closed:
             raise IOError("I/O operation on closed file.")
-        if self.exists():
-            return Collection(vsi_path, 'r', driver=driver, encoding=encoding,
-                              layer=layer, enabled_drivers=enabled_drivers,
-                              **kwargs)
-        else:
-            if schema:
-                # Make an ordered dict of schema properties.
-                this_schema = schema.copy()
-                this_schema['properties'] = OrderedDict(schema['properties'])
-            else:
-                this_schema = None
-            return Collection(vsi_path, 'w', crs=crs, driver=driver,
-                              schema=this_schema, encoding=encoding,
-                              layer=layer, enabled_drivers=enabled_drivers,
-                              crs_wkt=crs_wkt, **kwargs)
+
+        if not self.exists():
+            self._ensure_extension(driver)
+            this_schema = schema.copy()
+            this_schema["properties"] = OrderedDict(schema["properties"])
+            return Collection(
+                self.name,
+                "w",
+                crs=crs,
+                driver=driver,
+                schema=this_schema,
+                encoding=encoding,
+                layer=layer,
+                enabled_drivers=enabled_drivers,
+                crs_wkt=crs_wkt,
+                **kwargs
+            )
+
+        elif self.mode in ("r", "r+"):
+            return Collection(
+                self.name,
+                "r",
+                driver=driver,
+                encoding=encoding,
+                layer=layer,
+                enabled_drivers=enabled_drivers,
+                **kwargs
+            )
 
     def __enter__(self):
         return self
@@ -80,9 +95,9 @@ class ZipMemoryFile(MemoryFile):
     """
 
     def __init__(self, file_or_bytes=None):
-        super(ZipMemoryFile, self).__init__(file_or_bytes, ext='zip')
+        super(ZipMemoryFile, self).__init__(file_or_bytes, ext=".zip")
 
-    def open(self, path, driver=None, encoding=None, layer=None,
+    def open(self, path=None, driver=None, encoding=None, layer=None,
              enabled_drivers=None, **kwargs):
         """Open a dataset within the zipped stream.
 
@@ -95,11 +110,15 @@ class ZipMemoryFile(MemoryFile):
         Returns
         -------
         A Fiona collection object
-        """
-        vsi_path = '/vsizip{0}/{1}'.format(self.name, path.lstrip('/'))
 
+        """
         if self.closed:
             raise IOError("I/O operation on closed file.")
+        if path:
+            vsi_path = '/vsizip{0}/{1}'.format(self.name, path.lstrip('/'))
+        else:
+            vsi_path = '/vsizip{0}'.format(self.name)
+
         return Collection(vsi_path, 'r', driver=driver, encoding=encoding,
                           layer=layer, enabled_drivers=enabled_drivers,
                           **kwargs)
