@@ -33,6 +33,10 @@ def crs_to_wkt(crs):
     except CPLE_BaseError as exc:
         raise CRSError(u"{}".format(exc))
 
+    # check for other CRS classes
+    if hasattr(crs, "to_wkt") and callable(crs.to_wkt):
+        crs = crs.to_wkt()
+
     # First, check for CRS strings like "EPSG:3857".
     if isinstance(crs, string_types):
         proj_b = crs.encode('utf-8')
@@ -61,7 +65,6 @@ def crs_to_wkt(crs):
             proj_b = proj.encode('utf-8')
             proj_c = proj_b
             OSRImportFromProj4(cogr_srs, proj_c)
-
     else:
         raise CRSError("Invalid input to create CRS: {}".format(crs))
 

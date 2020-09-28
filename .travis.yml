@@ -21,61 +21,20 @@ env:
     - CXXFLAGS="-O0"
     - CFLAGS="-O0"
 
-matrix:
+jobs:
   include:
-    # Test all supported gdal minor versions (except latest stable) with one python version
     - python: "3.6"
-      env:
-        GDALVERSION="1.11.5"
-        PROJVERSION="4.8.0"
-    - python: "3.6"
-      env:
-        GDALVERSION="2.0.3"
-        PROJVERSION="4.9.3"
-    - python: "3.6"
-      env:
-        GDALVERSION="2.1.4"
-        PROJVERSION="4.9.3"
-    - python: "3.6"
-      env:
-        GDALVERSION="2.2.4"
-        PROJVERSION="4.9.3"
-    - python: "3.6"
-      env:
-        GDALVERSION="2.3.3"
-        PROJVERSION="4.9.3"
-    - python: "3.6"
-      env:
-        GDALVERSION="2.4.4"
-        PROJVERSION="4.9.3"
-    - python: "3.6"
-      env:
-        GDALVERSION="3.0.4"
-        PROJVERSION="6.2.1"
-
-    # Test all supported python versions with latest stable gdal release
-    - python: "2.7"
-      env:
-        GDALVERSION="3.1.2"
-        PROJVERSION="6.3.2"
-    - python: "3.6"
-      env:
-        GDALVERSION="3.1.2"
-        PROJVERSION="6.3.2"
+      env: GDALVERSION="2.4.4" PROJVERSION="4.9.3"
     - python: "3.7"
-      env:
-        GDALVERSION="3.1.2"
-        PROJVERSION="6.3.2"
+      env: GDALVERSION="2.4.4" PROJVERSION="4.9.3"
+    - python: "3.6"
+      env: GDALVERSION="3.0.4" PROJVERSION="6.1.1"
+    - python: "3.7"
+      env: GDALVERSION="3.0.4" PROJVERSION="6.1.1"
     - python: "3.8"
-      env:
-        GDALVERSION="3.1.2"
-        PROJVERSION="6.3.2"
-
-    # Test master
+      env: GDALVERSION="3.0.4" PROJVERSION="6.1.1"
     - python: "3.8"
-      env:
-        GDALVERSION="master"
-        PROJVERSION="7.0.1"
+      env: GDALVERSION="master" PROJVERSION="6.1.1"
 
   allow_failures:
     - env:
@@ -92,10 +51,8 @@ addons:
     - sqlite3
 
 before_install:
-  - pip install -U pip
-  - pip install setuptools==36.0.1
-  - pip install wheel
-  - "python -m pip install -r requirements-ci.txt"
+  - python -m pip install -U pip
+  - python -m pip install -r requirements-ci.txt
   - python -m pip wheel -r requirements-dev.txt
   - python -m pip install -r requirements-dev.txt
   - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$GDALINST/proj-$PROJVERSION/bin:$PATH
@@ -106,6 +63,8 @@ before_install:
   - export GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal
   - export PROJ_LIB=$GDALINST/gdal-$GDALVERSION/share/proj
   - gdal-config --version
+  - python -m pip wheel -r requirements-dev.txt
+  - python -m pip install -r requirements-dev.txt
 
 install:
   - if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $(gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
@@ -127,3 +86,6 @@ after_script:
 
 after_success:
   - coveralls || echo "!! intermittent coveralls failure"
+
+before_cache:
+  - if [ "$GDALVERSION" = "master" ]; then rm -rf $GDALINST/gdal-$GDALVERSION; fi

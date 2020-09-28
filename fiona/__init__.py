@@ -82,6 +82,7 @@ if sys.platform == "win32":
     os.environ["PATH"] = os.environ["PATH"] + ";" + libdir
 
 import fiona._loading
+
 with fiona._loading.add_gdal_dll_directories():
     from fiona.collection import BytesCollection, Collection
     from fiona.drvsupport import supported_drivers
@@ -89,11 +90,21 @@ with fiona._loading.add_gdal_dll_directories():
     from fiona.errors import FionaDeprecationWarning
     from fiona._env import driver_count
     from fiona._env import (
-        calc_gdal_version_num, get_gdal_version_num, get_gdal_release_name,
-        get_gdal_version_tuple)
+        calc_gdal_version_num,
+        get_gdal_version_num,
+        get_gdal_release_name,
+        get_gdal_version_tuple,
+    )
     from fiona.compat import OrderedDict
     from fiona.io import MemoryFile
-    from fiona.ogrext import _bounds, _listlayers, _listdir, FIELD_TYPES_MAP, _remove, _remove_layer
+    from fiona.ogrext import (
+        _bounds,
+        _listlayers,
+        _listdir,
+        FIELD_TYPES_MAP,
+        _remove,
+        _remove_layer,
+    )
     from fiona.path import ParsedPath, parse_path, vsi_path
     from fiona.vfs import parse_paths as vfs_parse_paths
     from fiona._show_versions import show_versions
@@ -105,7 +116,7 @@ with fiona._loading.add_gdal_dll_directories():
 
 
 __all__ = ['bounds', 'listlayers', 'listdir', 'open', 'prop_type', 'prop_width']
-__version__ = "1.8.15dev"
+__version__ = "1.9dev"
 __gdal_version__ = get_gdal_release_name()
 
 gdal_version = get_gdal_version_tuple()
@@ -227,9 +238,15 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
         def fp_writer(fp):
             memfile = MemoryFile()
             dataset = memfile.open(
-                driver=driver, crs=crs, schema=schema, layer=layer,
-                encoding=encoding, enabled_drivers=enabled_drivers,
-                crs_wkt=crs_wkt, **kwargs)
+                driver=driver,
+                crs=crs,
+                schema=this_schema,
+                layer=layer,
+                encoding=encoding,
+                enabled_drivers=enabled_drivers,
+                crs_wkt=crs_wkt,
+                **kwargs
+            )
             try:
                 yield dataset
             finally:
@@ -259,13 +276,13 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
             if schema:
                 # Make an ordered dict of schema properties.
                 this_schema = schema.copy()
-                if 'properties' in schema:
-                    this_schema['properties'] = OrderedDict(schema['properties'])
+                if "properties" in schema:
+                    this_schema["properties"] = OrderedDict(schema["properties"])
                 else:
-                    this_schema['properties'] = OrderedDict()
+                    this_schema["properties"] = OrderedDict()
 
-                if 'geometry' not in this_schema:
-                    this_schema['geometry'] = None
+                if "geometry" not in this_schema:
+                    this_schema["geometry"] = None
 
             else:
                 this_schema = None
@@ -312,17 +329,14 @@ def remove(path_or_collection, driver=None, layer=None):
 
 def listdir(path):
     """List files in a directory
-
     Parameters
     ----------
     path : URI (str or pathlib.Path)
         A dataset resource identifier.
-
     Returns
     -------
     list
         A list of filename strings.
-
     """
 
     if isinstance(path, Path):
@@ -356,7 +370,7 @@ def listlayers(fp, vfs=None):
     if hasattr(fp, 'read'):
 
         with MemoryFile(fp.read()) as memfile:
-            return _listlayers(memfile.name)
+            return  _listlayers(memfile.name)
 
     else:
 

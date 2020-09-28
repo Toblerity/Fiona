@@ -1,6 +1,7 @@
 # These are extension functions and classes using the OGR C API.
-
 from __future__ import absolute_import
+
+include "gdal.pxi"
 
 import datetime
 import json
@@ -19,7 +20,7 @@ from fiona._shim cimport *
 from fiona._geometry cimport (
     GeomBuilder, OGRGeomBuilder, geometry_type_code,
     normalize_geometry_type_code, base_geometry_type_code)
-from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile
+from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile, get_last_error_msg
 
 import fiona
 from fiona._env import get_gdal_version_num, calc_gdal_version_num, get_gdal_version_tuple
@@ -30,8 +31,8 @@ from fiona.env import Env
 from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
-    FionaDeprecationWarning)
-from fiona.compat import OrderedDict
+    FeatureWarning, FionaDeprecationWarning)
+from fiona.compat import OrderedDict, strencode
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 from fiona.schema import FIELD_TYPES, FIELD_TYPES_MAP, normalize_field_type
@@ -80,6 +81,7 @@ cdef const char * OLC_ALTERFIELDDEFN = "AlterFieldDefn"
 cdef const char * OLC_DELETEFEATURE = "DeleteFeature"
 cdef const char * OLC_STRINGSASUTF8 = "StringsAsUTF8"
 cdef const char * OLC_TRANSACTIONS = "Transactions"
+cdef const char * OLC_IGNOREFIELDS =  "IgnoreFields"
 
 # OGR integer error types.
 
@@ -167,6 +169,14 @@ cdef class FeatureBuilder:
         cdef int retval
         cdef int fieldsubtype
         cdef const char *key_c = NULL
+        # Parameters for get_field_as_datetime
+        cdef int y = 0
+        cdef int m = 0
+        cdef int d = 0
+        cdef int hh = 0
+        cdef int mm = 0
+        cdef float fss = 0.0
+        cdef int tz = 0
 
         # Skeleton of the feature to be returned.
         fid = OGR_F_GetFID(feature)
@@ -183,12 +193,14 @@ cdef class FeatureBuilder:
         for i in range(OGR_F_GetFieldCount(feature)):
             fdefn = OGR_F_GetFieldDefnRef(feature, i)
             if fdefn == NULL:
-                raise ValueError("Null feature definition")
+                raise ValueError("NULL field definition at index {}".format(i))
             key_c = OGR_Fld_GetNameRef(fdefn)
             if key_c == NULL:
-                raise ValueError("Null field name reference")
+                raise ValueError("NULL field name reference at index {}".format(i))
             key_b = key_c
             key = key_b.decode(encoding)
+            if not key:
+                warnings.warn("Empty field name at index {}".format(i))
 
             if key in ignore_fields:
                 continue
@@ -224,8 +236,8 @@ cdef class FeatureBuilder:
                 props[key] = OGR_F_GetFieldAsDouble(feature, i)
 
             elif fieldtype is text_type:
+                val = OGR_F_GetFieldAsString(feature, i)
                 try:
-                    val = OGR_F_GetFieldAsString(feature, i)
                     val = val.decode(encoding)
                 except UnicodeDecodeError:
                     log.warning(
@@ -243,9 +255,8 @@ cdef class FeatureBuilder:
                 props[key] = val
 
             elif fieldtype in (FionaDateType, FionaTimeType, FionaDateTimeType):
-                retval, y, m, d, hh, mm, ss, tz = get_field_as_datetime(feature, i)
-
-                ms, ss = math.modf(ss)
+                retval = get_field_as_datetime(feature, i, &y, &m, &d, &hh, &mm, &fss, &tz)
+                ms, ss = math.modf(fss)
                 ss = int(ss)
                 ms = int(round(ms * 10**6))
 
@@ -272,7 +283,6 @@ cdef class FeatureBuilder:
                 props[key] = data[:l]
 
             else:
-                log.debug("%s: None, fieldtype: %r, %r" % (key, fieldtype, fieldtype in string_types))
                 props[key] = None
 
         cdef void *cogr_geometry = NULL
@@ -341,25 +351,17 @@ cdef class OGRFeatureBuilder:
         if feature['geometry'] is not None:
             cogr_geometry = OGRGeomBuilder().build(
                                 feature['geometry'])
-        OGR_F_SetGeometryDirectly(cogr_feature, cogr_geometry)
+            exc_wrap_int(OGR_F_SetGeometryDirectly(cogr_feature, cogr_geometry))
 
         # OGR_F_SetFieldString takes encoded strings ('bytes' in Python 3).
         encoding = session._get_internal_encoding()
 
         for key, value in feature['properties'].items():
-            log.debug(
-                "Looking up %s in %s", key, repr(session._schema_mapping))
             ogr_key = session._schema_mapping[key]
 
             schema_type = normalize_field_type(collection.schema['properties'][key])
 
-            log.debug("Normalizing schema type for key %r in schema %r to %r", key, collection.schema['properties'], schema_type)
-
-            try:
-                key_bytes = ogr_key.encode(encoding)
-            except UnicodeDecodeError:
-                log.warning("Failed to encode %s using %s codec", key, encoding)
-                key_bytes = ogr_key
+            key_bytes = strencode(ogr_key, encoding)
             key_c = key_bytes
             i = OGR_F_GetFieldIndex(cogr_feature, key_c)
             if i < 0:
@@ -371,9 +373,6 @@ cdef class OGRFeatureBuilder:
 
             # Continue over the standard OGR types.
             if isinstance(value, integer_types):
-
-                log.debug("Setting field %r, type %r, to value %r", i, schema_type, value)
-
                 if schema_type == 'int32':
                     OGR_F_SetFieldInteger(cogr_feature, i, value)
                 else:
@@ -442,19 +441,13 @@ cdef class OGRFeatureBuilder:
                 OGR_F_SetFieldBinary(cogr_feature, i, len(value),
                     <unsigned char*>string_c)
             elif isinstance(value, string_types):
-                try:
-                    value_bytes = value.encode(encoding)
-                except UnicodeDecodeError:
-                    log.warning(
-                        "Failed to encode %s using %s codec", value, encoding)
-                    value_bytes = value
+                value_bytes = strencode(value, encoding)
                 string_c = value_bytes
                 OGR_F_SetFieldString(cogr_feature, i, string_c)
             elif value is None:
                 set_field_null(cogr_feature, i)
             else:
                 raise ValueError("Invalid field type %s" % type(value))
-            log.debug("Set field %s: %r" % (key, value))
         return cogr_feature
 
 
@@ -542,9 +535,17 @@ cdef class Session:
 
         encoding = self._get_internal_encoding()
 
-        if collection.ignore_fields:
+        if collection.ignore_fields or collection.include_fields is not None:
+            if not OGR_L_TestCapability(self.cogr_layer, OLC_IGNOREFIELDS):
+                raise DriverError("Driver does not support ignore_fields")
+
+        self.collection = collection
+
+        if self.collection.include_fields is not None:
+            self.collection.ignore_fields = list(set(self.get_schema()["properties"]) - set(collection.include_fields))
+        if self.collection.ignore_fields:
             try:
-                for name in collection.ignore_fields:
+                for name in self.collection.ignore_fields:
                     try:
                         name_b = name.encode(encoding)
                     except AttributeError:
@@ -553,8 +554,6 @@ cdef class Session:
                 OGR_L_SetIgnoredFields(self.cogr_layer, <const char**>ignore_fields)
             finally:
                 CSLDestroy(ignore_fields)
-
-        self.collection = collection
 
     cpdef stop(self):
         self.cogr_layer = NULL
@@ -652,18 +651,17 @@ cdef class Session:
         for i from 0 <= i < n:
             cogr_fielddefn = OGR_FD_GetFieldDefn(cogr_featuredefn, i)
             if cogr_fielddefn == NULL:
-                raise ValueError("Null field definition")
+                raise ValueError("NULL field definition at index {}".format(i))
 
             key_c = OGR_Fld_GetNameRef(cogr_fielddefn)
+            if key_c == NULL:
+                raise ValueError("NULL field name reference at index {}".format(i))
             key_b = key_c
-
-            if not bool(key_b):
-                raise ValueError("Invalid field name ref: %s" % key)
-
             key = key_b.decode(encoding)
+            if not key:
+                warnings.warn("Empty field name at index {}".format(i), FeatureWarning)
 
             if key in ignore_fields:
-                log.debug("By request, ignoring field %r", key)
                 continue
 
             fieldtypename = FIELD_TYPES[OGR_Fld_GetType(cogr_fielddefn)]
@@ -838,6 +836,10 @@ cdef class Session:
             raise ValueError("Null layer")
 
         result = OGR_L_GetExtent(self.cogr_layer, &extent, 1)
+        
+        if result != OGRERR_NONE:
+            raise DriverError("Driver was not able to calculate bounds")
+
         return (extent.MinX, extent.MinY, extent.MaxX, extent.MaxY)
 
     def has_feature(self, fid):
@@ -884,7 +886,6 @@ cdef class Session:
         if isinstance(item, slice):
             warnings.warn("Collection slicing is deprecated and will be disabled in a future version.", FionaDeprecationWarning)
             itr = Iterator(self.collection, item.start, item.stop, item.step)
-            log.debug("Slice: %r", item)
             return list(itr)
         elif isinstance(item, int):
             index = item
@@ -916,6 +917,76 @@ cdef class Session:
             return 0
 
 
+    def tags(self, ns=None):
+        """Returns a dict containing copies of the dataset or layers's
+        tags. Tags are pairs of key and value strings. Tags belong to
+        namespaces.  The standard namespaces are: default (None) and
+        'IMAGE_STRUCTURE'.  Applications can create their own additional
+        namespaces.
+
+        Parameters
+        ----------
+        ns: str, optional
+            Can be used to select a namespace other than the default.
+
+        Returns
+        -------
+        dict
+        """
+        cdef GDALMajorObjectH obj = NULL
+        if self.cogr_layer != NULL:
+            obj = self.cogr_layer
+        else:
+            obj = self.cogr_ds
+
+        cdef const char *domain = NULL
+        if ns:
+            ns = ns.encode('utf-8')
+            domain = ns
+
+        cdef char **metadata = NULL
+        metadata = GDALGetMetadata(obj, domain)
+        num_items = CSLCount(metadata)
+
+        return dict(metadata[i].decode('utf-8').split('=', 1) for i in range(num_items))
+
+
+    def get_tag_item(self, key, ns=None):
+        """Returns tag item value
+
+        Parameters
+        ----------
+        key: str
+            The key for the metadata item to fetch.
+        ns: str, optional
+            Used to select a namespace other than the default.
+
+        Returns
+        -------
+        str
+        """
+
+        key = key.encode('utf-8')
+        cdef const char *name = key
+
+        cdef const char *domain = NULL
+        if ns:
+            ns = ns.encode('utf-8')
+            domain = ns
+
+        cdef GDALMajorObjectH obj = NULL
+        if self.cogr_layer != NULL:
+            obj = self.cogr_layer
+        else:
+            obj = self.cogr_ds
+
+        cdef char *value = NULL
+        value = GDALGetMetadataItem(obj, name, domain)
+        if value == NULL:
+            return None
+        return value.decode("utf-8")
+
+
 cdef class WritingSession(Session):
 
     cdef object _schema_mapping
@@ -939,11 +1010,7 @@ cdef class WritingSession(Session):
 
             if not os.path.exists(path):
                 raise OSError("No such file or directory %s" % path)
-
-            try:
-                path_b = path.encode('utf-8')
-            except UnicodeDecodeError:
-                path_b = path
+            path_b = strencode(path)
             path_c = path_b
 
             try:
@@ -969,11 +1036,7 @@ cdef class WritingSession(Session):
             before_fields = self.get_schema()['properties']
 
         elif collection.mode == 'w':
-
-            try:
-                path_b = path.encode('utf-8')
-            except UnicodeDecodeError:
-                path_b = path
+            path_b = strencode(path)
             path_c = path_b
 
             driver_b = collection.driver.encode()
@@ -1259,13 +1322,20 @@ cdef class WritingSession(Session):
                 raise GeometryTypeValidationError(
                     "Record's geometry type does not match "
                     "collection schema's geometry type: %r != %r" % (
-                         record['geometry']['type'],
-                         collection.schema['geometry'] ))
-
+                        record['geometry']['type'],
+                        collection.schema['geometry'] ))
+            # Validate against collection's schema to give useful message
+            if set(record['properties'].keys()) != schema_props_keys:
+                raise SchemaError(
+                    "Record does not match collection schema: %r != %r" % (
+                        record['properties'].keys(),
+                        list(schema_props_keys) ))
             cogr_feature = OGRFeatureBuilder().build(record, collection)
             result = OGR_L_CreateFeature(cogr_layer, cogr_feature)
             if result != OGRERR_NONE:
-                raise RuntimeError("Failed to write record: %s" % record)
+                msg = get_last_error_msg()
+                raise RuntimeError("GDAL Error: {msg} \n \n Failed to write record: "
+                                   "{record}".format(msg=msg, record=record))
             _deleteOgrFeature(cogr_feature)
 
             if transactions_supported:
@@ -1297,6 +1367,80 @@ cdef class WritingSession(Session):
 
         gdal_flush_cache(cogr_ds)
         log.debug("Flushed data source cache")
+
+    def update_tags(self, tags, ns=None):
+        """Writes a dict containing the dataset or layers's tags.
+        Tags are pairs of key and value strings. Tags belong to
+        namespaces.  The standard namespaces are: default (None) and
+        'IMAGE_STRUCTURE'.  Applications can create their own additional
+        namespaces.
+
+        Parameters
+        ----------
+        tags: dict
+            The dict of metadata items to set.
+        ns: str, optional
+            Used to select a namespace other than the default.
+
+        Returns
+        -------
+        int
+        """
+        cdef GDALMajorObjectH obj = NULL
+        if self.cogr_layer != NULL:
+            obj = self.cogr_layer
+        else:
+            obj = self.cogr_ds
+
+        cdef const char *domain = NULL
+        if ns:
+            ns = ns.encode('utf-8')
+            domain = ns
+
+        cdef char **metadata = NULL
+        try:
+            for key, value in tags.items():
+                key = key.encode("utf-8")
+                value = value.encode("utf-8")
+                metadata = CSLAddNameValue(metadata, <const char *>key, <const char *>value)
+            return GDALSetMetadata(obj, metadata, domain)
+        finally:
+            CSLDestroy(metadata)
+
+    def update_tag_item(self, key, tag, ns=None):
+        """Updates the tag item value
+
+        Parameters
+        ----------
+        key: str
+            The key for the metadata item to set.
+        tag: str
+            The value of the metadata item to set.
+        ns: str
+            Used to select a namespace other than the default.
+
+        Returns
+        -------
+        int
+        """
+        key = key.encode('utf-8')
+        cdef const char *name = key
+        tag = tag.encode("utf-8")
+        cdef char *value = tag
+
+        cdef const char *domain = NULL
+        if ns:
+            ns = ns.encode('utf-8')
+            domain = ns
+
+        cdef GDALMajorObjectH obj = NULL
+        if self.cogr_layer != NULL:
+            obj = self.cogr_layer
+        else:
+            obj = self.cogr_ds
+
+        return GDALSetMetadataItem(obj, name, value, domain)
+
 
 cdef class Iterator:
 
@@ -1406,7 +1550,10 @@ cdef class Iterator:
 
         self.next_index = start
         log.debug("Next index: %d", self.next_index)
-        OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
+
+        # Set OGR_L_SetNextByIndex only if within range
+        if start >= 0 and (self.ftcount == -1 or self.start < self.ftcount):
+            exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
 
     def __iter__(self):
         return self
@@ -1416,6 +1563,7 @@ cdef class Iterator:
 
         cdef Session session
         session = self.collection.session
+
 
         # Check if next_index is valid
         if self.next_index < 0:
@@ -1435,7 +1583,7 @@ cdef class Iterator:
 
         # Set read cursor to next_item position
         if self.step > 1 and self.fastindex:
-            OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
+            exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
         elif self.step > 1 and not self.fastindex and not self.next_index == self.start:
             # GDALs default implementation of SetNextByIndex is calling ResetReading() and then
             # calling GetNextFeature n times. We can shortcut that if we know the previous index.
@@ -1445,9 +1593,12 @@ cdef class Iterator:
                 if cogr_feature == NULL:
                     raise StopIteration
         elif self.step > 1 and not self.fastindex and self.next_index == self.start:
-            OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
+            exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
+        elif self.step == 0:
+            # OGR_L_GetNextFeature increments read cursor by one
+            pass
         elif self.step < 0:
-            OGR_L_SetNextByIndex(session.cogr_layer, self.next_index)
+            exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
 
         # set the next index
         self.next_index += self.step
@@ -1611,10 +1762,7 @@ def _listlayers(path, **kwargs):
     cdef const char *name_c
 
     # Open OGR data source.
-    try:
-        path_b = path.encode('utf-8')
-    except UnicodeDecodeError:
-        path_b = path
+    path_b = strencode(path)
     path_c = path_b
     cogr_ds = gdal_open_vector(path_c, 0, None, kwargs)
 
@@ -1808,6 +1956,8 @@ cdef class MemoryFileBase:
         int
 
         """
+        if not self.getbuffer():
+            return 0        
         return self.getbuffer().size
 
     def getbuffer(self):
@@ -1820,10 +1970,10 @@ cdef class MemoryFileBase:
         buffer = VSIGetMemFileBuffer(name_b, &buffer_len, 0)
 
         if buffer == NULL or buffer_len == 0:
-            buff_view = memoryview(b"")
+            return None
         else:
             buff_view = <unsigned char [:buffer_len]>buffer
-        return buff_view
+            return buff_view
 
     def close(self):
         """Close and tear down VSI file and directory."""

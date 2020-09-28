@@ -95,7 +95,7 @@ polygons in Google Earth for one. No other library (like :py:mod:`Shapely`) is
 needed here, which keeps it uncomplicated. There's a :file:`test_uk` file in
 the Fiona repository for use in this and other examples.
 
-.. sourcecode:: python
+.. code-block:: python
 
   import datetime
   import logging
@@ -210,7 +210,7 @@ Reading a GIS vector file begins by opening it in mode ``'r'`` using Fiona's
 :py:func:`~fiona.open` function. It returns an opened
 :py:class:`~fiona.collection.Collection` object.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> import fiona
   >>> c = fiona.open('docs/data/test_uk.shp', 'r')
@@ -229,7 +229,7 @@ Mode ``'r'`` is the default and will be omitted in following examples.
 Fiona's :py:class:`~fiona.collection.Collection` is like a Python
 :py:class:`file`, but is iterable for records rather than lines.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> next(c)
   {'geometry': {'type': 'Polygon', 'coordinates': ...
@@ -239,7 +239,7 @@ Fiona's :py:class:`~fiona.collection.Collection` is like a Python
 Note that :py:func:`list` iterates over the entire collection, effectively
 emptying it as with a Python :py:class:`file`.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> next(c)
   Traceback (most recent call last):
@@ -251,7 +251,7 @@ emptying it as with a Python :py:class:`file`.
 Seeking the beginning of the file is not supported. You must reopen the
 collection to get back to the beginning.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> c = fiona.open('docs/data/test_uk.shp')
   >>> len(list(c))
@@ -309,7 +309,7 @@ no guarantee that these will be released unless you explicitly
 a :keyword:`with` statement. When a :py:class:`~fiona.collection.Collection`
 is a context guard, it is closed no matter what happens within the block.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> try:
   ...     with fiona.open('docs/data/test_uk.shp') as c:
@@ -342,7 +342,7 @@ a :py:class:`~fiona.collection.Collection` has a read-only
 :py:attr:`~fiona.collection.Collection.driver` attribute which names the
 :program:`OGR` :dfn:`format driver` used to open the vector file.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> c = fiona.open('docs/data/test_uk.shp')
   >>> c.driver
@@ -351,7 +351,7 @@ a :py:class:`~fiona.collection.Collection` has a read-only
 The :dfn:`coordinate reference system` (CRS) of the collection's vector data is
 accessed via a read-only :py:attr:`~fiona.collection.Collection.crs` attribute.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> c.crs
   {'no_defs': True, 'ellps': 'WGS84', 'datum': 'WGS84', 'proj': 'longlat'}
@@ -361,7 +361,7 @@ The CRS is represented by a mapping of :program:`PROJ.4` parameters.
 The :py:mod:`fiona.crs` module provides 3 functions to assist with these
 mappings. :py:func:`~fiona.crs.to_string` converts mappings to PROJ.4 strings:
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> from fiona.crs import to_string
   >>> print(to_string(c.crs))
@@ -369,7 +369,7 @@ mappings. :py:func:`~fiona.crs.to_string` converts mappings to PROJ.4 strings:
 
 :py:func:`~fiona.crs.from_string` does the inverse.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> from fiona.crs import from_string
   >>> from_string("+datum=WGS84 +ellps=WGS84 +no_defs +proj=longlat")
@@ -377,16 +377,22 @@ mappings. :py:func:`~fiona.crs.to_string` converts mappings to PROJ.4 strings:
 
 :py:func:`~fiona.crs.from_epsg` is a shortcut to CRS mappings from EPSG codes.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> from fiona.crs import from_epsg
   >>> from_epsg(3857)
   {'init': 'epsg:3857', 'no_defs': True}
 
+.. admonition:: No Validation
+
+   Both :py:func:`~fiona.crs.from_epsg` and :py:func:`~fiona.crs.from_string`
+   simply restructure data, they do not ensure that the resulting mapping is
+   a pre-defined or otherwise valid CRS in any way.
+
 The number of records in the collection's file can be obtained via Python's
 built in :py:func:`len` function.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> len(c)
   48
@@ -395,7 +401,7 @@ The :dfn:`minimum bounding rectangle` (MBR) or :dfn:`bounds` of the
 collection's records is obtained via a read-only
 :py:attr:`~fiona.collection.Collection.bounds` attribute.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> c.bounds
   (-8.621389, 49.911659, 1.749444, 60.844444)
@@ -406,7 +412,7 @@ record, remember) is accessed via a read-only
 and 'properties' items. The former is a string and the latter is an ordered
 dict with items having the same order as the fields in the data file.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> import pprint
   >>> pprint.pprint(c.schema)
@@ -425,7 +431,7 @@ record types is structured as closely to data about records as can be done.
 Modulo a record's 'id' key, the keys of a schema mapping are the same as the
 keys of the collection's record mappings.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> rec = next(c)
   >>> set(rec.keys()) - set(c.schema.keys())
@@ -437,7 +443,7 @@ The values of the schema mapping are either additional mappings or field type
 names like 'Polygon', 'float', and 'str'. The corresponding Python types can
 be found in a dictionary named :py:attr:`fiona.FIELD_TYPES_MAP`.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> pprint.pprint(fiona.FIELD_TYPES_MAP)
   {'date': <class 'fiona.rfc3339.FionaDateType'>,
@@ -455,7 +461,7 @@ Python (or Javascript) as possible. The 'str' vs 'unicode' muddle is a fact of
 life in Python < 3.0. Fiona records have Unicode strings, but their field type
 name is 'str' (looking forward to Python 3).
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> type(rec['properties']['CNTRY_NAME'])
   <class 'str'>
@@ -472,7 +478,7 @@ will be truncated at 25 characters. The default width is 80 chars, which means
 
 Fiona provides a function to get the width of a property.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> from fiona import prop_width
   >>> prop_width('str:25')
@@ -482,7 +488,7 @@ Fiona provides a function to get the width of a property.
 
 Another function gets the proper Python type of a property.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> from fiona import prop_type
   >>> prop_type('int')
@@ -495,7 +501,7 @@ Another function gets the proper Python type of a property.
 The example above is for Python 3. With Python 2, the type of 'str' properties
 is 'unicode'.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> prop_type('str:25')
   <class 'unicode'>
@@ -540,7 +546,7 @@ its fields are contained within the data structure and the values in the fields
 are typed properly for the type of record. Numeric field values are instances
 of type :py:class:`int` and :py:class:`float`, for example, not strings.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> pprint.pprint(rec)
   {'geometry': {'coordinates': [[(-4.663611, 51.158333),
@@ -569,7 +575,7 @@ The record data has no references to the
 other external resource. It's entirely independent and safe to use in any way.
 Closing the collection does not affect the record at all.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> c.close()
   >>> rec['id']
@@ -581,7 +587,7 @@ Record Id
 A record has an ``id`` key. As in the GeoJSON specification, its corresponding
 value is a string unique within the data file.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> c = fiona.open('docs/data/test_uk.shp')
   >>> rec = next(c)
@@ -601,7 +607,7 @@ ordered dict to be precise. The keys of the properties mapping are the same as
 the keys of the properties mapping in the schema of the collection the record
 comes from (see above).
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> pprint.pprint(rec['properties'])
   {'CAT': 232.0,
@@ -616,7 +622,7 @@ Record Geometry
 A record has a ``geometry`` key. Its corresponding value is a mapping with
 ``type`` and ``coordinates`` keys.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> pprint.pprint(rec['geometry'])
   {'coordinates': [[(0.899167, 51.357216),
@@ -683,7 +689,7 @@ In a proper, well-scrubbed vector data file the geometry mappings explained
 above are representations of geometric objects made up of :dfn:`point sets`.
 The following
 
-.. sourcecode:: python
+.. code-block:: python
 
   {'type': 'LineString', 'coordinates': [(0.0, 0.0), (0.0, 1.0)]}
 
@@ -694,7 +700,7 @@ geometric objects are equal if their point sets are equal whether they are
 equal in the Python sense or not. If you have Shapely (which implements Simple
 Features Access) installed, you can see this in by verifying the following.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> from shapely.geometry import shape
   >>> l1 = shape(
@@ -733,7 +739,7 @@ Let's start with the simplest if not most common use case, adding new records
 to an existing file. The file is copied before modification and a suitable
 record extracted in the example below.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> with fiona.open('docs/data/test_uk.shp') as c:
   ...     rec = next(c)
@@ -749,7 +755,7 @@ mode. The new record is written to the end of the file using the
 :py:meth:`~fiona.collection.Collection.write` method. Accordingly, the length
 of the file grows from 48 to 49.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> with fiona.open('/tmp/test_uk.shp', 'a') as c:
   ...     print(len(c))
@@ -762,7 +768,7 @@ of the file grows from 48 to 49.
 The record you write must match the file's schema (because a file contains one
 type of record, remember). You'll get a :py:class:`ValueError` if it doesn't.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> with fiona.open('/tmp/test_uk.shp', 'a') as c:
   ...     c.write({'properties': {'foo': 'bar'}})
@@ -775,7 +781,7 @@ Now, what about record ids? The id of a record written to a file is ignored and
 replaced by the next value appropriate for the file. If you read the file just
 appended to above,
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> with fiona.open('/tmp/test_uk.shp', 'a') as c:
   ...     records = list(c)
@@ -792,7 +798,7 @@ record to the collection's file. Its sibling
 :py:meth:`~fiona.collection.Collection.writerecords` writes a sequence (or
 iterator) of records.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> with fiona.open('/tmp/test_uk.shp', 'a') as c:
   ...     c.writerecords([rec, rec, rec])
@@ -824,7 +830,7 @@ formats are enumerated in the :py:attr:`fiona.supported_drivers` dictionary.
 
 Review the parameters of our demo file.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> with fiona.open('docs/data/test_uk.shp') as source:
   ...     source_driver = source.driver
@@ -845,7 +851,7 @@ Review the parameters of our demo file.
 
 We can create a new file using them.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> with fiona.open(
   ...         '/tmp/foo.shp',
@@ -868,7 +874,7 @@ Because the properties of the source schema are ordered and are passed in the
 same order to the write-mode collection, the written file's fields have the
 same order as those of the source file.
 
-.. sourcecode:: console
+.. code-block:: console
 
   $ ogrinfo /tmp/foo.shp foo -so
   INFO: Open of `/tmp/foo.shp'
@@ -893,7 +899,7 @@ same order as those of the source file.
 The :py:attr:`~fiona.collection.Collection.meta` attribute makes duplication of
 a file's meta properties even easier.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> source = fiona.open('docs/data/test_uk.shp')
   >>> sink = fiona.open('/tmp/foo.shp', 'w', **source.meta)
@@ -905,13 +911,13 @@ To write a new file from scratch we have to define our own specific driver, crs 
 
 To ensure the order of the attribute fields is predictable, in both the schema and the actual manifestation as feature attributes, we will use ordered dictionaries.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> from collections import OrderedDict
 
 Consider the following record, structured in accordance to the `Python geo protocol <https://gist.github.com/sgillies/2217756>`__, representing the Eiffel Tower using a point geometry with UTM coordinates in zone 31N.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> eiffel_tower =  {
   ...   'geometry': {
@@ -928,7 +934,7 @@ Consider the following record, structured in accordance to the `Python geo proto
 
 A corresponding scheme could be:
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> landmarks_schema = {
   ...   'geometry': 'Point',
@@ -942,20 +948,20 @@ A corresponding scheme could be:
 
 The coordinate reference system of these landmark coordinates is ETRS89 / UTM zone 31N which is referenced in the EPSG database as EPSG:25831.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> from fiona.crs import from_epsg
   >>> landmarks_crs = from_epsg(25831)
 
 An appropriate driver could be:
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> output_driver = "GeoJSON"
 
 Having specified schema, crs and driver, we are ready to open a file for writing our record:
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> with fiona.open(
   ...         '/tmp/foo.geojson',
@@ -989,7 +995,7 @@ dict is given, the ordering is determined by the output of that dict's
 
 For example, since
 
-.. sourcecode:: pycon
+.. code-block:: pycon
   
   >>> {'bar': 'int', 'foo': 'str'}.keys()
   ['foo', 'bar']
@@ -998,28 +1004,28 @@ a schema of ``{'properties': {'bar': 'int', 'foo': 'str'}}`` will produce
 a shapefile where the first field is 'foo' and the second field is 'bar'. If
 you want 'bar' to be the first field, you must use a list of property items
 
-.. sourcecode:: pycon
+.. code-block:: python
 
-  c = fiona.open(
-      '/tmp/file.shp', 
-      'w', 
-      schema={'properties': [('bar', 'int'), ('foo', 'str')], ...},
-      ... )
+    fiona.open(
+        "/tmp/file.shp",
+        "w",
+        schema={"properties": [("bar", "int"), ("foo", "str")]},
+        **kwargs
+    )
 
 or an ordered dict.
 
-.. sourcecode:: pycon
+.. code-block:: python
 
-  from collections import OrderedDict
+    from collections import OrderedDict
 
-  schema_props = OrderedDict([('bar', 'int'), ('foo', 'str')])
-
-  c = fiona.open(
-      '/tmp/file.shp', 
-      'w', 
-      schema={'properties': schema_props, ...},
-      ... )
-
+    schema_props = OrderedDict([("bar", "int"), ("foo", "str")])
+    fiona.open(
+        "/tmp/file.shp",
+        "w",
+        schema={"properties": schema_props},
+        **kwargs
+    )
 
 Coordinates and Geometry Types
 ------------------------------
@@ -1043,7 +1049,7 @@ using a context manager, ``fiona.Env``. This class's constructor takes GDAL/OGR
 configuration options as keyword arguments. To see debugging information from
 GDAL/OGR, for example, you may do the following.
 
-.. sourcecode:: python
+.. code-block:: python
 
     import logging
 
@@ -1077,13 +1083,13 @@ Cloud storage credentials
 One of the most important uses of ``fiona.Env`` is to set credentials for
 accessing data stored in AWS S3 or another cloud storage system.
 
-.. sourcecode:: python
+.. code-block:: python
 
         from fiona.session import AWSSession
         import fiona
 
         with fiona.Env(
-            session=AWSession(
+            session=AWSSession(
                 aws_access_key_id="key",
                 aws_secret_access_key="secret",
             )
@@ -1099,7 +1105,7 @@ If you call ``fiona.open()`` with no surrounding ``Env`` and pass a path to an
 S3 object, a session will be created for you using code equivalent to the
 following code.
 
-.. sourcecode:: python
+.. code-block:: python
 
     import boto3
 
@@ -1122,7 +1128,7 @@ collection's own coordinate reference system (see below) is used to interpret
 the box's values. If you want a list of the iterator's items, pass it to Python's
 builtin :py:func:`list` as shown below.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> c = fiona.open('docs/data/test_uk.shp')
   >>> hits = list(c.items(bbox=(-5.0, 55.0, 0.0, 60.0)))
@@ -1133,7 +1139,7 @@ The iterator method takes the same ``stop`` or ``start, stop[, step]``
 slicing arguments as :py:func:`itertools.islice`. 
 To get just the first two items from that iterator, pass a stop index.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
     >>> hits = c.items(2, bbox=(-5.0, 55.0, 0.0, 60.0))
     >>> len(list(hits))
@@ -1142,7 +1148,7 @@ To get just the first two items from that iterator, pass a stop index.
 To get the third through fifth items from that iterator, pass start and stop
 indexes.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
     >>> hits = c.items(2, 5, bbox=(-5.0, 55.0, 0.0, 60.0))
     >>> len(list(hits))
@@ -1152,7 +1158,7 @@ To filter features by property values, use Python's builtin :py:func:`filter` an
 :keyword:`lambda` or your own filter function that takes a single feature
 record and returns ``True`` or ``False``.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> def pass_positive_area(rec):
   ...     return rec['properties'].get('AREA', 0.0) > 0.0
@@ -1174,7 +1180,7 @@ A more useful example, for the purpose of this manual, is a directory
 comprising multiple shapefiles. The following three shell commands will create
 just such a two layered data source from the test data distributed with Fiona.
 
-.. sourcecode:: console
+.. code-block:: console
 
   $ mkdir /tmp/data
   $ ogr2ogr /tmp/data/ docs/data/test_uk.shp test_uk -nln foo
@@ -1183,7 +1189,7 @@ just such a two layered data source from the test data distributed with Fiona.
 The layers of a data source can be listed using :py:func:`fiona.listlayers`. In
 the shapefile format case, layer names match base names of the files.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> fiona.listlayers('/tmp/data')
   ['bar', 'foo']
@@ -1192,7 +1198,7 @@ Unlike OGR, Fiona has no classes representing layers or data sources. To access
 the features of a layer, open a collection using the path to the data source
 and specify the layer by name using the `layer` keyword.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> import pprint
   >>> datasrc_path = '/tmp/data'
@@ -1215,7 +1221,7 @@ and specify the layer by name using the `layer` keyword.
 
 Layers may also be specified by their index.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> for i, name in enumerate(fiona.listlayers(datasrc_path)):
   ...     with fiona.open(datasrc_path, layer=i) as c:
@@ -1227,7 +1233,7 @@ Layers may also be specified by their index.
 If no layer is specified, :py:func:`fiona.open` returns an open collection
 using the first layer.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> with fiona.open(datasrc_path) as c:
   ...     c.name == fiona.listlayers(datasrc_path)[0]
@@ -1238,14 +1244,14 @@ The most general way to open a shapefile for reading, using all of the
 parameters of :py:func:`fiona.open`, is to treat it as a data source with
 a named layer.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> fiona.open('docs/data/test_uk.shp', 'r', layer='test_uk')
 
 In practice, it is fine to rely on the implicit first layer and default ``'r'``
 mode and open a shapefile like this:
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> fiona.open('docs/data/test_uk.shp')
 
@@ -1255,7 +1261,7 @@ Writing Multilayer data
 To write an entirely new layer to a multilayer data source, simply provide
 a unique name to the `layer` keyword argument.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> 'wah' not in fiona.listlayers(datasrc_path)
   True
@@ -1269,7 +1275,7 @@ a unique name to the `layer` keyword argument.
 In ``'w'`` mode, existing layers will be overwritten if specified, just as normal
 files are overwritten by Python's :py:func:`open` function.
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> 'wah' in fiona.listlayers(datasrc_path)
   True
@@ -1285,7 +1291,7 @@ be made from paths and layers within them. In other words, Fiona lets you read
 zipped shapefiles. For example, make a Zip archive from the shapefile
 distributed with Fiona.
 
-.. sourcecode:: console
+.. code-block:: console
 
   $ zip /tmp/zed.zip docs/data/test_uk.*
   adding: docs/data/test_uk.shp (deflated 48%)
@@ -1299,7 +1305,7 @@ The `vfs` keyword parameter for :py:func:`fiona.listlayers` and
 archive file. When this parameter is used, the first argument to must be an
 absolute path within that archive. The layers in that Zip archive are:
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> import fiona
   >>> fiona.listlayers('/docs/data', vfs='zip:///tmp/zed.zip')
@@ -1307,7 +1313,7 @@ absolute path within that archive. The layers in that Zip archive are:
 
 The single shapefile may also be accessed like so:
 
-.. sourcecode:: pycon
+.. code-block:: pycon
 
   >>> with fiona.open(
   ...         '/docs/data/test_uk.shp', 
@@ -1315,7 +1321,6 @@ The single shapefile may also be accessed like so:
   ...     print(len(c))
   ...
   48
-
 
 Unsupported drivers
 -------------------
@@ -1327,57 +1332,62 @@ respectively a for append and w for write.
 
 These restrictions can be circumvented by modifying :py:attr:`fiona.supported_drivers`:
 
-.. sourcecode:: python
+.. code-block:: python
 
-  import fiona
-  fiona.drvsupport.supported_drivers["LIBKML"] = "raw"
-  with fiona.open("file.kmz") as collection:
-    pass
+    import fiona
+
+    fiona.drvsupport.supported_drivers["LIBKML"] = "raw"
+    with fiona.open("file.kmz") as collection:
+        pass
 
 It should, however, first be verified, if the local installation of GDAL/OGR 
 includes the required driver:
 
-.. sourcecode:: python
+.. code-block:: python
 
     from fiona.env import Env
 
     with Env() as gdalenv:
         print(gdalenv.drivers().keys())
 
-Dumpgj
-======
+MemoryFile and ZipMemoryFile
+----------------------------
 
-Fiona installs a script named ``dumpgj``. It converts files to GeoJSON with
-JSON-LD context as an option and is intended to be an upgrade to "ogr2ogr -f
-GeoJSON".
+:py:class:`fiona.io.MemoryFile` and :py:class:`fiona.io.ZipMemoryFile` allow
+formatted feature collections, even zipped feature collections, to be read or
+written in memory, with no filesystem access required. For example, you may
+have a zipped shapefile in a stream of bytes coming from a web upload or
+download.
 
-.. sourcecode:: console
+.. code-block:: pycon
 
-  $ dumpgj --help
-  usage: dumpgj [-h] [-d] [-n N] [--compact] [--encoding ENC]
-                [--record-buffered] [--ignore-errors] [--use-ld-context]
-                [--add-ld-context-item TERM=URI]
-                infile [outfile]
-  
-  Serialize a file's records or description to GeoJSON
-  
-  positional arguments:
-    infile                input file name
-    outfile               output file name, defaults to stdout if omitted
-  
-  optional arguments:
-    -h, --help            show this help message and exit
-    -d, --description     serialize file's data description (schema) only
-    -n N, --indent N      indentation level in N number of chars
-    --compact             use compact separators (',', ':')
-    --encoding ENC        Specify encoding of the input file
-    --record-buffered     Economical buffering of writes at record, not
-                          collection (default), level
-    --ignore-errors       log errors but do not stop serialization
-    --use-ld-context      add a JSON-LD context to JSON output
-    --add-ld-context-item TERM=URI
-                          map a term to a URI and add it to the output's JSON LD
-                          context
+    >>> data = open('tests/data/coutwildrnp.zip', 'rb').read()
+    >>> len(data)
+    154006
+    >>> data[:20]
+    b'PK\x03\x04\x14\x00\x00\x00\x00\x00\xaa~VM\xech\xae\x1e\xec\xab'
+
+The feature collection in this stream of bytes can be accessed by wrapping it
+in an instance of ZipMemoryFile.
+
+.. code-block:: pycon
+
+    >>> from fiona.io import ZipMemoryFile
+    >>> with ZipMemoryFile(data) as zip:
+    ...     with zip.open('coutwildrnp.shp') as collection:
+    ...         print(len(collection))
+    ...         print(collection.schema)
+    ...
+    67
+    {'properties': OrderedDict([('PERIMETER', 'float:24.15'), ('FEATURE2', 'str:80'), ('NAME', 'str:80'), ('FEATURE1', 'str:80'), ('URL', 'str:101'), ('AGBUR', 'str:80'), ('AREA', 'float:24.15'), ('STATE_FIPS', 'str:80'), ('WILDRNP020', 'int:10'), ('STATE', 'str:80')]), 'geometry': 'Polygon'}
+
+*New in 1.8.0*
+
+Fiona command line interface
+============================
+
+Fiona comes with a command line interface called "fio". See the 
+`CLI Documentation <cli.html>`__ for detailed usage instructions.
 
 Final Notes
 ===========

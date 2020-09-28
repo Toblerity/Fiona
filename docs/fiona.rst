@@ -43,6 +43,14 @@ fiona.drvsupport module
     :undoc-members:
     :show-inheritance:
 
+fiona.env module
+----------------
+
+.. automodule:: fiona.env
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 fiona.errors module
 -------------------
 
@@ -59,6 +67,22 @@ fiona.inspector module
     :undoc-members:
     :show-inheritance:
 
+fiona.io module
+---------------
+
+.. automodule:: fiona.io
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+fiona.logutils module
+---------------------
+
+.. automodule:: fiona.logutils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 fiona.ogrext module
 -------------------
 
@@ -67,18 +91,10 @@ fiona.ogrext module
     :undoc-members:
     :show-inheritance:
 
-fiona.ogrext1 module
---------------------
+fiona.path module
+-----------------
 
-.. automodule:: fiona.ogrext1
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-fiona.ogrext2 module
---------------------
-
-.. automodule:: fiona.ogrext2
+.. automodule:: fiona.path
     :members:
     :undoc-members:
     :show-inheritance:
@@ -91,10 +107,18 @@ fiona.rfc3339 module
     :undoc-members:
     :show-inheritance:
 
-fiona.tool module
------------------
+fiona.schema module
+-------------------
 
-.. automodule:: fiona.tool
+.. automodule:: fiona.schema
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+fiona.session module
+--------------------
+
+.. automodule:: fiona.session
     :members:
     :undoc-members:
     :show-inheritance:
@@ -103,6 +127,14 @@ fiona.transform module
 ----------------------
 
 .. automodule:: fiona.transform
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+fiona.vfs module
+----------------
+
+.. automodule:: fiona.vfs
     :members:
     :undoc-members:
     :show-inheritance:

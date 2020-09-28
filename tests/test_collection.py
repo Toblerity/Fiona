@@ -308,6 +308,31 @@ class TestIgnoreFieldsAndGeometry(object):
             with fiona.open(self.path_coutwildrnp_shp, "r", ignore_fields=[42]):
                 pass
 
+    def test_include_fields(self):
+        with fiona.open(self.path_coutwildrnp_shp, "r", include_fields=["AREA", "STATE"]) as collection:
+            assert sorted(collection.schema["properties"]) == ["AREA", "STATE"]
+            assert("geometry" in collection.schema.keys())
+
+            feature = next(iter(collection))
+            assert sorted(feature["properties"]) == ["AREA", "STATE"]
+            assert(feature["properties"]["AREA"] is not None)
+            assert(feature["properties"]["STATE"] is not None)
+            assert(feature["geometry"] is not None)
+
+    def test_include_fields__geom_only(self):
+        with fiona.open(self.path_coutwildrnp_shp, "r", include_fields=()) as collection:
+            assert sorted(collection.schema["properties"]) == []
+            assert("geometry" in collection.schema.keys())
+
+            feature = next(iter(collection))
+            assert sorted(feature["properties"]) == []
+            assert(feature["geometry"] is not None)
+
+    def test_include_fields__ignore_fields_error(self):
+        with pytest.raises(ValueError):
+            with fiona.open(self.path_coutwildrnp_shp, "r", include_fields=["AREA"], ignore_fields=["STATE"]) as collection:
+                pass
+
     def test_ignore_geometry(self):
         with fiona.open(self.path_coutwildrnp_shp, "r", ignore_geometry=True) as collection:
             assert("AREA" in collection.schema["properties"].keys())
@@ -892,7 +917,7 @@ def test_encoding_option_warning(tmpdir, caplog):
     assert not caplog.text
 
 
-def test_closed_session_next(path_coutwildrnp_shp):
+def test_closed_session_next(gdalenv, path_coutwildrnp_shp):
     """Confirm fix for  issue #687"""
     src = fiona.open(path_coutwildrnp_shp)
     itr = iter(src)
@@ -939,3 +964,26 @@ def test_mask_polygon_triangle(tmpdir, driver, filename):
         items = list(
             c.items(mask={'type': 'Polygon', 'coordinates': (((2.0, 2.0), (4.0, 4.0), (4.0, 6.0), (2.0, 2.0)),)}))
         assert len(items) == 15
+
+
+def test_collection__empty_column_name(tmpdir):
+    """Based on pull #955"""
+    tmpfile = str(tmpdir.join("test_empty.geojson"))
+    with pytest.warns(UserWarning, match="Empty field name at index 0"):
+        with fiona.open(tmpfile,  "w", driver="GeoJSON", schema={
+                "geometry": "Point",
+                "properties": {"": "str", "name": "str"}
+        }) as tmp:
+            tmp.writerecords([{
+                "geometry": {"type": "Point", "coordinates": [ 8, 49 ] },
+                "properties": { "": "", "name": "test" }
+            }])
+
+    with fiona.open(tmpfile) as tmp:
+        with pytest.warns(UserWarning, match="Empty field name at index 0"):
+            assert tmp.schema == {
+                "geometry": "Point",
+                "properties": {"": "str", "name": "str"}
+            }
+        with pytest.warns(UserWarning, match="Empty field name at index 0"):
+            next(tmp)

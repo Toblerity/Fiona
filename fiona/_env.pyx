@@ -118,11 +118,15 @@ def get_proj_version_tuple():
     """
     Returns proj version tuple for gdal >= 3.0.1, otherwise None
     """
+    cdef int major
+    cdef int minor
+    cdef int patch
     gdal_version_num = get_gdal_version_num()
     if gdal_version_num < calc_gdal_version_num(3, 0, 1):
         proj_version = None
     else:
-        return get_proj_version()
+        get_proj_version(&major, &minor, &patch)
+        return (major, minor, patch)
 
 
 cdef void log_error(CPLErr err_class, int err_no, const char* msg) with gil:
