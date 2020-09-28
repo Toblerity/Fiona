@@ -19,72 +19,13 @@ environment:
         # the libraries. It does not need to match the version of MSVC used to build Python.
         # https://en.wikipedia.org/wiki/Microsoft_Visual_C%2B%2B#Internal_version_numbering
 
-        - PYTHON: "C:\\Python27-x64"
-          PYTHON_VERSION: "2.7"
+        # Test all supported gdal minor versions (except latest stable) with one python version
+        - PYTHON: "C:\\Python38-x64"
+          PYTHON_VERSION: "3.8"
           PYTHON_ARCH: "64"
-          GDAL_VERSION: "1.11.4"
-          GIS_INTERNALS: "release-1800-x64-gdal-1-11-4-mapserver-6-4-3.zip"
-          GIS_INTERNALS_LIBS: "release-1800-x64-gdal-1-11-4-mapserver-6-4-3-libs.zip"
-
-        - PYTHON: "C:\\Python36-x64"
-          PYTHON_VERSION: "3.6"
-          PYTHON_ARCH: "64"
-          GDAL_VERSION: "2.2.3"
-          GIS_INTERNALS: "release-1911-x64-gdal-2-2-3-mapserver-7-0-7.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-2-3-mapserver-7-0-7-libs.zip"
-
-        - PYTHON: "C:\\Python36-x64"
-          PYTHON_VERSION: "3.6"
-          PYTHON_ARCH: "64"
-          GDAL_VERSION: "2.2.3"
-          GIS_INTERNALS: "release-1911-x64-gdal-2-2-3-mapserver-7-0-7.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-2-3-mapserver-7-0-7-libs.zip"
-
-        - PYTHON: "C:\\Python36-x64"
-          PYTHON_VERSION: "3.6"
-          PYTHON_ARCH: "64"
-          GDAL_VERSION: "2.3.3"
-          GIS_INTERNALS: "release-1911-x64-gdal-2-3-3-mapserver-7-2-1.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-3-3-mapserver-7-2-1-libs.zip"
-
-        - PYTHON: "C:\\Python36-x64"
-          PYTHON_VERSION: "3.6"
-          PYTHON_ARCH: "64"
-          GDAL_VERSION: "2.4.2"
-          GIS_INTERNALS: "release-1911-x64-gdal-2-4-2-mapserver-7-4-0.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-4-2-mapserver-7-4-0-libs.zip"
-
-        # Use daily stable branch of gdal 3.0.x series until release with gdal >= 3.0.1 is released
-        - PYTHON: "C:\\Python36-x64"
-          PYTHON_VERSION: "3.6"
-          PYTHON_ARCH: "64"
-          GDAL_VERSION: "3.0.4"
-          GIS_INTERNALS: "release-1911-x64-gdal-3-0-4-mapserver-7-4-3.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-3-0-4-mapserver-7-4-3-libs.zip"
-          PROJ_LIB: "C:\\gdal\\bin\\proj6\\share"
-
-        - PYTHON: "C:\\Python37-x64"
-          PYTHON_VERSION: "3.7"
-          PYTHON_ARCH: "64"
-          GDAL_VERSION: "2.4.2"
-          GIS_INTERNALS: "release-1911-x64-gdal-2-4-2-mapserver-7-4-0.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-4-2-mapserver-7-4-0-libs.zip"
-
-        - PYTHON: "C:\\Python37-x64"
-          PYTHON_VERSION: "3.7"
-          PYTHON_ARCH: "64"
-          GDAL_VERSION: "3.0.4"
-          GIS_INTERNALS: "release-1911-x64-gdal-3-0-4-mapserver-7-4-3.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-3-0-4-mapserver-7-4-3-libs.zip"
-          PROJ_LIB: "C:\\gdal\\bin\\proj6\\share"
-
-        - PYTHON: "C:\\Python37-x64"
-          PYTHON_VERSION: "3.7"
-          PYTHON_ARCH: "64"
-          GDAL_VERSION: "3.1.2"
-          GIS_INTERNALS: "release-1911-x64-gdal-3-1-2-mapserver-7-6-1.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-3-1-2-mapserver-7-6-1-libs.zip"
-          PROJ_LIB: "C:\\gdal\\bin\\proj6\\share"
+          GDAL_VERSION: "2.4.3"
+          GIS_INTERNALS: "release-1911-x64-gdal-2-4-3-mapserver-7-4-2.zip"
+          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-4-3-mapserver-7-4-2-libs.zip"
 
         - PYTHON: "C:\\Python38-x64"
           PYTHON_VERSION: "3.8"
@@ -94,6 +35,23 @@ environment:
           GIS_INTERNALS_LIBS: "release-1911-x64-gdal-3-0-4-mapserver-7-4-3-libs.zip"
           PROJ_LIB: "C:\\gdal\\bin\\proj6\\share"
 
+        # Test all supported python versions with latest stable gdal release
+        - PYTHON: "C:\\Python36-x64"
+          PYTHON_VERSION: "3.6"
+          PYTHON_ARCH: "64"
+          GDAL_VERSION: "3.1.2"
+          GIS_INTERNALS: "release-1911-x64-gdal-3-1-2-mapserver-7-6-1.zip"
+          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-3-1-2-mapserver-7-6-1-libs.zip"
+          PROJ_LIB: "C:\\gdal\\bin\\proj6\\share"
+
+        - PYTHON: "C:\\Python37-x64"
+          PYTHON_VERSION: "3.7"
+          PYTHON_ARCH: "64"
+          GDAL_VERSION: "3.1.2"
+          GIS_INTERNALS: "release-1911-x64-gdal-3-1-2-mapserver-7-6-1.zip"
+          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-3-1-2-mapserver-7-6-1-libs.zip"
+          PROJ_LIB: "C:\\gdal\\bin\\proj6\\share"
+          
         - PYTHON: "C:\\Python38-x64"
           PYTHON_VERSION: "3.8"
           PYTHON_ARCH: "64"
@@ -101,10 +59,6 @@ environment:
           GIS_INTERNALS: "release-1911-x64-gdal-3-1-2-mapserver-7-6-1.zip"
           GIS_INTERNALS_LIBS: "release-1911-x64-gdal-3-1-2-mapserver-7-6-1-libs.zip"
           PROJ_LIB: "C:\\gdal\\bin\\proj6\\share"
-
-matrix:
-  allow_failures:
-    - GDAL_VERSION: "1.11.4"
 
 install:
 
