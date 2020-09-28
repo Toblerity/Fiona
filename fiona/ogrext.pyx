@@ -1893,14 +1893,8 @@ cdef class MemoryFileBase:
         if get_gdal_version_tuple() < (2, ):
             return
 
-        name_b = drivername.encode("utf-8")
-        cdef const char *name_c = name_b
-        cdef GDALDriverH driver = GDALGetDriverByName(name_c)
-        cdef const char *extension_c = GDALGetMetadataItem(driver, "DMD_EXTENSION", NULL)
-
-        if extension_c != NULL:
-            extension_b = extension_c
-            recommended_extension = extension_b.decode("utf-8")
+        recommended_extension = _get_metadata_item(drivername, "DMD_EXTENSION")
+        if recommended_extension is not None:
             if not recommended_extension.startswith("."):
                 recommended_extension = "." + recommended_extension
             root, ext = os.path.splitext(self.name)
@@ -2012,8 +2006,8 @@ def _get_metadata_item(driver, metadata_item):
         Metadata item to query
     Returns
     -------
-    str
-        XML of metadata item or empty string
+    str or None
+        Metadata item
     """
     cdef char* metadata_c = NULL
     cdef void *cogr_driver
