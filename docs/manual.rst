@@ -1044,10 +1044,10 @@ OGR configuration options
 -------------------------
 
 GDAL/OGR has a large number of features that are controlled by global or
-thread-local configuration options. Fiona allows you to configure these options
-using a context manager, ``fiona.Env``. This class's constructor takes GDAL/OGR
-configuration options as keyword arguments. To see debugging information from
-GDAL/OGR, for example, you may do the following.
+thread-local `configuration options. <https://gdal.org/user/configoptions.html>`_
+Fiona allows you to configure these options using a context manager, ``fiona.Env``.
+This class's constructor takes GDAL/OGR configuration options as keyword arguments.
+To see debugging information from GDAL/OGR, for example, you may do the following.
 
 .. code-block:: python
 
@@ -1074,8 +1074,29 @@ The following extra messages will appear in the Python logger's output.::
 If you call ``fiona.open()`` with no surrounding ``Env`` environment, one will
 be created for you.
 
-When your program exits the environent's with block the configuration reverts
+When your program exits the environment's with block the configuration reverts
 to its previous state. 
+
+Driver configuration options
+----------------------------
+
+Drivers can have dataset open, dataset creation, respectively layer creation options. These options can be found
+on the drivers page on `GDAL's homepage. <https://gdal.org/drivers/vector/index.html>`_ or using the 
+``fiona.meta`` module:
+
+.. code-block:: pycon
+
+    >>> import fiona.meta
+    >>> fiona.meta.print_driver_options("GeoJSON")
+
+
+These options can be passed to ``fiona.open``:
+
+.. code-block:: python
+
+    import fiona
+    fiona.open('tests/data/coutwildrnp.json', ARRAY_AS_STRING="YES")
+
 
 Cloud storage credentials
 -------------------------
