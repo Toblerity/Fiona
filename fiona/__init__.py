@@ -100,6 +100,7 @@ with fiona._loading.add_gdal_dll_directories():
     from fiona.ogrext import (
         _bounds,
         _listlayers,
+        _listdir,
         FIELD_TYPES_MAP,
         _remove,
         _remove_layer,
@@ -114,7 +115,7 @@ with fiona._loading.add_gdal_dll_directories():
     import uuid
 
 
-__all__ = ['bounds', 'listlayers', 'open', 'prop_type', 'prop_width']
+__all__ = ['bounds', 'listlayers', 'listdir', 'open', 'prop_type', 'prop_width']
 __version__ = "1.9dev"
 __gdal_version__ = get_gdal_release_name()
 
@@ -326,6 +327,25 @@ def remove(path_or_collection, driver=None, layer=None):
         _remove_layer(path, layer, driver)
 
 
+def listdir(path):
+    """List files in a directory
+    Parameters
+    ----------
+    path : URI (str or pathlib.Path)
+        A dataset resource identifier.
+    Returns
+    -------
+    list
+        A list of filename strings.
+    """
+    if isinstance(path, Path):
+        path = str(path)
+    if not isinstance(path, string_types):
+        raise TypeError("invalid path: %r" % path)
+    pobj = parse_path(path)
+    return _listdir(vsi_path(pobj))
+
+
 @ensure_env_with_credentials
 def listlayers(fp, vfs=None):
     """List layer names in their index order
@@ -347,7 +367,7 @@ def listlayers(fp, vfs=None):
     if hasattr(fp, 'read'):
 
         with MemoryFile(fp.read()) as memfile:
-            return  _listlayers(memfile.name)
+            return _listlayers(memfile.name)
 
     else:
 

@@ -1783,6 +1783,33 @@ def _listlayers(path, **kwargs):
     return layer_names
 
 
+def _listdir(path):
+    """List all files in path, if path points to a directory"""
+    cdef const char *path_c
+    cdef int n
+    cdef char** papszFiles
+    cdef VSIStatBufL st_buf
+
+    try:
+        path_b = path.encode('utf-8')
+    except UnicodeDecodeError:
+        path_b = path
+    path_c = path_b
+    if not VSIStatL(path_c, &st_buf) == 0:
+        raise FionaValueError("Path '{}' does not exist.".format(path))
+    if not VSI_ISDIR(st_buf.st_mode):
+        raise FionaValueError("Path '{}' is not a directory.".format(path))
+
+    papszFiles = VSIReadDir(path_c)
+    n = CSLCount(papszFiles)
+    files = []
+    for i in range(n):
+        files.append(papszFiles[i].decode("utf-8"))
+    CSLDestroy(papszFiles)
+
+    return files
+
+
 def buffer_to_virtual_file(bytesbuf, ext=''):
     """Maps a bytes buffer to a virtual file.
 

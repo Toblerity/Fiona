@@ -8,7 +8,7 @@ import pytest
 
 import fiona
 import fiona.ogrext
-from fiona.errors import DriverError, FionaDeprecationWarning
+from fiona.errors import DriverError, FionaDeprecationWarning, FionaValueError
 
 
 def test_single_file_private(path_coutwildrnp_shp):
@@ -72,3 +72,27 @@ def test_listing_pathobj(path_coutwildrnp_json):
     """list layers from a Path object"""
     pathlib = pytest.importorskip("pathlib")
     assert len(fiona.listlayers(pathlib.Path(path_coutwildrnp_json))) == 1
+
+
+def test_listdir_path(path_coutwildrnp_zip):
+    """List directories in a path"""
+    assert fiona.listdir('zip://{}'.format(path_coutwildrnp_zip)) == ['coutwildrnp.shp', 'coutwildrnp.shx', 'coutwildrnp.dbf', 'coutwildrnp.prj']
+
+
+def test_listdir_path_not_existing(data_dir):
+    """Test listing of a non existent directory"""
+    path = os.path.join(data_dir, "does_not_exist.zip")
+    with pytest.raises(FionaValueError):
+        fiona.listdir(path)
+
+
+def test_listdir_invalid_path():
+    """List directories with invalid path"""
+    with pytest.raises(TypeError):
+        assert fiona.listdir(1)
+
+
+def test_listdir_file(path_coutwildrnp_zip):
+    """ Test list directories of a file"""
+    with pytest.raises(FionaValueError):
+        fiona.listdir('zip://{}/coutwildrnp.shp'.format(path_coutwildrnp_zip))
