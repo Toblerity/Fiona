@@ -2042,11 +2042,7 @@ def _get_metadata_item(driver, metadata_item):
     if get_gdal_version_tuple() < (2, ):
         return None
 
-    try:
-        driver_b = driver.encode('utf-8')
-    except UnicodeDecodeError:
-        driver_b = driver
-
+    driver_b = strencode(driver)
     cogr_driver = GDALGetDriverByName(driver_b)
     if cogr_driver == NULL:
         raise FionaValueError("Could not find driver '{}'".format(driver))
