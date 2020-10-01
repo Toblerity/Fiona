@@ -2,10 +2,10 @@
 
 from collections import OrderedDict
 from io import BytesIO
-
 import pytest
-
 import fiona
+from fiona import supported_drivers
+from fiona.drvsupport import _driver_supports_mode
 from fiona.io import MemoryFile, ZipMemoryFile
 
 from .conftest import requires_gdal2
@@ -168,3 +168,45 @@ def test_mapinfo_raises():
         with pytest.raises(OSError):
             with fiona.open(fout, "w", driver=driver, schema=schema) as collection:
                 collection.write({"type": "Feature", "geometry": {"type": "Point", "coordinates": (0, 0)}, "properties": {"position": "x"}})
+
+
+# TODO only test drivers that support DCAP_VIRTUALIO
+@pytest.mark.parametrize('driver', [driver for driver in supported_drivers if _driver_supports_mode(driver, 'w') and driver not in {'MapInfo File', 'FileGDB'}])
+def test_write_memoryfile_drivers(driver, testdata_generator):
+
+    range1 = list(range(0, 5))
+    schema, crs, records1, _, test_equal = testdata_generator(driver, range1, [])
+
+    with MemoryFile() as memfile:
+        with memfile.open(driver=driver, schema=schema) as c:
+            c.writerecords(records1)
+
+        with memfile.open(driver=driver) as c:
+            assert driver == c.driver
+            items = list(c)
+            assert len(items) == len(range1)
+            for val_in, val_out in zip(records1, items):
+                assert test_equal(driver, val_in, val_out)
+
+
+# TODO only test drivers that support DCAP_VIRTUALIO
+@pytest.mark.parametrize('driver', [driver for driver in supported_drivers if _driver_supports_mode(driver, 'a') and driver not in {'MapInfo File', 'FileGDB'}])
+def test_append_memoryfile_drivers(driver, testdata_generator):
+
+    range1 = list(range(0, 5))
+    range2 = list(range(5, 10))
+    schema, crs, records1, records2, test_equal = testdata_generator(driver, range1, range2)
+
+    with MemoryFile() as memfile:
+        with memfile.open(driver=driver, schema=schema) as c:
+            c.writerecords(records1)
+
+        with memfile.open(mode='a', driver=driver, schema=schema) as c:
+            c.writerecords(records2)
+
+        with memfile.open(driver=driver) as c:
+            assert driver == c.driver
+            items = list(c)
+            assert len(items) == len(range1 + range2)
+            for val_in, val_out in zip(records1 + records2, items):
+                assert test_equal(driver, val_in, val_out)

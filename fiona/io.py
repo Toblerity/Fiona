@@ -32,7 +32,7 @@ class MemoryFile(MemoryFileBase):
         super(MemoryFile, self).__init__(
             file_or_bytes=file_or_bytes, filename=filename, ext=ext)
 
-    def open(self, driver=None, schema=None, crs=None, encoding=None,
+    def open(self, mode=None, driver=None, schema=None, crs=None, encoding=None,
              layer=None, vfs=None, enabled_drivers=None, crs_wkt=None,
              **kwargs):
         """Open the file and return a Fiona collection object.
@@ -52,33 +52,34 @@ class MemoryFile(MemoryFileBase):
         if self.closed:
             raise IOError("I/O operation on closed file.")
 
+        # TODO test if driver supports GDAL_DCAP_VIRTUALIO
+
+        if mode in ('r', 'a') and not self.exists():
+            raise IOError("MemoryFile does not exist.")
+        elif mode == 'w' and self.exists():
+            raise IOError("MemoryFile already exists.")
+
         if not self.exists():
             self._ensure_extension(driver)
             this_schema = schema.copy()
             this_schema["properties"] = OrderedDict(schema["properties"])
-            return Collection(
-                self.name,
-                "w",
-                crs=crs,
-                driver=driver,
-                schema=this_schema,
-                encoding=encoding,
-                layer=layer,
-                enabled_drivers=enabled_drivers,
-                crs_wkt=crs_wkt,
-                **kwargs
-            )
+            mode = 'w'
+        else:
+            if mode is None:
+                mode = 'r'
 
-        elif self.mode in ("r", "r+"):
-            return Collection(
-                self.name,
-                "r",
-                driver=driver,
-                encoding=encoding,
-                layer=layer,
-                enabled_drivers=enabled_drivers,
-                **kwargs
-            )
+        return Collection(
+            self.name,
+            mode,
+            crs=crs,
+            driver=driver,
+            schema=schema,
+            encoding=encoding,
+            layer=layer,
+            enabled_drivers=enabled_drivers,
+            crs_wkt=crs_wkt,
+            **kwargs
+        )
 
     def __enter__(self):
         return self
