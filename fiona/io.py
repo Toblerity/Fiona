@@ -3,12 +3,12 @@
 
 from collections import OrderedDict
 import logging
-
 import fiona._loading
 with fiona._loading.add_gdal_dll_directories():
     from fiona.ogrext import MemoryFileBase
     from fiona.collection import Collection
-
+    from fiona.meta import supports_vsi
+    from fiona.errors import DriverError
 
 log = logging.getLogger(__name__)
 
@@ -52,7 +52,8 @@ class MemoryFile(MemoryFileBase):
         if self.closed:
             raise IOError("I/O operation on closed file.")
 
-        # TODO test if driver supports GDAL_DCAP_VIRTUALIO
+        if driver is not None and not supports_vsi(driver):
+            raise DriverError("Driver {} does not support virtual files.")
 
         if mode in ('r', 'a') and not self.exists():
             raise IOError("MemoryFile does not exist.")

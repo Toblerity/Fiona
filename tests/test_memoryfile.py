@@ -7,6 +7,7 @@ import fiona
 from fiona import supported_drivers
 from fiona.drvsupport import _driver_supports_mode
 from fiona.io import MemoryFile, ZipMemoryFile
+from fiona.meta import supports_vsi
 
 from .conftest import requires_gdal2
 
@@ -170,9 +171,10 @@ def test_mapinfo_raises():
                 collection.write({"type": "Feature", "geometry": {"type": "Point", "coordinates": (0, 0)}, "properties": {"position": "x"}})
 
 
-# TODO only test drivers that support DCAP_VIRTUALIO
-@pytest.mark.parametrize('driver', [driver for driver in supported_drivers if _driver_supports_mode(driver, 'w') and driver not in {'MapInfo File', 'FileGDB'}])
+@pytest.mark.parametrize('driver', [driver for driver in supported_drivers if _driver_supports_mode(driver, 'w') and
+                                    supports_vsi(driver)])
 def test_write_memoryfile_drivers(driver, testdata_generator):
+    """ Test if driver is able to write to memoryfile """
 
     range1 = list(range(0, 5))
     schema, crs, records1, _, test_equal = testdata_generator(driver, range1, [])
@@ -189,10 +191,10 @@ def test_write_memoryfile_drivers(driver, testdata_generator):
                 assert test_equal(driver, val_in, val_out)
 
 
-# TODO only test drivers that support DCAP_VIRTUALIO
-@pytest.mark.parametrize('driver', [driver for driver in supported_drivers if _driver_supports_mode(driver, 'a') and driver not in {'MapInfo File', 'FileGDB'}])
+@pytest.mark.parametrize('driver', [driver for driver in supported_drivers if _driver_supports_mode(driver, 'a') and
+                                    supports_vsi(driver)])
 def test_append_memoryfile_drivers(driver, testdata_generator):
-
+    """ Test if driver is able to append to memoryfile """
     range1 = list(range(0, 5))
     range2 = list(range(5, 10))
     schema, crs, records1, records2, test_equal = testdata_generator(driver, range1, range2)
