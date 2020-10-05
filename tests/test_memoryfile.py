@@ -171,8 +171,9 @@ def test_mapinfo_raises():
                 collection.write({"type": "Feature", "geometry": {"type": "Point", "coordinates": (0, 0)}, "properties": {"position": "x"}})
 
 
-@pytest.mark.parametrize('driver', [driver for driver in supported_drivers if _driver_supports_mode(driver, 'w') and
-                                    supports_vsi(driver)])
+# TODO remove exclusion of MapInfo File once testdata_generator is fixed
+@pytest.mark.parametrize('driver', [driver for driver in supported_drivers if _driver_supports_mode(driver, 'a') and
+                                    supports_vsi(driver) and driver not in {'MapInfo File'}])
 def test_write_memoryfile_drivers(driver, testdata_generator):
     """ Test if driver is able to write to memoryfile """
 
@@ -191,8 +192,9 @@ def test_write_memoryfile_drivers(driver, testdata_generator):
                 assert test_equal(driver, val_in, val_out)
 
 
+# TODO remove exclusion of MapInfo File once testdata_generator is fixed
 @pytest.mark.parametrize('driver', [driver for driver in supported_drivers if _driver_supports_mode(driver, 'a') and
-                                    supports_vsi(driver)])
+                                    supports_vsi(driver) and driver not in {'MapInfo File'}])
 def test_append_memoryfile_drivers(driver, testdata_generator):
     """ Test if driver is able to append to memoryfile """
     range1 = list(range(0, 5))
