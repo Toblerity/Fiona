@@ -323,6 +323,7 @@ cdef extern from "ogr_api.h":
     void *  OGROpenShared (char *path, int mode, void *x)
     int     OGRReleaseDataSource (void *datasource)
     OGRErr  OGR_L_SetIgnoredFields (void *layer, const char **papszFields)
+    OGRErr  OGR_L_SetAttributeFilter(void *layer, const char*)
     OGRErr  OGR_L_SetNextByIndex (void *layer, long nIndex)
     long long OGR_F_GetFieldAsInteger64 (void *feature, int n)
     void    OGR_F_SetFieldInteger64 (void *feature, int n, long long value)

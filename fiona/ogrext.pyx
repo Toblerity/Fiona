@@ -1212,7 +1212,7 @@ cdef class Iterator:
     cdef stepsign
 
     def __cinit__(self, collection, start=None, stop=None, step=None,
-                  bbox=None, mask=None):
+                  bbox=None, mask=None, where=None):
         if collection.session is None:
             raise ValueError("I/O operation on closed collection")
         self.collection = collection
@@ -1237,6 +1237,14 @@ cdef class Iterator:
 
         else:
             OGR_L_SetSpatialFilter(cogr_layer, NULL)
+
+        if where:
+            where_b = where.encode('utf-8')
+            where_c = where_b
+            OGR_L_SetAttributeFilter(cogr_layer, <const char*>where_c)
+
+        else:
+            OGR_L_SetAttributeFilter(cogr_layer, NULL)
 
         self.encoding = session._get_internal_encoding()
 

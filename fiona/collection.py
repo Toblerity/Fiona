@@ -246,15 +246,17 @@ class Collection(object):
         mask = kwds.get('mask')
         if bbox and mask:
             raise ValueError("mask and bbox can not be set together")
+        where = kwds.get('where')
         self.iterator = Iterator(
-            self, start, stop, step, bbox, mask)
+            self, start, stop, step, bbox, mask, where)
         return self.iterator
 
     def items(self, *args, **kwds):
         """Returns an iterator over FID, record pairs, optionally
         filtered by a test for spatial intersection with the provided
         ``bbox``, a (minx, miny, maxx, maxy) tuple or a geometry
-        ``mask``.
+        ``mask``. Additionally, an attribute filter can be set
+        using an SQL ``where`` clause.
 
         Positional arguments ``stop`` or ``start, stop[, step]`` allows
         iteration to skip over items or stop at a specific item.
@@ -274,8 +276,9 @@ class Collection(object):
         mask = kwds.get('mask')
         if bbox and mask:
             raise ValueError("mask and bbox can not be set together")
+        where = kwds.get('where')
         self.iterator = ItemsIterator(
-            self, start, stop, step, bbox, mask)
+            self, start, stop, step, bbox, mask, where)
         return self.iterator
 
     def keys(self, *args, **kwds):
