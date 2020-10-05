@@ -3,6 +3,20 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.9dev
+------
+
+Deprecations:
+
+- The fiona.drivers() function has been deprecated and will be removed in
+  version 2.0. It should be replaced by fiona.Env().
+- The new fiona.meta module will be renamed to fiona.drivers in version 2.0.
+
+New features:
+
+- Driver metadata including dataset open and dataset and layer creations
+  options are now exposed through methods of the fiona.meta module (#950).
+
 1.8.18 (TBD)
 ------------
 
