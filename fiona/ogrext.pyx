@@ -1920,14 +1920,8 @@ cdef class MemoryFileBase:
         if get_gdal_version_tuple() < (2, ):
             return
 
-        name_b = drivername.encode("utf-8")
-        cdef const char *name_c = name_b
-        cdef GDALDriverH driver = GDALGetDriverByName(name_c)
-        cdef const char *extension_c = GDALGetMetadataItem(driver, "DMD_EXTENSION", NULL)
-
-        if extension_c != NULL:
-            extension_b = extension_c
-            recommended_extension = extension_b.decode("utf-8")
+        recommended_extension = _get_metadata_item(drivername, "DMD_EXTENSION")
+        if recommended_extension is not None:
             if not recommended_extension.startswith("."):
                 recommended_extension = "." + recommended_extension
             root, ext = os.path.splitext(self.name)
@@ -2027,3 +2021,39 @@ cdef class MemoryFileBase:
         result = VSIFWriteL(view, 1, n, self._vsif)
         VSIFFlushL(self._vsif)
         return result
+
+
+def _get_metadata_item(driver, metadata_item):
+    """Query metadata items
+    Parameters
+    ----------
+    driver : str
+        Driver to query
+    metadata_item : str or None
+        Metadata item to query
+    Returns
+    -------
+    str or None
+        Metadata item
+    """
+    cdef char* metadata_c = NULL
+    cdef void *cogr_driver
+
+    if get_gdal_version_tuple() < (2, ):
+        return None
+
+    driver_b = strencode(driver)
+    cogr_driver = GDALGetDriverByName(driver_b)
+    if cogr_driver == NULL:
+        raise FionaValueError("Could not find driver '{}'".format(driver))
+
+    metadata_c = GDALGetMetadataItem(cogr_driver, metadata_item.encode('utf-8'), NULL)
+
+    metadata = None
+    if metadata_c != NULL:
+        metadata = metadata_c
+        metadata = metadata.decode('utf-8')
+        if len(metadata) == 0:
+            metadata = None
+
+    return metadata
