@@ -218,7 +218,7 @@ def test_append_memoryfile_drivers(driver, testdata_generator):
 
 
 def test_memoryfile_driver_does_not_support_vsi():
-    """ Test that Exception is raised when a dataset is opened with a driver that does not support VSI"""
+    """ Test that an exception is raised when a dataset is opened with a driver that does not support VSI"""
     if "FileGDB" not in supported_drivers:
         pytest.skip("FileGDB driver not available")
     with pytest.raises(DriverError):
@@ -226,10 +226,23 @@ def test_memoryfile_driver_does_not_support_vsi():
             with memfile.open(driver="FileGDB") as c:
                 pass
 
+
 @pytest.mark.parametrize('mode', ['r', 'a'])
 def test_modes_on_non_existing_memoryfile(mode):
     """ Test that non existing memoryfile cannot opened in r or a mode"""
     with MemoryFile() as memfile:
         with pytest.raises(IOError):
             with memfile.open(mode=mode) as c:
+                pass
+
+
+def test_write_mode_on_non_existing_memoryfile(profile_first_coutwildrnp_shp):
+    """ Test that exception is raised if a memoryfile is opened in write mode on a non empty memoryfile"""
+    profile, first = profile_first_coutwildrnp_shp
+    profile['driver'] = 'GeoJSON'
+    with MemoryFile() as memfile:
+        with memfile.open(**profile) as col:
+            col.write(first)
+        with pytest.raises(IOError):
+            with memfile.open(mode='w') as c:
                 pass
