@@ -6,6 +6,7 @@ import pytest
 import fiona
 from fiona import supported_drivers
 from fiona.drvsupport import _driver_supports_mode
+from fiona.errors import DriverError
 from fiona.io import MemoryFile, ZipMemoryFile
 from fiona.meta import supports_vsi
 
@@ -214,3 +215,21 @@ def test_append_memoryfile_drivers(driver, testdata_generator):
             assert len(items) == len(range1 + range2)
             for val_in, val_out in zip(records1 + records2, items):
                 assert test_equal(driver, val_in, val_out)
+
+
+def test_memoryfile_driver_does_not_support_vsi():
+    """ Test that Exception is raised when a dataset is opened with a driver that does not support VSI"""
+    if "FileGDB" not in supported_drivers:
+        pytest.skip("FileGDB driver not available")
+    with pytest.raises(DriverError):
+        with MemoryFile() as memfile:
+            with memfile.open(driver="FileGDB") as c:
+                pass
+
+@pytest.mark.parametrize('mode', ['r', 'a'])
+def test_modes_on_non_existing_memoryfile(mode):
+    """ Test that non existing memoryfile cannot opened in r or a mode"""
+    with MemoryFile() as memfile:
+        with pytest.raises(IOError):
+            with memfile.open(mode=mode) as c:
+                pass
