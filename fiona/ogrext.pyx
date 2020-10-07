@@ -2040,6 +2040,9 @@ def _get_metadata_item(driver, metadata_item):
 
     if get_gdal_version_tuple() < (2, ):
         return None
+    
+    if driver is None:
+        return None
 
     driver_b = strencode(driver)
     cogr_driver = GDALGetDriverByName(driver_b)

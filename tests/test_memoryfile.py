@@ -173,7 +173,7 @@ def test_mapinfo_raises():
 
 
 # TODO remove exclusion of MapInfo File once testdata_generator is fixed
-@pytest.mark.parametrize('driver', [driver for driver in supported_drivers if _driver_supports_mode(driver, 'a') and
+@pytest.mark.parametrize('driver', [driver for driver in supported_drivers if _driver_supports_mode(driver, 'w') and
                                     supports_vsi(driver) and driver not in {'MapInfo File'}])
 def test_write_memoryfile_drivers(driver, testdata_generator):
     """ Test if driver is able to write to memoryfile """
@@ -190,6 +190,35 @@ def test_write_memoryfile_drivers(driver, testdata_generator):
             items = list(c)
             assert len(items) == len(range1)
             for val_in, val_out in zip(records1, items):
+                assert test_equal(driver, val_in, val_out)
+
+
+def test_multiple_layer_memoryfile(testdata_generator):
+    """ Test ability to create multiple layers in memoryfile"""
+
+    driver = "GPKG"
+    range1 = list(range(0, 5))
+    range2 = list(range(5, 10))
+    schema, crs, records1, records2, test_equal = testdata_generator(driver, range1, range2)
+
+    with MemoryFile() as memfile:
+        with memfile.open(mode='w', driver=driver, schema=schema, layer="layer1") as c:
+            c.writerecords(records1)
+        with memfile.open(mode='w', driver=driver, schema=schema, layer="layer2") as c:
+            c.writerecords(records2)
+
+        with memfile.open(driver=driver, layer="layer1") as c:
+            assert driver == c.driver
+            items = list(c)
+            assert len(items) == len(range1)
+            for val_in, val_out in zip(records1, items):
+                assert test_equal(driver, val_in, val_out)
+
+        with memfile.open(driver=driver, layer="layer2") as c:
+            assert driver == c.driver
+            items = list(c)
+            assert len(items) == len(range1)
+            for val_in, val_out in zip(records2, items):
                 assert test_equal(driver, val_in, val_out)
 
 

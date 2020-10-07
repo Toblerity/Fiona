@@ -55,26 +55,36 @@ class MemoryFile(MemoryFileBase):
         if driver is not None and not supports_vsi(driver):
             raise DriverError("Driver {} does not support virtual files.")
 
+        if schema:
+            this_schema = schema.copy()
+            if "properties" in schema:
+                this_schema["properties"] = OrderedDict(schema["properties"])
+            else:
+                this_schema["properties"] = OrderedDict()
+
+            if "geometry" not in this_schema:
+                this_schema["geometry"] = None
+        else:
+            this_schema = None
+
         if mode in ('r', 'a') and not self.exists():
             raise IOError("MemoryFile does not exist.")
-        elif mode == 'w' and self.exists():
+        if layer is None and mode == 'w' and self.exists():
             raise IOError("MemoryFile already exists.")
 
-        if not self.exists():
-            self._ensure_extension(driver)
-            this_schema = schema.copy()
-            this_schema["properties"] = OrderedDict(schema["properties"])
+        if not self.exists() or mode == 'w':
+            if driver is not None:
+                self._ensure_extension(driver)
             mode = 'w'
-        else:
-            if mode is None:
-                mode = 'r'
+        elif mode is None:
+            mode = 'r'
 
         return Collection(
             self.name,
             mode,
             crs=crs,
             driver=driver,
-            schema=schema,
+            schema=this_schema,
             encoding=encoding,
             layer=layer,
             enabled_drivers=enabled_drivers,
