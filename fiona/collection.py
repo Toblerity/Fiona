@@ -4,6 +4,7 @@
 import logging
 import os
 import warnings
+from collections import OrderedDict
 
 import fiona._loading
 
@@ -167,10 +168,15 @@ class Collection(object):
 
             if not schema:
                 raise SchemaError("no schema")
-            elif 'properties' not in schema:
-                raise SchemaError("schema lacks: properties")
-            elif 'geometry' not in schema:
-                raise SchemaError("schema lacks: geometry")
+            if "properties" in schema:
+                # Make an ordered dict of schema properties.
+                this_schema = schema.copy()
+                this_schema["properties"] = OrderedDict(schema["properties"])
+                schema = this_schema
+            else:
+                schema["properties"] = OrderedDict()
+            if "geometry" not in schema:
+                schema["geometry"] = None
             self._schema = schema
 
             self._check_schema_driver_support()

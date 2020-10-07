@@ -227,20 +227,13 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
         return fp_reader(fp)
 
     elif mode == 'w' and hasattr(fp, 'write'):
-        if schema:
-            # Make an ordered dict of schema properties.
-            this_schema = schema.copy()
-            this_schema['properties'] = OrderedDict(schema['properties'])
-        else:
-            this_schema = None
-
         @contextmanager
         def fp_writer(fp):
             memfile = MemoryFile()
             dataset = memfile.open(
                 driver=driver,
                 crs=crs,
-                schema=this_schema,
+                schema=schema,
                 layer=layer,
                 encoding=encoding,
                 enabled_drivers=enabled_drivers,
@@ -273,20 +266,7 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
             c = Collection(path, mode, driver=driver, encoding=encoding,
                            layer=layer, enabled_drivers=enabled_drivers, **kwargs)
         elif mode == 'w':
-            if schema:
-                # Make an ordered dict of schema properties.
-                this_schema = schema.copy()
-                if "properties" in schema:
-                    this_schema["properties"] = OrderedDict(schema["properties"])
-                else:
-                    this_schema["properties"] = OrderedDict()
-
-                if "geometry" not in this_schema:
-                    this_schema["geometry"] = None
-
-            else:
-                this_schema = None
-            c = Collection(path, mode, crs=crs, driver=driver, schema=this_schema,
+            c = Collection(path, mode, crs=crs, driver=driver, schema=schema,
                            encoding=encoding, layer=layer, enabled_drivers=enabled_drivers, crs_wkt=crs_wkt,
                            **kwargs)
         else:
