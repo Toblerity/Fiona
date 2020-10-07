@@ -1,4 +1,6 @@
 import pytest
+from fiona._env import get_gdal_version_tuple
+
 import fiona
 from fiona.drvsupport import supported_drivers, _driver_supports_mode
 from fiona.errors import DriverError
@@ -30,11 +32,13 @@ def test_bounds_z():
 def test_bounds(tmpdir, driver, testdata_generator):
     """Test if bounds are correctly calculated after writing
     """
-
     if driver == 'BNA' and GDALVersion.runtime() < GDALVersion(2, 0):
         pytest.skip("BNA driver segfaults with gdal 1.11")
     if driver == 'MapInfo File':
-        pytest.skip("MapInfo File driver is not able to calcualte bounds: (-30000000.0, -15000000.0, 30000000.0, 15000000.0) ")
+        pytest.skip(
+            "MapInfo File driver is not able to calcualte bounds: (-30000000.0, -15000000.0, 30000000.0, 15000000.0) ")
+    if driver == 'ESRI Shapefile' and get_gdal_version_tuple() < (3, 1):
+        pytest.skip("Bug in GDALs Shapefile driver: https://github.com/OSGeo/gdal/issues/2269")
 
     range1 = list(range(0, 5))
     range2 = list(range(5, 10))
