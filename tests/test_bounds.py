@@ -1,9 +1,10 @@
 import pytest
 import fiona
-from fiona.drvsupport import supported_drivers
+from fiona.drvsupport import supported_drivers, _driver_supports_mode
 from fiona.errors import DriverError
-from .conftest import driver_extensions
 from fiona.env import GDALVersion
+from tests.conftest import get_temp_filename
+
 
 def test_bounds_point():
     g = {'type': 'Point', 'coordinates': [10, 10]}
@@ -21,48 +22,51 @@ def test_bounds_polygon():
 
 
 def test_bounds_z():
-    g = {'type': 'Point', 'coordinates': [10,10,10]}
+    g = {'type': 'Point', 'coordinates': [10, 10, 10]}
     assert fiona.bounds(g) == (10, 10, 10, 10)
 
 
-blacklist_write_drivers = set(['CSV', 'GPX', 'GPSTrackMaker', 'DXF', 'DGN', 'MapInfo File'])
-write_drivers = [driver for driver, raw in supported_drivers.items() if 'w' in raw and driver not in blacklist_write_drivers]
-
-
-@pytest.mark.parametrize('driver', write_drivers)
-def test_bounds(tmpdir, driver):
+@pytest.mark.parametrize('driver', [driver for driver in supported_drivers if _driver_supports_mode(driver, 'w')])
+def test_bounds(tmpdir, driver, testdata_generator):
     """Test if bounds are correctly calculated after writing
-    
     """
 
     if driver == 'BNA' and GDALVersion.runtime() < GDALVersion(2, 0):
-        # BNA driver segfaults with gdal 1.11
-        return
+        pytest.skip("BNA driver segfaults with gdal 1.11")
+    if driver == 'MapInfo File':
+        pytest.skip("MapInfo File driver is not able to calcualte bounds: (-30000000.0, -15000000.0, 30000000.0, 15000000.0) ")
 
+    range1 = list(range(0, 5))
+    range2 = list(range(5, 10))
+    schema, crs, records1, records2, test_equal = testdata_generator(driver, range1, range2)
 
-    extension = driver_extensions.get(driver, "bar")
-    path = str(tmpdir.join('foo.{}'.format(extension)))
+    if not schema['geometry'] == 'Point':
+        pytest.skip("Driver does not support point geometries")
+
+    filename = get_temp_filename(driver)
+    path = str(tmpdir.join(filename))
+
+    def calc_bounds(records):
+        xs = []
+        ys = []
+        for r in records:
+            xs.append(r['geometry']['coordinates'][0])
+            ys.append(r['geometry']['coordinates'][1])
+        return min(xs), max(xs), min(ys), max(ys)
 
     with fiona.open(path, 'w',
                     driver=driver,
-                    schema={'geometry': 'Point',
-                            'properties': [('title', 'str')]},
-                    fiona_force_driver=True) as c:
-
-        c.writerecords([{'geometry': {'type': 'Point', 'coordinates': (1.0, 10.0)},
-                            'properties': {'title': 'One'}}])
-
-        try: 
+                    schema=schema) as c:
+        c.writerecords(records1)
+        try:
             bounds = c.bounds
-            assert bounds == (1.0, 10.0, 1.0, 10.0)
+            assert bounds == calc_bounds(records1)
         except Exception as e:
-            assert isinstance(e, DriverError) 
+            assert isinstance(e, DriverError)
 
-        c.writerecords([{'geometry': {'type': 'Point', 'coordinates': (2.0, 20.0)},
-                            'properties': {'title': 'Two'}}])
-        
-        try: 
+        c.writerecords(records2)
+        try:
             bounds = c.bounds
-            assert bounds == (1.0, 10.0, 2.0, 20.0)
+            assert bounds == calc_bounds(records1 + records2)
         except Exception as e:
-            assert isinstance(e, DriverError) 
+            assert isinstance(e, DriverError)

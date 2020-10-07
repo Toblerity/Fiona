@@ -9,27 +9,10 @@ import zipfile
 from collections import OrderedDict
 from click.testing import CliRunner
 import pytest
-
 import fiona
 from fiona.crs import from_epsg
 from fiona.env import GDALVersion
-
-driver_extensions = {'DXF': 'dxf',
-                     'CSV': 'csv',
-                     'ESRI Shapefile': 'shp',
-                     'FileGDB': 'gdb',
-                     'GML': 'gml',
-                     'GPX': 'gpx',
-                     'GPSTrackMaker': 'gtm',
-                     'MapInfo File': 'tab',
-                     'DGN': 'dgn',
-                     'GPKG': 'gpkg',
-                     'GeoJSON': 'json',
-                     'GMT': 'gmt',
-                     'GeoJSONSeq': 'geojsons',
-                     'GMT': 'gmt',
-                     'OGR_GMT': 'gmt',
-                     'BNA': 'bna'}
+from fiona.meta import extensions
 
 
 def pytest_report_header(config):
@@ -44,16 +27,15 @@ def pytest_report_header(config):
 
 
 def get_temp_filename(driver):
-
+    """ Create a temporary file name with driver extension if required """
     basename = "foo"
-    extension = driver_extensions.get(driver, "bar")
-    prefix = ""
-    if driver == 'GeoJSONSeq':
-        prefix = "GeoJSONSeq:"
-
-    return "{prefix}{basename}.{extension}".format(prefix=prefix,
-                                                   basename=basename,
-                                                   extension=extension)
+    exts = extensions(driver)
+    if exts is None or len(exts) == 0:
+        ext = ""
+    else:
+        ext = ".{}".format(exts[0])
+    return "{basename}{extension}".format(basename=basename,
+                                          extension=ext)
 
 
 _COUTWILDRNP_FILES = [
@@ -78,6 +60,7 @@ def gdalenv(request):
         if fiona.env.local._env:
             fiona.env.delenv()
             fiona.env.local._env = None
+
     request.addfinalizer(fin)
 
 
@@ -106,10 +89,12 @@ def path_test_tin_shp(data_dir):
     """Path to ```test_tin.shp``"""
     return os.path.join(data_dir, 'test_tin.shp')
 
+
 @pytest.fixture(scope='session')
 def path_test_tin_csv(data_dir):
     """Path to ```test_tin.csv``"""
     return os.path.join(data_dir, 'test_tin.csv')
+
 
 @pytest.fixture(scope='session')
 def path_coutwildrnp_shp(data_dir):
@@ -450,7 +435,7 @@ def testdata_generator():
             A function that returns True if the geometry is equal between the generated records and a record and if
             the properties of the generated records can be found in a record
         """
-        return get_schema(driver), get_crs(driver), get_records(driver, range1), get_records2(driver, range2),\
+        return get_schema(driver), get_crs(driver), get_records(driver, range1), get_records2(driver, range2), \
                test_equal
 
     return _testdata_generator
