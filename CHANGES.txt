@@ -6,6 +6,9 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.8.18 (TBD)
 ------------
 
+- If the certifi package can be imported, its certificate store location will
+  be passed to GDAL during import of fiona._env unless CURL_CA_BUNDLE is
+  already set.
 - Warn when feature fields named "" are found (#955).
 
 1.8.17 (2020-09-09)
