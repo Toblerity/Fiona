@@ -38,7 +38,7 @@ GDALOPTS="  --with-geos \
             --without-python \
             --with-oci=no \
             --without-mrf \
-            --with-webp=no
+            --with-webp=no"
 
 case "$GDALVERSION" in
     3*)
