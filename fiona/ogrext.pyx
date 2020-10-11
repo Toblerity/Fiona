@@ -10,7 +10,7 @@ import os
 import warnings
 import math
 from uuid import uuid4
-from collections import namedtuple
+from collections import OrderedDict, namedtuple
 
 from six import integer_types, string_types, text_type
 
@@ -31,7 +31,7 @@ from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
     FeatureWarning, FionaDeprecationWarning)
-from fiona.compat import strencode, OrderedDict
+from fiona.compat import strencode
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 from fiona.schema import FIELD_TYPES, FIELD_TYPES_MAP, normalize_field_type
@@ -1222,14 +1222,16 @@ cdef class WritingSession(Session):
         schema_geom_type = collection.schema['geometry']
         cogr_driver = GDALGetDatasetDriver(self.cogr_ds)
         driver_name = OGR_Dr_GetName(cogr_driver).decode("utf-8")
-
         valid_geom_types = collection._valid_geom_types
+
         def validate_geometry_type(record):
             if record["geometry"] is None:
                 return True
             return record["geometry"]["type"].lstrip("3D ") in valid_geom_types
+
         transactions_supported = check_capability_transaction(self.cogr_ds)
         log.debug("Transaction supported: {}".format(transactions_supported))
+
         if transactions_supported:
             log.debug("Starting transaction (initial)")
             result = gdal_start_transaction(self.cogr_ds, 0)
@@ -1237,6 +1239,7 @@ cdef class WritingSession(Session):
                 raise TransactionError("Failed to start transaction")
 
         schema_props_keys = set(collection.schema['properties'].keys())
+
         for record in records:
             log.debug("Creating feature in layer: %s" % record)
 
@@ -1275,7 +1278,7 @@ cdef class WritingSession(Session):
             if transactions_supported:
                 features_in_transaction += 1
                 if features_in_transaction == DEFAULT_TRANSACTION_SIZE:
-                    log.debug("Comitting transaction (intermediate)")
+                    log.debug("Committing transaction (intermediate)")
                     result = gdal_commit_transaction(self.cogr_ds)
                     if result == OGRERR_FAILURE:
                         raise TransactionError("Failed to commit transaction")
@@ -1286,7 +1289,7 @@ cdef class WritingSession(Session):
                     features_in_transaction = 0
 
         if transactions_supported:
-            log.debug("Comitting transaction (final)")
+            log.debug("Committing transaction (final)")
             result = gdal_commit_transaction(self.cogr_ds)
             if result == OGRERR_FAILURE:
                 raise TransactionError("Failed to commit transaction")

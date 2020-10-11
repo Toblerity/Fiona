@@ -1,14 +1,7 @@
-import collections
-import sys
+"""Version compatibility"""
 
-if sys.version_info[0] >= 3:
-    from urllib.parse import urlparse
-    from collections import UserDict
-    from inspect import getfullargspec as getargspec
-else:
-    from urlparse import urlparse
-    from UserDict import UserDict
-    from inspect import getargspec
+from collections import UserDict
+import sys
 
 if sys.version_info >= (3, 3):
     from collections.abc import Mapping

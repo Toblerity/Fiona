@@ -62,6 +62,7 @@ Because Fiona collections are context managers, they are closed and (in
 writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
+from collections import OrderedDict
 from contextlib import contextmanager
 import logging
 import os
@@ -94,7 +95,6 @@ with fiona._loading.add_gdal_dll_directories():
         get_gdal_release_name,
         get_gdal_version_tuple,
     )
-    from fiona.compat import OrderedDict
     from fiona.io import MemoryFile
     from fiona.ogrext import (
         _bounds,

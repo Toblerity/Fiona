@@ -45,7 +45,7 @@ class TestTransaction:
     def teardown_method(self):
         log.removeHandler(self.handler)
 
-    def test_transaction(self, tmpdir):
+    def test_transaction(self, tmpdir, monkeypatch):
         """
         Test transaction start/commit is called the expected number of times,
         and that the default transaction size can be overloaded. The test uses
@@ -54,10 +54,7 @@ class TestTransaction:
         """
         num_records = 250
         transaction_size = 100
-
-        assert fiona.ogrext.DEFAULT_TRANSACTION_SIZE == 20000
-        fiona.ogrext.DEFAULT_TRANSACTION_SIZE = transaction_size
-        assert fiona.ogrext.DEFAULT_TRANSACTION_SIZE == transaction_size
+        monkeypatch.setattr(fiona.ogrext, "DEFAULT_TRANSACTION_SIZE", transaction_size)
 
         path = str(tmpdir.join("output.gpkg"))
 

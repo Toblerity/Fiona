@@ -1,9 +1,8 @@
 """Implementation of Apache VFS schemes and URLs."""
 
-import os
 import sys
 import re
-from fiona.compat import urlparse
+from urllib.parse import urlparse
 
 
 # Supported URI schemes and their mapping to GDAL's VSI suffix.
@@ -28,6 +27,7 @@ REMOTESCHEMES = set([k for k, v in SCHEMES.items() if v in ('curl', 's3', 'gs')]
 def valid_vsi(vsi):
     """Ensures all parts of our vsi path are valid schemes."""
     return all(p in SCHEMES for p in vsi.split('+'))
+
 
 def is_remote(scheme):
     if scheme is None:
