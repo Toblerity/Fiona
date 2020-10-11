@@ -95,6 +95,7 @@ if [ "$GDALVERSION" = "master" ]; then
         make install
     fi
 
+else
     PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
 
     if [ ! -d "$GDALINST/gdal-$GDALVERSION/share/gdal" ]; then
