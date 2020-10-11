@@ -126,12 +126,16 @@ cdef object _transform_single_geom(
     cdef void *src_ogr_geom = NULL
     cdef void *dst_ogr_geom = NULL
     cdef int i
-<<<<<<< HEAD
+
+    if not isinstance(single_geom, Geometry):
+        single_geom = Geometry.from_dict(**single_geom)
+
     src_ogr_geom = _geometry.OGRGeomBuilder().build(single_geom)
     dst_ogr_geom = factory.transformWithOptions(
                     <const OGRGeometry *>src_ogr_geom,
                     <OGRCoordinateTransformation *>transform,
                     options)
+
     if dst_ogr_geom == NULL:
         out_geom = None
         warnings.warn(
@@ -142,41 +146,7 @@ cdef object _transform_single_geom(
         )
     else:
         out_geom = _geometry.GeomBuilder().build(dst_ogr_geom)
-=======
-
-    if not isinstance(geom, Geometry):
-        geom = Geometry.from_dict(**geom)
-
-    if src_crs and dst_crs:
-        src = _crs_from_crs(src_crs)
-        dst = _crs_from_crs(dst_crs)
-        transform = _crs.OCTNewCoordinateTransformation(src, dst)
-
-        # Transform options.
-        options = _csl.CSLSetNameValue(
-                    options, "DATELINEOFFSET", 
-                    str(antimeridian_offset).encode('utf-8'))
-        if antimeridian_cutting:
-            options = _csl.CSLSetNameValue(options, "WRAPDATELINE", "YES")
-
-        factory = new OGRGeometryFactory()
-        src_ogr_geom = _geometry.OGRGeomBuilder().build(geom)
-        dst_ogr_geom = factory.transformWithOptions(
-                        <const OGRGeometry *>src_ogr_geom,
-                        <OGRCoordinateTransformation *>transform,
-                        options)
-
-        if dst_ogr_geom == NULL:
-            out_geom = None
-            warnings.warn(
-                "Full reprojection failed, but partial is possible. To enable partial "
-                "reprojection wrap the transform_geom call like so:\n"
-                "with fiona.Env(OGR_ENABLE_PARTIAL_REPROJECTION=True):\n"
-                "    transform_geom(...)"
-            )
-        else:
-            out_geom = _geometry.GeomBuilder().build(dst_ogr_geom)
-            _geometry.OGR_G_DestroyGeometry(dst_ogr_geom)
+        _geometry.OGR_G_DestroyGeometry(dst_ogr_geom)
 
     if src_ogr_geom != NULL:
         _geometry.OGR_G_DestroyGeometry(src_ogr_geom)
@@ -258,10 +228,9 @@ def _transform_geom(
     src = _crs_from_crs(src_crs)
     dst = _crs_from_crs(dst_crs)
     transform = _crs.OCTNewCoordinateTransformation(src, dst)
+
     # Transform options.
-    options = _csl.CSLSetNameValue(
-                options, "DATELINEOFFSET", 
-                str(antimeridian_offset).encode('utf-8'))
+    options = _csl.CSLSetNameValue(options, "DATELINEOFFSET", str(antimeridian_offset).encode('utf-8'))
     if antimeridian_cutting:
         options = _csl.CSLSetNameValue(options, "WRAPDATELINE", "YES")
 

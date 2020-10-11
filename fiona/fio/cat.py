@@ -1,7 +1,7 @@
 """fio-cat"""
 
-
 import json
+import logging
 import warnings
 
 import click
@@ -12,6 +12,7 @@ from fiona.transform import transform_geom
 from fiona.model import ObjectEncoder
 from fiona.fio import options, with_context_env
 
+log = logging.getLogger(__name__)
 
 warnings.simplefilter('default')
 
@@ -104,5 +105,5 @@ def cat(
                         click.echo(json.dumps(feat, cls=ObjectEncoder, **dump_kwds))
 
     except Exception:
-        logger.exception("Exception caught during processing")
+        log.exception("Exception caught during processing")
         raise click.Abort()
