@@ -12,8 +12,6 @@ from fiona.transform import transform_geom
 from fiona.model import ObjectEncoder
 from fiona.fio import options, with_context_env
 
-log = logging.getLogger(__name__)
-
 warnings.simplefilter('default')
 
 
@@ -67,6 +65,8 @@ def cat(
     Use the '--layer' option to select a different layer.
 
     """
+    log = logging.getLogger(__name__)
+
     dump_kwds = {'sort_keys': True}
     if indent:
         dump_kwds['indent'] = indent

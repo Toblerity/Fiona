@@ -12,6 +12,7 @@ from fiona._crs cimport OGRSpatialReferenceH
 from fiona._shim cimport osr_set_traditional_axis_mapping_strategy
 
 from fiona.compat import UserDict, DICT_TYPES
+from fiona.compat import UserDict
 from fiona.model import Geometry
 
 
