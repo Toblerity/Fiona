@@ -38,7 +38,7 @@ GDALOPTS="  --with-geos \
             --without-python \
             --with-oci=no \
             --without-mrf \
-            --with-webp=no"
+            --with-webp=no
 
 case "$GDALVERSION" in
     3*)
@@ -111,15 +111,6 @@ else
 
     case "$GDALVERSION" in
         3*)
-            PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
-            ;;
-        2.4*)
-            PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
-            ;;
-        2.3*)
-            PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
-            ;;
-        *)
             PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
             ;;
         *)
