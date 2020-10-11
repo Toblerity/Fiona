@@ -38,22 +38,10 @@ GDALOPTS="  --with-geos \
             --without-python \
             --with-oci=no \
             --without-mrf \
-            --with-webp=no"
-
-case "$GDALVERSION" in
-    3*)
-        GDALOPTS="$GDALOPTS \
-        --without-lerc \
-        --with-png=internal \
-        --with-jpeg=internal"
-        ;;
-    *)
-        GDALOPTS="$GDALOPTS \
-        --without-lerc \
-        --with-png=internal \
-        --with-jpeg=internal"
-        ;;
-esac
+            --with-webp=no \
+            --without-lerc \
+            --with-png=internal \
+            --with-jpeg=internal"
 
 # OS specific gdal build options
 if [ "$TRAVIS_OS_NAME" = "linux" ]; then
@@ -107,16 +95,7 @@ if [ "$GDALVERSION" = "master" ]; then
         make install
     fi
 
-else
-
-    case "$GDALVERSION" in
-        3*)
-            PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
-            ;;
-        *)
-            PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
-            ;;
-    esac
+    PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
 
     if [ ! -d "$GDALINST/gdal-$GDALVERSION/share/gdal" ]; then
         cd $GDALBUILD
