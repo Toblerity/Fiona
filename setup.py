@@ -5,7 +5,6 @@ import os
 import shutil
 import subprocess
 import sys
-
 from setuptools import setup
 from setuptools.extension import Extension
 
@@ -178,6 +177,16 @@ ext_options = dict(
     libraries=libraries,
     extra_link_args=extra_link_args)
 
+# Enable coverage for cython pyx files.
+if os.environ.get("CYTHON_COVERAGE"):
+    from Cython.Compiler.Options import get_directive_defaults
+
+    directive_defaults = get_directive_defaults()
+    directive_defaults["linetrace"] = True
+    directive_defaults["binding"] = True
+
+    ext_options.update(dict(define_macros=[("CYTHON_TRACE_NOGIL", "1")]))
+
 # GDAL 2.3+ requires C++11
 
 if language == "c++":
@@ -261,18 +270,19 @@ elif "clean" not in sys.argv:
             Extension('fiona._shim', ['fiona/_shim3.c'], **ext_options))
 
 requirements = [
-    'attrs>=17',
-    'click>=4.0,<8',
-    'cligj>=0.5',
-    'click-plugins>=1.0',
-    'six>=1.7',
-    'munch',
+    "attrs>=17",
+    "certifi",
+    "click>=4.0,<8",
+    "cligj>=0.5",
+    "click-plugins>=1.0",
+    "six>=1.7",
+    "munch",
 ]
 
 extras_require = {
-    'calc': ['shapely'],
-    's3': ['boto3>=1.2.4'],
-    'test': ['pytest>=3', 'pytest-cov', 'boto3>=1.2.4', 'mock; python_version<"3.4"']
+    "calc": ["shapely"],
+    "s3": ["boto3>=1.2.4"],
+    "test": ["pytest>=3", "pytest-cov", "boto3>=1.2.4"],
 }
 
 extras_require['all'] = list(set(it.chain(*extras_require.values())))

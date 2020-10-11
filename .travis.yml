@@ -13,7 +13,46 @@ env:
     - GDALBUILD=$HOME/gdalbuild
     - PROJINST=$HOME/gdalinstall
     - PROJBUILD=$HOME/projbuild
+    - FILEGDB=$HOME/gdalinstall/filegdb
+    - CYTHON_COVERAGE="true"
     - MAKEFLAGS="-j 2"
+    - CXXFLAGS="-O0"
+    - CFLAGS="-O0"
+
+jobs:
+  include:
+    - python: "3.6"
+      env:
+        GDALVERSION="3.0.4"
+        PROJVERSION="6.3.2"
+    - python: "3.7"
+      env:
+        GDALVERSION="3.1.3"
+        PROJVERSION="6.3.2"
+    - python: "3.8"
+      env:
+        GDALVERSION="3.1.3"
+        PROJVERSION="6.3.2"
+    - python: "3.8"
+      env:
+        GDALVERSION="master"
+        PROJVERSION="7.1.1"
+    - python: "3.8"
+      ox: linux
+      arch: ppc64le
+      env:
+        GDALVERSION="3.1.3"
+        PROJVERSION="6.3.2"
+    - os: osx
+      osx_image: xcode11.2
+      python: "3.8"
+      env:
+        GDALVERSION="3.1.3"
+        PROJVERSION="6.3.2"
+  allow_failures:
+    - env:
+        GDALVERSION="master"
+        PROJVERSION="7.1.1"
 
 addons:
   apt:
@@ -34,60 +73,28 @@ matrix:
   fast_finish: true
   include:
     - os: linux
-      dist: xenial
-      python: "3.6"
-      env:
-        GDALVERSION="2.3.3"
-        PROJVERSION="4.9.3"
-
-    - os: linux
-      dist: xenial
-      python: "3.6"
-      env:
-        GDALVERSION="2.4.4"
-        PROJVERSION="4.9.3"
-
-    - os: linux
-      dist: xenial
       python: "3.6"
       env:
         GDALVERSION="3.0.3"
         PROJVERSION="6.2.1"
  
     - os: linux
-      dist: xenial
       python: "3.7"
       env:
         GDALVERSION="3.0.3"
         PROJVERSION="6.2.1"
 
     - os: linux
-      dist: xenial
       python: "3.8"
       env:
         GDALVERSION="3.0.4"
         PROJVERSION="6.2.1"
 
     - os: linux
-      dist: xenial
       python: "3.8"
       env:
         GDALVERSION="master"
         PROJVERSION="6.3.0"
-        
-    - os: osx
-      osx_image: xcode11.2
-      language: shell
-      env:
-        GDALVERSION="2.3.3"
-        PROJVERSION="4.9.3"
-
-    - os: osx
-      osx_image: xcode11.2
-      language: shell
-      env:
-        GDALVERSION="2.4.4"
-        PROJVERSION="4.9.3"
 
     - os: osx
       osx_image: xcode11.2
@@ -123,12 +130,20 @@ install:
   - python3 -m pip freeze
   - fio --version
   - fio --gdal-version
+  - python -c "import fiona; fiona.show_versions()"
+  - python scripts/check_deprecated.py
 
 script:
   - python3 -m pytest -m "not wheel" --cov fiona --cov-report term-missing
 
 after_script:
-  - python setup.py clean
+  - python3 setup.py clean
+
+  # Check documentation
+  - rstcheck -r --ignore-directives automodule --ignore-substitutions version,release,today .
+
+after_script:
+  - python3 setup.py clean
 
 after_success:
   - coveralls || echo "!! intermittent coveralls failure"

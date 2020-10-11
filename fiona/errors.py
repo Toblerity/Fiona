@@ -65,3 +65,7 @@ class GDALVersionError(FionaError):
 
 class FionaDeprecationWarning(UserWarning):
     """A warning about deprecation of Fiona features"""
+
+
+class FeatureWarning(UserWarning):
+    """A warning about serialization of a feature"""

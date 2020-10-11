@@ -3,3 +3,4 @@ click-plugins==1.0.4
 cligj==0.5.0
 munch==2.3.2
 six==1.11.0
+enum34==1.1.6 ; python_version < '3.4'
