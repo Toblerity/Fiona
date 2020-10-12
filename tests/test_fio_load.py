@@ -5,6 +5,8 @@ import json
 import os
 import shutil
 
+import pytest
+
 import fiona
 from fiona.fio.main import main_group
 
@@ -121,7 +123,8 @@ def test_fio_load_layer(tmpdir, runner):
         shutil.rmtree(outdir)
 
 
-def test_creation_optiona(tmpdir, runner, feature_seq):
+@pytest.mark.iconv
+def test_creation_options(tmpdir, runner, feature_seq):
     tmpfile = str(tmpdir.mkdir("tests").join("test.shp"))
     result = runner.invoke(
         main_group,
