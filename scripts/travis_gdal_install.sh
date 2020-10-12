@@ -4,7 +4,6 @@
 set -e
 
 GDALOPTS="  --with-geos \
-            --with-expat \
             --without-libtool \
             --with-libz=internal \
             --with-libtiff=internal \
@@ -40,6 +39,17 @@ GDALOPTS="  --with-geos \
             --without-python \
             --with-oci=no \
             --with-webp=no"
+
+# OS specific gdal build options
+if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+    GDALOPTS="$GDALOPTS \
+                --with-expat \
+                --with-sqlite3"
+elif [ $TRAVIS_OS_NAME = 'osx' ]; then
+    GDALOPTS="$GDALOPTS \
+                --with-expat=/usr/local/opt/expat \
+                --with-sqlite3=/usr/local/opt/sqlite"
+fi
 
 if [ -d "$FILEGDB" ]; then
   GDALOPTS="$GDALOPTS --with-fgdb=$FILEGDB"
