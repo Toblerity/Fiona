@@ -1241,7 +1241,8 @@ cdef class Iterator:
         if where:
             where_b = where.encode('utf-8')
             where_c = where_b
-            OGR_L_SetAttributeFilter(cogr_layer, <const char*>where_c)
+            exc_wrap_int(
+                OGR_L_SetAttributeFilter(cogr_layer, <const char*>where_c))
 
         else:
             OGR_L_SetAttributeFilter(cogr_layer, NULL)

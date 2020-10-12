@@ -10,6 +10,7 @@ import fiona
 from fiona.collection import Collection, supported_drivers
 from fiona.env import getenv
 from fiona.errors import FionaValueError, DriverError, FionaDeprecationWarning
+from fiona._err import CPLE_AppDefinedError
 
 from .conftest import WGS84PATTERN
 
@@ -346,6 +347,29 @@ class TestFilterReading(object):
                 ((-112, 38), (-112, 40), (-106, 40), (-106, 38), (-112, 38)),)}
         results = list(self.c.filter(mask=mask))
         assert len(results) == 26
+
+    def test_filter_where(self):
+        results = list(self.c.filter(where="NAME LIKE 'Mount%'"))
+        assert len(results) == 9
+        assert all([x['properties']['NAME'].startswith('Mount')
+                    for x in results])
+        results = list(self.c.filter(where="NAME LIKE '%foo%'"))
+        assert len(results) == 0
+        results = list(self.c.filter())
+        assert len(results) == 67
+
+    def test_filter_bbox_where(self):
+        # combined filter criteria
+        results = list(self.c.filter(
+            bbox=(-120.0, 40.0, -100.0, 50.0), where="NAME LIKE 'Mount%'"))
+        assert set([x['id'] for x in results]) == set(['0', '2', '5', '13'])
+        results = list(self.c.filter())
+        assert len(results) == 67
+
+    def test_filter_where_error(self):
+        for w in ["bad stuff", "NAME=3", "NNAME LIKE 'Mount%'"]:
+            with pytest.raises(CPLE_AppDefinedError):
+                self.c.filter(where=w)
 
 
 class TestUnsupportedDriver(object):
