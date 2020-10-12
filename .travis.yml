@@ -41,14 +41,6 @@ matrix:
         GDALVERSION="2.3.3"
         PROJVERSION="4.9.3"
     - os: linux
-      arch: ppc64le
-      dist: xenial
-      python: "3.6"
-      env:
-        GDALVERSION="2.3.3"
-        PROJVERSION="4.9.3"
-
-    - os: linux
       arch: amd64
       dist: xenial
       python: "3.6"
@@ -56,14 +48,6 @@ matrix:
         GDALVERSION="2.4.4"
         PROJVERSION="4.9.3"
     - os: linux
-      arch: ppc64le
-      dist: xenial
-      python: "3.6"
-      env:
-        GDALVERSION="2.4.4"
-        PROJVERSION="4.9.3"
-
-    - os: linux
       arch: amd64
       dist: xenial
       python: "3.6"
@@ -71,28 +55,12 @@ matrix:
         GDALVERSION="3.0.3"
         PROJVERSION="6.2.1"
     - os: linux
-      arch: ppc64le
-      dist: xenial
-      python: "3.6"
-      env:
-        GDALVERSION="3.0.3"
-        PROJVERSION="6.2.1"
- 
-    - os: linux
       arch: amd64
       dist: xenial
       python: "3.7"
       env:
         GDALVERSION="3.0.3"
         PROJVERSION="6.2.1"
-    - os: linux
-      arch: ppc64le
-      dist: xenial
-      python: "3.7"
-      env:
-        GDALVERSION="3.0.3"
-        PROJVERSION="6.2.1"
-
     - os: linux
       arch: amd64
       dist: xenial
@@ -107,22 +75,13 @@ matrix:
       env:
         GDALVERSION="3.0.4"
         PROJVERSION="6.2.1"
-
     - os: linux
       arch: amd64
       dist: xenial
       python: "3.8"
       env:
         GDALVERSION="master"
-        PROJVERSION="6.3.0"
-    - os: linux
-      arch: ppc64le
-      dist: xenial
-      python: "3.8"
-      env:
-        GDALVERSION="master"
-        PROJVERSION="6.3.0"
-        
+        PROJVERSION="6.3.0"    
     - os: osx
       osx_image: xcode11.2
       language: shell
