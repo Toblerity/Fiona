@@ -14,7 +14,8 @@ GDALOPTS="  --with-geos \
             --without-libgrass \
             --without-cfitsio \
             --without-pcraster \
-            --with-netcdf \
+            --without-netcdf \
+            --without-openjpeg \
             --with-png=internal \
             --with-jpeg=internal \
             --without-gif \
@@ -37,17 +38,19 @@ GDALOPTS="  --with-geos \
             --without-perl \
             --without-python \
             --with-oci=no \
-            --with-webp=no"
+            --without-mrf \
+            --with-webp=no \
+            --without-lerc"
 
 # OS specific gdal build options
-if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-    GDALOPTS="$GDALOPTS \
-                --with-expat \
-                --with-sqlite3"
-elif [ $TRAVIS_OS_NAME = 'osx' ]; then
+if [ $TRAVIS_OS_NAME = 'osx' ]; then
     GDALOPTS="$GDALOPTS \
                 --with-expat=/usr/local/opt/expat \
                 --with-sqlite3=/usr/local/opt/sqlite"
+else
+    GDALOPTS="$GDALOPTS \
+              --with-expat \
+              --with-sqlite3"
 fi
 
 if [ -d "$FILEGDB" ]; then
