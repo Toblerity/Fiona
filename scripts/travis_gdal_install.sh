@@ -91,7 +91,7 @@ if [ "$GDALVERSION" = "master" ]; then
         cp newrev.txt "$GDALINST/gdal-$GDALVERSION/rev.txt"
         cp newproj.txt "$GDALINST/gdal-$GDALVERSION/newproj.txt"
         echo "./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT"
-        ./configure --prefix="$GDALINST/gdal-$GDALVERSION" "$GDALOPTS" "$PROJOPT"
+        ./configure --prefix="$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT"
         make
         make install
     fi
@@ -99,6 +99,7 @@ if [ "$GDALVERSION" = "master" ]; then
 else
 
     PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
+
     if [ ! -d "$GDALINST/gdal-$GDALVERSION/share/gdal" ]; then
         cd "$GDALBUILD"
         gdalver=$(expr "$GDALVERSION" : '\([0-9]*.[0-9]*.[0-9]*\)')
@@ -106,7 +107,7 @@ else
         tar -xzf "gdal-$GDALVERSION.tar.gz"
         cd "gdal-$gdalver"
         echo "./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT"
-        ./configure --prefix="$GDALINST/gdal-$GDALVERSION" "$GDALOPTS" "$PROJOPT"
+        ./configure --prefix="$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT"
         make
         make install
     fi
