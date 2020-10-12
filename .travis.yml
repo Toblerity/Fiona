@@ -21,9 +21,16 @@ env:
 
 jobs:
   include:
-    - python: "3.6"
+    # Test all supported gdal minor versions (except latest stable) with one python version
+    - python: "3.8"
       env:
         GDALVERSION="3.0.4"
+        PROJVERSION="6.2.1"
+
+    # Test all supported python versions with latest stable gdal release
+    - python: "3.6"
+      env:
+        GDALVERSION="3.1.3"
         PROJVERSION="6.3.2"
     - python: "3.7"
       env:
@@ -33,117 +40,74 @@ jobs:
       env:
         GDALVERSION="3.1.3"
         PROJVERSION="6.3.2"
-    - python: "3.8"
+    - python: "3.9"
       env:
-        GDALVERSION="master"
-        PROJVERSION="7.1.1"
+        GDALVERSION="3.1.3"
+        PROJVERSION="6.3.2"
+
+    # Test other architectures
     - python: "3.8"
       ox: linux
       arch: ppc64le
       env:
         GDALVERSION="3.1.3"
         PROJVERSION="6.3.2"
-    - os: osx
-      osx_image: xcode11.2
-      python: "3.8"
+  
+    # Test master
+    - python: "3.8"
       env:
-        GDALVERSION="3.1.3"
-        PROJVERSION="6.3.2"
+        GDALVERSION="master"
+        PROJVERSION="7.0.1"
+
   allow_failures:
     - env:
         GDALVERSION="master"
-        PROJVERSION="7.1.1"
+        PROJVERSION="7.0.1"
 
 addons:
   apt:
     packages:
-      - libatlas-dev
-      - libatlas-base-dev
-      - gfortran
-      - libsqlite3-dev
-      - sqlite3
-  homebrew:
-    packages:
-      - expat
-      - libspatialite
-      - sqlite
-      - geos
-
-matrix:
-  fast_finish: true
-  include:
-    - os: linux
-      python: "3.6"
-      env:
-        GDALVERSION="3.0.3"
-        PROJVERSION="6.2.1"
- 
-    - os: linux
-      python: "3.7"
-      env:
-        GDALVERSION="3.0.3"
-        PROJVERSION="6.2.1"
-
-    - os: linux
-      python: "3.8"
-      env:
-        GDALVERSION="3.0.4"
-        PROJVERSION="6.2.1"
-
-    - os: linux
-      python: "3.8"
-      env:
-        GDALVERSION="master"
-        PROJVERSION="6.3.0"
-
-    - os: osx
-      osx_image: xcode11.2
-      language: shell
-      env:
-        GDALVERSION="3.0.3"
-        PROJVERSION="6.2.1"
-
-  allow_failures:
-    - env:
-        GDALVERSION="master"
-        PROJVERSION="6.3.0"
+    - libatlas-dev
+    - libatlas-base-dev
+    - gfortran
+    - libsqlite3-dev
+    - sqlite3
 
 
 before_install:
-  - python3 -m pip install -U pip
+  - python -m pip install -U pip
+  - python -m pip install -r requirements-ci.txt
+  - python -m pip wheel -r requirements-dev.txt
+  - python -m pip install -r requirements-dev.txt
   - export PATH=$GDALINST/gdal-$GDALVERSION/bin:$GDALINST/proj-$PROJVERSION/bin:$PATH
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$GDALINST/proj-$PROJVERSION/lib:$LD_LIBRARY_PATH; fi
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then export DYLD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$GDALINST/proj-$PROJVERSION/lib:$DYLD_LIBRARY_PATH; fi
-  - chmod +x scripts/travis_proj_install.sh && ./scripts/travis_proj_install.sh
-  - chmod +x scripts/travis_gdal_install.sh && ./scripts/travis_gdal_install.sh
+  - export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$GDALINST/proj-$PROJVERSION/lib:$LD_LIBRARY_PATH
+  - . ./scripts/travis_proj_install.sh
+  - if [ "$TRAVIS_CPU_ARCH" = "amd64" ]; then . ./scripts/travis_filegdb_install.sh; fi
+  - . ./scripts/travis_gdal_install.sh
   - export GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal
   - export PROJ_LIB=$GDALINST/gdal-$GDALVERSION/share/proj
   - gdal-config --version
-  - $GDALINST/gdal-$GDALVERSION/bin/gdal-config --version
-  - python3 -m pip wheel -r requirements-dev.txt
-  - python3 -m pip install -r requirements-dev.txt
-  - python3 -m pip install coveralls>=1.1 --upgrade
 
 install:
-  - if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $($GDALINST/gdal-$GDALVERSION/bin/gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
-  - GDAL_CONFIG=$GDALINST/gdal-$GDALVERSION/bin/gdal-config python3 -m pip install -v -v -v --no-deps --force-reinstall --no-use-pep517 -e .
-  - python3 -m pip freeze
+  - if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $(gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
+  - "GDAL_CONFIG=$GDALINST/gdal-$GDALVERSION/bin/gdal-config python -m pip install --no-deps --force-reinstall --no-use-pep517 -e ."
+  - python -m pip freeze
   - fio --version
   - fio --gdal-version
   - python -c "import fiona; fiona.show_versions()"
   - python scripts/check_deprecated.py
 
 script:
-  - python3 -m pytest -m "not wheel" --cov fiona --cov-report term-missing
-
-after_script:
-  - python3 setup.py clean
+  - python -m pytest -m "not wheel" --cov fiona --cov-report term-missing
 
   # Check documentation
   - rstcheck -r --ignore-directives automodule --ignore-substitutions version,release,today .
 
 after_script:
-  - python3 setup.py clean
+  - python setup.py clean
 
 after_success:
   - coveralls || echo "!! intermittent coveralls failure"
+
+before_cache:
+  - if [ "$GDALVERSION" = "master" ]; then rm -rf $GDALINST/gdal-$GDALVERSION; fi

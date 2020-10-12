@@ -25,5 +25,8 @@ if [ ! -d "$PROJINST/gdal-$GDALVERSION/share/proj" ]; then
     make install
 fi
 
+# Remove projbuild to emulate travis cache
+rm -rf "$PROJBUILD"
+
 # change back to travis build dir
 cd $TRAVIS_BUILD_DIR
