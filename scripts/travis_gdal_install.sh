@@ -45,16 +45,15 @@ GDALOPTS="  --with-geos \
 
 # OS specific gdal build options
 if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-
     GDALOPTS="$GDALOPTS \
                 --with-expat \
                 --with-sqlite3"
 
-elif [ $TRAVIS_OS_NAME = 'osx' ]; then
-
+elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
     GDALOPTS="$GDALOPTS \
                 --with-expat=/usr/local/opt/expat \
                 --with-sqlite3=/usr/local/opt/sqlite"
+fi
 
 if [ -d "$FILEGDB" ]; then
   GDALOPTS="$GDALOPTS --with-fgdb=$FILEGDB"
@@ -62,57 +61,59 @@ fi
 
 # Create build dir if not exists
 if [ ! -d "$GDALBUILD" ]; then
-  mkdir $GDALBUILD;
+  mkdir "$GDALBUILD";
 fi
 
 if [ ! -d "$GDALINST" ]; then
-  mkdir $GDALINST;
+  mkdir "$GDALINST";
 fi
 
-ls -l $GDALINST
+ls -l "$GDALINST";
 
 if [ "$GDALVERSION" = "master" ]; then
     PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
-    cd $GDALBUILD
-    git clone --depth 1 https://github.com/OSGeo/gdal gdal-$GDALVERSION
-    cd gdal-$GDALVERSION/gdal
-    echo $PROJVERSION > newproj.txt
+    cd "$GDALBUILD"
+    git clone --depth 1 https://github.com/OSGeo/gdal gdal-"$GDALVERSION"
+    cd gdal-"$GDALVERSION/gdal"
+    echo "$PROJVERSION" > newproj.txt
     git rev-parse HEAD > newrev.txt
     BUILD=no
     # Only build if nothing cached or if the GDAL revision changed
-    if test ! -f $GDALINST/gdal-$GDALVERSION/rev.txt; then
+
+    if test ! -f "$GDALINST/gdal-$GDALVERSION/rev.txt"; then
         BUILD=yes
-    elif ( ! diff newrev.txt $GDALINST/gdal-$GDALVERSION/rev.txt >/dev/null ) || ( ! diff newproj.txt $GDALINST/gdal-$GDALVERSION/newproj.txt >/dev/null ); then
+    elif ( ! diff newrev.txt "$GDALINST/gdal-$GDALVERSION/rev.txt" >/dev/null ) || ( ! diff newproj.txt "$GDALINST/gdal-$GDALVERSION/newproj.txt" >/dev/null ); then
         BUILD=yes
     fi
+
     if test "$BUILD" = "yes"; then
-        mkdir -p $GDALINST/gdal-$GDALVERSION
-        cp newrev.txt $GDALINST/gdal-$GDALVERSION/rev.txt
-        cp newproj.txt $GDALINST/gdal-$GDALVERSION/newproj.txt
+        mkdir -p "$GDALINST/gdal-$GDALVERSION"
+        cp newrev.txt "$GDALINST/gdal-$GDALVERSION/rev.txt"
+        cp newproj.txt "$GDALINST/gdal-$GDALVERSION/newproj.txt"
         echo "./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT"
-        ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT
+        ./configure --prefix="$GDALINST/gdal-$GDALVERSION" "$GDALOPTS" "$PROJOPT"
         make
         make install
     fi
 
 else
-    PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
 
+    PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
     if [ ! -d "$GDALINST/gdal-$GDALVERSION/share/gdal" ]; then
-        cd $GDALBUILD
+        cd "$GDALBUILD"
         gdalver=$(expr "$GDALVERSION" : '\([0-9]*.[0-9]*.[0-9]*\)')
-        wget -q http://download.osgeo.org/gdal/$gdalver/gdal-$GDALVERSION.tar.gz
-        tar -xzf gdal-$GDALVERSION.tar.gz
-        cd gdal-$gdalver
+        wget -q "http://download.osgeo.org/gdal/$gdalver/gdal-$GDALVERSION.tar.gz"
+        tar -xzf "gdal-$GDALVERSION.tar.gz"
+        cd "gdal-$gdalver"
         echo "./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT"
-        ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT
+        ./configure --prefix="$GDALINST/gdal-$GDALVERSION" "$GDALOPTS" "$PROJOPT"
         make
         make install
     fi
 fi
 
 # Remove gdalbuild to emulate travis cache
-rm -rf $GDALBUILD
+rm -rf "$GDALBUILD"
 
 # change back to travis build dir
-cd $TRAVIS_BUILD_DIR
+cd "$TRAVIS_BUILD_DIR"
