@@ -32,7 +32,6 @@ GDALOPTS="  --with-geos \
             --without-xerces \
             --without-odbc \
             --with-curl \
-            --with-sqlite3 \
             --without-idb \
             --without-sde \
             --without-perl \
