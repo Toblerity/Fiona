@@ -57,12 +57,12 @@ jobs:
     - python: "3.8"
       env:
         GDALVERSION="master"
-        PROJVERSION="7.0.1"
+        PROJVERSION="7.1.1"
 
   allow_failures:
     - env:
         GDALVERSION="master"
-        PROJVERSION="7.0.1"
+        PROJVERSION="7.1.1"
 
 addons:
   apt:
