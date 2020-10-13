@@ -33,10 +33,12 @@ warnings.simplefilter('default')
 @cligj.use_rs_opt
 @click.option('--bbox', default=None, metavar="w,s,e,n",
               help="filter for features intersecting a bounding box")
+@click.option('--where', default=None,
+              help="attribute filter using SQL where clause")
 @click.pass_context
 @with_context_env
 def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
-        use_rs, bbox, layer):
+        use_rs, bbox, where, layer):
     """
     Concatenate and print the features of input datasets as a sequence of
     GeoJSON features.
@@ -72,7 +74,7 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
         for i, path in enumerate(files, 1):
             for lyr in layer[str(i)]:
                 with fiona.open(path, layer=lyr) as src:
-                    for i, feat in src.items(bbox=bbox):
+                    for i, feat in src.items(bbox=bbox, where=where):
                         if dst_crs or precision >= 0:
                             g = transform_geom(
                                 src.crs, dst_crs, feat['geometry'],
