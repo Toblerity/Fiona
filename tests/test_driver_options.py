@@ -2,11 +2,11 @@ import os
 import tempfile
 from collections import OrderedDict
 import glob
-
 import fiona
-from tests.conftest import get_temp_filename
+from tests.conftest import get_temp_filename, requires_gdal2
 
 
+@requires_gdal2
 def test_gml_format_option():
     """ Test GML dataset creation option FORMAT (see https://github.com/Toblerity/Fiona/issues/968)"""
 
