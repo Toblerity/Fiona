@@ -1007,7 +1007,8 @@ cdef class WritingSession(Session):
 
             if not CPLCheckForFile(path_c, NULL):
                 log.debug("File doesn't exist. Creating a new one...")
-                cogr_ds = gdal_create(cogr_driver, path_c, {})
+                with Env(GDAL_VALIDATE_CREATION_OPTIONS="NO"):
+                    cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
 
             else:
                 if collection.driver == "GeoJSON":
