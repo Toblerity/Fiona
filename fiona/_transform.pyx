@@ -163,7 +163,7 @@ def _transform_geom(
 
     if precision >= 0:
     
-        def process_point(g):
+        def round_point(g):
             coords = list(g['coordinates'])
             x, y = coords[:2]
             x = round(x, precision)
@@ -175,7 +175,7 @@ def _transform_geom(
             return new_coords
         
         
-        def process_linestring(g):
+        def round_linestring(g):
             coords = list(zip(*g['coordinates']))
             xp, yp = coords[:2]
             xp = [round(v, precision) for v in xp]
@@ -189,7 +189,7 @@ def _transform_geom(
             return new_coords
 
 
-        def process_polygon(g):
+        def round_polygon(g):
             new_coords = []
             for piece in g['coordinates']:
                 coords = list(zip(*piece))
@@ -204,7 +204,7 @@ def _transform_geom(
                     new_coords.append(list(zip(xp, yp)))
             return new_coords
 
-        def process_multipolygon(g):
+        def round_multipolygon(g):
             parts = g['coordinates']
             new_coords = []
             for part in parts:
@@ -223,22 +223,22 @@ def _transform_geom(
                 new_coords.append(inner_coords)
             return new_coords
 
-        def process_geometry(g):        
+        def round_geometry(g):        
             if g['type'] == 'Point':
-                g['coordinates'] = process_point(g)
+                g['coordinates'] = round_point(g)
             elif g['type'] in ['LineString', 'MultiPoint']:
-                g['coordinates'] = process_linestring(g)
+                g['coordinates'] = round_linestring(g)
             elif g['type'] in ['Polygon', 'MultiLineString']:
-                g['coordinates'] = process_polygon(g)
+                g['coordinates'] = round_polygon(g)
             elif g['type'] == 'MultiPolygon':
-                g['coordinates'] = process_multipolygon(g)
+                g['coordinates'] = round_multipolygon(g)
             else:
                 raise RuntimeError("Unsupported geometry type: {}".format(g['type']))
         
         if g['type'] == 'GeometryCollection':
             for _g in g['geometries']:
-                process_geometry(_g)
+                round_geometry(_g)
         else:
-            process_geometry(g)
+            round_geometry(g)
 
     return g
