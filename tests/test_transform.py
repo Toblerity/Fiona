@@ -81,4 +81,4 @@ def test_transform_issue971():
                                                                           (512371.23869999964, 5866322.282500001),
                                                                           (512364.6014999999, 5866328.260199999)]}]}
     geom_transformed = transform.transform_geom(source_crs, dest_src, geom, precision=3)
-
+    assert geom_transformed['geometries'][0]['coordinates'][0] == pytest.approx((9.184, 52.946))
