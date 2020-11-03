@@ -360,10 +360,10 @@ class TestFilterReading(object):
 
     def test_filter_bbox_where(self):
         # combined filter criteria
-        results = list(self.c.filter(
+        results = set(self.c.keys(
             bbox=(-120.0, 40.0, -100.0, 50.0), where="NAME LIKE 'Mount%'"))
-        assert set([x['id'] for x in results]) == set(['0', '2', '5', '13'])
-        results = list(self.c.filter())
+        assert results == set([0, 2, 5, 13])
+        results = set(self.c.keys())
         assert len(results) == 67
 
     def test_filter_where_error(self):
