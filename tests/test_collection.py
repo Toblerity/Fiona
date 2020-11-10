@@ -9,8 +9,9 @@ import pytest
 import fiona
 from fiona.collection import Collection, supported_drivers
 from fiona.env import getenv
-from fiona.errors import FionaValueError, DriverError, FionaDeprecationWarning
-from fiona._err import CPLE_AppDefinedError
+from fiona.errors import (
+    AttributeFilterError, FionaValueError, DriverError, FionaDeprecationWarning
+)
 
 from .conftest import WGS84PATTERN
 
@@ -368,7 +369,7 @@ class TestFilterReading(object):
 
     def test_filter_where_error(self):
         for w in ["bad stuff", "NAME=3", "NNAME LIKE 'Mount%'"]:
-            with pytest.raises(CPLE_AppDefinedError):
+            with pytest.raises(AttributeFilterError):
                 self.c.filter(where=w)
 
 

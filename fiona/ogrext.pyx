@@ -20,16 +20,17 @@ from fiona._geometry cimport (
     GeomBuilder, OGRGeomBuilder, geometry_type_code,
     normalize_geometry_type_code, base_geometry_type_code)
 from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile
-
 import fiona
 from fiona._env import GDALVersion, get_gdal_version_num
-from fiona._err import cpl_errs, FionaNullPointerError, CPLE_BaseError, CPLE_OpenFailedError
+from fiona._err import (
+    cpl_errs, FionaNullPointerError, CPLE_BaseError, CPLE_AppDefinedError,
+    CPLE_OpenFailedError)
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
 from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
-    FionaDeprecationWarning)
+    AttributeFilterError, FionaDeprecationWarning)
 from fiona.compat import strencode
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -1241,8 +1242,11 @@ cdef class Iterator:
         if where:
             where_b = where.encode('utf-8')
             where_c = where_b
-            exc_wrap_int(
-                OGR_L_SetAttributeFilter(cogr_layer, <const char*>where_c))
+            try:
+                exc_wrap_int(
+                    OGR_L_SetAttributeFilter(cogr_layer, <const char*>where_c))
+            except CPLE_AppDefinedError as e:
+                raise AttributeFilterError(e) from None
 
         else:
             OGR_L_SetAttributeFilter(cogr_layer, NULL)

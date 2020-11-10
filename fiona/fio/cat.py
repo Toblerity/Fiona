@@ -11,6 +11,7 @@ import cligj
 import fiona
 from fiona.transform import transform_geom
 from fiona.fio import options, with_context_env
+from fiona.errors import AttributeFilterError
 
 
 warnings.simplefilter('default')
@@ -86,6 +87,8 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
                             click.echo(u'\u001e', nl=False)
                         click.echo(json.dumps(feat, **dump_kwds))
 
+    except AttributeFilterError as e:
+        raise click.BadParameter("'where' clause is invalid: " + str(e))
     except Exception:
         logger.exception("Exception caught during processing")
         raise click.Abort()
