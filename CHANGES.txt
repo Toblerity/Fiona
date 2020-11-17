@@ -3,9 +3,11 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.8.18 (TBD)
-------------
+1.8.18 (2020-11-17)
+-------------------
 
+- The precision option of transform has been fixed for the case of
+  GeometryCollections (#971, #972).
 - Added missing --co (creation) option to fio-load (#390).
 - If the certifi package can be imported, its certificate store location will
   be passed to GDAL during import of fiona._env unless CURL_CA_BUNDLE is
