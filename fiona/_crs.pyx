@@ -8,7 +8,7 @@ from __future__ import absolute_import
 import logging
 
 from fiona cimport _cpl
-from fiona._err cimport exc_wrap_pointer
+from fiona._err cimport exc_wrap_pointer, exc_wrap_ogrerr
 from fiona._err import CPLE_BaseError
 from fiona._shim cimport osr_get_name, osr_set_traditional_axis_mapping_strategy
 from fiona.compat import DICT_TYPES
@@ -20,8 +20,59 @@ logger = logging.getLogger(__name__)
 cdef int OAMS_TRADITIONAL_GIS_ORDER = 0
 
 
+cdef _osr_to_wkt(OGRSpatialReferenceH cogr_srs, crs, wkt_version):
+    cdef char *wkt_c = NULL
+    wkt = None
+    cdef const char* options_wkt[2]
+    options_wkt[0] = NULL
+    options_wkt[1] = NULL
+
+    if wkt_version:
+        wkt_format = f"FORMAT={wkt_version}".encode("utf-8")
+        options_wkt[0] = wkt_format
+
+    gdal_error = None
+    try:
+        exc_wrap_ogrerr(
+            OSRExportToWktEx(cogr_srs, &wkt_c, options_wkt)
+        )
+    except CPLE_BaseError as error:
+        gdal_error = error
+
+    if wkt_c != NULL:
+        wkt_b = wkt_c
+        wkt = wkt_b.decode('utf-8')
+
+    if not wkt and wkt_version is None:
+        # attempt to morph to ESRI before export
+        options_wkt[0] = "FORMAT=WKT1_ESRI"
+        try:
+            exc_wrap_ogrerr(
+                OSRExportToWktEx(cogr_srs, &wkt_c, options_wkt)
+            )
+        except CPLE_BaseError as error:
+            gdal_error = error
+
+    if wkt_c != NULL:
+        wkt_b = wkt_c
+        wkt = wkt_b.decode('utf-8')
+
+    _cpl.CPLFree(wkt_c)
+
+    if not wkt:
+        error_message = (
+            f"Unable to export CRS to WKT. "
+            "Please choose a different WKT version (WKT2 is recommended): "
+            "WKT1 | WKT1_GDAL | WKT1_ESRI | WKT2 | WKT2_2018 | WKT2_2015."
+        )
+        if gdal_error is not None:
+            error_message = f"{error_message} GDAL ERROR: {gdal_error}"
+        raise CRSError(error_message)
+    return wkt
+
+
 # Export a WKT string from input crs.
-def crs_to_wkt(crs):
+def crs_to_wkt(crs, wkt_version=None):
     """Convert a Fiona CRS object to WKT format"""
     cdef OGRSpatialReferenceH cogr_srs = NULL
     cdef char *proj_c = NULL
@@ -67,15 +118,4 @@ def crs_to_wkt(crs):
         raise CRSError("Invalid input to create CRS: {}".format(crs))
 
     osr_set_traditional_axis_mapping_strategy(cogr_srs)
-    OSRExportToWkt(cogr_srs, &proj_c)
-
-    if proj_c == NULL:
-        raise CRSError("Invalid input to create CRS: {}".format(crs))
-
-    proj_b = proj_c
-    _cpl.CPLFree(proj_c)
-
-    if not proj_b:
-        raise CRSError("Invalid input to create CRS: {}".format(crs))
-
-    return proj_b.decode('utf-8')
+    return _osr_to_wkt(cogr_srs, crs, wkt_version)

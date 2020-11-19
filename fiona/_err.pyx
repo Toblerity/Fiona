@@ -275,8 +275,10 @@ cdef OGRErr exc_wrap_ogrerr(OGRErr err) except -1:
     """
     if err == 0:
         return err
-    else:
-        raise CPLE_BaseError(3, err, "OGR Error code {}".format(err))
+    exc = exc_check()
+    if exc:
+        raise exc
+    raise CPLE_BaseError(3, err, "OGR Error code {}".format(err))
 
 
 cdef void *exc_wrap_pointer(void *ptr) except NULL:

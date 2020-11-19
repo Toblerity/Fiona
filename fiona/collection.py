@@ -53,6 +53,7 @@ class Collection(object):
                  encoding=None, layer=None, vsi=None, archive=None,
                  enabled_drivers=None, crs_wkt=None, ignore_fields=None,
                  ignore_geometry=False, include_fields=None,
+                 wkt_version=None,
                  **kwargs):
 
         """The required ``path`` is the absolute or relative path to
@@ -185,7 +186,7 @@ class Collection(object):
 
             self._check_schema_driver_support()
             if crs_wkt or crs:
-                self._crs_wkt = crs_to_wkt(crs_wkt or crs)
+                self._crs_wkt = crs_to_wkt(crs_wkt or crs, wkt_version=wkt_version)
 
         self._driver = driver
         kwargs.update(encoding=encoding)
