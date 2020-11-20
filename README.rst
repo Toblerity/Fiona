@@ -5,7 +5,7 @@ Fiona
 Fiona is GDAL_'s neat and nimble vector API for Python programmers.
 
 .. image:: https://github.com/Toblerity/Fiona/workflows/Linux%20CI/badge.svg?branch=maint-1.8
-   :target: https://github.com/Toblerity/Fiona/actions
+   :target: https://github.com/Toblerity/Fiona/actions?query=branch%3Amaint-1.8
 
 .. image:: https://ci.appveyor.com/api/projects/status/github/Toblerity/Fiona?svg=true
    :target: https://ci.appveyor.com/project/sgillies/fiona/branch/master
