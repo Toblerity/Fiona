@@ -4,57 +4,72 @@ on: [push, pull_request]
 
 jobs:
   build:
+    name: Python ${{ matrix.python }} / GDAL ${{ matrix.GDALVERSION }} / PROJ ${{ matrix.PROJVERSION }}
     runs-on: [ubuntu-18.04]
     strategy:
       fail-fast: false
       matrix:
-        config:
+        include:
           # Test all supported gdal minor versions (except latest stable) with one python version
-          - { python-version: 3.6, GDALVERSION: "2.0.3", PROJVERSION: "4.9.3" }
-          - { python-version: 3.6, GDALVERSION: "2.1.4", PROJVERSION: "4.9.3" }
-          - { python-version: 3.6, GDALVERSION: "2.2.4", PROJVERSION: "4.9.3" }
-          - { python-version: 3.6, GDALVERSION: "2.3.3", PROJVERSION: "4.9.3" }
-          - { python-version: 3.6, GDALVERSION: "2.4.4", PROJVERSION: "4.9.3" }
-          - { python-version: 3.6, GDALVERSION: "3.0.4", PROJVERSION: "6.2.1" }
-          - { python-version: 3.6, GDALVERSION: "3.1.0", PROJVERSION: "6.3.2" }
+          - { python: 3.6, GDALVERSION: "2.0.3", PROJVERSION: "4.9.3" }
+          - { python: 3.6, GDALVERSION: "2.1.4", PROJVERSION: "4.9.3" }
+          - { python: 3.6, GDALVERSION: "2.2.4", PROJVERSION: "4.9.3" }
+          - { python: 3.6, GDALVERSION: "2.3.3", PROJVERSION: "4.9.3" }
+          - { python: 3.6, GDALVERSION: "2.4.4", PROJVERSION: "4.9.3" }
+          - { python: 3.6, GDALVERSION: "3.0.4", PROJVERSION: "6.2.1" }
+          - { python: 3.6, GDALVERSION: "3.1.0", PROJVERSION: "6.3.2" }
 
           # Test all supported python versions with latest stable gdal release
-          - { python-version: 3.6, GDALVERSION: "3.2.0", PROJVERSION: "7.2.0" }
-          - { python-version: 3.7, GDALVERSION: "3.2.0", PROJVERSION: "7.2.0" }
-          - { python-version: 3.8, GDALVERSION: "3.2.0", PROJVERSION: "7.2.0" }
-          - { python-version: 3.9, GDALVERSION: "3.2.0", PROJVERSION: "7.2.0" }
+          - { python: 3.6, GDALVERSION: "3.2.0", PROJVERSION: "7.2.0" }
+          - { python: 3.7, GDALVERSION: "3.2.0", PROJVERSION: "7.2.0" }
+          - { python: 3.8, GDALVERSION: "3.2.0", PROJVERSION: "7.2.0" }
+          - { python: 3.9, GDALVERSION: "3.2.0", PROJVERSION: "7.2.0" }
+
+          # Test GDAL master
+          - { python: 3.6, GDALVERSION: "master", PROJVERSION: "7.2.0" }
+
+    env:
+      CYTHON_COVERAGE: "true"
+      MAKEFLAGS: "-j 4 -s"
+      CXXFLAGS: "-O0"
+      CFLAGS: "-O0"
+      PROJVERSION: ${{ matrix.PROJVERSION }}
+      GDALVERSION: ${{ matrix.GDALVERSION }}
+      GDALINST: ${{ github.workspace }}/gdalinstall
+      GDALBUILD: ${{ github.workspace }}/gdalbuild
+      PROJINST: ${{ github.workspace }}/gdalinstall
+      PROJBUILD: ${{ github.workspace }}/projbuild
+      FILEGDB: ${{ github.workspace }}/gdalinstall/filegdb
+
+      # Emulate travis
+      TRAVIS_BUILD_DIR: ${{ github.workspace }}
+      TRAVIS_OS_NAME: "linux"
 
     steps:
       - uses: actions/checkout@v2
 
-      - name: Set up Python ${{ matrix.config.python-version }}
+      - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.config.python-version }}
+          python: ${{ matrix.python }}
 
-        # Environment variables need to be newly set in each step. Create env_variables to facilitate this.
       - name: Set env variables
         run: |
-          touch $GITHUB_WORKSPACE/env_variables
-          echo "export CYTHON_COVERAGE=\"true\"" >> $GITHUB_WORKSPACE/env_variables
-          echo "export MAKEFLAGS=\"-j 4 -s\"" >> $GITHUB_WORKSPACE/env_variables
-          echo "export CXXFLAGS=\"-O0\"" >> $GITHUB_WORKSPACE/env_variables
-          echo "export CFLAGS=\"-O0\"" >> $GITHUB_WORKSPACE/env_variables
-          echo "export GDALINST=$GITHUB_WORKSPACE/gdalinstall" >> $GITHUB_WORKSPACE/env_variables
-          echo "export GDALBUILD=$GITHUB_WORKSPACE/gdalbuild" >> $GITHUB_WORKSPACE/env_variables
-          echo "export PROJINST=$GITHUB_WORKSPACE/gdalinstall" >> $GITHUB_WORKSPACE/env_variables
-          echo "export PROJBUILD=$GITHUB_WORKSPACE/projbuild" >> $GITHUB_WORKSPACE/env_variables
-          echo "export FILEGDB=$GITHUB_WORKSPACE/gdalinstall/filegdb" >> $GITHUB_WORKSPACE/env_variables
-          echo "export GDALVERSION=${{matrix.config.GDALVERSION}}" >> $GITHUB_WORKSPACE/env_variables
-          echo "export PROJVERSION=${{matrix.config.PROJVERSION}}" >> $GITHUB_WORKSPACE/env_variables
-          echo "export TRAVIS_BUILD_DIR=$GITHUB_WORKSPACE" >> $GITHUB_WORKSPACE/env_variables
-          echo "export TRAVIS_OS_NAME=linux" >> $GITHUB_WORKSPACE/env_variables
-          source $GITHUB_WORKSPACE/env_variables
-          echo "export GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal" >> $GITHUB_WORKSPACE/env_variables
-          echo "export PROJ_LIB=$GDALINST/gdal-$GDALVERSION/share/proj" >> $GITHUB_WORKSPACE/env_variables
-          echo "export PATH=$GDALINST/gdal-$GDALVERSION/bin:$GDALINST/proj-$PROJVERSION/bin:\$PATH" >> $GITHUB_WORKSPACE/env_variables
-          echo "export LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$GDALINST/proj-$PROJVERSION/lib:$FILEGDB/lib:\$LD_LIBRARY_PATH" >> $GITHUB_WORKSPACE/env_variables
-          cat $GITHUB_WORKSPACE/env_variables
+
+          # Additional env variables
+          echo "GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal" >> $GITHUB_ENV
+          echo "PROJ_LIB=$GDALINST/gdal-$GDALVERSION/share/proj" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$GDALINST/proj-$PROJVERSION/lib:$FILEGDB/lib:\$LD_LIBRARY_PATH" >> $GITHUB_ENV
+
+          # Add PATH
+          echo "$GDALINST/gdal-$GDALVERSION/bin" >> $GITHUB_PATH
+          echo "$GDALINST/proj-$PROJVERSION/bin" >> $GITHUB_PATH
+
+          echo "cat \$GITHUB_ENV"
+          cat $GITHUB_ENV
+          echo ""
+          echo "cat \$GITHUB_PATH"
+          cat $GITHUB_PATH
 
       - name: Install apt packages
         run: |
@@ -65,11 +80,11 @@ jobs:
           apt list --installed | grep 'libgeos-dev\|libxml2-dev' > $GITHUB_WORKSPACE/apt_list
           cat $GITHUB_WORKSPACE/apt_list
 
-      - name: GDAL Cache
+      - name: Cache GDAL binaries
         uses: actions/cache@v2
         with:
           path: gdalinstall
-          key: ${{ runner.os }}-gdal-${{ matrix.config.GDALVERSION }}-proj-${{ matrix.config.PROJVERSION }}-${{ hashFiles('**/apt_list') }}
+          key: ${{ runner.os }}-gdal-${{ matrix.GDALVERSION }}-proj-${{ matrix.PROJVERSION }}-${{ hashFiles('**/apt_list') }}
 
       - name: Cache pip
         uses: actions/cache@v2
@@ -88,29 +103,27 @@ jobs:
 
       - name: Build PROJ
         run: |
-          source $GITHUB_WORKSPACE/env_variables
           chmod +x scripts/travis_proj_install.sh && ./scripts/travis_proj_install.sh
 
       - name: Install FileGDB
         run: |
-          source $GITHUB_WORKSPACE/env_variables
           chmod +x scripts/travis_filegdb_install.sh && ./scripts/travis_filegdb_install.sh
 
       - name: Build GDAL
+        continue-on-error: ${{ matrix.GDALVERSION == 'master' }}
         run: |
-          source $GITHUB_WORKSPACE/env_variables
           chmod +x scripts/travis_gdal_install.sh && ./scripts/travis_gdal_install.sh
           gdal-config --version
 
       - name: Build Fiona
+        continue-on-error: ${{ matrix.GDALVERSION == 'master' }}
         run: |
-          source $GITHUB_WORKSPACE/env_variables
           if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $($GDALINST/gdal-$GDALVERSION/bin/gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
           GDAL_CONFIG=$GDALINST/gdal-$GDALVERSION/bin/gdal-config python -m pip install --no-deps --force-reinstall --no-use-pep517 -e .
 
       - name: Print Environment
+        continue-on-error: ${{ matrix.GDALVERSION == 'master' }}
         run: |
-          source $GITHUB_WORKSPACE/env_variables
           echo "python -m pip freeze"
           python -m pip freeze
           echo ""
@@ -123,12 +136,13 @@ jobs:
           echo "python -c \"import fiona; fiona.show_versions()\""
           python -c "import fiona; fiona.show_versions()"
 
-      - name: Pytest
+      - name: pytest
+        continue-on-error: ${{ matrix.GDALVERSION == 'master' }}
         run: |
-          source $GITHUB_WORKSPACE/env_variables
           python -m pytest -m "not wheel" --cov fiona --cov-report term-missing
 
       - name: Coveralls
+        continue-on-error: ${{ matrix.GDALVERSION == 'master' }}
         run: coveralls || echo "!! intermittent coveralls failure"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
