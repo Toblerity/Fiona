@@ -51,7 +51,7 @@ jobs:
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v2
         with:
-          python: ${{ matrix.python }}
+          python-version: ${{ matrix.python }}
 
       - name: Set env variables
         run: |
