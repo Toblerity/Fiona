@@ -74,9 +74,11 @@ jobs:
       - name: Install apt packages
         run: |
           sudo apt-get install libatlas-base-dev libcurl4-openssl-dev libgeos-dev libfreexl-dev libzstd-dev libspatialite-dev
-          # Unlike travis github CI includes nonstandard package repositories.
-          # Updates of not in the standard ubuntu repositories included packages (e.g. bionic/universe or bionic/main) could change API version and break cached gdal binaries. 
+          # Unlike travis, packages from non default repositories are installed.
+          # While default repositories e.g. bionic/universe or bionic/main) tend to keep packages at the same API / ABI level,
+          # this is not guaranteed with other repositories.  
           # The following command creates a list of these packages, which is used as key for the GDAL cache
+          # The repositories of packages can be identified in the the output of `sudo apt-get install`
           apt list --installed | grep 'libgeos-dev\|libxml2-dev' > $GITHUB_WORKSPACE/apt_list
           cat $GITHUB_WORKSPACE/apt_list
 
