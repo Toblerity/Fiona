@@ -36,6 +36,7 @@ jobs:
       - name: Set env variables
         run: |
           touch $GITHUB_WORKSPACE/env_variables
+          echo "export CYTHON_COVERAGE=\"true\"" >> $GITHUB_WORKSPACE/env_variables
           echo "export MAKEFLAGS=\"-j 4 -s\"" >> $GITHUB_WORKSPACE/env_variables
           echo "export CXXFLAGS=\"-O0\"" >> $GITHUB_WORKSPACE/env_variables
           echo "export CFLAGS=\"-O0\"" >> $GITHUB_WORKSPACE/env_variables
