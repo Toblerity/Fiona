@@ -1,0 +1,147 @@
+name: Windows CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Python ${{ matrix.python }} / GDAL ${{ matrix.GDAL_VERSION }}
+    runs-on: [windows-2019]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python: 3.6
+            GDAL_VERSION: 1.11.4
+            GIS_INTERNALS: release-1800-x64-gdal-1-11-4-mapserver-6-4-3.zip
+            GIS_INTERNALS_LIBS: release-1800-x64-gdal-1-11-4-mapserver-6-4-3-libs.zip
+            allow_failure: true
+
+          - python: 3.6
+            GDAL_VERSION: 2.2.3
+            GIS_INTERNALS: release-1911-x64-gdal-2-2-3-mapserver-7-0-7.zip
+            GIS_INTERNALS_LIBS: release-1911-x64-gdal-2-2-3-mapserver-7-0-7-libs.zip
+            allow_failure: false
+
+          - python: 3.7
+            GDAL_VERSION: 2.3.3
+            GIS_INTERNALS: release-1911-x64-gdal-2-3-3-mapserver-7-2-1.zip
+            GIS_INTERNALS_LIBS: release-1911-x64-gdal-2-3-3-mapserver-7-2-1-libs.zip
+            allow_failure: false
+
+          - python: 3.7
+            GDAL_VERSION: 2.4.4
+            GIS_INTERNALS: release-1911-x64-gdal-2-4-4-mapserver-7-4-3.zip
+            GIS_INTERNALS_LIBS: release-1911-x64-gdal-2-4-4-mapserver-7-4-3-libs.zip
+            allow_failure: false
+
+          - python: 3.8
+            GDAL_VERSION: 3.0.4
+            GIS_INTERNALS: release-1911-x64-gdal-3-0-4-mapserver-7-4-3.zip
+            GIS_INTERNALS_LIBS: release-1911-x64-gdal-3-0-4-mapserver-7-4-3-libs.zip
+            allow_failure: false
+
+          - python: 3.8
+            GDAL_VERSION: 3.1.4
+            GIS_INTERNALS: release-1911-x64-gdal-3-1-4-mapserver-7-6-1.zip
+            GIS_INTERNALS_LIBS: release-1911-x64-gdal-3-1-4-mapserver-7-6-1-libs.zip
+            allow_failure: false
+
+          - python: 3.9
+            GDAL_VERSION: 3.2.0
+            GIS_INTERNALS: release-1911-x64-gdal-3-2-0-mapserver-7-6-1.zip
+            GIS_INTERNALS_LIBS: release-1911-x64-gdal-3-2-0-mapserver-7-6-1-libs.zip
+            allow_failure: false
+
+    env:
+      GDAL_VERSION: ${{ matrix.GDAL_VERSION }}
+      GIS_INTERNALS: ${{ matrix.GIS_INTERNALS }}
+      GIS_INTERNALS_LIBS: ${{ matrix.GIS_INTERNALS_LIBS }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Cache GDAL binaries
+        uses: actions/cache@v2
+        with:
+          path: C:\gdal
+          key: ${{ runner.os }}-gdal-${{ matrix.GDAL_VERSION }}
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Set env variables
+        run: |
+          echo "C:\\gdal\\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "GDAL_DATA=C:\\gdal\\bin\\gdal-data" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          if ($env:GDAL_VERSION -ge '3.0.0') { echo "PROJ_LIB=C:\\gdal\\bin\\proj6\\share" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append }
+
+          echo "GITHUB_PATH"
+          Get-Content -Path $env:GITHUB_PATH
+          echo ""
+          echo "GITHUB_ENV"
+          Get-Content -Path $env:GITHUB_ENV
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.0.2
+
+      - name: Download GDAL
+        run: |
+          # Only download if not already cached
+          if (!(test-path C:\gdal)) {
+            curl http://download.gisinternals.com/sdk/downloads/$env:GIS_INTERNALS --output gdalbin.zip
+            Expand-Archive -LiteralPath gdalbin.zip -DestinationPath C:\gdal
+            curl http://download.gisinternals.com/sdk/downloads/$env:GIS_INTERNALS_LIBS --output gdallibs.zip
+            Expand-Archive -LiteralPath gdallibs.zip -DestinationPath C:\gdal
+            Get-ChildItem -Path C:\gdal
+          }
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install -U pip wheel
+          python -m pip install -r requirements-ci.txt
+          python -m pip wheel -r requirements-dev.txt
+          python -m pip install -r requirements-dev.txt
+
+      - name: Build Fiona
+        continue-on-error: ${{ matrix.allow_failure == 'true' }}
+        run: |
+          python -m pip install --install-option=build_ext --install-option="-IC:\gdal\include" --install-option="-lgdal_i" --install-option="-LC:\gdal\lib" --no-deps --force-reinstall --no-use-pep517 -e .
+
+      - name: Copy DLLs
+        continue-on-error: ${{ matrix.allow_failure == 'true' }}
+        run: |
+          mkdir $env:GITHUB_WORKSPACE\fiona\.libs -Force
+          Copy-Item -Path "C:\gdal\bin\*.dll" -Destination "$env:GITHUB_WORKSPACE\fiona\.libs" -Recurse
+          mkdir $env:GITHUB_WORKSPACE\fiona\.libs\licenses -Force
+          Copy-Item -Path "C:\gdal\*.rtf" -Destination "$env:GITHUB_WORKSPACE\fiona\.libs\licenses" -Recurse
+
+      - name: Print Environment
+        continue-on-error: ${{ matrix.allow_failure == 'true' }}
+        run: |
+          echo "python -m pip freeze"
+          python -m pip freeze
+
+          echo ""
+          echo "fio --version"
+          fio --version
+
+          echo ""
+          echo "fio --gdal-version"
+          fio --gdal-version
+
+          echo ""
+          echo "python -c import fiona; fiona.show_versions()"
+          python -c "import fiona; fiona.show_versions()"
+
+      - name: pytest
+        continue-on-error: ${{ matrix.allow_failure }}
+        run: |
+          python -m pytest -m "not iconv and not wheel" --cov fiona --cov-report term-missing
+
+      - name: Coveralls
+        continue-on-error: ${{ matrix.allow_failure }}
+        run: coveralls || echo "!! intermittent coveralls failure"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

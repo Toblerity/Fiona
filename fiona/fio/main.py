@@ -11,9 +11,11 @@ import click
 from click_plugins import with_plugins
 from cligj import verbose_opt, quiet_opt
 
-import fiona
-from fiona import __version__ as fio_version
-from fiona.session import AWSSession, DummySession
+import fiona._loading
+with fiona._loading.add_gdal_dll_directories():
+    import fiona
+    from fiona import __version__ as fio_version
+    from fiona.session import AWSSession, DummySession
 
 
 def configure_logging(verbosity):
