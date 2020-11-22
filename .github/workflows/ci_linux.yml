@@ -114,19 +114,19 @@ jobs:
           chmod +x scripts/travis_filegdb_install.sh && ./scripts/travis_filegdb_install.sh
 
       - name: Build GDAL
-        continue-on-error: ${{ matrix.allow_failure == 'true' }}
+        continue-on-error: ${{ matrix.allow_failure }}
         run: |
           chmod +x scripts/travis_gdal_install.sh && ./scripts/travis_gdal_install.sh
           gdal-config --version
 
       - name: Build Fiona
-        continue-on-error: ${{ matrix.allow_failure == 'true' }}
+        continue-on-error: ${{ matrix.allow_failure }}
         run: |
           if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $($GDALINST/gdal-$GDALVERSION/bin/gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
           GDAL_CONFIG=$GDALINST/gdal-$GDALVERSION/bin/gdal-config python -m pip install --no-deps --force-reinstall --no-use-pep517 -e .
 
       - name: Print Environment
-        continue-on-error: ${{ matrix.allow_failure == 'true' }}
+        continue-on-error: ${{ matrix.allow_failure }}
         run: |
           echo "python -m pip freeze"
           python -m pip freeze
@@ -141,12 +141,12 @@ jobs:
           python -c "import fiona; fiona.show_versions()"
 
       - name: pytest
-        continue-on-error: ${{ matrix.allow_failure == 'true' }}
+        continue-on-error: ${{ matrix.allow_failure }}
         run: |
           python -m pytest -m "not wheel" --cov fiona --cov-report term-missing
 
       - name: Coveralls
-        continue-on-error: ${{ matrix.allow_failure == 'true' }}
+        continue-on-error: ${{ matrix.allow_failure }}
         run: coveralls || echo "!! intermittent coveralls failure"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
