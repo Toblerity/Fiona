@@ -84,7 +84,7 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
                             feat['geometry'] = g
                             feat['bbox'] = fiona.bounds(g)
                         if use_rs:
-                            click.echo(u'\u001e', nl=False)
+                            click.echo('\x1e', nl=False)
                         click.echo(json.dumps(feat, **dump_kwds))
 
     except AttributeFilterError as e:

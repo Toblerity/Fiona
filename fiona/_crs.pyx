@@ -31,7 +31,7 @@ def crs_to_wkt(crs):
     try:
         cogr_srs = exc_wrap_pointer(OSRNewSpatialReference(NULL))
     except CPLE_BaseError as exc:
-        raise CRSError(u"{}".format(exc))
+        raise CRSError(str(exc))
 
     # First, check for CRS strings like "EPSG:3857".
     if isinstance(crs, string_types):

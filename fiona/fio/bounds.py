@@ -65,7 +65,7 @@ def bounds(ctx, precision, explode, with_id, with_obj, use_rs):
                     else:
                         rec = (w, s, e, n)
                     if use_rs:
-                        click.echo(u'\u001e', nl=False)
+                        click.echo('\x1e', nl=False)
                     click.echo(json.dumps(rec))
                 else:
                     xs.extend([w, e])
@@ -80,7 +80,7 @@ def bounds(ctx, precision, explode, with_id, with_obj, use_rs):
                 else:
                     rec = (w, s, e, n)
                 if use_rs:
-                    click.echo(u'\u001e', nl=False)
+                    click.echo('\x1e', nl=False)
                 click.echo(json.dumps(rec))
 
     except Exception:

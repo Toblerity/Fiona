@@ -50,7 +50,7 @@ def filter(ctx, filter_expression, use_rs):
                     continue
 
                 if use_rs:
-                    click.echo(u'\u001e', nl=False)
+                    click.echo('\x1e', nl=False)
                 click.echo(json.dumps(feat))
 
     except Exception:
