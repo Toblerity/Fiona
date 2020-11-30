@@ -17,7 +17,7 @@ class TestUnicodePath(object):
 
     def setup(self):
         tempdir = tempfile.mkdtemp()
-        self.dir = os.path.join(tempdir, u'français')
+        self.dir = os.path.join(tempdir, 'français')
         shutil.copytree(os.path.join(os.path.dirname(__file__), 'data'),
                         self.dir)
 
@@ -75,18 +75,18 @@ class TestUnicodeStringField(object):
                 'type': 'Feature',
                 'geometry': {'type': 'Point', 'coordinates': [0, 0]},
                 'properties': {
-                    'label': u'徐汇区',
+                    'label': '徐汇区',
                     'num': 0}}])
 
         with fiona.open(os.path.join(self.tempdir), encoding='latin1') as c:
             f = next(iter(c))
             # Next assert fails.
-            assert f['properties']['label'] == u'徐汇区'
+            assert f['properties']['label'] == '徐汇区'
 
     def test_write_utf8(self):
         schema = {
             'geometry': 'Point',
-            'properties': {'label': 'str', u'verit\xe9': 'int'}}
+            'properties': {'label': 'str', 'verit\xe9': 'int'}}
         with fiona.open(os.path.join(self.tempdir, "test-write.shp"),
                         "w", "ESRI Shapefile", schema=schema,
                         encoding='utf-8') as c:
@@ -94,12 +94,12 @@ class TestUnicodeStringField(object):
                 'type': 'Feature',
                 'geometry': {'type': 'Point', 'coordinates': [0, 0]},
                 'properties': {
-                    'label': u'Ba\u2019kelalan', u'verit\xe9': 0}}])
+                    'label': 'Ba\u2019kelalan', 'verit\xe9': 0}}])
 
         with fiona.open(os.path.join(self.tempdir), encoding='utf-8') as c:
             f = next(iter(c))
-            assert f['properties']['label'] == u'Ba\u2019kelalan'
-            assert f['properties'][u'verit\xe9'] == 0
+            assert f['properties']['label'] == 'Ba\u2019kelalan'
+            assert f['properties']['verit\xe9'] == 0
 
     @pytest.mark.iconv
     def test_write_gb18030(self):
@@ -113,11 +113,11 @@ class TestUnicodeStringField(object):
             c.writerecords([{
                 'type': 'Feature',
                 'geometry': {'type': 'Point', 'coordinates': [0, 0]},
-                'properties': {'label': u'徐汇区', 'num': 0}}])
+                'properties': {'label': '徐汇区', 'num': 0}}])
 
         with fiona.open(os.path.join(self.tempdir), encoding='gb18030') as c:
             f = next(iter(c))
-            assert f['properties']['label'] == u'徐汇区'
+            assert f['properties']['label'] == '徐汇区'
             assert f['properties']['num'] == 0
 
     @pytest.mark.iconv
@@ -131,7 +131,7 @@ class TestUnicodeStringField(object):
 
         See GH#595.
         """
-        field_name = u"区县名称"
+        field_name = "区县名称"
         meta = {
             "schema": {
                 "properties": OrderedDict([(field_name, "int")]),

@@ -894,7 +894,7 @@ cdef class WritingSession(Session):
                 OGRReleaseDataSource(self.cogr_ds)
                 self.cogr_ds = NULL
                 self.cogr_layer = NULL
-                raise DriverError(u"{}".format(exc))
+                raise DriverError(str(exc))
 
             else:
                 self._fileencoding = userencoding or self._get_fallback_encoding()
@@ -958,7 +958,7 @@ cdef class WritingSession(Session):
                 OGRReleaseDataSource(self.cogr_ds)
                 self.cogr_ds = NULL
                 self.cogr_layer = NULL
-                raise CRSError(u"{}".format(exc))
+                raise CRSError(str(exc))
 
             # Determine which encoding to use. The encoding parameter given to
             # the collection constructor takes highest precedence, then
@@ -1036,7 +1036,7 @@ cdef class WritingSession(Session):
             except Exception as exc:
                 OGRReleaseDataSource(self.cogr_ds)
                 self.cogr_ds = NULL
-                raise DriverIOError(u"{}".format(exc))
+                raise DriverIOError(str(exc))
 
             finally:
                 if options != NULL:
@@ -1109,7 +1109,7 @@ cdef class WritingSession(Session):
                     OGRReleaseDataSource(self.cogr_ds)
                     self.cogr_ds = NULL
                     self.cogr_layer = NULL
-                    raise SchemaError(u"{}".format(exc))
+                    raise SchemaError(str(exc))
 
                 else:
                     OGR_Fld_Destroy(cogr_fielddefn)
