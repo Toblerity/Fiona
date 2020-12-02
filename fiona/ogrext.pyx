@@ -1467,7 +1467,7 @@ cdef class Iterator:
 
         # Set read cursor to next_item position
         if session.cursor_interrupted:
-            if not self.fastindex:
+            if not self.fastindex and not self.next_index == self.start:
                 warnings.warn("Sequential read of iterator was interrupted. Resetting iterator. "
                               "This can negatively impact the performance.", RuntimeWarning)
             exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
