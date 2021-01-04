@@ -1438,6 +1438,7 @@ cdef class Iterator:
         # Set OGR_L_SetNextByIndex only if within range
         if start >= 0 and (self.ftcount == -1 or self.start < self.ftcount):
             exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
+        session.cursor_interrupted = False
 
     def __iter__(self):
         return self
