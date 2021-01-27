@@ -1,0 +1,216 @@
+name: Linux CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Python ${{ matrix.python }} / GDAL ${{ matrix.GDALVERSION }} / PROJ ${{ matrix.PROJVERSION }}
+    runs-on: [ubuntu-18.04]
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Test all supported gdal minor versions (except latest stable) with one python version
+          - {
+              python: 3.6,
+              GDALVERSION: "2.0.3",
+              PROJVERSION: "4.9.3",
+              allow_failure: "false",
+            }
+          - {
+              python: 3.6,
+              GDALVERSION: "2.1.4",
+              PROJVERSION: "4.9.3",
+              allow_failure: "false",
+            }
+          - {
+              python: 3.6,
+              GDALVERSION: "2.2.4",
+              PROJVERSION: "4.9.3",
+              allow_failure: "false",
+            }
+          - {
+              python: 3.6,
+              GDALVERSION: "2.3.3",
+              PROJVERSION: "4.9.3",
+              allow_failure: "false",
+            }
+          - {
+              python: 3.6,
+              GDALVERSION: "2.4.4",
+              PROJVERSION: "4.9.3",
+              allow_failure: "false",
+            }
+          - {
+              python: 3.6,
+              GDALVERSION: "3.0.4",
+              PROJVERSION: "6.2.1",
+              allow_failure: "false",
+            }
+          - {
+              python: 3.6,
+              GDALVERSION: "3.1.0",
+              PROJVERSION: "6.3.2",
+              allow_failure: "false",
+            }
+
+          # Test all supported python versions with latest stable gdal release
+          - {
+              python: 3.6,
+              GDALVERSION: "3.2.1",
+              PROJVERSION: "7.2.1",
+              allow_failure: "false",
+            }
+          - {
+              python: 3.7,
+              GDALVERSION: "3.2.1",
+              PROJVERSION: "7.2.1",
+              allow_failure: "false",
+            }
+          - {
+              python: 3.8,
+              GDALVERSION: "3.2.1",
+              PROJVERSION: "7.2.1",
+              allow_failure: "false",
+            }
+          - {
+              python: 3.9,
+              GDALVERSION: "3.2.1",
+              PROJVERSION: "7.2.1",
+              allow_failure: "false",
+            }
+
+          # Test GDAL master
+          - {
+              python: 3.6,
+              GDALVERSION: "master",
+              PROJVERSION: "7.2.1",
+              allow_failure: "true",
+            }
+
+    env:
+      CYTHON_COVERAGE: "true"
+      MAKEFLAGS: "-j 4 -s"
+      CXXFLAGS: "-O0"
+      CFLAGS: "-O0"
+      PROJVERSION: ${{ matrix.PROJVERSION }}
+      GDALVERSION: ${{ matrix.GDALVERSION }}
+      GDALINST: ${{ github.workspace }}/gdalinstall
+      GDALBUILD: ${{ github.workspace }}/gdalbuild
+      PROJINST: ${{ github.workspace }}/gdalinstall
+      PROJBUILD: ${{ github.workspace }}/projbuild
+      FILEGDB: ${{ github.workspace }}/gdalinstall/filegdb
+
+      # Emulate travis
+      TRAVIS_BUILD_DIR: ${{ github.workspace }}
+      TRAVIS_OS_NAME: "linux"
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Set env variables
+        run: |
+
+          # Additional env variables
+          echo "GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal" >> $GITHUB_ENV
+          echo "PROJ_LIB=$GDALINST/gdal-$GDALVERSION/share/proj" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$GDALINST/proj-$PROJVERSION/lib:$FILEGDB/lib:\$LD_LIBRARY_PATH" >> $GITHUB_ENV
+
+          # Add PATH
+          echo "$GDALINST/gdal-$GDALVERSION/bin" >> $GITHUB_PATH
+          echo "$GDALINST/proj-$PROJVERSION/bin" >> $GITHUB_PATH
+
+          echo "cat \$GITHUB_ENV"
+          cat $GITHUB_ENV
+          echo ""
+          echo "cat \$GITHUB_PATH"
+          cat $GITHUB_PATH
+
+      - name: Install apt packages
+        run: |
+          sudo apt-get install libatlas-base-dev libcurl4-openssl-dev libgeos-dev libfreexl-dev libzstd-dev libspatialite-dev
+
+          # Unlike travis, packages from non default repositories are installed.
+          # While default repositories e.g. bionic/universe or bionic/main) tend to keep packages at the same API / ABI level,
+          # this is not guaranteed with other repositories.  
+          # The following command creates a list of these packages, which is used as key for the GDAL cache
+          # The repositories of packages can be identified in the the output of `sudo apt-get install`
+          apt list --installed | grep 'libgeos-dev\|libxml2-dev' > $GITHUB_WORKSPACE/apt_list
+          cat $GITHUB_WORKSPACE/apt_list
+
+      - name: Cache GDAL binaries
+        uses: actions/cache@v2
+        with:
+          path: gdalinstall
+          key: ${{ runner.os }}-gdal-${{ matrix.GDALVERSION }}-proj-${{ matrix.PROJVERSION }}-${{ hashFiles('**/apt_list') }}
+
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install -U pip
+          python -m pip install -U wheel
+          python -m pip install -r requirements-ci.txt
+          python -m pip wheel -r requirements-dev.txt
+          python -m pip install -r requirements-dev.txt
+
+      - name: Build PROJ
+        run: |
+          chmod +x scripts/travis_proj_install.sh && ./scripts/travis_proj_install.sh
+
+      - name: Install FileGDB
+        run: |
+          chmod +x scripts/travis_filegdb_install.sh && ./scripts/travis_filegdb_install.sh
+
+      - name: Build GDAL
+        continue-on-error: ${{ matrix.allow_failure == 'true' }}
+        run: |
+          chmod +x scripts/travis_gdal_install.sh && ./scripts/travis_gdal_install.sh
+          gdal-config --version
+
+      - name: Build Fiona
+        continue-on-error: ${{ matrix.allow_failure == 'true' }}
+        run: |
+          if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $($GDALINST/gdal-$GDALVERSION/bin/gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
+          GDAL_CONFIG=$GDALINST/gdal-$GDALVERSION/bin/gdal-config python -m pip install --no-deps --force-reinstall --no-use-pep517 -e .
+
+      - name: Print Environment
+        continue-on-error: ${{ matrix.allow_failure == 'true' }}
+        run: |
+          echo "python -m pip freeze"
+          python -m pip freeze
+
+          echo ""
+          echo "fio --version"
+          fio --version
+
+          echo ""
+          echo "fio --gdal-version"
+          fio --gdal-version
+
+          echo ""
+          echo "python -c \"import fiona; fiona.show_versions()\""
+          python -c "import fiona; fiona.show_versions()"
+
+      - name: pytest
+        continue-on-error: ${{ matrix.allow_failure == 'true' }}
+        run: |
+          python -m pytest -m "not wheel" --cov fiona --cov-report term-missing
+
+      - name: Coveralls
+        continue-on-error: ${{ matrix.allow_failure == 'true' }}
+        run: coveralls || echo "!! intermittent coveralls failure"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
