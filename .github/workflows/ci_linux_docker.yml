@@ -3,21 +3,31 @@ name: Linux CI with Docker
 on: [push, pull_request]
 
 jobs:
-  build:
-    name: Test with osgeo/gdal:ubuntu-small-3.2.1
-    runs-on: [ubuntu-20.04]
+  test:
+    strategy:
+      matrix:
+        include:
+          - { GDAL_VERSION: "3.0.4", PYTHON: "3.6" }
+          - { GDAL_VERSION: "3.1.4", PYTHON: "3.6" }
+          - { GDAL_VERSION: "3.2.1", PYTHON: "3.6" }
+          - { GDAL_VERSION: "3.2.1", PYTHON: "3.7" }
+          - { GDAL_VERSION: "3.2.1", PYTHON: "3.8" }
+          - { GDAL_VERSION: "3.2.1", PYTHON: "3.9" }
+
+    name: Python ${{ matrix.PYTHON }} / GDAL ${{ matrix.GDAL_VERSION }}
+    runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
 
     steps:
       - uses: actions/checkout@v2
 
       - name: Start docker container
-        run: docker run -t -d  --name gdal --mount src="$(pwd)",target=/fiona,type=bind osgeo/gdal:ubuntu-full-latest /bin/bash
+        run: docker run -t -d  --name gdal --mount src="$(pwd)",target=/fiona,type=bind ghcr.io/rbuffat/buildcontainer:gdal-${{ matrix.GDAL_VERSION }}-py-${{ matrix.PYTHON }} /bin/bash
 
       - name: Install apt packages
-        run: | 
+        run: |
           docker exec gdal apt update
-          docker exec gdal apt install -y python3-pip libatlas-base-dev libcurl4-openssl-dev libgeos-dev libfreexl-dev libzstd-dev libspatialite-dev
+          docker exec gdal apt install -y python3-pip libatlas-base-dev
 
       - name: Install Python dependencies
         run: |
