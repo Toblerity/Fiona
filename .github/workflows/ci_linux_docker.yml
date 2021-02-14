@@ -17,7 +17,7 @@ jobs:
       - name: Install apt packages
         run: | 
           docker exec gdal apt update
-          docker exec gdal apt install -y apt-get install python3-pip libatlas-base-dev libcurl4-openssl-dev libgeos-dev libfreexl-dev libzstd-dev libspatialite-dev
+          docker exec gdal apt install -y python3-pip libatlas-base-dev libcurl4-openssl-dev libgeos-dev libfreexl-dev libzstd-dev libspatialite-dev
 
       - name: Install Python dependencies
         run: |
