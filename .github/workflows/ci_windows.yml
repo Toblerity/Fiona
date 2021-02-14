@@ -11,7 +11,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-
           - python: 3.6
             GDAL_VERSION: 2.4.4
             GIS_INTERNALS: release-1911-x64-gdal-2-4-4-mapserver-7-4-3.zip
@@ -125,7 +124,6 @@ jobs:
           python -m pytest -m "not iconv and not wheel" --cov fiona --cov-report term-missing
 
       - name: Coveralls
-        continue-on-error: ${{ matrix.allow_failure }}
-        run: coveralls || echo "!! intermittent coveralls failure"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
