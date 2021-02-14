@@ -15,7 +15,9 @@ jobs:
         run: docker run -t -d  --name gdal --mount src="$(pwd)",target=/fiona,type=bind osgeo/gdal:ubuntu-full-latest /bin/bash
 
       - name: Install apt packages
-        run: docker exec gdal apt install -y apt-get install python3-pip libatlas-base-dev libcurl4-openssl-dev libgeos-dev libfreexl-dev libzstd-dev libspatialite-dev
+        run: | 
+          docker exec gdal apt update
+          docker exec gdal apt install -y apt-get install python3-pip libatlas-base-dev libcurl4-openssl-dev libgeos-dev libfreexl-dev libzstd-dev libspatialite-dev
 
       - name: Install Python dependencies
         run: |
