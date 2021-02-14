@@ -1,0 +1,56 @@
+name: Linux CI with Docker
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Test with osgeo/gdal:ubuntu-small-3.2.1
+    runs-on: [ubuntu-20.04]
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Start docker container
+        run: docker run -t -d  --name gdal --mount src="$(pwd)",target=/fiona,type=bind osgeo/gdal:ubuntu-full-latest /bin/bash
+
+      - name: Install apt packages
+        run: docker exec gdal apt install -y apt-get install python3-pip libatlas-base-dev libcurl4-openssl-dev libgeos-dev libfreexl-dev libzstd-dev libspatialite-dev
+
+      - name: Install Python dependencies
+        run: |
+          docker exec -w /fiona gdal python -m pip install -r requirements-ci.txt
+          docker exec -w /fiona gdal python -m pip install -r requirements-dev.txt
+
+      - name: Build Fiona
+        continue-on-error: ${{ matrix.allow_failure == 'true' }}
+        run: docker exec -w /fiona gdal python -m pip install --no-deps --force-reinstall --no-use-pep517 -e .
+
+      - name: Print Environment
+        continue-on-error: ${{ matrix.allow_failure == 'true' }}
+        run: |
+          echo "python -m pip freeze"
+          docker exec gdal python -m pip freeze
+
+          echo ""
+          echo "fio --version"
+          docker exec gdal fio --version
+
+          echo ""
+          echo "fio --gdal-version"
+          docker exec gdal fio --gdal-version
+
+          echo ""
+          echo "python -c \"import fiona; fiona.show_versions()\""
+          docker exec gdal python -c "import fiona; fiona.show_versions()"
+
+      - name: pytest
+        continue-on-error: ${{ matrix.allow_failure == 'true' }}
+        run: |
+          docker exec -w /fiona gdal python -m pytest -m "not wheel" --cov fiona --cov-report term-missing
+
+      - name: Coveralls
+        continue-on-error: ${{ matrix.allow_failure == 'true' }}
+        run: docker exec -w /fiona gdal  coveralls || echo "!! intermittent coveralls failure"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
