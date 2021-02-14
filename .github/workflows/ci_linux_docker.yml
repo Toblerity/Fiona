@@ -24,11 +24,6 @@ jobs:
       - name: Start docker container
         run: docker run -t -d  --name gdal --mount src="$(pwd)",target=/fiona,type=bind ghcr.io/rbuffat/buildcontainer:gdal-${{ matrix.GDAL_VERSION }}-py-${{ matrix.PYTHON }} /bin/bash
 
-      - name: Install apt packages
-        run: |
-          docker exec gdal apt update
-          docker exec gdal apt install -y python3-pip libatlas-base-dev
-
       - name: Install Python dependencies
         run: |
           docker exec -w /fiona gdal python -m pip install -r requirements-ci.txt
