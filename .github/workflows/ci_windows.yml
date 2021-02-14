@@ -3,33 +3,16 @@ name: Windows CI
 on: [push, pull_request]
 
 jobs:
-  build:
+  test:
     name: Python ${{ matrix.python }} / GDAL ${{ matrix.GDAL_VERSION }}
-    runs-on: [windows-2019]
+    runs-on: windows-2019
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
     strategy:
       fail-fast: false
       matrix:
         include:
-          - python: 3.6
-            GDAL_VERSION: 1.11.4
-            GIS_INTERNALS: release-1800-x64-gdal-1-11-4-mapserver-6-4-3.zip
-            GIS_INTERNALS_LIBS: release-1800-x64-gdal-1-11-4-mapserver-6-4-3-libs.zip
-            allow_failure: true
 
           - python: 3.6
-            GDAL_VERSION: 2.2.3
-            GIS_INTERNALS: release-1911-x64-gdal-2-2-3-mapserver-7-0-7.zip
-            GIS_INTERNALS_LIBS: release-1911-x64-gdal-2-2-3-mapserver-7-0-7-libs.zip
-            allow_failure: false
-
-          - python: 3.7
-            GDAL_VERSION: 2.3.3
-            GIS_INTERNALS: release-1911-x64-gdal-2-3-3-mapserver-7-2-1.zip
-            GIS_INTERNALS_LIBS: release-1911-x64-gdal-2-3-3-mapserver-7-2-1-libs.zip
-            allow_failure: false
-
-          - python: 3.7
             GDAL_VERSION: 2.4.4
             GIS_INTERNALS: release-1911-x64-gdal-2-4-4-mapserver-7-4-3.zip
             GIS_INTERNALS_LIBS: release-1911-x64-gdal-2-4-4-mapserver-7-4-3-libs.zip
@@ -48,9 +31,9 @@ jobs:
             allow_failure: false
 
           - python: 3.9
-            GDAL_VERSION: 3.2.0
-            GIS_INTERNALS: release-1911-x64-gdal-3-2-0-mapserver-7-6-1.zip
-            GIS_INTERNALS_LIBS: release-1911-x64-gdal-3-2-0-mapserver-7-6-1-libs.zip
+            GDAL_VERSION: 3.2.1
+            GIS_INTERNALS: release-1911-x64-gdal-3-2-1-mapserver-7-6-2.zip
+            GIS_INTERNALS_LIBS: release-1911-x64-gdal-3-2-1-mapserver-7-6-2-libs.zip
             allow_failure: false
 
     env:
