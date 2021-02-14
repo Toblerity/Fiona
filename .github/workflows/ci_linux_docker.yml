@@ -12,7 +12,7 @@ jobs:
           - { GDAL_VERSION: "3.2.1", PYTHON: "3.6" }
           - { GDAL_VERSION: "3.2.1", PYTHON: "3.7" }
           - { GDAL_VERSION: "3.2.1", PYTHON: "3.8" }
-          - { GDAL_VERSION: "3.2.1", PYTHON: "3.9" }
+          # - { GDAL_VERSION: "3.2.1", PYTHON: "3.9" }
 
     name: Python ${{ matrix.PYTHON }} / GDAL ${{ matrix.GDAL_VERSION }}
     runs-on: ubuntu-latest
