@@ -115,6 +115,7 @@ supported_drivers = dict([
     ("SEGY", "r"),
     # Norwegian SOSI Standard 	SOSI 	No 	Yes 	No, needs FYBA library
     # SQLite/SpatiaLite 	SQLite 	Yes 	Yes 	No, needs libsqlite3 or libspatialite
+    ("SQLite", "raw"),
     # SUA 	SUA 	No 	Yes 	Yes
     ("SUA", "r"),
     # SVG 	SVG 	No 	Yes 	No, needs libexpat
