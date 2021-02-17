@@ -296,7 +296,8 @@ _drivers_not_supporting_timezones = {
         'MapInfo File': None,
         'GPKG': (3, 1, 0),
         'GPSTrackMaker': (3, 1, 1),
-        'FileGDB': None
+        'FileGDB': None,
+        'SQLite': (2, 4, 0)
     },
     'time': {
         'MapInfo File': None,
