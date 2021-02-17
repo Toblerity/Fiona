@@ -55,4 +55,5 @@ def test_write_memfile_crs_wkt():
 
         fd.seek(0)
         with fiona.open(fd) as src:
+            assert src.driver == "GPKG"
             assert src.crs == {"init": "epsg:32611"}
