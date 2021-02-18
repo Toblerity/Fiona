@@ -119,11 +119,13 @@ jobs:
           python -c "import fiona; fiona.show_versions()"
 
       - name: pytest
-        continue-on-error: ${{ matrix.allow_failure }}
+        continue-on-error: ${{ matrix.allow_failure == 'true' }}
         run: |
           python -m pytest -m "not iconv and not wheel" --cov fiona --cov-report term-missing
 
       - name: Coveralls
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: ${{ matrix.allow_failure == 'true' }}
+        run: coveralls || echo "!! intermittent coveralls failure"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
