@@ -125,7 +125,7 @@ jobs:
 
       - name: Coveralls
         continue-on-error: ${{ matrix.allow_failure == 'true' }}
-        run: coveralls || echo "!! intermittent coveralls failure"
+        run: coveralls --service=github || echo "!! intermittent coveralls failure"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
