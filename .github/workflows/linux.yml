@@ -1,0 +1,125 @@
+name: Tests (Linux)
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: Python ${{ matrix.python }} (GDAL ${{ matrix.gdal }}, PROJ ${{ matrix.proj }})
+    runs-on: ubuntu-16.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python: 3.6
+            gdal: 2.3.3
+            proj: 4.9.3
+
+          - python: 3.6
+            gdal: 2.4.4
+            proj: 4.9.3
+
+          - python: 3.6
+            gdal: 3.0.3
+            proj: 6.2.1
+
+          - python: 3.7
+            gdal: 3.0.3
+            proj: 6.2.1
+
+          - python: 3.8
+            gdal: 3.0.4
+            proj: 6.2.1
+
+          - python: 3.8
+            gdal: master
+            proj: 6.3.0
+
+    env:
+      GDAL_VERSION: ${{ matrix.gdal }}
+      PROJ_VERSION: ${{ matrix.proj }}
+      INSTALL_PREFIX: ${{ github.workspace }}/inst
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install apt packages
+        run: sudo apt-get install libatlas-dev libatlas-base-dev libsqlite3-dev sqlite3 libtiff-dev libcurl4-openssl-dev libgeos-dev
+
+      - name: Cache GDAL, PROJ and pip packages
+        uses: actions/cache@v2
+        with:
+          key: ${{ runner.os }}-gdal-${{ matrix.gdal }}-proj-${{ matrix.proj }}
+          path: |
+            ~/.cache/pip
+            ${{ github.workspace }}/inst
+
+      - name: Install PROJ and GDAL
+        shell: bash
+        run: |
+          ./ci/install_proj.sh
+          ./ci/install_gdal.sh
+          cd ${{ github.workspace }}
+
+      - name: Set environment variables
+        shell: bash
+        run: |
+          echo "$INSTALL_PREFIX/bin" >> $GITHUB_PATH
+          echo "LD_LIBRARY_PATH=$INSTALL_PREFIX/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "PROJ_LIB=$INSTALL_PREFIX/share/proj" >> $GITHUB_ENV
+          echo "GDAL_DATA=$INSTALL_PREFIX/share/gdal" >> $GITHUB_ENV
+
+      - name: Install Python dependencies
+        shell: bash
+        run: |
+          pip install --disable-pip-version-check --upgrade pip
+          pip install --upgrade wheel
+          pip install wheel -r requirements-dev.txt
+          pip install install -r requirements-dev.txt
+          pip install --upgrade coveralls>=1.1
+          pip list
+
+      - name: Build and install Fiona
+        shell: bash
+        run: |
+          unset GDAL_VERSION
+          GDAL_CONFIG=$INSTALL_PREFIX/bin/gdal-config pip install -v -v -v --no-deps --force-reinstall --no-use-pep517 -e .
+          pip freeze
+          fio --version
+          fio --gdal-version
+
+      - name: Overview of the Python environment (pip list)
+        shell: bash
+        run: |
+          pip list
+
+      - name: Run tests
+        shell: bash
+        continue-on-error: ${{ matrix.gdal == 'master' }}
+        run: |
+          pytest -m "not wheel" --cov fiona --cov-report term-missing
+
+      - name: Upload coverage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_PARALLEL: true
+        shell: bash
+        run: |
+          coveralls --service=github || echo "!! intermittent coveralls failure"
+
+  coveralls:
+    name: Indicate completion to coveralls.io
+    needs: test
+    runs-on: ubuntu-latest
+    container: python:3-slim
+    steps:
+      - name: Finished
+        run: |
+          pip3 install --upgrade coveralls
+          coveralls --finish || echo "!! intermittent coveralls failure"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
