@@ -3,7 +3,7 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.8.19 (2021-04-05)
+1.8.19 (2021-04-07)
 -------------------
 
 - In fiona/env.py the GDAL data path is now configured using set_gdal_config
