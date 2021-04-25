@@ -24,14 +24,20 @@ readily with other Python GIS packages such as pyproj_, Rtree_, and Shapely_.
 
 Fiona is supported only on CPython versions 3.6+.
 
-Why the name "Fiona"? Because Fiona is OGR's neat and nimble API for Python programmers. And a Shrek reference made us laugh.
+Why the name "Fiona"? Because Fiona Is OGR's Neat and Nimble API for Python programmers. And a Shrek reference made us laugh.
 
 For more details, see:
 
 * Fiona `home page <https://github.com/Toblerity/Fiona>`__
 * `Docs and manual <https://fiona.readthedocs.io/>`__
 * `Examples <https://github.com/Toblerity/Fiona/tree/master/examples>`__
+
+For support and help:
+
 * Main `user discussion group <https://fiona.groups.io/g/main>`__
+
+For project discussions, see:
+
 * `Developers discussion group <https://fiona.groups.io/g/dev>`__
 
 Usage
@@ -314,6 +320,17 @@ for successful builds, which includes GDAL and other dependencies, for users
 wanting to try an unstable development version.
 The `Appveyor configuration file <https://github.com/Toblerity/Fiona/blob/master/appveyor.yml>`__ may be a useful example for
 users building from source on Windows.
+
+Support
+=======
+
+The primary forum for questions about installation and usage of Fiona is
+https://fiona.groups.io/g/main. The authors and other users will answer
+questions when they have expertise to share and time to explain. Please take
+the time to craft a clear question and be patient about responses.
+
+Please do not bring these questions to Fiona's issue tracker, which we want
+to reserve for bug reports and other actionable issues.
 
 Development and testing
 =======================
