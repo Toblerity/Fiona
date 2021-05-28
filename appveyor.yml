@@ -182,7 +182,7 @@ test_script:
   - ps: python -c "import fiona"
 
   # Our Windows GDAL doesn't have iconv and can't support certain tests.
-  - "%CMD_IN_ENV% python -m pytest -m \"not iconv and not wheel\" --cov fiona --cov-report term-missing"
+  - "%CMD_IN_ENV% GDAL_ENABLE_DEPRECATED_DRIVER_GTM=YES python -m pytest -m \"not iconv and not wheel\" --cov fiona --cov-report term-missing"
 
 
 artifacts:

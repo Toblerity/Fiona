@@ -102,6 +102,8 @@ def test_append_or_driver_error(tmpdir, testdata_generator, driver):
     Some driver only allow a specific schema. These drivers can be excluded by adding them to blacklist_append_drivers.
 
     """
+    if driver == "DGN":
+        pytest.xfail("DGN schema has changed")
 
     if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
         pytest.skip("BNA driver segfaults with gdal 1.11")
