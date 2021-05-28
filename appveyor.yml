@@ -12,6 +12,7 @@ environment:
         CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_env.cmd"
         GDAL_HOME: "C:\\gdal"
         PYTHONWARNINGS: "ignore:DEPRECATION::pip._internal.cli.base_command"
+        ENABLE_DEPRECATED_DRIVER_GTM: "YES"
 
     matrix:
         # PYTHON_VERSION and PYTHON_ARCH are required by run_with_env.cmd.
@@ -182,7 +183,7 @@ test_script:
   - ps: python -c "import fiona"
 
   # Our Windows GDAL doesn't have iconv and can't support certain tests.
-  - "%CMD_IN_ENV% GDAL_ENABLE_DEPRECATED_DRIVER_GTM=YES python -m pytest -m \"not iconv and not wheel\" --cov fiona --cov-report term-missing"
+  - "%CMD_IN_ENV% python -m pytest -m \"not iconv and not wheel\" --cov fiona --cov-report term-missing"
 
 
 artifacts:
