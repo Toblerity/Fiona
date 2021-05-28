@@ -3,8 +3,25 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.20 (TBD)
+------------
+
+Packaging:
+
+- Wheels include GDAL 3.3.0 and GEOS 3.9.1.
+
+Bug fixes:
+
+- Allow use with click 8 and higher (#1015).
+
 1.8.19 (2021-04-07)
 -------------------
+
+Packaging:
+
+- Wheels include GDAL 3.2.1 and PROJ 7.2.1.
+
+Bug fixes:
 
 - In fiona/env.py the GDAL data path is now configured using set_gdal_config
   instead by setting the GDAL_DATA environment variable (#1007).
