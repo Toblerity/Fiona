@@ -120,6 +120,7 @@ supported_drivers = dict([
     ("SEGY", "r"),
     # Norwegian SOSI Standard 	SOSI 	No 	Yes 	No, needs FYBA library
     # SQLite/SpatiaLite 	SQLite 	Yes 	Yes 	No, needs libsqlite3 or libspatialite
+    ("SQLite", "raw"),
     # SUA 	SUA 	No 	Yes 	Yes
     ("SUA", "r"),
     # SVG 	SVG 	No 	Yes 	No, needs libexpat
@@ -295,7 +296,8 @@ _drivers_not_supporting_timezones = {
         'MapInfo File': None,
         'GPKG': (3, 1, 0),
         'GPSTrackMaker': (3, 1, 1),
-        'FileGDB': None
+        'FileGDB': None,
+        'SQLite': (2, 4, 0)
     },
     'time': {
         'MapInfo File': None,
@@ -306,7 +308,8 @@ _drivers_not_supporting_timezones = {
         'GML': None,
         'CSV': None,
         'GMT': None,
-        'OGR_GMT': None
+        'OGR_GMT': None,
+        'SQLite': None 
     }
 }
 
