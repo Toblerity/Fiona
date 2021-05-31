@@ -3,8 +3,8 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.8.20 (TBD)
-------------
+1.8.20 (2021-05-31)
+-------------------
 
 Packaging:
 
