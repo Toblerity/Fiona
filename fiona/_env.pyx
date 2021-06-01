@@ -18,7 +18,7 @@ import sys
 import threading
 
 from fiona._err cimport exc_wrap_int, exc_wrap_ogrerr
-from fiona._shim cimport set_proj_search_path
+from fiona._shim cimport set_proj_search_path, get_proj_version
 from fiona._err import CPLE_BaseError
 from fiona.errors import EnvError
 
@@ -55,6 +55,11 @@ code_map = {
 
 log = logging.getLogger(__name__)
 
+try:
+    import certifi
+    os.environ.setdefault("CURL_CA_BUNDLE", certifi.where())
+except ImportError:
+    pass
 
 cdef bint is_64bit = sys.maxsize > 2 ** 32
 
@@ -112,6 +117,21 @@ def get_gdal_version_tuple():
         minor = (gdal_version_num - (major * 1000)) // 100
         revision = (gdal_version_num - (major * 1000) - (minor * 100)) // 10
         return GDALVersion(major, minor, revision)
+
+
+def get_proj_version_tuple():
+    """
+    Returns proj version tuple for gdal >= 3.0.1, otherwise None
+    """
+    cdef int major
+    cdef int minor
+    cdef int patch
+    gdal_version_num = get_gdal_version_num()
+    if gdal_version_num < calc_gdal_version_num(3, 0, 1):
+        proj_version = None
+    else:
+        get_proj_version(&major, &minor, &patch)
+        return (major, minor, patch)
 
 
 cdef void log_error(CPLErr err_class, int err_no, const char* msg) with gil:
@@ -373,7 +393,6 @@ cdef class GDALEnv(ConfigEnv):
 
     def start(self):
         CPLPushErrorHandler(<CPLErrorHandler>logging_error_handler)
-        log.debug("Logging error handler pushed.")
 
         # The outer if statement prevents each thread from acquiring a
         # lock when the environment starts, and the inner avoids a
@@ -384,41 +403,53 @@ cdef class GDALEnv(ConfigEnv):
 
                     GDALAllRegister()
                     OGRRegisterAll()
-                    log.debug("All drivers registered.")
 
                     if 'GDAL_DATA' in os.environ:
+                        log.debug("GDAL_DATA found in environment.")
                         self.update_config_options(GDAL_DATA=os.environ['GDAL_DATA'])
-                        log.debug("GDAL_DATA found in environment: %r.", os.environ['GDAL_DATA'])
-
-                    # See https://github.com/mapbox/rasterio/issues/1631.
-                    elif GDALDataFinder().find_file("header.dxf"):
-                        log.debug("GDAL data files are available at built-in paths")
 
                     else:
-                        path = GDALDataFinder().search()
+                        path = GDALDataFinder().search_wheel()
 
                         if path:
+                            log.debug("GDAL data found in package: path=%r.", path)
                             self.update_config_options(GDAL_DATA=path)
-                            log.debug("GDAL_DATA not found in environment, set to %r.", path)
+
+                        # See https://github.com/mapbox/rasterio/issues/1631.
+                        elif GDALDataFinder().find_file("header.dxf"):
+                            log.debug("GDAL data files are available at built-in paths.")
+
+                        else:
+                            path = GDALDataFinder().search()
+
+                            if path:
+                                log.debug("GDAL data found in other locations: path=%r.", path)
+                                self.update_config_options(GDAL_DATA=path)
 
                     if 'PROJ_LIB' in os.environ:
-                        log.debug("PROJ_LIB found in environment: %r.", os.environ['PROJ_LIB'])
+                        log.debug("PROJ_LIB found in environment.")
                         path = os.environ["PROJ_LIB"]
                         set_proj_data_search_path(path)
 
-                    elif PROJDataFinder().has_data():
-                        log.debug("PROJ data files are available at built-in paths")
-
                     else:
-                        path = PROJDataFinder().search()
+                        path = PROJDataFinder().search_wheel()
 
                         if path:
-                            log.debug("PROJ data not found in environment, setting to %r.", path)
+                            log.debug("PROJ data found in package: path=%r.", path)
                             set_proj_data_search_path(path)
+
+                        elif PROJDataFinder().has_data():
+                            log.debug("PROJ data files are available at built-in paths.")
+
+                        else:
+                            path = PROJDataFinder().search()
+
+                            if path:
+                                log.debug("PROJ data found in other locations: path=%r.", path)
+                                set_proj_data_search_path(path)
 
                     if driver_count() == 0:
                         CPLPopErrorHandler()
-                        log.debug("Error handler popped")
                         raise ValueError("Drivers not registered.")
 
                     # Flag the drivers as registered, otherwise every thread
@@ -427,7 +458,7 @@ cdef class GDALEnv(ConfigEnv):
                     # actually makes it this far.
                     self._have_registered_drivers = True
 
-        log.debug("Started GDALEnv %r.", self)
+        log.debug("Started GDALEnv: self=%r.", self)
 
     def stop(self):
         # NB: do not restore the CPL error handler to its default

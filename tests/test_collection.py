@@ -1,8 +1,10 @@
 # Testing collections and workspaces
 
 import datetime
+import random
 import sys
 import re
+from collections import OrderedDict
 
 import pytest
 
@@ -306,6 +308,30 @@ class TestIgnoreFieldsAndGeometry(object):
         with pytest.raises(TypeError):
             with fiona.open(self.path_coutwildrnp_shp, "r", ignore_fields=[42]):
                 pass
+
+    def test_include_fields(self):
+        with fiona.open(self.path_coutwildrnp_shp, "r", include_fields=["AREA", "STATE"]) as collection:
+            assert sorted(collection.schema["properties"]) == ["AREA", "STATE"]
+            assert("geometry" in collection.schema.keys())
+
+            feature = next(iter(collection))
+            assert sorted(feature["properties"]) == ["AREA", "STATE"]
+            assert(feature["properties"]["AREA"] is not None)
+            assert(feature["properties"]["STATE"] is not None)
+            assert(feature["geometry"] is not None)
+
+    def test_include_fields__geom_only(self):
+        with fiona.open(self.path_coutwildrnp_shp, "r", include_fields=()) as collection:
+            assert sorted(collection.schema["properties"]) == []
+            assert("geometry" in collection.schema.keys())
+
+            feature = next(iter(collection))
+            assert sorted(feature["properties"]) == []
+            assert(feature["geometry"] is not None)
+
+    def test_include_fields__ignore_fields_error(self):
+        with pytest.raises(ValueError):
+            fiona.open(self.path_coutwildrnp_shp, "r", include_fields=["AREA"], ignore_fields=["STATE"])
 
     def test_ignore_geometry(self):
         with fiona.open(self.path_coutwildrnp_shp, "r", ignore_geometry=True) as collection:
@@ -829,8 +855,7 @@ class TestCollection(object):
         with pytest.raises(DriverError):
             fiona.open("PG:dbname=databasename", "r")
 
-    @pytest.mark.skipif(sys.platform.startswith("win"),
-                     reason="test only for *nix based system")
+    @pytest.mark.skipif(sys.platform.startswith("win"), reason="test only for *nix based system")
     def test_no_read_directory(self):
         with pytest.raises(DriverError):
             fiona.open("/dev/null", "r")
@@ -900,17 +925,13 @@ def test_collection_zip_http():
         "https://raw.githubusercontent.com/Toblerity/Fiona/master/tests/data/coutwildrnp.zip",
         vsi="zip+https",
     )
-    assert (
-        ds.path
-        == "/vsizip/vsicurl/https://raw.githubusercontent.com/Toblerity/Fiona/master/tests/data/coutwildrnp.zip",
-    )
+    assert ds.path == "/vsizip/vsicurl/https://raw.githubusercontent.com/Toblerity/Fiona/master/tests/data/coutwildrnp.zip"
     assert len(ds) == 67
 
 
 def test_encoding_option_warning(tmpdir, caplog):
     """There is no ENCODING creation option log warning for GeoJSON"""
-    fiona.Collection(str(tmpdir.join("test.geojson")), "w", driver="GeoJSON", crs="epsg:4326",
-            schema={"geometry": "Point", "properties": {"foo": "int"}})
+    fiona.Collection(str(tmpdir.join("test.geojson")), "w", driver="GeoJSON", crs="epsg:4326", schema={"geometry": "Point", "properties": {"foo": "int"}})
     assert not caplog.text
 
 
@@ -936,3 +957,51 @@ def test_collection_env(path_coutwildrnp_shp):
     """We have a GDAL env within collection context"""
     with fiona.open(path_coutwildrnp_shp):
         assert 'FIONA_ENV' in getenv()
+
+
+@pytest.mark.parametrize('driver,filename', [('ESRI Shapefile', 'test.shp'),
+                                             ('GeoJSON', 'test.json'),
+                                             ('GPKG', 'test.gpkg')])
+def test_mask_polygon_triangle(tmpdir, driver, filename):
+    """ Test if mask works for non trivial geometries"""
+    schema = {'geometry': 'Polygon', 'properties': OrderedDict([('position_i', 'int'), ('position_j', 'int')])}
+    records = [{'geometry': {'type': 'Polygon', 'coordinates': (((float(i), float(j)), (float(i + 1), float(j)),
+                                                                 (float(i + 1), float(j + 1)), (float(i), float(j + 1)),
+                                                                 (float(i), float(j))),)},
+                'properties': {'position_i': i, 'position_j': j}} for i in range(10) for j in range(10)]
+    random.shuffle(records)
+
+    path = str(tmpdir.join(filename))
+
+    with fiona.open(path, 'w',
+                    driver=driver,
+                    schema=schema,) as c:
+        c.writerecords(records)
+
+    with fiona.open(path) as c:
+        items = list(
+            c.items(mask={'type': 'Polygon', 'coordinates': (((2.0, 2.0), (4.0, 4.0), (4.0, 6.0), (2.0, 2.0)),)}))
+        assert len(items) == 15
+
+
+def test_collection__empty_column_name(tmpdir):
+    """Based on pull #955"""
+    tmpfile = str(tmpdir.join("test_empty.geojson"))
+    with pytest.warns(UserWarning, match="Empty field name at index 0"):
+        with fiona.open(tmpfile,  "w", driver="GeoJSON", schema={
+                "geometry": "Point",
+                "properties": {"": "str", "name": "str"}
+        }) as tmp:
+            tmp.writerecords([{
+                "geometry": {"type": "Point", "coordinates": [ 8, 49 ] },
+                "properties": { "": "", "name": "test" }
+            }])
+
+    with fiona.open(tmpfile) as tmp:
+        with pytest.warns(UserWarning, match="Empty field name at index 0"):
+            assert tmp.schema == {
+                "geometry": "Point",
+                "properties": {"": "str", "name": "str"}
+            }
+        with pytest.warns(UserWarning, match="Empty field name at index 0"):
+            next(tmp)

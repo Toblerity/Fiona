@@ -32,14 +32,36 @@ warnings.simplefilter('default')
               help="log errors but do not stop serialization.")
 @options.dst_crs_opt
 @cligj.use_rs_opt
-@click.option('--bbox', default=None, metavar="w,s,e,n",
-              help="filter for features intersecting a bounding box")
+@click.option(
+    "--bbox",
+    default=None,
+    metavar="w,s,e,n",
+    help="filter for features intersecting a bounding box",
+)
+@click.option(
+    "--cut-at-antimeridian",
+    is_flag=True,
+    default=False,
+    help="Optionally cut geometries at the anti-meridian. To be used only for a geographic destination CRS.",
+)
 @click.option('--where', default=None,
               help="attribute filter using SQL where clause")
 @click.pass_context
 @with_context_env
-def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
-        use_rs, bbox, where, layer):
+def cat(
+    ctx,
+    files,
+    precision,
+    indent,
+    compact,
+    ignore_errors,
+    dst_crs,
+    use_rs,
+    bbox,
+    cut_at_antimeridian,
+    where,
+    layer,
+):
     """
     Concatenate and print the features of input datasets as a sequence of
     GeoJSON features.
@@ -79,7 +101,7 @@ def cat(ctx, files, precision, indent, compact, ignore_errors, dst_crs,
                         if dst_crs or precision >= 0:
                             g = transform_geom(
                                 src.crs, dst_crs, feat['geometry'],
-                                antimeridian_cutting=True,
+                                antimeridian_cutting=cut_at_antimeridian,
                                 precision=precision)
                             feat['geometry'] = g
                             feat['bbox'] = fiona.bounds(g)

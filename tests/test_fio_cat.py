@@ -133,3 +133,13 @@ def test_vfs(path_coutwildrnp_zip):
         'cat', 'zip://{}'.format(path_coutwildrnp_zip)])
     assert result.exit_code == 0
     assert result.output.count('"Feature"') == 67
+
+
+def test_dst_crs_epsg3857(path_coutwildrnp_shp):
+    """Confirm fix of issue #952"""
+    runner = CliRunner()
+    result = runner.invoke(
+        main_group, ["cat", "--dst-crs", "EPSG:3857", path_coutwildrnp_shp]
+    )
+    assert result.exit_code == 0
+    assert result.output.count('"Feature"') == 67

@@ -25,6 +25,10 @@ class CRSError(FionaValueError):
     """When a crs mapping has neither init or proj items."""
 
 
+class UnsupportedOperation(FionaError):
+    """Raised when reading from a file opened in 'w' mode"""
+
+
 class DataIOError(IOError):
     """IO errors involving driver registration or availability."""
 
@@ -69,3 +73,7 @@ class GDALVersionError(FionaError):
 
 class FionaDeprecationWarning(UserWarning):
     """A warning about deprecation of Fiona features"""
+
+
+class FeatureWarning(UserWarning):
+    """A warning about serialization of a feature"""

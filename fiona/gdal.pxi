@@ -226,8 +226,7 @@ cdef extern from "gdal.h" nogil:
     char** GDALGetMetadata(GDALMajorObjectH obj, const char *pszDomain)
     int GDALSetMetadata(GDALMajorObjectH obj, char **papszMD,
                         const char *pszDomain)
-    const char* GDALGetMetadataItem(GDALMajorObjectH obj, const char *pszName,
-                                    const char *pszDomain)
+    const char* GDALGetMetadataItem(GDALMajorObjectH obj, const char *pszName, const char *pszDomain)
     int GDALSetMetadataItem(GDALMajorObjectH obj, const char *pszName,
                             const char *pszValue, const char *pszDomain)
     const GDALColorEntry *GDALGetColorEntry(GDALColorTableH table, int)
@@ -348,7 +347,7 @@ cdef extern from "ogr_api.h" nogil:
     OGRGeometryH OGR_G_CreateGeometryFromJson(const char *json)
     void OGR_G_DestroyGeometry(OGRGeometryH geometry)
     char *OGR_G_ExportToJson(OGRGeometryH geometry)
-    void OGR_G_ExportToWkb(OGRGeometryH geometry, int endianness, char *buffer)
+    OGRErr OGR_G_ExportToWkb(OGRGeometryH geometry, int endianness, char *buffer)
     int OGR_G_GetCoordinateDimension(OGRGeometryH geometry)
     int OGR_G_GetGeometryCount(OGRGeometryH geometry)
     const char *OGR_G_GetGeometryName(OGRGeometryH geometry)

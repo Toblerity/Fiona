@@ -34,56 +34,14 @@ GDALOPTS="  --with-geos \
             --without-idb \
             --without-sde \
             --without-perl \
+            --without-php \
             --without-python \
             --with-oci=no \
+            --without-mrf \
             --with-webp=no"
 
-# Version specific gdal build options
-case "$GDALVERSION" in
-    2.3*)
-        GDALOPTS="$GDALOPTS \
-        --without-php \
-        --without-bsb \
-        --without-mrf \
-        --without-grib \
-        --without-png \
-        --without-jpeg"
-        ;;
-    2.4*)
-        GDALOPTS="$GDALOPTS \
-        --without-bsb \
-        --without-mrf \
-        --without-grib \
-        --without-lerc \
-        --without-png \
-        --without-jpeg"
-        ;;
-    3*)
-        GDALOPTS="$GDALOPTS \
-        --without-lerc \
-        --with-png=internal \
-        --with-jpeg=internal"
-        ;;
-    *)
-        GDALOPTS="$GDALOPTS \
-        --without-lerc \
-        --with-png=internal \
-        --with-jpeg=internal"
-        ;;
-esac
-
-# OS specific gdal build options
-if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-
-    GDALOPTS="$GDALOPTS \
-                --with-expat \
-                --with-sqlite3"
-
-elif [ $TRAVIS_OS_NAME = 'osx' ]; then
-
-    GDALOPTS="$GDALOPTS \
-                --with-expat=/usr/local/opt/expat \
-                --with-sqlite3=/usr/local/opt/sqlite"
+if [ -d "$FILEGDB" ]; then
+  GDALOPTS="$GDALOPTS --with-fgdb=$FILEGDB"
 fi
 
 # Create build dir if not exists
@@ -115,7 +73,6 @@ if [ "$GDALVERSION" = "master" ]; then
         mkdir -p $GDALINST/gdal-$GDALVERSION
         cp newrev.txt $GDALINST/gdal-$GDALVERSION/rev.txt
         cp newproj.txt $GDALINST/gdal-$GDALVERSION/newproj.txt
-        echo "./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT"
         ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT
         make
         make install
@@ -131,6 +88,9 @@ else
             PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
             ;;
         2.3*)
+            PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
+            ;;
+        *)
             PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
             ;;
         *)

@@ -11,71 +11,53 @@ environment:
         # See: http://stackoverflow.com/a/13751649/163740
         CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_env.cmd"
         GDAL_HOME: "C:\\gdal"
+        PYTHONWARNINGS: "ignore:DEPRECATION::pip._internal.cli.base_command"
+        ENABLE_DEPRECATED_DRIVER_GTM: "YES"
 
     matrix:
         # PYTHON_VERSION and PYTHON_ARCH are required by run_with_env.cmd.
         # The 4-digit number in the GISInternals archives is the MSVC version used to build
         # the libraries. It does not need to match the version of MSVC used to build Python.
         # https://en.wikipedia.org/wiki/Microsoft_Visual_C%2B%2B#Internal_version_numbering
-        - PYTHON: "C:\\Python36-x64"
-          PYTHON_VERSION: "3.6"
+        # Test all supported gdal minor versions (except latest stable) with one python version
+        - PYTHON: "C:\\Python38-x64"
+          PYTHON_VERSION: "3.8"
           PYTHON_ARCH: "64"
-          GDAL_VERSION: "2.2.3"
-          GIS_INTERNALS: "release-1911-x64-gdal-2-2-3-mapserver-7-0-7.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-2-3-mapserver-7-0-7-libs.zip"
+          GDAL_VERSION: "2.4.3"
+          GIS_INTERNALS: "release-1911-x64-gdal-2-4-3-mapserver-7-4-2.zip"
+          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-4-3-mapserver-7-4-2-libs.zip"
 
-        - PYTHON: "C:\\Python36-x64"
-          PYTHON_VERSION: "3.6"
+        - PYTHON: "C:\\Python38-x64"
+          PYTHON_VERSION: "3.8"
           PYTHON_ARCH: "64"
-          GDAL_VERSION: "2.3.3"
-          GIS_INTERNALS: "release-1911-x64-gdal-2-3-3-mapserver-7-2-1.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-3-3-mapserver-7-2-1-libs.zip"
+          GDAL_VERSION: "3.0.4"
+          GIS_INTERNALS: "release-1911-x64-gdal-3-0-4-mapserver-7-4-3.zip"
+          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-3-0-4-mapserver-7-4-3-libs.zip"
+          PROJ_LIB: "C:\\gdal\\bin\\proj6\\share"
 
+        # Test all supported python versions with latest stable gdal release
         - PYTHON: "C:\\Python36-x64"
           PYTHON_VERSION: "3.6"
           PYTHON_ARCH: "64"
-          GDAL_VERSION: "2.4.2"
-          GIS_INTERNALS: "release-1911-x64-gdal-2-4-2-mapserver-7-4-0.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-4-2-mapserver-7-4-0-libs.zip"
-
-        # Use daily stable branch of gdal 3.0.x series until release with gdal >= 3.0.1 is released
-        - PYTHON: "C:\\Python36-x64"
-          PYTHON_VERSION: "3.6"
-          PYTHON_ARCH: "64"
-          GDAL_VERSION: "3.0.0"
-          GIS_INTERNALS: "release-1911-x64-gdal-3-0-mapserver-7-4.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-3-0-mapserver-7-4-libs.zip"
+          GDAL_VERSION: "3.1.2"
+          GIS_INTERNALS: "release-1911-x64-gdal-3-1-2-mapserver-7-6-1.zip"
+          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-3-1-2-mapserver-7-6-1-libs.zip"
           PROJ_LIB: "C:\\gdal\\bin\\proj6\\share"
 
         - PYTHON: "C:\\Python37-x64"
           PYTHON_VERSION: "3.7"
           PYTHON_ARCH: "64"
-          GDAL_VERSION: "2.4.2"
-          GIS_INTERNALS: "release-1911-x64-gdal-2-4-2-mapserver-7-4-0.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-2-4-2-mapserver-7-4-0-libs.zip"
-
-        - PYTHON: "C:\\Python37-x64"
-          PYTHON_VERSION: "3.7"
-          PYTHON_ARCH: "64"
-          GDAL_VERSION: "3.0.0"
-          GIS_INTERNALS: "release-1911-x64-gdal-3-0-mapserver-7-4.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-3-0-mapserver-7-4-libs.zip"
-          PROJ_LIB: "C:\\gdal\\bin\\proj6\\share"
-
-        - PYTHON: "C:\\Python37-x64"
-          PYTHON_VERSION: "3.7"
-          PYTHON_ARCH: "64"
-          GDAL_VERSION: "3.1.0"
-          GIS_INTERNALS: "release-1911-x64-gdal-mapserver.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-3-0-mapserver-7-4-libs.zip"
+          GDAL_VERSION: "3.1.2"
+          GIS_INTERNALS: "release-1911-x64-gdal-3-1-2-mapserver-7-6-1.zip"
+          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-3-1-2-mapserver-7-6-1-libs.zip"
           PROJ_LIB: "C:\\gdal\\bin\\proj6\\share"
 
         - PYTHON: "C:\\Python38-x64"
           PYTHON_VERSION: "3.8"
           PYTHON_ARCH: "64"
-          GDAL_VERSION: "3.1.0"
-          GIS_INTERNALS: "release-1911-x64-gdal-mapserver.zip"
-          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-3-0-mapserver-7-4-libs.zip"
+          GDAL_VERSION: "3.1.2"
+          GIS_INTERNALS: "release-1911-x64-gdal-3-1-2-mapserver-7-6-1.zip"
+          GIS_INTERNALS_LIBS: "release-1911-x64-gdal-3-1-2-mapserver-7-6-1-libs.zip"
           PROJ_LIB: "C:\\gdal\\bin\\proj6\\share"
 
 install:
@@ -118,8 +100,8 @@ install:
   - cd C:\projects\fiona
   # Upgrade to the latest version of pip to avoid it displaying warnings
   # about it being out of date.
-  - ps: python -m pip install --upgrade pip
-  - ps: python -m pip --version
+  - cmd: python -m pip install --disable-pip-version-check --user --upgrade pip
+  - cmd: python -m pip --version
 
   # Install the build dependencies of the project. If some dependencies contain
   # compiled extensions and are not provided as pre-built wheel packages,
@@ -143,6 +125,7 @@ build_script:
   - "%CMD_IN_ENV% python setup.py build_ext -IC:\\gdal\\include -lgdal_i -LC:\\gdal\\lib bdist_wheel --gdalversion %GDAL_VERSION%"
 
   # install the wheel
+  - ps: python -m pip install --upgrade pip
   - ps: python -m pip install --no-deps --ignore-installed (gci dist\*.whl | % { "$_" })
   - ps: python -m pip freeze
   - ps: move fiona fiona.build
@@ -156,13 +139,6 @@ test_script:
 
   # Our Windows GDAL doesn't have iconv and can't support certain tests.
   - "%CMD_IN_ENV% python -m pytest -m \"not iconv and not wheel\" --cov fiona --cov-report term-missing"
-
-after_test:
-#  - coveralls || echo "!! intermittent coveralls failure"
-
-matrix:
-  allow_failures:
-    - GDAL_VERSION: "3.1.0"
 
 artifacts:
   - path: dist\*.whl

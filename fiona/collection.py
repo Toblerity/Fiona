@@ -5,20 +5,38 @@ import logging
 import os
 import warnings
 
-from fiona import compat, vfs
-from fiona.ogrext import Iterator, ItemsIterator, KeysIterator
-from fiona.ogrext import Session, WritingSession
-from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file, GEOMETRY_TYPES
-from fiona.errors import (DriverError, SchemaError, CRSError, UnsupportedGeometryTypeError, DriverSupportError)
-from fiona.logutils import FieldSkipLogFilter
-from fiona._crs import crs_to_wkt
-from fiona._env import get_gdal_release_name, get_gdal_version_tuple
-from fiona.env import env_ctx_if_needed
-from fiona.errors import FionaDeprecationWarning
-from fiona.drvsupport import supported_drivers
-from fiona.path import Path, vsi_path, parse_path
-from six import string_types, binary_type
+import fiona._loading
 
+with fiona._loading.add_gdal_dll_directories():
+    from fiona import compat, vfs
+    from fiona.ogrext import Iterator, ItemsIterator, KeysIterator
+    from fiona.ogrext import Session, WritingSession
+    from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file, GEOMETRY_TYPES
+    from fiona.errors import (
+        DriverError,
+        SchemaError,
+        CRSError,
+        UnsupportedGeometryTypeError,
+        UnsupportedOperation,
+        DriverSupportError,
+    )
+    from fiona.logutils import FieldSkipLogFilter
+    from fiona._crs import crs_to_wkt
+    from fiona._env import get_gdal_release_name, get_gdal_version_tuple
+    from fiona.env import env_ctx_if_needed
+    from fiona.errors import FionaDeprecationWarning
+    from fiona.drvsupport import (
+        supported_drivers,
+        driver_mode_mingdal,
+        _driver_converts_field_type_silently_to_str,
+        _driver_supports_field,
+    )
+    from fiona.path import Path, vsi_path, parse_path
+    from six import string_types, binary_type
+
+
+_GDAL_VERSION_TUPLE = get_gdal_version_tuple()
+_GDAL_RELEASE_NAME = get_gdal_release_name()
 
 log = logging.getLogger(__name__)
 
@@ -35,7 +53,7 @@ class Collection(object):
     def __init__(self, path, mode='r', driver=None, schema=None, crs=None,
                  encoding=None, layer=None, vsi=None, archive=None,
                  enabled_drivers=None, crs_wkt=None, ignore_fields=None,
-                 ignore_geometry=False,
+                 ignore_geometry=False, include_fields=None,
                  **kwargs):
 
         """The required ``path`` is the absolute or relative path to
@@ -74,12 +92,27 @@ class Collection(object):
                 raise TypeError("invalid vsi: %r" % vsi)
         if archive and not isinstance(archive, string_types):
             raise TypeError("invalid archive: %r" % archive)
+        if ignore_fields is not None and include_fields is not None:
+            raise ValueError("Cannot specify both 'ignore_fields' and 'include_fields'")
 
         # Check GDAL version against drivers
-        if (driver == "GPKG" and get_gdal_version_tuple() < (1, 11, 0)):
+        if (
+            driver in driver_mode_mingdal[mode]
+            and get_gdal_version_tuple() < driver_mode_mingdal[mode][driver]
+        ):
+            min_gdal_version = ".".join(
+                list(map(str, driver_mode_mingdal[mode][driver]))
+            )
+
             raise DriverError(
-                "GPKG driver requires GDAL 1.11.0, fiona was compiled "
-                "against: {}".format(get_gdal_release_name()))
+                "{driver} driver requires at least GDAL {min_gdal_version} for mode '{mode}', "
+                "Fiona was compiled against: {gdal}".format(
+                    driver=driver,
+                    mode=mode,
+                    min_gdal_version=min_gdal_version,
+                    gdal=get_gdal_release_name(),
+                )
+            )
 
         self.session = None
         self.iterator = None
@@ -90,8 +123,20 @@ class Collection(object):
         self._crs = None
         self._crs_wkt = None
         self.enabled_drivers = enabled_drivers
+        self.include_fields = include_fields
         self.ignore_fields = ignore_fields
         self.ignore_geometry = bool(ignore_geometry)
+
+        # Check GDAL version against drivers
+        if driver in driver_mode_mingdal[mode] and get_gdal_version_tuple() < driver_mode_mingdal[mode][driver]:
+            min_gdal_version = ".".join(list(map(str, driver_mode_mingdal[mode][driver])))
+
+            raise DriverError(
+                "{driver} driver requires at least GDAL {min_gdal_version} for mode '{mode}', "
+                "Fiona was compiled against: {gdal}".format(driver=driver,
+                                                            mode=mode,
+                                                            min_gdal_version=min_gdal_version,
+                                                            gdal=get_gdal_release_name()))
 
         if vsi:
             self.path = vfs.vsi_path(path, vsi, archive)
@@ -213,6 +258,106 @@ class Collection(object):
             self._crs_wkt = self.session.get_crs_wkt()
         return self._crs_wkt
 
+    def tags(self, ns=None):
+        """Returns a dict containing copies of the dataset or layers's
+        tags. Tags are pairs of key and value strings. Tags belong to
+        namespaces.  The standard namespaces are: default (None) and
+        'IMAGE_STRUCTURE'.  Applications can create their own additional
+        namespaces.
+
+        Parameters
+        ----------
+        ns: str, optional
+            Can be used to select a namespace other than the default.
+
+        Returns
+        -------
+        dict
+        """
+        if _GDAL_VERSION_TUPLE.major < 2:
+            raise GDALVersionError(
+                "tags requires GDAL 2+, fiona was compiled "
+                "against: {}".format(_GDAL_RELEASE_NAME)
+            )
+        if self.session:
+            return self.session.tags(ns=ns)
+        return None
+
+    def get_tag_item(self, key, ns=None):
+        """Returns tag item value
+
+        Parameters
+        ----------
+        key: str
+            The key for the metadata item to fetch.
+        ns: str, optional
+            Used to select a namespace other than the default.
+
+        Returns
+        -------
+        str
+        """
+        if _GDAL_VERSION_TUPLE.major < 2:
+            raise GDALVersionError(
+                "get_tag_item requires GDAL 2+, fiona was compiled "
+                "against: {}".format(_GDAL_RELEASE_NAME)
+            )
+        if self.session:
+            return self.session.get_tag_item(key=key, ns=ns)
+        return None
+
+    def update_tags(self, tags, ns=None):
+        """Writes a dict containing the dataset or layers's tags.
+        Tags are pairs of key and value strings. Tags belong to
+        namespaces.  The standard namespaces are: default (None) and
+        'IMAGE_STRUCTURE'.  Applications can create their own additional
+        namespaces.
+
+        Parameters
+        ----------
+        tags: dict
+            The dict of metadata items to set.
+        ns: str, optional
+            Used to select a namespace other than the default.
+
+        Returns
+        -------
+        int
+        """
+        if _GDAL_VERSION_TUPLE.major < 2:
+            raise GDALVersionError(
+                "update_tags requires GDAL 2+, fiona was compiled "
+                "against: {}".format(_GDAL_RELEASE_NAME)
+            )
+        if not isinstance(self.session, WritingSession):
+            raise UnsupportedOperation("Unable to update tags as not in writing mode.")
+        return self.session.update_tags(tags, ns=ns)
+
+    def update_tag_item(self, key, tag, ns=None):
+        """Updates the tag item value
+
+        Parameters
+        ----------
+        key: str
+            The key for the metadata item to set.
+        tag: str
+            The value of the metadata item to set.
+        ns: str, optional
+            Used to select a namespace other than the default.
+
+        Returns
+        -------
+        int
+        """
+        if _GDAL_VERSION_TUPLE.major < 2:
+            raise GDALVersionError(
+                "update_tag_item requires GDAL 2+, fiona was compiled "
+                "against: {}".format(_GDAL_RELEASE_NAME)
+            )
+        if not isinstance(self.session, WritingSession):
+            raise UnsupportedOperation("Unable to update tag as not in writing mode.")
+        return self.session.update_tag_item(key=key, tag=tag, ns=ns)
+
     @property
     def meta(self):
         """Returns a mapping with the driver, schema, crs, and additional
@@ -232,6 +377,10 @@ class Collection(object):
 
         Positional arguments ``stop`` or ``start, stop[, step]`` allows
         iteration to skip over items or stop at a specific item.
+
+        Note: spatial filtering using ``mask`` may be inaccurate and returning
+        all features overlapping the envelope of ``mask``.
+
         """
         if self.closed:
             raise ValueError("I/O operation on closed collection")
@@ -263,6 +412,10 @@ class Collection(object):
 
         Positional arguments ``stop`` or ``start, stop[, step]`` allows
         iteration to skip over items or stop at a specific item.
+
+        Note: spatial filtering using ``mask`` may be inaccurate and returning
+        all features overlapping the envelope of ``mask``.
+
         """
         if self.closed:
             raise ValueError("I/O operation on closed collection")
@@ -294,6 +447,9 @@ class Collection(object):
 
         Positional arguments ``stop`` or ``start, stop[, step]`` allows
         iteration to skip over items or stop at a specific item.
+
+        Note: spatial filtering using ``mask`` may be inaccurate and returning
+        all features overlapping the envelope of ``mask``.
         """
         if self.closed:
             raise ValueError("I/O operation on closed collection")
@@ -349,7 +505,7 @@ class Collection(object):
             raise IOError("collection not open for writing")
         self.session.writerecs(records, self)
         self._len = self.session.get_length()
-        self._bounds = self.session.get_extent()
+        self._bounds = None
 
     def write(self, record):
         """Stages a record for writing to disk.
@@ -411,29 +567,48 @@ class Collection(object):
 
         See GH#572 for discussion.
         """
-        gdal_version_major = get_gdal_version_tuple().major
+        gdal_version_major = _GDAL_VERSION_TUPLE.major
 
         for field in self._schema["properties"].values():
             field_type = field.split(":")[0]
-            if self._driver == "ESRI Shapefile":
-                if field_type == "datetime":
-                    raise DriverSupportError("ESRI Shapefile does not support datetime fields")
-                elif field_type == "time":
-                    raise DriverSupportError("ESRI Shapefile does not support time fields")
-            elif self._driver == "GPKG":
-                if field_type == "time":
-                    raise DriverSupportError("GPKG does not support time fields")
-                elif gdal_version_major == 1:
-                    if field_type == "datetime":
-                        raise DriverSupportError("GDAL 1.x GPKG driver does not support datetime fields")
-            elif self._driver == "GeoJSON":
-                if gdal_version_major == 1:
-                    if field_type == "date":
-                        warnings.warn("GeoJSON driver in GDAL 1.x silently converts date to string in non-standard format")
-                    elif field_type == "datetime":
-                        warnings.warn("GeoJSON driver in GDAL 1.x silently converts datetime to string in non-standard format")
-                    elif field_type == "time":
-                        warnings.warn("GeoJSON driver in GDAL 1.x silently converts time to string")
+
+            if not _driver_supports_field(self.driver, field_type):
+                if (
+                    self.driver == "GPKG"
+                    and gdal_version_major < 2
+                    and field_type == "datetime"
+                ):
+                    raise DriverSupportError(
+                        "GDAL 1.x GPKG driver does not support datetime fields"
+                    )
+                else:
+                    raise DriverSupportError(
+                        "{driver} does not support {field_type} "
+                        "fields".format(driver=self.driver, field_type=field_type)
+                    )
+            elif (
+                field_type
+                in {
+                    "time",
+                    "datetime",
+                    "date",
+                }
+                and _driver_converts_field_type_silently_to_str(self.driver, field_type)
+            ):
+                if (
+                    self._driver == "GeoJSON"
+                    and gdal_version_major < 2
+                    and field_type in {"datetime", "date"}
+                ):
+                    warnings.warn(
+                        "GeoJSON driver in GDAL 1.x silently converts {} to string"
+                        " in non-standard format".format(field_type)
+                    )
+                else:
+                    warnings.warn(
+                        "{driver} driver silently converts {field_type} "
+                        "to string".format(driver=self.driver, field_type=field_type)
+                    )
 
     def flush(self):
         """Flush the buffer."""
@@ -441,7 +616,7 @@ class Collection(object):
             self.session.sync(self)
             new_len = self.session.get_length()
             self._len = new_len > self._len and new_len or self._len
-            self._bounds = self.session.get_extent()
+            self._bounds = None
 
     def close(self):
         """In append or write mode, flushes data to disk, then ends

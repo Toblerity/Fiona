@@ -5,7 +5,6 @@ import os
 import shutil
 import subprocess
 import sys
-
 from setuptools import setup
 from setuptools.extension import Extension
 
@@ -170,6 +169,7 @@ if 'clean' not in sys.argv:
     gdal_version_parts = gdalversion.split('.')
     gdal_major_version = int(gdal_version_parts[0])
     gdal_minor_version = int(gdal_version_parts[1])
+
     log.info("GDAL version major=%r minor=%r", gdal_major_version, gdal_minor_version)
 
 ext_options = dict(
@@ -177,6 +177,16 @@ ext_options = dict(
     library_dirs=library_dirs,
     libraries=libraries,
     extra_link_args=extra_link_args)
+
+# Enable coverage for cython pyx files.
+if os.environ.get('CYTHON_COVERAGE'):
+    from Cython.Compiler.Options import get_directive_defaults
+    directive_defaults = get_directive_defaults()
+    directive_defaults['linetrace'] = True
+    directive_defaults['binding'] = True
+
+    ext_options.update(dict(
+        define_macros=[("CYTHON_TRACE_NOGIL", "1")]))
 
 # GDAL 2.3+ requires C++11
 
@@ -262,17 +272,19 @@ elif "clean" not in sys.argv:
 
 requirements = [
     'attrs>=17',
-    'click>=4.0,<8',
+    'certifi',
+    'click>=4.0',
     'cligj>=0.5',
     'click-plugins>=1.0',
     'six>=1.7',
     'munch',
+    "setuptools",
 ]
 
 extras_require = {
     'calc': ['shapely'],
     's3': ['boto3>=1.2.4'],
-    'test': ['pytest>=3', 'pytest-cov', 'boto3>=1.2.4', 'mock; python_version<"3.4"']
+    'test': ['pytest>=3', 'pytest-cov', 'boto3>=1.2.4', 'mock; python_version < "3.4"']
 }
 
 extras_require['all'] = list(set(it.chain(*extras_require.values())))

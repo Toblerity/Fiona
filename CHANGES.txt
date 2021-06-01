@@ -3,6 +3,123 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.9dev
+------
+
+Deprecations:
+
+- The fiona.drivers() function has been deprecated and will be removed in
+  version 2.0. It should be replaced by fiona.Env().
+- The new fiona.meta module will be renamed to fiona.drivers in version 2.0.
+
+New features:
+
+- Driver metadata including dataset open and dataset and layer creations
+  options are now exposed through methods of the fiona.meta module (#950).
+
+1.8.20 (2021-05-31)
+-------------------
+
+Packaging:
+
+- Wheels include GDAL 3.3.0 and GEOS 3.9.1.
+
+Bug fixes:
+
+- Allow use with click 8 and higher (#1015).
+
+1.8.19 (2021-04-07)
+-------------------
+
+Packaging:
+
+- Wheels include GDAL 3.2.1 and PROJ 7.2.1.
+
+Bug fixes:
+
+- In fiona/env.py the GDAL data path is now configured using set_gdal_config
+  instead by setting the GDAL_DATA environment variable (#1007).
+- Spurious iterator reset warnings have been eliminatged (#987).
+
+1.8.18 (2020-11-17)
+-------------------
+
+- The precision option of transform has been fixed for the case of
+  GeometryCollections (#971, #972).
+- Added missing --co (creation) option to fio-load (#390).
+- If the certifi package can be imported, its certificate store location will
+  be passed to GDAL during import of fiona._env unless CURL_CA_BUNDLE is
+  already set.
+- Warn when feature fields named "" are found (#955).
+
+1.8.17 (2020-09-09)
+-------------------
+
+- To fix issue #952 the fio-cat command no longer cuts feature geometries at
+  the anti-meridian by default. A --cut-at-antimeridian option has been added
+  to allow cutting of geometries in a geographic destination coordinate
+  reference system.
+
+1.8.16 (2020-09-04)
+-------------------
+
+- More OGR errors and warnings arising in calls to GDAL C API functions are
+  surfaced (#946).
+- A circular import introduced in some cases in 1.8.15 has been fixed (#945).
+
+1.8.15 (2020-09-03)
+-------------------
+
+- Change shim functions to not return tuples (#942) as a solution for the
+  packaging problem reported in #941.
+- Raise a Python exception when VSIFOpenL fails (#937).
+
+1.8.14 (2020-08-31)
+-------------------
+
+- When creating a new Collection in a MemoryFile with a default (random) name
+  Fiona will attempt to use a format driver-supported file extension (#934).
+  When initializing a MemoryFile with bytes of data formatted for a vector
+  driver that requires a certain file name or extension, the user should
+  continue to pass an appropriate filename and/or extension.
+- Read support for FlatGeobuf has been enabled in the drvsupport module.
+- The MemoryFile implementation has been improved so that it can support multi-part
+  S3 downloads (#906). This is largely a port of code from rasterio.
+- Axis ordering for results of fiona.transform was wrong when CRS were passed
+  in the "EPSG:dddd" form (#919). This has been fixed by (#926).
+- Allow implicit access to the only dataset in a ZipMemoryFile. The path
+  argument of ZipMemoryFile.open() is now optional (#928).
+- Improve support for datetime types: support milliseconds (#744), timezones (#914)
+  and improve warnings if type is not supported by driver (#572).
+- Fix "Failed to commit transaction" TransactionError for FileGDB driver.
+- Load GDAL DLL dependencies on Python 3.8+ / Windows with add_dll_directory() (#851).
+- Do not require optional properties (#848).
+- Ensure that slice does not overflow available data (#884).
+- Resolve issue when "ERROR 4: Unable to open EPSG support file gcs.csv." is raised on
+  importing fiona (#897).
+- Resolve issue resulting in possible mixed up fields names (affecting only DXF, GPX,
+  GPSTrackMacker and DGN driver) (#916).
+- Ensure crs_wkt is passed when writing to MemoryFile (#907).
+
+
+1.8.13.post1 (2020-02-21)
+-------------------------
+
+- This release is being made to improve binary wheel compatibility with shapely
+  1.7.0. There have been no changes to the fiona package code since 1.8.13.
+
+1.8.13 (2019-12-05)
+-------------------
+
+- The Python version specs for argparse and ordereddict in 1.8.12 were wrong
+  and have been corrected (#843).
+
+1.8.12 (2019-12-04)
+-------------------
+
+- Specify Python versions for argparse, enum34, and ordereddict requirements
+  (#842).
+
 1.8.11 (2019-11-07)
 -------------------
 

@@ -11,9 +11,9 @@ else:
     from inspect import getargspec
 
 if sys.version_info >= (3, 3):
-    from collections.abc import Mapping
+    from collections.abc import Mapping, MutableMapping
 else:
-    from collections import Mapping
+    from collections import Mapping, MutableMapping
 
 # Users can pass in objects that subclass a few different objects
 # More specifically, rasterio has a CRS() class that subclasses UserDict()

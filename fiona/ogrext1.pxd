@@ -4,11 +4,18 @@
 
 from libc.stdio cimport FILE
 
+
 cdef extern from "gdal.h":
+    ctypedef void * GDALDriverH
+    ctypedef void * GDALMajorObjectH
+
+    const char* GDALGetMetadataItem(GDALMajorObjectH obj, const char *pszName, const char *pszDomain)
     char * GDALVersionInfo (char *pszRequest)
+
 
 cdef extern from "gdal_version.h":
     int    GDAL_COMPUTE_VERSION(int maj, int min, int rev)
+
 
 cdef extern from "cpl_conv.h":
     void *  CPLMalloc (size_t)
@@ -16,16 +23,27 @@ cdef extern from "cpl_conv.h":
     void    CPLSetThreadLocalConfigOption (char *key, char *val)
     void    CPLSetConfigOption (char *key, char *val)
     const char *CPLGetConfigOption (char *, char *)
+    int CPLCheckForFile(char *, char **)
+
 
 cdef extern from "cpl_string.h":
     char ** CSLAddNameValue (char **list, char *name, char *value)
     char ** CSLSetNameValue (char **list, char *name, char *value)
     void    CSLDestroy (char **list)
     char ** CSLAddString(char **list, const char *string)
+    int CSLCount(char **papszStrList)
+
+
+cdef extern from "sys/stat.h" nogil:
+    struct stat:
+        int st_mode
+
 
 cdef extern from "cpl_vsi.h" nogil:
+
     ctypedef int vsi_l_offset
     ctypedef FILE VSILFILE
+    ctypedef stat VSIStatBufL
 
     unsigned char *VSIGetMemFileBuffer(const char *path,
                                        vsi_l_offset *data_len,
@@ -35,14 +53,18 @@ cdef extern from "cpl_vsi.h" nogil:
     VSILFILE* VSIFOpenL(const char *path, const char *mode)
     int VSIFCloseL(VSILFILE *fp)
     int VSIUnlink(const char *path)
-
+    int VSIMkdir(const char *path, long mode)
+    int VSIRmdir(const char *path)
     int VSIFFlushL(VSILFILE *fp)
     size_t VSIFReadL(void *buffer, size_t nSize, size_t nCount, VSILFILE *fp)
+    char** VSIReadDir(const char* pszPath)
     int VSIFSeekL(VSILFILE *fp, vsi_l_offset nOffset, int nWhence)
     vsi_l_offset VSIFTellL(VSILFILE *fp)
     int VSIFTruncateL(VSILFILE *fp, vsi_l_offset nNewSize)
     size_t VSIFWriteL(void *buffer, size_t nSize, size_t nCount, VSILFILE *fp)
-    int VSIUnlink (const char * pathname)
+    int VSIStatL(const char *pszFilename, VSIStatBufL *psStatBuf)
+    int VSI_ISDIR(int mode)
+
 
 ctypedef int OGRErr
 ctypedef struct OGREnvelope:
@@ -50,6 +72,7 @@ ctypedef struct OGREnvelope:
     double MaxX
     double MinY
     double MaxY
+
 
 cdef extern from "ogr_core.h":
     ctypedef enum OGRwkbGeometryType:
@@ -234,7 +257,7 @@ cdef extern from "ogr_api.h":
     double  OGR_G_GetX (void *geometry, int n)
     double  OGR_G_GetY (void *geometry, int n)
     double  OGR_G_GetZ (void *geometry, int n)
-    void    OGR_G_ImportFromWkb (void *geometry, unsigned char *bytes, int nbytes)
+    OGRErr  OGR_G_ImportFromWkb (void *geometry, unsigned char *bytes, int nbytes)
     int     OGR_G_WkbSize (void *geometry)
     void *  OGR_G_ForceToMultiPolygon (void *geometry)
     void *  OGR_G_ForceToPolygon (void *geometry)
