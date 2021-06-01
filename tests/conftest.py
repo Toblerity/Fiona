@@ -29,7 +29,8 @@ driver_extensions = {'DXF': 'dxf',
                      'GeoJSONSeq': 'geojsons',
                      'GMT': 'gmt',
                      'OGR_GMT': 'gmt',
-                     'BNA': 'bna'}
+                     'BNA': 'bna',
+                     'FlatGeobuf': 'fgb'}
 
 
 def pytest_report_header(config):
@@ -409,6 +410,12 @@ def testdata_generator():
         }
         return special_records2.get(driver, get_records(driver, range))
 
+    def get_create_kwargs(driver):
+        kwargs = {
+            'FlatGeobuf': {'SPATIAL_INDEX': False}
+        }
+        return kwargs.get(driver, {})
+
     def test_equal(driver, val_in, val_out):
         is_good = True
         is_good = is_good and val_in['geometry'] == val_out['geometry']
@@ -451,7 +458,7 @@ def testdata_generator():
             the properties of the generated records can be found in a record
         """
         return get_schema(driver), get_crs(driver), get_records(driver, range1), get_records2(driver, range2),\
-               test_equal
+               test_equal, get_create_kwargs(driver)
 
     return _testdata_generator
 

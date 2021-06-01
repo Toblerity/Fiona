@@ -17,9 +17,39 @@ New features:
 - Driver metadata including dataset open and dataset and layer creations
   options are now exposed through methods of the fiona.meta module (#950).
 
-1.8.18 (TBD)
-------------
+1.8.20 (2021-05-31)
+-------------------
 
+Packaging:
+
+- Wheels include GDAL 3.3.0 and GEOS 3.9.1.
+
+Bug fixes:
+
+- Allow use with click 8 and higher (#1015).
+
+1.8.19 (2021-04-07)
+-------------------
+
+Packaging:
+
+- Wheels include GDAL 3.2.1 and PROJ 7.2.1.
+
+Bug fixes:
+
+- In fiona/env.py the GDAL data path is now configured using set_gdal_config
+  instead by setting the GDAL_DATA environment variable (#1007).
+- Spurious iterator reset warnings have been eliminatged (#987).
+
+1.8.18 (2020-11-17)
+-------------------
+
+- The precision option of transform has been fixed for the case of
+  GeometryCollections (#971, #972).
+- Added missing --co (creation) option to fio-load (#390).
+- If the certifi package can be imported, its certificate store location will
+  be passed to GDAL during import of fiona._env unless CURL_CA_BUNDLE is
+  already set.
 - Warn when feature fields named "" are found (#955).
 
 1.8.17 (2020-09-09)

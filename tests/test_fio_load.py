@@ -4,7 +4,6 @@
 import json
 import os
 import shutil
-import sys
 
 import pytest
 
@@ -32,7 +31,6 @@ def test_collection(tmpdir, feature_collection, runner):
         main_group, ['load', '-f', 'Shapefile', tmpfile], feature_collection)
     assert result.exit_code == 0
     assert len(fiona.open(tmpfile)) == 2
-
 
 
 def test_seq_rs(feature_seq_pp_rs, tmpdir, runner):
@@ -123,3 +121,15 @@ def test_fio_load_layer(tmpdir, runner):
 
     finally:
         shutil.rmtree(outdir)
+
+
+@pytest.mark.iconv
+def test_creation_options(tmpdir, runner, feature_seq):
+    tmpfile = str(tmpdir.mkdir("tests").join("test.shp"))
+    result = runner.invoke(
+        main_group,
+        ["load", "-f", "Shapefile", "--co", "ENCODING=LATIN1", tmpfile],
+        feature_seq,
+    )
+    assert result.exit_code == 0
+    assert tmpdir.join("tests/test.cpg").read() == "LATIN1"

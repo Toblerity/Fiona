@@ -117,6 +117,8 @@ with fiona._loading.add_gdal_dll_directories():
 
 __all__ = ['bounds', 'listlayers', 'listdir', 'open', 'prop_type', 'prop_width']
 __version__ = "1.9dev"
+__all__ = ['bounds', 'listlayers', 'open', 'prop_type', 'prop_width']
+__version__ = "1.8.20"
 __gdal_version__ = get_gdal_release_name()
 
 gdal_version = get_gdal_version_tuple()

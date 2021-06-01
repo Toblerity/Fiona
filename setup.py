@@ -284,11 +284,13 @@ elif "clean" not in sys.argv:
 
 requirements = [
     'attrs>=17',
-    'click>=4.0,<8',
+    'certifi',
+    'click>=4.0',
     'cligj>=0.5',
     'click-plugins>=1.0',
     'six>=1.7',
     'munch',
+    "setuptools",
     'argparse; python_version < "2.7"',
     'ordereddict; python_version < "2.7"',
     'enum34; python_version < "3.4"'
