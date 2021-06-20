@@ -71,8 +71,8 @@ class TestTransaction:
 
         assert self.handler.history["Starting transaction (initial)"] == 1
         assert self.handler.history["Starting transaction (intermediate)"] == num_records // transaction_size
-        assert self.handler.history["Comitting transaction (intermediate)"] == num_records // transaction_size
-        assert self.handler.history["Comitting transaction (final)"] == 1
+        assert self.handler.history["Committing transaction (intermediate)"] == num_records // transaction_size
+        assert self.handler.history["Committing transaction (final)"] == 1
 
         with fiona.open(path, "r") as src:
             assert len(src) == num_records

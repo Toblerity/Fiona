@@ -49,27 +49,6 @@ with open('CREDITS.txt', **open_kwds) as f:
 with open('CHANGES.txt', **open_kwds) as f:
     changes = f.read()
 
-# Set a flag for builds where the source directory is a repo checkout.
-source_is_repo = os.path.exists("MANIFEST.in")
-
-
-# Extend distutil's sdist command to generate C extension sources from
-# the _shim extension modules for GDAL 1.x and 2.x.
-class sdist_multi_gdal(sdist):
-    def run(self):
-        sources = {
-            "_shim1": "_shim",
-            "_shim2": "_shim",
-            "_shim22": "_shim",
-            "_shim3": "_shim"
-        }
-        for src_a, src_b in sources.items():
-            shutil.copy('fiona/{}.pyx'.format(src_a), 'fiona/{}.pyx'.format(src_b))
-            _ = check_output(['cython', '-v', '-f', 'fiona/{}.pyx'.format(src_b),
-                              '-o', 'fiona/{}.c'.format(src_a)])
-            print(_)
-        sdist.run(self)
-
 # Building Fiona requires options that can be obtained from GDAL's gdal-config
 # program or can be specified using setup arguments. The latter override the
 # former.
@@ -89,6 +68,8 @@ extra_link_args = []
 gdal_output = [None for i in range(4)]
 gdalversion = None
 language = None
+gdal_major_version = 0
+gdal_minor_version = 0
 
 if 'clean' not in sys.argv:
     try:
@@ -166,13 +147,26 @@ if 'clean' not in sys.argv:
     gdal_major_version = int(gdal_version_parts[0])
     gdal_minor_version = int(gdal_version_parts[1])
 
+    if (gdal_major_version, gdal_minor_version) < (3, 1):
+        raise SystemExit(
+            "ERROR: GDAL >= 3.1 is required for fiona. "
+            "Please upgrade GDAL."
+        )
+
     log.info("GDAL version major=%r minor=%r", gdal_major_version, gdal_minor_version)
+
+compile_time_env = {
+    "CTE_GDAL_MAJOR_VERSION": gdal_major_version,
+    "CTE_GDAL_MINOR_VERSION": gdal_minor_version,
+}
 
 ext_options = dict(
     include_dirs=include_dirs,
     library_dirs=library_dirs,
     libraries=libraries,
-    extra_link_args=extra_link_args)
+    extra_link_args=extra_link_args,
+    cython_compile_time_env=compile_time_env,
+)
 
 # Enable coverage for cython pyx files.
 if os.environ.get('CYTHON_COVERAGE'):
@@ -199,29 +193,12 @@ if sys.platform != "win32":
 # Define the extension modules.
 ext_modules = []
 
-if source_is_repo and "clean" not in sys.argv:
-    # When building from a repo, Cython is required.
-    log.info("MANIFEST.in found, presume a repo, cythonizing...")
+if "clean" not in sys.argv:
     if not cythonize:
-        log.fatal("Cython.Build.cythonize not found. "
-                  "Cython is required to build from a repo.")
-        sys.exit(1)
-
-    if gdalversion.startswith("1"):
-        shutil.copy('fiona/_shim1.pyx', 'fiona/_shim.pyx')
-        shutil.copy('fiona/_shim1.pxd', 'fiona/_shim.pxd')
-    elif gdal_major_version == 2:
-        if gdal_minor_version >= 2:
-            log.info("Building Fiona for gdal 2.2+: {0}".format(gdalversion))
-            shutil.copy('fiona/_shim22.pyx', 'fiona/_shim.pyx')
-            shutil.copy('fiona/_shim22.pxd', 'fiona/_shim.pxd')
-        else:
-            log.info("Building Fiona for gdal 2.0.x-2.1.x: {0}".format(gdalversion))
-            shutil.copy('fiona/_shim2.pyx', 'fiona/_shim.pyx')
-            shutil.copy('fiona/_shim2.pxd', 'fiona/_shim.pxd')
-    elif gdal_major_version == 3:
-        shutil.copy('fiona/_shim3.pyx', 'fiona/_shim.pyx')
-        shutil.copy('fiona/_shim3.pxd', 'fiona/_shim.pxd')
+        raise SystemExit(
+            "Cython.Build.cythonize not found. "
+            "Cython is required to build fiona."
+        )
 
     ext_modules = cythonize([
         Extension('fiona._geometry', ['fiona/_geometry.pyx'], **ext_options),
@@ -230,41 +207,11 @@ if source_is_repo and "clean" not in sys.argv:
         Extension('fiona._crs', ['fiona/_crs.pyx'], **ext_options),
         Extension('fiona._env', ['fiona/_env.pyx'], **ext_options),
         Extension('fiona._err', ['fiona/_err.pyx'], **ext_options),
-        Extension('fiona._shim', ['fiona/_shim.pyx'], **ext_options),
         Extension('fiona.ogrext', ['fiona/ogrext.pyx'], **ext_options)
         ],
-        compiler_directives={"language_level": "3"}
+        compiler_directives={"language_level": "3"},
+        compile_time_env=compile_time_env,
     )
-
-# If there's no manifest template, as in an sdist, we just specify .c files.
-elif "clean" not in sys.argv:
-    ext_modules = [
-        Extension('fiona.schema', ['fiona/schema.c'], **ext_options),
-        Extension('fiona._transform', ['fiona/_transform.cpp'], **ext_options_cpp),
-        Extension('fiona._geometry', ['fiona/_geometry.c'], **ext_options),
-        Extension('fiona._crs', ['fiona/_crs.c'], **ext_options),
-        Extension('fiona._env', ['fiona/_env.c'], **ext_options),
-        Extension('fiona._err', ['fiona/_err.c'], **ext_options),
-        Extension('fiona.ogrext', ['fiona/ogrext.c'], **ext_options),
-    ]
-
-    if gdal_major_version == 1:
-        log.info("Building Fiona for gdal 1.x: {0}".format(gdalversion))
-        ext_modules.append(
-            Extension('fiona._shim', ['fiona/_shim1.c'], **ext_options))
-    elif gdal_major_version == 2:
-        if gdal_minor_version >= 2:
-            log.info("Building Fiona for gdal 2.2+: {0}".format(gdalversion))
-            ext_modules.append(
-                Extension('fiona._shim', ['fiona/_shim22.c'], **ext_options))
-        else:
-            log.info("Building Fiona for gdal 2.0.x-2.1.x: {0}".format(gdalversion))
-            ext_modules.append(
-                Extension('fiona._shim', ['fiona/_shim2.c'], **ext_options))
-    elif gdal_major_version == 3:
-        log.info("Building Fiona for gdal >= 3.0.x: {0}".format(gdalversion))
-        ext_modules.append(
-            Extension('fiona._shim', ['fiona/_shim3.c'], **ext_options))
 
 requirements = [
     'attrs>=17',
@@ -286,7 +233,6 @@ extras_require['all'] = list(set(it.chain(*extras_require.values())))
 
 
 setup_args = dict(
-    cmdclass={'sdist': sdist_multi_gdal},
     metadata_version='1.2',
     name='Fiona',
     version=version,

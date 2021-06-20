@@ -18,10 +18,8 @@ import sys
 import threading
 
 from fiona._err cimport exc_wrap_int, exc_wrap_ogrerr
-from fiona._shim cimport set_proj_search_path, get_proj_version
 from fiona._err import CPLE_BaseError
 from fiona.errors import EnvError
-
 
 level_map = {
     0: 0,
@@ -61,7 +59,17 @@ try:
 except ImportError:
     pass
 
+
+
 cdef bint is_64bit = sys.maxsize > 2 ** 32
+
+cdef void set_proj_search_path(object path):
+    cdef const char **paths = NULL
+    cdef const char *path_c = NULL
+    path_b = path.encode("utf-8")
+    path_c = path_b
+    paths = CSLAddString(paths, path_c)
+    OSRSetPROJSearchPaths(paths)
 
 
 cdef _safe_osr_release(OGRSpatialReferenceH srs):
@@ -121,17 +129,13 @@ def get_gdal_version_tuple():
 
 def get_proj_version_tuple():
     """
-    Returns proj version tuple for gdal >= 3.0.1, otherwise None
+    Returns proj version tuple
     """
-    cdef int major
-    cdef int minor
-    cdef int patch
-    gdal_version_num = get_gdal_version_num()
-    if gdal_version_num < calc_gdal_version_num(3, 0, 1):
-        proj_version = None
-    else:
-        get_proj_version(&major, &minor, &patch)
-        return (major, minor, patch)
+    cdef int major = 0
+    cdef int minor = 0
+    cdef int patch = 0
+    OSRGetPROJVersion(&major, &minor, &patch)
+    return (major, minor, patch)
 
 
 cdef void log_error(CPLErr err_class, int err_no, const char* msg) with gil:
