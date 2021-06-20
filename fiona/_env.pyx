@@ -18,7 +18,6 @@ import sys
 import threading
 
 from fiona._err cimport exc_wrap_int, exc_wrap_ogrerr
-from fiona._shim cimport set_proj_search_path, get_proj_version
 from fiona._err import CPLE_BaseError
 from fiona.errors import EnvError
 
@@ -61,7 +60,38 @@ try:
 except ImportError:
     pass
 
+
+IF CTE_GDAL_MAJOR_VERSION >= 3:
+
+    cdef extern from "ogr_srs_api.h":
+
+        void OSRSetPROJSearchPaths(const char *const *papszPaths)
+        void OSRGetPROJVersion	(int *pnMajor, int *pnMinor, int *pnPatch)
+
+
 cdef bint is_64bit = sys.maxsize > 2 ** 32
+
+
+cdef void get_proj_version(int* major, int* minor, int* patch):
+    IF CTE_GDAL_MAJOR_VERSION >= 3:
+        OSRGetPROJVersion(major, minor, patch)
+    ELSE:
+        cdef int val = -1
+        major[0] = val
+        minor[0] = val
+        patch[0] = val
+
+
+cdef void set_proj_search_path(object path):
+    IF CTE_GDAL_MAJOR_VERSION >= 3:
+        cdef const char **paths = NULL
+        cdef const char *path_c = NULL
+        path_b = path.encode("utf-8")
+        path_c = path_b
+        paths = CSLAddString(paths, path_c)
+        OSRSetPROJSearchPaths(paths)
+    ELSE:
+        os.environ["PROJ_LIB"] = path
 
 
 cdef _safe_osr_release(OGRSpatialReferenceH srs):

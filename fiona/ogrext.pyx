@@ -15,8 +15,7 @@ from uuid import uuid4
 
 from six import integer_types, string_types, text_type
 
-from fiona._shim cimport *
-
+from fiona._crs cimport osr_set_traditional_axis_mapping_strategy
 from fiona._geometry cimport (
     GeomBuilder, OGRGeomBuilder, geometry_type_code,
     normalize_geometry_type_code, base_geometry_type_code)
@@ -41,23 +40,10 @@ from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 from fiona.schema import FIELD_TYPES, FIELD_TYPES_MAP, normalize_field_type
 from fiona.path import vsi_path
 
-from fiona._shim cimport is_field_null, osr_get_name, osr_set_traditional_axis_mapping_strategy
-
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
 from cpython cimport PyBytes_FromStringAndSize, PyBytes_AsString
 from fiona.drvsupport import _driver_supports_timezones
-
-
-cdef extern from "ogr_api.h" nogil:
-
-    ctypedef void * OGRLayerH
-    ctypedef void * OGRDataSourceH
-    ctypedef void * OGRSFDriverH
-    ctypedef void * OGRFieldDefnH
-    ctypedef void * OGRFeatureDefnH
-    ctypedef void * OGRFeatureH
-    ctypedef void * OGRGeometryH
 
 
 log = logging.getLogger(__name__)
@@ -97,6 +83,93 @@ OGRERR_CORRUPT_DATA = 5
 OGRERR_FAILURE = 6
 OGRERR_UNSUPPORTED_SRS = 7
 OGRERR_INVALID_HANDLE = 8
+
+
+cdef bint is_field_null(void *feature, int n):
+    if OGR_F_IsFieldNull(feature, n):
+        return True
+    elif not OGR_F_IsFieldSet(feature, n):
+        return True
+    else:
+        return False
+
+
+cdef void gdal_flush_cache(void *cogr_ds):
+    with cpl_errs:
+        GDALFlushCache(cogr_ds)
+
+
+cdef void* gdal_open_vector(char* path_c, int mode, drivers, options) except NULL:
+    cdef void* cogr_ds = NULL
+    cdef char **drvs = NULL
+    cdef void* drv = NULL
+    cdef char **open_opts = NULL
+
+    flags = GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR
+    if mode == 1:
+        flags |= GDAL_OF_UPDATE
+    else:
+        flags |= GDAL_OF_READONLY
+
+    if drivers:
+        for name in drivers:
+            name_b = name.encode()
+            name_c = name_b
+            drv = GDALGetDriverByName(name_c)
+            if drv != NULL:
+                drvs = CSLAddString(drvs, name_c)
+
+    for k, v in options.items():
+
+        if v is None:
+            continue
+
+        k = k.upper().encode('utf-8')
+        if isinstance(v, bool):
+            v = ('ON' if v else 'OFF').encode('utf-8')
+        else:
+            v = str(v).encode('utf-8')
+        log.debug("Set option %r: %r", k, v)
+        open_opts = CSLAddNameValue(open_opts, <const char *>k, <const char *>v)
+
+    open_opts = CSLAddNameValue(open_opts, "VALIDATE_OPEN_OPTIONS", "NO")
+
+    try:
+        cogr_ds = exc_wrap_pointer(
+            GDALOpenEx(path_c, flags, <const char *const *>drvs, <const char *const *>open_opts, NULL)
+        )
+        return cogr_ds
+    except FionaNullPointerError:
+        raise DriverError("Failed to open dataset (mode={}): {}".format(mode, path_c.decode("utf-8")))
+    except CPLE_BaseError as exc:
+        raise DriverError(str(exc))
+    finally:
+        CSLDestroy(drvs)
+        CSLDestroy(open_opts)
+
+
+cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except NULL:
+    cdef char **creation_opts = NULL
+    cdef void *cogr_ds = NULL
+
+    for k, v in options.items():
+        k = k.upper().encode('utf-8')
+        if isinstance(v, bool):
+            v = ('ON' if v else 'OFF').encode('utf-8')
+        else:
+            v = str(v).encode('utf-8')
+        log.debug("Set option %r: %r", k, v)
+        creation_opts = CSLAddNameValue(creation_opts, <const char *>k, <const char *>v)
+
+    try:
+        return exc_wrap_pointer(GDALCreate(cogr_driver, path_c, 0, 0, 0, GDT_Unknown, creation_opts))
+    except FionaNullPointerError:
+        raise DriverError("Failed to create dataset: {}".format(path_c.decode("utf-8")))
+    except CPLE_BaseError as exc:
+        raise DriverError(str(exc))
+    finally:
+        CSLDestroy(creation_opts)
+
 
 
 def _explode(coords):
@@ -172,7 +245,7 @@ cdef class FeatureBuilder:
         cdef int retval
         cdef int fieldsubtype
         cdef const char *key_c = NULL
-        # Parameters for get_field_as_datetime
+        # Parameters for OGR_F_GetFieldAsDateTimeEx
         cdef int y = 0
         cdef int m = 0
         cdef int d = 0
@@ -209,7 +282,7 @@ cdef class FeatureBuilder:
                 continue
 
             fieldtypename = FIELD_TYPES[OGR_Fld_GetType(fdefn)]
-            fieldsubtype = get_field_subtype(fdefn)
+            fieldsubtype = OGR_Fld_GetSubType(fdefn)
             if not fieldtypename:
                 log.warning(
                     "Skipping field %s: invalid type %s",
@@ -258,7 +331,7 @@ cdef class FeatureBuilder:
                 props[key] = val
 
             elif fieldtype in (FionaDateType, FionaTimeType, FionaDateTimeType):
-                retval = get_field_as_datetime(feature, i, &y, &m, &d, &hh, &mm, &fss, &tz)
+                retval = OGR_F_GetFieldAsDateTimeEx(feature, i, &y, &m, &d, &hh, &mm, &fss, &tz)
                 ms, ss = math.modf(fss)
                 ss = int(ss)
                 ms = int(round(ms * 10**6))
@@ -299,7 +372,7 @@ cdef class FeatureBuilder:
                 code = base_geometry_type_code(OGR_G_GetGeometryType(cogr_geometry))
 
                 if 8 <= code <= 14:  # Curves.
-                    cogr_geometry = get_linear_geometry(cogr_geometry)
+                    cogr_geometry = OGR_G_GetLinearGeometry(cogr_geometry, 0.0, NULL)
                     geom = GeomBuilder().build(cogr_geometry)
                     OGR_G_DestroyGeometry(cogr_geometry)
 
@@ -437,7 +510,7 @@ cdef class OGRFeatureBuilder:
                 # Add microseconds to seconds
                 ss += ms / 10**6
 
-                set_field_datetime(cogr_feature, i, y, m, d, hh, mm, ss, tzinfo)
+                OGR_F_SetFieldDateTimeEx(cogr_feature, i, y, m, d, hh, mm, ss, tzinfo)
 
             elif isinstance(value, bytes) and schema_type == "bytes":
                 string_c = value
@@ -448,7 +521,7 @@ cdef class OGRFeatureBuilder:
                 string_c = value_bytes
                 OGR_F_SetFieldString(cogr_feature, i, string_c)
             elif value is None:
-                set_field_null(cogr_feature, i)
+                OGR_F_SetFieldNull(cogr_feature, i)
             else:
                 raise ValueError("Invalid field type %s" % type(value))
         return cogr_feature
@@ -1082,7 +1155,7 @@ cdef class WritingSession(Session):
                             cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
                     else:
                         # check capability of creating a new layer in the existing dataset
-                        capability = check_capability_create_layer(cogr_ds)
+                        capability = GDALDatasetTestCapability(cogr_ds, ODsCCreateLayer)
                         if not capability or collection.name is None:
                             # unable to use existing dataset, recreate it
                             log.debug("Unable to use existing dataset: capability=%r, name=%r", capability, collection.name)
@@ -1128,7 +1201,7 @@ cdef class WritingSession(Session):
             layer_count = GDALDatasetGetLayerCount(self.cogr_ds)
             layer_names = []
             for i in range(layer_count):
-                cogr_layer = GDALDatasetGetLayer(cogr_ds, i)
+                cogr_layer = GDALDatasetGetLayer(self.cogr_ds, i)
                 name_c = OGR_L_GetName(cogr_layer)
                 name_b = name_c
                 layer_names.append(name_b.decode('utf-8'))
@@ -1266,7 +1339,7 @@ cdef class WritingSession(Session):
                         OGR_Fld_SetPrecision(cogr_fielddefn, precision)
                     if field_subtype != OFSTNone:
                         # subtypes are new in GDAL 2.x, ignored in 1.x
-                        set_field_subtype(cogr_fielddefn, field_subtype)
+                        OGR_Fld_SetSubType(cogr_fielddefn, field_subtype)
                     exc_wrap_int(OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1))
 
                 except (UnicodeEncodeError, CPLE_BaseError) as exc:
@@ -1308,12 +1381,12 @@ cdef class WritingSession(Session):
                 return True
             return record["geometry"]["type"].lstrip("3D ") in valid_geom_types
 
-        transactions_supported = check_capability_transaction(self.cogr_ds)
+        transactions_supported = GDALDatasetTestCapability(self.cogr_ds, ODsCTransactions)
         log.debug("Transaction supported: {}".format(transactions_supported))
 
         if transactions_supported:
             log.debug("Starting transaction (initial)")
-            result = gdal_start_transaction(self.cogr_ds, 0)
+            result = GDALDatasetStartTransaction(self.cogr_ds, 0)
             if result == OGRERR_FAILURE:
                 raise TransactionError("Failed to start transaction")
 
@@ -1362,18 +1435,18 @@ cdef class WritingSession(Session):
                 features_in_transaction += 1
                 if features_in_transaction == DEFAULT_TRANSACTION_SIZE:
                     log.debug("Committing transaction (intermediate)")
-                    result = gdal_commit_transaction(self.cogr_ds)
+                    result = GDALDatasetCommitTransaction(self.cogr_ds)
                     if result == OGRERR_FAILURE:
                         raise TransactionError("Failed to commit transaction")
                     log.debug("Starting transaction (intermediate)")
-                    result = gdal_start_transaction(self.cogr_ds, 0)
+                    result = GDALDatasetStartTransaction(self.cogr_ds, 0)
                     if result == OGRERR_FAILURE:
                         raise TransactionError("Failed to start transaction")
                     features_in_transaction = 0
 
         if transactions_supported:
             log.debug("Committing transaction (final)")
-            result = gdal_commit_transaction(self.cogr_ds)
+            result = GDALDatasetCommitTransaction(self.cogr_ds)
             if result == OGRERR_FAILURE:
                 raise TransactionError("Failed to commit transaction")
 

@@ -67,8 +67,6 @@ VERSION.txt
 fiona/*.c
 fiona/*.cpp
 fiona/ograpi.pxd
-fiona/_shim.pxd
-fiona/_shim.pyx
 tests/data/coutwildrnp.json
 tests/data/coutwildrnp.tar
 tests/data/coutwildrnp.gpkg

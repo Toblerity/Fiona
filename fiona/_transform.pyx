@@ -1,15 +1,15 @@
 # distutils: language = c++
 #
 # Coordinate and geometry transformations.
-
 from __future__ import absolute_import
+
+include "gdal.pxi"
 
 import logging
 import warnings
 
-from fiona cimport _cpl, _crs, _csl, _geometry
-from fiona._crs cimport OGRSpatialReferenceH
-from fiona._shim cimport osr_set_traditional_axis_mapping_strategy
+from fiona cimport _cpl, _csl, _geometry
+from fiona._crs cimport OGRSpatialReferenceH, osr_set_traditional_axis_mapping_strategy
 
 from fiona.compat import UserDict, DICT_TYPES
 
@@ -39,7 +39,7 @@ log.addHandler(NullHandler())
 cdef void *_crs_from_crs(object crs):
     cdef char *proj_c = NULL
     cdef OGRSpatialReferenceH osr = NULL
-    osr = _crs.OSRNewSpatialReference(NULL)
+    osr = OSRNewSpatialReference(NULL)
     if osr == NULL:
         raise ValueError("NULL spatial reference")
     params = []
@@ -53,7 +53,7 @@ cdef void *_crs_from_crs(object crs):
         if init:
             auth, val = init.split(':')
             if auth.upper() == 'EPSG':
-                _crs.OSRImportFromEPSG(osr, int(val))
+                OSRImportFromEPSG(osr, int(val))
         else:
             crs['wktext'] = True
             for k, v in crs.items():
@@ -65,12 +65,12 @@ cdef void *_crs_from_crs(object crs):
             log.debug("PROJ.4 to be imported: %r", proj)
             proj_b = proj.encode('utf-8')
             proj_c = proj_b
-            _crs.OSRImportFromProj4(osr, proj_c)
+            OSRImportFromProj4(osr, proj_c)
     # Fall back for CRS strings like "EPSG:3857."
     else:
         proj_b = crs.encode('utf-8')
         proj_c = proj_b
-        _crs.OSRSetFromUserInput(osr, proj_c)
+        OSRSetFromUserInput(osr, proj_c)
 
     osr_set_traditional_axis_mapping_strategy(osr)
     return osr
@@ -97,8 +97,8 @@ def _transform(src_crs, dst_crs, xs, ys):
         x[i] = xs[i]
         y[i] = ys[i]
 
-    transform = _crs.OCTNewCoordinateTransformation(src, dst)
-    res = _crs.OCTTransform(transform, n, x, y, NULL)
+    transform = OCTNewCoordinateTransformation(src, dst)
+    res = OCTTransform(transform, n, x, y, NULL)
 
     res_xs = [0]*n
     res_ys = [0]*n
@@ -109,9 +109,9 @@ def _transform(src_crs, dst_crs, xs, ys):
 
     _cpl.CPLFree(x)
     _cpl.CPLFree(y)
-    _crs.OCTDestroyCoordinateTransformation(transform)
-    _crs.OSRRelease(src)
-    _crs.OSRRelease(dst)
+    OCTDestroyCoordinateTransformation(transform)
+    OSRRelease(src)
+    OSRRelease(dst)
     return res_xs, res_ys
 
 
@@ -246,7 +246,7 @@ def _transform_geom(src_crs, dst_crs, geom, antimeridian_cutting, antimeridian_o
 
     src = _crs_from_crs(src_crs)
     dst = _crs_from_crs(dst_crs)
-    transform = _crs.OCTNewCoordinateTransformation(src, dst)
+    transform = OCTNewCoordinateTransformation(src, dst)
 
     # Transform options.
     options = _csl.CSLSetNameValue(options, "DATELINEOFFSET", str(antimeridian_offset).encode('utf-8'))
@@ -264,12 +264,12 @@ def _transform_geom(src_crs, dst_crs, geom, antimeridian_cutting, antimeridian_o
             for single_geom in geom
         ]
 
-    _crs.OCTDestroyCoordinateTransformation(transform)
+    OCTDestroyCoordinateTransformation(transform)
 
     if options != NULL:
         _csl.CSLDestroy(options)
 
-    _crs.OSRRelease(src)
-    _crs.OSRRelease(dst)
+    OSRRelease(src)
+    OSRRelease(dst)
 
     return out_geom

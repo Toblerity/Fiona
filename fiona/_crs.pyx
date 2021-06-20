@@ -6,20 +6,28 @@ Calls methods from GDAL's OSR module.
 from __future__ import absolute_import
 
 import logging
+import os
 
 from six import string_types
 
 from fiona cimport _cpl
 from fiona._err cimport exc_wrap_pointer
 from fiona._err import CPLE_BaseError
-from fiona._shim cimport osr_get_name, osr_set_traditional_axis_mapping_strategy
 from fiona.compat import DICT_TYPES
 from fiona.errors import CRSError
 
 
 logger = logging.getLogger(__name__)
 
-cdef int OAMS_TRADITIONAL_GIS_ORDER = 0
+
+cdef void osr_set_traditional_axis_mapping_strategy(OGRSpatialReferenceH hSrs):
+    IF CTE_GDAL_MAJOR_VERSION >= 3:
+
+        OSRSetAxisMappingStrategy(hSrs, OAMS_TRADITIONAL_GIS_ORDER)
+
+    ELSE:
+
+        OSRFixup(hSrs)
 
 
 # Export a WKT string from input crs.
