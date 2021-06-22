@@ -159,7 +159,7 @@ the Fiona repository for use in this and other examples.
 
                   sink.write(f)
 
-              except Exception, e:
+              except Exception:
                   logging.exception("Error processing feature %s:", f["id"])
 
           # The sink file is written to disk and closed when its block ends.
