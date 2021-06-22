@@ -147,7 +147,7 @@ cdef object _transform_single_geom(
     if src_ogr_geom != NULL:
         _geometry.OGR_G_DestroyGeometry(src_ogr_geom)
 
-    if precision >= 0:
+    if precision >= 0 and out_geom is not None:
 
         def round_point(g):
             coords = list(g['coordinates'])
