@@ -155,7 +155,7 @@ class TestReading(object):
         assert f['properties']['STATE'] == 'UT'
 
     def test_no_write(self):
-        with pytest.raises(IOError):
+        with pytest.raises(OSError):
             self.c.write({})
 
     def test_iter_items_list(self):
