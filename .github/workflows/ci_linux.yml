@@ -102,6 +102,7 @@ jobs:
 
       - name: Install apt packages
         run: |
+          sudo apt-get update
           sudo apt-get install libatlas-base-dev libcurl4-openssl-dev libgeos-dev libfreexl-dev libzstd-dev libspatialite-dev
 
           # Unlike travis, packages from non default repositories are installed.
