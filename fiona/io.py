@@ -50,7 +50,7 @@ class MemoryFile(MemoryFileBase):
         parameters of `fiona.open()`.
         """
         if self.closed:
-            raise IOError("I/O operation on closed file.")
+            raise OSError("I/O operation on closed file.")
 
         if not self.exists():
             self._ensure_extension(driver)
@@ -118,7 +118,7 @@ class ZipMemoryFile(MemoryFile):
             vsi_path = '/vsizip{0}'.format(self.name)
 
         if self.closed:
-            raise IOError("I/O operation on closed file.")
+            raise OSError("I/O operation on closed file.")
         if path:
             vsi_path = '/vsizip{0}/{1}'.format(self.name, path.lstrip('/'))
         else:

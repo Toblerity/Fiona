@@ -199,7 +199,7 @@ class Collection(object):
             elif self.mode in ('a', 'w'):
                 self.session = WritingSession()
                 self.session.start(self, **kwargs)
-        except IOError:
+        except OSError:
             self.session = None
             raise
 
@@ -385,7 +385,7 @@ class Collection(object):
         if self.closed:
             raise ValueError("I/O operation on closed collection")
         elif self.mode != 'r':
-            raise IOError("collection not open for reading")
+            raise OSError("collection not open for reading")
         if args:
             s = slice(*args)
             start = s.start
@@ -420,7 +420,7 @@ class Collection(object):
         if self.closed:
             raise ValueError("I/O operation on closed collection")
         elif self.mode != 'r':
-            raise IOError("collection not open for reading")
+            raise OSError("collection not open for reading")
         if args:
             s = slice(*args)
             start = s.start
@@ -454,7 +454,7 @@ class Collection(object):
         if self.closed:
             raise ValueError("I/O operation on closed collection")
         elif self.mode != 'r':
-            raise IOError("collection not open for reading")
+            raise OSError("collection not open for reading")
         if args:
             s = slice(*args)
             start = s.start
@@ -502,7 +502,7 @@ class Collection(object):
         if self.closed:
             raise ValueError("I/O operation on closed collection")
         if self.mode not in ('a', 'w'):
-            raise IOError("collection not open for writing")
+            raise OSError("collection not open for writing")
         self.session.writerecs(records, self)
         self._len = self.session.get_length()
         self._bounds = None

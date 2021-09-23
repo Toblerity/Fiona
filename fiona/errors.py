@@ -29,11 +29,11 @@ class UnsupportedOperation(FionaError):
     """Raised when reading from a file opened in 'w' mode"""
 
 
-class DataIOError(IOError):
+class DataIOError(OSError):
     """IO errors involving driver registration or availability."""
 
 
-class DriverIOError(IOError):
+class DriverIOError(OSError):
     """A format specific driver error."""
 
 
@@ -41,7 +41,7 @@ class DriverSupportError(DriverIOError):
     """Driver does not support schema"""
 
 
-class DatasetDeleteError(IOError):
+class DatasetDeleteError(OSError):
     """Failure to delete a dataset"""
 
 
