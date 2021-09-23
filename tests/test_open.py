@@ -9,6 +9,8 @@ import fiona
 from fiona._crs import crs_to_wkt
 from fiona.errors import DriverError
 
+from .conftest import requires_gdal21
+
 
 def test_open_shp(path_coutwildrnp_shp):
     """Open a shapefile"""
@@ -21,6 +23,7 @@ def test_open_filename_with_exclamation(data_dir):
     assert fiona.open(path), "Failed to open !test.geojson"
 
 
+@requires_gdal21
 @pytest.mark.xfail(raises=DriverError)
 def test_write_memfile_crs_wkt():
     example_schema = {
