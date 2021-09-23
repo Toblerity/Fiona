@@ -1,10 +1,7 @@
 """Tests of _env util module"""
 
 import pytest
-try:
-    from unittest import mock
-except ImportError:
-    import mock
+from unittest import mock
 
 from fiona._env import GDALDataFinder, PROJDataFinder
 

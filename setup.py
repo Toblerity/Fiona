@@ -284,7 +284,7 @@ requirements = [
 extras_require = {
     'calc': ['shapely'],
     's3': ['boto3>=1.2.4'],
-    'test': ['pytest>=3', 'pytest-cov', 'boto3>=1.2.4', 'mock; python_version < "3.4"']
+    'test': ['pytest>=3', 'pytest-cov', 'boto3>=1.2.4']
 }
 
 extras_require['all'] = list(set(it.chain(*extras_require.values())))
