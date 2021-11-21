@@ -80,6 +80,12 @@ jobs:
               PROJVERSION: "7.2.1",
               allow_failure: "false",
             }
+          - {
+              python: "3.10",
+              GDALVERSION: "3.3.3",
+              PROJVERSION: "8.2.0",
+              allow_failure: "false",
+            }
 
           # Test GDAL master
           - {
