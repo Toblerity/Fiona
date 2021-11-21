@@ -1,2 +1,7 @@
 [build-system]
-requires = ["setuptools", "wheel", "cython==0.29.21", "oldest-supported-numpy"]
+requires = [
+    "cython==0.29.24",
+    "oldest-supported-numpy",
+    "setuptools",
+    "wheel",
+]
