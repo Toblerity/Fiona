@@ -6,8 +6,8 @@ Fiona reads and writes geographic data files and thereby helps Python programmer
 integrate geographic information systems with other computer systems. Fiona
 contains extension modules that link the Geospatial Data Abstraction Library (`GDAL`_).
 
-.. image:: https://github.com/Toblerity/Fiona/workflows/Linux%20CI/badge.svg?branch=maint-1.8
-   :target: https://github.com/Toblerity/Fiona/actions?query=branch%3Amaint-1.8
+.. image:: https://github.com/Toblerity/Fiona/workflows/Linux%20CI/badge.svg?branch=master
+   :target: https://github.com/Toblerity/Fiona/actions?query=branch%3Amaster
 
 .. image:: https://ci.appveyor.com/api/projects/status/github/Toblerity/Fiona?svg=true
    :target: https://ci.appveyor.com/project/sgillies/fiona/branch/master
