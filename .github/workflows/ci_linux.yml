@@ -54,42 +54,49 @@ jobs:
               PROJVERSION: "6.3.2",
               allow_failure: "false",
             }
+          - {
+              python: 3.6,
+              GDALVERSION: "3.3.3",
+              PROJVERSION: "8.2.0",
+              allow_failure: "false",
+            }
+
 
           # Test all supported python versions with latest stable gdal release
           - {
               python: 3.6,
-              GDALVERSION: "3.2.1",
-              PROJVERSION: "7.2.1",
+              GDALVERSION: "3.4.0",
+              PROJVERSION: "8.2.0",
               allow_failure: "false",
             }
           - {
               python: 3.7,
-              GDALVERSION: "3.2.1",
-              PROJVERSION: "7.2.1",
+              GDALVERSION: "3.4.0",
+              PROJVERSION: "8.2.0",
               allow_failure: "false",
             }
           - {
               python: 3.8,
-              GDALVERSION: "3.2.1",
-              PROJVERSION: "7.2.1",
+              GDALVERSION: "3.4.0",
+              PROJVERSION: "8.2.0",
               allow_failure: "false",
             }
           - {
               python: 3.9,
-              GDALVERSION: "3.2.1",
-              PROJVERSION: "7.2.1",
+              GDALVERSION: "3.4.0",
+              PROJVERSION: "8.2.0",
               allow_failure: "false",
             }
           - {
               python: "3.10",
-              GDALVERSION: "3.3.3",
+              GDALVERSION: "3.4.0",
               PROJVERSION: "8.2.0",
               allow_failure: "false",
             }
 
           # Test GDAL master
           - {
-              python: 3.9,
+              python: 3.10,
               GDALVERSION: "master",
               PROJVERSION: "8.2.0",
               allow_failure: "true",
