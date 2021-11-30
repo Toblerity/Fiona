@@ -295,6 +295,9 @@ requirements = [
     'ordereddict; python_version < "2.7"',
     'enum34; python_version < "3.4"'
 ]
+# Python 3.10 workaround as enum34 not available
+if sys.version_info >= (3, 10):
+    requirements.remove('enum34; python_version < "3.4"')
 
 extras_require = {
     'calc': ['shapely'],
