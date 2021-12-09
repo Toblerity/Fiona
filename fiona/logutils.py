@@ -10,7 +10,7 @@ class FieldSkipLogFilter(logging.Filter):
     """
 
     def __init__(self, name=''):
-        super(FieldSkipLogFilter, self).__init__(name)
+        super().__init__(name)
         self.seen_msgs = set()
 
     def filter(self, record):

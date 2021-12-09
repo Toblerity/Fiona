@@ -29,7 +29,7 @@ class MemoryFile(MemoryFileBase):
     def __init__(self, file_or_bytes=None, filename=None, ext=""):
         if ext and not ext.startswith("."):
             ext = "." + ext
-        super(MemoryFile, self).__init__(
+        super().__init__(
             file_or_bytes=file_or_bytes, filename=filename, ext=ext)
 
     def open(self, driver=None, schema=None, crs=None, encoding=None,
@@ -95,7 +95,7 @@ class ZipMemoryFile(MemoryFile):
     """
 
     def __init__(self, file_or_bytes=None):
-        super(ZipMemoryFile, self).__init__(file_or_bytes, ext=".zip")
+        super().__init__(file_or_bytes, ext=".zip")
 
     def open(self, path=None, driver=None, encoding=None, layer=None,
              enabled_drivers=None, **kwargs):
