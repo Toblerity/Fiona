@@ -295,7 +295,7 @@ setup_args = dict(
     metadata_version='1.2',
     name='Fiona',
     version=version,
-    requires_python='>=3.6',
+    python_requires='>=3.6',
     requires_external='GDAL (>=1.8)',
     description="Fiona reads and writes spatial data files",
     license='BSD',
