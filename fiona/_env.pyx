@@ -388,7 +388,7 @@ cdef class GDALEnv(ConfigEnv):
     """Configuration and driver management"""
 
     def __init__(self, **options):
-        super(GDALEnv, self).__init__(**options)
+        super().__init__(**options)
         self._have_registered_drivers = False
 
     def start(self):
