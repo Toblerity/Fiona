@@ -3,6 +3,13 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.21 (TBD)
+------------
+
+Changes:
+
+- Upgrade attrs, cython, etc to open up Python 3.10 support (#1049).
+
 1.8.20 (2021-05-31)
 -------------------
 
