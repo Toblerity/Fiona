@@ -10,6 +10,11 @@ Changes:
 
 - Upgrade attrs, cython, etc to open up Python 3.10 support (#1049).
 
+Bug fixes:
+
+- Hard-coded "utf-8" collection encoding added in #423 has been removed
+  (#1057).
+
 1.8.20 (2021-05-31)
 -------------------
 
