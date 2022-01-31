@@ -552,8 +552,7 @@ class BytesCollection(Collection):
         self.virtual_file = buffer_to_virtual_file(self.bytesbuf, ext=ext)
 
         # Instantiate the parent class.
-        super(BytesCollection, self).__init__(self.virtual_file, vsi=filetype,
-                                              encoding='utf-8', **kwds)
+        super(BytesCollection, self).__init__(self.virtual_file, vsi=filetype, **kwds)
 
     def close(self):
         """Removes the virtual file associated with the class."""
