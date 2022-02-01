@@ -160,6 +160,12 @@ def test_write_bytesio(profile_first_coutwildrnp_shp):
             assert len(col) == 1
 
 
+def test_append_bytesio_exception(profile_first_coutwildrnp_shp):
+    """Append is not supported, see #1027."""
+    with pytest.raises(OSError):
+        fiona.open(BytesIO(data_coutwildrnp_json), "a")
+
+
 def test_mapinfo_raises():
     """Reported to be a crasher in #937"""
     driver = 'MapInfo File'
