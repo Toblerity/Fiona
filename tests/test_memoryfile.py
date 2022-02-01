@@ -160,7 +160,7 @@ def test_write_bytesio(profile_first_coutwildrnp_shp):
             assert len(col) == 1
 
 
-def test_append_bytesio_exception(profile_first_coutwildrnp_shp):
+def test_append_bytesio_exception(data_coutwildrnp_json):
     """Append is not supported, see #1027."""
     with pytest.raises(OSError):
         fiona.open(BytesIO(data_coutwildrnp_json), "a")
