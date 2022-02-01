@@ -67,7 +67,7 @@ def test_write_or_driver_error(tmpdir, driver, testdata_generator):
 
         with fiona.open(path, driver=open_driver) as collection:
             assert collection.driver == driver
-            assert len(collection) == len(records1)
+            assert len(list(collection)) == len(records1)
 
 
 @pytest.mark.parametrize(
@@ -167,7 +167,7 @@ def test_append_or_driver_error(tmpdir, testdata_generator, driver):
 
         with fiona.open(path, driver=open_driver) as collection:
             assert collection.driver == driver
-            assert len(collection) == len(records1) + len(records2)
+            assert len(list(collection)) == len(records1) + len(records2)
 
 
 @pytest.mark.parametrize(
@@ -230,7 +230,7 @@ def test_append_does_not_work_when_gdal_smaller_mingdal(
 
             with fiona.open(path, driver=open_driver) as collection:
                 assert collection.driver == driver
-                assert len(collection) == len(records1) + len(records2)
+                assert len(list(collection)) == len(records1) + len(records2)
 
 
 @pytest.mark.parametrize(
@@ -320,7 +320,7 @@ def test_no_append_driver_cannot_append(
 
     with fiona.open(path, driver=open_driver) as collection:
         assert collection.driver == driver
-        assert len(collection) == len(records1)
+        assert len(list(collection)) == len(records1)
 
 
 def test_mingdal_drivers_are_supported():
