@@ -12,6 +12,7 @@ Changes:
 
 Bug fixes:
 
+- Clean up VSI files left by MemoryFileBase, resolving #1041.
 - Hard-coded "utf-8" collection encoding added in #423 has been removed
   (#1057).
 
