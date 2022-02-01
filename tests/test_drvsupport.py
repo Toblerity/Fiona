@@ -311,6 +311,7 @@ def test_no_append_driver_cannot_append(
             c.writerecords(records2)
     except Exception as exc:
         log.exception("Caught exception in trying to append.")
+        return
 
     if driver in {"FileGDB", "OpenFileGDB"}:
         open_driver = driver
