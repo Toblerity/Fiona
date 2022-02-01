@@ -1,12 +1,18 @@
 """Tests of driver support"""
 
+import logging
+
 import pytest
+
 from .conftest import requires_gdal24, get_temp_filename
+
 from fiona.drvsupport import supported_drivers, driver_mode_mingdal
 import fiona.drvsupport
 from fiona.env import GDALVersion
 from fiona._env import calc_gdal_version_num, get_gdal_version_num
 from fiona.errors import DriverError
+
+log = logging.getLogger()
 
 
 @requires_gdal24
