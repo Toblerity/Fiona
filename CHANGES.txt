@@ -8,6 +8,8 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Changes:
 
+- Driver mode support tests have been made more general and less susceptible to
+  driver quirks involving feature fields and coordinate values (#1060).
 - OSError is raised on attempts to open a dataset in a Python file object in
   "a" mode (see #1027).
 - Upgrade attrs, cython, etc to open up Python 3.10 support (#1049).
