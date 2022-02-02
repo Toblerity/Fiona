@@ -160,7 +160,7 @@ driver_mode_mingdal = {
           'FlatGeobuf': (3, 1, 3)},
 
     'a': {'GPKG': (1, 11, 0),
-          'PCIDSK': (3, 3, 0),
+          'PCIDSK': (2, 0, 0),
           'GeoJSON': (2, 1, 0),
           'MapInfo File': (2, 0, 0)}
 }
