@@ -280,9 +280,6 @@ requirements = [
     'munch',
     "setuptools",
 ]
-# Python 3.10 workaround as enum34 not available
-if sys.version_info >= (3, 10):
-    requirements.remove('enum34; python_version < "3.4"')
 
 extras_require = {
     'calc': ['shapely'],
@@ -299,7 +296,7 @@ setup_args = dict(
     name='Fiona',
     version=version,
     python_requires='>=3.6',
-    requires_external='GDAL (>=1.8)',
+    requires_external='GDAL (>=2.4)',
     description="Fiona reads and writes spatial data files",
     license='BSD',
     keywords='gis vector feature data',
