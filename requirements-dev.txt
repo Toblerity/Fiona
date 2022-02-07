@@ -3,8 +3,7 @@ boto3==1.20.10
 coverage==4.5.4
 cython==0.29.24
 pytest==6.2.5
-pytest-cov==2.8.1
-pytest==4.6.6
+pytest-cov==2.12.1
 pytz==2020.1
 setuptools==41.6.0
 wheel==0.33.6
