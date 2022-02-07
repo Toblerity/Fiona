@@ -133,13 +133,13 @@ cdef object _transform_single_geom(
                     options)
 
     if dst_ogr_geom == NULL:
-        out_geom = None
         warnings.warn(
             "Full reprojection failed, but partial is possible. To enable partial "
             "reprojection wrap the transform_geom call like so:\n"
             "with fiona.Env(OGR_ENABLE_PARTIAL_REPROJECTION=True):\n"
             "    transform_geom(...)"
         )
+        return None
     else:
         out_geom = _geometry.GeomBuilder().build(dst_ogr_geom)
         _geometry.OGR_G_DestroyGeometry(dst_ogr_geom)
