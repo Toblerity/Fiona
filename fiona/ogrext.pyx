@@ -2001,6 +2001,9 @@ cdef class MemoryFileBase:
         if self._vsif != NULL:
             VSIFCloseL(self._vsif)
         self._vsif = NULL
+        # As soon as support for GDAL < 3 is dropped, we can switch
+        # to VSIRmdirRecursive.
+        VSIUnlink(self.name.encode("utf-8"))
         VSIRmdir(self._dirname.encode("utf-8"))
         self.closed = True
 

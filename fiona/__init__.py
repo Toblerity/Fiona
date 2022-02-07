@@ -118,7 +118,7 @@ with fiona._loading.add_gdal_dll_directories():
 __all__ = ['bounds', 'listlayers', 'listdir', 'open', 'prop_type', 'prop_width']
 __version__ = "1.9dev"
 __all__ = ['bounds', 'listlayers', 'open', 'prop_type', 'prop_width']
-__version__ = "1.8.20"
+__version__ = "1.8.21"
 __gdal_version__ = get_gdal_release_name()
 
 gdal_version = get_gdal_version_tuple()
@@ -212,14 +212,17 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
     Returns
     -------
     Collection
-    """
 
+    """
     if mode == 'r' and hasattr(fp, 'read'):
 
         @contextmanager
         def fp_reader(fp):
             memfile = MemoryFile(fp.read())
-            dataset = memfile.open()
+            dataset = memfile.open(
+                driver=driver, crs=crs, schema=schema, layer=layer,
+                encoding=encoding, enabled_drivers=enabled_drivers,
+                **kwargs)
             try:
                 yield dataset
             finally:
@@ -258,6 +261,11 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
                 memfile.close()
 
         return fp_writer(fp)
+
+    elif mode == "a" and hasattr(fp, "write"):
+        raise OSError(
+            "Append mode is not supported for datasets in a Python file object."
+        )
 
     else:
         # If a pathlib.Path instance is given, convert it to a string path.

@@ -17,6 +17,25 @@ New features:
 - Driver metadata including dataset open and dataset and layer creations
   options are now exposed through methods of the fiona.meta module (#950).
 
+1.8.21 (2022-02-07)
+-------------------
+
+Changes:
+
+- Driver mode support tests have been made more general and less susceptible to
+  driver quirks involving feature fields and coordinate values (#1060).
+- OSError is raised on attempts to open a dataset in a Python file object in
+  "a" mode (see #1027).
+- Upgrade attrs, cython, etc to open up Python 3.10 support (#1049).
+
+Bug fixes:
+
+- Allow FieldSkipLogFilter to handle exception messages as well as strings
+  (reported in #1035).
+- Clean up VSI files left by MemoryFileBase, resolving #1041.
+- Hard-coded "utf-8" collection encoding added in #423 has been removed
+  (#1057).
+
 1.8.20 (2021-05-31)
 -------------------
 
