@@ -207,8 +207,8 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
     Returns
     -------
     Collection
-    """
 
+    """
     if mode == 'r' and hasattr(fp, 'read'):
 
         @contextmanager
@@ -256,6 +256,11 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
                 memfile.close()
 
         return fp_writer(fp)
+
+    elif mode == "a" and hasattr(fp, "write"):
+        raise OSError(
+            "Append mode is not supported for datasets in a Python file object."
+        )
 
     else:
         # If a pathlib.Path instance is given, convert it to a string path.

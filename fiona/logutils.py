@@ -15,8 +15,8 @@ class FieldSkipLogFilter(logging.Filter):
 
     def filter(self, record):
         """Pass record if not seen."""
-        if getattr(record, 'msg', "").startswith("Skipping field"):
-            msg = record.getMessage()
+        msg = record.getMessage()
+        if msg.startswith("Skipping field"):
             retval = msg not in self.seen_msgs
             self.seen_msgs.add(msg)
             return retval
@@ -25,7 +25,6 @@ class FieldSkipLogFilter(logging.Filter):
 
 
 class LogFiltering(object):
-
     def __init__(self, logger, filter):
         self.logger = logger
         self.filter = filter

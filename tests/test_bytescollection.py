@@ -12,7 +12,7 @@ class TestReading(object):
     def bytes_collection_object(self, path_coutwildrnp_json):
         with open(path_coutwildrnp_json) as src:
             bytesbuf = src.read().encode('utf-8')
-        self.c = fiona.BytesCollection(bytesbuf)
+        self.c = fiona.BytesCollection(bytesbuf, encoding="utf-8")
         yield
         self.c.close()
 
