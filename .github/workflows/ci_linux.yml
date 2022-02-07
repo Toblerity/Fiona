@@ -42,37 +42,37 @@ jobs:
           - {
               python: "3.6",
               GDALVERSION: "3.4.0",
-              PROJVERSION: "8.2.0",
+              PROJVERSION: "8.2.1",
               allow_failure: "false",
             }
           - {
               python: "3.7",
               GDALVERSION: "3.4.0",
-              PROJVERSION: "8.2.0",
+              PROJVERSION: "8.2.1",
               allow_failure: "false",
             }
           - {
               python: "3.8",
               GDALVERSION: "3.4.0",
-              PROJVERSION: "8.2.0",
+              PROJVERSION: "8.2.1",
               allow_failure: "false",
             }
           - {
               python: "3.9",
               GDALVERSION: "3.4.0",
-              PROJVERSION: "8.2.0",
+              PROJVERSION: "8.2.1",
               allow_failure: "false",
             }
           - {
               python: "3.10",
               GDALVERSION: "3.4.0",
-              PROJVERSION: "8.2.0",
+              PROJVERSION: "8.2.1",
               allow_failure: "false",
             }
           - {
               python: "3.10",
               GDALVERSION: "3.3.3",
-              PROJVERSION: "8.2.0",
+              PROJVERSION: "8.2.1",
               allow_failure: "false",
             }
 
@@ -80,7 +80,7 @@ jobs:
           - {
               python: "3.10",
               GDALVERSION: "master",
-              PROJVERSION: "8.2.0",
+              PROJVERSION: "8.2.1",
               allow_failure: "true",
             }
 
