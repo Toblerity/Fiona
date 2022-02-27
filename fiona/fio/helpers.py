@@ -67,7 +67,7 @@ def eval_feature_expression(feature, expression):
 def make_ld_context(context_items):
     """Returns a JSON-LD Context object.
 
-    See http://json-ld.org/spec/latest/json-ld."""
+    See https://json-ld.org/spec/latest/json-ld/."""
     ctx = {
       "@context": {
         "geojson": "http://ld.geojson.org/vocab#",
