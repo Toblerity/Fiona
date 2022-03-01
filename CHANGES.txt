@@ -678,7 +678,7 @@ Packaging:
   a typo (#254).
 
 Special thanks to WFMU DJ Liz Berg for the awesome playlist that's fueling my
-release sprint. Check it out at http://wfmu.org/playlists/shows/62083. You
+release sprint. Check it out at https://wfmu.org/playlists/shows/62083. You
 can't unhear Love Coffin.
 
 1.6.0 (2015-07-21)

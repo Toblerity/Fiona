@@ -101,7 +101,7 @@ else
     if [ ! -d "$GDALINST/gdal-$GDALVERSION/share/gdal" ]; then
         cd $GDALBUILD
         gdalver=$(expr "$GDALVERSION" : '\([0-9]*.[0-9]*.[0-9]*\)')
-        wget -q http://download.osgeo.org/gdal/$gdalver/gdal-$GDALVERSION.tar.gz
+        wget -q https://download.osgeo.org/gdal/$gdalver/gdal-$GDALVERSION.tar.gz
         tar -xzf gdal-$GDALVERSION.tar.gz
         cd gdal-$gdalver
         echo "./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT"

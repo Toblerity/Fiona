@@ -10,7 +10,7 @@ The Fiona User Manual
   United States License`__. The code examples are licensed under the BSD 3-clause license (see
   LICENSE.txt in the repository root).
 
-.. __: http://creativecommons.org/licenses/by/3.0/us/
+.. __: https://creativecommons.org/licenses/by/3.0/us/
 
 :Abstract:
   Fiona is OGR's neat, nimble, no-nonsense API. This document explains how to
@@ -36,13 +36,13 @@ continuous scalar fields (land surface temperature or elevation, for example)
 and :dfn:`vectors` representing discrete entities like roads and administrative
 boundaries. Fiona is concerned exclusively with the latter. It is a Python
 wrapper for vector data access functions from the `GDAL/OGR
-<http://www.gdal.org>`_ library.  A very simple wrapper for minimalists.
+<https://gdal.org>`_ library.  A very simple wrapper for minimalists.
 It reads data records from files as GeoJSON-like mappings and writes the same
 kind of mappings as records back to files. That's it. There are no layers, no
 cursors, no geometric operations, no transformations between coordinate
 systems, no remote method calls; all these concerns are left to other Python
-packages such as :py:mod:`Shapely <https://github.com/Toblerity/Shapely>` and
-:py:mod:`pyproj <http://code.google.com/p/pyproj/>` and Python language
+packages such as :py:mod:`Shapely <https://github.com/shapely/shapely>` and
+:py:mod:`pyproj <https://pypi.org/project/pyproj/>` and Python language
 protocols. Why? To eliminate unnecessary complication. Fiona aims to be simple
 to understand and use, with no gotchas.
 
@@ -1477,7 +1477,7 @@ References
 ==========
 
 .. [Kent1978] William Kent, Data and Reality, North Holland, 1978.
-.. [ESRI1998] ESRI Shapefile Technical Description. July 1998. http://www.esri.com/library/whitepapers/pdfs/shapefile.pdf
-.. [GeoJSON] http://geojson.org
-.. [JSON] http://www.ietf.org/rfc/rfc4627
-.. [SFA] http://en.wikipedia.org/wiki/Simple_feature_access
+.. [ESRI1998] ESRI Shapefile Technical Description. July 1998. https://www.esri.com/library/whitepapers/pdfs/shapefile.pdf
+.. [GeoJSON] https://geojson.org
+.. [JSON] https://www.ietf.org/rfc/rfc4627
+.. [SFA] https://en.wikipedia.org/wiki/Simple_feature_access

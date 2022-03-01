@@ -237,7 +237,7 @@ from the project's .pyx files. See the project's requirements-dev.txt file for
 guidance.
 
 The `Kyngchaos GDAL frameworks
-<http://www.kyngchaos.com/software/frameworks#gdal_complete>`__ will satisfy
+<https://www.kyngchaos.com/software/frameworks/#gdal_complete>`__ will satisfy
 the GDAL/OGR dependency for OS X, as will Homebrew's GDAL Formula (``brew install
 gdal``).
 
@@ -290,7 +290,7 @@ Binary installers are available at
 https://www.lfd.uci.edu/~gohlke/pythonlibs/#fiona and coming eventually to PyPI.
 
 You can download a binary distribution of GDAL from `here
-<http://www.gisinternals.com/release.php>`_.  You will also need to download
+<https://www.gisinternals.com/release.php>`_.  You will also need to download
 the compiled libraries and headers (include files).
 
 When building from source on Windows, it is important to know that setup.py
@@ -341,7 +341,7 @@ to reserve for bug reports and other actionable issues.
 Development and testing
 =======================
 
-Building from the source requires Cython. Tests require `pytest <http://pytest.org>`_. If the GDAL/OGR
+Building from the source requires Cython. Tests require `pytest <https://pytest.org>`_. If the GDAL/OGR
 libraries, headers, and `gdal-config`_ program are installed to well known
 locations on your system (via your system's package manager), you can do this::
 
@@ -363,8 +363,8 @@ lib dirs and GDAL library on the command line::
   (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal --gdalversion 2 develop
   (fiona_env)$ py.test
 
-.. _GDAL: http://www.gdal.org
-.. _pyproj: http://pypi.python.org/pypi/pyproj/
-.. _Rtree: http://pypi.python.org/pypi/Rtree/
-.. _Shapely: http://pypi.python.org/pypi/Shapely/
-.. _gdal-config: http://www.gdal.org/gdal-config.html
+.. _GDAL: https://gdal.org
+.. _pyproj: https://pypi.org/project/pyproj/
+.. _Rtree: https://pypi.org/project/Rtree/
+.. _Shapely: https://pypi.org/project/Shapely/
+.. _gdal-config: https://gdal.org/programs/gdal-config.html
