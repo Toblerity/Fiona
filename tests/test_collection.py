@@ -245,7 +245,7 @@ class TestReading(object):
         assert f['id'] == "2"
 
     def test_no_write(self):
-        with pytest.raises(IOError):
+        with pytest.raises(OSError):
             self.c.write({})
 
     def test_iter_items_list(self):
@@ -403,11 +403,11 @@ class TestGenericWritingTest(object):
         assert self.c.encoding == 'Windows-1252'
 
     def test_no_iter(self):
-        with pytest.raises(IOError):
+        with pytest.raises(OSError):
             iter(self.c)
 
     def test_no_filter(self):
-        with pytest.raises(IOError):
+        with pytest.raises(OSError):
             self.c.filter()
 
 
