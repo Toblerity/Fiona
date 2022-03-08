@@ -710,11 +710,11 @@ class BytesCollection(Collection):
         self.virtual_file = buffer_to_virtual_file(self.bytesbuf, ext=ext)
 
         # Instantiate the parent class.
-        super(BytesCollection, self).__init__(self.virtual_file, vsi=filetype, **kwds)
+        super().__init__(self.virtual_file, vsi=filetype, **kwds)
 
     def close(self):
         """Removes the virtual file associated with the class."""
-        super(BytesCollection, self).close()
+        super().close()
         if self.virtual_file:
             remove_virtual_file(self.virtual_file)
             self.virtual_file = None
