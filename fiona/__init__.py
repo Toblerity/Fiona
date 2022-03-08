@@ -69,6 +69,7 @@ import sys
 import warnings
 import platform
 from six import string_types
+from collections import OrderedDict
 
 try:
     from pathlib import Path
@@ -95,7 +96,6 @@ with fiona._loading.add_gdal_dll_directories():
         get_gdal_release_name,
         get_gdal_version_tuple,
     )
-    from fiona.compat import OrderedDict
     from fiona.io import MemoryFile
     from fiona.ogrext import (
         _bounds,

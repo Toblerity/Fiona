@@ -10,8 +10,8 @@ import logging
 import os
 import warnings
 import math
+from collections import namedtuple, OrderedDict
 from uuid import uuid4
-from collections import namedtuple
 
 from six import integer_types, string_types, text_type
 
@@ -32,7 +32,7 @@ from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
     FeatureWarning, FionaDeprecationWarning)
-from fiona.compat import OrderedDict, strencode
+from fiona.compat import strencode
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 from fiona.schema import FIELD_TYPES, FIELD_TYPES_MAP, normalize_field_type
