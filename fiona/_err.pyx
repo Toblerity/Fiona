@@ -63,10 +63,7 @@ class CPLE_BaseError(Exception):
         self.errmsg = errmsg
 
     def __str__(self):
-        return self.__unicode__()
-
-    def __unicode__(self):
-        return u"{}".format(self.errmsg)
+        return str(self.errmsg)
 
     @property
     def args(self):

@@ -189,9 +189,9 @@ cpdef get_gdal_config(key, normalize=True):
     elif val.isdigit():
         return int(val)
     else:
-        if val == u'ON':
+        if val == 'ON':
             return True
-        elif val == u'OFF':
+        elif val == 'OFF':
             return False
         else:
             return val

@@ -293,7 +293,7 @@ Features of a collection may also be accessed by index.
                                    (-4.663611, 51.158333)]],
                   'type': 'Polygon'},
      'id': '1',
-     'properties': OrderedDict([(u'CAT', 232.0), (u'FIPS_CNTRY', u'UK'), (u'CNTRY_NAME', u'United Kingdom'), (u'AREA', 244820.0), (u'POP_CNTRY', 60270708.0)]),
+     'properties': OrderedDict([('CAT', 232.0), ('FIPS_CNTRY', 'UK'), ('CNTRY_NAME', 'United Kingdom'), ('AREA', 244820.0), ('POP_CNTRY', 60270708.0)]),
      'type': 'Feature'}
 
 Note that these indices are controlled by GDAL, and do not always follow Python conventions. They can start from 0, 1 (e.g. geopackages), or even other values, and have no guarantee of contiguity. Negative indices will only function correctly if indices start from 0 and are contiguous.
@@ -457,9 +457,8 @@ Field Types
 -----------
 
 In a nutshell, the types and their names are as near to what you'd expect in
-Python (or Javascript) as possible. The 'str' vs 'unicode' muddle is a fact of
-life in Python < 3.0. Fiona records have Unicode strings, but their field type
-name is 'str' (looking forward to Python 3).
+Python (or Javascript) as possible. Since Python 3, the 'str' field type
+may contain Unicode characters.
 
 .. code-block:: pycon
 
@@ -497,14 +496,6 @@ Another function gets the proper Python type of a property.
   <type 'float'>
   >>> prop_type('str:25')
   <class 'str'>
-
-The example above is for Python 3. With Python 2, the type of 'str' properties
-is 'unicode'.
-
-.. code-block:: pycon
-
-  >>> prop_type('str:25')
-  <class 'unicode'>
 
 Geometry Types
 --------------

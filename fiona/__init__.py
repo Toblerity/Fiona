@@ -22,7 +22,7 @@ attribute table. For example:
 
   {'id': '1',
    'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
-   'properties': {'label': u'Null Island'} }
+   'properties': {'label': 'Null Island'} }
 
 is a Fiona feature with a point geometry and one property.
 
