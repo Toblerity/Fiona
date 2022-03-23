@@ -6,6 +6,10 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.9dev
 ------
 
+Changes:
+
+- Drop Python 2, and establish Python 3.6 as the minimum version (#1079).
+
 Deprecations:
 
 - The fiona.drivers() function has been deprecated and will be removed in
