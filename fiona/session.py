@@ -47,7 +47,7 @@ class Session(object):
         bool
 
         """
-        return NotImplementedError
+        return NotImplemented
 
     def get_credential_options(self):
         """Get credentials as GDAL configuration options
@@ -57,7 +57,7 @@ class Session(object):
         dict
 
         """
-        return NotImplementedError
+        return NotImplemented
 
     @staticmethod
     def from_foreign_session(session, cls=None):
@@ -83,13 +83,16 @@ class Session(object):
     @staticmethod
     def cls_from_path(path):
         """Find the session class suited to the data at `path`.
+
         Parameters
         ----------
         path : str
             A dataset path or identifier.
+
         Returns
         -------
         class
+
         """
         if not path:
             return DummySession
@@ -101,7 +104,7 @@ class Session(object):
 
         elif (
             path.scheme == "s3" or "amazonaws.com" in path.path
-        ) and "X-Amz-Signature" not in path.path:
+        ) and not "X-Amz-Signature" in path.path:
             if boto3 is not None:
                 return AWSSession
             else:
@@ -238,10 +241,18 @@ class AWSSession(Session):
     """
 
     def __init__(
-            self, session=None, aws_unsigned=False, aws_access_key_id=None,
-            aws_secret_access_key=None, aws_session_token=None,
-            region_name=None, profile_name=None, requester_pays=False):
-        """Create a new boto3 session
+        self,
+        session=None,
+        aws_unsigned=False,
+        aws_access_key_id=None,
+        aws_secret_access_key=None,
+        aws_session_token=None,
+        region_name=None,
+        profile_name=None,
+        endpoint_url=None,
+        requester_pays=False,
+    ):
+        """Create a new AWS session
 
         Parameters
         ----------
@@ -259,12 +270,13 @@ class AWSSession(Session):
             A region name, as per boto3.
         profile_name : str, optional
             A shared credentials profile name, as per boto3.
+        endpoint_url: str, optional
+            An endpoint_url, as per GDAL's AWS_S3_ENPOINT
         requester_pays : bool, optional
             True if the requester agrees to pay transfer costs (default:
             False)
-        """
-        import boto3
 
+        """
         if session:
             self._session = session
         else:
@@ -276,8 +288,13 @@ class AWSSession(Session):
                 profile_name=profile_name)
 
         self.requester_pays = requester_pays
-        self.unsigned = aws_unsigned
-        self._creds = self._session._session.get_credentials()
+        self.unsigned = bool(os.getenv("AWS_NO_SIGN_REQUEST", aws_unsigned))
+        self.endpoint_url = endpoint_url
+        self._creds = (
+            self._session.get_credentials()
+            if not self.unsigned and self._session
+            else None
+        )
 
     @classmethod
     def hascreds(cls, config):
@@ -295,13 +312,13 @@ class AWSSession(Session):
         bool
 
         """
-        return "AWS_ACCESS_KEY_ID" in config and "AWS_SECRET_ACCESS_KEY" in config
+        return {"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"}.issubset(config.keys())
 
     @property
     def credentials(self):
         """The session credentials as a dict"""
         res = {}
-        if self._creds:
+        if self._creds:  # pragma: no branch
             frozen_creds = self._creds.get_frozen_credentials()
             if frozen_creds.access_key:  # pragma: no branch
                 res["aws_access_key_id"] = frozen_creds.access_key
@@ -313,6 +330,8 @@ class AWSSession(Session):
             res["aws_region"] = self._session.region_name
         if self.requester_pays:
             res["aws_request_payer"] = "requester"
+        if self.endpoint_url:
+            res["aws_s3_endpoint"] = self.endpoint_url
         return res
 
     def get_credential_options(self):
@@ -324,7 +343,10 @@ class AWSSession(Session):
 
         """
         if self.unsigned:
-            return {'AWS_NO_SIGN_REQUEST': 'YES'}
+            opts = {"AWS_NO_SIGN_REQUEST": "YES"}
+            if "aws_region" in self.credentials:
+                opts["AWS_REGION"] = self.credentials["aws_region"]
+            return opts
         else:
             return {k.upper(): v for k, v in self.credentials.items()}
 
@@ -339,8 +361,8 @@ class GSSession(Session):
         ----------
         google_application_credentials: string
             Path to the google application credentials JSON file.
-        """
 
+        """
         self._creds = {}
         if google_application_credentials is not None:
             self._creds['google_application_credentials'] = google_application_credentials
@@ -386,6 +408,7 @@ class OSSSession(Session):
         self, oss_access_key_id=None, oss_secret_access_key=None, oss_endpoint=None
     ):
         """Create new Alibaba Cloud OSS session
+
         Parameters
         ----------
         oss_access_key_id: string, optional (default: None)
@@ -394,8 +417,8 @@ class OSSSession(Session):
             An secret access key
         oss_endpoint: string, optional (default: None)
             the region attached to the bucket
-        """
 
+        """
         self._creds = {
             "oss_access_key_id": oss_access_key_id,
             "oss_secret_access_key": oss_secret_access_key,
@@ -405,17 +428,20 @@ class OSSSession(Session):
     @classmethod
     def hascreds(cls, config):
         """Determine if the given configuration has proper credentials
+
         Parameters
         ----------
         cls : class
             A Session class.
         config : dict
             GDAL configuration as a dict.
+
         Returns
         -------
         bool
+
         """
-        return "OSS_ACCESS_KEY_ID" in config and "OSS_SECRET_ACCESS_KEY" in config
+        return {"OSS_ACCESS_KEY_ID", "OSS_SECRET_ACCESS_KEY"}.issubset(config.keys())
 
     @property
     def credentials(self):
@@ -424,9 +450,11 @@ class OSSSession(Session):
 
     def get_credential_options(self):
         """Get credentials as GDAL configuration options
+
         Returns
         -------
         dict
+
         """
         return {k.upper(): v for k, v in self.credentials.items()}
 
@@ -466,6 +494,7 @@ class SwiftSession(Session):
             user name to authenticate as
         swift_key: string, optional
             key/password to authenticate with
+
         Examples
         --------
         >>> import rasterio
@@ -480,6 +509,7 @@ class SwiftSession(Session):
         >>> with rasterio.Env(session):
         >>>     with rasterio.open(fp) as src:
         >>>         print(src.profile)
+
         """
         if swift_storage_url and swift_auth_token:
             self._creds = {
@@ -503,17 +533,20 @@ class SwiftSession(Session):
     @classmethod
     def hascreds(cls, config):
         """Determine if the given configuration has proper credentials
+
         Parameters
         ----------
         cls : class
             A Session class.
         config : dict
             GDAL configuration as a dict.
+
         Returns
         -------
         bool
+
         """
-        return "SWIFT_STORAGE_URL" in config and "SWIFT_AUTH_TOKEN" in config
+        return {"SWIFT_STORAGE_URL", "SWIFT_AUTH_TOKEN"}.issubset(config.keys())
 
     @property
     def credentials(self):
@@ -522,9 +555,11 @@ class SwiftSession(Session):
 
     def get_credential_options(self):
         """Get credentials as GDAL configuration options
+
         Returns
         -------
         dict
+
         """
         return {k.upper(): v for k, v in self.credentials.items()}
 
@@ -540,6 +575,7 @@ class AzureSession(Session):
         azure_unsigned=False,
     ):
         """Create new Microsoft Azure Blob Storage session
+
         Parameters
         ----------
         azure_storage_connection_string: string
@@ -550,8 +586,8 @@ class AzureSession(Session):
             A secret key
         azure_unsigned : bool, optional (default: False)
             If True, requests will be unsigned.
-        """
 
+        """
         self.unsigned = bool(os.getenv("AZURE_NO_SIGN_REQUEST", azure_unsigned))
         self.storage_account = os.getenv("AZURE_STORAGE_ACCOUNT", azure_storage_account)
 
@@ -570,23 +606,27 @@ class AzureSession(Session):
     @classmethod
     def hascreds(cls, config):
         """Determine if the given configuration has proper credentials
+
         Parameters
         ----------
         cls : class
             A Session class.
         config : dict
             GDAL configuration as a dict.
+
         Returns
         -------
         bool
+
         """
         return (
             "AZURE_STORAGE_CONNECTION_STRING" in config
-            or (
-                "AZURE_STORAGE_ACCOUNT" in config
-                and "AZURE_STORAGE_ACCESS_KEY" in config
+            or {"AZURE_STORAGE_ACCOUNT", "AZURE_STORAGE_ACCESS_KEY"}.issubset(
+                config.keys()
             )
-            or ("AZURE_STORAGE_ACCOUNT" in config and "AZURE_NO_SIGN_REQUEST" in config)
+            or {"AZURE_STORAGE_ACCOUNT", "AZURE_NO_SIGN_REQUEST"}.issubset(
+                config.keys()
+            )
         )
 
     @property
@@ -596,9 +636,11 @@ class AzureSession(Session):
 
     def get_credential_options(self):
         """Get credentials as GDAL configuration options
+
         Returns
         -------
         dict
+
         """
         if self.unsigned:
             return {
