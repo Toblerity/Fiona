@@ -669,7 +669,7 @@ if "GDAL_DATA" not in os.environ:
         log.debug("GDAL data found in package: path=%r.", path)
         set_gdal_config("GDAL_DATA", path)
 
-    # See https://github.com/mapbox/fiona/issues/1631.
+    # See https://github.com/mapbox/rasterio/issues/1631.
     elif GDALDataFinder().find_file("header.dxf"):
         log.debug("GDAL data files are available at built-in paths.")
 
