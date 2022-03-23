@@ -7,6 +7,8 @@ try:
 except ImportError:
     import mock
 
+import boto3
+
 import fiona
 from fiona import _env
 from fiona.env import getenv, hasenv, ensure_env, ensure_env_with_credentials
@@ -103,6 +105,7 @@ def test_env_default_env(path_coutwildrnp_shp):
     with fiona.open(path_coutwildrnp_shp):
         assert hasenv()
 
+
 def test_nested_gs_credentials(monkeypatch):
     """Check that rasterio.open() doesn't wipe out surrounding credentials"""
 
@@ -115,3 +118,15 @@ def test_nested_gs_credentials(monkeypatch):
 
         gdalenv = fake_opener('gs://foo/bar')
         assert gdalenv['GOOGLE_APPLICATION_CREDENTIALS'] == 'foo'
+
+
+def test_aws_session(gdalenv):
+    """Create an Env with a boto3 session."""
+    aws_session = boto3.Session(
+        aws_access_key_id='id', aws_secret_access_key='key',
+        aws_session_token='token', region_name='null-island-1')
+    with fiona.env.Env(session=aws_session) as s:
+        assert s.session._session.get_credentials().get_frozen_credentials().access_key == 'id'
+        assert s.session._session.get_credentials().get_frozen_credentials().secret_key == 'key'
+        assert s.session._session.get_credentials().get_frozen_credentials().token == 'token'
+        assert s.session._session.region_name == 'null-island-1'

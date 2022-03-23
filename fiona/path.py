@@ -10,21 +10,25 @@ from fiona.compat import urlparse
 # Supported URI schemes and their mapping to GDAL's VSI suffix.
 # TODO: extend for other cloud plaforms.
 SCHEMES = {
-    'ftp': 'curl',
-    'gzip': 'gzip',
-    'http': 'curl',
-    'https': 'curl',
-    's3': 's3',
-    'tar': 'tar',
-    'zip': 'zip',
-    'file': 'file',
-    'gs': 'gs',
+    "ftp": "curl",
+    "gzip": "gzip",
+    "http": "curl",
+    "https": "curl",
+    "s3": "s3",
+    "tar": "tar",
+    "zip": "zip",
+    "file": "file",
+    "gs": "gs",
+    "oss": "oss",
+    "az": "az",
 }
 
 CURLSCHEMES = set([k for k, v in SCHEMES.items() if v == 'curl'])
 
 # TODO: extend for other cloud plaforms.
-REMOTESCHEMES = set([k for k, v in SCHEMES.items() if v in ('curl', 's3', 'gs')])
+REMOTESCHEMES = set(
+    [k for k, v in SCHEMES.items() if v in ("curl", "s3", "gs", "oss", "az")]
+)
 
 
 class Path(object):
