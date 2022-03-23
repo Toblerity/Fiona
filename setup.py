@@ -291,18 +291,12 @@ requirements = [
     'six>=1.7',
     'munch',
     "setuptools",
-    'argparse; python_version < "2.7"',
-    'ordereddict; python_version < "2.7"',
-    'enum34; python_version < "3.4"'
 ]
-# Python 3.10 workaround as enum34 not available
-if sys.version_info >= (3, 10):
-    requirements.remove('enum34; python_version < "3.4"')
 
 extras_require = {
     'calc': ['shapely'],
     's3': ['boto3>=1.2.4'],
-    'test': ['pytest>=3', 'pytest-cov', 'boto3>=1.2.4', 'mock; python_version < "3.4"']
+    'test': ['pytest>=3', 'pytest-cov', 'boto3>=1.2.4']
 }
 
 extras_require['all'] = list(set(it.chain(*extras_require.values())))
@@ -313,8 +307,8 @@ setup_args = dict(
     metadata_version='1.2',
     name='Fiona',
     version=version,
-    requires_python='>=2.6',
-    requires_external='GDAL (>=1.8)',
+    requires_python='>=3.6',
+    requires_external='GDAL (>=2.4)',
     description="Fiona reads and writes spatial data files",
     license='BSD',
     keywords='gis vector feature data',
@@ -354,7 +348,6 @@ setup_args = dict(
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
