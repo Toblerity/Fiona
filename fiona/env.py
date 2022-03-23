@@ -127,7 +127,7 @@ class Env(object):
     ):
         """Create a new GDAL/AWS environment.
         Note: this class is a context manager. GDAL isn't configured
-        until the context is entered via `with rasterio.Env():`
+        until the context is entered via `with fiona.Env():`
 
         Parameters
         ----------
@@ -156,16 +156,18 @@ class Env(object):
         Examples
         --------
         >>> with Env(CPL_DEBUG=True, CPL_CURL_VERBOSE=True):
-        ...     with rasterio.open("https://example.com/a.tif") as src:
-        ...         print(src.profile)
+        ...     with fiona.open("zip+https://example.com/a.zip") as col:
+        ...         print(col.profile)
+
         For access to secured cloud resources, a Fiona Session or a
         foreign session object may be passed to the constructor.
+
         >>> import boto3
-        >>> from rasterio.session import AWSSession
+        >>> from fiona.session import AWSSession
         >>> boto3_session = boto3.Session(...)
         >>> with Env(AWSSession(boto3_session)):
-        ...     with rasterio.open("s3://mybucket/a.tif") as src:
-        ...         print(src.profile)
+        ...     with fiona.open("zip+s3://example/a.zip") as col:
+        ...         print(col.profile
 
         """
         aws_access_key_id = options.pop("aws_access_key_id", None)
@@ -192,8 +194,7 @@ class Env(object):
             # way to configure access to secured cloud resources.
             if not isinstance(session, Session):
                 warnings.warn(
-                    "Passing a boto3 session is deprecated. Pass a Fiona "
-                    "AWSSession object instead.",
+                    "Passing a boto3 session is deprecated. Pass a Fiona AWSSession object instead.",
                     FionaDeprecationWarning,
                 )
                 session = Session.aws_or_dummy(session=session)
@@ -668,7 +669,7 @@ if "GDAL_DATA" not in os.environ:
         log.debug("GDAL data found in package: path=%r.", path)
         set_gdal_config("GDAL_DATA", path)
 
-    # See https://github.com/mapbox/rasterio/issues/1631.
+    # See https://github.com/mapbox/fiona/issues/1631.
     elif GDALDataFinder().find_file("header.dxf"):
         log.debug("GDAL data files are available at built-in paths.")
 
