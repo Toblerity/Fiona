@@ -69,7 +69,7 @@ def test_open_closed():
     memfile = MemoryFile()
     memfile.close()
     assert memfile.closed
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         memfile.open()
 
 
@@ -78,7 +78,7 @@ def test_open_closed_zip():
     memfile = ZipMemoryFile()
     memfile.close()
     assert memfile.closed
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         memfile.open()
 
 

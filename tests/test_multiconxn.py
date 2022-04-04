@@ -1,7 +1,7 @@
 import pytest
 
 import fiona
-from fiona.compat import OrderedDict
+from collections import OrderedDict
 
 
 class TestReadAccess(object):

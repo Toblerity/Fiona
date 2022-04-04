@@ -32,7 +32,7 @@ def distrib(ctx, use_rs):
                 feat_id = feat.get('id', 'feature:' + str(i))
                 feat['id'] = feat_id
                 if use_rs:
-                    click.echo(u'\u001e', nl=False)
+                    click.echo('\x1e', nl=False)
                 click.echo(json.dumps(feat))
     except Exception:
         logger.exception("Exception caught during processing")

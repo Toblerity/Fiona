@@ -60,16 +60,16 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
     # If parsing geojson
     if parse:
         # If input is RS-delimited JSON sequence.
-        if first_line.startswith(u'\x1e'):
+        if first_line.startswith('\x1e'):
             def feature_text_gen():
-                buffer = first_line.strip(u'\x1e')
+                buffer = first_line.strip('\x1e')
                 for line in stdin:
-                    if line.startswith(u'\x1e'):
+                    if line.startswith('\x1e'):
                         if buffer:
                             feat = json.loads(buffer)
                             feat['geometry'] = transformer(feat['geometry'])
                             yield json.dumps(feat, **dump_kwds)
-                        buffer = line.strip(u'\x1e')
+                        buffer = line.strip('\x1e')
                     else:
                         buffer += line
                 else:
@@ -90,14 +90,14 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
     # If *not* parsing geojson
     else:
         # If input is RS-delimited JSON sequence.
-        if first_line.startswith(u'\x1e'):
+        if first_line.startswith('\x1e'):
             def feature_text_gen():
-                buffer = first_line.strip(u'\x1e')
+                buffer = first_line.strip('\x1e')
                 for line in stdin:
-                    if line.startswith(u'\x1e'):
+                    if line.startswith('\x1e'):
                         if buffer:
                             yield buffer
-                        buffer = line.strip(u'\x1e')
+                        buffer = line.strip('\x1e')
                     else:
                         buffer += line
                 else:

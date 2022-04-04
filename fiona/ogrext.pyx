@@ -10,8 +10,8 @@ import logging
 import os
 import warnings
 import math
+from collections import namedtuple, OrderedDict
 from uuid import uuid4
-from collections import namedtuple
 
 from six import integer_types, string_types, text_type
 
@@ -32,7 +32,7 @@ from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
     FeatureWarning, FionaDeprecationWarning)
-from fiona.compat import OrderedDict, strencode
+from fiona.compat import strencode
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 from fiona.schema import FIELD_TYPES, FIELD_TYPES_MAP, normalize_field_type
@@ -1036,7 +1036,7 @@ cdef class WritingSession(Session):
                 GDALClose(self.cogr_ds)
                 self.cogr_ds = NULL
                 self.cogr_layer = NULL
-                raise DriverError(u"{}".format(exc))
+                raise DriverError(str(exc))
 
             else:
                 self._fileencoding = userencoding or self._get_fallback_encoding()
@@ -1106,7 +1106,7 @@ cdef class WritingSession(Session):
                 GDALClose(self.cogr_ds)
                 self.cogr_ds = NULL
                 self.cogr_layer = NULL
-                raise CRSError(u"{}".format(exc))
+                raise CRSError(str(exc))
 
             # Determine which encoding to use. The encoding parameter given to
             # the collection constructor takes highest precedence, then
@@ -1184,7 +1184,7 @@ cdef class WritingSession(Session):
             except Exception as exc:
                 GDALClose(self.cogr_ds)
                 self.cogr_ds = NULL
-                raise DriverIOError(u"{}".format(exc))
+                raise DriverIOError(str(exc))
 
             finally:
                 if options != NULL:
@@ -1270,7 +1270,7 @@ cdef class WritingSession(Session):
                     GDALClose(self.cogr_ds)
                     self.cogr_ds = NULL
                     self.cogr_layer = NULL
-                    raise SchemaError(u"{}".format(exc))
+                    raise SchemaError(str(exc))
 
                 else:
                     OGR_Fld_Destroy(cogr_fielddefn)

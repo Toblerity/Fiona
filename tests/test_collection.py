@@ -245,7 +245,7 @@ class TestReading(object):
         assert f['id'] == "2"
 
     def test_no_write(self):
-        with pytest.raises(IOError):
+        with pytest.raises(OSError):
             self.c.write({})
 
     def test_iter_items_list(self):
@@ -381,7 +381,7 @@ class TestUnsupportedDriver(object):
     def test_immediate_fail_driver(self, tmpdir):
         schema = {
             'geometry': 'Point',
-            'properties': {'label': 'str', u'verit\xe9': 'int'}}
+            'properties': {'label': 'str', 'verit\xe9': 'int'}}
         with pytest.raises(DriverError):
             fiona.open(str(tmpdir.join("foo")), "w", "Bogus", schema=schema)
 
@@ -392,7 +392,7 @@ class TestGenericWritingTest(object):
     def no_iter_shp(self, tmpdir):
         schema = {
             'geometry': 'Point',
-            'properties': [('label', 'str'), (u'verit\xe9', 'int')]}
+            'properties': [('label', 'str'), ('verit\xe9', 'int')]}
         self.c = fiona.open(str(tmpdir.join("test-no-iter.shp")),
                             'w', driver="ESRI Shapefile", schema=schema,
                             encoding='Windows-1252')
@@ -403,11 +403,11 @@ class TestGenericWritingTest(object):
         assert self.c.encoding == 'Windows-1252'
 
     def test_no_iter(self):
-        with pytest.raises(IOError):
+        with pytest.raises(OSError):
             iter(self.c)
 
     def test_no_filter(self):
-        with pytest.raises(IOError):
+        with pytest.raises(OSError):
             self.c.filter()
 
 

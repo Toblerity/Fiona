@@ -4,11 +4,11 @@ Fiona
 
 Fiona is GDAL_'s neat and nimble vector API for Python programmers.
 
-.. image:: https://github.com/Toblerity/Fiona/workflows/Linux%20CI/badge.svg?branch=maint-1.8
-   :target: https://github.com/Toblerity/Fiona/actions?query=branch%3Amaint-1.8
+.. image:: https://github.com/Toblerity/Fiona/workflows/Linux%20CI/badge.svg?branch=maint-1.9
+   :target: https://github.com/Toblerity/Fiona/actions?query=branch%3Amaint-1.9
 
 .. image:: https://ci.appveyor.com/api/projects/status/github/Toblerity/Fiona?svg=true
-   :target: https://ci.appveyor.com/project/sgillies/fiona/branch/master
+   :target: https://ci.appveyor.com/project/sgillies/fiona/branch/maint-1.9
 
 .. image:: https://coveralls.io/repos/Toblerity/Fiona/badge.svg
    :target: https://coveralls.io/r/Toblerity/Fiona
@@ -19,7 +19,10 @@ and protocols such as files, dictionaries, mappings, and iterators instead of
 classes specific to OGR. Fiona can read and write real-world data using
 multi-layered GIS formats and zipped virtual file systems and integrates
 readily with other Python GIS packages such as pyproj_, Rtree_, and Shapely_.
-Fiona is supported only on CPython versions 2.7 and 3.4+.
+
+Fiona is supported only on CPython versions 3.6+.
+
+Why the name "Fiona"? Because Fiona Is OGR's Neat and Nimble API for Python programmers. And a Shrek reference made us laugh.
 
 For more details, see:
 
@@ -98,7 +101,7 @@ provides an index ordered list of layer names.
             print(layername, len(src))
 
     # Output:
-    # (u'coutwildrnp', 67)
+    # ('coutwildrnp', 67)
 
 Layer can also be specified by index. In this case, ``layer=0`` and
 ``layer='test_uk'`` specify the same layer in the data file or directory.
@@ -110,7 +113,7 @@ Layer can also be specified by index. In this case, ``layer=0`` and
             print(i, layername, len(src))
 
     # Output:
-    # (0, u'coutwildrnp', 67)
+    # (0, 'coutwildrnp', 67)
 
 Writing Multilayer data
 -----------------------
@@ -136,10 +139,10 @@ writing.
         print(f['properties'])
 
         # Output:
-        # [u'bar']
+        # ['bar']
         # 1
         # Polygon
-        # OrderedDict([(u'PERIMETER', 1.22107), (u'FEATURE2', None), (u'NAME', u'Mount Naomi Wilderness'), (u'FEATURE1', u'Wilderness'), (u'URL', u'http://www.wilderness.net/index.cfm?fuse=NWPS&sec=wildView&wname=Mount%20Naomi'), (u'AGBUR', u'FS'), (u'AREA', 0.0179264), (u'STATE_FIPS', u'49'), (u'WILDRNP020', 332), (u'STATE', u'UT')])
+        # OrderedDict([('PERIMETER', 1.22107), ('FEATURE2', None), ('NAME', 'Mount Naomi Wilderness'), ('FEATURE1', 'Wilderness'), ('URL', 'http://www.wilderness.net/index.cfm?fuse=NWPS&sec=wildView&wname=Mount%20Naomi'), ('AGBUR', 'FS'), ('AREA', 0.0179264), ('STATE_FIPS', '49'), ('WILDRNP020', 332), ('STATE', 'UT')])
 
 A view of the /tmp/foo directory will confirm the creation of the new files.
 
@@ -162,7 +165,7 @@ and write zipped Shapefiles.
             print(i, layername, len(src))
 
     # Output:
-    # (0, u'coutwildrnp', 67)
+    # (0, 'coutwildrnp', 67)
 
 Fiona can also read from more exotic file systems. For instance, a
 zipped shape file in S3 can be accessed like so:
@@ -216,7 +219,7 @@ info`` pretty prints information about a data file.
 Installation
 ============
 
-Fiona requires Python 2.7 or 3.4+ and GDAL/OGR 1.8+. To build from
+Fiona requires Python 3.6+ and GDAL/OGR 1.8+. To build from
 a source distribution you will need a C compiler and GDAL and Python
 development headers and libraries (libgdal1-dev for Debian/Ubuntu, gdal-dev for
 CentOS/Fedora).
@@ -233,10 +236,9 @@ gdal``).
 Python Requirements
 -------------------
 
-Fiona depends on the modules ``enum34``, ``six``, ``cligj``,  ``munch``, ``argparse``, and
-``ordereddict`` (the two latter modules are standard in Python 2.7+). Pip will
-fetch these requirements for you, but users installing Fiona from a Windows
-installer must get them separately.
+Fiona depends on the modules ``six``, ``cligj``,  and ``munch``.
+Pip will fetch these requirements for you, but users installing Fiona from a
+Windows installer must get them separately.
 
 Unix-like systems
 -----------------
