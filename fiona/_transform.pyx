@@ -230,8 +230,6 @@ cdef object _transform_single_geom(
         else:
             round_geometry(out_geom)
 
-        out_geom['coordinates'] = new_coords
-
     return out_geom
 
 

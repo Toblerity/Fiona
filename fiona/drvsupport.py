@@ -74,7 +74,7 @@ supported_drivers = dict([
     ("GPX", "rw"),
     # GRASS 	GRASS 	No 	Yes 	No, needs libgrass
     # GPSTrackMaker (.gtm, .gtz) 	GPSTrackMaker 	Yes 	Yes 	Yes
-    ("GPSTrackMaker", "rw"),
+    # ("GPSTrackMaker", "rw"),
     # Hydrographic Transfer Format 	HTF 	No 	Yes 	Yes
     # TODO: Fiona is not ready for multi-layer formats: ("HTF", "r"),
     # Idrisi Vector (.VCT) 	Idrisi 	No 	Yes 	Yes
