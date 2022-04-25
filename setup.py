@@ -284,15 +284,20 @@ elif "clean" not in sys.argv:
 
 requirements = [
     'attrs>=17',
-    'click>=4.0,<8',
+    'certifi',
+    'click>=4.0',
     'cligj>=0.5',
     'click-plugins>=1.0',
     'six>=1.7',
     'munch',
+    "setuptools",
     'argparse; python_version < "2.7"',
     'ordereddict; python_version < "2.7"',
     'enum34; python_version < "3.4"'
 ]
+# Python 3.10 workaround as enum34 not available
+if sys.version_info >= (3, 10):
+    requirements.remove('enum34; python_version < "3.4"')
 
 extras_require = {
     'calc': ['shapely'],
@@ -317,7 +322,7 @@ setup_args = dict(
     author_email='sean.gillies@gmail.com',
     maintainer='Sean Gillies',
     maintainer_email='sean.gillies@gmail.com',
-    url='http://github.com/Toblerity/Fiona',
+    url='https://github.com/Toblerity/Fiona',
     long_description=readme + "\n" + changes + "\n" + credits,
     package_dir={'': '.'},
     packages=['fiona', 'fiona.fio'],
@@ -350,7 +355,11 @@ setup_args = dict(
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Topic :: Scientific/Engineering :: GIS'])
 
 if os.environ.get('PACKAGE_DATA'):

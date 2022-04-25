@@ -138,13 +138,13 @@ cdef object _transform_single_geom(
                     options)
 
     if dst_ogr_geom == NULL:
-        out_geom = None
         warnings.warn(
             "Full reprojection failed, but partial is possible. To enable partial "
             "reprojection wrap the transform_geom call like so:\n"
             "with fiona.Env(OGR_ENABLE_PARTIAL_REPROJECTION=True):\n"
             "    transform_geom(...)"
         )
+        return None
     else:
         out_geom = _geometry.GeomBuilder().build(dst_ogr_geom)
         _geometry.OGR_G_DestroyGeometry(dst_ogr_geom)
@@ -152,9 +152,10 @@ cdef object _transform_single_geom(
     if src_ogr_geom != NULL:
         _geometry.OGR_G_DestroyGeometry(src_ogr_geom)
 
-    if out_geom is not None and precision >= 0:
-        if out_geom['type'] == 'Point':
-            coords = list(out_geom['coordinates'])
+    if precision >= 0:
+
+        def round_point(g):
+            coords = list(g['coordinates'])
             x, y = coords[:2]
             x = round(x, precision)
             y = round(y, precision)
@@ -162,9 +163,10 @@ cdef object _transform_single_geom(
             if len(coords) == 3:
                 z = coords[2]
                 new_coords.append(round(z, precision))
+            return new_coords
 
-        elif out_geom['type'] in ['LineString', 'MultiPoint']:
-            coords = list(zip(*out_geom['coordinates']))
+        def round_linestring(g):
+            coords = list(zip(*g['coordinates']))
             xp, yp = coords[:2]
             xp = [round(v, precision) for v in xp]
             yp = [round(v, precision) for v in yp]
@@ -174,8 +176,9 @@ cdef object _transform_single_geom(
                 new_coords = list(zip(xp, yp, zp))
             else:
                 new_coords = list(zip(xp, yp))
+            return new_coords
 
-        elif out_geom['type'] in ['Polygon', 'MultiLineString']:
+        def round_polygon(g):
             new_coords = []
             for piece in out_geom['coordinates']:
                 coords = list(zip(*piece))
@@ -188,9 +191,10 @@ cdef object _transform_single_geom(
                     new_coords.append(list(zip(xp, yp, zp)))
                 else:
                     new_coords.append(list(zip(xp, yp)))
+            return new_coords
 
-        elif out_geom['type'] == 'MultiPolygon':
-            parts = out_geom['coordinates']
+        def round_multipolygon(g):
+            parts = g['coordinates']
             new_coords = []
             for part in parts:
                 inner_coords = []
@@ -206,16 +210,35 @@ cdef object _transform_single_geom(
                     else:
                         inner_coords.append(list(zip(xp, yp)))
                 new_coords.append(inner_coords)
+            return new_coords
+
+        def round_geometry(g):
+            if g['type'] == 'Point':
+                g['coordinates'] = round_point(g)
+            elif g['type'] in ['LineString', 'MultiPoint']:
+                g['coordinates'] = round_linestring(g)
+            elif g['type'] in ['Polygon', 'MultiLineString']:
+                g['coordinates'] = round_polygon(g)
+            elif g['type'] == 'MultiPolygon':
+                g['coordinates'] = round_multipolygon(g)
+            else:
+                raise RuntimeError("Unsupported geometry type: {}".format(g['type']))
+
+        if out_geom['type'] == 'GeometryCollection':
+            for _g in out_geom['geometries']:
+                round_geometry(_g)
+        else:
+            round_geometry(out_geom)
 
         out_geom['coordinates'] = new_coords
 
     return out_geom
 
 
-def _transform_geom(
-        src_crs, dst_crs, geom, antimeridian_cutting, antimeridian_offset,
-        precision):
-    """Return a transformed geometry."""
+def _transform_geom(src_crs, dst_crs, geom, antimeridian_cutting, antimeridian_offset, precision):
+    """Return a transformed geometry.
+
+    """
     cdef char *proj_c = NULL
     cdef char *key_c = NULL
     cdef char *val_c = NULL
@@ -224,14 +247,21 @@ def _transform_geom(
     cdef OGRSpatialReferenceH dst = NULL
     cdef void *transform = NULL
     cdef OGRGeometryFactory *factory = NULL
+
     if not all([src_crs, dst_crs]):
         raise RuntimeError("Must provide a source and destination CRS.")
+
     src = _crs_from_crs(src_crs)
     dst = _crs_from_crs(dst_crs)
     transform = _crs.OCTNewCoordinateTransformation(src, dst)
 
     # Transform options.
-    options = _csl.CSLSetNameValue(options, "DATELINEOFFSET", str(antimeridian_offset).encode('utf-8'))
+    options = _csl.CSLSetNameValue(
+        options,
+        "DATELINEOFFSET",
+        str(antimeridian_offset).encode('utf-8')
+    )
+
     if antimeridian_cutting:
         options = _csl.CSLSetNameValue(options, "WRAPDATELINE", "YES")
 
@@ -246,8 +276,11 @@ def _transform_geom(
         ]
 
     _crs.OCTDestroyCoordinateTransformation(transform)
+
     if options != NULL:
         _csl.CSLDestroy(options)
+
     _crs.OSRRelease(src)
     _crs.OSRRelease(dst)
+
     return out_geom

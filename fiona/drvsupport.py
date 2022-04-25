@@ -43,7 +43,6 @@ supported_drivers = dict([
     # multi-layer
     ("FileGDB", "raw"),
     ("OpenFileGDB", "r"),
-    ("FlatGeobuf", "r"),
     # ESRI Personal GeoDatabase 	PGeo 	No 	Yes 	No, needs ODBC library
     # ESRI ArcSDE 	SDE 	No 	Yes 	No, needs ESRI SDE
     # ESRIJSON 	ESRIJSON 	No 	Yes 	Yes 
@@ -51,6 +50,7 @@ supported_drivers = dict([
     # ESRI Shapefile 	ESRI Shapefile 	Yes 	Yes 	Yes
     ("ESRI Shapefile", "raw"),
     # FMEObjects Gateway 	FMEObjects Gateway 	No 	Yes 	No, needs FME
+    ("FlatGeobuf", "rw"),
     # GeoJSON 	GeoJSON 	Yes 	Yes 	Yes
     ("GeoJSON", "raw"),
     # GeoJSONSeq 	GeoJSON sequences 	Yes 	Yes 	Yes 
@@ -101,7 +101,7 @@ supported_drivers = dict([
     # multi-layer
     #   ("OpenAir", "r"),
     # PCI Geomatics Database File 	PCIDSK 	No 	No 	Yes, using internal PCIDSK SDK (from GDAL 1.7.0)
-    ("PCIDSK", "rw"),
+    ("PCIDSK", "raw"),
     # PDS 	PDS 	No 	Yes 	Yes
     ("PDS", "r"),
     # PDS renamed to OGR_PDS for GDAL 2.x
@@ -122,6 +122,7 @@ supported_drivers = dict([
     ("SEGY", "r"),
     # Norwegian SOSI Standard 	SOSI 	No 	Yes 	No, needs FYBA library
     # SQLite/SpatiaLite 	SQLite 	Yes 	Yes 	No, needs libsqlite3 or libspatialite
+    ("SQLite", "raw"),
     # SUA 	SUA 	No 	Yes 	Yes
     ("SUA", "r"),
     # SVG 	SVG 	No 	Yes 	No, needs libexpat
@@ -152,13 +153,16 @@ supported_drivers = dict([
 driver_mode_mingdal = {
 
     'r': {'GPKG': (1, 11, 0),
-          'GeoJSONSeq': (2, 4, 0)},
+          'GeoJSONSeq': (2, 4, 0),
+          'FlatGeobuf': (3, 1, 0)},
 
     'w': {'GPKG': (1, 11, 0),
           'PCIDSK': (2, 0, 0),
-          'GeoJSONSeq': (2, 4, 0)},
+          'GeoJSONSeq': (2, 4, 0),
+          'FlatGeobuf': (3, 1, 3)},
 
     'a': {'GPKG': (1, 11, 0),
+          'PCIDSK': (2, 0, 0),
           'GeoJSON': (2, 1, 0),
           'MapInfo File': (2, 0, 0)}
 }
@@ -251,7 +255,8 @@ _driver_field_type_unsupported = {
         'BNA': None,
         'DXF': None,
         'PCIDSK': (2, 1, 0),
-        'FileGDB': None
+        'FileGDB': None,
+        'FlatGeobuf': None
     },
     'datetime': {
         'ESRI Shapefile': None,
@@ -268,7 +273,8 @@ _driver_field_type_unsupported = {
         'BNA': None,
         'DXF': None,
         'PCIDSK': (2, 1, 0),
-        'FileGDB': None
+        'FileGDB': None,
+        'FlatGeobuf': None
     }
 }
 
@@ -293,7 +299,8 @@ _drivers_not_supporting_timezones = {
         'MapInfo File': None,
         'GPKG': (3, 1, 0),
         'GPSTrackMaker': (3, 1, 1),
-        'FileGDB': None
+        'FileGDB': None,
+        'SQLite': (2, 4, 0)
     },
     'time': {
         'MapInfo File': None,
@@ -304,7 +311,8 @@ _drivers_not_supporting_timezones = {
         'GML': None,
         'CSV': None,
         'GMT': None,
-        'OGR_GMT': None
+        'OGR_GMT': None,
+        'SQLite': None 
     }
 }
 

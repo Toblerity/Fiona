@@ -127,6 +127,17 @@ class Collection(object):
         self.ignore_fields = ignore_fields
         self.ignore_geometry = bool(ignore_geometry)
 
+        # Check GDAL version against drivers
+        if driver in driver_mode_mingdal[mode] and get_gdal_version_tuple() < driver_mode_mingdal[mode][driver]:
+            min_gdal_version = ".".join(list(map(str, driver_mode_mingdal[mode][driver])))
+
+            raise DriverError(
+                "{driver} driver requires at least GDAL {min_gdal_version} for mode '{mode}', "
+                "Fiona was compiled against: {gdal}".format(driver=driver,
+                                                            mode=mode,
+                                                            min_gdal_version=min_gdal_version,
+                                                            gdal=get_gdal_release_name()))
+
         if vsi:
             self.path = vfs.vsi_path(path, vsi, archive)
             path = parse_path(self.path)
@@ -699,8 +710,7 @@ class BytesCollection(Collection):
         self.virtual_file = buffer_to_virtual_file(self.bytesbuf, ext=ext)
 
         # Instantiate the parent class.
-        super(BytesCollection, self).__init__(self.virtual_file, vsi=filetype,
-                                              encoding='utf-8', **kwds)
+        super(BytesCollection, self).__init__(self.virtual_file, vsi=filetype, **kwds)
 
     def close(self):
         """Removes the virtual file associated with the class."""
