@@ -13,19 +13,7 @@ jobs:
         include:
           # Test all supported gdal minor versions (except latest stable) with one python version
           - {
-              python: 3.6,
-              GDALVERSION: "2.4.4",
-              PROJVERSION: "4.9.3",
-              allow_failure: "false",
-            }
-          - {
-              python: 3.6,
-              GDALVERSION: "3.0.4",
-              PROJVERSION: "6.2.1",
-              allow_failure: "false",
-            }
-          - {
-              python: 3.6,
+              python: 3.7,
               GDALVERSION: "3.1.4",
               PROJVERSION: "6.3.2",
               allow_failure: "false",
@@ -37,32 +25,26 @@ jobs:
               allow_failure: "false",
             }
           - {
-              python: 3.7,
+              python: 3.8,
               GDALVERSION: "3.3.3",
               PROJVERSION: "7.2.1",
               allow_failure: "false",
             }
           - {
-              python: 3.7,
-              GDALVERSION: "3.4.1",
-              PROJVERSION: "8.2.1",
-              allow_failure: "false",
-            }
-          - {
               python: 3.8,
-              GDALVERSION: "3.4.1",
+              GDALVERSION: "3.4.2",
               PROJVERSION: "8.2.1",
               allow_failure: "false",
             }
           - {
               python: 3.9,
-              GDALVERSION: "3.4.1",
+              GDALVERSION: "3.4.2",
               PROJVERSION: "8.2.1",
               allow_failure: "false",
             }
           - {
               python: "3.10",
-              GDALVERSION: "3.4.1",
+              GDALVERSION: "3.4.2",
               PROJVERSION: "8.2.1",
               allow_failure: "false",
             }
