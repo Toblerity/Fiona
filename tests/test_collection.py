@@ -11,10 +11,12 @@ import pytest
 
 import fiona
 from fiona.collection import Collection
+from fiona.drvsupport import supported_drivers, driver_mode_mingdal
 from fiona.env import getenv, GDALVersion
 from fiona.errors import FionaValueError, DriverError, FionaDeprecationWarning
+from fiona.model import Feature, Geometry
+
 from .conftest import WGS84PATTERN, get_temp_filename
-from fiona.drvsupport import supported_drivers, driver_mode_mingdal
 
 
 class TestSupportedDrivers(object):
@@ -341,10 +343,10 @@ class TestIgnoreFieldsAndGeometry(object):
             assert("geometry" not in collection.schema.keys())
 
             feature = next(iter(collection))
-            assert(feature["properties"]["AREA"] is not None)
-            assert(feature["properties"]["STATE"] is not None)
-            assert(feature["properties"]["NAME"] is not None)
-            assert("geometry" not in feature.keys())
+            assert(feature.properties["AREA"] is not None)
+            assert(feature.properties["STATE"] is not None)
+            assert(feature.properties["NAME"] is not None)
+            assert(feature.geometry is None)
 
 
 class TestFilterReading(object):
@@ -741,10 +743,8 @@ class TestPointAppend(object):
                     'w', crs=None, driver="ESRI Shapefile",
                     schema=output_schema) as output:
                 for f in input:
-                    f['geometry'] = {
-                        'type': 'Point',
-                        'coordinates': f['geometry']['coordinates'][0][0]}
-                    output.write(f)
+                    fnew = Feature(id=f.id, properties=f.properties, geometry=Geometry(type="Point", coordinates=f.geometry.coordinates[0][0]))
+                    output.write(fnew)
 
     def test_append_point(self, tmpdir):
         with fiona.open(str(tmpdir.join("test_append_point.shp")), "a") as c:
@@ -832,8 +832,7 @@ class TestCollection(object):
         with pytest.raises(DriverError):
             fiona.open("PG:dbname=databasename", "r")
 
-    @pytest.mark.skipif(sys.platform.startswith("win"),
-                     reason="test only for *nix based system")
+    @pytest.mark.skipif(sys.platform.startswith("win"), reason="test only for *nix based system")
     def test_no_read_directory(self):
         with pytest.raises(DriverError):
             fiona.open("/dev/null", "r")
@@ -912,8 +911,7 @@ def test_collection_zip_http():
 
 def test_encoding_option_warning(tmpdir, caplog):
     """There is no ENCODING creation option log warning for GeoJSON"""
-    fiona.Collection(str(tmpdir.join("test.geojson")), "w", driver="GeoJSON", crs="epsg:4326",
-            schema={"geometry": "Point", "properties": {"foo": "int"}})
+    fiona.Collection(str(tmpdir.join("test.geojson")), "w", driver="GeoJSON", crs="epsg:4326", schema={"geometry": "Point", "properties": {"foo": "int"}})
     assert not caplog.text
 
 

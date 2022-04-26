@@ -1,5 +1,4 @@
-"""$ fio cat"""
-
+"""fio-cat"""
 
 import json
 import logging
@@ -10,8 +9,8 @@ import cligj
 
 import fiona
 from fiona.transform import transform_geom
+from fiona.model import ObjectEncoder
 from fiona.fio import options, with_context_env
-
 
 warnings.simplefilter('default')
 
@@ -64,9 +63,9 @@ def cat(
 
     When working with a multi-layer dataset the first layer is used by default.
     Use the '--layer' option to select a different layer.
-    """
 
-    logger = logging.getLogger(__name__)
+    """
+    log = logging.getLogger(__name__)
 
     dump_kwds = {'sort_keys': True}
     if indent:
@@ -103,8 +102,8 @@ def cat(
                             feat['bbox'] = fiona.bounds(g)
                         if use_rs:
                             click.echo('\x1e', nl=False)
-                        click.echo(json.dumps(feat, **dump_kwds))
+                        click.echo(json.dumps(feat, cls=ObjectEncoder, **dump_kwds))
 
     except Exception:
-        logger.exception("Exception caught during processing")
+        log.exception("Exception caught during processing")
         raise click.Abort()

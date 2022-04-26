@@ -1,17 +1,14 @@
 """Tests for `$ fio cat`."""
 
 
-import os
-import pytest
 from click.testing import CliRunner
 
 from fiona.fio.main import main_group
-from fiona.fio import cat
 
 
 def test_one(path_coutwildrnp_shp):
     runner = CliRunner()
-    result = runner.invoke(main_group, ['cat', path_coutwildrnp_shp])
+    result = runner.invoke(main_group, ['cat', path_coutwildrnp_shp], catch_exceptions=False)
     assert result.exit_code == 0
     assert result.output.count('"Feature"') == 67
 

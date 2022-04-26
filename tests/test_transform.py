@@ -3,6 +3,7 @@
 import math
 import pytest
 from fiona import transform
+from fiona.errors import FionaDeprecationWarning
 
 from .conftest import requires_gdal_lt_3
 
@@ -47,7 +48,8 @@ TEST_GEOMS = [
 @pytest.mark.parametrize("geom", TEST_GEOMS)
 def test_transform_geom_with_z(geom):
     """Transforming a geom with Z succeeds"""
-    transform.transform_geom("epsg:4326", "epsg:3857", geom, precision=3)
+    with pytest.warns(FionaDeprecationWarning):
+        transform.transform_geom("epsg:4326", "epsg:3857", geom, precision=3)
 
 
 @pytest.mark.parametrize("geom", TEST_GEOMS)

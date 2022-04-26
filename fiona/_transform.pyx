@@ -12,6 +12,8 @@ from fiona._crs cimport OGRSpatialReferenceH
 from fiona._shim cimport osr_set_traditional_axis_mapping_strategy
 
 from fiona.compat import UserDict, DICT_TYPES
+from fiona.compat import UserDict
+from fiona.model import Geometry
 
 
 cdef extern from "ogr_geometry.h" nogil:
@@ -125,6 +127,9 @@ cdef object _transform_single_geom(
     cdef void *src_ogr_geom = NULL
     cdef void *dst_ogr_geom = NULL
     cdef int i
+
+    if not isinstance(single_geom, Geometry):
+        single_geom = Geometry.from_dict(**single_geom)
 
     src_ogr_geom = _geometry.OGRGeomBuilder().build(single_geom)
     dst_ogr_geom = factory.transformWithOptions(
@@ -249,7 +254,11 @@ def _transform_geom(src_crs, dst_crs, geom, antimeridian_cutting, antimeridian_o
     transform = _crs.OCTNewCoordinateTransformation(src, dst)
 
     # Transform options.
-    options = _csl.CSLSetNameValue(options, "DATELINEOFFSET", str(antimeridian_offset).encode('utf-8'))
+    options = _csl.CSLSetNameValue(
+        options,
+        "DATELINEOFFSET",
+        str(antimeridian_offset).encode('utf-8')
+    )
 
     if antimeridian_cutting:
         options = _csl.CSLSetNameValue(options, "WRAPDATELINE", "YES")

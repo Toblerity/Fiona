@@ -8,6 +8,7 @@ import click
 import cligj
 
 from fiona.fio import helpers, with_context_env
+from fiona.model import ObjectEncoder
 
 
 @click.command()
@@ -18,9 +19,11 @@ def distrib(ctx, use_rs):
     """Distribute features from a collection.
 
     Print the features of GeoJSON objects read from stdin.
+
     """
     logger = logging.getLogger(__name__)
     stdin = click.get_text_stream('stdin')
+
     try:
         source = helpers.obj_gen(stdin)
         for i, obj in enumerate(source):
@@ -33,7 +36,8 @@ def distrib(ctx, use_rs):
                 feat['id'] = feat_id
                 if use_rs:
                     click.echo('\x1e', nl=False)
-                click.echo(json.dumps(feat))
+                click.echo(json.dumps(feat, cls=ObjectEncoder))
+
     except Exception:
         logger.exception("Exception caught during processing")
         raise click.Abort()

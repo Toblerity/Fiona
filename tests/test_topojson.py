@@ -3,11 +3,13 @@ Support for TopoJSON was added in OGR 1.11 to the `GeoJSON` driver.
 Starting at GDAL 2.3 support was moved to the `TopoJSON` driver.
 """
 
-import fiona
-from fiona.env import GDALVersion
 import os
 import pytest
-from collections import OrderedDict
+
+import fiona
+from fiona.env import GDALVersion
+from fiona.model import Properties
+
 
 gdal_version = GDALVersion.runtime()
 
@@ -30,6 +32,6 @@ def test_read_topojson(data_dir):
 
     assert len(features) == 3, "unexpected number of features"
     for feature in features:
-        assert isinstance(feature["properties"], OrderedDict)
+        assert isinstance(feature["properties"], Properties)
         assert len(feature["properties"]) > 0
         assert feature["geometry"]["type"] in {"Point", "LineString", "Polygon"}

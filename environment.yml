@@ -2,5 +2,7 @@ name: _fiona
 channels:
 - defaults
 dependencies:
-- python=3.6.*
-- libgdal=2.3.*
+- python=3.7.*
+- libgdal=3.4.*
+- pip:
+  - jinja2==3.0.3

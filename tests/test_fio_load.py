@@ -1,6 +1,6 @@
 """Tests for `$ fio load`."""
 
-
+from functools import partial
 import json
 import os
 import shutil
@@ -9,6 +9,7 @@ import pytest
 
 import fiona
 from fiona.fio.main import main_group
+from fiona.model import ObjectEncoder
 
 
 def test_err(runner):
@@ -104,7 +105,7 @@ def test_fio_load_layer(tmpdir, runner):
                 'coordinates': (5.0, 39.0)
             }
         }
-        sequence = os.linesep.join(map(json.dumps, [feature, feature]))
+        sequence = os.linesep.join(map(partial(json.dumps, cls=ObjectEncoder), [feature, feature]))
         result = runner.invoke(main_group, [
             'load',
             outdir,

@@ -2,7 +2,6 @@
 
 
 import json
-import logging
 
 import click
 from cligj import use_rs_opt
@@ -36,9 +35,8 @@ def filter(ctx, filter_expression, use_rs):
         $ fio cat data.shp \\
             | fio filter "f.properties.area > 1000.0" \\
             | fio collect > large_polygons.geojson
-    """
 
-    logger = logging.getLogger(__name__)
+    """
     stdin = click.get_text_stream('stdin')
 
     try:
