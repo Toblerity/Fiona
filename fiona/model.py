@@ -134,6 +134,9 @@ class Object(MutableMapping):
         else:
             del self._data[key]
 
+    def __eq__(self, other):
+        return dict(**self) == dict(**other)
+
 
 class _Geometry(object):
     def __init__(self, coordinates=None, type=None):
@@ -239,6 +242,13 @@ class Feature(Object):
 
         fid = data.pop("id", None)
         return Feature(geometry=geom, id=fid, properties=props, **data)
+
+    def __eq__(self, other):
+        return (
+            self.geometry == other.geometry
+            and self.id == other.id
+            and self.properties == other.properties
+        )
 
     @property
     def geometry(self):

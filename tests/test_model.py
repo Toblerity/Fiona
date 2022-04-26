@@ -137,8 +137,9 @@ def test_feature_no_geometry():
 
 def test_feature_geometry():
     """Feature has a geometry attribute"""
-    feat = Feature(geometry=Geometry(type="Point"))
-    assert feat.geometry is not None
+    geom = Geometry(type="Point")
+    feat = Feature(geometry=geom)
+    assert feat.geometry is geom
 
 
 def test_feature_no_id():
@@ -161,13 +162,13 @@ def test_feature_no_properties():
 
 def test_feature_properties():
     """Feature has properties"""
-    feat = Feature(properties=Object(foo=1))
+    feat = Feature(properties=Properties(foo=1))
     assert len(feat.properties) == 1
     assert feat.properties["foo"] == 1
 
 
-def test_feature_complete():
-    """Feature can be created from GeoJSON"""
+def test_feature_from_dict_kwargs():
+    """Feature can be created from GeoJSON kwargs"""
     data = {
         "id": "foo",
         "type": "Feature",
@@ -186,8 +187,8 @@ def test_feature_complete():
     assert feat["extras"]["this"] == 1
 
 
-def test_feature_complete_bis():
-    """Feature can be created from GeoJSON"""
+def test_feature_from_dict_obj():
+    """Feature can be created from GeoJSON obj"""
     data = {
         "id": "foo",
         "type": "Feature",
@@ -206,8 +207,8 @@ def test_feature_complete_bis():
     assert feat["extras"]["this"] == 1
 
 
-def test_feature_complete_2():
-    """Feature can be created from GeoJSON"""
+def test_feature_from_dict_kwargs_2():
+    """From GeoJSON kwargs using Geometry and Properties"""
     data = {
         "id": "foo",
         "type": "Feature",

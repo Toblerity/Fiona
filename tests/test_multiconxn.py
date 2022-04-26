@@ -26,7 +26,7 @@ class TestReadAccess(object):
                 assert f1 == f2
 
 
-class TestReadWriteAccess(object):
+class TestReadWriteAccess:
     # To check that we'll be able to read from a file that we're
     # writing to.
 
@@ -37,11 +37,17 @@ class TestReadWriteAccess(object):
             self.shapefile_path, "w",
             driver="ESRI Shapefile",
             schema={
-                'geometry': 'Point',
-                'properties': [('title', 'str:80'), ('date', 'date')]},
-            crs={'init': "epsg:4326", 'no_defs': True},
-            encoding='utf-8')
-        self.f = Feature(geometry=Geometry(type="Point", coordinates=(0.0, 0.1)), properties=OrderedDict([('title', 'point one'), ('date', '2012-01-29')]))
+                "geometry": "Point",
+                "properties": [("title", "str:80"), ("date", "date")],
+            },
+            crs={"init": "epsg:4326", "no_defs": True},
+            encoding="utf-8",
+        )
+        self.f = Feature(
+            id="0",
+            geometry=Geometry(type="Point", coordinates=(0.0, 0.1)),
+            properties=OrderedDict([("title", "point one"), ("date", "2012-01-29")]),
+        )
         self.c.writerecords([self.f])
         self.c.flush()
         yield
@@ -56,7 +62,7 @@ class TestReadWriteAccess(object):
     def test_read(self):
         c2 = fiona.open(self.shapefile_path, "r")
         f2 = next(iter(c2))
-        assert self.f.properties == f2.properties
+        assert self.f == f2
         c2.close()
 
     def test_read_after_close(self):
