@@ -19,7 +19,7 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          python -m pip install sphinx==3.2.1 rstcheck==3.3.1
+          python -m pip install jinja2<3.1 sphinx==3.2.1 rstcheck==3.3.1
 
       - name: Run rstcheck
         run: |
