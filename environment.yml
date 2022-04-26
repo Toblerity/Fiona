@@ -5,4 +5,4 @@ dependencies:
 - python=3.7.*
 - libgdal=3.4.*
 - pip:
-  - jinja2<3.1
+  - jinja2==3.0.3
