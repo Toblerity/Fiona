@@ -8,7 +8,13 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Changes:
 
-- Drop Python 2, and establish Python 3.6 as the minimum version (#1079).
+- Fiona's feature accessors now return instances of fiona.model.Feature instead
+  of Python dicts (#787). The Feature class is compatible with code that
+  expects GeoJSON-like dicts but also provides id, geometry, and properties
+  attributes. The last two of these are instances of fiona.model.Geometry and
+  fiona.model.Properties.
+- GDAL 3.1.0 is the minimum GDAL version.
+- Drop Python 2, and establish Python 3.7 as the minimum version (#1079).
 
 Deprecations:
 
