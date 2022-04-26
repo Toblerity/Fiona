@@ -101,7 +101,7 @@ def cat(
                             feat['geometry'] = g
                             feat['bbox'] = fiona.bounds(g)
                         if use_rs:
-                            click.echo(u'\u001e', nl=False)
+                            click.echo('\x1e', nl=False)
                         click.echo(json.dumps(feat, cls=ObjectEncoder, **dump_kwds))
 
     except Exception:

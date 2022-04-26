@@ -83,17 +83,6 @@ def test_from_epsg_neg():
         raise
 
 
-def test_to_string_unicode():
-    # See issue #83.
-    val = crs.to_string({
-        u'units': u'm',
-        u'no_defs': True,
-        u'datum': u'NAD83',
-        u'proj': u'utm',
-        u'zone': 16})
-    assert 'NAD83' in val
-
-
 @requires_gdal_lt_3
 def test_wktext():
     """Test +wktext parameter is preserved."""

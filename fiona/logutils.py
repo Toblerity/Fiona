@@ -9,8 +9,8 @@ class FieldSkipLogFilter(logging.Filter):
     At most, one message per field skipped per loop will be passed.
     """
 
-    def __init__(self, name=""):
-        super(FieldSkipLogFilter, self).__init__(name)
+    def __init__(self, name=''):
+        super().__init__(name)
         self.seen_msgs = set()
 
     def filter(self, record):

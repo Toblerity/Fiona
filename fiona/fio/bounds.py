@@ -41,20 +41,25 @@ def bounds(ctx, precision, explode, with_id, with_obj, use_rs):
     """
     logger = logging.getLogger(__name__)
     stdin = click.get_text_stream('stdin')
+
     try:
         source = obj_gen(stdin)
+
         for i, obj in enumerate(source):
             obj_id = obj.get('id', 'collection:' + str(i))
             xs = []
             ys = []
             features = obj.get('features') or [obj]
+
             for j, feat in enumerate(features):
                 feat_id = feat.get('id', 'feature:' + str(i))
                 w, s, e, n = fiona.bounds(feat)
+
                 if precision > 0:
                     w, s, e, n = (round(v, precision)
                                   for v in (w, s, e, n))
                 if explode:
+
                     if with_id:
                         rec = {
                             'parent': obj_id,
@@ -65,14 +70,19 @@ def bounds(ctx, precision, explode, with_id, with_obj, use_rs):
                         rec = feat
                     else:
                         rec = (w, s, e, n)
+
                     if use_rs:
-                        click.echo(u'\u001e', nl=False)
+                        click.echo('\x1e', nl=False)
+
                     click.echo(json.dumps(rec, cls=ObjectEncoder))
+
                 else:
                     xs.extend([w, e])
                     ys.extend([s, n])
+
             if not explode:
                 w, s, e, n = (min(xs), min(ys), max(xs), max(ys))
+
                 if with_id:
                     rec = {'id': obj_id, 'bbox': (w, s, e, n)}
                 elif with_obj:
@@ -80,8 +90,10 @@ def bounds(ctx, precision, explode, with_id, with_obj, use_rs):
                     rec = obj
                 else:
                     rec = (w, s, e, n)
+
                 if use_rs:
-                    click.echo(u'\u001e', nl=False)
+                    click.echo('\x1e', nl=False)
+
                 click.echo(json.dumps(rec, cls=ObjectEncoder))
 
     except Exception:

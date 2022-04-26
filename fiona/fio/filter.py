@@ -39,13 +39,18 @@ def filter(ctx, filter_expression, use_rs):
     """
     stdin = click.get_text_stream('stdin')
 
-    source = obj_gen(stdin)
-    for i, obj in enumerate(source):
-        features = obj.get('features') or [obj]
-        for j, feat in enumerate(features):
-            if not eval_feature_expression(feat, filter_expression):
-                continue
+    try:
+        source = obj_gen(stdin)
+        for i, obj in enumerate(source):
+            features = obj.get('features') or [obj]
+            for j, feat in enumerate(features):
+                if not eval_feature_expression(feat, filter_expression):
+                    continue
 
-            if use_rs:
-                click.echo(u'\u001e', nl=False)
-            click.echo(json.dumps(feat))
+                if use_rs:
+                    click.echo('\x1e', nl=False)
+                click.echo(json.dumps(feat))
+
+    except Exception:
+        logger.exception("Exception caught during processing")
+        raise click.Abort()

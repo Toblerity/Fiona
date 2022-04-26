@@ -6,6 +6,10 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.9dev
 ------
 
+Changes:
+
+- Drop Python 2, and establish Python 3.6 as the minimum version (#1079).
+
 Deprecations:
 
 - The fiona.drivers() function has been deprecated and will be removed in
@@ -16,6 +20,11 @@ New features:
 
 - Driver metadata including dataset open and dataset and layer creations
   options are now exposed through methods of the fiona.meta module (#950).
+
+Bug fixes:
+
+- Env and Session classes have been updated for parity with rasterio and to
+  resolve a credential refresh bug (#1055).
 
 1.8.21 (2022-02-07)
 -------------------

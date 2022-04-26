@@ -5,11 +5,13 @@ import logging
 import os
 import re
 import threading
+import warnings
 
 import attr
 from six import string_types
 
 import fiona._loading
+
 with fiona._loading.add_gdal_dll_directories():
     from fiona._env import (
         GDALDataFinder,
@@ -23,7 +25,7 @@ with fiona._loading.add_gdal_dll_directories():
         set_proj_data_search_path,
     )
     from fiona.compat import getargspec
-    from fiona.errors import EnvError, GDALVersionError
+    from fiona.errors import EnvError, FionaDeprecationWarning, GDALVersionError
     from fiona.session import Session, DummySession
 
 
@@ -107,6 +109,7 @@ class Env(object):
         Returns
         -------
         dict
+
         """
         return {
             'CHECK_WITH_INVERT_PROJ': True,
@@ -115,9 +118,14 @@ class Env(object):
         }
 
     def __init__(
-            self, session=None, **options):
+        self,
+        session=None,
+        aws_unsigned=False,
+        profile_name=None,
+        session_class=Session.aws_or_dummy,
+        **options
+    ):
         """Create a new GDAL/AWS environment.
-
         Note: this class is a context manager. GDAL isn't configured
         until the context is entered via `with fiona.Env():`
 
@@ -125,6 +133,12 @@ class Env(object):
         ----------
         session : optional
             A Session object.
+        aws_unsigned : bool, optional
+            Do not sign cloud requests.
+        profile_name : str, optional
+            A shared credentials profile name, as per boto3.
+        session_class : Session, optional
+            A sub-class of Session.
         **options : optional
             A mapping of GDAL configuration options, e.g.,
             `CPL_DEBUG=True, CHECK_WITH_INVERT_PROJ=False`.
@@ -141,30 +155,65 @@ class Env(object):
 
         Examples
         --------
-
         >>> with Env(CPL_DEBUG=True, CPL_CURL_VERBOSE=True):
         ...     with fiona.open("zip+https://example.com/a.zip") as col:
-        ...         print(col.meta)
+        ...         print(col.profile)
 
-        For access to secured cloud resources, a Fiona Session may be
-        passed to the constructor.
+        For access to secured cloud resources, a Fiona Session or a
+        foreign session object may be passed to the constructor.
 
         >>> import boto3
         >>> from fiona.session import AWSSession
         >>> boto3_session = boto3.Session(...)
         >>> with Env(AWSSession(boto3_session)):
         ...     with fiona.open("zip+s3://example/a.zip") as col:
-        ...         print(col.meta)
+        ...         print(col.profile
 
         """
-        if ('AWS_ACCESS_KEY_ID' in options or
-                'AWS_SECRET_ACCESS_KEY' in options):
+        aws_access_key_id = options.pop("aws_access_key_id", None)
+        # Before 1.0, Fiona only supported AWS. We will special
+        # case AWS in 1.0.x. TODO: warn deprecation in 1.1.
+        if aws_access_key_id:
+            warnings.warn(
+                "Passing abstract session keyword arguments is deprecated. "
+                "Pass a Fiona AWSSession object instead.",
+                FionaDeprecationWarning,
+            )
+
+        aws_secret_access_key = options.pop("aws_secret_access_key", None)
+        aws_session_token = options.pop("aws_session_token", None)
+        region_name = options.pop("region_name", None)
+
+        if not {"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"}.isdisjoint(options):
             raise EnvError(
                 "GDAL's AWS config options can not be directly set. "
                 "AWS credentials are handled exclusively by boto3.")
 
         if session:
+            # Passing a session via keyword argument is the canonical
+            # way to configure access to secured cloud resources.
+            if not isinstance(session, Session):
+                warnings.warn(
+                    "Passing a boto3 session is deprecated. Pass a Fiona AWSSession object instead.",
+                    FionaDeprecationWarning,
+                )
+                session = Session.aws_or_dummy(session=session)
+
             self.session = session
+
+        elif aws_access_key_id or profile_name or aws_unsigned:
+            self.session = Session.aws_or_dummy(
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+                aws_session_token=aws_session_token,
+                region_name=region_name,
+                profile_name=profile_name,
+                aws_unsigned=aws_unsigned,
+            )
+
+        elif {"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"}.issubset(os.environ.keys()):
+            self.session = Session.from_environ()
+
         else:
             self.session = DummySession()
 
@@ -172,16 +221,15 @@ class Env(object):
         self.context_options = {}
 
     @classmethod
-    def from_defaults(cls, session=None, **options):
+    def from_defaults(cls, *args, **kwargs):
         """Create an environment with default config options
 
         Parameters
         ----------
-        session : optional
-            A Session object.
-        **options : optional
-            A mapping of GDAL configuration options, e.g.,
-            `CPL_DEBUG=True, CHECK_WITH_INVERT_PROJ=False`.
+        args : optional
+            Positional arguments for Env()
+        kwargs : optional
+            Keyword arguments for Env()
 
         Returns
         -------
@@ -192,19 +240,9 @@ class Env(object):
         The items in kwargs will be overlaid on the default values.
 
         """
-        opts = Env.default_options()
-        opts.update(**options)
-        return Env(session=session, **opts)
-
-    @property
-    def is_credentialized(self):
-        """Test for existence of cloud credentials
-
-        Returns
-        -------
-        bool
-        """
-        return hascreds()
+        options = Env.default_options()
+        options.update(**kwargs)
+        return Env(*args, **options)
 
     def credentialize(self):
         """Get credentials and configure GDAL
@@ -217,16 +255,20 @@ class Env(object):
         None
 
         """
-        if hascreds():
-            pass
-        else:
-            cred_opts = self.session.get_credential_options()
-            self.options.update(**cred_opts)
-            setenv(**cred_opts)
+        cred_opts = self.session.get_credential_options()
+        self.options.update(**cred_opts)
+        setenv(**cred_opts)
 
     def drivers(self):
         """Return a mapping of registered drivers."""
         return local._env.drivers()
+
+    def _dump_open_datasets(self):
+        """Writes descriptions of open datasets to stderr
+
+        For debugging and testing purposes.
+        """
+        return local._env._dump_open_datasets()
 
     def __enter__(self):
         log.debug("Entering env context: %r", self)
@@ -237,13 +279,12 @@ class Env(object):
             # See note directly above where _discovered_options is globally
             # defined.  This MUST happen before calling 'defenv()'.
             local._discovered_options = {}
-            # Don't want to reinstate the "FIONA_ENV" option.
-            probe_env = {k for k in self.options.keys() if k != "FIONA_ENV"}
+            # Don't want to reinstate the "RASTERIO_ENV" option.
+            probe_env = {k for k in self.options.keys() if k != "RASTERIO_ENV"}
             for key in probe_env:
                 val = get_gdal_config(key, normalize=False)
                 if val is not None:
                     local._discovered_options[key] = val
-                    log.debug("Discovered option: %s=%s", key, val)
 
             defenv(**self.options)
             self.context_options = {}
@@ -270,8 +311,6 @@ class Env(object):
             while local._discovered_options:
                 key, val = local._discovered_options.popitem()
                 set_gdal_config(key, val, normalize=False)
-                log.debug(
-                    "Set discovered option back to: '%s=%s", key, val)
             local._discovered_options = None
         log.debug("Exited env context: %r", self)
 
@@ -284,8 +323,7 @@ def defenv(**options):
         log.debug("No GDAL environment exists")
         local._env = GDALEnv()
         local._env.update_config_options(**options)
-        log.debug(
-            "New GDAL environment %r created", local._env)
+        log.debug("New GDAL environment %r created", local._env)
     local._env.start()
 
 
@@ -312,7 +350,11 @@ def setenv(**options):
 
 
 def hascreds():
-    return local._env is not None and all(key in local._env.get_config_options() for key in ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY'])
+    warnings.warn("Please use Env.session.hascreds() instead", FionaDeprecationWarning)
+    return local._env is not None and all(
+        key in local._env.get_config_options()
+        for key in ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]
+    )
 
 
 def delenv():
@@ -377,6 +419,7 @@ def ensure_env(f):
         else:
             with Env.from_defaults():
                 return f(*args, **kwargs)
+
     return wrapper
 
 
@@ -403,18 +446,28 @@ def ensure_env_with_credentials(f):
 
     """
     @wraps(f)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args, **kwds):
         if local._env:
-            return f(*args, **kwargs)
+            env_ctor = Env
         else:
-            if isinstance(args[0], str):
-                session = Session.from_path(args[0])
-            else:
-                session = Session.from_path(None)
+            env_ctor = Env.from_defaults
 
-            with Env.from_defaults(session=session):
-                log.debug("Credentialized: {!r}".format(getenv()))
-                return f(*args, **kwargs)
+        fp_arg = kwds.get("fp", None) or args[0]
+
+        if isinstance(fp_arg, str):
+            session_cls = Session.cls_from_path(fp_arg)
+
+            if local._env and session_cls.hascreds(getenv()):
+                session_cls = DummySession
+
+            session = session_cls()
+
+        else:
+            session = DummySession()
+
+        with env_ctor(session=session):
+            return f(*args, **kwds)
+
     return wrapper
 
 
@@ -425,8 +478,8 @@ class GDALVersion(object):
     components and comparing between versions.  This is highly
     simplistic and assumes a very normal numbering scheme for versions
     and ignores everything except the major and minor components.
-    """
 
+    """
     major = attr.ib(default=0, validator=attr.validators.instance_of(int))
     minor = attr.ib(default=0, validator=attr.validators.instance_of(int))
 
@@ -455,8 +508,8 @@ class GDALVersion(object):
         Returns
         -------
         GDALVersion instance
-        """
 
+        """
         if isinstance(input, cls):
             return input
         if isinstance(input, tuple):
@@ -464,12 +517,13 @@ class GDALVersion(object):
         elif isinstance(input, string_types):
             # Extract major and minor version components.
             # alpha, beta, rc suffixes ignored
-            match = re.search(r'^\d+\.\d+', input)
+            match = re.search(r"^\d+\.\d+", input)
             if not match:
                 raise ValueError(
                     "value does not appear to be a valid GDAL version "
-                    "number: {}".format(input))
-            major, minor = (int(c) for c in match.group().split('.'))
+                    "number: {}".format(input)
+                )
+            major, minor = (int(c) for c in match.group().split("."))
             return cls(major=major, minor=minor)
 
         raise TypeError("GDALVersion can only be parsed from a string or tuple")
@@ -484,8 +538,9 @@ class GDALVersion(object):
         return self >= other
 
 
-def require_gdal_version(version, param=None, values=None, is_max_version=False,
-                         reason=''):
+def require_gdal_version(
+    version, param=None, values=None, is_max_version=False, reason=""
+):
     """A decorator that ensures the called function or parameters are supported
     by the runtime version of GDAL.  Raises GDALVersionError if conditions
     are not met.
@@ -533,60 +588,69 @@ def require_gdal_version(version, param=None, values=None, is_max_version=False,
     Returns
     ---------
     wrapped function
-    """
 
+    """
     if values is not None:
         if param is None:
-            raise ValueError(
-                'require_gdal_version: param must be provided with values')
+            raise ValueError("require_gdal_version: param must be provided with values")
 
         if not isinstance(values, (tuple, list, set)):
             raise ValueError(
-                'require_gdal_version: values must be a tuple, list, or set')
+                "require_gdal_version: values must be a tuple, list, or set"
+            )
 
     version = GDALVersion.parse(version)
     runtime = GDALVersion.runtime()
-    inequality = '>=' if runtime < version else '<='
-    reason = '\n{0}'.format(reason) if reason else reason
+    inequality = ">=" if runtime < version else "<="
+    reason = "\n{0}".format(reason) if reason else reason
 
     def decorator(f):
         @wraps(f)
         def wrapper(*args, **kwds):
-            if ((runtime < version and not is_max_version) or
-                    (is_max_version and runtime > version)):
+            if (runtime < version and not is_max_version) or (
+                is_max_version and runtime > version
+            ):
 
                 if param is None:
                     raise GDALVersionError(
                         "GDAL version must be {0} {1}{2}".format(
-                            inequality, str(version), reason))
+                            inequality, str(version), reason
+                        )
+                    )
 
                 # normalize args and kwds to dict
                 argspec = getargspec(f)
                 full_kwds = kwds.copy()
 
                 if argspec.args:
-                    full_kwds.update(dict(zip(argspec.args[:len(args)], args)))
+                    full_kwds.update(dict(zip(argspec.args[: len(args)], args)))
 
                 if argspec.defaults:
-                    defaults = dict(zip(
-                        reversed(argspec.args), reversed(argspec.defaults)))
+                    defaults = dict(
+                        zip(reversed(argspec.args), reversed(argspec.defaults))
+                    )
                 else:
                     defaults = {}
 
                 if param in full_kwds:
                     if values is None:
                         if param not in defaults or (
-                                full_kwds[param] != defaults[param]):
+                            full_kwds[param] != defaults[param]
+                        ):
                             raise GDALVersionError(
                                 'usage of parameter "{0}" requires '
-                                'GDAL {1} {2}{3}'.format(param, inequality,
-                                                         version, reason))
+                                "GDAL {1} {2}{3}".format(
+                                    param, inequality, version, reason
+                                )
+                            )
 
                     elif full_kwds[param] in values:
                         raise GDALVersionError(
                             'parameter "{0}={1}" requires '
-                            'GDAL {2} {3}{4}'.format(
-                                param, full_kwds[param], inequality, version, reason))
+                            "GDAL {2} {3}{4}".format(
+                                param, full_kwds[param], inequality, version, reason
+                            )
+                        )
 
             return f(*args, **kwds)
 
@@ -597,7 +661,7 @@ def require_gdal_version(version, param=None, values=None, is_max_version=False,
 
 # Patch the environment if needed, such as in the installed wheel case.
 
-if 'GDAL_DATA' not in os.environ:
+if "GDAL_DATA" not in os.environ:
 
     path = GDALDataFinder().search_wheel()
 

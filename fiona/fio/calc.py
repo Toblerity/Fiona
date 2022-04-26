@@ -57,7 +57,7 @@ def calc(ctx, property_name, expression, overwrite, use_rs):
                     feat, expression)
 
                 if use_rs:
-                    click.echo(u'\u001e', nl=False)
+                    click.echo('\x1e', nl=False)
                 click.echo(json.dumps(feat, cls=ObjectEncoder))
 
     except Exception:

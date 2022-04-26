@@ -167,7 +167,7 @@ class ReadingTest(unittest.TestCase):
         assert f['id'] == "2"
 
     def test_no_write(self):
-        with pytest.raises(IOError):
+        with pytest.raises(OSError):
             self.c.write({})
 
     def test_iter_items_list(self):

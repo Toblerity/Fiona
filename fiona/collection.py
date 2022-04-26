@@ -199,7 +199,7 @@ class Collection(object):
             elif self.mode in ('a', 'w'):
                 self.session = WritingSession()
                 self.session.start(self, **kwargs)
-        except IOError:
+        except OSError:
             self.session = None
             raise
 
@@ -383,7 +383,7 @@ class Collection(object):
         if self.closed:
             raise ValueError("I/O operation on closed collection")
         elif self.mode != 'r':
-            raise IOError("collection not open for reading")
+            raise OSError("collection not open for reading")
         if args:
             s = slice(*args)
             start = s.start
@@ -415,7 +415,7 @@ class Collection(object):
         if self.closed:
             raise ValueError("I/O operation on closed collection")
         elif self.mode != 'r':
-            raise IOError("collection not open for reading")
+            raise OSError("collection not open for reading")
         if args:
             s = slice(*args)
             start = s.start
@@ -446,7 +446,7 @@ class Collection(object):
         if self.closed:
             raise ValueError("I/O operation on closed collection")
         elif self.mode != 'r':
-            raise IOError("collection not open for reading")
+            raise OSError("collection not open for reading")
         if args:
             s = slice(*args)
             start = s.start
@@ -493,7 +493,7 @@ class Collection(object):
         if self.closed:
             raise ValueError("I/O operation on closed collection")
         if self.mode not in ('a', 'w'):
-            raise IOError("collection not open for writing")
+            raise OSError("collection not open for writing")
         self.session.writerecs(records, self)
         self._len = self.session.get_length()
         self._bounds = None
@@ -710,11 +710,11 @@ class BytesCollection(Collection):
         self.virtual_file = buffer_to_virtual_file(self.bytesbuf, ext=ext)
 
         # Instantiate the parent class.
-        super(BytesCollection, self).__init__(self.virtual_file, vsi=filetype, **kwds)
+        super().__init__(self.virtual_file, vsi=filetype, **kwds)
 
     def close(self):
         """Removes the virtual file associated with the class."""
-        super(BytesCollection, self).close()
+        super().close()
         if self.virtual_file:
             remove_virtual_file(self.virtual_file)
             self.virtual_file = None

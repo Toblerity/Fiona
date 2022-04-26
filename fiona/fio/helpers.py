@@ -17,14 +17,14 @@ warnings.simplefilter('default')
 def obj_gen(lines, object_hook=None):
     """Return a generator of JSON objects loaded from ``lines``."""
     first_line = next(lines)
-    if first_line.startswith(u'\x1e'):
+    if first_line.startswith('\x1e'):
         def gen():
-            buffer = first_line.strip(u'\x1e')
+            buffer = first_line.strip('\x1e')
             for line in lines:
-                if line.startswith(u'\x1e'):
+                if line.startswith('\x1e'):
                     if buffer:
                         yield json.loads(buffer, object_hook=object_hook)
-                    buffer = line.strip(u'\x1e')
+                    buffer = line.strip('\x1e')
                 else:
                     buffer += line
             else:

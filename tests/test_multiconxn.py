@@ -1,7 +1,8 @@
+from collections import OrderedDict
+
 import pytest
 
 import fiona
-from fiona.compat import OrderedDict
 from fiona.model import Feature, Geometry
 
 
