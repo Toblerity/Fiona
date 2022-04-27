@@ -325,19 +325,13 @@ locations on your system (via your system's package manager), you can do this::
   (fiona_env)$ cd Fiona
   (fiona_env)$ pip install cython
   (fiona_env)$ pip install -e .[test]
-  (fiona_env)$ py.test
-
-Or you can use the ``pep-518-install`` script::
-
-  (fiona_env)$ git clone git://github.com/Toblerity/Fiona.git
-  (fiona_env)$ cd Fiona
-  (fiona_env)$ ./pep-518-install
+  (fiona_env)$ pytest
 
 If you have a non-standard environment, you'll need to specify the include and
 lib dirs and GDAL library on the command line::
 
   (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal --gdalversion 2 develop
-  (fiona_env)$ py.test
+  (fiona_env)$ pytest
 
 .. _GDAL: https://gdal.org
 .. _pyproj: https://pypi.org/project/pyproj/
