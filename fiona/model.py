@@ -5,9 +5,9 @@ from collections import OrderedDict
 import itertools
 from json import JSONEncoder
 from warnings import warn
+from collections.abc import MutableMapping
 
 from fiona.errors import FionaDeprecationWarning
-from fiona.compat import MutableMapping
 
 
 # Mapping of OGR integer geometry types to GeoJSON type names.

@@ -10,8 +10,6 @@ here we use mappings:
     {'proj': 'longlat', 'ellps': 'WGS84', 'datum': 'WGS84', 'no_defs': True}
 """
 
-from six import string_types
-
 
 def to_string(crs):
     """Turn a parameter mapping into a more conventional PROJ.4 string.
@@ -24,8 +22,7 @@ def to_string(crs):
     items = []
     for k, v in sorted(filter(
             lambda x: x[0] in all_proj_keys and x[1] is not False and (
-                isinstance(x[1], (bool, int, float)) or
-                isinstance(x[1], string_types)),
+                isinstance(x[1], (bool, int, float, str))),
             crs.items())):
         items.append(
             "+" + "=".join(

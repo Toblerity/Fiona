@@ -6,13 +6,13 @@ from __future__ import absolute_import
 
 import logging
 import warnings
+from collections import UserDict
 
 from fiona cimport _cpl, _crs, _csl, _geometry
 from fiona._crs cimport OGRSpatialReferenceH
 from fiona._shim cimport osr_set_traditional_axis_mapping_strategy
 
-from fiona.compat import UserDict, DICT_TYPES
-from fiona.compat import UserDict
+from fiona.compat import DICT_TYPES
 from fiona.model import Geometry
 
 

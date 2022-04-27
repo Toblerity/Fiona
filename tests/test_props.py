@@ -1,6 +1,5 @@
 import json
 import os.path
-from six import text_type
 import tempfile
 
 import fiona
@@ -20,8 +19,8 @@ def test_width_other():
 
 
 def test_types():
-    assert prop_type('str:254') == text_type
-    assert prop_type('str') == text_type
+    assert prop_type('str:254') == str
+    assert prop_type('str') == str
     assert isinstance(0, prop_type('int'))
     assert isinstance(0.0, prop_type('float'))
     assert prop_type('date') == FionaDateType
@@ -189,7 +188,7 @@ def test_json_prop_decode_non_geojson_driver():
     with fiona.open(filename) as src:
         actual = next(iter(src))
 
-    assert isinstance(actual['properties']['ulc'], text_type)
+    assert isinstance(actual['properties']['ulc'], str)
     a = json.loads(actual['properties']['ulc'])
     e = json.loads(actual['properties']['ulc'])
     assert e == a

@@ -236,7 +236,7 @@ gdal``).
 Python Requirements
 -------------------
 
-Fiona depends on the modules ``six``, ``cligj``,  and ``munch``.
+Fiona depends on the modules ``cligj`` and ``munch``.
 Pip will fetch these requirements for you, but users installing Fiona from a
 Windows installer must get them separately.
 
