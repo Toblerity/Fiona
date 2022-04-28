@@ -2,7 +2,6 @@
 
 
 import pytest
-import six
 
 import fiona
 
@@ -16,7 +15,6 @@ class TestReading(object):
         yield
         self.c.close()
 
-    @pytest.mark.skipif(six.PY2, reason='string are bytes in Python 2')
     def test_construct_with_str(self, path_coutwildrnp_json):
         with open(path_coutwildrnp_json) as src:
             strbuf = src.read()

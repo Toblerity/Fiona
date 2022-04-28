@@ -15,6 +15,7 @@ Changes:
   fiona.model.Properties.
 - GDAL 3.1.0 is the minimum GDAL version.
 - Drop Python 2, and establish Python 3.7 as the minimum version (#1079).
+- Remove six and reduce footprint of fiona.compat (#985).
 
 Deprecations:
 

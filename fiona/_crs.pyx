@@ -7,8 +7,6 @@ from __future__ import absolute_import
 
 import logging
 
-from six import string_types
-
 from fiona cimport _cpl
 from fiona._err cimport exc_wrap_pointer
 from fiona._err import CPLE_BaseError
@@ -38,7 +36,7 @@ def crs_to_wkt(crs):
         crs = crs.to_wkt()
 
     # First, check for CRS strings like "EPSG:3857".
-    if isinstance(crs, string_types):
+    if isinstance(crs, str):
         proj_b = crs.encode('utf-8')
         proj_c = proj_b
         OSRSetFromUserInput(cogr_srs, proj_c)

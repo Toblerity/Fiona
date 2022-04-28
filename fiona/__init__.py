@@ -68,7 +68,6 @@ import os
 import sys
 import warnings
 import platform
-from six import string_types
 from collections import OrderedDict
 
 try:
@@ -348,7 +347,7 @@ def listdir(path):
     """
     if isinstance(path, Path):
         path = str(path)
-    if not isinstance(path, string_types):
+    if not isinstance(path, str):
         raise TypeError("invalid path: %r" % path)
     pobj = parse_path(path)
     return _listdir(vsi_path(pobj))
@@ -382,9 +381,9 @@ def listlayers(fp, vfs=None):
         if isinstance(fp, Path):
             fp = str(fp)
 
-        if not isinstance(fp, string_types):
+        if not isinstance(fp, str):
             raise TypeError("invalid path: %r" % fp)
-        if vfs and not isinstance(vfs, string_types):
+        if vfs and not isinstance(vfs, str):
             raise TypeError("invalid vfs: %r" % vfs)
 
         if vfs:

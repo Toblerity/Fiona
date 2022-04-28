@@ -1,6 +1,7 @@
 """Fiona's GDAL/AWS environment"""
 
 from functools import wraps, total_ordering
+from inspect import getfullargspec
 import logging
 import os
 import re
@@ -8,7 +9,6 @@ import threading
 import warnings
 
 import attr
-from six import string_types
 
 import fiona._loading
 
@@ -24,7 +24,6 @@ with fiona._loading.add_gdal_dll_directories():
         set_gdal_config,
         set_proj_data_search_path,
     )
-    from fiona.compat import getargspec
     from fiona.errors import EnvError, FionaDeprecationWarning, GDALVersionError
     from fiona.session import Session, DummySession
 
@@ -514,7 +513,7 @@ class GDALVersion(object):
             return input
         if isinstance(input, tuple):
             return cls(*input)
-        elif isinstance(input, string_types):
+        elif isinstance(input, str):
             # Extract major and minor version components.
             # alpha, beta, rc suffixes ignored
             match = re.search(r"^\d+\.\d+", input)
@@ -619,7 +618,7 @@ def require_gdal_version(
                     )
 
                 # normalize args and kwds to dict
-                argspec = getargspec(f)
+                argspec = getfullargspec(f)
                 full_kwds = kwds.copy()
 
                 if argspec.args:

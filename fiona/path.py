@@ -5,7 +5,7 @@ import sys
 
 import attr
 
-from fiona.compat import urlparse
+from urllib.parse import urlparse
 
 # Supported URI schemes and their mapping to GDAL's VSI suffix.
 # TODO: extend for other cloud plaforms.

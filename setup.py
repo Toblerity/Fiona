@@ -272,7 +272,6 @@ requirements = [
     'click>=4.0',
     'cligj>=0.5',
     'click-plugins>=1.0',
-    'six>=1.7',
     'munch',
     "setuptools",
 ]
