@@ -202,6 +202,16 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
     crs_wkt : str
         An optional WKT representation of a coordinate reference
         system.
+    ignore_fields : list
+        List of field names to ignore on load.
+    ignore_geometry : bool
+        Ignore the geometry on load.
+    include_fields : list
+        List of a subset of field names to include on load.
+    wkt_version : str
+        WKT Version to use to for the CRS
+        (WKT1, WKT1_GDAL, WKT1_ESRI, WKT2, WKT2_2015, WKT2_2018).
+        Defaults to GDAL's default (WKT1_GDAL for GDAL 3).
     kwargs : mapping
         Other driver-specific parameters that will be interpreted by
         the OGR library as layer creation or opening options.
