@@ -49,10 +49,6 @@ with open('CREDITS.txt', **open_kwds) as f:
 with open('CHANGES.txt', **open_kwds) as f:
     changes = f.read()
 
-# Set a flag for builds where the source directory is a repo checkout.
-source_is_repo = os.path.exists("MANIFEST.in")
-
-
 # Extend distutil's sdist command to generate C extension sources from
 # the _shim extension modules for GDAL 1.x and 2.x.
 class sdist_multi_gdal(sdist):
@@ -199,7 +195,7 @@ if sys.platform != "win32":
 # Define the extension modules.
 ext_modules = []
 
-if source_is_repo and "clean" not in sys.argv:
+if "clean" not in sys.argv:
     # When building from a repo, Cython is required.
     log.info("MANIFEST.in found, presume a repo, cythonizing...")
     if not cythonize:

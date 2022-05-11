@@ -2,11 +2,11 @@ global-exclude .DS_Store
 global-exclude *.pyc
 recursive-exclude docs/data *
 recursive-exclude docs/_build *
-exclude MANIFEST.in
 exclude *.txt *.py
 recursive-include docs *.rst *.txt
 recursive-include tests *.py
 recursive-include tests/data *
-include fiona/*.c fiona/*.cpp
-include CHANGES.txt CREDITS.txt LICENSE.txt VERSION.txt README.rst
-include benchmark.py setup.py requirements.txt
+recursive-include fiona *.pyx *.pxd *.pxi
+recursive-exclude fiona *.c *.cpp
+include CHANGES.txt CITATION.txt CREDITS.txt LICENSE.txt VERSION.txt README.rst
+include benchmark.py pyproject.toml setup.py requirements.txt
