@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import os
+
 from fiona.env import Env
 from fiona._env import get_gdal_version_tuple
 
@@ -148,7 +150,6 @@ supported_drivers = dict([
     #   ("XPLANE", "r")
 ])
 
-
 # Minimal gdal version for different modes
 driver_mode_mingdal = {
 
@@ -200,6 +201,53 @@ def _filter_supported_drivers():
 
 
 _filter_supported_drivers()
+
+
+def vector_driver_extensions():
+    """
+    Returns
+    -------
+    dict:
+        Map of extensions to the driver.
+    """
+    from fiona.meta import extensions  # prevent circular import
+
+    extension_to_driver = {}
+    for drv, modes in supported_drivers.items():
+        # update extensions based on driver suppport
+        for extension in extensions(drv) or ():
+            if "w" in modes:
+                extension_to_driver[extension] = extension_to_driver.get(extension, drv)
+    return extension_to_driver
+
+
+def driver_from_extension(path):
+    """
+    Attempt to auto-detect driver based on the extension.
+
+    Parameters
+    ----------
+    path: str or pathlike object
+        The path to the dataset to write with.
+
+    Returns
+    -------
+    str:
+        The name of the driver for the extension.
+    """
+    try:
+        # in case the path is a file handle
+        # or a partsed path
+        path = path.name
+    except AttributeError:
+        pass
+
+    driver_extensions = vector_driver_extensions()
+
+    try:
+        return driver_extensions[os.path.splitext(path)[-1].lstrip(".").lower()]
+    except KeyError:
+        raise ValueError("Unable to detect driver. Please specify driver.")
 
 # driver_converts_to_str contains field type, driver combinations that are silently converted to string
 # None: field type is always converted to str

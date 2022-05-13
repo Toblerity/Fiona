@@ -985,3 +985,23 @@ def test_collection__empty_column_name(tmpdir):
             }
         with pytest.warns(UserWarning, match="Empty field name at index 0"):
             next(tmp)
+
+
+@pytest.mark.parametrize("extension, driver", [
+    ("shp", "ESRI Shapefile"),
+    ("geojson", "GeoJSON"),
+    ("json", "GeoJSON"),
+    ("gpkg", "GPKG"),
+    ("SHP", "ESRI Shapefile"),
+])
+def test_driver_detection(tmpdir, extension, driver):
+    with fiona.open(
+        str(tmpdir.join("test.{}".format(extension))),
+        "w",
+        schema={
+            'geometry': 'MultiLineString',
+            'properties': {'title': 'str', 'date': 'date'}
+        },
+        crs="EPSG:4326",
+    ) as output:
+        assert output.driver == driver
