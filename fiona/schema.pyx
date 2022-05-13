@@ -1,5 +1,3 @@
-from six import text_type
-
 from fiona.errors import SchemaError
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 
@@ -39,7 +37,7 @@ FIELD_TYPES = [
 FIELD_TYPES_MAP = {
     'int32': int,
     'float': float,
-    'str': text_type,
+    'str': str,
     'date': FionaDateType,
     'time': FionaTimeType,
     'datetime': FionaDateTimeType,

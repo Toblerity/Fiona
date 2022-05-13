@@ -1,7 +1,7 @@
 """Unittests to verify Fiona is functioning properly with other software."""
 
 
-import six
+from collections import UserDict
 
 import fiona
 
@@ -14,7 +14,7 @@ def test_dict_subclass(tmpdir):
     not a subclass of `collections.Mapping()`, so it provides an edge case.
     """
 
-    class CRS(six.moves.UserDict):
+    class CRS(UserDict):
         pass
 
     outfile = str(tmpdir.join('test_UserDict.geojson'))

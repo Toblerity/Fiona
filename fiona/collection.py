@@ -27,13 +27,13 @@ with fiona._loading.add_gdal_dll_directories():
     from fiona.env import env_ctx_if_needed
     from fiona.errors import FionaDeprecationWarning
     from fiona.drvsupport import (
+        driver_from_extension,
         supported_drivers,
         driver_mode_mingdal,
         _driver_converts_field_type_silently_to_str,
         _driver_supports_field,
     )
     from fiona.path import Path, vsi_path, parse_path
-    from six import string_types, binary_type
 
 
 _GDAL_VERSION_TUPLE = get_gdal_version_tuple()
@@ -55,6 +55,7 @@ class Collection(object):
                  encoding=None, layer=None, vsi=None, archive=None,
                  enabled_drivers=None, crs_wkt=None, ignore_fields=None,
                  ignore_geometry=False, include_fields=None,
+                 wkt_version=None,
                  **kwargs):
 
         """The required ``path`` is the absolute or relative path to
@@ -72,29 +73,32 @@ class Collection(object):
         options.
         """
 
-        if not isinstance(path, (string_types, Path)):
+        if not isinstance(path, (str, Path)):
             raise TypeError("invalid path: %r" % path)
-        if not isinstance(mode, string_types) or mode not in ('r', 'w', 'a'):
+        if not isinstance(mode, str) or mode not in ('r', 'w', 'a'):
             raise TypeError("invalid mode: %r" % mode)
-        if driver and not isinstance(driver, string_types):
+        if driver and not isinstance(driver, str):
             raise TypeError("invalid driver: %r" % driver)
         if schema and not hasattr(schema, 'get'):
             raise TypeError("invalid schema: %r" % schema)
-        if crs and not isinstance(crs, compat.DICT_TYPES + string_types):
+        if crs and not isinstance(crs, compat.DICT_TYPES + (str,)):
             raise TypeError("invalid crs: %r" % crs)
-        if crs_wkt and not isinstance(crs_wkt, string_types):
+        if crs_wkt and not isinstance(crs_wkt, str):
             raise TypeError("invalid crs_wkt: %r" % crs_wkt)
-        if encoding and not isinstance(encoding, string_types):
+        if encoding and not isinstance(encoding, str):
             raise TypeError("invalid encoding: %r" % encoding)
-        if layer and not isinstance(layer, tuple(list(string_types) + [int])):
+        if layer and not isinstance(layer, (str, int)):
             raise TypeError("invalid name: %r" % layer)
         if vsi:
-            if not isinstance(vsi, string_types) or not vfs.valid_vsi(vsi):
+            if not isinstance(vsi, str) or not vfs.valid_vsi(vsi):
                 raise TypeError("invalid vsi: %r" % vsi)
-        if archive and not isinstance(archive, string_types):
+        if archive and not isinstance(archive, str):
             raise TypeError("invalid archive: %r" % archive)
         if ignore_fields is not None and include_fields is not None:
             raise ValueError("Cannot specify both 'ignore_fields' and 'include_fields'")
+
+        if mode == "w" and driver is None:
+            driver = driver_from_extension(path)
 
         # Check GDAL version against drivers
         if (
@@ -128,6 +132,17 @@ class Collection(object):
         self.ignore_fields = ignore_fields
         self.ignore_geometry = bool(ignore_geometry)
 
+        # Check GDAL version against drivers
+        if driver in driver_mode_mingdal[mode] and get_gdal_version_tuple() < driver_mode_mingdal[mode][driver]:
+            min_gdal_version = ".".join(list(map(str, driver_mode_mingdal[mode][driver])))
+
+            raise DriverError(
+                "{driver} driver requires at least GDAL {min_gdal_version} for mode '{mode}', "
+                "Fiona was compiled against: {gdal}".format(driver=driver,
+                                                            mode=mode,
+                                                            min_gdal_version=min_gdal_version,
+                                                            gdal=get_gdal_release_name()))
+
         if vsi:
             self.path = vfs.vsi_path(path, vsi, archive)
             path = parse_path(self.path)
@@ -136,7 +151,7 @@ class Collection(object):
             self.path = vsi_path(path)
 
         if mode == 'w':
-            if layer and not isinstance(layer, string_types):
+            if layer and not isinstance(layer, str):
                 raise ValueError("in 'w' mode, layer names must be strings")
             if driver == 'GeoJSON':
                 if layer is not None:
@@ -181,7 +196,7 @@ class Collection(object):
 
             self._check_schema_driver_support()
             if crs_wkt or crs:
-                self._crs_wkt = crs_to_wkt(crs_wkt or crs)
+                self._crs_wkt = crs_to_wkt(crs_wkt or crs, wkt_version=wkt_version)
 
         self._driver = driver
         kwargs.update(encoding=encoding)
@@ -194,7 +209,7 @@ class Collection(object):
             elif self.mode in ('a', 'w'):
                 self.session = WritingSession()
                 self.session.start(self, **kwargs)
-        except IOError:
+        except OSError:
             self.session = None
             raise
 
@@ -378,7 +393,7 @@ class Collection(object):
         if self.closed:
             raise ValueError("I/O operation on closed collection")
         elif self.mode != 'r':
-            raise IOError("collection not open for reading")
+            raise OSError("collection not open for reading")
         if args:
             s = slice(*args)
             start = s.start
@@ -410,7 +425,7 @@ class Collection(object):
         if self.closed:
             raise ValueError("I/O operation on closed collection")
         elif self.mode != 'r':
-            raise IOError("collection not open for reading")
+            raise OSError("collection not open for reading")
         if args:
             s = slice(*args)
             start = s.start
@@ -441,7 +456,7 @@ class Collection(object):
         if self.closed:
             raise ValueError("I/O operation on closed collection")
         elif self.mode != 'r':
-            raise IOError("collection not open for reading")
+            raise OSError("collection not open for reading")
         if args:
             s = slice(*args)
             start = s.start
@@ -488,7 +503,7 @@ class Collection(object):
         if self.closed:
             raise ValueError("I/O operation on closed collection")
         if self.mode not in ('a', 'w'):
-            raise IOError("collection not open for writing")
+            raise OSError("collection not open for writing")
         self.session.writerecs(records, self)
         self._len = self.session.get_length()
         self._bounds = None
@@ -646,7 +661,7 @@ ALL_GEOMETRY_TYPES.add("None")
 def _get_valid_geom_types(schema, driver):
     """Returns a set of geometry types the schema will accept"""
     schema_geom_type = schema["geometry"]
-    if isinstance(schema_geom_type, string_types) or schema_geom_type is None:
+    if isinstance(schema_geom_type, str) or schema_geom_type is None:
         schema_geom_type = (schema_geom_type,)
     valid_types = set()
     for geom_type in schema_geom_type:
@@ -685,7 +700,7 @@ class BytesCollection(Collection):
         """Takes buffer of bytes whose contents is something we'd like
         to open with Fiona and maps it to a virtual file.
         """
-        if not isinstance(bytesbuf, binary_type):
+        if not isinstance(bytesbuf, bytes):
             raise ValueError("input buffer must be bytes")
 
         # Hold a reference to the buffer, as bad things will happen if
@@ -705,12 +720,11 @@ class BytesCollection(Collection):
         self.virtual_file = buffer_to_virtual_file(self.bytesbuf, ext=ext)
 
         # Instantiate the parent class.
-        super(BytesCollection, self).__init__(self.virtual_file, vsi=filetype,
-                                              encoding='utf-8', **kwds)
+        super().__init__(self.virtual_file, vsi=filetype, **kwds)
 
     def close(self):
         """Removes the virtual file associated with the class."""
-        super(BytesCollection, self).close()
+        super().close()
         if self.virtual_file:
             remove_virtual_file(self.virtual_file)
             self.virtual_file = None

@@ -1,7 +1,6 @@
-"""$ fio collect"""
+"""fio-collect"""
 
-
-from functools import partial, wraps
+from functools import partial
 import json
 import logging
 
@@ -9,6 +8,7 @@ import click
 import cligj
 
 from fiona.fio import helpers, options, with_context_env
+from fiona.model import Feature, ObjectEncoder
 from fiona.transform import transform_geom
 
 
@@ -60,44 +60,48 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
     # If parsing geojson
     if parse:
         # If input is RS-delimited JSON sequence.
-        if first_line.startswith(u'\x1e'):
+        if first_line.startswith('\x1e'):
             def feature_text_gen():
-                buffer = first_line.strip(u'\x1e')
+                buffer = first_line.strip('\x1e')
                 for line in stdin:
-                    if line.startswith(u'\x1e'):
+                    if line.startswith('\x1e'):
                         if buffer:
                             feat = json.loads(buffer)
                             feat['geometry'] = transformer(feat['geometry'])
-                            yield json.dumps(feat, **dump_kwds)
-                        buffer = line.strip(u'\x1e')
+                            feat = Feature.from_dict(**feat)
+                            yield json.dumps(feat, cls=ObjectEncoder, **dump_kwds)
+                        buffer = line.strip('\x1e')
                     else:
                         buffer += line
                 else:
                     feat = json.loads(buffer)
                     feat['geometry'] = transformer(feat['geometry'])
-                    yield json.dumps(feat, **dump_kwds)
+                    feat = Feature.from_dict(**feat)
+                    yield json.dumps(feat, cls=ObjectEncoder, **dump_kwds)
         else:
             def feature_text_gen():
                 feat = json.loads(first_line)
                 feat['geometry'] = transformer(feat['geometry'])
-                yield json.dumps(feat, **dump_kwds)
+                feat = Feature.from_dict(**feat)
+                yield json.dumps(feat, cls=ObjectEncoder, **dump_kwds)
 
                 for line in stdin:
                     feat = json.loads(line)
                     feat['geometry'] = transformer(feat['geometry'])
-                    yield json.dumps(feat, **dump_kwds)
+                    feat = Feature.from_dict(**feat)
+                    yield json.dumps(feat, cls=ObjectEncoder, **dump_kwds)
 
     # If *not* parsing geojson
     else:
         # If input is RS-delimited JSON sequence.
-        if first_line.startswith(u'\x1e'):
+        if first_line.startswith('\x1e'):
             def feature_text_gen():
-                buffer = first_line.strip(u'\x1e')
+                buffer = first_line.strip('\x1e')
                 for line in stdin:
-                    if line.startswith(u'\x1e'):
+                    if line.startswith('\x1e'):
                         if buffer:
                             yield buffer
-                        buffer = line.strip(u'\x1e')
+                        buffer = line.strip('\x1e')
                     else:
                         buffer += line
                 else:
@@ -124,7 +128,7 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
                 collection['@context'] = helpers.make_ld_context(
                     add_ld_context_item)
 
-            head, tail = json.dumps(collection, **dump_kwds).split('[]')
+            head, tail = json.dumps(collection, cls=ObjectEncoder, **dump_kwds).split('[]')
 
             sink.write(head)
             sink.write("[")
@@ -202,7 +206,7 @@ def collect(ctx, precision, indent, compact, record_buffered, ignore_errors,
                 collection['@context'] = helpers.make_ld_context(
                     add_ld_context_item)
 
-            head, tail = json.dumps(collection, **dump_kwds).split('[]')
+            head, tail = json.dumps(collection, cls=ObjectEncoder, **dump_kwds).split('[]')
             sink.write(head)
             sink.write("[")
             sink.write(",".join(source))

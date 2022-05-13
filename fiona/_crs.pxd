@@ -1,4 +1,6 @@
 # Coordinate system and transform API functions.
+cdef extern from "ogr_core.h":
+    ctypedef int OGRErr
 
 cdef extern from "ogr_srs_api.h":
 
@@ -19,3 +21,5 @@ cdef extern from "ogr_srs_api.h":
     void *  OCTNewCoordinateTransformation (OGRSpatialReferenceH source, OGRSpatialReferenceH dest)
     void    OCTDestroyCoordinateTransformation (void *source)
     int     OCTTransform (void *ct, int nCount, double *x, double *y, double *z)
+    OGRErr OSRExportToWktEx(OGRSpatialReferenceH, char ** ppszResult,
+                            const char* const* papszOptions)

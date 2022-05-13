@@ -10,10 +10,8 @@ import logging
 import os
 import warnings
 import math
+from collections import namedtuple, OrderedDict
 from uuid import uuid4
-from collections import namedtuple
-
-from six import integer_types, string_types, text_type
 
 from fiona._shim cimport *
 
@@ -27,16 +25,17 @@ from fiona._env import get_gdal_version_num, calc_gdal_version_num, get_gdal_ver
 from fiona._err import cpl_errs, FionaNullPointerError, CPLE_BaseError, CPLE_OpenFailedError
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
+from fiona.compat import strencode
 from fiona.env import Env
 from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
     FeatureWarning, FionaDeprecationWarning)
-from fiona.compat import OrderedDict, strencode
+from fiona.model import Feature, Properties
+from fiona.path import vsi_path
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 from fiona.schema import FIELD_TYPES, FIELD_TYPES_MAP, normalize_field_type
-from fiona.path import vsi_path
 
 from fiona._shim cimport is_field_null, osr_get_name, osr_set_traditional_axis_mapping_strategy
 
@@ -181,11 +180,6 @@ cdef class FeatureBuilder:
         # Skeleton of the feature to be returned.
         fid = OGR_F_GetFID(feature)
         props = OrderedDict()
-        fiona_feature = {
-            "type": "Feature",
-            "id": str(fid),
-            "properties": props,
-        }
 
         ignore_fields = set(ignore_fields or [])
 
@@ -235,7 +229,7 @@ cdef class FeatureBuilder:
             elif fieldtype is float:
                 props[key] = OGR_F_GetFieldAsDouble(feature, i)
 
-            elif fieldtype is text_type:
+            elif fieldtype is str:
                 val = OGR_F_GetFieldAsString(feature, i)
                 try:
                     val = val.decode(encoding)
@@ -288,6 +282,8 @@ cdef class FeatureBuilder:
         cdef void *cogr_geometry = NULL
         cdef void *org_geometry = NULL
 
+        geom = None
+
         if not ignore_geometry:
             cogr_geometry = OGR_F_GetGeometryRef(feature)
 
@@ -316,13 +312,7 @@ cdef class FeatureBuilder:
                 else:
                     geom = GeomBuilder().build(cogr_geometry)
 
-                fiona_feature["geometry"] = geom
-
-            else:
-
-                fiona_feature["geometry"] = None
-
-        return fiona_feature
+        return Feature(id=str(fid), properties=Properties(**props), geometry=geom)
 
 
 cdef class OGRFeatureBuilder:
@@ -372,7 +362,7 @@ cdef class OGRFeatureBuilder:
                 value = json.dumps(value)
 
             # Continue over the standard OGR types.
-            if isinstance(value, integer_types):
+            if isinstance(value, int):
                 if schema_type == 'int32':
                     OGR_F_SetFieldInteger(cogr_feature, i, value)
                 else:
@@ -381,7 +371,7 @@ cdef class OGRFeatureBuilder:
             elif isinstance(value, float):
                 OGR_F_SetFieldDouble(cogr_feature, i, value)
             elif schema_type in ['date', 'time', 'datetime'] and value is not None:
-                if isinstance(value, string_types):
+                if isinstance(value, str):
                     if schema_type == 'date':
                         y, m, d, hh, mm, ss, ms, tz = parse_date(value)
                     elif schema_type == 'time':
@@ -440,7 +430,7 @@ cdef class OGRFeatureBuilder:
                 string_c = value
                 OGR_F_SetFieldBinary(cogr_feature, i, len(value),
                     <unsigned char*>string_c)
-            elif isinstance(value, string_types):
+            elif isinstance(value, str):
                 value_bytes = strencode(value, encoding)
                 string_c = value_bytes
                 OGR_F_SetFieldString(cogr_feature, i, string_c)
@@ -483,12 +473,14 @@ cdef class Session:
     cdef object _fileencoding
     cdef object _encoding
     cdef object collection
+    cdef bint cursor_interrupted
 
     def __init__(self):
         self.cogr_ds = NULL
         self.cogr_layer = NULL
         self._fileencoding = None
         self._encoding = None
+        self.cursor_interrupted = False
 
     def __dealloc__(self):
         self.stop()
@@ -520,7 +512,7 @@ cdef class Session:
 
         self.cogr_ds = gdal_open_vector(path_c, 0, drivers, kwargs)
 
-        if isinstance(collection.name, string_types):
+        if isinstance(collection.name, str):
             name_b = collection.name.encode('utf-8')
             name_c = name_b
             self.cogr_layer = GDALDatasetGetLayerByName(self.cogr_ds, name_c)
@@ -614,7 +606,7 @@ cdef class Session:
     def get_length(self):
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
-        return OGR_L_GetFeatureCount(self.cogr_layer, 0)
+        return self._get_feature_count(0)
 
     def get_driver(self):
         cdef void *cogr_driver = GDALGetDatasetDriver(self.cogr_ds)
@@ -836,11 +828,17 @@ cdef class Session:
             raise ValueError("Null layer")
 
         result = OGR_L_GetExtent(self.cogr_layer, &extent, 1)
-        
+        self.cursor_interrupted = True
         if result != OGRERR_NONE:
             raise DriverError("Driver was not able to calculate bounds")
-
         return (extent.MinX, extent.MinY, extent.MaxX, extent.MaxY)
+
+    cdef int _get_feature_count(self, force=0):
+        if self.cogr_layer == NULL:
+            raise ValueError("Null layer")
+
+        self.cursor_interrupted = True
+        return OGR_L_GetFeatureCount(self.cogr_layer, force)
 
     def has_feature(self, fid):
         """Provides access to feature data by FID.
@@ -891,7 +889,7 @@ cdef class Session:
             index = item
             # from the back
             if index < 0:
-                ftcount = OGR_L_GetFeatureCount(self.cogr_layer, 0)
+                ftcount = self._get_feature_count(0)
                 if ftcount == -1:
                     raise IndexError(
                         "collection's dataset does not support negative indexes")
@@ -1016,7 +1014,7 @@ cdef class WritingSession(Session):
             try:
                 self.cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
 
-                if isinstance(collection.name, string_types):
+                if isinstance(collection.name, str):
                     name_b = collection.name.encode('utf-8')
                     name_c = name_b
                     self.cogr_layer = exc_wrap_pointer(GDALDatasetGetLayerByName(self.cogr_ds, name_c))
@@ -1028,7 +1026,7 @@ cdef class WritingSession(Session):
                 GDALClose(self.cogr_ds)
                 self.cogr_ds = NULL
                 self.cogr_layer = NULL
-                raise DriverError(u"{}".format(exc))
+                raise DriverError(str(exc))
 
             else:
                 self._fileencoding = userencoding or self._get_fallback_encoding()
@@ -1045,7 +1043,8 @@ cdef class WritingSession(Session):
 
             if not CPLCheckForFile(path_c, NULL):
                 log.debug("File doesn't exist. Creating a new one...")
-                cogr_ds = gdal_create(cogr_driver, path_c, {})
+                with Env(GDAL_VALIDATE_CREATION_OPTIONS="NO"):
+                    cogr_ds = gdal_create(cogr_driver, path_c, kwargs)
 
             else:
                 if collection.driver == "GeoJSON":
@@ -1097,7 +1096,7 @@ cdef class WritingSession(Session):
                 GDALClose(self.cogr_ds)
                 self.cogr_ds = NULL
                 self.cogr_layer = NULL
-                raise CRSError(u"{}".format(exc))
+                raise CRSError(str(exc))
 
             # Determine which encoding to use. The encoding parameter given to
             # the collection constructor takes highest precedence, then
@@ -1122,7 +1121,7 @@ cdef class WritingSession(Session):
                 layer_names.append(name_b.decode('utf-8'))
 
             idx = -1
-            if isinstance(collection.name, string_types):
+            if isinstance(collection.name, str):
                 if collection.name in layer_names:
                     idx = layer_names.index(collection.name)
             elif isinstance(collection.name, int):
@@ -1156,7 +1155,7 @@ cdef class WritingSession(Session):
                 options = CSLAddNameValue(options, <const char *>k, <const char *>v)
 
             geometry_type = collection.schema.get("geometry", "Unknown")
-            if not isinstance(geometry_type, string_types) and geometry_type is not None:
+            if not isinstance(geometry_type, str) and geometry_type is not None:
                 geometry_types = set(geometry_type)
                 if len(geometry_types) > 1:
                     geometry_type = "Unknown"
@@ -1175,7 +1174,7 @@ cdef class WritingSession(Session):
             except Exception as exc:
                 GDALClose(self.cogr_ds)
                 self.cogr_ds = NULL
-                raise DriverIOError(u"{}".format(exc))
+                raise DriverIOError(str(exc))
 
             finally:
                 if options != NULL:
@@ -1261,7 +1260,7 @@ cdef class WritingSession(Session):
                     GDALClose(self.cogr_ds)
                     self.cogr_ds = NULL
                     self.cogr_layer = NULL
-                    raise SchemaError(u"{}".format(exc))
+                    raise SchemaError(str(exc))
 
                 else:
                     OGR_Fld_Destroy(cogr_fielddefn)
@@ -1506,9 +1505,9 @@ cdef class Iterator:
                 warnings.warn("Layer does not support" \
                         " OLC_FASTFEATURECOUNT, negative slices or start values other than zero" \
                         " may be slow.", RuntimeWarning)
-            self.ftcount = OGR_L_GetFeatureCount(session.cogr_layer, 1)
+            self.ftcount = session._get_feature_count(1)
         else:
-            self.ftcount = OGR_L_GetFeatureCount(session.cogr_layer, 0)
+            self.ftcount = session._get_feature_count(0)
 
         if self.ftcount == -1 and ((start is not None and start < 0) or
                               (stop is not None and stop < 0)):
@@ -1554,6 +1553,7 @@ cdef class Iterator:
         # Set OGR_L_SetNextByIndex only if within range
         if start >= 0 and (self.ftcount == -1 or self.start < self.ftcount):
             exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
+        session.cursor_interrupted = False
 
     def __iter__(self):
         return self
@@ -1582,23 +1582,40 @@ cdef class Iterator:
                 raise StopIteration
 
         # Set read cursor to next_item position
-        if self.step > 1 and self.fastindex:
+        if session.cursor_interrupted:
+            if not self.fastindex and not self.next_index == 0:
+                warnings.warn(
+                    "Sequential read of iterator was interrupted. Resetting iterator. "
+                    "This can negatively impact the performance.", RuntimeWarning
+                )
             exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
-        elif self.step > 1 and not self.fastindex and not self.next_index == self.start:
-            # GDALs default implementation of SetNextByIndex is calling ResetReading() and then
-            # calling GetNextFeature n times. We can shortcut that if we know the previous index.
-            # OGR_L_GetNextFeature increments cursor by 1, therefore self.step - 1 as one increment was performed when feature is read
-            for _ in range(self.step - 1):
-                cogr_feature = OGR_L_GetNextFeature(session.cogr_layer)
-                if cogr_feature == NULL:
-                    raise StopIteration
-        elif self.step > 1 and not self.fastindex and self.next_index == self.start:
-            exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
-        elif self.step == 0:
-            # OGR_L_GetNextFeature increments read cursor by one
-            pass
-        elif self.step < 0:
-            exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
+            session.cursor_interrupted = False
+
+        else:
+            if self.step > 1 and self.fastindex:
+                exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
+
+            elif self.step > 1 and not self.fastindex and not self.next_index == self.start:
+                # OGR's default implementation of SetNextByIndex is
+                # calling ResetReading() and then calling GetNextFeature
+                # n times. We can shortcut that if we know the previous
+                # index.  OGR_L_GetNextFeature increments cursor by 1,
+                # therefore self.step - 1 as one increment was performed
+                # when feature is read.
+                for _ in range(self.step - 1):
+                    cogr_feature = OGR_L_GetNextFeature(session.cogr_layer)
+                    if cogr_feature == NULL:
+                        raise StopIteration
+
+            elif self.step > 1 and not self.fastindex and self.next_index == self.start:
+                exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
+
+            elif self.step == 0:
+                # OGR_L_GetNextFeature increments read cursor by one
+                pass
+
+            elif self.step < 0:
+                exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
 
         # set the next index
         self.next_index += self.step
@@ -1723,7 +1740,7 @@ def _remove_layer(path, layer, driver=None):
     cdef void *cogr_ds
     cdef int layer_index
 
-    if isinstance(layer, integer_types):
+    if isinstance(layer, int):
         layer_index = layer
         layer_str = str(layer_index)
     else:
@@ -1817,7 +1834,7 @@ def buffer_to_virtual_file(bytesbuf, ext=''):
     """
 
     vsi_filename = '/vsimem/{}'.format(uuid4().hex + ext)
-    vsi_cfilename = vsi_filename if not isinstance(vsi_filename, string_types) else vsi_filename.encode('utf-8')
+    vsi_cfilename = vsi_filename if not isinstance(vsi_filename, str) else vsi_filename.encode('utf-8')
 
     vsi_handle = VSIFileFromMemBuffer(vsi_cfilename, <unsigned char *>bytesbuf, len(bytesbuf), 0)
 
@@ -1830,7 +1847,7 @@ def buffer_to_virtual_file(bytesbuf, ext=''):
 
 
 def remove_virtual_file(vsi_filename):
-    vsi_cfilename = vsi_filename if not isinstance(vsi_filename, string_types) else vsi_filename.encode('utf-8')
+    vsi_cfilename = vsi_filename if not isinstance(vsi_filename, str) else vsi_filename.encode('utf-8')
     return VSIUnlink(vsi_cfilename)
 
 
@@ -1973,6 +1990,9 @@ cdef class MemoryFileBase:
         if self._vsif != NULL:
             VSIFCloseL(self._vsif)
         self._vsif = NULL
+        # As soon as support for GDAL < 3 is dropped, we can switch
+        # to VSIRmdirRecursive.
+        VSIUnlink(self.name.encode("utf-8"))
         VSIRmdir(self._dirname.encode("utf-8"))
         self.closed = True
 

@@ -4,11 +4,11 @@ Fiona
 
 Fiona is GDAL_'s neat and nimble vector API for Python programmers.
 
-.. image:: https://travis-ci.org/Toblerity/Fiona.png?branch=master
-   :target: https://travis-ci.org/Toblerity/Fiona
+.. image:: https://github.com/Toblerity/Fiona/workflows/Linux%20CI/badge.svg?branch=maint-1.9
+   :target: https://github.com/Toblerity/Fiona/actions?query=branch%3Amaint-1.9
 
 .. image:: https://ci.appveyor.com/api/projects/status/github/Toblerity/Fiona?svg=true
-   :target: https://ci.appveyor.com/project/sgillies/fiona/branch/master
+   :target: https://ci.appveyor.com/project/sgillies/fiona/branch/maint-1.9
 
 .. image:: https://coveralls.io/repos/Toblerity/Fiona/badge.svg
    :target: https://coveralls.io/r/Toblerity/Fiona
@@ -19,7 +19,10 @@ and protocols such as files, dictionaries, mappings, and iterators instead of
 classes specific to OGR. Fiona can read and write real-world data using
 multi-layered GIS formats and zipped virtual file systems and integrates
 readily with other Python GIS packages such as pyproj_, Rtree_, and Shapely_.
-Fiona is supported only on CPython versions 2.7 and 3.4+.
+
+Fiona is supported only on CPython versions 3.6+.
+
+Why the name "Fiona"? Because Fiona Is OGR's Neat and Nimble API for Python programmers. And a Shrek reference made us laugh.
 
 For more details, see:
 
@@ -98,7 +101,7 @@ provides an index ordered list of layer names.
             print(layername, len(src))
 
     # Output:
-    # (u'coutwildrnp', 67)
+    # ('coutwildrnp', 67)
 
 Layer can also be specified by index. In this case, ``layer=0`` and
 ``layer='test_uk'`` specify the same layer in the data file or directory.
@@ -110,7 +113,7 @@ Layer can also be specified by index. In this case, ``layer=0`` and
             print(i, layername, len(src))
 
     # Output:
-    # (0, u'coutwildrnp', 67)
+    # (0, 'coutwildrnp', 67)
 
 Writing Multilayer data
 -----------------------
@@ -136,10 +139,10 @@ writing.
         print(f['properties'])
 
         # Output:
-        # [u'bar']
+        # ['bar']
         # 1
         # Polygon
-        # OrderedDict([(u'PERIMETER', 1.22107), (u'FEATURE2', None), (u'NAME', u'Mount Naomi Wilderness'), (u'FEATURE1', u'Wilderness'), (u'URL', u'http://www.wilderness.net/index.cfm?fuse=NWPS&sec=wildView&wname=Mount%20Naomi'), (u'AGBUR', u'FS'), (u'AREA', 0.0179264), (u'STATE_FIPS', u'49'), (u'WILDRNP020', 332), (u'STATE', u'UT')])
+        # OrderedDict([('PERIMETER', 1.22107), ('FEATURE2', None), ('NAME', 'Mount Naomi Wilderness'), ('FEATURE1', 'Wilderness'), ('URL', 'http://www.wilderness.net/index.cfm?fuse=NWPS&sec=wildView&wname=Mount%20Naomi'), ('AGBUR', 'FS'), ('AREA', 0.0179264), ('STATE_FIPS', '49'), ('WILDRNP020', 332), ('STATE', 'UT')])
 
 A view of the /tmp/foo directory will confirm the creation of the new files.
 
@@ -162,7 +165,7 @@ and write zipped Shapefiles.
             print(i, layername, len(src))
 
     # Output:
-    # (0, u'coutwildrnp', 67)
+    # (0, 'coutwildrnp', 67)
 
 Fiona can also read from more exotic file systems. For instance, a
 zipped shape file in S3 can be accessed like so:
@@ -216,7 +219,7 @@ info`` pretty prints information about a data file.
 Installation
 ============
 
-Fiona requires Python 2.7 or 3.4+ and GDAL/OGR 1.8+. To build from
+Fiona requires Python 3.6+ and GDAL/OGR 1.8+. To build from
 a source distribution you will need a C compiler and GDAL and Python
 development headers and libraries (libgdal1-dev for Debian/Ubuntu, gdal-dev for
 CentOS/Fedora).
@@ -226,17 +229,16 @@ from the project's .pyx files. See the project's requirements-dev.txt file for
 guidance.
 
 The `Kyngchaos GDAL frameworks
-<http://www.kyngchaos.com/software/frameworks#gdal_complete>`__ will satisfy
+<https://www.kyngchaos.com/software/frameworks/#gdal_complete>`__ will satisfy
 the GDAL/OGR dependency for OS X, as will Homebrew's GDAL Formula (``brew install
 gdal``).
 
 Python Requirements
 -------------------
 
-Fiona depends on the modules ``enum34``, ``six``, ``cligj``,  ``munch``, ``argparse``, and
-``ordereddict`` (the two latter modules are standard in Python 2.7+). Pip will
-fetch these requirements for you, but users installing Fiona from a Windows
-installer must get them separately.
+Fiona depends on the modules ``cligj`` and ``munch``.
+Pip will fetch these requirements for you, but users installing Fiona from a
+Windows installer must get them separately.
 
 Unix-like systems
 -----------------
@@ -280,7 +282,7 @@ Binary installers are available at
 https://www.lfd.uci.edu/~gohlke/pythonlibs/#fiona and coming eventually to PyPI.
 
 You can download a binary distribution of GDAL from `here
-<http://www.gisinternals.com/release.php>`_.  You will also need to download
+<https://www.gisinternals.com/release.php>`_.  You will also need to download
 the compiled libraries and headers (include files).
 
 When building from source on Windows, it is important to know that setup.py
@@ -315,7 +317,7 @@ users building from source on Windows.
 Development and testing
 =======================
 
-Building from the source requires Cython. Tests require `pytest <http://pytest.org>`_. If the GDAL/OGR
+Building from the source requires Cython. Tests require `pytest <https://pytest.org>`_. If the GDAL/OGR
 libraries, headers, and `gdal-config`_ program are installed to well known
 locations on your system (via your system's package manager), you can do this::
 
@@ -323,22 +325,16 @@ locations on your system (via your system's package manager), you can do this::
   (fiona_env)$ cd Fiona
   (fiona_env)$ pip install cython
   (fiona_env)$ pip install -e .[test]
-  (fiona_env)$ py.test
-
-Or you can use the ``pep-518-install`` script::
-
-  (fiona_env)$ git clone git://github.com/Toblerity/Fiona.git
-  (fiona_env)$ cd Fiona
-  (fiona_env)$ ./pep-518-install
+  (fiona_env)$ pytest
 
 If you have a non-standard environment, you'll need to specify the include and
 lib dirs and GDAL library on the command line::
 
   (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal --gdalversion 2 develop
-  (fiona_env)$ py.test
+  (fiona_env)$ pytest
 
-.. _GDAL: http://www.gdal.org
-.. _pyproj: http://pypi.python.org/pypi/pyproj/
-.. _Rtree: http://pypi.python.org/pypi/Rtree/
-.. _Shapely: http://pypi.python.org/pypi/Shapely/
-.. _gdal-config: http://www.gdal.org/gdal-config.html
+.. _GDAL: https://gdal.org
+.. _pyproj: https://pypi.org/project/pyproj/
+.. _Rtree: https://pypi.org/project/Rtree/
+.. _Shapely: https://pypi.org/project/Shapely/
+.. _gdal-config: https://gdal.org/programs/gdal-config.html

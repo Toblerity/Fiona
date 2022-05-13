@@ -1,15 +1,15 @@
 """Tests for `$ fio load`."""
 
-
+from functools import partial
 import json
 import os
 import shutil
-import sys
 
 import pytest
 
 import fiona
 from fiona.fio.main import main_group
+from fiona.model import ObjectEncoder
 
 
 def test_err(runner):
@@ -32,7 +32,6 @@ def test_collection(tmpdir, feature_collection, runner):
         main_group, ['load', '-f', 'Shapefile', tmpfile], feature_collection)
     assert result.exit_code == 0
     assert len(fiona.open(tmpfile)) == 2
-
 
 
 def test_seq_rs(feature_seq_pp_rs, tmpdir, runner):
@@ -106,7 +105,7 @@ def test_fio_load_layer(tmpdir, runner):
                 'coordinates': (5.0, 39.0)
             }
         }
-        sequence = os.linesep.join(map(json.dumps, [feature, feature]))
+        sequence = os.linesep.join(map(partial(json.dumps, cls=ObjectEncoder), [feature, feature]))
         result = runner.invoke(main_group, [
             'load',
             outdir,
@@ -123,3 +122,36 @@ def test_fio_load_layer(tmpdir, runner):
 
     finally:
         shutil.rmtree(outdir)
+
+@pytest.mark.iconv
+def test_creation_options(tmpdir, runner, feature_seq):
+    tmpfile = str(tmpdir.mkdir("tests").join("test.shp"))
+    result = runner.invoke(
+        main_group,
+        ["load", "-f", "Shapefile", "--co", "ENCODING=LATIN1", tmpfile],
+        feature_seq,
+    )
+    assert result.exit_code == 0
+    assert tmpdir.join("tests/test.cpg").read() == "LATIN1"
+
+
+@pytest.mark.parametrize("extension, driver", [
+    ("shp", "ESRI Shapefile"),
+    ("geojson", "GeoJSON"),
+    ("json", "GeoJSON"),
+    ("gpkg", "GPKG"),
+    ("SHP", "ESRI Shapefile"),
+])
+def test_load__auto_detect_format(tmpdir, runner, feature_seq, extension, driver):
+    tmpfile = str(tmpdir.mkdir('tests').join('test_src_vs_dst_crs.{}'.format(extension)))
+    result = runner.invoke(main_group, [
+        'load',
+        '--src-crs',
+        'EPSG:32617',
+        tmpfile
+    ], feature_seq)
+    assert result.exit_code == 0
+    with fiona.open(tmpfile.lower()) as src:
+        assert src.crs == {'init': 'epsg:32617'}
+        assert len(src) == len(feature_seq.splitlines())
+        assert src.driver == driver

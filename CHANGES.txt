@@ -6,6 +6,17 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.9dev
 ------
 
+Changes:
+
+- Fiona's feature accessors now return instances of fiona.model.Feature instead
+  of Python dicts (#787). The Feature class is compatible with code that
+  expects GeoJSON-like dicts but also provides id, geometry, and properties
+  attributes. The last two of these are instances of fiona.model.Geometry and
+  fiona.model.Properties.
+- GDAL 3.1.0 is the minimum GDAL version.
+- Drop Python 2, and establish Python 3.7 as the minimum version (#1079).
+- Remove six and reduce footprint of fiona.compat (#985).
+
 Deprecations:
 
 - The fiona.drivers() function has been deprecated and will be removed in
@@ -16,10 +27,65 @@ New features:
 
 - Driver metadata including dataset open and dataset and layer creations
   options are now exposed through methods of the fiona.meta module (#950).
+- CRS WKT format support (#979).
 
-1.8.18 (TBD)
-------------
+Bug fixes:
 
+- Env and Session classes have been updated for parity with rasterio and to
+  resolve a credential refresh bug (#1055).
+
+1.8.21 (2022-02-07)
+-------------------
+
+Changes:
+
+- Driver mode support tests have been made more general and less susceptible to
+  driver quirks involving feature fields and coordinate values (#1060).
+- OSError is raised on attempts to open a dataset in a Python file object in
+  "a" mode (see #1027).
+- Upgrade attrs, cython, etc to open up Python 3.10 support (#1049).
+
+Bug fixes:
+
+- Allow FieldSkipLogFilter to handle exception messages as well as strings
+  (reported in #1035).
+- Clean up VSI files left by MemoryFileBase, resolving #1041.
+- Hard-coded "utf-8" collection encoding added in #423 has been removed
+  (#1057).
+
+1.8.20 (2021-05-31)
+-------------------
+
+Packaging:
+
+- Wheels include GDAL 3.3.0 and GEOS 3.9.1.
+
+Bug fixes:
+
+- Allow use with click 8 and higher (#1015).
+
+1.8.19 (2021-04-07)
+-------------------
+
+Packaging:
+
+- Wheels include GDAL 3.2.1 and PROJ 7.2.1.
+
+Bug fixes:
+
+- In fiona/env.py the GDAL data path is now configured using set_gdal_config
+  instead by setting the GDAL_DATA environment variable (#1007).
+- Spurious iterator reset warnings have been eliminatged (#987).
+
+1.8.18 (2020-11-17)
+-------------------
+
+- The precision option of transform has been fixed for the case of
+  GeometryCollections (#971, #972).
+- Added missing --co (creation) option to fio-load (#390).
+- If the certifi package can be imported, its certificate store location will
+  be passed to GDAL during import of fiona._env unless CURL_CA_BUNDLE is
+  already set.
 - Warn when feature fields named "" are found (#955).
 
 1.8.17 (2020-09-09)
@@ -629,7 +695,7 @@ Packaging:
   a typo (#254).
 
 Special thanks to WFMU DJ Liz Berg for the awesome playlist that's fueling my
-release sprint. Check it out at http://wfmu.org/playlists/shows/62083. You
+release sprint. Check it out at https://wfmu.org/playlists/shows/62083. You
 can't unhear Love Coffin.
 
 1.6.0 (2015-07-21)

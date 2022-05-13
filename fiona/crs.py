@@ -1,6 +1,6 @@
 """Coordinate reference systems and functions
 
-PROJ.4 is the law of this land: http://proj.osgeo.org/. But whereas PROJ.4
+PROJ is the law of this land: https://proj.org/. But whereas PROJ
 coordinate reference systems are described by strings of parameters such as
 
     +proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs
@@ -9,8 +9,6 @@ here we use mappings:
 
     {'proj': 'longlat', 'ellps': 'WGS84', 'datum': 'WGS84', 'no_defs': True}
 """
-
-from six import string_types
 
 
 def to_string(crs):
@@ -24,8 +22,7 @@ def to_string(crs):
     items = []
     for k, v in sorted(filter(
             lambda x: x[0] in all_proj_keys and x[1] is not False and (
-                isinstance(x[1], (bool, int, float)) or
-                isinstance(x[1], string_types)),
+                isinstance(x[1], (bool, int, float, str))),
             crs.items())):
         items.append(
             "+" + "=".join(

@@ -28,7 +28,7 @@ class TestPointRoundTrip(object):
     def test_geometry(self):
         f = { 'id': '1',
               'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
-              'properties': {'title': u'foo'} }
+              'properties': {'title': 'foo'} }
         g = featureRT(f, self.c)
         assert (
             sorted(g['geometry'].items()) ==
@@ -37,7 +37,7 @@ class TestPointRoundTrip(object):
     def test_properties(self):
         f = { 'id': '1',
               'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
-              'properties': {'title': u'foo'} }
+              'properties': {'title': 'foo'} }
         g = featureRT(f, self.c)
         assert g['properties']['title'] == 'foo'
 
@@ -65,7 +65,7 @@ class TestLineStringRoundTrip(object):
         f = { 'id': '1',
               'geometry': { 'type': 'LineString',
                             'coordinates': [(0.0, 0.0), (1.0, 1.0)] },
-              'properties': {'title': u'foo'} }
+              'properties': {'title': 'foo'} }
         g = featureRT(f, self.c)
         assert (
             sorted(g['geometry'].items()) ==
@@ -75,7 +75,7 @@ class TestLineStringRoundTrip(object):
     def test_properties(self):
         f = { 'id': '1',
               'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
-              'properties': {'title': u'foo'} }
+              'properties': {'title': 'foo'} }
         g = featureRT(f, self.c)
         assert g['properties']['title'] == 'foo'
 
@@ -101,7 +101,7 @@ class TestPolygonRoundTrip(object):
                                   (1.0, 1.0),
                                   (1.0, 0.0),
                                   (0.0, 0.0)]] },
-              'properties': {'title': u'foo'} }
+              'properties': {'title': 'foo'} }
         g = featureRT(f, self.c)
         assert (
             sorted(g['geometry'].items()) ==
@@ -121,7 +121,7 @@ class TestPolygonRoundTrip(object):
                                   (1.0, 1.0),
                                   (1.0, 0.0),
                                   (0.0, 0.0)]] },
-              'properties': {'title': u'foo'} }
+              'properties': {'title': 'foo'} }
         g = featureRT(f, self.c)
         assert g['properties']['title'] == 'foo'
 

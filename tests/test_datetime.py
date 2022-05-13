@@ -13,7 +13,7 @@ from fiona.env import GDALVersion
 import datetime
 from fiona.drvsupport import (supported_drivers, driver_mode_mingdal, _driver_converts_field_type_silently_to_str,
                               _driver_supports_field, _driver_converts_to_str, _driver_supports_timezones,
-                              _driver_supports_milliseconds)
+                              _driver_supports_milliseconds, _driver_supports_mode)
 import pytz
 from pytz import timezone
 
@@ -253,9 +253,7 @@ def generate_testcases():
     for field_type in ['time', 'datetime', 'date']:
         # Select only driver that are capable of writing fields
         for driver, raw in supported_drivers.items():
-            if ('w' in raw and
-                    (driver not in driver_mode_mingdal['w'] or
-                     gdal_version >= GDALVersion(*driver_mode_mingdal['w'][driver][:2]))):
+            if _driver_supports_mode(driver, 'w'):
                 if _driver_supports_field(driver, field_type):
                     if _driver_converts_field_type_silently_to_str(driver, field_type):
                         _test_cases_datefield_to_str.append((driver, field_type))
@@ -284,7 +282,7 @@ def test_datefield(tmpdir, driver, field_type):
         elif field_type == 'datetime':
 
             # some drivers do not support timezones. In this case, Fiona converts datetime fields with a timezone other
-            # than UTC to UTC. Thus, both the dateime read by Fiona, as well as expected value are first converted to
+            # than UTC to UTC. Thus, both the datetime read by Fiona, as well as expected value are first converted to
             # UTC before compared.
 
             # Milliseconds
@@ -585,9 +583,8 @@ def test_datetime_field_type_marked_not_supported_is_not_supported(tmpdir, drive
 
     """
 
-    if driver == "BNA" and gdal_version < GDALVersion(2, 0):
-        # BNA driver segfaults with gdal 1.11
-        return
+    if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
+        pytest.skip("BNA driver segfaults with gdal 1.11")
 
     monkeypatch.delitem(fiona.drvsupport._driver_field_type_unsupported[field_type], driver)
 
@@ -621,8 +618,7 @@ def generate_tostr_testcases():
     for field_type in _driver_converts_to_str:
         for driver in _driver_converts_to_str[field_type]:
             driver_supported = driver in supported_drivers
-            driver_can_write = (driver not in driver_mode_mingdal['w'] or
-                                gdal_version >= GDALVersion(*driver_mode_mingdal['w'][driver][:2]))
+            driver_can_write = _driver_supports_mode(driver, 'w')
             field_supported = _driver_supports_field(driver, field_type)
             converts_to_str = _driver_converts_field_type_silently_to_str(driver, field_type)
             if driver_supported and driver_can_write and converts_to_str and field_supported:

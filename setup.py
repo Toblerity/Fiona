@@ -17,18 +17,7 @@ except ImportError:
 
 
 def check_output(cmd):
-    # since subprocess.check_output doesn't exist in 2.6
-    # we wrap it here.
-    try:
-        out = subprocess.check_output(cmd)
-        return out.decode('utf')
-    except AttributeError:
-        # For some reasone check_output doesn't exist
-        # So fall back on Popen
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        out, err = p.communicate()
-        return out
-
+    return subprocess.check_output(cmd).decode('utf')
 
 def copy_data_tree(datadir, destdir):
     try:
@@ -42,16 +31,11 @@ def copy_data_tree(datadir, destdir):
 with open('fiona/__init__.py', 'r') as f:
     for line in f:
         if line.find("__version__") >= 0:
-            version = line.split("=")[1].strip()
-            version = version.strip('"')
-            version = version.strip("'")
+            version = line.split("=")[1].strip().strip('"').strip("'")
             break
 
-# Fiona's auxiliary files are UTF-8 encoded and we'll specify this when
-# reading with Python 3+
-open_kwds = {}
-if sys.version_info > (3,):
-    open_kwds['encoding'] = 'utf-8'
+# Fiona's auxiliary files are UTF-8 encoded
+open_kwds = {'encoding': 'utf-8'}
 
 with open('VERSION.txt', 'w', **open_kwds) as f:
     f.write(version)
@@ -64,10 +48,6 @@ with open('CREDITS.txt', **open_kwds) as f:
 
 with open('CHANGES.txt', **open_kwds) as f:
     changes = f.read()
-
-# Set a flag for builds where the source directory is a repo checkout.
-source_is_repo = os.path.exists("MANIFEST.in")
-
 
 # Extend distutil's sdist command to generate C extension sources from
 # the _shim extension modules for GDAL 1.x and 2.x.
@@ -215,7 +195,7 @@ if sys.platform != "win32":
 # Define the extension modules.
 ext_modules = []
 
-if source_is_repo and "clean" not in sys.argv:
+if "clean" not in sys.argv:
     # When building from a repo, Cython is required.
     log.info("MANIFEST.in found, presume a repo, cythonizing...")
     if not cythonize:
@@ -284,20 +264,18 @@ elif "clean" not in sys.argv:
 
 requirements = [
     'attrs>=17',
-    'click>=4.0,<8',
+    'certifi',
+    'click>=4.0',
     'cligj>=0.5',
     'click-plugins>=1.0',
-    'six>=1.7',
     'munch',
-    'argparse; python_version < "2.7"',
-    'ordereddict; python_version < "2.7"',
-    'enum34; python_version < "3.4"'
+    "setuptools",
 ]
 
 extras_require = {
     'calc': ['shapely'],
     's3': ['boto3>=1.2.4'],
-    'test': ['pytest>=3', 'pytest-cov', 'boto3>=1.2.4', 'mock; python_version < "3.4"']
+    'test': ['pytest>=3', 'pytest-cov', 'boto3>=1.2.4']
 }
 
 extras_require['all'] = list(set(it.chain(*extras_require.values())))
@@ -308,8 +286,8 @@ setup_args = dict(
     metadata_version='1.2',
     name='Fiona',
     version=version,
-    requires_python='>=2.6',
-    requires_external='GDAL (>=1.8)',
+    python_requires='>=3.7',
+    requires_external='GDAL (>=3.1)',
     description="Fiona reads and writes spatial data files",
     license='BSD',
     keywords='gis vector feature data',
@@ -317,7 +295,7 @@ setup_args = dict(
     author_email='sean.gillies@gmail.com',
     maintainer='Sean Gillies',
     maintainer_email='sean.gillies@gmail.com',
-    url='http://github.com/Toblerity/Fiona',
+    url='https://github.com/Toblerity/Fiona',
     long_description=readme + "\n" + changes + "\n" + credits,
     package_dir={'': '.'},
     packages=['fiona', 'fiona.fio'],
@@ -349,8 +327,10 @@ setup_args = dict(
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Topic :: Scientific/Engineering :: GIS'])
 
 if os.environ.get('PACKAGE_DATA'):

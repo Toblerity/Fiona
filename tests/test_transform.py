@@ -3,6 +3,7 @@
 import math
 import pytest
 from fiona import transform
+from fiona.errors import FionaDeprecationWarning
 
 from .conftest import requires_gdal_lt_3
 
@@ -47,7 +48,8 @@ TEST_GEOMS = [
 @pytest.mark.parametrize("geom", TEST_GEOMS)
 def test_transform_geom_with_z(geom):
     """Transforming a geom with Z succeeds"""
-    transform.transform_geom("epsg:4326", "epsg:3857", geom, precision=3)
+    with pytest.warns(FionaDeprecationWarning):
+        transform.transform_geom("epsg:4326", "epsg:3857", geom, precision=3)
 
 
 @pytest.mark.parametrize("geom", TEST_GEOMS)
@@ -113,3 +115,15 @@ def test_axis_ordering(crs):
     geom = {"type": "Point", "coordinates": [-8427998.647958742, 4587905.27136252]}
     g2 = transform.transform_geom("epsg:3857", crs, geom, precision=3)
     assert g2["coordinates"] == pytest.approx(rev_expected)
+
+
+def test_transform_issue971():
+    """ See https://github.com/Toblerity/Fiona/issues/971 """
+    source_crs = "epsg:25832"
+    dest_src = "epsg:4326"
+    geom = {'type': 'GeometryCollection', 'geometries': [{'type': 'LineString',
+                                                          'coordinates': [(512381.8870945257, 5866313.311218272),
+                                                                          (512371.23869999964, 5866322.282500001),
+                                                                          (512364.6014999999, 5866328.260199999)]}]}
+    geom_transformed = transform.transform_geom(source_crs, dest_src, geom, precision=3)
+    assert geom_transformed['geometries'][0]['coordinates'][0] == pytest.approx((9.184, 52.946))

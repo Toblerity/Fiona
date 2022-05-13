@@ -8,30 +8,32 @@ import warnings
 
 from munch import munchify
 
+from fiona.model import to_dict
+
 
 warnings.simplefilter('default')
 
 
-def obj_gen(lines):
+def obj_gen(lines, object_hook=None):
     """Return a generator of JSON objects loaded from ``lines``."""
     first_line = next(lines)
-    if first_line.startswith(u'\x1e'):
+    if first_line.startswith('\x1e'):
         def gen():
-            buffer = first_line.strip(u'\x1e')
+            buffer = first_line.strip('\x1e')
             for line in lines:
-                if line.startswith(u'\x1e'):
+                if line.startswith('\x1e'):
                     if buffer:
-                        yield json.loads(buffer)
-                    buffer = line.strip(u'\x1e')
+                        yield json.loads(buffer, object_hook=object_hook)
+                    buffer = line.strip('\x1e')
                 else:
                     buffer += line
             else:
-                yield json.loads(buffer)
+                yield json.loads(buffer, object_hook=object_hook)
     else:
         def gen():
-            yield json.loads(first_line)
+            yield json.loads(first_line, object_hook=object_hook)
             for line in lines:
-                yield json.loads(line)
+                yield json.loads(line, object_hook=object_hook)
     return gen()
 
 
@@ -43,7 +45,7 @@ def nullable(val, cast):
 
 
 def eval_feature_expression(feature, expression):
-    safe_dict = {'f': munchify(feature)}
+    safe_dict = {'f': munchify(to_dict(feature))}
     safe_dict.update({
         'sum': sum,
         'pow': pow,
@@ -67,7 +69,7 @@ def eval_feature_expression(feature, expression):
 def make_ld_context(context_items):
     """Returns a JSON-LD Context object.
 
-    See http://json-ld.org/spec/latest/json-ld."""
+    See https://json-ld.org/spec/latest/json-ld/."""
     ctx = {
       "@context": {
         "geojson": "http://ld.geojson.org/vocab#",

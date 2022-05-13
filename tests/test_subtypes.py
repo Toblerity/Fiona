@@ -1,5 +1,4 @@
 import fiona
-import six
 
 def test_read_bool_subtype(tmpdir):
     test_data = """{"type": "FeatureCollection", "features": [{"type": "Feature", "properties": {"bool": true, "not_bool": 1, "float": 42.5}, "geometry": null}]}"""
@@ -14,7 +13,7 @@ def test_read_bool_subtype(tmpdir):
         assert type(feature["properties"]["bool"]) is bool
     else:
         assert type(feature["properties"]["bool"]) is int
-    assert isinstance(feature["properties"]["not_bool"], six.integer_types)
+    assert isinstance(feature["properties"]["not_bool"], int)
     assert type(feature["properties"]["float"]) is float
 
 def test_write_bool_subtype(tmpdir):
