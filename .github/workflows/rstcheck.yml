@@ -1,7 +1,17 @@
 name: rstcheck
 
-# Run this workflow every time a new commit pushed to your repository
-on: [push, pull_request]
+# Run this workflow for commits to doc files
+on:
+  push:
+    paths:
+      - ".github/workflows/rstcheck.yml"
+      - "README.rst"
+      - "docs/**"
+  pull_request:
+    paths:
+      - ".github/workflows/rstcheck.yml"
+      - "README.rst"
+      - "docs/**"
 
 jobs:
   rstcheck:
@@ -19,7 +29,7 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          python -m pip install jinja2==3.0.3 sphinx==3.2.1 rstcheck==3.3.1
+          python -m pip install rstcheck[sphinx]==4.1.0
 
       - name: Run rstcheck
         run: |
