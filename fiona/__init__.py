@@ -22,7 +22,7 @@ attribute table. For example:
 
   {'id': '1',
    'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
-   'properties': {'label': u'Null Island'} }
+   'properties': {'label': 'Null Island'} }
 
 is a Fiona feature with a point geometry and one property.
 
@@ -68,7 +68,7 @@ import os
 import sys
 import warnings
 import platform
-from six import string_types
+from collections import OrderedDict
 
 try:
     from pathlib import Path
@@ -95,7 +95,6 @@ with fiona._loading.add_gdal_dll_directories():
         get_gdal_release_name,
         get_gdal_version_tuple,
     )
-    from fiona.compat import OrderedDict
     from fiona.io import MemoryFile
     from fiona.ogrext import (
         _bounds,
@@ -203,6 +202,16 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
     crs_wkt : str
         An optional WKT representation of a coordinate reference
         system.
+    ignore_fields : list
+        List of field names to ignore on load.
+    ignore_geometry : bool
+        Ignore the geometry on load.
+    include_fields : list
+        List of a subset of field names to include on load.
+    wkt_version : str
+        WKT Version to use to for the CRS
+        (WKT1, WKT1_GDAL, WKT1_ESRI, WKT2, WKT2_2015, WKT2_2018).
+        Defaults to GDAL's default (WKT1_GDAL for GDAL 3).
     kwargs : mapping
         Other driver-specific parameters that will be interpreted by
         the OGR library as layer creation or opening options.
@@ -210,14 +219,17 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
     Returns
     -------
     Collection
-    """
 
+    """
     if mode == 'r' and hasattr(fp, 'read'):
 
         @contextmanager
         def fp_reader(fp):
             memfile = MemoryFile(fp.read())
-            dataset = memfile.open()
+            dataset = memfile.open(
+                driver=driver, crs=crs, schema=schema, layer=layer,
+                encoding=encoding, enabled_drivers=enabled_drivers,
+                **kwargs)
             try:
                 yield dataset
             finally:
@@ -256,6 +268,11 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
                 memfile.close()
 
         return fp_writer(fp)
+
+    elif mode == "a" and hasattr(fp, "write"):
+        raise OSError(
+            "Append mode is not supported for datasets in a Python file object."
+        )
 
     else:
         # If a pathlib.Path instance is given, convert it to a string path.
@@ -340,7 +357,7 @@ def listdir(path):
     """
     if isinstance(path, Path):
         path = str(path)
-    if not isinstance(path, string_types):
+    if not isinstance(path, str):
         raise TypeError("invalid path: %r" % path)
     pobj = parse_path(path)
     return _listdir(vsi_path(pobj))
@@ -374,9 +391,9 @@ def listlayers(fp, vfs=None):
         if isinstance(fp, Path):
             fp = str(fp)
 
-        if not isinstance(fp, string_types):
+        if not isinstance(fp, str):
             raise TypeError("invalid path: %r" % fp)
-        if vfs and not isinstance(vfs, string_types):
+        if vfs and not isinstance(vfs, str):
             raise TypeError("invalid vfs: %r" % vfs)
 
         if vfs:

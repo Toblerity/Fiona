@@ -8,6 +8,7 @@ from fiona.env import GDALVersion
 from tests.conftest import get_temp_filename
 
 
+
 def test_bounds_point():
     g = {'type': 'Point', 'coordinates': [10, 10]}
     assert fiona.bounds(g) == (10, 10, 10, 10)
@@ -30,12 +31,10 @@ def test_bounds_z():
 # MapInfo File driver requires that the bounds (geographical extents) of a new file
 # be set before writing the first feature (https://gdal.org/drivers/vector/mitab.html)
 
-
 @pytest.mark.parametrize('driver', [driver for driver in supported_drivers if
                                     _driver_supports_mode(driver, 'w') and not driver == 'MapInfo File'])
 def test_bounds(tmpdir, driver, testdata_generator):
-    """Test if bounds are correctly calculated after writing
-    """
+    """Test if bounds are correctly calculated after writing."""
     if driver == 'BNA' and GDALVersion.runtime() < GDALVersion(2, 0):
         pytest.skip("BNA driver segfaults with gdal 1.11")
     if driver == 'ESRI Shapefile' and get_gdal_version_tuple() < (3, 1):
@@ -63,6 +62,7 @@ def test_bounds(tmpdir, driver, testdata_generator):
                     driver=driver,
                     schema=schema) as c:
         c.writerecords(records1)
+
         try:
             bounds = c.bounds
             assert bounds == calc_bounds(records1)
@@ -70,6 +70,7 @@ def test_bounds(tmpdir, driver, testdata_generator):
             assert isinstance(e, DriverError)
 
         c.writerecords(records2)
+
         try:
             bounds = c.bounds
             assert bounds == calc_bounds(records1 + records2)

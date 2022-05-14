@@ -58,10 +58,10 @@ def test_remove(tmpdir, kind, driver, specify_driver):
 
 
 def test_remove_nonexistent(tmpdir):
-    """Attempting to remove a file that does not exist results in an IOError"""
+    """Attempting to remove a file that does not exist results in an OSError"""
     filename = str(tmpdir.join("does_not_exist.shp"))
     assert not os.path.exists(filename)
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         fiona.remove(filename)
 
 @requires_gpkg
@@ -106,12 +106,12 @@ def test_remove_layer_geojson(tmpdir):
     """Removal of layers is not supported by GeoJSON driver
 
     The reason for failure is slightly different between GDAL 2.2+ and < 2.2.
-    With < 2.2 the datasource will fail to open in write mode (IOError), while
+    With < 2.2 the datasource will fail to open in write mode (OSError), while
     with 2.2+ the datasource will open but the removal operation will fail (not
     supported).
     """
     filename = str(tmpdir.join("a_filename.geojson"))
     create_sample_data(filename, "GeoJSON")
-    with pytest.raises((RuntimeError, IOError)):
+    with pytest.raises((RuntimeError, OSError)):
         fiona.remove(filename, layer=0)
     assert os.path.exists(filename)

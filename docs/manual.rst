@@ -9,7 +9,7 @@ The Fiona User Manual
   This work is licensed under a `Creative Commons Attribution 3.0
   United States License`__.
 
-.. __: http://creativecommons.org/licenses/by/3.0/us/
+.. __: https://creativecommons.org/licenses/by/3.0/us/
 
 :Abstract:
   Fiona is OGR's neat, nimble, no-nonsense API. This document explains how to
@@ -35,13 +35,13 @@ continuous scalar fields (land surface temperature or elevation, for example)
 and :dfn:`vectors` representing discrete entities like roads and administrative
 boundaries. Fiona is concerned exclusively with the latter. It is a Python
 wrapper for vector data access functions from the `GDAL/OGR
-<http://www.gdal.org>`_ library.  A very simple wrapper for minimalists.
+<https://gdal.org>`_ library.  A very simple wrapper for minimalists.
 It reads data records from files as GeoJSON-like mappings and writes the same
 kind of mappings as records back to files. That's it. There are no layers, no
 cursors, no geometric operations, no transformations between coordinate
 systems, no remote method calls; all these concerns are left to other Python
-packages such as :py:mod:`Shapely <https://github.com/Toblerity/Shapely>` and
-:py:mod:`pyproj <http://code.google.com/p/pyproj/>` and Python language
+packages such as :py:mod:`Shapely <https://github.com/shapely/shapely>` and
+:py:mod:`pyproj <https://pypi.org/project/pyproj/>` and Python language
 protocols. Why? To eliminate unnecessary complication. Fiona aims to be simple
 to understand and use, with no gotchas.
 
@@ -293,7 +293,7 @@ Features of a collection may also be accessed by index.
                                    (-4.663611, 51.158333)]],
                   'type': 'Polygon'},
      'id': '1',
-     'properties': OrderedDict([(u'CAT', 232.0), (u'FIPS_CNTRY', u'UK'), (u'CNTRY_NAME', u'United Kingdom'), (u'AREA', 244820.0), (u'POP_CNTRY', 60270708.0)]),
+     'properties': OrderedDict([('CAT', 232.0), ('FIPS_CNTRY', 'UK'), ('CNTRY_NAME', 'United Kingdom'), ('AREA', 244820.0), ('POP_CNTRY', 60270708.0)]),
      'type': 'Feature'}
 
 Note that these indices are controlled by GDAL, and do not always follow Python conventions. They can start from 0, 1 (e.g. geopackages), or even other values, and have no guarantee of contiguity. Negative indices will only function correctly if indices start from 0 and are contiguous.
@@ -457,9 +457,8 @@ Field Types
 -----------
 
 In a nutshell, the types and their names are as near to what you'd expect in
-Python (or Javascript) as possible. The 'str' vs 'unicode' muddle is a fact of
-life in Python < 3.0. Fiona records have Unicode strings, but their field type
-name is 'str' (looking forward to Python 3).
+Python (or Javascript) as possible. Since Python 3, the 'str' field type
+may contain Unicode characters.
 
 .. code-block:: pycon
 
@@ -497,14 +496,6 @@ Another function gets the proper Python type of a property.
   <type 'float'>
   >>> prop_type('str:25')
   <class 'str'>
-
-The example above is for Python 3. With Python 2, the type of 'str' properties
-is 'unicode'.
-
-.. code-block:: pycon
-
-  >>> prop_type('str:25')
-  <class 'unicode'>
 
 Geometry Types
 --------------
@@ -1430,7 +1421,7 @@ References
 ==========
 
 .. [Kent1978] William Kent, Data and Reality, North Holland, 1978.
-.. [ESRI1998] ESRI Shapefile Technical Description. July 1998. http://www.esri.com/library/whitepapers/pdfs/shapefile.pdf
-.. [GeoJSON] http://geojson.org
-.. [JSON] http://www.ietf.org/rfc/rfc4627
-.. [SFA] http://en.wikipedia.org/wiki/Simple_feature_access
+.. [ESRI1998] ESRI Shapefile Technical Description. July 1998. https://www.esri.com/library/whitepapers/pdfs/shapefile.pdf
+.. [GeoJSON] https://geojson.org
+.. [JSON] https://www.ietf.org/rfc/rfc4627
+.. [SFA] https://en.wikipedia.org/wiki/Simple_feature_access

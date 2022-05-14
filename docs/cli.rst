@@ -86,7 +86,7 @@ cat
 
 The cat command concatenates the features of one or more datasets and prints
 them as a `JSON text sequence
-<http://tools.ietf.org/html/draft-ietf-json-text-sequence-07>`__ of features.
+<https://datatracker.ietf.org/doc/html/rfc7464>`__ of features.
 In other words: GeoJSON feature objects, possibly pretty printed, optionally
 separated by ASCII RS (\x1e) chars using `--rs`.
 

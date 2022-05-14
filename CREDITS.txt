@@ -57,6 +57,6 @@ Fiona would not be possible without the great work of Frank Warmerdam and other
 GDAL/OGR developers.
 
 Some portions of this work were supported by a grant (for Pleiades_) from the
-U.S. National Endowment for the Humanities (http://www.neh.gov).
+U.S. National Endowment for the Humanities (https://www.neh.gov).
 
-.. _Pleiades: http://pleiades.stoa.org
+.. _Pleiades: https://pleiades.stoa.org

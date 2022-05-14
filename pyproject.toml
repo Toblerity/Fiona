@@ -1,3 +1,7 @@
 [build-system]
-# Minimum requirements for the build system to execute.
-requires = ["setuptools", "wheel", "cython"]
+requires = [
+    "cython==0.29.24",
+    "oldest-supported-numpy",
+    "setuptools",
+    "wheel",
+]

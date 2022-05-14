@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import os
+
 from fiona.env import Env
 from fiona._env import get_gdal_version_tuple
 
@@ -43,7 +45,6 @@ supported_drivers = dict([
     # multi-layer
     ("FileGDB", "raw"),
     ("OpenFileGDB", "r"),
-    ("FlatGeobuf", "r"),
     # ESRI Personal GeoDatabase 	PGeo 	No 	Yes 	No, needs ODBC library
     # ESRI ArcSDE 	SDE 	No 	Yes 	No, needs ESRI SDE
     # ESRIJSON 	ESRIJSON 	No 	Yes 	Yes 
@@ -51,6 +52,7 @@ supported_drivers = dict([
     # ESRI Shapefile 	ESRI Shapefile 	Yes 	Yes 	Yes
     ("ESRI Shapefile", "raw"),
     # FMEObjects Gateway 	FMEObjects Gateway 	No 	Yes 	No, needs FME
+    ("FlatGeobuf", "rw"),
     # GeoJSON 	GeoJSON 	Yes 	Yes 	Yes
     ("GeoJSON", "raw"),
     # GeoJSONSeq 	GeoJSON sequences 	Yes 	Yes 	Yes 
@@ -74,7 +76,7 @@ supported_drivers = dict([
     ("GPX", "rw"),
     # GRASS 	GRASS 	No 	Yes 	No, needs libgrass
     # GPSTrackMaker (.gtm, .gtz) 	GPSTrackMaker 	Yes 	Yes 	Yes
-    ("GPSTrackMaker", "rw"),
+    # ("GPSTrackMaker", "rw"),
     # Hydrographic Transfer Format 	HTF 	No 	Yes 	Yes
     # TODO: Fiona is not ready for multi-layer formats: ("HTF", "r"),
     # Idrisi Vector (.VCT) 	Idrisi 	No 	Yes 	Yes
@@ -101,7 +103,7 @@ supported_drivers = dict([
     # multi-layer
     #   ("OpenAir", "r"),
     # PCI Geomatics Database File 	PCIDSK 	No 	No 	Yes, using internal PCIDSK SDK (from GDAL 1.7.0)
-    ("PCIDSK", "rw"),
+    ("PCIDSK", "raw"),
     # PDS 	PDS 	No 	Yes 	Yes
     ("PDS", "r"),
     # PDS renamed to OGR_PDS for GDAL 2.x
@@ -122,6 +124,7 @@ supported_drivers = dict([
     ("SEGY", "r"),
     # Norwegian SOSI Standard 	SOSI 	No 	Yes 	No, needs FYBA library
     # SQLite/SpatiaLite 	SQLite 	Yes 	Yes 	No, needs libsqlite3 or libspatialite
+    ("SQLite", "raw"),
     # SUA 	SUA 	No 	Yes 	Yes
     ("SUA", "r"),
     # SVG 	SVG 	No 	Yes 	No, needs libexpat
@@ -147,18 +150,20 @@ supported_drivers = dict([
     #   ("XPLANE", "r")
 ])
 
-
 # Minimal gdal version for different modes
 driver_mode_mingdal = {
 
     'r': {'GPKG': (1, 11, 0),
-          'GeoJSONSeq': (2, 4, 0)},
+          'GeoJSONSeq': (2, 4, 0),
+          'FlatGeobuf': (3, 1, 0)},
 
     'w': {'GPKG': (1, 11, 0),
           'PCIDSK': (2, 0, 0),
-          'GeoJSONSeq': (2, 4, 0)},
+          'GeoJSONSeq': (2, 4, 0),
+          'FlatGeobuf': (3, 1, 3)},
 
     'a': {'GPKG': (1, 11, 0),
+          'PCIDSK': (2, 0, 0),
           'GeoJSON': (2, 1, 0),
           'MapInfo File': (2, 0, 0)}
 }
@@ -196,6 +201,53 @@ def _filter_supported_drivers():
 
 
 _filter_supported_drivers()
+
+
+def vector_driver_extensions():
+    """
+    Returns
+    -------
+    dict:
+        Map of extensions to the driver.
+    """
+    from fiona.meta import extensions  # prevent circular import
+
+    extension_to_driver = {}
+    for drv, modes in supported_drivers.items():
+        # update extensions based on driver suppport
+        for extension in extensions(drv) or ():
+            if "w" in modes:
+                extension_to_driver[extension] = extension_to_driver.get(extension, drv)
+    return extension_to_driver
+
+
+def driver_from_extension(path):
+    """
+    Attempt to auto-detect driver based on the extension.
+
+    Parameters
+    ----------
+    path: str or pathlike object
+        The path to the dataset to write with.
+
+    Returns
+    -------
+    str:
+        The name of the driver for the extension.
+    """
+    try:
+        # in case the path is a file handle
+        # or a partsed path
+        path = path.name
+    except AttributeError:
+        pass
+
+    driver_extensions = vector_driver_extensions()
+
+    try:
+        return driver_extensions[os.path.splitext(path)[-1].lstrip(".").lower()]
+    except KeyError:
+        raise ValueError("Unable to detect driver. Please specify driver.")
 
 # driver_converts_to_str contains field type, driver combinations that are silently converted to string
 # None: field type is always converted to str
@@ -251,7 +303,8 @@ _driver_field_type_unsupported = {
         'BNA': None,
         'DXF': None,
         'PCIDSK': (2, 1, 0),
-        'FileGDB': None
+        'FileGDB': None,
+        'FlatGeobuf': None
     },
     'datetime': {
         'ESRI Shapefile': None,
@@ -268,7 +321,8 @@ _driver_field_type_unsupported = {
         'BNA': None,
         'DXF': None,
         'PCIDSK': (2, 1, 0),
-        'FileGDB': None
+        'FileGDB': None,
+        'FlatGeobuf': None
     }
 }
 
@@ -293,7 +347,8 @@ _drivers_not_supporting_timezones = {
         'MapInfo File': None,
         'GPKG': (3, 1, 0),
         'GPSTrackMaker': (3, 1, 1),
-        'FileGDB': None
+        'FileGDB': None,
+        'SQLite': (2, 4, 0)
     },
     'time': {
         'MapInfo File': None,
@@ -304,7 +359,8 @@ _drivers_not_supporting_timezones = {
         'GML': None,
         'CSV': None,
         'GMT': None,
-        'OGR_GMT': None
+        'OGR_GMT': None,
+        'SQLite': None 
     }
 }
 

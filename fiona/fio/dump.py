@@ -1,4 +1,4 @@
-"""$ fio dump"""
+"""fio-dump"""
 
 
 from functools import partial
@@ -10,6 +10,7 @@ import cligj
 
 import fiona
 from fiona.fio import helpers, options, with_context_env
+from fiona.model import Feature, ObjectEncoder
 from fiona.transform import transform_geom
 
 
@@ -60,8 +61,7 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
     def transformer(crs, feat):
         tg = partial(transform_geom, crs, 'EPSG:4326',
                      antimeridian_cutting=True, precision=precision)
-        feat['geometry'] = tg(feat['geometry'])
-        return feat
+        return Feature(id=feat.id, properties=feat.properties, geometry=tg(feat.geometry))
 
     try:
         with fiona.open(input, **open_kwds) as source:
@@ -100,7 +100,7 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                     if indented:
                         sink.write(rec_indent)
                     sink.write(json.dumps(
-                        first, **dump_kwds).replace("\n", rec_indent))
+                        first, cls=ObjectEncoder, **dump_kwds).replace("\n", rec_indent))
                 except StopIteration:
                     pass
                 except Exception as exc:
@@ -135,7 +135,7 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                             sink.write(rec_indent)
                         sink.write(item_sep)
                         sink.write(json.dumps(
-                            rec, **dump_kwds).replace("\n", rec_indent))
+                            rec, cls=ObjectEncoder, **dump_kwds).replace("\n", rec_indent))
                     except Exception as exc:
                         if ignore_errors:
                             logger.error(
@@ -174,7 +174,7 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
                 else:
                     collection['features'] = [
                         transformer(source.crs, rec) for rec in source]
-                json.dump(collection, sink, **dump_kwds)
+                json.dump(collection, sink, cls=ObjectEncoder, **dump_kwds)
 
     except Exception:
         logger.exception("Exception caught during processing")

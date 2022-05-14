@@ -16,6 +16,7 @@ def test_filtering(caplog):
         logger.warning("Skipping field 2")
         logger.warning("Danger!")
         logger.warning("Skipping field 1")
+
     assert len(caplog.records) == 4
     assert caplog.records[0].getMessage() == "Attention!"
     assert caplog.records[1].getMessage() == "Skipping field 1"
@@ -39,3 +40,13 @@ def test_skipping_list(caplog, data_dir):
     assert len(results) == 3
     assert not any(['skip_me' in f['properties'] for f in results])
     assert len([rec for rec in caplog.records if rec.getMessage().startswith('Skipping')]) == 1
+
+
+def test_log_filter_exception(caplog):
+    """FieldSkipLogFilter handles exceptions from log.exception()."""
+    logger = logging.getLogger()
+    with LogFiltering(logger, FieldSkipLogFilter()):
+        logger.exception(ValueError("Oh no"))
+
+    assert len(caplog.records) == 1
+    assert caplog.records[0].getMessage() == "Oh no"

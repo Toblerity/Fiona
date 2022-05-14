@@ -3,7 +3,7 @@
 import os
 import sys
 import re
-from fiona.compat import urlparse
+from urllib.parse import urlparse
 
 
 # Supported URI schemes and their mapping to GDAL's VSI suffix.

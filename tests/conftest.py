@@ -13,6 +13,7 @@ import fiona
 from fiona.crs import from_epsg
 from fiona.env import GDALVersion
 from fiona.meta import extensions
+from fiona.model import ObjectEncoder
 
 
 def pytest_report_header(config):
@@ -154,7 +155,7 @@ def path_coutwildrnp_json(data_dir):
             'type': 'FeatureCollection',
             'features': features}
         with open(path, 'w') as f:
-            f.write(json.dumps(my_layer))
+            f.write(json.dumps(my_layer, cls=ObjectEncoder))
     return path
 
 
@@ -394,6 +395,12 @@ def testdata_generator():
         }
         return special_records2.get(driver, get_records(driver, range))
 
+    def get_create_kwargs(driver):
+        kwargs = {
+            'FlatGeobuf': {'SPATIAL_INDEX': False}
+        }
+        return kwargs.get(driver, {})
+
     def test_equal(driver, val_in, val_out):
         is_good = True
         is_good = is_good and val_in['geometry'] == val_out['geometry']
@@ -435,8 +442,8 @@ def testdata_generator():
             A function that returns True if the geometry is equal between the generated records and a record and if
             the properties of the generated records can be found in a record
         """
-        return get_schema(driver), get_crs(driver), get_records(driver, range1), get_records2(driver, range2), \
-               test_equal
+
+        return get_schema(driver), get_crs(driver), get_records(driver, range1), get_records2(driver, range2), test_equal
 
     return _testdata_generator
 

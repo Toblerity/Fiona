@@ -7,6 +7,7 @@ from cligj import use_rs_opt
 
 from .helpers import obj_gen, eval_feature_expression
 from fiona.fio import with_context_env
+from fiona.model import ObjectEncoder
 
 
 @click.command(short_help="Calculate GeoJSON property by Python expression")
@@ -56,8 +57,8 @@ def calc(ctx, property_name, expression, overwrite, use_rs):
                     feat, expression)
 
                 if use_rs:
-                    click.echo(u'\u001e', nl=False)
-                click.echo(json.dumps(feat))
+                    click.echo('\x1e', nl=False)
+                click.echo(json.dumps(feat, cls=ObjectEncoder))
 
     except Exception:
         logger.exception("Exception caught during processing")

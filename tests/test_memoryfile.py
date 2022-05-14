@@ -2,13 +2,14 @@
 
 from collections import OrderedDict
 from io import BytesIO
+import os
 
 import pytest
 
 import fiona
 from fiona.io import MemoryFile, ZipMemoryFile
 
-from .conftest import requires_gdal2
+from .conftest import requires_gdal2, requires_gpkg
 
 
 @pytest.fixture(scope='session')
@@ -68,7 +69,7 @@ def test_open_closed():
     memfile = MemoryFile()
     memfile.close()
     assert memfile.closed
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         memfile.open()
 
 
@@ -77,7 +78,7 @@ def test_open_closed_zip():
     memfile = ZipMemoryFile()
     memfile.close()
     assert memfile.closed
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         memfile.open()
 
 
@@ -159,6 +160,12 @@ def test_write_bytesio(profile_first_coutwildrnp_shp):
             assert len(col) == 1
 
 
+def test_append_bytesio_exception(data_coutwildrnp_json):
+    """Append is not supported, see #1027."""
+    with pytest.raises(OSError):
+        fiona.open(BytesIO(data_coutwildrnp_json), "a")
+
+
 def test_mapinfo_raises():
     """Reported to be a crasher in #937"""
     driver = 'MapInfo File'
@@ -168,3 +175,27 @@ def test_mapinfo_raises():
         with pytest.raises(OSError):
             with fiona.open(fout, "w", driver=driver, schema=schema) as collection:
                 collection.write({"type": "Feature", "geometry": {"type": "Point", "coordinates": (0, 0)}, "properties": {"position": "x"}})
+
+
+@requires_gpkg
+def test_read_multilayer_memoryfile(path_coutwildrnp_json, tmpdir):
+    """Test read access to multilayer dataset in from file-like object"""
+    with fiona.open(path_coutwildrnp_json, "r") as src:
+        schema = src.schema
+        features = list(src)
+
+    path = os.path.join(tmpdir, "test.gpkg")
+    with fiona.open(path, "w", driver="GPKG", schema=schema, layer="layer1") as dst:
+        dst.writerecords(features[0:5])
+    with fiona.open(path, "w", driver="GPKG", schema=schema, layer="layer2") as dst:
+        dst.writerecords(features[5:])
+
+    with open(path, "rb") as f:
+        with fiona.open(f, layer="layer1") as src:
+            assert src.name == "layer1"
+            assert len(src) == 5
+    # Bug reported in #781 where this next section would fail
+    with open(path, "rb") as f:
+        with fiona.open(f, layer="layer2") as src:
+            assert src.name == "layer2"
+            assert len(src) == 62

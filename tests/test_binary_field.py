@@ -29,7 +29,7 @@ def test_binary_field(tmpdir):
             "geometry": {"type": "Point", "coordinates": ((0, 0))},
             "properties": {
                 "name": "test",
-                u"data": input_data,
+                "data": input_data,
             }
         }
         dst.write(feature)
