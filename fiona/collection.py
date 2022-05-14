@@ -26,6 +26,7 @@ with fiona._loading.add_gdal_dll_directories():
     from fiona.env import env_ctx_if_needed
     from fiona.errors import FionaDeprecationWarning
     from fiona.drvsupport import (
+        driver_from_extension,
         supported_drivers,
         driver_mode_mingdal,
         _driver_converts_field_type_silently_to_str,
@@ -94,6 +95,9 @@ class Collection(object):
             raise TypeError("invalid archive: %r" % archive)
         if ignore_fields is not None and include_fields is not None:
             raise ValueError("Cannot specify both 'ignore_fields' and 'include_fields'")
+
+        if mode == "w" and driver is None:
+            driver = driver_from_extension(path)
 
         # Check GDAL version against drivers
         if (

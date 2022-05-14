@@ -194,6 +194,8 @@ if sys.platform != "win32":
 ext_modules = []
 
 if "clean" not in sys.argv:
+    # When building from a repo, Cython is required.
+    log.info("MANIFEST.in found, presume a repo, cythonizing...")
     if not cythonize:
         raise SystemExit(
             "Cython.Build.cythonize not found. "
