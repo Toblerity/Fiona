@@ -9,6 +9,10 @@ class FionaValueError(ValueError):
     """Fiona-specific value errors"""
 
 
+class AttributeFilterError(FionaValueError):
+    """Error processing SQL WHERE clause with the dataset."""
+
+
 class DriverError(FionaValueError):
     """Encapsulates unsupported driver and driver mode errors."""
 

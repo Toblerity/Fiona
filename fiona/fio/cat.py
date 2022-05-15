@@ -11,6 +11,7 @@ import fiona
 from fiona.transform import transform_geom
 from fiona.model import ObjectEncoder
 from fiona.fio import options, with_context_env
+from fiona.errors import AttributeFilterError
 
 warnings.simplefilter('default')
 
@@ -37,6 +38,11 @@ warnings.simplefilter('default')
     help="filter for features intersecting a bounding box",
 )
 @click.option(
+    "--where",
+    default=None,
+    help="attribute filter using SQL where clause",
+)
+@click.option(
     "--cut-at-antimeridian",
     is_flag=True,
     default=False,
@@ -54,6 +60,7 @@ def cat(
     dst_crs,
     use_rs,
     bbox,
+    where,
     cut_at_antimeridian,
     layer,
 ):
@@ -92,7 +99,7 @@ def cat(
         for i, path in enumerate(files, 1):
             for lyr in layer[str(i)]:
                 with fiona.open(path, layer=lyr) as src:
-                    for i, feat in src.items(bbox=bbox):
+                    for i, feat in src.items(bbox=bbox, where=where):
                         if dst_crs or precision >= 0:
                             g = transform_geom(
                                 src.crs, dst_crs, feat['geometry'],
@@ -104,6 +111,8 @@ def cat(
                             click.echo('\x1e', nl=False)
                         click.echo(json.dumps(feat, cls=ObjectEncoder, **dump_kwds))
 
+    except AttributeFilterError as e:
+        raise click.BadParameter("'where' clause is invalid: " + str(e))
     except Exception:
         log.exception("Exception caught during processing")
         raise click.Abort()

@@ -60,6 +60,55 @@ def test_bbox_json_yes(path_coutwildrnp_shp):
     assert result.output.count('"Feature"') == 19
 
 
+def test_bbox_where(path_coutwildrnp_shp):
+    runner = CliRunner()
+    result = runner.invoke(
+        main_group,
+        ['cat', path_coutwildrnp_shp, '--bbox', '-120,40,-100,50',
+         '--where', "NAME LIKE 'Mount%'"],
+        catch_exceptions=False)
+    assert result.exit_code == 0
+    assert result.output.count('"Feature"') == 4
+
+
+def test_where_no(path_coutwildrnp_shp):
+    runner = CliRunner()
+    result = runner.invoke(
+        main_group,
+        ['cat', path_coutwildrnp_shp, '--where', "STATE LIKE '%foo%'"],
+        catch_exceptions=False)
+    assert result.exit_code == 0
+    assert result.output == ""
+
+
+def test_where_yes(path_coutwildrnp_shp):
+    runner = CliRunner()
+    result = runner.invoke(
+        main_group,
+        ['cat', path_coutwildrnp_shp, '--where', "NAME LIKE 'Mount%'"],
+        catch_exceptions=False)
+    assert result.exit_code == 0
+    assert result.output.count('"Feature"') == 9
+
+
+def test_where_yes_two_files(path_coutwildrnp_shp):
+    runner = CliRunner()
+    result = runner.invoke(
+        main_group,
+        ['cat', path_coutwildrnp_shp, path_coutwildrnp_shp,
+         '--where', "NAME LIKE 'Mount%'"],
+        catch_exceptions=False)
+    assert result.exit_code == 0
+    assert result.output.count('"Feature"') == 18
+
+
+def test_where_fail(data_dir):
+    runner = CliRunner()
+    result = runner.invoke(main_group, ['cat', '--where', "NAME=3",
+                           data_dir])
+    assert result.exit_code != 0
+
+
 def test_multi_layer(data_dir):
     layerdef = "1:coutwildrnp,1:coutwildrnp"
     runner = CliRunner()

@@ -28,6 +28,7 @@ New features:
 - Driver metadata including dataset open and dataset and layer creations
   options are now exposed through methods of the fiona.meta module (#950).
 - CRS WKT format support (#979).
+- Add 'where' SQL clause to set attribute filter (#961, #1097).
 
 Bug fixes:
 
