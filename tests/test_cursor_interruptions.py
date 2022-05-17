@@ -5,23 +5,29 @@ from fiona.errors import DriverError
 from tests.conftest import get_temp_filename
 
 
-@pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['w'].keys()
-                                    if _driver_supports_mode(driver, 'w')])
+@pytest.mark.parametrize(
+    "driver",
+    [
+        driver
+        for driver in driver_mode_mingdal["w"].keys()
+        if _driver_supports_mode(driver, "w")
+    ],
+)
 def test_write_getextent(tmpdir, driver, testdata_generator):
-    """
-        Test if a call to OGR_L_GetExtent has side effects for writing
-
-    """
-
-    schema, crs, records1, records2, test_equal, create_kwargs = testdata_generator(driver, range(0, 10), range(10, 20))
+    """Test if a call to OGR_L_GetExtent has side effects for writing."""
+    schema, crs, records1, records2, _ = testdata_generator(
+        driver, range(0, 10), range(10, 20)
+    )
     path = str(tmpdir.join(get_temp_filename(driver)))
     positions = set([int(r['properties']['position']) for r in records1 + records2])
 
-    with fiona.open(path, 'w',
-                    driver=driver,
-                    crs=crs,
-                    schema=schema,
-                    **create_kwargs) as c:
+    with fiona.open(
+        path,
+        "w",
+        driver=driver,
+        crs=crs,
+        schema=schema,
+    ) as c:
         c.writerecords(records1)
 
         # Call to OGR_L_GetExtent
@@ -39,23 +45,29 @@ def test_write_getextent(tmpdir, driver, testdata_generator):
             assert p in data
 
 
-@pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['w'].keys()
-                                    if _driver_supports_mode(driver, 'w')])
+@pytest.mark.parametrize(
+    "driver",
+    [
+        driver
+        for driver in driver_mode_mingdal["w"].keys()
+        if _driver_supports_mode(driver, "w")
+    ],
+)
 def test_read_getextent(tmpdir, driver, testdata_generator):
-    """
-        Test if a call to OGR_L_GetExtent has side effects for reading
-
-    """
-
-    schema, crs, records1, records2, test_equal, create_kwargs = testdata_generator(driver, range(0, 10), range(10, 20))
+    """Test if a call to OGR_L_GetExtent has side effects for reading."""
+    schema, crs, records1, records2, _ = testdata_generator(
+        driver, range(0, 10), range(10, 20)
+    )
     path = str(tmpdir.join(get_temp_filename(driver)))
     positions = set([int(r['properties']['position']) for r in records1 + records2])
 
-    with fiona.open(path, 'w',
-                    driver=driver,
-                    crs=crs,
-                    schema=schema,
-                    **create_kwargs) as c:
+    with fiona.open(
+        path,
+        "w",
+        driver=driver,
+        crs=crs,
+        schema=schema,
+    ) as c:
         c.writerecords(records1)
         c.writerecords(records2)
 
@@ -79,23 +91,29 @@ def test_read_getextent(tmpdir, driver, testdata_generator):
             assert p in data
 
 
-@pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['w'].keys()
-                                    if _driver_supports_mode(driver, 'w')])
+@pytest.mark.parametrize(
+    "driver",
+    [
+        driver
+        for driver in driver_mode_mingdal["w"].keys()
+        if _driver_supports_mode(driver, "w")
+    ],
+)
 def test_write_getfeaturecount(tmpdir, driver, testdata_generator):
-    """
-        Test if a call to OGR_L_GetFeatureCount has side effects for writing
-
-    """
-
-    schema, crs, records1, records2, test_equal, create_kwargs = testdata_generator(driver, range(0, 10), range(10, 20))
+    """Test if a call to OGR_L_GetFeatureCount has side effects for writing."""
+    schema, crs, records1, records2, _ = testdata_generator(
+        driver, range(0, 10), range(10, 20)
+    )
     path = str(tmpdir.join(get_temp_filename(driver)))
     positions = set([int(r['properties']['position']) for r in records1 + records2])
 
-    with fiona.open(path, 'w',
-                    driver=driver,
-                    crs=crs,
-                    schema=schema,
-                    **create_kwargs) as c:
+    with fiona.open(
+        path,
+        "w",
+        driver=driver,
+        crs=crs,
+        schema=schema,
+    ) as c:
         c.writerecords(records1)
 
         # Call to OGR_L_GetFeatureCount
@@ -112,23 +130,29 @@ def test_write_getfeaturecount(tmpdir, driver, testdata_generator):
             assert p in data
 
 
-@pytest.mark.parametrize('driver', [driver for driver in driver_mode_mingdal['w'].keys()
-                                    if _driver_supports_mode(driver, 'w')])
+@pytest.mark.parametrize(
+    "driver",
+    [
+        driver
+        for driver in driver_mode_mingdal["w"].keys()
+        if _driver_supports_mode(driver, "w")
+    ],
+)
 def test_read_getfeaturecount(tmpdir, driver, testdata_generator):
-    """
-        Test if a call to OGR_L_GetFeatureCount has side effects for reading
-
-    """
-
-    schema, crs, records1, records2, test_equal, create_kwargs = testdata_generator(driver, range(0, 10), range(10, 20))
+    """Test if a call to OGR_L_GetFeatureCount has side effects for reading."""
+    schema, crs, records1, records2, _ = testdata_generator(
+        driver, range(0, 10), range(10, 20)
+    )
     path = str(tmpdir.join(get_temp_filename(driver)))
     positions = set([int(r['properties']['position']) for r in records1 + records2])
 
-    with fiona.open(path, 'w',
-                    driver=driver,
-                    crs=crs,
-                    schema=schema,
-                    **create_kwargs) as c:
+    with fiona.open(
+        path,
+        "w",
+        driver=driver,
+        crs=crs,
+        schema=schema,
+    ) as c:
         c.writerecords(records1)
         c.writerecords(records2)
 
