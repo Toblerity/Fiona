@@ -416,9 +416,7 @@ def testdata_generator():
                             ("MSLink", None),
                             ("Text", None),
                         ]
-                        + [("ULink", None)]
-                        if gdal_version.at_least("3.3")
-                        else []
+                        + ([("ULink", None)] if gdal_version.at_least("3.3") else [])
                     ),
                 }
                 for i in range
