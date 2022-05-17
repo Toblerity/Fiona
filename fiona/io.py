@@ -3,12 +3,12 @@
 
 from collections import OrderedDict
 import logging
-
 import fiona._loading
 with fiona._loading.add_gdal_dll_directories():
     from fiona.ogrext import MemoryFileBase
     from fiona.collection import Collection
-
+    from fiona.meta import supports_vsi
+    from fiona.errors import DriverError
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class MemoryFile(MemoryFileBase):
         super().__init__(
             file_or_bytes=file_or_bytes, filename=filename, ext=ext)
 
-    def open(self, driver=None, schema=None, crs=None, encoding=None,
+    def open(self, mode=None, driver=None, schema=None, crs=None, encoding=None,
              layer=None, vfs=None, enabled_drivers=None, crs_wkt=None,
              **kwargs):
         """Open the file and return a Fiona collection object.
@@ -52,33 +52,33 @@ class MemoryFile(MemoryFileBase):
         if self.closed:
             raise OSError("I/O operation on closed file.")
 
-        if not self.exists():
-            self._ensure_extension(driver)
-            this_schema = schema.copy()
-            this_schema["properties"] = OrderedDict(schema["properties"])
-            return Collection(
-                self.name,
-                "w",
-                crs=crs,
-                driver=driver,
-                schema=this_schema,
-                encoding=encoding,
-                layer=layer,
-                enabled_drivers=enabled_drivers,
-                crs_wkt=crs_wkt,
-                **kwargs
-            )
+        if driver is not None and not supports_vsi(driver):
+            raise DriverError("Driver {} does not support virtual files.")
 
-        elif self.mode in ("r", "r+"):
-            return Collection(
-                self.name,
-                "r",
-                driver=driver,
-                encoding=encoding,
-                layer=layer,
-                enabled_drivers=enabled_drivers,
-                **kwargs
-            )
+        if mode in ('r', 'a') and not self.exists():
+            raise IOError("MemoryFile does not exist.")
+        if layer is None and mode == 'w' and self.exists():
+            raise IOError("MemoryFile already exists.")
+
+        if not self.exists() or mode == 'w':
+            if driver is not None:
+                self._ensure_extension(driver)
+            mode = 'w'
+        elif mode is None:
+            mode = 'r'
+
+        return Collection(
+            self.name,
+            mode,
+            crs=crs,
+            driver=driver,
+            schema=schema,
+            encoding=encoding,
+            layer=layer,
+            enabled_drivers=enabled_drivers,
+            crs_wkt=crs_wkt,
+            **kwargs
+        )
 
     def __enter__(self):
         return self
