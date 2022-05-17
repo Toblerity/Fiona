@@ -46,7 +46,6 @@ def pytest_report_header(config):
 
 
 def get_temp_filename(driver):
-
     basename = "foo"
     extension = driver_extensions.get(driver, "bar")
     prefix = ""
@@ -274,7 +273,7 @@ def uttc_path_gpx(path_gpx, request):
 
 # GDAL 2.3.x silently converts ESRI WKT to OGC WKT
 # The regular expression below will match against either
-WGS84PATTERN = 'GEOGCS\["(?:GCS_WGS_1984|WGS 84)",DATUM\["WGS_1984",SPHEROID\["WGS[_ ]84"'
+WGS84PATTERN = r'GEOGCS\["(?:GCS_WGS_1984|WGS 84)",DATUM\["WGS_1984",SPHEROID\["WGS[_ ]84"'
 
 # Define helpers to skip tests based on GDAL version
 gdal_version = GDALVersion.runtime()
@@ -415,9 +414,11 @@ def testdata_generator():
                             ("Style", 0),
                             ("EntityNum", None),
                             ("MSLink", None),
-                            ("ULink", None),
                             ("Text", None),
                         ]
+                        + [("ULink", None)]
+                        if gdal_version.at_least("3.3")
+                        else []
                     ),
                 }
                 for i in range
