@@ -9,29 +9,11 @@ import zipfile
 from collections import OrderedDict
 from click.testing import CliRunner
 import pytest
-
 import fiona
 from fiona.crs import from_epsg
 from fiona.env import GDALVersion
+from fiona.meta import extensions
 from fiona.model import ObjectEncoder, to_dict
-
-driver_extensions = {'DXF': 'dxf',
-                     'CSV': 'csv',
-                     'ESRI Shapefile': 'shp',
-                     'FileGDB': 'gdb',
-                     'GML': 'gml',
-                     'GPX': 'gpx',
-                     'GPSTrackMaker': 'gtm',
-                     'MapInfo File': 'tab',
-                     'DGN': 'dgn',
-                     'GPKG': 'gpkg',
-                     'GeoJSON': 'json',
-                     'GMT': 'gmt',
-                     'GeoJSONSeq': 'geojsons',
-                     'GMT': 'gmt',
-                     'OGR_GMT': 'gmt',
-                     'BNA': 'bna',
-                     'FlatGeobuf': 'fgb'}
 
 
 def pytest_report_header(config):
@@ -46,15 +28,14 @@ def pytest_report_header(config):
 
 
 def get_temp_filename(driver):
+    """Create a temporary file name with driver extension if required."""
     basename = "foo"
-    extension = driver_extensions.get(driver, "bar")
-    prefix = ""
-    if driver == 'GeoJSONSeq':
-        prefix = "GeoJSONSeq:"
-
-    return "{prefix}{basename}.{extension}".format(prefix=prefix,
-                                                   basename=basename,
-                                                   extension=extension)
+    exts = extensions(driver)
+    if exts is None or len(exts) == 0:
+        ext = ""
+    else:
+        ext = ".{}".format(exts[0])
+    return "{basename}{extension}".format(basename=basename, extension=ext)
 
 
 _COUTWILDRNP_FILES = [
@@ -79,6 +60,7 @@ def gdalenv(request):
         if fiona.env.local._env:
             fiona.env.delenv()
             fiona.env.local._env = None
+
     request.addfinalizer(fin)
 
 
@@ -444,18 +426,21 @@ def testdata_generator():
                     )
 
     def _testdata_generator(driver, range1, range2):
-        """ Generate test data and helper methods for a specific driver. Each set of generated set of records
-        contains the position specified with range. These positions are either encoded as field or in the geometry
-        of the record, depending of the driver characteristics.
+        """Generate test data and helper methods for a specific driver.
+
+        Each set of generated set of records contains the position
+        specified with range. These positions are either encoded as
+        field or in the geometry of the record, depending of the driver
+        characteristics.
 
         Parameters
         ----------
-            driver: str
-                Name of drive to generate tests for
-            range1: list of integer
-                Range of positions for first set of records
-            range2: list of integer
-                Range  of positions for second set of records
+        driver : str
+            Name of drive to generate tests for
+        range1 : list of integer
+            Range of positions for first set of records
+        range2 : list of integer
+            Range  of positions for second set of records
 
         Returns
         -------
@@ -468,8 +453,11 @@ def testdata_generator():
         records2
             A set of records containing the positions of range2
         test_equal
-            A function that returns True if the geometry is equal between the generated records and a record and if
-            the properties of the generated records can be found in a record
+            A function that returns True if the geometry is equal
+            between the generated records and a record and if the
+            properties of the generated records can be found in a
+            record.
+
         """
         return (
             get_schema(driver),
