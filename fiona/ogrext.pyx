@@ -1081,10 +1081,10 @@ cdef class WritingSession(Session):
 
         if collection.mode == 'a':
 
-            if not os.path.exists(path):
-                raise OSError("No such file or directory %s" % path)
             path_b = strencode(path)
             path_c = path_b
+            if not CPLCheckForFile(path_c, NULL):
+                raise OSError("No such file or directory %s" % path)
 
             try:
                 self.cogr_ds = gdal_open_vector(path_c, 1, None, kwargs)
@@ -1990,7 +1990,6 @@ cdef class MemoryFileBase:
             self._vsif = VSIFileFromMemBuffer(
                name_b, buffer, len(self._initial_bytes), 0)
             self.mode = "r"
-
         else:
             self._vsif = NULL
             self.mode = "r+"
@@ -2147,6 +2146,9 @@ def _get_metadata_item(driver, metadata_item):
     cdef void *cogr_driver
 
     if get_gdal_version_tuple() < (2, ):
+        return None
+    
+    if driver is None:
         return None
 
     driver_b = strencode(driver)

@@ -13,7 +13,7 @@ import pytest
 import fiona
 from fiona.crs import from_epsg
 from fiona.env import GDALVersion
-from fiona.model import ObjectEncoder
+from fiona.model import ObjectEncoder, to_dict
 
 driver_extensions = {'DXF': 'dxf',
                      'CSV': 'csv',
@@ -46,7 +46,6 @@ def pytest_report_header(config):
 
 
 def get_temp_filename(driver):
-
     basename = "foo"
     extension = driver_extensions.get(driver, "bar")
     prefix = ""
@@ -274,7 +273,7 @@ def uttc_path_gpx(path_gpx, request):
 
 # GDAL 2.3.x silently converts ESRI WKT to OGC WKT
 # The regular expression below will match against either
-WGS84PATTERN = 'GEOGCS\["(?:GCS_WGS_1984|WGS 84)",DATUM\["WGS_1984",SPHEROID\["WGS[_ ]84"'
+WGS84PATTERN = r'GEOGCS\["(?:GCS_WGS_1984|WGS 84)",DATUM\["WGS_1984",SPHEROID\["WGS[_ ]84"'
 
 # Define helpers to skip tests based on GDAL version
 gdal_version = GDALVersion.runtime()
@@ -398,18 +397,30 @@ def testdata_generator():
             range])
 
     def get_records2(driver, range):
-        special_records2 = {'DGN': [
-            {'geometry': {'type': 'LineString', 'coordinates': [(float(i), 0.0), (0.0, 0.0)]},
-             'properties': OrderedDict(
-                 [('Type', 4),
-                  ('Level', 0),
-                  ('GraphicGroup', 0),
-                  ('ColorIndex', 0),
-                  ('Weight', 0),
-                  ('Style', 0),
-                  ('EntityNum', None),
-                  ('MSLink', None),
-                  ('Text', None)])} for i in range],
+        special_records2 = {
+            "DGN": [
+                {
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [(float(i), 0.0), (0.0, 0.0)],
+                    },
+                    "properties": OrderedDict(
+                        [
+                            ("Type", 4),
+                            ("Level", 0),
+                            ("GraphicGroup", 0),
+                            ("ColorIndex", 0),
+                            ("Weight", 0),
+                            ("Style", 0),
+                            ("EntityNum", None),
+                            ("MSLink", None),
+                            ("Text", None),
+                        ]
+                        + ([("ULink", None)] if gdal_version.at_least("3.3") else [])
+                    ),
+                }
+                for i in range
+            ],
         }
         return special_records2.get(driver, get_records(driver, range))
 
@@ -420,17 +431,17 @@ def testdata_generator():
         return kwargs.get(driver, {})
 
     def test_equal(driver, val_in, val_out):
-        is_good = True
-        is_good = is_good and val_in['geometry'] == val_out['geometry']
-        for key in val_in['properties']:
-            if key in val_out['properties']:
-                if driver == 'FileGDB' and isinstance(val_in['properties'][key], int):
-                    is_good = is_good and str(val_in['properties'][key]) == str(int(val_out['properties'][key]))
+        assert val_in["geometry"] == to_dict(val_out["geometry"])
+        for key in val_in["properties"]:
+            if key in val_out["properties"]:
+                if driver == "FileGDB" and isinstance(val_in["properties"][key], int):
+                    assert str(val_in["properties"][key]) == str(
+                        int(val_out["properties"][key])
+                    )
                 else:
-                    is_good = is_good and str(val_in['properties'][key]) == str(val_out['properties'][key])
-            else:
-                is_good = False
-        return is_good
+                    assert str(val_in["properties"][key]) == str(
+                        val_out["properties"][key]
+                    )
 
     def _testdata_generator(driver, range1, range2):
         """ Generate test data and helper methods for a specific driver. Each set of generated set of records
@@ -460,8 +471,13 @@ def testdata_generator():
             A function that returns True if the geometry is equal between the generated records and a record and if
             the properties of the generated records can be found in a record
         """
-        return get_schema(driver), get_crs(driver), get_records(driver, range1), get_records2(driver, range2),\
-               test_equal, get_create_kwargs(driver)
+        return (
+            get_schema(driver),
+            get_crs(driver),
+            get_records(driver, range1),
+            get_records2(driver, range2),
+            test_equal,
+        )
 
     return _testdata_generator
 
