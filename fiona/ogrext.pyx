@@ -13,7 +13,7 @@ import math
 from collections import namedtuple, OrderedDict
 from uuid import uuid4
 
-from fiona._crs cimport osr_set_traditional_axis_mapping_strategy
+from fiona.crs cimport CRS, osr_set_traditional_axis_mapping_strategy
 from fiona._geometry cimport (
     GeomBuilder, OGRGeomBuilder, geometry_type_code,
     normalize_geometry_type_code, base_geometry_type_code)
@@ -491,7 +491,7 @@ cdef class OGRFeatureBuilder:
                         del d_utc, d_tz
 
                 # tzinfo: (0=unknown, 100=GMT, 101=GMT+15minute, 99=GMT-15minute), or NULL
-                if tz is not None:               
+                if tz is not None:
                     tzinfo = int(tz / 15.0 + 100)
                 else:
                     tzinfo = 0
@@ -781,81 +781,11 @@ cdef class Session:
         CRS
 
         """
-        cdef char *proj_c = NULL
-        cdef const char *auth_key = NULL
-        cdef const char *auth_val = NULL
-        cdef void *cogr_crs = NULL
-
-        if self.cogr_layer == NULL:
-            raise ValueError("Null layer")
-
-        try:
-            cogr_crs = exc_wrap_pointer(OGR_L_GetSpatialRef(self.cogr_layer))
-        # TODO: we don't intend to use try/except for flow control
-        # this is a work around for a GDAL issue.
-        except FionaNullPointerError:
-            log.debug("Layer has no coordinate system")
-
-        if cogr_crs is not NULL:
-
-            log.debug("Got coordinate system")
-            crs = {}
-
-            try:
-
-                retval = OSRAutoIdentifyEPSG(cogr_crs)
-                if retval > 0:
-                    log.info("Failed to auto identify EPSG: %d", retval)
-
-                try:
-                    auth_key = <const char *>exc_wrap_pointer(<void *>OSRGetAuthorityName(cogr_crs, NULL))
-                    auth_val = <const char *>exc_wrap_pointer(<void *>OSRGetAuthorityCode(cogr_crs, NULL))
-
-                except CPLE_BaseError as exc:
-                    log.debug("{}".format(exc))
-
-                if auth_key != NULL and auth_val != NULL:
-                    key_b = auth_key
-                    key = key_b.decode('utf-8')
-                    if key == 'EPSG':
-                        val_b = auth_val
-                        val = val_b.decode('utf-8')
-                        crs['init'] = "epsg:" + val
-
-                else:
-                    OSRExportToProj4(cogr_crs, &proj_c)
-                    if proj_c == NULL:
-                        raise ValueError("Null projection")
-                    proj_b = proj_c
-                    log.debug("Params: %s", proj_b)
-                    value = proj_b.decode()
-                    value = value.strip()
-                    for param in value.split():
-                        kv = param.split("=")
-                        if len(kv) == 2:
-                            k, v = kv
-                            try:
-                                v = float(v)
-                                if v % 1 == 0:
-                                    v = int(v)
-                            except ValueError:
-                                # Leave v as a string
-                                pass
-                        elif len(kv) == 1:
-                            k, v = kv[0], True
-                        else:
-                            raise ValueError("Unexpected proj parameter %s" % param)
-                        k = k.lstrip("+")
-                        crs[k] = v
-
-            finally:
-                CPLFree(proj_c)
-                return crs
-
+        wkt = self.get_crs_wkt()
+        if not wkt:
+            return CRS()
         else:
-            log.debug("Projection not found (cogr_crs was NULL)")
-
-        return {}
+            return CRS.from_user_input(wkt)
 
     def get_crs_wkt(self):
         cdef char *proj_c = NULL

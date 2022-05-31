@@ -6,10 +6,8 @@ import os
 import pytest
 
 import fiona
-from fiona._crs import crs_to_wkt
+from fiona.crs import CRS
 from fiona.errors import DriverError
-
-from .conftest import requires_gdal21
 
 
 def test_open_shp(path_coutwildrnp_shp):
@@ -23,8 +21,6 @@ def test_open_filename_with_exclamation(data_dir):
     assert fiona.open(path), "Failed to open !test.geojson"
 
 
-@requires_gdal21
-@pytest.mark.xfail(raises=DriverError)
 def test_write_memfile_crs_wkt():
     example_schema = {
         "geometry": "Point",
@@ -52,7 +48,7 @@ def test_write_memfile_crs_wkt():
             "w",
             driver="GPKG",
             schema=example_schema,
-            crs_wkt=crs_to_wkt("EPSG:32611"),
+            crs_wkt=CRS.from_epsg(32611).to_wkt(),
         ) as dst:
             dst.writerecords(example_features)
 

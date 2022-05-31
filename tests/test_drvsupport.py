@@ -244,8 +244,8 @@ def test_no_append_driver_cannot_append(
     """Test if a driver that supports write and not append cannot also append."""
     monkeypatch.setitem(fiona.drvsupport.supported_drivers, driver, "raw")
 
-    if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
-        pytest.skip("BNA driver segfaults with gdal 1.11")
+    if driver == "FlatGeobuf" and GDALVersion.runtime() >= GDALVersion(3, 5):
+        pytest.skip("FlatGeobuf driver segfaults with gdal 3.5")
 
     path = str(tmpdir.join(get_temp_filename(driver)))
     schema, crs, records1, records2, _ = testdata_generator(

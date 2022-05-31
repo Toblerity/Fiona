@@ -1,7 +1,7 @@
 """New tests of writing feature collections."""
 
 import fiona
-from fiona.crs import from_epsg
+from fiona.crs import CRS
 
 
 def test_issue771(tmpdir, caplog):
@@ -17,7 +17,11 @@ def test_issue771(tmpdir, caplog):
 
     for i in range(2):
         with fiona.open(
-            str(outputfile), "w", driver="GeoJSON", schema=schema, crs=from_epsg(4326)
+            str(outputfile),
+            "w",
+            driver="GeoJSON",
+            schema=schema,
+            crs=CRS.from_epsg(4326),
         ) as collection:
             collection.write(feature)
         assert outputfile.exists()

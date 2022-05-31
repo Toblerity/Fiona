@@ -10,7 +10,7 @@ from collections import OrderedDict
 from click.testing import CliRunner
 import pytest
 import fiona
-from fiona.crs import from_epsg
+from fiona.crs import CRS
 from fiona.env import GDALVersion
 from fiona.meta import extensions
 from fiona.model import ObjectEncoder, to_dict
@@ -344,7 +344,7 @@ def testdata_generator():
         return special_schemas.get(driver, {'geometry': 'Point', 'properties': OrderedDict([('position', 'int')])})
 
     def get_crs(driver):
-        special_crs = {'MapInfo File': from_epsg(4326)}
+        special_crs = {"MapInfo File": CRS.from_epsg(4326)}
         return special_crs.get(driver, None)
 
     def get_records(driver, range):

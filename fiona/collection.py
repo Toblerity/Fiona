@@ -22,7 +22,7 @@ with fiona._loading.add_gdal_dll_directories():
         DriverSupportError,
     )
     from fiona.logutils import FieldSkipLogFilter
-    from fiona._crs import crs_to_wkt
+    from fiona.crs import CRS
     from fiona._env import get_gdal_release_name, get_gdal_version_tuple
     from fiona.env import env_ctx_if_needed
     from fiona.errors import FionaDeprecationWarning
@@ -81,7 +81,7 @@ class Collection(object):
             raise TypeError("invalid driver: %r" % driver)
         if schema and not hasattr(schema, 'get'):
             raise TypeError("invalid schema: %r" % schema)
-        if crs and not isinstance(crs, compat.DICT_TYPES + (str,)):
+        if crs and not isinstance(crs, compat.DICT_TYPES + (str, CRS)):
             raise TypeError("invalid crs: %r" % crs)
         if crs_wkt and not isinstance(crs_wkt, str):
             raise TypeError("invalid crs_wkt: %r" % crs_wkt)
@@ -195,8 +195,11 @@ class Collection(object):
             self._schema = schema
 
             self._check_schema_driver_support()
+
             if crs_wkt or crs:
-                self._crs_wkt = crs_to_wkt(crs_wkt or crs, wkt_version=wkt_version)
+                self._crs_wkt = CRS.from_user_input(crs_wkt or crs).to_wkt(
+                    version=wkt_version
+                )
 
         self._driver = driver
         kwargs.update(encoding=encoding)
@@ -256,7 +259,7 @@ class Collection(object):
 
     @property
     def crs(self):
-        """Returns a Proj4 string."""
+        """The coordinate reference system (CRS) of the Collection."""
         if self._crs is None and self.session:
             self._crs = self.session.get_crs()
         return self._crs
