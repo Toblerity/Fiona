@@ -1,8 +1,6 @@
 from collections import UserDict
 from collections.abc import Mapping
 
-# Users can pass in objects that subclass a few different objects
-# More specifically, rasterio has a CRS() class that subclasses UserDict()
 DICT_TYPES = (dict, Mapping, UserDict)
 
 

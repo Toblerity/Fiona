@@ -11,7 +11,7 @@ global CRS from the Open Geospatial Consortium authority. Custom CRS can
 be described in text using several formats. Rasterio's CRS class is our
 abstraction for coordinate reference systems.
 
-A rasterio dataset's crs property is an instance of CRS. CRS are also
+A fiona.Collection's crs property is an instance of CRS. CRS are also
 used to define transformations between coordinate reference systems.
 These transformations are performed by the PROJ library. Rasterio does
 not call PROJ functions directly, but invokes them via calls to GDAL's
@@ -92,6 +92,8 @@ cdef _safe_osr_release(OGRSpatialReferenceH srs):
 
 cdef class CRS:
     """A geographic or projected coordinate reference system.
+
+    .. versionadded:: 1.9.0
 
     CRS objects may be created by passing PROJ parameters as keyword
     arguments to the standard constructor or by passing EPSG codes, PROJ
@@ -309,7 +311,7 @@ cdef class CRS:
         .. note:: If there is a corresponding EPSG code, it will be used
            when returning PROJ parameter dict.
 
-        .. versionadded:: 1.3.0
+        .. versionadded:: 1.9.0
 
         Parameters
         ----------
@@ -388,7 +390,7 @@ cdef class CRS:
     def to_wkt(self, morph_to_esri_dialect=False, version=None):
         """Convert to a OGC WKT representation.
 
-         .. versionadded:: 1.9.0 version
+        .. versionadded:: 1.9.0
 
         Parameters
         ----------
@@ -820,7 +822,7 @@ cdef class CRS:
     def from_authority(auth_name, code):
         """Make a CRS from an authority name and code.
 
-        .. versionadded:: 1.1.7
+        .. versionadded:: 1.9.0
 
         Parameters
         ----------
@@ -1038,7 +1040,7 @@ cdef class CRS:
 
         For internal use only.
 
-        .. versionadded:: 1.3.0
+        .. versionadded:: 1.9.0
 
         .. note:: Requires GDAL 3.1+ and PROJ 6.2+
 
@@ -1075,6 +1077,8 @@ cdef class CRS:
 def epsg_treats_as_latlong(input_crs):
     """Test if the CRS is in latlon order
 
+    .. versionadded:: 1.9.0
+
     From GDAL docs:
 
     > This method returns TRUE if EPSG feels this geographic coordinate
@@ -1096,7 +1100,7 @@ def epsg_treats_as_latlong(input_crs):
     Parameters
     ----------
     input_crs : CRS
-        Coordinate reference system, as a rasterio CRS object
+        Coordinate reference system, as a fiona CRS object
         Example: CRS({'init': 'EPSG:4326'})
 
     Returns
@@ -1120,6 +1124,8 @@ def epsg_treats_as_latlong(input_crs):
 def epsg_treats_as_northingeasting(input_crs):
     """Test if the CRS should be treated as having northing/easting coordinate ordering
 
+    .. versionadded:: 1.9.0
+
     From GDAL docs:
 
     > This method returns TRUE if EPSG feels this projected coordinate
@@ -1142,7 +1148,7 @@ def epsg_treats_as_northingeasting(input_crs):
     Parameters
     ----------
     input_crs : CRS
-        Coordinate reference system, as a rasterio CRS object
+        Coordinate reference system, as a fiona CRS object
         Example: CRS({'init': 'EPSG:4326'})
 
     Returns
