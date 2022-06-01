@@ -162,9 +162,10 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
             else:
                 # Buffer GeoJSON data at the collection level. The default.
                 collection = {
-                    'type': 'FeatureCollection',
-                    'fiona:schema': meta['schema'],
-                    'fiona:crs': meta['crs']}
+                    "type": "FeatureCollection",
+                    "fiona:schema": meta["schema"],
+                    "fiona:crs": meta["crs"].to_string(),
+                }
                 if with_ld_context:
                     collection['@context'] = helpers.make_ld_context(
                         add_ld_context_item)

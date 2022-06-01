@@ -5,7 +5,7 @@ class FionaError(Exception):
     """Base Fiona error"""
 
 
-class FionaValueError(ValueError):
+class FionaValueError(FionaError, ValueError):
     """Fiona-specific value errors"""
 
 

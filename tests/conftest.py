@@ -10,7 +10,7 @@ from collections import OrderedDict
 from click.testing import CliRunner
 import pytest
 import fiona
-from fiona.crs import from_epsg
+from fiona.crs import CRS
 from fiona.env import GDALVersion
 from fiona.meta import extensions
 from fiona.model import ObjectEncoder, to_dict
@@ -289,21 +289,23 @@ requires_gdal_lt_3 = pytest.mark.skipif(
     reason="Requires at least GDAL < 3")
 
 requires_gdal3 = pytest.mark.skipif(
-    not gdal_version.major >= 3,
-    reason="Requires at least GDAL 3.x")
+    not gdal_version.major >= 3, reason="Requires at least GDAL 3.x"
+)
 
 requires_gdal31 = pytest.mark.skipif(
-    not gdal_version.at_least('3.1'),
-    reason="Requires at least GDAL 3.1.x")
+    not gdal_version.at_least("3.1"), reason="Requires at least GDAL 3.1.x"
+)
 
-travis_only = pytest.mark.skipif(
-    not os.getenv("TRAVIS", "false") == "true",
-    reason="Requires travis CI environment"
+requires_gdal33 = pytest.mark.skipif(
+    not gdal_version.at_least("3.3"), reason="Requires at least GDAL 3.3.0"
 )
 
 travis_only = pytest.mark.skipif(
-    not os.getenv("TRAVIS", "false") == "true",
-    reason="Requires travis CI environment"
+    not os.getenv("TRAVIS", "false") == "true", reason="Requires travis CI environment"
+)
+
+travis_only = pytest.mark.skipif(
+    not os.getenv("TRAVIS", "false") == "true", reason="Requires travis CI environment"
 )
 
 
@@ -344,7 +346,7 @@ def testdata_generator():
         return special_schemas.get(driver, {'geometry': 'Point', 'properties': OrderedDict([('position', 'int')])})
 
     def get_crs(driver):
-        special_crs = {'MapInfo File': from_epsg(4326)}
+        special_crs = {"MapInfo File": CRS.from_epsg(4326)}
         return special_crs.get(driver, None)
 
     def get_records(driver, range):

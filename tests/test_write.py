@@ -1,7 +1,9 @@
 """New tests of writing feature collections."""
 
+from .conftest import requires_gdal33
+
 import fiona
-from fiona.crs import from_epsg
+from fiona.crs import CRS
 
 
 def test_issue771(tmpdir, caplog):
@@ -17,7 +19,11 @@ def test_issue771(tmpdir, caplog):
 
     for i in range(2):
         with fiona.open(
-            str(outputfile), "w", driver="GeoJSON", schema=schema, crs=from_epsg(4326)
+            str(outputfile),
+            "w",
+            driver="GeoJSON",
+            schema=schema,
+            crs=CRS.from_epsg(4326),
         ) as collection:
             collection.write(feature)
         assert outputfile.exists()
@@ -26,6 +32,7 @@ def test_issue771(tmpdir, caplog):
         assert record.levelname != "ERROR"
 
 
+@requires_gdal33
 def test_write__esri_only_wkt(tmpdir):
     """https://github.com/Toblerity/Fiona/issues/977"""
     schema = {"geometry": "Point", "properties": {"zero": "int"}}

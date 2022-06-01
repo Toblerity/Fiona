@@ -202,14 +202,15 @@ if "clean" not in sys.argv:
             "Cython is required to build fiona."
         )
 
-    ext_modules = cythonize([
-        Extension('fiona._geometry', ['fiona/_geometry.pyx'], **ext_options),
-        Extension('fiona.schema', ['fiona/schema.pyx'], **ext_options),
-        Extension('fiona._transform', ['fiona/_transform.pyx'], **ext_options_cpp),
-        Extension('fiona._crs', ['fiona/_crs.pyx'], **ext_options),
-        Extension('fiona._env', ['fiona/_env.pyx'], **ext_options),
-        Extension('fiona._err', ['fiona/_err.pyx'], **ext_options),
-        Extension('fiona.ogrext', ['fiona/ogrext.pyx'], **ext_options)
+    ext_modules = cythonize(
+        [
+            Extension("fiona._geometry", ["fiona/_geometry.pyx"], **ext_options),
+            Extension("fiona.schema", ["fiona/schema.pyx"], **ext_options),
+            Extension("fiona._transform", ["fiona/_transform.pyx"], **ext_options_cpp),
+            Extension("fiona.crs", ["fiona/crs.pyx"], **ext_options),
+            Extension("fiona._env", ["fiona/_env.pyx"], **ext_options),
+            Extension("fiona._err", ["fiona/_err.pyx"], **ext_options),
+            Extension("fiona.ogrext", ["fiona/ogrext.pyx"], **ext_options),
         ],
         compiler_directives={"language_level": "3"},
         compile_time_env=compile_time_env,

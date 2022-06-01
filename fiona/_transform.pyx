@@ -10,9 +10,10 @@ import warnings
 from collections import UserDict
 
 from fiona cimport _cpl, _csl, _geometry
-from fiona._crs cimport OGRSpatialReferenceH, osr_set_traditional_axis_mapping_strategy
+from fiona.crs cimport OGRSpatialReferenceH, osr_set_traditional_axis_mapping_strategy
 
 from fiona.compat import DICT_TYPES
+from fiona.crs import CRS
 from fiona.model import Geometry
 
 
@@ -39,40 +40,20 @@ log.addHandler(NullHandler())
 
 
 cdef void *_crs_from_crs(object crs):
-    cdef char *proj_c = NULL
+    cdef char *wkt_c = NULL
     cdef OGRSpatialReferenceH osr = NULL
     osr = OSRNewSpatialReference(NULL)
+
     if osr == NULL:
         raise ValueError("NULL spatial reference")
-    params = []
-    # Normally, we expect a CRS dict.
-    if isinstance(crs, UserDict):
-        crs = dict(crs)
 
-    if isinstance(crs, dict):
-        # EPSG is a special case.
-        init = crs.get('init')
-        if init:
-            auth, val = init.split(':')
-            if auth.upper() == 'EPSG':
-                OSRImportFromEPSG(osr, int(val))
-        else:
-            crs['wktext'] = True
-            for k, v in crs.items():
-                if v is True or (k in ('no_defs', 'wktext') and v):
-                    params.append("+%s" % k)
-                else:
-                    params.append("+%s=%s" % (k, v))
-            proj = " ".join(params)
-            log.debug("PROJ.4 to be imported: %r", proj)
-            proj_b = proj.encode('utf-8')
-            proj_c = proj_b
-            OSRImportFromProj4(osr, proj_c)
-    # Fall back for CRS strings like "EPSG:3857."
-    else:
-        proj_b = crs.encode('utf-8')
-        proj_c = proj_b
-        OSRSetFromUserInput(osr, proj_c)
+    params = []
+
+    wkt = CRS.from_user_input(crs).to_wkt()
+
+    wkt_b = wkt.encode('utf-8')
+    wkt_c = wkt_b
+    OSRSetFromUserInput(osr, wkt_c)
 
     osr_set_traditional_axis_mapping_strategy(osr)
     return osr
