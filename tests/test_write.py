@@ -1,5 +1,7 @@
 """New tests of writing feature collections."""
 
+from .conftest import requires_gdal33
+
 import fiona
 from fiona.crs import CRS
 
@@ -30,6 +32,7 @@ def test_issue771(tmpdir, caplog):
         assert record.levelname != "ERROR"
 
 
+@requires_gdal33
 def test_write__esri_only_wkt(tmpdir):
     """https://github.com/Toblerity/Fiona/issues/977"""
     schema = {"geometry": "Point", "properties": {"zero": "int"}}

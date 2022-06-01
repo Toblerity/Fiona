@@ -2,6 +2,8 @@
 
 import pytest
 
+from .conftest import requires_gdal33
+
 from fiona import crs
 from fiona.env import Env
 from fiona.errors import CRSError, FionaDeprecationWarning
@@ -94,6 +96,7 @@ def test_crs__version():
     )
 
 
+@requires_gdal33
 def test_crs__esri_only_wkt():
     """https://github.com/Toblerity/Fiona/issues/977"""
     target_crs = (
