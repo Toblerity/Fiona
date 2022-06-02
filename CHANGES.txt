@@ -3,6 +3,16 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.9a2 (TBD)
+-----------
+
+New features:
+
+- Fiona Collections now carry a context exit stack into which we can push fiona
+  Envs and MemoryFiles (#1059).
+- Fiona has a new CRS class, like rasterio's, which is compatible with the CRS
+  dicts of previous versions (#714).
+
 1.9a1 (2022-05-19)
 ------------------
 

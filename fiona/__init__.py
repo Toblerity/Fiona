@@ -115,7 +115,7 @@ with fiona._loading.add_gdal_dll_directories():
 
 
 __all__ = ['bounds', 'listlayers', 'listdir', 'open', 'prop_type', 'prop_width']
-__version__ = "1.9a1"
+__version__ = "1.9a2"
 __gdal_version__ = get_gdal_release_name()
 
 gdal_version = get_gdal_version_tuple()
@@ -221,28 +221,58 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
     Collection
 
     """
-    if mode == 'r' and hasattr(fp, 'read'):
+    if mode == "r" and hasattr(fp, "read"):
+        memfile = MemoryFile(fp.read())
+        colxn = memfile.open(
+            driver=driver,
+            crs=crs,
+            schema=schema,
+            layer=layer,
+            encoding=encoding,
+            enabled_drivers=enabled_drivers,
+            **kwargs
+        )
+        colxn._env.enter_context(memfile)
+        return colxn
 
-        @contextmanager
-        def fp_reader(fp):
-            memfile = MemoryFile(fp.read())
-            dataset = memfile.open(
-                driver=driver, crs=crs, schema=schema, layer=layer,
-                encoding=encoding, enabled_drivers=enabled_drivers,
-                **kwargs)
-            try:
-                yield dataset
-            finally:
-                dataset.close()
-                memfile.close()
+    elif mode == "w" and hasattr(fp, "write"):
+        memfile = MemoryFile()
+        colxn = memfile.open(
+            driver=driver,
+            crs=crs,
+            schema=schema,
+            layer=layer,
+            encoding=encoding,
+            enabled_drivers=enabled_drivers,
+            crs_wkt=crs_wkt,
+            **kwargs
+        )
+        colxn._env.enter_context(memfile)
 
-        return fp_reader(fp)
+        # For the writing case we push an extra callback onto the
+        # ExitStack. It ensures that the MemoryFile's contents are
+        # copied to the open file object.
+        def func(*args, **kwds):
+            memfile.seek(0)
+            fp.write(memfile.read())
 
-    elif mode == 'w' and hasattr(fp, 'write'):
-        @contextmanager
-        def fp_writer(fp):
-            memfile = MemoryFile()
-            dataset = memfile.open(
+        colxn._env.callback(func)
+        return colxn
+
+    elif mode == "a" and hasattr(fp, "write"):
+        raise OSError(
+            "Append mode is not supported for datasets in a Python file object."
+        )
+
+    # TODO: test for a shared base class or abstract type.
+    elif isinstance(fp, MemoryFile):
+        if mode.startswith("r"):
+            colxn = fp.open(driver=driver, **kwargs)
+
+        # Note: FilePath does not support writing and an exception will
+        # result from this.
+        elif mode.startswith("w"):
+            colxn = fp.open(
                 driver=driver,
                 crs=crs,
                 schema=schema,
@@ -252,45 +282,53 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
                 crs_wkt=crs_wkt,
                 **kwargs
             )
-            try:
-                yield dataset
-            finally:
-                dataset.close()
-                memfile.seek(0)
-                fp.write(memfile.read())
-                memfile.close()
+        return colxn
 
-        return fp_writer(fp)
-
-    elif mode == "a" and hasattr(fp, "write"):
-        raise OSError(
-            "Append mode is not supported for datasets in a Python file object."
-        )
-
+    # At this point, the fp argument is a string or path-like object
+    # which can be converted to a string.
     else:
         # If a pathlib.Path instance is given, convert it to a string path.
         if isinstance(fp, Path):
             fp = str(fp)
 
         if vfs:
-            warnings.warn("The vfs keyword argument is deprecated. Instead, pass a URL that uses a zip or tar (for example) scheme.", FionaDeprecationWarning, stacklevel=2)
+            warnings.warn(
+                "The vfs keyword argument is deprecated and will be removed in version 2.0.0. Instead, pass a URL that uses a zip or tar (for example) scheme.",
+                FionaDeprecationWarning,
+                stacklevel=2,
+            )
             path, scheme, archive = vfs_parse_paths(fp, vfs=vfs)
             path = ParsedPath(path, archive, scheme)
         else:
             path = parse_path(fp)
 
-        if mode in ('a', 'r'):
-            c = Collection(path, mode, driver=driver, encoding=encoding,
-                           layer=layer, enabled_drivers=enabled_drivers, **kwargs)
-        elif mode == 'w':
-            c = Collection(path, mode, crs=crs, driver=driver, schema=schema,
-                           encoding=encoding, layer=layer, enabled_drivers=enabled_drivers, crs_wkt=crs_wkt,
-                           **kwargs)
+        if mode in ("a", "r"):
+            colxn = Collection(
+                path,
+                mode,
+                driver=driver,
+                encoding=encoding,
+                layer=layer,
+                enabled_drivers=enabled_drivers,
+                **kwargs
+            )
+        elif mode == "w":
+            colxn = Collection(
+                path,
+                mode,
+                crs=crs,
+                driver=driver,
+                schema=schema,
+                encoding=encoding,
+                layer=layer,
+                enabled_drivers=enabled_drivers,
+                crs_wkt=crs_wkt,
+                **kwargs
+            )
         else:
-            raise ValueError(
-                "mode string must be one of 'r', 'w', or 'a', not %s" % mode)
+            raise ValueError("mode string must be one of {'r', 'w', 'a'}")
 
-        return c
+        return colxn
 
 
 collection = open
