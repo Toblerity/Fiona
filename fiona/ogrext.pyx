@@ -118,16 +118,13 @@ cdef void* gdal_open_vector(char* path_c, int mode, drivers, options) except NUL
                 drvs = CSLAddString(drvs, name_c)
 
     for k, v in options.items():
-
         if v is None:
             continue
-
         k = k.upper().encode('utf-8')
         if isinstance(v, bool):
             v = ('ON' if v else 'OFF').encode('utf-8')
         else:
             v = str(v).encode('utf-8')
-        log.debug("Set option %r: %r", k, v)
         open_opts = CSLAddNameValue(open_opts, <const char *>k, <const char *>v)
 
     open_opts = CSLAddNameValue(open_opts, "VALIDATE_OPEN_OPTIONS", "NO")
@@ -156,7 +153,6 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except NU
             v = ('ON' if v else 'OFF').encode('utf-8')
         else:
             v = str(v).encode('utf-8')
-        log.debug("Set option %r: %r", k, v)
         creation_opts = CSLAddNameValue(creation_opts, <const char *>k, <const char *>v)
 
     try:
@@ -1156,7 +1152,6 @@ cdef class WritingSession(Session):
                     v = ('ON' if v else 'OFF').encode('utf-8')
                 else:
                     v = str(v).encode('utf-8')
-                log.debug("Set option %r: %r", k, v)
                 options = CSLAddNameValue(options, <const char *>k, <const char *>v)
 
             geometry_type = collection.schema.get("geometry", "Unknown")
@@ -1213,9 +1208,6 @@ cdef class WritingSession(Session):
             before_fields.update(new_fields)
 
             for key, value in new_fields.items():
-
-                log.debug("Begin creating field: %r value: %r", key, value)
-
                 field_subtype = OFSTNone
 
                 # Convert 'long' to 'int'. See
@@ -1233,8 +1225,6 @@ cdef class WritingSession(Session):
                 width = precision = None
                 if ':' in value:
                     value, fmt = value.split(':')
-
-                    log.debug("Field format parsing, value: %r, fmt: %r", value, fmt)
 
                     if '.' in fmt:
                         width, precision = map(int, fmt.split('.'))
@@ -1269,7 +1259,6 @@ cdef class WritingSession(Session):
 
                 else:
                     OGR_Fld_Destroy(cogr_fielddefn)
-                    log.debug("End creating field %r", key)
 
         # Mapping of the Python collection schema to the munged
         # OGR schema.
@@ -1307,9 +1296,8 @@ cdef class WritingSession(Session):
                 raise TransactionError("Failed to start transaction")
 
         schema_props_keys = set(collection.schema['properties'].keys())
-        for record in records:
-            log.debug("Creating feature in layer: %s" % record)
 
+        for record in records:
             # Check for optional elements
             if 'properties' not in record:
                 record['properties'] = {}
@@ -1367,7 +1355,6 @@ cdef class WritingSession(Session):
         cdef void *cogr_layer = self.cogr_layer
         if cogr_ds == NULL:
             raise ValueError("Null data source")
-
 
         gdal_flush_cache(cogr_ds)
         log.debug("Flushed data source cache")
