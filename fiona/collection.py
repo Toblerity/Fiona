@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-# Collections provide file-like access to feature data
 
+"""Collections provide file-like access to feature data."""
+
+from contextlib import ExitStack
 import logging
 import os
 import warnings
@@ -223,6 +225,8 @@ class Collection(object):
             self._valid_geom_types = _get_valid_geom_types(self.schema, self.driver)
 
         self.field_skip_log_filter = FieldSkipLogFilter()
+        self._env = ExitStack()
+        self._closed = False
 
     def __repr__(self):
         return "<%s Collection '%s', mode '%s' at %s>" % (
@@ -628,8 +632,7 @@ class Collection(object):
             self._bounds = None
 
     def close(self):
-        """In append or write mode, flushes data to disk, then ends
-        access."""
+        """In append or write mode, flushes data to disk, then ends access."""
         if self.session is not None and self.session.isactive():
             if self.mode in ('a', 'w'):
                 self.flush()
@@ -638,24 +641,23 @@ class Collection(object):
             log.debug("Stopped session")
             self.session = None
             self.iterator = None
+        if self._env:
+            self._env.close()
+            self._env = None
+        self._closed = True
 
     @property
     def closed(self):
         """``False`` if data can be accessed, otherwise ``True``."""
-        return self.session is None
+        return self._closed
 
     def __enter__(self):
-        self._env = env_ctx_if_needed()
-        self._env.__enter__()
+        self._env.enter_context(env_ctx_if_needed())
         logging.getLogger('fiona.ogrext').addFilter(self.field_skip_log_filter)
-        self._env = env_ctx_if_needed()
-        self._env.__enter__()
         return self
 
     def __exit__(self, type, value, traceback):
-        self._env.__exit__()
         logging.getLogger('fiona.ogrext').removeFilter(self.field_skip_log_filter)
-        self._env.__exit__()
         self.close()
 
     def __del__(self):
