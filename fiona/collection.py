@@ -133,6 +133,8 @@ class Collection(object):
         self.include_fields = include_fields
         self.ignore_fields = ignore_fields
         self.ignore_geometry = bool(ignore_geometry)
+        self._env = None
+        self._closed = True
 
         # Check GDAL version against drivers
         if driver in driver_mode_mingdal[mode] and get_gdal_version_tuple() < driver_mode_mingdal[mode][driver]:
@@ -633,18 +635,19 @@ class Collection(object):
 
     def close(self):
         """In append or write mode, flushes data to disk, then ends access."""
-        if self.session is not None and self.session.isactive():
-            if self.mode in ('a', 'w'):
-                self.flush()
-            log.debug("Flushed buffer")
-            self.session.stop()
-            log.debug("Stopped session")
-            self.session = None
-            self.iterator = None
-        if self._env:
-            self._env.close()
-            self._env = None
-        self._closed = True
+        if not self._closed:
+            if self.session is not None and self.session.isactive():
+                if self.mode in ("a", "w"):
+                    self.flush()
+                log.debug("Flushed buffer")
+                self.session.stop()
+                log.debug("Stopped session")
+                self.session = None
+                self.iterator = None
+            if self._env:
+                self._env.close()
+                self._env = None
+            self._closed = True
 
     @property
     def closed(self):
@@ -663,7 +666,8 @@ class Collection(object):
     def __del__(self):
         # Note: you can't count on this being called. Call close() explicitly
         # or use the context manager protocol ("with").
-        self.close()
+        if not self._closed:
+            self.close()
 
 
 ALL_GEOMETRY_TYPES = set([
