@@ -541,6 +541,9 @@ cdef extern from "ogr_api.h" nogil:
     void OGR_G_ImportFromWkb(OGRGeometryH geometry, unsigned char *bytes,
                              int nbytes)
     int OGR_G_WkbSize(OGRGeometryH geometry)
+
+    void OGR_G_Segmentize(OGRGeometryH hGeom, double dfMaxLength)
+
     OGRErr OGR_L_CreateFeature(OGRLayerH layer, OGRFeatureH feature)
     int OGR_L_CreateField(OGRLayerH layer, OGRFieldDefnH, int flexible)
     OGRErr OGR_L_GetExtent(OGRLayerH layer, void *extent, int force)
