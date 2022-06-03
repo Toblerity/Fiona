@@ -137,3 +137,13 @@ def test_apply_geom():
     output_geom = next(apply_geom([("segmentize", 1.0)], [input_geom]))
     assert len(output_geom.coordinates) == 11
     assert output_geom.coordinates[1] == (0.0, 1.0)
+
+
+def test_apply_geom_twice():
+    from fiona._transform import apply_geom
+    from fiona.model import Geometry
+
+    input_geom = Geometry(type="LineString", coordinates=[(0, 0), (0, 10)])
+    output_geom = next(apply_geom([("segmentize", 1.0), ("segmentize", 0.5)], [input_geom]))
+    assert len(output_geom.coordinates) == 21
+    assert output_geom.coordinates[1] == (0.0, 0.5)
