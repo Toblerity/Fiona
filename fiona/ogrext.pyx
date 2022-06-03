@@ -1,4 +1,5 @@
-# These are extension functions and classes using the OGR C API.
+"""Extension functions and classes using the OGR C API."""
+
 from __future__ import absolute_import
 
 include "gdal.pxi"
@@ -163,7 +164,6 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except NU
         raise DriverError(str(exc))
     finally:
         CSLDestroy(creation_opts)
-
 
 
 def _explode(coords):

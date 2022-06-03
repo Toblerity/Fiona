@@ -11,6 +11,7 @@ from collections import UserDict
 
 from fiona cimport _cpl, _csl, _geometry
 from fiona.crs cimport OGRSpatialReferenceH, osr_set_traditional_axis_mapping_strategy
+from fiona._err cimport exc_wrap_pointer
 
 from fiona.compat import DICT_TYPES
 from fiona.crs import CRS
@@ -263,3 +264,63 @@ def _transform_geom(src_crs, dst_crs, geom, antimeridian_cutting, antimeridian_o
     OSRRelease(dst)
 
     return out_geom
+
+
+from libcpp.unordered_map cimport unordered_map
+
+cdef OGRGeometryH segmentize(OGRGeometryH geom, double max_length):
+    cdef OGRGeometryH new_geom = NULL
+    new_geom = OGR_G_Clone(geom)
+    OGR_G_Segmentize(new_geom, max_length)
+    return new_geom
+
+
+ctypedef OGRGeometryH (*geometry_func)(OGRGeometryH, double)
+cdef unordered_map[int, geometry_func] func_map
+
+func_map[1] = <geometry_func>segmentize
+
+cdef geometry_func func_alias(int choice):
+    return func_map[choice]
+
+
+def apply_geom(operations, geoms):
+    """Apply a series of geometry transforming operations to one or more geometries.
+
+    Parameters
+    ----------
+    operations: list
+        A list of operation names and extra arg as a tuple.
+    geoms: Geometry or Sequence[Geometry]
+        Geometries on which to apply operations.
+
+    Yields
+    ------
+    Geometry
+
+    """
+    cdef OGRGeometryH ogr_geom1 = NULL
+    cdef OGRGeometryH ogr_geom2 = NULL
+    cdef int choice = 0
+
+    op_map = {
+        "segmentize": 1
+    }
+
+    for geom in geoms:
+        ogr_geom1 = _geometry.OGRGeomBuilder().build(geom)
+
+        for op_name, op_arg in operations:
+            choice = op_map[op_name]
+            ogr_geom2 = func_alias(choice)(ogr_geom1, op_arg)
+            ogr_geom2 = exc_wrap_pointer(ogr_geom2)
+            OGR_G_DestroyGeometry(ogr_geom1)
+            ogr_geom1 = ogr_geom2
+
+        if ogr_geom2 == NULL:
+            raise Exception("NULL geometry")
+
+        output_geom = _geometry.GeomBuilder().build(ogr_geom2)
+        OGR_G_DestroyGeometry(ogr_geom2)
+
+        yield output_geom
