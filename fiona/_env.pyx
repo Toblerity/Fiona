@@ -8,8 +8,6 @@ threads will inherit config options from the main thread unless the
 option is set to a new value inside the thread.
 """
 
-include "gdal.pxi"
-
 from collections import namedtuple
 import logging
 import os
