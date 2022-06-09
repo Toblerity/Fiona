@@ -8,6 +8,7 @@ import pytest
 import fiona
 from fiona.crs import CRS
 from fiona.errors import DriverError
+from fiona.model import Feature
 
 
 def test_open_shp(path_coutwildrnp_shp):
@@ -28,18 +29,24 @@ def test_write_memfile_crs_wkt():
     }
 
     example_features = [
-        {
-            "geometry": {"type": "Point", "coordinates": [0.0, 0.0]},
-            "properties": {"title": "One"},
-        },
-        {
-            "geometry": {"type": "Point", "coordinates": [1.0, 2.0]},
-            "properties": {"title": "Two"},
-        },
-        {
-            "geometry": {"type": "Point", "coordinates": [3.0, 4.0]},
-            "properties": {"title": "Three"},
-        },
+        Feature.from_dict(
+            **{
+                "geometry": {"type": "Point", "coordinates": [0.0, 0.0]},
+                "properties": {"title": "One"},
+            }
+        ),
+        Feature.from_dict(
+            **{
+                "geometry": {"type": "Point", "coordinates": [1.0, 2.0]},
+                "properties": {"title": "Two"},
+            }
+        ),
+        Feature.from_dict(
+            **{
+                "geometry": {"type": "Point", "coordinates": [3.0, 4.0]},
+                "properties": {"title": "Three"},
+            }
+        ),
     ]
 
     with io.BytesIO() as fd:
@@ -55,4 +62,4 @@ def test_write_memfile_crs_wkt():
         fd.seek(0)
         with fiona.open(fd) as src:
             assert src.driver == "GPKG"
-            assert src.crs == {"init": "epsg:32611"}
+            assert src.crs == "EPSG:32611"

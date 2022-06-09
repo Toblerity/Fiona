@@ -19,51 +19,58 @@ import pytest
 
 import fiona
 from fiona.env import calc_gdal_version_num, get_gdal_version_num
+from fiona.model import Feature
 
 
-@pytest.mark.xfail(fiona.gdal_version.major < 2,
-                   reason="64-bit integer fields require GDAL 2+")
 def testCreateBigIntSchema(tmpdir):
-    name = str(tmpdir.join('output1.shp'))
+    name = str(tmpdir.join("output1.shp"))
 
     a_bigint = 10 ** 18 - 1
-    fieldname = 'abigint'
+    fieldname = "abigint"
 
     kwargs = {
-        'driver': 'ESRI Shapefile',
-        'crs': 'EPSG:4326',
-        'schema': {
-            'geometry': 'Point',
-            'properties': [(fieldname, 'int:10')]}}
+        "driver": "ESRI Shapefile",
+        "crs": "EPSG:4326",
+        "schema": {"geometry": "Point", "properties": [(fieldname, "int:10")]},
+    }
 
-    with fiona.open(name, 'w', **kwargs) as dst:
+    with fiona.open(name, "w", **kwargs) as dst:
         rec = {}
-        rec['geometry'] = {'type': 'Point', 'coordinates': (0, 0)}
-        rec['properties'] = {fieldname: a_bigint}
-        dst.write(rec)
+        rec["geometry"] = {"type": "Point", "coordinates": (0, 0)}
+        rec["properties"] = {fieldname: a_bigint}
+        dst.write(Feature.from_dict(**rec))
 
     with fiona.open(name) as src:
         if fiona.gdal_version >= (2, 0, 0):
             first = next(iter(src))
-            assert first['properties'][fieldname] == a_bigint
+            assert first["properties"][fieldname] == a_bigint
 
 
-@pytest.mark.skipif(get_gdal_version_num() < calc_gdal_version_num(2, 0, 0),
-                    reason="Test requires GDAL 2+")
-@pytest.mark.parametrize('dtype', ['int', 'int64'])
+@pytest.mark.parametrize("dtype", ["int", "int64"])
 def test_issue691(tmpdir, dtype):
     """Type 'int' maps to 'int64'"""
-    schema = {'geometry': 'Any', 'properties': {'foo': dtype}}
+    schema = {"geometry": "Any", "properties": {"foo": dtype}}
     with fiona.open(
-            str(tmpdir.join('test.shp')), 'w', driver='Shapefile',
-            schema=schema, crs='epsg:4326') as dst:
-        dst.write({
-            'type': 'Feature',
-            'geometry': {'type': 'Point',
-                         'coordinates': (-122.278015, 37.868995)},
-            'properties': {'foo': 3694063472}})
+        str(tmpdir.join("test.shp")),
+        "w",
+        driver="Shapefile",
+        schema=schema,
+        crs="epsg:4326",
+    ) as dst:
+        dst.write(
+            Feature.from_dict(
+                **{
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": (-122.278015, 37.868995),
+                    },
+                    "properties": {"foo": 3694063472},
+                }
+            )
+        )
 
-    with fiona.open(str(tmpdir.join('test.shp'))) as src:
-        assert src.schema['properties']['foo'] == 'int:18'
+    with fiona.open(str(tmpdir.join("test.shp"))) as src:
+        assert src.schema["properties"]["foo"] == "int:18"
         first = next(iter(src))
-        assert first['properties']['foo'] == 3694063472
+        assert first["properties"]["foo"] == 3694063472

@@ -6,6 +6,21 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.9a2 (TBD)
 -----------
 
+Deprecations:
+
+- Fiona's API methods will accept feature and geometry dicts in 1.9.0, but this
+  usage is deprecated. Instances of Feature and Geometry will be required in
+  2.0.
+- The precision keyword argument of fiona.transform.transform_geom is
+  deprecated and will be removed in version 2.0.
+- Deprecated usage has been eliminated in the project. Fiona's tests pass when
+  run with a -Werror::DeprecationWarning filter.
+
+Changes:
+
+- Fiona's FionaDeprecationWarning now sub-classes DeprecationWarning.
+- Some test modules have beeen re-formatted using black.
+
 New features:
 
 - Fiona Collections now carry a context exit stack into which we can push fiona

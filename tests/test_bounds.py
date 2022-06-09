@@ -9,23 +9,24 @@ from tests.conftest import get_temp_filename
 
 
 def test_bounds_point():
-    g = {'type': 'Point', 'coordinates': [10, 10]}
+    g = {"type": "Point", "coordinates": [10, 10]}
     assert fiona.bounds(g) == (10, 10, 10, 10)
 
 
 def test_bounds_line():
-    g = {'type': 'LineString', 'coordinates': [[0, 0], [10, 10]]}
+    g = {"type": "LineString", "coordinates": [[0, 0], [10, 10]]}
     assert fiona.bounds(g) == (0, 0, 10, 10)
 
 
 def test_bounds_polygon():
-    g = {'type': 'Polygon', 'coordinates': [[[0, 0], [10, 10], [10, 0]]]}
+    g = {"type": "Polygon", "coordinates": [[[0, 0], [10, 10], [10, 0]]]}
     assert fiona.bounds(g) == (0, 0, 10, 10)
 
 
 def test_bounds_z():
-    g = {'type': 'Point', 'coordinates': [10, 10, 10]}
+    g = {"type": "Point", "coordinates": [10, 10, 10]}
     assert fiona.bounds(g) == (10, 10, 10, 10)
+
 
 # MapInfo File driver requires that the bounds (geographical extents) of a new file
 # be set before writing the first feature (https://gdal.org/drivers/vector/mitab.html)
@@ -64,8 +65,8 @@ def test_bounds(tmpdir, driver, testdata_generator):
         xs = []
         ys = []
         for r in records:
-            xs.append(r["geometry"]["coordinates"][0])
-            ys.append(r["geometry"]["coordinates"][1])
+            xs.append(r.geometry["coordinates"][0])
+            ys.append(r.geometry["coordinates"][1])
         return min(xs), max(xs), min(ys), max(ys)
 
     with fiona.open(path, "w", driver=driver, schema=schema) as c:

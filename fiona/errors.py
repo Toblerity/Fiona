@@ -71,7 +71,7 @@ class GDALVersionError(FionaError):
     """
 
 
-class FionaDeprecationWarning(UserWarning):
+class FionaDeprecationWarning(DeprecationWarning):
     """A warning about deprecation of Fiona features"""
 
 

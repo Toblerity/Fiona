@@ -111,9 +111,9 @@ class Env(object):
 
         """
         return {
-            'CHECK_WITH_INVERT_PROJ': True,
-            'GTIFF_IMPLICIT_JPEG_OVR': False,
-            "FIONA_ENV": True
+            "CHECK_WITH_INVERT_PROJ": True,
+            "GTIFF_IMPLICIT_JPEG_OVR": False,
+            "FIONA_ENV": True,
         }
 
     def __init__(
@@ -170,8 +170,7 @@ class Env(object):
 
         """
         aws_access_key_id = options.pop("aws_access_key_id", None)
-        # Before 1.0, Fiona only supported AWS. We will special
-        # case AWS in 1.0.x. TODO: warn deprecation in 1.1.
+        # Warn deprecation in 1.9, remove in 2.0.
         if aws_access_key_id:
             warnings.warn(
                 "Passing abstract session keyword arguments is deprecated. "
@@ -186,11 +185,13 @@ class Env(object):
         if not {"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"}.isdisjoint(options):
             raise EnvError(
                 "GDAL's AWS config options can not be directly set. "
-                "AWS credentials are handled exclusively by boto3.")
+                "AWS credentials are handled exclusively by boto3."
+            )
 
         if session:
             # Passing a session via keyword argument is the canonical
             # way to configure access to secured cloud resources.
+            # Warn deprecation in 1.9, remove in 2.0.
             if not isinstance(session, Session):
                 warnings.warn(
                     "Passing a boto3 session is deprecated. Pass a Fiona AWSSession object instead.",
@@ -411,6 +412,7 @@ def ensure_env(f):
     nothing and immediately calls f with the given arguments.
 
     """
+
     @wraps(f)
     def wrapper(*args, **kwargs):
         if local._env:
@@ -444,6 +446,7 @@ def ensure_env_with_credentials(f):
     nothing and immediately calls f with the given arguments.
 
     """
+
     @wraps(f)
     def wrapper(*args, **kwds):
         if local._env:
@@ -479,6 +482,7 @@ class GDALVersion(object):
     and ignores everything except the major and minor components.
 
     """
+
     major = attr.ib(default=0, validator=attr.validators.instance_of(int))
     minor = attr.ib(default=0, validator=attr.validators.instance_of(int))
 

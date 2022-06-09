@@ -126,6 +126,7 @@ def test_geometry__props():
     assert Geometry(coordinates=(0, 0), type="Point")._props() == {
         "coordinates": (0, 0),
         "type": "Point",
+        "geometries": None,
     }
 
 
@@ -157,7 +158,7 @@ def test_feature_id():
 def test_feature_no_properties():
     """Feature has no properties"""
     feat = Feature()
-    assert feat.properties is None
+    assert len(feat.properties) == 0
 
 
 def test_feature_properties():
