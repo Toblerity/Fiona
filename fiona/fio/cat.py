@@ -118,7 +118,7 @@ def cat(
                             )
 
                         if precision >= 0:
-                            geom = recursive_round(geom)
+                            geom = recursive_round(geom, precision)
 
                         feat = Feature(
                             id=feat.id,

@@ -1,6 +1,7 @@
+"""Helper objects needed by multiple CLI commands.
+
 """
-Helper objects needed by multiple CLI commands.
-"""
+
 from functools import partial
 import json
 import math
@@ -8,7 +9,7 @@ import warnings
 
 from munch import munchify
 
-from fiona.model import to_dict
+from fiona.model import Geometry, to_dict
 
 
 warnings.simplefilter("default")
