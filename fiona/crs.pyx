@@ -33,6 +33,7 @@ from fiona.compat import DICT_TYPES
 from fiona.errors import CRSError, FionaDeprecationWarning
 from fiona.enums import WktVersion
 
+from fiona._env cimport _safe_osr_release
 from fiona._err cimport exc_wrap_ogrerr, exc_wrap_int, exc_wrap_pointer
 
 
@@ -50,44 +51,6 @@ _RE_PROJ_PARAM = re.compile(r"""
 
 cdef void osr_set_traditional_axis_mapping_strategy(OGRSpatialReferenceH hSrs):
     OSRSetAxisMappingStrategy(hSrs, OAMS_TRADITIONAL_GIS_ORDER)
-
-
-cdef OGRSpatialReferenceH osr_from_crs(object crs) except NULL:
-    """Returns a reference to memory that must be deallocated
-    by the caller."""
-    crs = CRS.from_user_input(crs)
-
-    # EPSG is a special case.
-    init = crs.get('init')
-    if init:
-        auth, val = init.strip().split(':')
-
-        if not val or auth.upper() != 'EPSG':
-            raise CRSError("Invalid CRS: {!r}".format(crs))
-        proj = 'EPSG:{}'.format(val).encode('utf-8')
-    else:
-        proj = crs.to_string().encode('utf-8')
-        log.debug("PROJ.4 to be imported: %r", proj)
-
-    cdef OGRSpatialReferenceH osr = OSRNewSpatialReference(NULL)
-    try:
-        retval = exc_wrap_int(OSRSetFromUserInput(osr, <const char *>proj))
-        if retval:
-            _safe_osr_release(osr)
-            raise CRSError("Invalid CRS: {!r}".format(crs))
-    except CPLE_BaseError as exc:
-        _safe_osr_release(osr)
-        raise CRSError(str(exc))
-    else:
-        osr_set_traditional_axis_mapping_strategy(osr)
-        return osr
-
-
-cdef _safe_osr_release(OGRSpatialReferenceH srs):
-    """Wrapper to handle OSR release when NULL."""
-    if srs != NULL:
-        OSRRelease(srs)
-    srs = NULL
 
 
 cdef class CRS:
@@ -400,7 +363,7 @@ cdef class CRS:
             in a future version of fiona (2.0.0).
         version : WktVersion or str, optional
             The version of the WKT output.
-            Only works with GDAL 3+. Default is WKT1_GDAL.
+            Defaults to GDAL's default (WKT1_GDAL for GDAL 3).
 
         Returns
         -------

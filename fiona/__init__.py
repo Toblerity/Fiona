@@ -208,9 +208,8 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
         Ignore the geometry on load.
     include_fields : list
         List of a subset of field names to include on load.
-    wkt_version : str
-        WKT Version to use to for the CRS
-        (WKT1, WKT1_GDAL, WKT1_ESRI, WKT2, WKT2_2015, WKT2_2018).
+    wkt_version : fiona.enums.WktVersion or str, optional
+        Version to use to for the CRS WKT.
         Defaults to GDAL's default (WKT1_GDAL for GDAL 3).
     kwargs : mapping
         Other driver-specific parameters that will be interpreted by
