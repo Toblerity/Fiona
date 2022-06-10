@@ -53,12 +53,25 @@ class Collection(object):
     represented as GeoJSON-like mappings.
     """
 
-    def __init__(self, path, mode='r', driver=None, schema=None, crs=None,
-                 encoding=None, layer=None, vsi=None, archive=None,
-                 enabled_drivers=None, crs_wkt=None, ignore_fields=None,
-                 ignore_geometry=False, include_fields=None,
-                 wkt_version=None,
-                 **kwargs):
+    def __init__(
+        self,
+        path,
+        mode="r",
+        driver=None,
+        schema=None,
+        crs=None,
+        encoding=None,
+        layer=None,
+        vsi=None,
+        archive=None,
+        enabled_drivers=None,
+        crs_wkt=None,
+        ignore_fields=None,
+        ignore_geometry=False,
+        include_fields=None,
+        wkt_version=None,
+        **kwargs
+    ):
 
         """The required ``path`` is the absolute or relative path to
         a file, such as '/data/test_uk.shp'. In ``mode`` 'r', data can
@@ -73,15 +86,17 @@ class Collection(object):
 
         In 'w' mode, kwargs will be mapped to OGR layer creation
         options.
+
         """
+        self._closed = True
 
         if not isinstance(path, (str, Path)):
             raise TypeError("invalid path: %r" % path)
-        if not isinstance(mode, str) or mode not in ('r', 'w', 'a'):
+        if not isinstance(mode, str) or mode not in ("r", "w", "a"):
             raise TypeError("invalid mode: %r" % mode)
         if driver and not isinstance(driver, str):
             raise TypeError("invalid driver: %r" % driver)
-        if schema and not hasattr(schema, 'get'):
+        if schema and not hasattr(schema, "get"):
             raise TypeError("invalid schema: %r" % schema)
         if crs and not isinstance(crs, compat.DICT_TYPES + (str, CRS)):
             raise TypeError("invalid crs: %r" % crs)
@@ -137,15 +152,23 @@ class Collection(object):
         self._closed = True
 
         # Check GDAL version against drivers
-        if driver in driver_mode_mingdal[mode] and get_gdal_version_tuple() < driver_mode_mingdal[mode][driver]:
-            min_gdal_version = ".".join(list(map(str, driver_mode_mingdal[mode][driver])))
+        if (
+            driver in driver_mode_mingdal[mode]
+            and get_gdal_version_tuple() < driver_mode_mingdal[mode][driver]
+        ):
+            min_gdal_version = ".".join(
+                list(map(str, driver_mode_mingdal[mode][driver]))
+            )
 
             raise DriverError(
                 "{driver} driver requires at least GDAL {min_gdal_version} for mode '{mode}', "
-                "Fiona was compiled against: {gdal}".format(driver=driver,
-                                                            mode=mode,
-                                                            min_gdal_version=min_gdal_version,
-                                                            gdal=get_gdal_release_name()))
+                "Fiona was compiled against: {gdal}".format(
+                    driver=driver,
+                    mode=mode,
+                    min_gdal_version=min_gdal_version,
+                    gdal=get_gdal_release_name(),
+                )
+            )
 
         if vsi:
             self.path = vfs.vsi_path(path, vsi, archive)
@@ -154,13 +177,13 @@ class Collection(object):
             path = parse_path(path)
             self.path = vsi_path(path)
 
-        if mode == 'w':
+        if mode == "w":
             if layer and not isinstance(layer, str):
                 raise ValueError("in 'w' mode, layer names must be strings")
-            if driver == 'GeoJSON':
+            if driver == "GeoJSON":
                 if layer is not None:
                     raise ValueError("the GeoJSON format does not have layers")
-                self.name = 'OgrGeoJSON'
+                self.name = "OgrGeoJSON"
             # TODO: raise ValueError as above for other single-layer formats.
             else:
                 self.name = layer or os.path.basename(os.path.splitext(path.path)[0])
@@ -172,17 +195,15 @@ class Collection(object):
 
         self.mode = mode
 
-        if self.mode == 'w':
-            if driver == 'Shapefile':
-                driver = 'ESRI Shapefile'
+        if self.mode == "w":
+            if driver == "Shapefile":
+                driver = "ESRI Shapefile"
             if not driver:
                 raise DriverError("no driver")
             elif driver not in supported_drivers:
-                raise DriverError(
-                    "unsupported driver: %r" % driver)
+                raise DriverError("unsupported driver: %r" % driver)
             elif self.mode not in supported_drivers[driver]:
-                raise DriverError(
-                    "unsupported mode: %r" % self.mode)
+                raise DriverError("unsupported mode: %r" % self.mode)
             self._driver = driver
 
             if not schema:
@@ -210,10 +231,10 @@ class Collection(object):
         self.encoding = encoding
 
         try:
-            if self.mode == 'r':
+            if self.mode == "r":
                 self.session = Session()
                 self.session.start(self, **kwargs)
-            elif self.mode in ('a', 'w'):
+            elif self.mode in ("a", "w"):
                 self.session = WritingSession()
                 self.session.start(self, **kwargs)
         except OSError:
@@ -235,7 +256,8 @@ class Collection(object):
             self.closed and "closed" or "open",
             self.path + ":" + str(self.name),
             self.mode,
-            hex(id(self)))
+            hex(id(self)),
+        )
 
     def guard_driver_mode(self):
         driver = self.session.get_driver()
@@ -382,8 +404,11 @@ class Collection(object):
         """Returns a mapping with the driver, schema, crs, and additional
         properties."""
         return {
-            'driver': self.driver, 'schema': self.schema, 'crs': self.crs,
-            'crs_wkt': self.crs_wkt}
+            "driver": self.driver,
+            "schema": self.schema,
+            "crs": self.crs,
+            "crs_wkt": self.crs_wkt,
+        }
 
     profile = meta
 
@@ -403,7 +428,7 @@ class Collection(object):
         """
         if self.closed:
             raise ValueError("I/O operation on closed collection")
-        elif self.mode != 'r':
+        elif self.mode != "r":
             raise OSError("collection not open for reading")
         if args:
             s = slice(*args)
@@ -412,13 +437,12 @@ class Collection(object):
             step = s.step
         else:
             start = stop = step = None
-        bbox = kwds.get('bbox')
-        mask = kwds.get('mask')
+        bbox = kwds.get("bbox")
+        mask = kwds.get("mask")
         if bbox and mask:
             raise ValueError("mask and bbox can not be set together")
-        where = kwds.get('where')
-        self.iterator = Iterator(
-            self, start, stop, step, bbox, mask, where)
+        where = kwds.get("where")
+        self.iterator = Iterator(self, start, stop, step, bbox, mask, where)
         return self.iterator
 
     def items(self, *args, **kwds):
@@ -438,7 +462,7 @@ class Collection(object):
         """
         if self.closed:
             raise ValueError("I/O operation on closed collection")
-        elif self.mode != 'r':
+        elif self.mode != "r":
             raise OSError("collection not open for reading")
         if args:
             s = slice(*args)
@@ -447,13 +471,12 @@ class Collection(object):
             step = s.step
         else:
             start = stop = step = None
-        bbox = kwds.get('bbox')
-        mask = kwds.get('mask')
+        bbox = kwds.get("bbox")
+        mask = kwds.get("mask")
         if bbox and mask:
             raise ValueError("mask and bbox can not be set together")
-        where = kwds.get('where')
-        self.iterator = ItemsIterator(
-            self, start, stop, step, bbox, mask, where)
+        where = kwds.get("where")
+        self.iterator = ItemsIterator(self, start, stop, step, bbox, mask, where)
         return self.iterator
 
     def keys(self, *args, **kwds):
@@ -472,7 +495,7 @@ class Collection(object):
         """
         if self.closed:
             raise ValueError("I/O operation on closed collection")
-        elif self.mode != 'r':
+        elif self.mode != "r":
             raise OSError("collection not open for reading")
         if args:
             s = slice(*args)
@@ -481,13 +504,12 @@ class Collection(object):
             step = s.step
         else:
             start = stop = step = None
-        bbox = kwds.get('bbox')
-        mask = kwds.get('mask')
+        bbox = kwds.get("bbox")
+        mask = kwds.get("mask")
         if bbox and mask:
             raise ValueError("mask and bbox can not be set together")
-        where = kwds.get('where')
-        self.iterator = KeysIterator(
-            self, start, stop, step, bbox, mask, where)
+        where = kwds.get("where")
+        self.iterator = KeysIterator(self, start, stop, step, bbox, mask, where)
         return self.iterator
 
     def __contains__(self, fid):
@@ -501,9 +523,12 @@ class Collection(object):
 
     def __next__(self):
         """Returns next record from iterator."""
-        warnings.warn("Collection.__next__() is buggy and will be removed in "
-                      "Fiona 2.0. Switch to `next(iter(collection))`.",
-                      FionaDeprecationWarning, stacklevel=2)
+        warnings.warn(
+            "Collection.__next__() is buggy and will be removed in "
+            "Fiona 2.0. Switch to `next(iter(collection))`.",
+            FionaDeprecationWarning,
+            stacklevel=2,
+        )
         if not self.iterator:
             iter(self)
         return next(self.iterator)
@@ -520,7 +545,7 @@ class Collection(object):
         """Stages multiple records for writing to disk."""
         if self.closed:
             raise ValueError("I/O operation on closed collection")
-        if self.mode not in ('a', 'w'):
+        if self.mode not in ("a", "w"):
             raise OSError("collection not open for writing")
         self.session.writerecs(records, self)
         self._len = self.session.get_length()
@@ -537,10 +562,9 @@ class Collection(object):
         """
         # Currently we only compare keys of properties, not the types of
         # values.
-        return (
-            set(record['properties'].keys()) ==
-            set(self.schema['properties'].keys()) and
-            self.validate_record_geometry(record))
+        return set(record["properties"].keys()) == set(
+            self.schema["properties"].keys()
+        ) and self.validate_record_geometry(record)
 
     def validate_record_geometry(self, record):
         """Compares the record's geometry to the collection's schema.
@@ -551,15 +575,15 @@ class Collection(object):
         # OGR reports these mixed files as type "Polygon" or "LineString"
         # but will return either these or their multi counterparts when
         # reading features.
-        if (self.driver == "ESRI Shapefile" and
-                "Point" not in record['geometry']['type']):
-            return record['geometry']['type'].lstrip(
-                "Multi") == self.schema['geometry'].lstrip("3D ").lstrip(
-                    "Multi")
+        if (
+            self.driver == "ESRI Shapefile"
+            and "Point" not in record["geometry"]["type"]
+        ):
+            return record["geometry"]["type"].lstrip("Multi") == self.schema[
+                "geometry"
+            ].lstrip("3D ").lstrip("Multi")
         else:
-            return (
-                record['geometry']['type'] ==
-                self.schema['geometry'].lstrip("3D "))
+            return record["geometry"]["type"] == self.schema["geometry"].lstrip("3D ")
 
     def __len__(self):
         if self._len <= 0 and self.session is not None:
@@ -656,11 +680,11 @@ class Collection(object):
 
     def __enter__(self):
         self._env.enter_context(env_ctx_if_needed())
-        logging.getLogger('fiona.ogrext').addFilter(self.field_skip_log_filter)
+        logging.getLogger("fiona.ogrext").addFilter(self.field_skip_log_filter)
         return self
 
     def __exit__(self, type, value, traceback):
-        logging.getLogger('fiona.ogrext').removeFilter(self.field_skip_log_filter)
+        logging.getLogger("fiona.ogrext").removeFilter(self.field_skip_log_filter)
         self.close()
 
     def __del__(self):
@@ -670,9 +694,13 @@ class Collection(object):
             self.close()
 
 
-ALL_GEOMETRY_TYPES = set([
-    geom_type for geom_type in GEOMETRY_TYPES.values()
-    if "3D " not in geom_type and geom_type != "None"])
+ALL_GEOMETRY_TYPES = set(
+    [
+        geom_type
+        for geom_type in GEOMETRY_TYPES.values()
+        if "3D " not in geom_type and geom_type != "None"
+    ]
+)
 ALL_GEOMETRY_TYPES.add("None")
 
 
@@ -704,20 +732,24 @@ def get_filetype(bytesbuf):
     """Detect compression type of bytesbuf.
 
     ZIP only. TODO: add others relevant to GDAL/OGR."""
-    if bytesbuf[:4].startswith(b'PK\x03\x04'):
-        return 'zip'
+    if bytesbuf[:4].startswith(b"PK\x03\x04"):
+        return "zip"
     else:
-        return ''
+        return ""
 
 
 class BytesCollection(Collection):
     """BytesCollection takes a buffer of bytes and maps that to
     a virtual file that can then be opened by fiona.
     """
+
     def __init__(self, bytesbuf, **kwds):
         """Takes buffer of bytes whose contents is something we'd like
         to open with Fiona and maps it to a virtual file.
+
         """
+        self._closed = True
+
         if not isinstance(bytesbuf, bytes):
             raise ValueError("input buffer must be bytes")
 
@@ -730,15 +762,17 @@ class BytesCollection(Collection):
         # it. If the requested driver is for GeoJSON, we append an an
         # appropriate extension to ensure the driver reads it.
         filetype = get_filetype(self.bytesbuf)
-        ext = ''
-        if filetype == 'zip':
-            ext = '.zip'
-        elif kwds.get('driver') == "GeoJSON":
-            ext = '.json'
+        ext = ""
+        if filetype == "zip":
+            ext = ".zip"
+        elif kwds.get("driver") == "GeoJSON":
+            ext = ".json"
         self.virtual_file = buffer_to_virtual_file(self.bytesbuf, ext=ext)
 
         # Instantiate the parent class.
         super().__init__(self.virtual_file, vsi=filetype, **kwds)
+
+        self._closed = False
 
     def close(self):
         """Removes the virtual file associated with the class."""
@@ -753,4 +787,5 @@ class BytesCollection(Collection):
             self.closed and "closed" or "open",
             self.path + ":" + str(self.name),
             self.mode,
-            hex(id(self)))
+            hex(id(self)),
+        )

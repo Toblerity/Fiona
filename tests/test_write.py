@@ -4,16 +4,19 @@ from .conftest import requires_gdal33
 
 import fiona
 from fiona.crs import CRS
+from fiona.model import Feature
 
 
 def test_issue771(tmpdir, caplog):
     """Overwrite a GeoJSON file without logging errors."""
     schema = {"geometry": "Point", "properties": {"zero": "int"}}
 
-    feature = {
-        "geometry": {"type": "Point", "coordinates": (0, 0)},
-        "properties": {"zero": "0"},
-    }
+    feature = Feature.from_dict(
+        **{
+            "geometry": {"type": "Point", "coordinates": (0, 0)},
+            "properties": {"zero": "0"},
+        }
+    )
 
     outputfile = tmpdir.join("test.geojson")
 
@@ -36,10 +39,12 @@ def test_issue771(tmpdir, caplog):
 def test_write__esri_only_wkt(tmpdir):
     """https://github.com/Toblerity/Fiona/issues/977"""
     schema = {"geometry": "Point", "properties": {"zero": "int"}}
-    feature = {
-        "geometry": {"type": "Point", "coordinates": (0, 0)},
-        "properties": {"zero": "0"},
-    }
+    feature = Feature.from_dict(
+        **{
+            "geometry": {"type": "Point", "coordinates": (0, 0)},
+            "properties": {"zero": "0"},
+        }
+    )
     target_crs = (
         'PROJCS["IaRCS_04_Sioux_City-Iowa_Falls_NAD_1983_2011_LCC_US_Feet",'
         'GEOGCS["GCS_NAD_1983_2011",DATUM["D_NAD_1983_2011",'
@@ -57,7 +62,8 @@ def test_write__esri_only_wkt(tmpdir):
     )
     outputfile = tmpdir.join("test.shp")
     with fiona.open(
-        str(outputfile), "w",
+        str(outputfile),
+        "w",
         driver="ESRI Shapefile",
         schema=schema,
         crs=target_crs,
@@ -66,7 +72,7 @@ def test_write__esri_only_wkt(tmpdir):
         assert collection.crs_wkt.startswith(
             (
                 'PROJCS["IaRCS_04_Sioux_City-Iowa_Falls_NAD_1983_2011_LCC_US_Feet"',
-                'PROJCRS["IaRCS_04_Sioux_City-Iowa_Falls_NAD_1983_2011_LCC_US_Feet"'  # GDAL 3.3+
+                'PROJCRS["IaRCS_04_Sioux_City-Iowa_Falls_NAD_1983_2011_LCC_US_Feet"',  # GDAL 3.3+
             )
         )
 
@@ -74,10 +80,12 @@ def test_write__esri_only_wkt(tmpdir):
 def test_write__wkt_version(tmpdir):
     """https://github.com/Toblerity/Fiona/issues/977"""
     schema = {"geometry": "Point", "properties": {"zero": "int"}}
-    feature = {
-        "geometry": {"type": "Point", "coordinates": (0, 0)},
-        "properties": {"zero": "0"},
-    }
+    feature = Feature.from_dict(
+        **{
+            "geometry": {"type": "Point", "coordinates": (0, 0)},
+            "properties": {"zero": "0"},
+        }
+    )
     target_crs = (
         'PROJCS["IaRCS_04_Sioux_City-Iowa_Falls_NAD_1983_2011_LCC_US_Feet",'
         'GEOGCS["GCS_NAD_1983_2011",DATUM["D_NAD_1983_2011",'
@@ -95,7 +103,8 @@ def test_write__wkt_version(tmpdir):
     )
     outputfile = tmpdir.join("test.shp")
     with fiona.open(
-        str(outputfile), "w",
+        str(outputfile),
+        "w",
         driver="ESRI Shapefile",
         schema=schema,
         crs=target_crs,

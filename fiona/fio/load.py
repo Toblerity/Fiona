@@ -9,6 +9,7 @@ import cligj
 
 import fiona
 from fiona.fio import options, with_context_env
+from fiona.model import Feature, Geometry
 from fiona.schema import FIELD_TYPES_MAP_REV
 from fiona.transform import transform_geom
 
@@ -45,12 +46,14 @@ def _cb_key_val(ctx, param, value):
 
 
 @click.command(short_help="Load GeoJSON to a dataset in another format.")
-@click.argument('output', required=True)
-@click.option('-f', '--format', '--driver', 'driver',
-              help="Output format driver name.")
+@click.argument("output", required=True)
+@click.option("-f", "--format", "--driver", "driver", help="Output format driver name.")
 @options.src_crs_opt
-@click.option('--dst-crs', '--dst_crs',
-              help="Destination CRS.  Defaults to --src-crs when not given.")
+@click.option(
+    "--dst-crs",
+    "--dst_crs",
+    help="Destination CRS.  Defaults to --src-crs when not given.",
+)
 @cligj.features_in_arg
 @click.option(
     "--layer",
@@ -82,16 +85,25 @@ def load(ctx, output, driver, src_crs, dst_crs, features, layer, creation_option
     dst_crs = dst_crs or src_crs
 
     if src_crs and dst_crs and src_crs != dst_crs:
-        transformer = partial(transform_geom, src_crs, dst_crs,
-                              antimeridian_cutting=True, precision=-1)
+        transformer = partial(
+            transform_geom, src_crs, dst_crs, antimeridian_cutting=True
+        )
     else:
+
         def transformer(x):
-            return x
+            return Geometry.from_dict(**x)
 
     def feature_gen():
+        """Convert stream of JSON to features.
+
+        Yields
+        ------
+        Feature
+
+        """
         for feat in features:
-            feat['geometry'] = transformer(feat['geometry'])
-            yield feat
+            feat["geometry"] = transformer(Geometry.from_dict(**feat["geometry"]))
+            yield Feature.from_dict(**feat)
 
     try:
         source = feature_gen()
@@ -99,10 +111,14 @@ def load(ctx, output, driver, src_crs, dst_crs, features, layer, creation_option
         # Use schema of first feature as a template.
         # TODO: schema specified on command line?
         first = next(source)
-        schema = {'geometry': first['geometry']['type']}
-        schema['properties'] = dict([
-            (k, FIELD_TYPES_MAP_REV.get(type(v)) or 'str')
-            for k, v in first['properties'].items()])
+        # print(first, first.geometry)
+        schema = {"geometry": first.geometry.type}
+        schema["properties"] = dict(
+            [
+                (k, FIELD_TYPES_MAP_REV.get(type(v)) or "str")
+                for k, v in first.properties.items()
+            ]
+        )
 
         with fiona.open(
             output,

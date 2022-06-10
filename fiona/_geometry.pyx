@@ -5,7 +5,7 @@ from __future__ import absolute_import
 import logging
 
 from fiona.errors import UnsupportedGeometryTypeError
-from fiona.model import GEOMETRY_TYPES, Geometry
+from fiona.model import _guard_model_object, GEOMETRY_TYPES, Geometry
 
 from fiona._err cimport exc_wrap_int
 
@@ -100,16 +100,16 @@ cdef class GeomBuilder:
                 values.append(OGR_G_GetZ(geom, i))
             coords.append(tuple(values))
         return coords
-    
+
     cpdef _buildPoint(self):
         return {'type': 'Point', 'coordinates': self._buildCoords(self.geom)[0]}
-    
+
     cpdef _buildLineString(self):
         return {'type': 'LineString', 'coordinates': self._buildCoords(self.geom)}
-    
+
     cpdef _buildLinearRing(self):
         return {'type': 'LinearRing', 'coordinates': self._buildCoords(self.geom)}
-    
+
     cdef _buildParts(self, void *geom):
         cdef int j
         cdef void *part
@@ -120,19 +120,19 @@ cdef class GeomBuilder:
             part = OGR_G_GetGeometryRef(geom, j)
             parts.append(GeomBuilder().build(part))
         return parts
-    
+
     cpdef _buildPolygon(self):
         coordinates = [p['coordinates'] for p in self._buildParts(self.geom)]
         return {'type': 'Polygon', 'coordinates': coordinates}
-    
+
     cpdef _buildMultiPoint(self):
         coordinates = [p['coordinates'] for p in self._buildParts(self.geom)]
         return {'type': 'MultiPoint', 'coordinates': coordinates}
-    
+
     cpdef _buildMultiLineString(self):
         coordinates = [p['coordinates'] for p in self._buildParts(self.geom)]
         return {'type': 'MultiLineString', 'coordinates': coordinates}
-    
+
     cpdef _buildMultiPolygon(self):
         coordinates = [p['coordinates'] for p in self._buildParts(self.geom)]
         return {'type': 'MultiPolygon', 'coordinates': coordinates}
@@ -140,7 +140,7 @@ cdef class GeomBuilder:
     cpdef _buildGeometryCollection(self):
         parts = self._buildParts(self.geom)
         return {'type': 'GeometryCollection', 'geometries': parts}
-    
+
     cdef build(self, void *geom):
         # The only method anyone needs to call
         if geom == NULL:
@@ -157,7 +157,7 @@ cdef class GeomBuilder:
         self.ndims = OGR_G_GetCoordinateDimension(geom)
         self.geom = geom
         built = getattr(self, '_build' + self.geomtypename)()
-        return Geometry(**built)
+        return Geometry.from_dict(**built)
 
     cpdef build_wkb(self, object wkb):
         # The only other method anyone needs to call
@@ -189,20 +189,20 @@ cdef class OGRGeomBuilder:
         cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['Point'])
         self._addPointToGeometry(cogr_geometry, coordinates)
         return cogr_geometry
-    
+
     cdef void * _buildLineString(self, object coordinates) except NULL:
         cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['LineString'])
         for coordinate in coordinates:
             self._addPointToGeometry(cogr_geometry, coordinate)
         return cogr_geometry
-    
+
     cdef void * _buildLinearRing(self, object coordinates) except NULL:
         cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['LinearRing'])
         for coordinate in coordinates:
             self._addPointToGeometry(cogr_geometry, coordinate)
         OGR_G_CloseRings(cogr_geometry)
         return cogr_geometry
-    
+
     cdef void * _buildPolygon(self, object coordinates) except NULL:
         cdef void *cogr_ring
         cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['Polygon'])
@@ -235,17 +235,18 @@ cdef class OGRGeomBuilder:
             exc_wrap_int(OGR_G_AddGeometryDirectly(cogr_geometry, cogr_part))
         return cogr_geometry
 
-    cdef void * _buildGeometryCollection(self, object coordinates) except NULL:
+    cdef void * _buildGeometryCollection(self, object geometries) except NULL:
         cdef void *cogr_part
         cdef void *cogr_geometry = self._createOgrGeometry(GEOJSON2OGR_GEOMETRY_TYPES['GeometryCollection'])
-        for part in coordinates:
+        for part in geometries:
             cogr_part = OGRGeomBuilder().build(part)
             exc_wrap_int(OGR_G_AddGeometryDirectly(cogr_geometry, cogr_part))
         return cogr_geometry
 
     cdef void * build(self, object geometry) except NULL:
-        cdef object typename = geometry['type']
-        cdef object coordinates = geometry.get('coordinates')
+        cdef object typename = geometry.type
+        cdef object coordinates = geometry.coordinates
+        cdef object geometries = geometry.geometries
         if typename == 'Point':
             return self._buildPoint(coordinates)
         elif typename == 'LineString':
@@ -261,14 +262,14 @@ cdef class OGRGeomBuilder:
         elif typename == 'MultiPolygon':
             return self._buildMultiPolygon(coordinates)
         elif typename == 'GeometryCollection':
-            coordinates = geometry.get('geometries')
-            return self._buildGeometryCollection(coordinates)
+            return self._buildGeometryCollection(geometries)
         else:
             raise UnsupportedGeometryTypeError("Unsupported geometry type %s" % typename)
 
 
-def geometryRT(geometry):
+def geometryRT(geom):
     # For testing purposes only, leaks the JSON data
+    geometry = _guard_model_object(geom)
     cdef void *cogr_geometry = OGRGeomBuilder().build(geometry)
     result = GeomBuilder().build(cogr_geometry)
     _deleteOgrGeom(cogr_geometry)

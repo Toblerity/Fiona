@@ -32,7 +32,7 @@ from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
     AttributeFilterError, FeatureWarning, FionaDeprecationWarning)
-from fiona.model import Feature, Properties
+from fiona.model import _guard_model_object, Feature, Geometry, Properties
 from fiona.path import vsi_path
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -392,32 +392,33 @@ cdef class OGRFeatureBuilder:
 
     Allocates one OGR Feature which should be destroyed by the caller.
     Borrows a layer definition from the collection.
-    """
 
+    """
     cdef void * build(self, feature, collection) except NULL:
         cdef void *cogr_geometry = NULL
         cdef const char *string_c = NULL
-        cdef WritingSession session
-        session = collection.session
+        cdef WritingSession session = collection.session
         cdef void *cogr_layer = session.cogr_layer
+        cdef void *cogr_featuredefn = OGR_L_GetLayerDefn(cogr_layer)
+        cdef void *cogr_feature = OGR_F_Create(cogr_featuredefn)
+
         if cogr_layer == NULL:
             raise ValueError("Null layer")
-        cdef void *cogr_featuredefn = OGR_L_GetLayerDefn(cogr_layer)
+
         if cogr_featuredefn == NULL:
             raise ValueError("Null feature definition")
-        cdef void *cogr_feature = OGR_F_Create(cogr_featuredefn)
+
         if cogr_feature == NULL:
             raise ValueError("Null feature")
 
-        if feature['geometry'] is not None:
-            cogr_geometry = OGRGeomBuilder().build(
-                                feature['geometry'])
+        if feature.geometry is not None:
+            cogr_geometry = OGRGeomBuilder().build(feature.geometry)
             exc_wrap_int(OGR_F_SetGeometryDirectly(cogr_feature, cogr_geometry))
 
         # OGR_F_SetFieldString takes encoded strings ('bytes' in Python 3).
         encoding = session._get_internal_encoding()
 
-        for key, value in feature['properties'].items():
+        for key, value in feature.properties.items():
             ogr_key = session._schema_mapping[key]
 
             schema_type = normalize_field_type(collection.schema['properties'][key])
@@ -519,8 +520,9 @@ cdef _deleteOgrFeature(void *cogr_feature):
     cogr_feature = NULL
 
 
-def featureRT(feature, collection):
+def featureRT(feat, collection):
     # For testing purposes only, leaks the JSON data
+    feature = _guard_model_object(feat)
     cdef void *cogr_feature = OGRFeatureBuilder().build(feature, collection)
     cdef void *cogr_geometry = OGR_F_GetGeometryRef(cogr_feature)
     if cogr_geometry == NULL:
@@ -1283,10 +1285,12 @@ cdef class WritingSession(Session):
         driver_name = OGR_Dr_GetName(cogr_driver).decode("utf-8")
 
         valid_geom_types = collection._valid_geom_types
+
         def validate_geometry_type(record):
             if record["geometry"] is None:
                 return True
             return record["geometry"]["type"].lstrip("3D ") in valid_geom_types
+
         transactions_supported = GDALDatasetTestCapability(self.cogr_ds, ODsCTransactions)
         log.debug("Transaction supported: {}".format(transactions_supported))
         if transactions_supported:
@@ -1297,37 +1301,43 @@ cdef class WritingSession(Session):
 
         schema_props_keys = set(collection.schema['properties'].keys())
 
-        for record in records:
+        for _rec in records:
+            record = _guard_model_object(_rec)
+
             # Check for optional elements
-            if 'properties' not in record:
-                record['properties'] = {}
-            if 'geometry' not in record:
-                record['geometry'] = None
+            # if 'properties' not in _rec:
+            #     _rec['properties'] = {}
+            # if 'geometry' not in _rec:
+            #     _rec['geometry'] = None
 
             # Validate against collection's schema.
-            if set(record['properties'].keys()) != schema_props_keys:
+            if set(record.properties.keys()) != schema_props_keys:
                 raise ValueError(
                     "Record does not match collection schema: %r != %r" % (
-                        record['properties'].keys(),
+                        record.properties.keys(),
                         list(schema_props_keys) ))
+
             if not validate_geometry_type(record):
                 raise GeometryTypeValidationError(
                     "Record's geometry type does not match "
                     "collection schema's geometry type: %r != %r" % (
-                        record['geometry']['type'],
+                        record.geometry.type,
                         collection.schema['geometry'] ))
+
             # Validate against collection's schema to give useful message
-            if set(record['properties'].keys()) != schema_props_keys:
+            if set(record.properties.keys()) != schema_props_keys:
                 raise SchemaError(
                     "Record does not match collection schema: %r != %r" % (
-                        record['properties'].keys(),
+                        record.properties.keys(),
                         list(schema_props_keys) ))
+
             cogr_feature = OGRFeatureBuilder().build(record, collection)
             result = OGR_L_CreateFeature(cogr_layer, cogr_feature)
             if result != OGRERR_NONE:
                 msg = get_last_error_msg()
                 raise RuntimeError("GDAL Error: {msg} \n \n Failed to write record: "
                                    "{record}".format(msg=msg, record=record))
+
             _deleteOgrFeature(cogr_feature)
 
             if transactions_supported:
@@ -1470,7 +1480,8 @@ cdef class Iterator:
             OGR_L_SetSpatialFilterRect(
                 cogr_layer, bbox[0], bbox[1], bbox[2], bbox[3])
         elif mask:
-            cogr_geometry = OGRGeomBuilder().build(mask)
+            mask_geom = _guard_model_object(mask)
+            cogr_geometry = OGRGeomBuilder().build(mask_geom)
             OGR_L_SetSpatialFilter(cogr_layer, cogr_geometry)
             OGR_G_DestroyGeometry(cogr_geometry)
 

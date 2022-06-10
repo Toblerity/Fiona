@@ -1,8 +1,12 @@
-import fiona
+"""Binary BLOB field testing."""
 
 import pytest
 import struct
 from collections import OrderedDict
+
+import fiona
+from fiona.model import Feature
+
 from .conftest import requires_gpkg
 
 
@@ -12,11 +16,13 @@ def test_binary_field(tmpdir):
         "driver": "GPKG",
         "schema": {
             "geometry": "Point",
-            "properties": OrderedDict([
-                ("name", "str"),
-                ("data", "bytes"),
-            ])
-        }
+            "properties": OrderedDict(
+                [
+                    ("name", "str"),
+                    ("data", "bytes"),
+                ]
+            ),
+        },
     }
 
     # create some binary data
@@ -25,18 +31,20 @@ def test_binary_field(tmpdir):
     # write the binary data to a BLOB field
     filename = str(tmpdir.join("binary_test.gpkg"))
     with fiona.open(filename, "w", **meta) as dst:
-        feature = {
-            "geometry": {"type": "Point", "coordinates": ((0, 0))},
-            "properties": {
-                "name": "test",
-                "data": input_data,
+        feature = Feature.from_dict(
+            **{
+                "geometry": {"type": "Point", "coordinates": ((0, 0))},
+                "properties": {
+                    "name": "test",
+                    "data": input_data,
+                },
             }
-        }
+        )
         dst.write(feature)
 
     # read the data back and check consistency
     with fiona.open(filename, "r") as src:
         feature = next(iter(src))
-        assert feature["properties"]["name"] == "test"
-        output_data = feature["properties"]["data"]
+        assert feature.properties["name"] == "test"
+        output_data = feature.properties["data"]
         assert output_data == input_data

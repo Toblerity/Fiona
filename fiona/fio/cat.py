@@ -9,26 +9,34 @@ import cligj
 
 import fiona
 from fiona.transform import transform_geom
-from fiona.model import ObjectEncoder
+from fiona.model import Feature, Geometry, ObjectEncoder
 from fiona.fio import options, with_context_env
+from fiona.fio.helpers import recursive_round
 from fiona.errors import AttributeFilterError
 
-warnings.simplefilter('default')
+warnings.simplefilter("default")
 
 
 # Cat command
 @click.command(short_help="Concatenate and print the features of datasets")
-@click.argument('files', nargs=-1, required=True, metavar="INPUTS...")
-@click.option('--layer', default=None, multiple=True,
-              callback=options.cb_multilayer,
-              help="Input layer(s), specified as 'fileindex:layer` "
-                   "For example, '1:foo,2:bar' will concatenate layer foo "
-                   "from file 1 and layer bar from file 2")
+@click.argument("files", nargs=-1, required=True, metavar="INPUTS...")
+@click.option(
+    "--layer",
+    default=None,
+    multiple=True,
+    callback=options.cb_multilayer,
+    help="Input layer(s), specified as 'fileindex:layer` "
+    "For example, '1:foo,2:bar' will concatenate layer foo "
+    "from file 1 and layer bar from file 2",
+)
 @cligj.precision_opt
 @cligj.indent_opt
 @cligj.compact_opt
-@click.option('--ignore-errors/--no-ignore-errors', default=False,
-              help="log errors but do not stop serialization.")
+@click.option(
+    "--ignore-errors/--no-ignore-errors",
+    default=False,
+    help="log errors but do not stop serialization.",
+)
 @options.dst_crs_opt
 @cligj.use_rs_opt
 @click.option(
@@ -74,11 +82,11 @@ def cat(
     """
     log = logging.getLogger(__name__)
 
-    dump_kwds = {'sort_keys': True}
+    dump_kwds = {"sort_keys": True}
     if indent:
-        dump_kwds['indent'] = indent
+        dump_kwds["indent"] = indent
     if compact:
-        dump_kwds['separators'] = (',', ':')
+        dump_kwds["separators"] = (",", ":")
 
     # Validate file idexes provided in --layer option
     # (can't pass the files to option callback)
@@ -93,22 +101,33 @@ def cat(
     try:
         if bbox:
             try:
-                bbox = tuple(map(float, bbox.split(',')))
+                bbox = tuple(map(float, bbox.split(",")))
             except ValueError:
                 bbox = json.loads(bbox)
         for i, path in enumerate(files, 1):
             for lyr in layer[str(i)]:
                 with fiona.open(path, layer=lyr) as src:
                     for i, feat in src.items(bbox=bbox, where=where):
-                        if dst_crs or precision >= 0:
-                            g = transform_geom(
-                                src.crs, dst_crs, feat['geometry'],
+                        geom = feat.geometry
+                        if dst_crs:
+                            geom = transform_geom(
+                                src.crs,
+                                dst_crs,
+                                geom,
                                 antimeridian_cutting=cut_at_antimeridian,
-                                precision=precision)
-                            feat['geometry'] = g
-                            feat['bbox'] = fiona.bounds(g)
+                            )
+
+                        if precision >= 0:
+                            geom = recursive_round(geom, precision)
+
+                        feat = Feature(
+                            id=feat.id,
+                            properties=feat.properties,
+                            geometry=geom,
+                            bbox=fiona.bounds(geom),
+                        )
                         if use_rs:
-                            click.echo('\x1e', nl=False)
+                            click.echo("\x1e", nl=False)
                         click.echo(json.dumps(feat, cls=ObjectEncoder, **dump_kwds))
 
     except AttributeFilterError as e:
