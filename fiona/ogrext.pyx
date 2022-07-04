@@ -1443,6 +1443,84 @@ cdef class WritingSession(Session):
         return GDALSetMetadataItem(obj, name, value, domain)
 
 
+cdef extern from "stdint.h":
+    ctypedef signed int int64_t
+
+
+cdef extern from "ogr_recordbatch.h":
+
+    cdef struct ArrowSchema:
+        const char* format
+        const char* name
+        const char* metadata
+        int64_t flags
+        int64_t n_children
+        ArrowSchema **children
+        ArrowSchema *dictionary
+        void (*release)(ArrowSchema *)
+
+    cdef struct ArrowArray:
+        int64_t length
+        int64_t null_count
+        int64_t offset
+        int64_t n_buffers
+        int64_t n_children
+        const void **buffers
+        ArrowArray **children
+        ArrowArray *dictionary
+        void (*release)(ArrowArray *)
+
+    cdef struct ArrowArrayStream:
+        int (*get_schema)(ArrowArrayStream *, ArrowSchema *out)
+        int (*get_next)(ArrowArrayStream *, ArrowArray *out)
+        const char* (*get_last_error)(ArrowArrayStream *)
+        void (*release)(ArrowArrayStream *)
+
+cdef extern from "ogr_api.h" nogil:
+
+    bint OGR_L_GetArrowStream(OGRLayerH hLayer, ArrowArrayStream *out_stream, char **papszOptions)
+
+
+cdef class BatchReader:
+    cdef collection
+
+    def __init__(self, collection):
+        self.collection = collection
+
+    def batches(self):
+        cdef Session session = self.collection.session
+        cdef OGRLayerH cogr_layer = session.cogr_layer
+
+        if not session or not session.isactive:
+            raise FionaValueError("Session is inactive, dataset is closed or layer is unavailable.")
+
+        cdef ArrowArrayStream stream
+
+        if not OGR_L_GetArrowStream(cogr_layer, &stream, NULL):
+            raise CPLE_AppDefinedError("OGR_L_GetArrowStream() failed")
+
+        cdef ArrowSchema schema
+
+        if stream.get_schema(&stream, &schema) == 0:
+            # print(schema.name)
+            schema.release(&schema)
+
+        cdef ArrowArray array
+
+        while True:
+            # Look for an error (get_next() returning a non-zero code), or
+            # end of iteration (array.release == nullptr)
+
+            if stream.get_next(&stream, &array) != 0 or array.release == NULL:
+                break
+
+            yield array.length
+
+            array.release(&array)
+
+        stream.release(&stream)
+
+
 cdef class Iterator:
 
     """Provides iterated access to feature data.
@@ -1982,7 +2060,7 @@ cdef class MemoryFileBase:
 
         """
         if not self.getbuffer():
-            return 0        
+            return 0
         return self.getbuffer().size
 
     def getbuffer(self):

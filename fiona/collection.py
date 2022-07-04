@@ -12,7 +12,7 @@ import fiona._loading
 
 with fiona._loading.add_gdal_dll_directories():
     from fiona import compat, vfs
-    from fiona.ogrext import Iterator, ItemsIterator, KeysIterator
+    from fiona.ogrext import BatchReader, Iterator, ItemsIterator, KeysIterator
     from fiona.ogrext import Session, WritingSession
     from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file, GEOMETRY_TYPES
     from fiona.errors import (
@@ -511,6 +511,15 @@ class Collection(object):
         where = kwds.get("where")
         self.iterator = KeysIterator(self, start, stop, step, bbox, mask, where)
         return self.iterator
+
+    def batches(self, *args, **kwds):
+        if self.closed:
+            raise ValueError("I/O operation on closed collection")
+        elif self.mode != "r":
+            raise OSError("collection not open for reading")
+        reader = BatchReader(self)
+        for batch in reader.batches():
+            yield batch
 
     def __contains__(self, fid):
         return self.session.has_feature(fid)
