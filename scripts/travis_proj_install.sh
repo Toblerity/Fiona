@@ -3,11 +3,11 @@ set -e
 
 # Create build dir if not exists
 if [ ! -d "$PROJBUILD" ]; then
-  mkdir $PROJBUILD;
+    mkdir $PROJBUILD;
 fi
 
 if [ ! -d "$PROJINST" ]; then
-  mkdir $PROJINST;
+    mkdir $PROJINST;
 fi
 
 ls -l $PROJINST
@@ -20,9 +20,15 @@ if [ ! -d "$PROJINST/gdal-$GDALVERSION/share/proj" ]; then
     tar -xzf proj-$PROJVERSION.tar.gz
     projver=$(expr "$PROJVERSION" : '\([0-9]*.[0-9]*.[0-9]*\)')
     cd proj-$projver
-    ./configure --prefix=$PROJINST/gdal-$GDALVERSION
-    make -s
-    make install
+    if [ -f "configure" ]; then
+        ./configure --prefix=$PROJINST/gdal-$GDALVERSION
+        make -s
+        make install
+    else
+        cmake -DCMAKE_PREFIX_PATH=$PROJINST/gdal-$GDALVERSION ..
+        cmake --build .
+        cmake --build . --target install
+    fi
 fi
 
 # change back to travis build dir
