@@ -52,7 +52,7 @@ supported_drivers = dict([
     # ESRI Shapefile 	ESRI Shapefile 	Yes 	Yes 	Yes
     ("ESRI Shapefile", "raw"),
     # FMEObjects Gateway 	FMEObjects Gateway 	No 	Yes 	No, needs FME
-    ("FlatGeobuf", "rw"),
+    ("FlatGeobuf", "raw"),
     # GeoJSON 	GeoJSON 	Yes 	Yes 	Yes
     ("GeoJSON", "raw"),
     # GeoJSONSeq 	GeoJSON sequences 	Yes 	Yes 	Yes 
@@ -165,7 +165,8 @@ driver_mode_mingdal = {
     'a': {'GPKG': (1, 11, 0),
           'PCIDSK': (2, 0, 0),
           'GeoJSON': (2, 1, 0),
-          'MapInfo File': (2, 0, 0)}
+          'MapInfo File': (2, 0, 0),
+          'FlatGeobuf': (3, 5, 1)}
 }
 
 
