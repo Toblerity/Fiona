@@ -31,21 +31,15 @@ jobs:
               allow_failure: "false",
             }
           - {
-              python: 3.8,
-              GDALVERSION: "3.4.2",
-              PROJVERSION: "8.2.1",
-              allow_failure: "false",
-            }
-          - {
               python: 3.9,
-              GDALVERSION: "3.4.2",
+              GDALVERSION: "3.4.3",
               PROJVERSION: "8.2.1",
               allow_failure: "false",
             }
           - {
               python: "3.10",
-              GDALVERSION: "3.4.2",
-              PROJVERSION: "8.2.1",
+              GDALVERSION: "3.5.1",
+              PROJVERSION: "9.0.1",
               allow_failure: "false",
             }
 
@@ -54,6 +48,14 @@ jobs:
               python: "3.10",
               GDALVERSION: "master",
               PROJVERSION: "8.2.1",
+              allow_failure: "true",
+            }
+
+          # Python 3.11
+          - {
+              python: "3.11-dev",
+              GDALVERSION: "3.5.1",
+              PROJVERSION: "9.0.1",
               allow_failure: "true",
             }
 
