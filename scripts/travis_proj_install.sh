@@ -25,7 +25,7 @@ if [ ! -d "$PROJINST/gdal-$GDALVERSION/share/proj" ]; then
         make -s
         make install
     else
-        cmake . -DCMAKE_PREFIX_PATH=$PROJINST/gdal-$GDALVERSION -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+        cmake . -DCMAKE_INSTALL_PREFIX=$PROJINST/gdal-$GDALVERSION -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
         make -s
         make install
     fi
