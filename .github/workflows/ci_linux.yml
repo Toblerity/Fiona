@@ -119,7 +119,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: gdalinstall
-          key: ${{ runner.os }}-gdal-${{ matrix.GDALVERSION }}-proj-${{ matrix.PROJVERSION }}-${{ hashFiles('**/apt_list') }}
+          key: ${{ runner.os }}-gdal-${{ matrix.GDALVERSION }}-proj-${{ matrix.PROJVERSION }}-${{ hashFiles('**/apt_list') }}-${{ hashFiles('scripts/travis_gdal_install.sh', 'travis_proj_install.sh') }}
 
       - name: Cache pip
         uses: actions/cache@v2
