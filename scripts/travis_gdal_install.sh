@@ -270,12 +270,16 @@ else
         tar -xzf gdal-$GDALVERSION.tar.gz
         cd gdal-$gdalver
         if [ -f "CMakeLists.txt" ]; then
-            cmake . -DCMAKE_INSTALL_PREFIX=$GDALINST/gdal-$GDALVERSION -DPROJ_INCLUDE_DIR=$GDALINST/gdal-$GDALVERSION $GDAL_CMAKE_OPTS -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+            mkdir build
+            cd build
+            cmake -DCMAKE_INSTALL_PREFIX=$GDALINST/gdal-$GDALVERSION -DPROJ_INCLUDE_DIR=$GDALINST/gdal-$GDALVERSION $GDAL_CMAKE_OPTS -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF ..
+            cmake --build .
+            cmake --build . --target install
         else
             ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT
+            make
+            make install
         fi
-        make
-        make install
     fi
 fi
 
