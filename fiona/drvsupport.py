@@ -44,7 +44,7 @@ supported_drivers = dict([
     # ESRI FileGDB 	FileGDB 	Yes 	Yes 	No, needs FileGDB API library
     # multi-layer
     ("FileGDB", "raw"),
-    ("OpenFileGDB", "r"),
+    ("OpenFileGDB", "rw"),
     # ESRI Personal GeoDatabase 	PGeo 	No 	Yes 	No, needs ODBC library
     # ESRI ArcSDE 	SDE 	No 	Yes 	No, needs ESRI SDE
     # ESRIJSON 	ESRIJSON 	No 	Yes 	Yes 
@@ -160,7 +160,8 @@ driver_mode_mingdal = {
     'w': {'GPKG': (1, 11, 0),
           'PCIDSK': (2, 0, 0),
           'GeoJSONSeq': (2, 4, 0),
-          'FlatGeobuf': (3, 1, 3)},
+          'FlatGeobuf': (3, 1, 3),
+          'OpenFileGDB': (3, 6, 0)},
 
     'a': {'GPKG': (1, 11, 0),
           'PCIDSK': (2, 0, 0),
