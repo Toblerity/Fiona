@@ -47,7 +47,7 @@ jobs:
           - {
               python: "3.10",
               GDALVERSION: "master",
-              PROJVERSION: "8.2.1",
+              PROJVERSION: "9.0.1",
               allow_failure: "true",
             }
 
