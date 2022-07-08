@@ -44,7 +44,7 @@ supported_drivers = dict([
     # ESRI FileGDB 	FileGDB 	Yes 	Yes 	No, needs FileGDB API library
     # multi-layer
     ("FileGDB", "raw"),
-    ("OpenFileGDB", "rw"),
+    ("OpenFileGDB", "raw"),
     # ESRI Personal GeoDatabase 	PGeo 	No 	Yes 	No, needs ODBC library
     # ESRI ArcSDE 	SDE 	No 	Yes 	No, needs ESRI SDE
     # ESRIJSON 	ESRIJSON 	No 	Yes 	Yes 
@@ -167,7 +167,8 @@ driver_mode_mingdal = {
           'PCIDSK': (2, 0, 0),
           'GeoJSON': (2, 1, 0),
           'MapInfo File': (2, 0, 0),
-          'FlatGeobuf': (3, 5, 1)}
+          'FlatGeobuf': (3, 5, 1),
+          'OpenFileGDB': (3, 6, 0)}
 }
 
 
@@ -306,7 +307,8 @@ _driver_field_type_unsupported = {
         'DXF': None,
         'PCIDSK': (2, 1, 0),
         'FileGDB': None,
-        'FlatGeobuf': None
+        'FlatGeobuf': None,
+        'OpenFileGDB': None
     },
     'datetime': {
         'ESRI Shapefile': None,
@@ -324,7 +326,8 @@ _driver_field_type_unsupported = {
         'DXF': None,
         'PCIDSK': (2, 1, 0),
         'FileGDB': None,
-        'FlatGeobuf': None
+        'FlatGeobuf': None,
+        'OpenFileGDB': None
     }
 }
 
@@ -383,7 +386,8 @@ def _driver_supports_timezones(driver, field_type):
 # None: driver never supports timezones, (2, 0, 0): driver supports timezones with GDAL 2.0.0
 _drivers_not_supporting_milliseconds = {
     'GPSTrackMaker': None,
-    'FileGDB': None
+    'FileGDB': None,
+    'OpenFileGDB': None
 }
 
 
