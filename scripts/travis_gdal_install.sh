@@ -219,7 +219,7 @@ if [ "$GDALVERSION" = "master" ]; then
     PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
     cd $GDALBUILD
     git clone --depth 1 https://github.com/OSGeo/gdal gdal-$GDALVERSION
-    cd gdal-$GDALVERSION/gdal
+    cd gdal-$GDALVERSION
     echo $PROJVERSION > newproj.txt
     git rev-parse HEAD > newrev.txt
     BUILD=no
@@ -233,9 +233,12 @@ if [ "$GDALVERSION" = "master" ]; then
         mkdir -p $GDALINST/gdal-$GDALVERSION
         cp newrev.txt $GDALINST/gdal-$GDALVERSION/rev.txt
         cp newproj.txt $GDALINST/gdal-$GDALVERSION/newproj.txt
-        ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT
-        make
-        make install
+        mkdir build
+        cd build
+        echo "cmake -DCMAKE_INSTALL_PREFIX=$GDALINST/gdal-$GDALVERSION -DPROJ_INCLUDE_DIR=$GDALINST/gdal-$GDALVERSION $GDAL_CMAKE_OPTS -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .."
+        cmake -DCMAKE_INSTALL_PREFIX=$GDALINST/gdal-$GDALVERSION "-DPROJ_INCLUDE_DIR=$GDALINST/gdal-$GDALVERSION" $GDAL_CMAKE_OPTS -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF ..
+        cmake --build .
+        cmake --build . --target install
     fi
 
 else
@@ -276,7 +279,8 @@ else
         if [ -f "CMakeLists.txt" ]; then
             mkdir build
             cd build
-            cmake -DCMAKE_INSTALL_PREFIX=$GDALINST/gdal-$GDALVERSION -DPROJ_INCLUDE_DIR=$GDALINST/gdal-$GDALVERSION $GDAL_CMAKE_OPTS -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF ..
+            echo "cmake -DCMAKE_INSTALL_PREFIX=$GDALINST/gdal-$GDALVERSION -DPROJ_INCLUDE_DIR=$GDALINST/gdal-$GDALVERSION $GDAL_CMAKE_OPTS -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .."
+            cmake -DCMAKE_INSTALL_PREFIX=$GDALINST/gdal-$GDALVERSION "-DPROJ_INCLUDE_DIR=$GDALINST/gdal-$GDALVERSION" $GDAL_CMAKE_OPTS -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF ..
             cmake --build .
             cmake --build . --target install
         else
