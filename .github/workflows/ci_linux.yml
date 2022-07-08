@@ -178,7 +178,7 @@ jobs:
       - name: pytest
         continue-on-error: ${{ matrix.allow_failure == 'true' }}
         run: |
-          GDAL_ENABLE_DEPRECATED_DRIVER_GTM=YES python -m pytest -m "not wheel" --cov fiona --cov-report term-missing
+          GDAL_ENABLE_DEPRECATED_DRIVER_GTM=YES python -m pytest -m "not wheel and gdal" --cov fiona --cov-report term-missing
 
       - name: Coveralls
         continue-on-error: ${{ matrix.allow_failure == 'true' }}

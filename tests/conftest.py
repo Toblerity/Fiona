@@ -16,6 +16,13 @@ from fiona.meta import extensions
 from fiona.model import Feature, ObjectEncoder, to_dict
 
 
+def pytest_collection_modifyitems(config, items):
+    if not config.getoption('-m'):
+        skip_me = pytest.mark.skip(reason="use `-m gdal` to run this test")
+        for item in items:
+            if "gdal" in item.keywords:
+                item.add_marker(skip_me)
+
 def pytest_report_header(config):
     headers = []
     # gdal version number

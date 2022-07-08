@@ -399,6 +399,7 @@ def generate_testcases():
 
 
 @pytest.mark.parametrize("driver, field_type", test_cases_datefield)
+@pytest.mark.gdal
 def test_datefield(tmpdir, driver, field_type):
     """
     Test date, time, datetime field types.
@@ -471,6 +472,7 @@ def test_datefield(tmpdir, driver, field_type):
 
 
 @pytest.mark.parametrize("driver, field_type", test_cases_datefield_to_str)
+@pytest.mark.gdal
 def test_datefield_driver_converts_to_string(tmpdir, driver, field_type):
     """
     Test handling of date, time, datetime for drivers that convert these types to string.
@@ -690,6 +692,7 @@ def test_datefield_driver_converts_to_string(tmpdir, driver, field_type):
 @pytest.mark.parametrize(
     "driver,field_type", test_cases_datefield + test_cases_datefield_to_str
 )
+@pytest.mark.gdal
 def test_datefield_null(tmpdir, driver, field_type):
     """
     Test handling of null values for date, time, datetime types for write capable drivers
@@ -726,6 +729,7 @@ def test_datefield_null(tmpdir, driver, field_type):
 
 
 @pytest.mark.parametrize("driver, field_type", test_cases_datefield_not_supported)
+@pytest.mark.gdal
 def test_datetime_field_unsupported(tmpdir, driver, field_type):
     """Test if DriverSupportError is raised for unsupported field_types"""
     schema = get_schema(driver, field_type)
@@ -739,6 +743,7 @@ def test_datetime_field_unsupported(tmpdir, driver, field_type):
 
 
 @pytest.mark.parametrize("driver, field_type", test_cases_datefield_not_supported)
+@pytest.mark.gdal
 def test_datetime_field_type_marked_not_supported_is_not_supported(
     tmpdir, driver, field_type, monkeypatch
 ):
@@ -801,6 +806,7 @@ def generate_tostr_testcases():
 
 @pytest.mark.filterwarnings("ignore:.*driver silently converts *:UserWarning")
 @pytest.mark.parametrize("driver,field_type", test_cases_datefield_to_str)
+@pytest.mark.gdal
 def test_driver_marked_as_silently_converts_to_str_converts_silently_to_str(
     tmpdir, driver, field_type, monkeypatch
 ):
