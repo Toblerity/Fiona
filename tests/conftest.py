@@ -16,12 +16,22 @@ from fiona.meta import extensions
 from fiona.model import Feature, ObjectEncoder, to_dict
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--test_gdal", action="store_true", default=False, help="run tests only depended on gdal functionality"
+    )
+
+
 def pytest_collection_modifyitems(config, items):
+
+    if config.getoption("--test_gdal"):
+        return
+
     if not config.getoption('-m'):
-        skip_me = pytest.mark.skip(reason="use `-m gdal` to run this test")
+        skip_gdal = pytest.mark.skip(reason="need --test_gdal option to run")
         for item in items:
             if "gdal" in item.keywords:
-                item.add_marker(skip_me)
+                item.add_marker(skip_gdal)
 
 def pytest_report_header(config):
     headers = []
