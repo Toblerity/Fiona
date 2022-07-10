@@ -288,3 +288,34 @@ def test_mingdal_drivers_are_supported():
             # we cannot test drivers that are not present in the gdal installation
             if driver in supported_drivers:
                 assert mode in supported_drivers[driver]
+
+
+def test_allow_unsupported_drivers(monkeypatch, tmpdir):
+    """Test if allow unsupported drivers works as expected"""
+
+    # We delete a known working driver from fiona.drvsupport so that we can use it
+    monkeypatch.delitem(fiona.drvsupport.supported_drivers, "GPKG")
+
+    schema = {"geometry": "Polygon", "properties": {}}
+
+    # Test that indeed we can't create a file without allow_unsupported_drivers
+    path1 = str(tmpdir.join("test1.gpkg"))
+    with pytest.raises(DriverError):
+        with fiona.open(path1, mode="w", driver="GPKG", schema=schema):
+            pass
+
+    # Test that we can create file with allow_unsupported_drivers=True
+    path2 = str(tmpdir.join("test2.gpkg"))
+    try:
+        with fiona.open(
+            path2,
+            mode="w",
+            driver="GPKG",
+            schema=schema,
+            allow_unsupported_drivers=True,
+        ):
+            pass
+    except Exception as e:
+        assert (
+            False
+        ), f"Using allow_unsupported_drivers=True should not raise an exception: {e}"

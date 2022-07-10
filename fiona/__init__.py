@@ -62,13 +62,11 @@ Because Fiona collections are context managers, they are closed and (in
 writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
-from contextlib import contextmanager
 import logging
 import os
 import sys
 import warnings
-import platform
-from collections import OrderedDict
+
 
 try:
     from pathlib import Path
@@ -125,9 +123,20 @@ log.addHandler(logging.NullHandler())
 
 
 @ensure_env_with_credentials
-def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
-         layer=None, vfs=None, enabled_drivers=None, crs_wkt=None,
-         **kwargs):
+def open(
+    fp,
+    mode="r",
+    driver=None,
+    schema=None,
+    crs=None,
+    encoding=None,
+    layer=None,
+    vfs=None,
+    enabled_drivers=None,
+    crs_wkt=None,
+    allow_unsupported_drivers=False,
+    **kwargs
+):
     """Open a collection for read, append, or write
 
     In write mode, a driver name such as "ESRI Shapefile" or "GPX" (see
@@ -211,6 +220,8 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
     wkt_version : fiona.enums.WktVersion or str, optional
         Version to use to for the CRS WKT.
         Defaults to GDAL's default (WKT1_GDAL for GDAL 3).
+    allow_unsupported_drivers : bool
+        If set to true do not limit GDAL drivers to set set of known working.
     kwargs : mapping
         Other driver-specific parameters that will be interpreted by
         the OGR library as layer creation or opening options.
@@ -229,6 +240,7 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
             layer=layer,
             encoding=encoding,
             enabled_drivers=enabled_drivers,
+            allow_unsupported_drivers=allow_unsupported_drivers,
             **kwargs
         )
         colxn._env.enter_context(memfile)
@@ -243,6 +255,7 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
             layer=layer,
             encoding=encoding,
             enabled_drivers=enabled_drivers,
+            allow_unsupported_drivers=allow_unsupported_drivers,
             crs_wkt=crs_wkt,
             **kwargs
         )
@@ -266,7 +279,11 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
     # TODO: test for a shared base class or abstract type.
     elif isinstance(fp, MemoryFile):
         if mode.startswith("r"):
-            colxn = fp.open(driver=driver, **kwargs)
+            colxn = fp.open(
+                driver=driver,
+                allow_unsupported_drivers=allow_unsupported_drivers,
+                **kwargs
+            )
 
         # Note: FilePath does not support writing and an exception will
         # result from this.
@@ -278,6 +295,7 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
                 layer=layer,
                 encoding=encoding,
                 enabled_drivers=enabled_drivers,
+                allow_unsupported_drivers=allow_unsupported_drivers,
                 crs_wkt=crs_wkt,
                 **kwargs
             )
@@ -309,6 +327,7 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
                 encoding=encoding,
                 layer=layer,
                 enabled_drivers=enabled_drivers,
+                allow_unsupported_drivers=allow_unsupported_drivers,
                 **kwargs
             )
         elif mode == "w":
@@ -322,6 +341,7 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
                 layer=layer,
                 enabled_drivers=enabled_drivers,
                 crs_wkt=crs_wkt,
+                allow_unsupported_drivers=allow_unsupported_drivers,
                 **kwargs
             )
         else:
