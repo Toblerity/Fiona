@@ -132,8 +132,8 @@ if 'clean' not in sys.argv:
                 log.info("Copying gdal data from %s" % gdal_data)
                 copy_data_tree(gdal_data, destdir)
 
-        # Conditionally copy PROJ.4 data.
-        projdatadir = os.environ.get('PROJ_LIB', '/usr/local/share/proj')
+        # Conditionally copy PROJ DATA.
+        projdatadir = os.environ.get('PROJ_DATA', os.environ.get('PROJ_LIB', '/usr/local/share/proj'))
         if os.path.exists(projdatadir):
             log.info("Copying proj data from %s" % projdatadir)
             copy_data_tree(projdatadir, 'fiona/proj_data')

@@ -304,7 +304,7 @@ Note: The following environment variables needs to be set so that Fiona works co
   Windows ``PATH`` (e.g. ``C:\gdal\bin``).
 * The gdal-data directory needs to be in your Windows ``PATH`` or the environment variable
   ``GDAL_DATA`` must be set (e.g. ``C:\gdal\bin\gdal-data``).
-* The environment variable ``PROJ_LIB`` must be set to the proj library directory (e.g.
+* The environment variable ``PROJ_LIB`` (PROJ < 9.1) | ``PROJ_DATA`` (PROJ 9.1+) must be set to the proj data directory (e.g.
   ``C:\gdal\bin\proj6\share``)
 
 The `Appveyor CI build <https://ci.appveyor.com/project/sgillies/fiona/history>`__
