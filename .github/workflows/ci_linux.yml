@@ -87,7 +87,7 @@ jobs:
 
           # Additional env variables
           echo "GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal" >> $GITHUB_ENV
-          echo "PROJ_LIB=$GDALINST/gdal-$GDALVERSION/share/proj" >> $GITHUB_ENV
+          echo "PROJ_DATA=$GDALINST/gdal-$GDALVERSION/share/proj" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$GDALINST/proj-$PROJVERSION/lib:$FILEGDB/lib:\$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
           # Add PATH
