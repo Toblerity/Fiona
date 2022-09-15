@@ -11,6 +11,7 @@ import os
 import warnings
 import math
 from collections import namedtuple, OrderedDict
+from typing import List
 from uuid import uuid4
 
 from six import integer_types, string_types, text_type
@@ -168,6 +169,8 @@ cdef class FeatureBuilder:
         cdef void *fdefn = NULL
         cdef int i
         cdef unsigned char *data = NULL
+        cdef char **string_list = NULL
+        cdef int string_list_index = 0
         cdef int l
         cdef int retval
         cdef int fieldsubtype
@@ -284,7 +287,20 @@ cdef class FeatureBuilder:
             elif fieldtype is bytes:
                 data = OGR_F_GetFieldAsBinary(feature, i, &l)
                 props[key] = data[:l]
-
+            elif fieldtype is List[str]:
+                string_list = OGR_F_GetFieldAsStringList(feature, i)
+                string_list_index = 0
+                props[key] = []
+                while string_list[string_list_index] != NULL:
+                    val = string_list[string_list_index]
+                    try:
+                        val = val.decode(encoding)
+                    except UnicodeDecodeError:
+                        log.warning(
+                            "Failed to decode %s using %s codec", val, encoding
+                        )
+                    props[key].append(val)
+                    string_list_index += 1
             else:
                 props[key] = None
 

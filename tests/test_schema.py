@@ -384,3 +384,34 @@ def test_schema_default_fields_wrong_type(tmpdir):
                         driver="GPX",
                         schema=schema) as c:
             pass
+
+
+def test_schema_string_list(tmp_path):
+    output_file = tmp_path / "fio_test.geojson"
+    schema = {
+    "properties": {
+        "time_range": "str",
+    },
+    "geometry": "Point",
+}
+    with fiona.open(
+        output_file, "w", driver="GeoJSON", schema=schema, crs="EPSG:4326"
+    ) as fds:
+        fds.writerecords(
+            [
+                {
+                    "id": 1,
+                    "geometry": {"type": "Point", "coordinates": [0.0, 0.0]},
+                    "properties": {
+                        "time_range": '["2020-01-01", "2020-01-02"]',
+                    },
+                }
+            ]
+        )
+
+    with fiona.open(output_file) as fds:
+        assert fds.schema["properties"] == {"time_range": "List[str]"}
+        layers = list(fds)
+        assert layers[0]["properties"] == {
+            "time_range": ["2020-01-01", "2020-01-02"]
+        }
