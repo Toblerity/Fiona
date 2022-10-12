@@ -48,6 +48,12 @@ jobs:
               PROJVERSION: "8.2.1",
               allow_failure: "false",
             }
+          - {
+              python: "3.11-dev",
+              GDALVERSION: "3.4.2",
+              PROJVERSION: "8.2.1",
+              allow_failure: "false",
+            }
 
           # Test GDAL master
           - {
@@ -75,10 +81,10 @@ jobs:
       TRAVIS_OS_NAME: "linux"
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
 
@@ -107,20 +113,20 @@ jobs:
 
           # Unlike travis, packages from non default repositories are installed.
           # While default repositories e.g. bionic/universe or bionic/main) tend to keep packages at the same API / ABI level,
-          # this is not guaranteed with other repositories.  
+          # this is not guaranteed with other repositories.
           # The following command creates a list of these packages, which is used as key for the GDAL cache
           # The repositories of packages can be identified in the the output of `sudo apt-get install`
           apt list --installed | grep 'libgeos-dev\|libxml2-dev' > $GITHUB_WORKSPACE/apt_list
           cat $GITHUB_WORKSPACE/apt_list
 
       - name: Cache GDAL binaries
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: gdalinstall
           key: ${{ runner.os }}-gdal-${{ matrix.GDALVERSION }}-proj-${{ matrix.PROJVERSION }}-${{ hashFiles('**/apt_list') }}
 
       - name: Cache pip
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
