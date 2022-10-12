@@ -38,7 +38,7 @@ jobs:
             }
           - {
               python: "3.10",
-              GDALVERSION: "3.5.1",
+              GDALVERSION: "3.5.2",
               PROJVERSION: "9.0.1",
               allow_failure: "false",
             }
@@ -54,7 +54,7 @@ jobs:
           # Python 3.11
           - {
               python: "3.11-dev",
-              GDALVERSION: "3.5.1",
+              GDALVERSION: "3.5.2",
               PROJVERSION: "9.0.1",
               allow_failure: "true",
             }
