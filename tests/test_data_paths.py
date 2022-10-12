@@ -46,8 +46,11 @@ def test_env_gdal_data_environ(monkeypatch):
     assert result.output.strip() == '/foo/bar'
 
 
-def test_env_proj_data_environ(monkeypatch):
-    monkeypatch.setenv('PROJ_LIB', '/foo/bar')
+@pytest.mark.parametrize("data_directory_env", ["PROJ_LIB", "PROJ_DATA"])
+def test_env_proj_data_environ(data_directory_env, monkeypatch):
+    monkeypatch.delenv('PROJ_DATA', raising=False)
+    monkeypatch.delenv('PROJ_LIB', raising=False)
+    monkeypatch.setenv(data_directory_env, '/foo/bar')
     runner = CliRunner()
     result = runner.invoke(main_group, ['env', '--proj-data'])
     assert result.exit_code == 0
