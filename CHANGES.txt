@@ -3,6 +3,13 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.8.22 (2022-10-14)
+-------------------
+
+Builds now require Cython >= 0.29.29 because of
+https://github.com/cython/cython/issues/4609 (#1143).
+
+
 1.8.21 (2022-02-07)
 -------------------
 
