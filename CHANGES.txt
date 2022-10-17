@@ -3,6 +3,16 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.9a3 (2022-10-17)
+------------------
+
+Packaging:
+
+* Builds now require Cython >= 0.29.29 because of
+* https://github.com/cython/cython/issues/4609 (see #1143).
+* PyPI wheels now include GDAL 3.5.2, PROJ 9.0.1, and GEOS 3.11.0.
+* PyPI wheels are now available for Python 3.11.
+
 1.9a2 (2022-06-10)
 ------------------
 
