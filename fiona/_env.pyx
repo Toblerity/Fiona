@@ -468,16 +468,11 @@ cdef class GDALEnv(ConfigEnv):
                     # actually makes it this far.
                     self._have_registered_drivers = True
 
-        log.debug("Started GDALEnv: self=%r.", self)
-
     def stop(self):
         # NB: do not restore the CPL error handler to its default
         # state here. If you do, log messages will be written to stderr
         # by GDAL instead of being sent to Python's logging module.
-        log.debug("Stopping GDALEnv %r.", self)
         CPLPopErrorHandler()
-        log.debug("Error handler popped.")
-        log.debug("Stopped GDALEnv %r.", self)
 
     def drivers(self):
         cdef OGRSFDriverH driver = NULL

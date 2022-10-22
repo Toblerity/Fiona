@@ -271,9 +271,7 @@ class Env(object):
         return local._env._dump_open_datasets()
 
     def __enter__(self):
-        log.debug("Entering env context: %r", self)
         if local._env is None:
-            log.debug("Starting outermost env")
             self._has_parent_env = False
 
             # See note directly above where _discovered_options is globally
@@ -294,36 +292,29 @@ class Env(object):
             setenv(**self.options)
 
         self.credentialize()
-
-        log.debug("Entered env context: %r", self)
         return self
 
     def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
-        log.debug("Exiting env context: %r", self)
         delenv()
         if self._has_parent_env:
             defenv()
             setenv(**self.context_options)
         else:
-            log.debug("Exiting outermost env")
             # See note directly above where _discovered_options is globally
             # defined.
             while local._discovered_options:
                 key, val = local._discovered_options.popitem()
                 set_gdal_config(key, val, normalize=False)
+
             local._discovered_options = None
-        log.debug("Exited env context: %r", self)
 
 
 def defenv(**options):
     """Create a default environment if necessary."""
-    if local._env:
-        log.debug("GDAL environment exists: %r", local._env)
-    else:
-        log.debug("No GDAL environment exists")
+    if not local._env:
         local._env = GDALEnv()
         local._env.update_config_options(**options)
-        log.debug("New GDAL environment %r created", local._env)
+
     local._env.start()
 
 
@@ -332,7 +323,6 @@ def getenv():
     if not local._env:
         raise EnvError("No GDAL environment exists")
     else:
-        log.debug("Got a copy of environment %r options", local._env)
         return local._env.options.copy()
 
 
@@ -346,7 +336,6 @@ def setenv(**options):
         raise EnvError("No GDAL environment exists")
     else:
         local._env.update_config_options(**options)
-        log.debug("Updated existing %r with options %r", local._env, options)
 
 
 def hascreds():
@@ -363,7 +352,7 @@ def delenv():
         raise EnvError("No GDAL environment exists")
     else:
         local._env.clear_config_options()
-        log.debug("Cleared existing %r options", local._env)
+
     local._env.stop()
     local._env = None
 

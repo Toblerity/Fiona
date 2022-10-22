@@ -3,6 +3,13 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.9b1dev
+--------
+
+Changes:
+
+* Remove debug logging from env and _env modules.
+
 1.9a3 (2022-10-17)
 ------------------
 
