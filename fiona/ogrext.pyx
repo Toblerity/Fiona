@@ -360,15 +360,11 @@ cdef class OGRFeatureBuilder:
         encoding = session._get_internal_encoding()
 
         for key, value in feature['properties'].items():
-            ogr_key = session._schema_mapping[key]
-
-            schema_type = normalize_field_type(collection.schema['properties'][key])
-
-            key_bytes = strencode(ogr_key, encoding)
-            key_c = key_bytes
-            i = OGR_F_GetFieldIndex(cogr_feature, key_c)
+            i = session._schema_mapping_index[key]
             if i < 0:
                 continue
+
+            schema_type = normalize_field_type(collection.schema['properties'][key])
 
             # Special case: serialize dicts to assist OGR.
             if isinstance(value, dict):
@@ -1001,6 +997,7 @@ cdef class Session:
 cdef class WritingSession(Session):
 
     cdef object _schema_mapping
+    cdef object _schema_mapping_index
 
     def start(self, collection, **kwargs):
         cdef OGRSpatialReferenceH cogr_srs = NULL
@@ -1284,6 +1281,10 @@ cdef class WritingSession(Session):
         after_fields = self.get_schema()['properties']
         self._schema_mapping = dict(zip(before_fields.keys(),
                                         after_fields.keys()))
+
+        # assumption: get_schema()['properties'].keys() is in ogr field order
+        assert len(before_fields) == len(after_fields)
+        self._schema_mapping_index = dict(zip(before_fields.keys(), range(len(after_fields.keys()))))
 
         log.debug("Writing started")
 
