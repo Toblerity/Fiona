@@ -1349,13 +1349,6 @@ cdef class WritingSession(Session):
                         record['geometry']['type'],
                         collection.schema['geometry'] ))
 
-            # Validate against collection's schema to give useful message
-            if set(record['properties'].keys()) != schema_props_keys:
-                raise SchemaError(
-                    "Record does not match collection schema: %r != %r" % (
-                        record['properties'].keys(),
-                        list(schema_props_keys) ))
-
             cogr_feature = OGRFeatureBuilder().build(record, collection)
             result = OGR_L_CreateFeature(cogr_layer, cogr_feature)
 
