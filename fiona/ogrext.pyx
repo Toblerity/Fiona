@@ -364,7 +364,7 @@ cdef class OGRFeatureBuilder:
             if i < 0:
                 continue
 
-            schema_type = normalize_field_type(collection.schema['properties'][key])
+            schema_type = session._schema_normalized_field_types[key]
 
             # Special case: serialize dicts to assist OGR.
             if isinstance(value, dict):
@@ -998,6 +998,7 @@ cdef class WritingSession(Session):
 
     cdef object _schema_mapping
     cdef object _schema_mapping_index
+    cdef object _schema_normalized_field_types
 
     def start(self, collection, **kwargs):
         cdef OGRSpatialReferenceH cogr_srs = NULL
@@ -1282,9 +1283,14 @@ cdef class WritingSession(Session):
         self._schema_mapping = dict(zip(before_fields.keys(),
                                         after_fields.keys()))
 
-        # assumption: get_schema()['properties'].keys() is in ogr field order
+        # Mapping of the Python collection schema to OGR field indices.
+        # We assume that get_schema()['properties'].keys() is in the exact OGR field order
         assert len(before_fields) == len(after_fields)
         self._schema_mapping_index = dict(zip(before_fields.keys(), range(len(after_fields.keys()))))
+
+        # Mapping of the Python collection schema to normalized field types
+        self._schema_normalized_field_types = {k: normalize_field_type(v) for (k, v) in self.collection.schema['properties'].items()}
+
 
         log.debug("Writing started")
 
