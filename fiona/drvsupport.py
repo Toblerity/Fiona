@@ -42,7 +42,7 @@ supported_drivers = dict([
     # ESRI FileGDB 	FileGDB 	Yes 	Yes 	No, needs FileGDB API library
     # multi-layer
     ("FileGDB", "raw"),
-    ("OpenFileGDB", "r"),
+    ("OpenFileGDB", "r" if _GDAL_VERSION < (3,6) else "raw"),
     # ESRI Personal GeoDatabase 	PGeo 	No 	Yes 	No, needs ODBC library
     # ESRI ArcSDE 	SDE 	No 	Yes 	No, needs ESRI SDE
     # ESRIJSON 	ESRIJSON 	No 	Yes 	Yes 
@@ -50,11 +50,11 @@ supported_drivers = dict([
     # ESRI Shapefile 	ESRI Shapefile 	Yes 	Yes 	Yes
     ("ESRI Shapefile", "raw"),
     # FMEObjects Gateway 	FMEObjects Gateway 	No 	Yes 	No, needs FME
-    ("FlatGeobuf", "rw"),
+    ("FlatGeobuf", "rw" if _GDAL_VERSION < (3,6) else "raw"),
     # GeoJSON 	GeoJSON 	Yes 	Yes 	Yes
     ("GeoJSON", "raw"),
     # GeoJSONSeq 	GeoJSON sequences 	Yes 	Yes 	Yes 
-    ("GeoJSONSeq", "rw"),
+    ("GeoJSONSeq", "rw" if _GDAL_VERSION < (3,6) else "raw"),
     # Géoconcept Export 	Geoconcept 	Yes 	Yes 	Yes
     # multi-layers
     #   ("Geoconcept", "raw"),
@@ -255,6 +255,7 @@ _driver_field_type_unsupported = {
         'DXF': None,
         'PCIDSK': (2, 1, 0),
         'FileGDB': None,
+        'OpenFileGDB': None,
         'FlatGeobuf': None
     },
     'datetime': {
@@ -272,8 +273,9 @@ _driver_field_type_unsupported = {
         'BNA': None,
         'DXF': None,
         'PCIDSK': (2, 1, 0),
-        'FileGDB': None,
-        'FlatGeobuf': None
+        'FileGDB': None,        # FIXME? FileGDB does support date
+        'OpenFileGDB': None,    # FIXME? OpenFileGDB does support date
+        'FlatGeobuf': None      # FIXME? FlatGeobuf does support date
     }
 }
 
@@ -299,6 +301,7 @@ _drivers_not_supporting_timezones = {
         'GPKG': (3, 1, 0),
         'GPSTrackMaker': (3, 1, 1),
         'FileGDB': None,
+        'OpenFileGDB': None,
         'SQLite': (2, 4, 0)
     },
     'time': {
@@ -332,7 +335,8 @@ def _driver_supports_timezones(driver, field_type):
 # None: driver never supports timezones, (2, 0, 0): driver supports timezones with GDAL 2.0.0
 _drivers_not_supporting_milliseconds = {
     'GPSTrackMaker': None,
-    'FileGDB': None
+    'FileGDB': None,
+    'OpenFileGDB': None
 }
 
 
