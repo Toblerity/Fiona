@@ -366,8 +366,8 @@ def test_get_tz_offset():
 
 
 def generate_testcases():
-    """Generate test cases for drivers that support datefields, convert datefields to string or do not support
-    datefiels"""
+    """Generate test cases for drivers that support date fields, convert date fields to string or do not support
+    date fields"""
     _test_cases_datefield = []
     _test_cases_datefield_to_str = []
     _test_cases_datefield_not_supported = []
@@ -462,7 +462,7 @@ def test_datefield(tmpdir, driver, field_type):
         c.writerecords(records)
 
     with fiona.open(path, "r") as c:
-        assert get_schema_field(driver, c.schema) == field_type
+        assert get_schema_field(driver, c.schema) == field_type, f"Returned field type is {get_schema_field(driver, c.schema)}, expected {field_type}"
         items = [get_field(driver, f) for f in c]
         assert len(items) == len(values_in)
         for val, val_exp in zip(items, values_exp):

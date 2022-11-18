@@ -56,7 +56,7 @@ supported_drivers = dict([
     # GeoJSON 	GeoJSON 	Yes 	Yes 	Yes
     ("GeoJSON", "raw"),
     # GeoJSONSeq 	GeoJSON sequences 	Yes 	Yes 	Yes 
-    ("GeoJSONSeq", "rw"),
+    ("GeoJSONSeq", "raw"),
     # Géoconcept Export 	Geoconcept 	Yes 	Yes 	Yes
     # multi-layers
     #   ("Geoconcept", "raw"),
@@ -166,6 +166,7 @@ driver_mode_mingdal = {
     'a': {'GPKG': (1, 11, 0),
           'PCIDSK': (2, 0, 0),
           'GeoJSON': (2, 1, 0),
+          'GeoJSONSeq': (3, 6, 0),
           'MapInfo File': (2, 0, 0),
           'FlatGeobuf': (3, 5, 1),
           'OpenFileGDB': (3, 6, 0)}
@@ -306,9 +307,9 @@ _driver_field_type_unsupported = {
         'BNA': None,
         'DXF': None,
         'PCIDSK': (2, 1, 0),
-        'FileGDB': None,
+        # 'FileGDB': None,
         'FlatGeobuf': None,
-        'OpenFileGDB': None
+        # 'OpenFileGDB': None
     },
     'datetime': {
         'ESRI Shapefile': None,
@@ -325,9 +326,9 @@ _driver_field_type_unsupported = {
         'BNA': None,
         'DXF': None,
         'PCIDSK': (2, 1, 0),
-        'FileGDB': None,
+        # 'FileGDB': None,
         'FlatGeobuf': None,
-        'OpenFileGDB': None
+        # 'OpenFileGDB': None
     }
 }
 

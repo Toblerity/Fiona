@@ -38,32 +38,25 @@ jobs:
             }
           - {
               python: "3.10",
-              GDALVERSION: "3.5.2",
+              GDALVERSION: "3.5.3",
               PROJVERSION: "9.0.1",
               allow_failure: "false",
             }
           - {
-              python: "3.11-dev",
-              GDALVERSION: "3.4.2",
-              PROJVERSION: "8.2.1",
+              python: "3.11",
+              GDALVERSION: "3.6.0",
+              PROJVERSION: "9.1.0",
               allow_failure: "false",
             }
 
           # Test GDAL master
           - {
-              python: "3.10",
+              python: "3.11",
               GDALVERSION: "master",
-              PROJVERSION: "9.0.1",
+              PROJVERSION: "9.1.0",
               allow_failure: "true",
             }
 
-          # Python 3.11
-          - {
-              python: "3.11-dev",
-              GDALVERSION: "3.5.2",
-              PROJVERSION: "9.0.1",
-              allow_failure: "true",
-            }
 
     env:
       CYTHON_COVERAGE: "true"
