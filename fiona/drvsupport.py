@@ -307,7 +307,7 @@ _driver_field_type_unsupported = {
         'BNA': None,
         'DXF': None,
         'PCIDSK': (2, 1, 0),
-        # 'FileGDB': None,
+        'FileGDB': (3, 5, 0),
         'FlatGeobuf': None,
         # 'OpenFileGDB': None
     },
@@ -326,9 +326,9 @@ _driver_field_type_unsupported = {
         'BNA': None,
         'DXF': None,
         'PCIDSK': (2, 1, 0),
-        # 'FileGDB': None,
+        'FileGDB': (3, 5, 0),
         'FlatGeobuf': None,
-        # 'OpenFileGDB': None
+        'OpenFileGDB': None
     }
 }
 
