@@ -309,7 +309,7 @@ _driver_field_type_unsupported = {
         'PCIDSK': (2, 1, 0),
         'FileGDB': (3, 5, 0),
         'FlatGeobuf': None,
-        # 'OpenFileGDB': None
+        'OpenFileGDB': None
     },
     'datetime': {
         'ESRI Shapefile': None,
