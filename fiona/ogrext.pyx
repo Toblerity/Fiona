@@ -351,37 +351,12 @@ cdef class FeatureBuilder:
                 props[key] = None
 
         cdef void *cogr_geometry = NULL
-        cdef void *org_geometry = NULL
-
+        cdef void *stolen_geometry = NULL
         geom = None
 
         if not ignore_geometry:
             cogr_geometry = OGR_F_GetGeometryRef(feature)
-
-            if cogr_geometry is not NULL:
-
-                code = base_geometry_type_code(OGR_G_GetGeometryType(cogr_geometry))
-
-                if 8 <= code <= 14:  # Curves.
-                    cogr_geometry = OGR_G_GetLinearGeometry(cogr_geometry, 0.0, NULL)
-                    geom = GeomBuilder().build(cogr_geometry)
-                    OGR_G_DestroyGeometry(cogr_geometry)
-
-                elif 15 <= code <= 17:
-                    # We steal the geometry: the geometry of the in-memory feature is now null
-                    # and we are responsible for cogr_geometry.
-                    org_geometry = OGR_F_StealGeometry(feature)
-
-                    if code in (15, 16):
-                        cogr_geometry = OGR_G_ForceToMultiPolygon(org_geometry)
-                    elif code == 17:
-                        cogr_geometry = OGR_G_ForceToPolygon(org_geometry)
-
-                    geom = GeomBuilder().build(cogr_geometry)
-                    OGR_G_DestroyGeometry(cogr_geometry)
-
-                else:
-                    geom = GeomBuilder().build(cogr_geometry)
+            geom = GeomBuilder().build(cogr_geometry)
 
         return Feature(id=str(fid), properties=Properties(**props), geometry=geom)
 

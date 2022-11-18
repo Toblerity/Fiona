@@ -2,6 +2,8 @@
 
 from __future__ import absolute_import
 
+include "gdal.pxi"
+
 import logging
 
 from fiona.errors import UnsupportedGeometryTypeError
@@ -87,6 +89,7 @@ cdef _deleteOgrGeom(void *cogr_geometry):
 cdef class GeomBuilder:
     """Builds Fiona (GeoJSON) geometries from an OGR geometry handle.
     """
+
     cdef _buildCoords(self, void *geom):
         # Build a coordinate sequence
         cdef int i
@@ -143,20 +146,49 @@ cdef class GeomBuilder:
 
     cdef build(self, void *geom):
         # The only method anyone needs to call
+        cdef void *cogr_geometry = NULL
+        cdef void *cloned_geometry = NULL
+
         if geom == NULL:
-            raise ValueError("Null geom")
+            return None
 
-        cdef unsigned int etype = OGR_G_GetGeometryType(geom)
+        code = base_geometry_type_code(OGR_G_GetGeometryType(geom))
 
-        self.code = base_geometry_type_code(etype)
+        # We convert special geometries (curves, TIN, Triangle, ...)
+        # to GeoJSON compatible geometries (LineStrings, Polygons, MultiPolygon, ...)
+        if 8 <= code <= 14:  # Curves.
+            # OGR_G_GetLinearGeometry: The ownership of the returned geometry belongs to the caller.
+            cogr_geometry = OGR_G_GetLinearGeometry(geom, 0.0, NULL)
+            code = base_geometry_type_code(OGR_G_GetGeometryType(cogr_geometry))
+            ndims = OGR_G_GetCoordinateDimension(cogr_geometry)
+            geom = cogr_geometry
+        elif 15 <= code <= 17:
+            cloned_geometry = OGR_G_Clone(geom)
+            if code in (15, 16):
+                # OGR_G_ForceToMultiPolygon: the converted geometry (ownership to caller).
+                cogr_geometry = OGR_G_ForceToMultiPolygon(cloned_geometry)
+            elif code == 17:
+                # OGR_G_ForceToPolygon: the converted geometry (ownership to caller).
+                cogr_geometry = OGR_G_ForceToPolygon(cloned_geometry)
+            code = base_geometry_type_code(OGR_G_GetGeometryType(cogr_geometry))
+            ndims = OGR_G_GetCoordinateDimension(cogr_geometry)
+            geom = cogr_geometry
+        else:
+            ndims = OGR_G_GetCoordinateDimension(geom)
 
-        if self.code not in GEOMETRY_TYPES:
-            raise UnsupportedGeometryTypeError(self.code)
+        if code not in GEOMETRY_TYPES:
+            raise UnsupportedGeometryTypeError(code)
 
-        self.geomtypename = GEOMETRY_TYPES[self.code]
-        self.ndims = OGR_G_GetCoordinateDimension(geom)
+        self.code = code
+        self.geomtypename = GEOMETRY_TYPES[code]
+        self.ndims = ndims
         self.geom = geom
         built = getattr(self, '_build' + self.geomtypename)()
+
+        # Cleanup geometries we have ownership over
+        if cogr_geometry is not NULL:
+            OGR_G_DestroyGeometry(cogr_geometry)
+
         return Geometry.from_dict(**built)
 
     cpdef build_wkb(self, object wkb):
@@ -247,6 +279,7 @@ cdef class OGRGeomBuilder:
         cdef object typename = geometry.type
         cdef object coordinates = geometry.coordinates
         cdef object geometries = geometry.geometries
+
         if typename == 'Point':
             return self._buildPoint(coordinates)
         elif typename == 'LineString':

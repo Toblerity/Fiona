@@ -538,7 +538,7 @@ cdef extern from "ogr_api.h" nogil:
     double OGR_G_GetX(OGRGeometryH geometry, int n)
     double OGR_G_GetY(OGRGeometryH geometry, int n)
     double OGR_G_GetZ(OGRGeometryH geometry, int n)
-    void OGR_G_ImportFromWkb(OGRGeometryH geometry, unsigned char *bytes,
+    OGRErr OGR_G_ImportFromWkb(OGRGeometryH geometry, unsigned char *bytes,
                              int nbytes)
     int OGR_G_WkbSize(OGRGeometryH geometry)
     OGRErr OGR_L_CreateFeature(OGRLayerH layer, OGRFeatureH feature)
