@@ -7,8 +7,7 @@ include "gdal.pxi"
 import logging
 
 from fiona.errors import UnsupportedGeometryTypeError
-from fiona.model import _guard_model_object, GEOMETRY_TYPES, Geometry
-
+from fiona.model import _guard_model_object, GEOMETRY_TYPES, Geometry, OGRGeometryType
 from fiona._err cimport exc_wrap_int
 
 
@@ -146,35 +145,44 @@ cdef class GeomBuilder:
 
     cdef build(self, void *geom):
         # The only method anyone needs to call
-        cdef void *cogr_geometry = NULL
-        cdef void *cloned_geometry = NULL
+        cdef void *geometry_to_dealloc = NULL
 
         if geom == NULL:
             return None
 
         code = base_geometry_type_code(OGR_G_GetGeometryType(geom))
+        ndims = OGR_G_GetCoordinateDimension(geom)
 
-        # We convert special geometries (curves, TIN, Triangle, ...)
+        # We convert special geometries (Curves, TIN, Triangle, ...)
         # to GeoJSON compatible geometries (LineStrings, Polygons, MultiPolygon, ...)
-        if 8 <= code <= 14:  # Curves.
+        if code in (
+            OGRGeometryType.CircularString.value,
+            OGRGeometryType.CompoundCurve.value,
+            OGRGeometryType.CurvePolygon.value,
+            OGRGeometryType.MultiCurve.value,
+            OGRGeometryType.MultiSurface.value,
+            OGRGeometryType.Curve.value,
+            OGRGeometryType.Surface.value,
+        ):
             # OGR_G_GetLinearGeometry: The ownership of the returned geometry belongs to the caller.
-            cogr_geometry = OGR_G_GetLinearGeometry(geom, 0.0, NULL)
-            code = base_geometry_type_code(OGR_G_GetGeometryType(cogr_geometry))
-            ndims = OGR_G_GetCoordinateDimension(cogr_geometry)
-            geom = cogr_geometry
-        elif 15 <= code <= 17:
-            cloned_geometry = OGR_G_Clone(geom)
-            if code in (15, 16):
+            geometry_to_dealloc = OGR_G_GetLinearGeometry(geom, 0.0, NULL)
+            code = base_geometry_type_code(OGR_G_GetGeometryType(geometry_to_dealloc))
+            geom = geometry_to_dealloc
+        elif code in (
+            OGRGeometryType.PolyhedralSurface.value,
+            OGRGeometryType.TIN.value,
+            OGRGeometryType.Triangle.value,
+        ):
+            geometry_to_dealloc = OGR_G_Clone(geom)
+            if code in (OGRGeometryType.PolyhedralSurface.value, OGRGeometryType.TIN.value):
                 # OGR_G_ForceToMultiPolygon: the converted geometry (ownership to caller).
-                cogr_geometry = OGR_G_ForceToMultiPolygon(cloned_geometry)
-            elif code == 17:
+                geometry_to_dealloc = OGR_G_ForceToMultiPolygon(geometry_to_dealloc)
+            elif code == OGRGeometryType.Triangle.value:
                 # OGR_G_ForceToPolygon: the converted geometry (ownership to caller).
-                cogr_geometry = OGR_G_ForceToPolygon(cloned_geometry)
-            code = base_geometry_type_code(OGR_G_GetGeometryType(cogr_geometry))
-            ndims = OGR_G_GetCoordinateDimension(cogr_geometry)
-            geom = cogr_geometry
-        else:
-            ndims = OGR_G_GetCoordinateDimension(geom)
+                geometry_to_dealloc = OGR_G_ForceToPolygon(geometry_to_dealloc)
+            code = base_geometry_type_code(OGR_G_GetGeometryType(geometry_to_dealloc))
+            geom = geometry_to_dealloc
+
 
         if code not in GEOMETRY_TYPES:
             raise UnsupportedGeometryTypeError(code)
@@ -186,8 +194,9 @@ cdef class GeomBuilder:
         built = getattr(self, '_build' + self.geomtypename)()
 
         # Cleanup geometries we have ownership over
-        if cogr_geometry is not NULL:
-            OGR_G_DestroyGeometry(cogr_geometry)
+        if geometry_to_dealloc is not NULL:
+            self.geom = NULL
+            OGR_G_DestroyGeometry(geometry_to_dealloc)
 
         return Geometry.from_dict(**built)
 
