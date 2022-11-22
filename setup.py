@@ -192,8 +192,8 @@ if "clean" not in sys.argv:
         compile_time_env=compile_time_env,
     )
 
-# Include .pxd files for wheels
-fiona_package_data = ['*.pxd']
+# Include these files for binary wheels
+fiona_package_data = ['gdal.pxi', '*.pxd']
 
 if os.environ.get('PACKAGE_DATA'):
     fiona_package_data.extend([
