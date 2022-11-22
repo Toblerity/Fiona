@@ -8,5 +8,5 @@ recursive-include tests *.py
 recursive-include tests/data *
 recursive-include fiona *.pyx *.pxd *.pxi
 recursive-exclude fiona *.c *.cpp
-include CHANGES.txt CITATION.txt CREDITS.txt LICENSE.txt VERSION.txt README.rst
+include CHANGES.txt CITATION.txt CREDITS.txt LICENSE.txt README.rst
 include benchmark.py pyproject.toml setup.py requirements.txt

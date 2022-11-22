@@ -1,7 +1,85 @@
 [build-system]
 requires = [
-    "cython>=0.29.29",
+    "Cython~=0.29",
     "oldest-supported-numpy",
-    "setuptools",
-    "wheel",
+    "setuptools>=61",
 ]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Fiona"
+dynamic = ["readme", "version"]
+authors = [
+    {name = "Sean Gillies"},
+]
+maintainers = [
+    {name = "Fiona contributors"},
+]
+description = "Fiona reads and writes spatial data files"
+keywords = ["gis", "vector", "feature", "data"]
+license = {text = "BSD 3-Clause"}
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: GIS",
+]
+
+requires-python = ">=3.7"
+dependencies = [
+    "attrs>=19.2.0",
+    "certifi",
+    "click~=8.0",
+    "click-plugins>=1.0",
+    "cligj>=0.5",
+    "munch>=2.3.2",
+]
+
+[project.optional-dependencies]
+all = ["Fiona[calc,s3,test]"]
+calc = ["shapely"]
+s3 = ["boto3>=1.3.1"]
+test = [
+    "Cython~=0.29",
+    "Fiona[s3]",
+    "pytest>=7",
+    "pytest-cov",
+    "pytz",
+]
+
+[project.scripts]
+fio = "fiona.fio.main:main_group"
+
+[project.entry-points."fiona.fio_commands"]
+bounds = "fiona.fio.bounds:bounds"
+calc = "fiona.fio.calc:calc"
+cat = "fiona.fio.cat:cat"
+collect = "fiona.fio.collect:collect"
+distrib = "fiona.fio.distrib:distrib"
+dump = "fiona.fio.dump:dump"
+env = "fiona.fio.env:env"
+filter = "fiona.fio.filter:filter"
+info = "fiona.fio.info:info"
+insp = "fiona.fio.insp:insp"
+load = "fiona.fio.load:load"
+ls = "fiona.fio.ls:ls"
+rm = "fiona.fio.rm:rm"
+
+[project.urls]
+Documentation = "https://fiona.readthedocs.io/"
+Repository = "https://github.com/Toblerity/Fiona"
+
+[tool.setuptools]
+include-package-data = false
+packages = ["fiona", "fiona.fio"]
+
+[tool.setuptools.dynamic]
+version = {attr = "fiona.__version__"}
+readme = {file = ["README.rst", "CHANGES.txt", "CREDITS.txt"]}
