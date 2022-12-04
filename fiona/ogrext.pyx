@@ -355,8 +355,7 @@ cdef class FeatureBuilder:
         geom = None
 
         if not ignore_geometry:
-            cogr_geometry = OGR_F_GetGeometryRef(feature)
-            geom = GeomBuilder().build(cogr_geometry)
+            geom = GeomBuilder().build_from_feature(feature)
 
         return Feature(id=str(fid), properties=Properties(**props), geometry=geom)
 

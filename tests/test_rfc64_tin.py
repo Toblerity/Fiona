@@ -26,28 +26,32 @@ def test_tin_csv(path_test_tin_csv):
     """Convert TIN to MultiPolygon and Triangle to Polygon"""
     with fiona.open(path_test_tin_csv) as col:
         assert col.schema["geometry"] == "Unknown"
-        features = list(col)
-        assert len(features) == 3
-        assert features[0]["geometry"]["type"] == "MultiPolygon"
-        assert features[0]["geometry"]["coordinates"] == [
+
+        feature1 = next(col)
+        # features = list(col)
+        # assert len(features) == 3
+        assert feature1["geometry"]["type"] == "MultiPolygon"
+        assert feature1["geometry"]["coordinates"] == [
             [[(0.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, 1.0, 0.0), (0.0, 0.0, 0.0)]],
             [[(0.0, 0.0, 0.0), (0.0, 1.0, 0.0), (1.0, 1.0, 0.0), (0.0, 0.0, 0.0)]],
         ]
 
-        assert features[1]["geometry"]["type"] == "Polygon"
-        assert features[1]["geometry"]["coordinates"] == [
+        feature2 = next(col)
+        assert feature2["geometry"]["type"] == "Polygon"
+        assert feature2["geometry"]["coordinates"] == [
             [(0.0, 0.0, 0.0), (0.0, 1.0, 0.0), (1.0, 1.0, 0.0), (0.0, 0.0, 0.0)]
         ]
 
-        assert features[2]["geometry"]["type"] == "GeometryCollection"
-        assert len(features[2]["geometry"]["geometries"]) == 2
-        assert features[2]["geometry"]["geometries"][0]["type"] == "MultiPolygon"
-        assert features[2]["geometry"]["geometries"][0]["coordinates"] == [
+        feature3 = next(col)
+        assert feature3["geometry"]["type"] == "GeometryCollection"
+        assert len(feature3["geometry"]["geometries"]) == 2
+        assert feature3["geometry"]["geometries"][0]["type"] == "MultiPolygon"
+        assert feature3["geometry"]["geometries"][0]["coordinates"] == [
             [[(0.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, 1.0, 0.0), (0.0, 0.0, 0.0)]],
             [[(0.0, 0.0, 0.0), (0.0, 1.0, 0.0), (1.0, 1.0, 0.0), (0.0, 0.0, 0.0)]],
         ]
 
-        assert features[2]["geometry"]["geometries"][1]["type"] == "Polygon"
-        assert features[2]["geometry"]["geometries"][1]["coordinates"] == [
+        assert feature3["geometry"]["geometries"][1]["type"] == "Polygon"
+        assert feature3["geometry"]["geometries"][1]["coordinates"] == [
             [(0.0, 0.0, 0.0), (0.0, 1.0, 0.0), (1.0, 1.0, 0.0), (0.0, 0.0, 0.0)]
         ]
