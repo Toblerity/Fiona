@@ -1,6 +1,4 @@
-from distutils.command.sdist import sdist
 from distutils import log
-import itertools as it
 import os
 import shutil
 import subprocess
@@ -26,28 +24,6 @@ def copy_data_tree(datadir, destdir):
         pass
     shutil.copytree(datadir, destdir)
 
-
-# Parse the version from the fiona module.
-with open('fiona/__init__.py', 'r') as f:
-    for line in f:
-        if line.find("__version__") >= 0:
-            version = line.split("=")[1].strip().strip('"').strip("'")
-            break
-
-# Fiona's auxiliary files are UTF-8 encoded
-open_kwds = {'encoding': 'utf-8'}
-
-with open('VERSION.txt', 'w', **open_kwds) as f:
-    f.write(version)
-
-with open('README.rst', **open_kwds) as f:
-    readme = f.read()
-
-with open('CREDITS.txt', **open_kwds) as f:
-    credits = f.read()
-
-with open('CHANGES.txt', **open_kwds) as f:
-    changes = f.read()
 
 # Building Fiona requires options that can be obtained from GDAL's gdal-config
 # program or can be specified using setup arguments. The latter override the
@@ -216,76 +192,21 @@ if "clean" not in sys.argv:
         compile_time_env=compile_time_env,
     )
 
-requirements = [
-    'attrs>=17',
-    'certifi',
-    'click>=4.0',
-    'cligj>=0.5',
-    'click-plugins>=1.0',
-    'munch',
-]
-
-extras_require = {
-    'calc': ['shapely'],
-    's3': ['boto3>=1.2.4'],
-    'test': ['pytest>=3', 'pytest-cov', 'boto3>=1.2.4']
-}
-
-extras_require['all'] = list(set(it.chain(*extras_require.values())))
-
-
-setup_args = dict(
-    metadata_version='1.2',
-    name='Fiona',
-    version=version,
-    python_requires='>=3.7',
-    requires_external='GDAL (>=3.1)',
-    description="Fiona reads and writes spatial data files",
-    license='BSD',
-    keywords='gis vector feature data',
-    author='Sean Gillies',
-    author_email='sean.gillies@gmail.com',
-    maintainer='Sean Gillies',
-    maintainer_email='sean.gillies@gmail.com',
-    url='https://github.com/Toblerity/Fiona',
-    long_description=readme + "\n" + changes + "\n" + credits,
-    package_dir={'': '.'},
-    packages=['fiona', 'fiona.fio'],
-    entry_points='''
-        [console_scripts]
-        fio=fiona.fio.main:main_group
-
-        [fiona.fio_commands]
-        bounds=fiona.fio.bounds:bounds
-        calc=fiona.fio.calc:calc
-        cat=fiona.fio.cat:cat
-        collect=fiona.fio.collect:collect
-        distrib=fiona.fio.distrib:distrib
-        dump=fiona.fio.dump:dump
-        env=fiona.fio.env:env
-        filter=fiona.fio.filter:filter
-        info=fiona.fio.info:info
-        insp=fiona.fio.insp:insp
-        load=fiona.fio.load:load
-        ls=fiona.fio.ls:ls
-        rm=fiona.fio.rm:rm
-        ''',
-    install_requires=requirements,
-    extras_require=extras_require,
-    ext_modules=ext_modules,
-    classifiers=[
-        'Development Status :: 5 - Production/Stable',
-        'Intended Audience :: Developers',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: BSD License',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
-        'Programming Language :: Python :: 3.10',
-        'Topic :: Scientific/Engineering :: GIS'])
+# Include these files for binary wheels
+fiona_package_data = ['gdal.pxi', '*.pxd']
 
 if os.environ.get('PACKAGE_DATA'):
-    setup_args['package_data'] = {'fiona': ['gdal_data/*', 'proj_data/*', '.libs/*', '.libs/licenses/*']}
+    fiona_package_data.extend([
+        'gdal_data/*',
+        'proj_data/*',
+        '.libs/*',
+        '.libs/licenses/*',
+    ])
 
-setup(**setup_args)
+
+# See pyproject.toml for project metadata
+setup(
+    name="Fiona",  # need by GitHub dependency graph
+    package_data={"fiona": fiona_package_data},
+    ext_modules=ext_modules,
+)
