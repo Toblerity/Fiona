@@ -195,7 +195,6 @@ cdef class GeomBuilder:
             return None
 
         code = base_geometry_type_code(OGR_G_GetGeometryType(geom))
-        self.ndims = OGR_G_GetCoordinateDimension(geom)
 
         # We convert special geometries (Curves, TIN, Triangle, ...)
         # to GeoJSON compatible geometries (LineStrings, Polygons, MultiPolygon, ...)
@@ -222,6 +221,7 @@ cdef class GeomBuilder:
                 geometry_to_dealloc = OGR_G_ForceToPolygon(geom)
             code = base_geometry_type_code(OGR_G_GetGeometryType(geometry_to_dealloc))
             geom = geometry_to_dealloc
+        self.ndims = OGR_G_GetCoordinateDimension(geom)
 
         if code not in GEOMETRY_TYPES:
             raise UnsupportedGeometryTypeError(code)
