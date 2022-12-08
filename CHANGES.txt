@@ -8,6 +8,9 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Changes:
 
+* Update drvsupport.py to reflect new format capabilities in GDAL 3.6.0
+  (#1122).
+* Added support for the OGR StringList field type (#1141).
 * Remove debug logging from env and _env modules.
 
 1.9a3 (2022-10-17)
