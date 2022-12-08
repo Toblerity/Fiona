@@ -169,27 +169,26 @@ cdef class GeomBuilder:
 
 
     cdef object build_from_feature(self, void *feature):
+        # Build Geometry from *OGRFeatureH
         cdef void *cogr_geometry = NULL
-        cdef void *geometry_to_dealloc = NULL
         cdef int code
 
         cogr_geometry = OGR_F_GetGeometryRef(feature)
         code = base_geometry_type_code(OGR_G_GetGeometryType(cogr_geometry))
 
+        # We need to take ownership of the geometry before we can call 
+        # OGR_G_ForceToPolygon or OGR_G_ForceToMultiPolygon
         if code in (
             OGRGeometryType.PolyhedralSurface.value,
             OGRGeometryType.TIN.value,
             OGRGeometryType.Triangle.value,
         ):
-            geometry_to_dealloc = OGR_F_StealGeometry(feature)
-            geom = self.build(geometry_to_dealloc)
-            return geom
-        else:
-            return self.build(cogr_geometry)
-
+            cogr_geometry = OGR_F_StealGeometry(feature)
+        return self.build(cogr_geometry)
 
     cdef object build(self, void *geom):
-        # The only method anyone needs to call
+        # Build Geometry from *OGRGeometryH
+
         cdef void *geometry_to_dealloc = NULL
 
         if geom == NULL:
@@ -217,7 +216,6 @@ cdef class GeomBuilder:
             OGRGeometryType.TIN.value,
             OGRGeometryType.Triangle.value,
         ):
-            # geometry_to_dealloc = OGR_G_Clone(geom)
             if code in (OGRGeometryType.PolyhedralSurface.value, OGRGeometryType.TIN.value):
                 geometry_to_dealloc = OGR_G_ForceToMultiPolygon(geom)
             elif code == OGRGeometryType.Triangle.value:
@@ -225,12 +223,10 @@ cdef class GeomBuilder:
             code = base_geometry_type_code(OGR_G_GetGeometryType(geometry_to_dealloc))
             geom = geometry_to_dealloc
 
-
         if code not in GEOMETRY_TYPES:
             raise UnsupportedGeometryTypeError(code)
 
         geomtypename = GEOMETRY_TYPES[code]
-
         if geomtypename == "Point":
             built = self._buildPoint(geom)
         elif geomtypename == "LineString":
@@ -257,7 +253,7 @@ cdef class GeomBuilder:
         return Geometry.from_dict(**built)
 
     cpdef build_wkb(self, object wkb):
-        # The only other method anyone needs to call
+        # Build geometry from wkb
         cdef object data = wkb
         cdef void *cogr_geometry = _createOgrGeomFromWKB(data)
         result = self.build(cogr_geometry)

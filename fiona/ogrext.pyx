@@ -351,10 +351,9 @@ cdef class FeatureBuilder:
                 props[key] = None
 
         cdef void *cogr_geometry = NULL
-        cdef void *stolen_geometry = NULL
         geom = None
-
         if not ignore_geometry:
+            cogr_geometry = OGR_F_GetGeometryRef(feature)
             geom = GeomBuilder().build_from_feature(feature)
 
         return Feature(id=str(fid), properties=Properties(**props), geometry=geom)
