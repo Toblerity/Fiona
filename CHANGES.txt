@@ -8,6 +8,7 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Changes:
 
+* Move project metadata to pyproject.toml (#1165).
 * Update drvsupport.py to reflect new format capabilities in GDAL 3.6.0
   (#1122).
 * Added support for the OGR StringList field type (#1141).
