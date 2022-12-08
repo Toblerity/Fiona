@@ -1,9 +1,9 @@
-import xml.etree.ElementTree as ET
 import logging
+import xml.etree.ElementTree as ET
+
 import fiona
-with fiona._loading.add_gdal_dll_directories():
-    from fiona.ogrext import _get_metadata_item
-    from fiona.env import require_gdal_version
+from fiona.env import require_gdal_version
+from fiona.ogrext import _get_metadata_item
 
 log = logging.getLogger(__name__)
 

@@ -6,9 +6,7 @@ import os
 import click
 
 import fiona
-import fiona._loading
-with fiona._loading.add_gdal_dll_directories():
-    from fiona._env import GDALDataFinder, PROJDataFinder
+from fiona._env import GDALDataFinder, PROJDataFinder
 
 
 @click.command(short_help="Print information about the fio environment.")

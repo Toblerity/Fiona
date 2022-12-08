@@ -2,13 +2,10 @@
 
 from warnings import warn
 
-import fiona._loading
-
-with fiona._loading.add_gdal_dll_directories():
-    from fiona._transform import _transform, _transform_geom
-    from fiona.compat import DICT_TYPES
-    from fiona.errors import FionaDeprecationWarning
-    from fiona.model import _guard_model_object, Geometry
+from fiona._transform import _transform, _transform_geom
+from fiona.compat import DICT_TYPES
+from fiona.errors import FionaDeprecationWarning
+from fiona.model import _guard_model_object, Geometry
 
 
 def transform(src_crs, dst_crs, xs, ys):

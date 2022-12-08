@@ -8,6 +8,8 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Changes:
 
+* The fiona._loading module, which supports DLL loading on Windows,
+  has been moved into __init__.py and is no longer used anywhere else (#1168).
 * Move project metadata to pyproject.toml (#1165).
 * Update drvsupport.py to reflect new format capabilities in GDAL 3.6.0
   (#1122).
