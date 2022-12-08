@@ -10,22 +10,19 @@ import warnings
 
 import attr
 
-import fiona._loading
-
-with fiona._loading.add_gdal_dll_directories():
-    from fiona._env import (
-        GDALDataFinder,
-        GDALEnv,
-        PROJDataFinder,
-        calc_gdal_version_num,
-        get_gdal_config,
-        get_gdal_release_name,
-        get_gdal_version_num,
-        set_gdal_config,
-        set_proj_data_search_path,
-    )
-    from fiona.errors import EnvError, FionaDeprecationWarning, GDALVersionError
-    from fiona.session import Session, DummySession
+from fiona._env import (
+    GDALDataFinder,
+    GDALEnv,
+    PROJDataFinder,
+    calc_gdal_version_num,
+    get_gdal_config,
+    get_gdal_release_name,
+    get_gdal_version_num,
+    set_gdal_config,
+    set_proj_data_search_path,
+)
+from fiona.errors import EnvError, FionaDeprecationWarning, GDALVersionError
+from fiona.session import Session, DummySession
 
 
 class ThreadEnv(threading.local):

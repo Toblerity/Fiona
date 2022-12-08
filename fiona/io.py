@@ -3,12 +3,11 @@
 
 from collections import OrderedDict
 import logging
-import fiona._loading
-with fiona._loading.add_gdal_dll_directories():
-    from fiona.ogrext import MemoryFileBase
-    from fiona.collection import Collection
-    from fiona.meta import supports_vsi
-    from fiona.errors import DriverError
+
+from fiona.ogrext import MemoryFileBase
+from fiona.collection import Collection
+from fiona.meta import supports_vsi
+from fiona.errors import DriverError
 
 log = logging.getLogger(__name__)
 

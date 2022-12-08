@@ -3,10 +3,7 @@
 import logging
 import os
 
-import fiona._loading
-
-with fiona._loading.add_gdal_dll_directories():
-    from fiona.path import parse_path, UnparsedPath
+from fiona.path import parse_path, UnparsedPath
 
 log = logging.getLogger(__name__)
 
