@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "Cython~=0.29",
+    "Cython~=0.29.29",
     "oldest-supported-numpy",
     "setuptools>=61",
 ]
@@ -47,7 +47,7 @@ all = ["Fiona[calc,s3,test]"]
 calc = ["shapely"]
 s3 = ["boto3>=1.3.1"]
 test = [
-    "Cython~=0.29",
+    "Cython~=0.29.29",
     "Fiona[s3]",
     "pytest>=7",
     "pytest-cov",
