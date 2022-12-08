@@ -31,37 +31,32 @@ jobs:
               allow_failure: "false",
             }
           - {
-              python: 3.8,
-              GDALVERSION: "3.4.2",
-              PROJVERSION: "8.2.1",
-              allow_failure: "false",
-            }
-          - {
               python: 3.9,
-              GDALVERSION: "3.4.2",
+              GDALVERSION: "3.4.3",
               PROJVERSION: "8.2.1",
               allow_failure: "false",
             }
           - {
               python: "3.10",
-              GDALVERSION: "3.4.2",
-              PROJVERSION: "8.2.1",
+              GDALVERSION: "3.5.3",
+              PROJVERSION: "9.0.1",
               allow_failure: "false",
             }
           - {
-              python: "3.11-dev",
-              GDALVERSION: "3.4.2",
-              PROJVERSION: "8.2.1",
+              python: "3.11",
+              GDALVERSION: "3.6.0",
+              PROJVERSION: "9.1.0",
               allow_failure: "false",
             }
 
           # Test GDAL master
           - {
-              python: "3.10",
+              python: "3.11",
               GDALVERSION: "master",
-              PROJVERSION: "8.2.1",
+              PROJVERSION: "9.1.0",
               allow_failure: "true",
             }
+
 
     env:
       CYTHON_COVERAGE: "true"
@@ -123,7 +118,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: gdalinstall
-          key: ${{ runner.os }}-gdal-${{ matrix.GDALVERSION }}-proj-${{ matrix.PROJVERSION }}-${{ hashFiles('**/apt_list') }}
+          key: ${{ runner.os }}-gdal-${{ matrix.GDALVERSION }}-proj-${{ matrix.PROJVERSION }}-${{ hashFiles('**/apt_list') }}-${{ hashFiles('scripts/travis_gdal_install.sh', 'scripts/travis_proj_install.sh', 'scripts/travis_filegdb_install.sh') }}
 
       - name: Cache pip
         uses: actions/cache@v3
@@ -182,7 +177,7 @@ jobs:
       - name: pytest
         continue-on-error: ${{ matrix.allow_failure == 'true' }}
         run: |
-          GDAL_ENABLE_DEPRECATED_DRIVER_GTM=YES python -m pytest -m "not wheel" -k "not [FlatGeobuf]" --cov fiona --cov-report term-missing
+          GDAL_ENABLE_DEPRECATED_DRIVER_GTM=YES python -m pytest -m "not wheel or gdal" --cov fiona --cov-report term-missing
 
       - name: Coveralls
         continue-on-error: ${{ matrix.allow_failure == 'true' }}

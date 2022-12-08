@@ -16,6 +16,24 @@ from fiona.meta import extensions
 from fiona.model import Feature, ObjectEncoder, to_dict
 
 
+def pytest_collection_modifyitems(config, items):
+
+    # Fiona contains some tests that depend only on GDALs behavior.
+    # E.g. some test the driver specific access modes maintained in
+    # fiona/drvsupport.py for different GDAL versions.
+    # These tests can fail on exotic architectures (e.g. not returning 
+    # the exact same value)
+    # We explicitly enable these tests on Fiona CI using pytest -m gdal
+    # and hide these tests otherwise.
+    markers_options = config.getoption("-m", "")
+    if "gdal" not in markers_options:
+        skip_gdal = pytest.mark.skip(reason="use '-m gdal' to run GDAL related tests.")
+        for item in items:
+            gdal_marker = item.get_closest_marker("gdal")
+            if gdal_marker is not None and gdal_marker.name == "gdal":
+                item.add_marker(skip_gdal)
+
+
 def pytest_report_header(config):
     headers = []
     # gdal version number
