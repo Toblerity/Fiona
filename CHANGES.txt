@@ -3,12 +3,17 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.9b1dev
---------
+1.9b1 (TBD)
+-----------
 
-Changes:
+New features:
 
+* Add support for TIN and triangle geometries (#1163).
 * Add an allow_unsupported_drivers option to fiona.open() (#1126).
+* Added support for the OGR StringList field type (#1141).
+
+Changes and bug fixes:
+
 * Ensure that ZipMemoryFile have the proper GDAL name after creation so that we
   can use listdir() (#1092).
 * The fiona._loading module, which supports DLL loading on Windows,
@@ -16,7 +21,6 @@ Changes:
 * Move project metadata to pyproject.toml (#1165).
 * Update drvsupport.py to reflect new format capabilities in GDAL 3.6.0
   (#1122).
-* Added support for the OGR StringList field type (#1141).
 * Remove debug logging from env and _env modules.
 
 1.9a3 (2022-10-17)
