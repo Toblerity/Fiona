@@ -8,6 +8,7 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Changes:
 
+* Add an allow_unsupported_drivers option to fiona.open() (#1126).
 * Ensure that ZipMemoryFile have the proper GDAL name after creation so that we
   can use listdir() (#1092).
 * The fiona._loading module, which supports DLL loading on Windows,
