@@ -319,3 +319,30 @@ def test_read_multilayer_memoryfile(path_coutwildrnp_json, tmpdir):
         with fiona.open(f, layer="layer2") as src:
             assert src.name == "layer2"
             assert len(src) == 62
+
+
+def test_allow_unsupported_drivers(monkeypatch):
+    """Test if allow unsupported drivers works as expected"""
+
+    # We delete a known working driver from fiona.drvsupport so that we can use it
+    monkeypatch.delitem(fiona.drvsupport.supported_drivers, "GPKG")
+
+    schema = {"geometry": "Polygon", "properties": {}}
+
+    # Test that indeed we can't create a file without allow_unsupported_drivers
+    with pytest.raises(DriverError):
+        with MemoryFile() as memfile:
+            with memfile.open(mode="w", driver="GPKG", schema=schema):
+                pass
+
+    # Test that we can create file with allow_unsupported_drivers=True
+    try:
+        with MemoryFile() as memfile:
+            with memfile.open(
+                mode="w", driver="GPKG", schema=schema, allow_unsupported_drivers=True
+            ):
+                pass
+    except Exception as e:
+        assert (
+            False
+        ), f"Using allow_unsupported_drivers=True should not raise an exception: {e}"

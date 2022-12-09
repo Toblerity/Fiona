@@ -67,6 +67,7 @@ class Collection(object):
         ignore_geometry=False,
         include_fields=None,
         wkt_version=None,
+        allow_unsupported_drivers=False,
         **kwargs
     ):
 
@@ -145,6 +146,7 @@ class Collection(object):
         self.include_fields = include_fields
         self.ignore_fields = ignore_fields
         self.ignore_geometry = bool(ignore_geometry)
+        self._allow_unsupported_drivers = allow_unsupported_drivers
         self._env = None
         self._closed = True
 
@@ -197,10 +199,11 @@ class Collection(object):
                 driver = "ESRI Shapefile"
             if not driver:
                 raise DriverError("no driver")
-            elif driver not in supported_drivers:
-                raise DriverError("unsupported driver: %r" % driver)
-            elif self.mode not in supported_drivers[driver]:
-                raise DriverError("unsupported mode: %r" % self.mode)
+            if not allow_unsupported_drivers:
+                if driver not in supported_drivers:
+                    raise DriverError("unsupported driver: %r" % driver)
+                if self.mode not in supported_drivers[driver]:
+                    raise DriverError("unsupported mode: %r" % self.mode)
             self._driver = driver
 
             if not schema:
@@ -257,11 +260,12 @@ class Collection(object):
         )
 
     def guard_driver_mode(self):
-        driver = self.session.get_driver()
-        if driver not in supported_drivers:
-            raise DriverError("unsupported driver: %r" % driver)
-        if self.mode not in supported_drivers[driver]:
-            raise DriverError("unsupported mode: %r" % self.mode)
+        if not self._allow_unsupported_drivers:
+            driver = self.session.get_driver()
+            if driver not in supported_drivers:
+                raise DriverError("unsupported driver: %r" % driver)
+            if self.mode not in supported_drivers[driver]:
+                raise DriverError("unsupported mode: %r" % self.mode)
 
     @property
     def driver(self):

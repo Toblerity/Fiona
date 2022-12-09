@@ -1,7 +1,6 @@
 """Classes capable of reading and writing collections
 """
 
-from collections import OrderedDict
 import logging
 
 from fiona.ogrext import MemoryFileBase
@@ -31,9 +30,20 @@ class MemoryFile(MemoryFileBase):
         super().__init__(
             file_or_bytes=file_or_bytes, filename=filename, ext=ext)
 
-    def open(self, mode=None, driver=None, schema=None, crs=None, encoding=None,
-             layer=None, vfs=None, enabled_drivers=None, crs_wkt=None,
-             **kwargs):
+    def open(
+        self,
+        mode=None,
+        driver=None,
+        schema=None,
+        crs=None,
+        encoding=None,
+        layer=None,
+        vfs=None,
+        enabled_drivers=None,
+        crs_wkt=None,
+        allow_unsupported_drivers=False,
+        **kwargs
+    ):
         """Open the file and return a Fiona collection object.
 
         If data has already been written, the file is opened in 'r'
@@ -51,7 +61,11 @@ class MemoryFile(MemoryFileBase):
         if self.closed:
             raise OSError("I/O operation on closed file.")
 
-        if driver is not None and not supports_vsi(driver):
+        if (
+            not allow_unsupported_drivers
+            and driver is not None
+            and not supports_vsi(driver)
+        ):
             raise DriverError("Driver {} does not support virtual files.")
 
         if mode in ('r', 'a') and not self.exists():
@@ -75,6 +89,7 @@ class MemoryFile(MemoryFileBase):
             encoding=encoding,
             layer=layer,
             enabled_drivers=enabled_drivers,
+            allow_unsupported_drivers=allow_unsupported_drivers,
             crs_wkt=crs_wkt,
             **kwargs
         )
@@ -97,8 +112,16 @@ class ZipMemoryFile(MemoryFile):
         super().__init__(file_or_bytes, ext=".zip")
         self.name = "/vsizip{}".format(self.name)
 
-    def open(self, path=None, driver=None, encoding=None, layer=None,
-             enabled_drivers=None, **kwargs):
+    def open(
+        self,
+        path=None,
+        driver=None,
+        encoding=None,
+        layer=None,
+        enabled_drivers=None,
+        allow_unsupported_drivers=False,
+        **kwargs
+    ):
         """Open a dataset within the zipped stream.
 
         Parameters
@@ -126,5 +149,6 @@ class ZipMemoryFile(MemoryFile):
             encoding=encoding,
             layer=layer,
             enabled_drivers=enabled_drivers,
+            allow_unsupported_drivers=allow_unsupported_drivers,
             **kwargs
         )
