@@ -435,15 +435,12 @@ cdef class OGRFeatureBuilder:
         encoding = session._get_internal_encoding()
 
         for key, value in feature.properties.items():
-            ogr_key = session._schema_mapping[key]
+            i = session._schema_mapping_index[key]
 
-            schema_type = normalize_field_type(collection.schema['properties'][key])
-
-            key_bytes = strencode(ogr_key, encoding)
-            key_c = key_bytes
-            i = OGR_F_GetFieldIndex(cogr_feature, key_c)
             if i < 0:
                 continue
+
+            schema_type = session._schema_normalized_field_types[key]
 
             # Special case: serialize dicts to assist OGR.
             if isinstance(value, dict):
@@ -1007,6 +1004,8 @@ cdef class Session:
 cdef class WritingSession(Session):
 
     cdef object _schema_mapping
+    cdef object _schema_mapping_index
+    cdef object _schema_normalized_field_types
 
     def start(self, collection, **kwargs):
         cdef OGRSpatialReferenceH cogr_srs = NULL
@@ -1284,6 +1283,15 @@ cdef class WritingSession(Session):
         self._schema_mapping = dict(zip(before_fields.keys(),
                                         after_fields.keys()))
 
+        # Mapping of the Python collection schema to OGR field indices.
+        # We assume that get_schema()['properties'].keys() is in the exact OGR field order
+        assert len(before_fields) == len(after_fields)
+        self._schema_mapping_index = dict(zip(before_fields.keys(), range(len(after_fields.keys()))))
+
+        # Mapping of the Python collection schema to normalized field types
+        self._schema_normalized_field_types = {k: normalize_field_type(v) for (k, v) in self.collection.schema['properties'].items()}
+
+
         log.debug("Writing started")
 
     def writerecs(self, records, collection):
@@ -1339,13 +1347,6 @@ cdef class WritingSession(Session):
                     "collection schema's geometry type: %r != %r" % (
                         record.geometry.type,
                         collection.schema['geometry'] ))
-
-            # Validate against collection's schema to give useful message
-            if set(record.properties.keys()) != schema_props_keys:
-                raise SchemaError(
-                    "Record does not match collection schema: %r != %r" % (
-                        record.properties.keys(),
-                        list(schema_props_keys) ))
 
             cogr_feature = OGRFeatureBuilder().build(record, collection)
             result = OGR_L_CreateFeature(cogr_layer, cogr_feature)
