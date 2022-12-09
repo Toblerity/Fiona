@@ -2,11 +2,12 @@
 
 from __future__ import absolute_import
 
+include "gdal.pxi"
+
 import logging
 
 from fiona.errors import UnsupportedGeometryTypeError
-from fiona.model import _guard_model_object, GEOMETRY_TYPES, Geometry
-
+from fiona.model import _guard_model_object, GEOMETRY_TYPES, Geometry, OGRGeometryType
 from fiona._err cimport exc_wrap_int
 
 
@@ -87,7 +88,15 @@ cdef _deleteOgrGeom(void *cogr_geometry):
 cdef class GeomBuilder:
     """Builds Fiona (GeoJSON) geometries from an OGR geometry handle.
     """
-    cdef _buildCoords(self, void *geom):
+
+    # Note: The geometry passed to OGR_G_ForceToPolygon and
+    # OGR_G_ForceToMultiPolygon must be removed from the container /
+    # feature beforehand and the returned geometry needs to be cleaned up
+    # afterwards.
+    # OGR_G_GetLinearGeometry returns a copy of the geometry that needs
+    # to be cleaned up afterwards.
+
+    cdef list _buildCoords(self, void *geom):
         # Build a coordinate sequence
         cdef int i
         if geom == NULL:
@@ -101,66 +110,150 @@ cdef class GeomBuilder:
             coords.append(tuple(values))
         return coords
 
-    cpdef _buildPoint(self):
-        return {'type': 'Point', 'coordinates': self._buildCoords(self.geom)[0]}
+    cdef dict  _buildPoint(self, void *geom):
+        return {'type': 'Point', 'coordinates': self._buildCoords(geom)[0]}
 
-    cpdef _buildLineString(self):
-        return {'type': 'LineString', 'coordinates': self._buildCoords(self.geom)}
+    cdef dict _buildLineString(self, void *geom):
+        return {'type': 'LineString', 'coordinates': self._buildCoords(geom)}
 
-    cpdef _buildLinearRing(self):
-        return {'type': 'LinearRing', 'coordinates': self._buildCoords(self.geom)}
+    cdef dict _buildLinearRing(self, void *geom):
+        return {'type': 'LinearRing', 'coordinates': self._buildCoords(geom)}
 
-    cdef _buildParts(self, void *geom):
+    cdef list _buildParts(self, void *geom):
         cdef int j
+        cdef int code
+        cdef int count
         cdef void *part
         if geom == NULL:
             raise ValueError("Null geom")
         parts = []
-        for j in range(OGR_G_GetGeometryCount(geom)):
+        j = 0
+        count = OGR_G_GetGeometryCount(geom)
+        while j < count:
             part = OGR_G_GetGeometryRef(geom, j)
-            parts.append(GeomBuilder().build(part))
+            code = base_geometry_type_code(OGR_G_GetGeometryType(part))
+            if code in (
+                OGRGeometryType.PolyhedralSurface.value,
+                OGRGeometryType.TIN.value,
+                OGRGeometryType.Triangle.value,
+            ):
+                OGR_G_RemoveGeometry(geom, j, False)
+                # Removing a geometry will cause the geometry count to drop by one,
+                # and all “higher” geometries will shuffle down one in index.
+                count -= 1
+                parts.append(GeomBuilder().build(part))
+            else:
+                parts.append(GeomBuilder().build(part))
+                j += 1
         return parts
 
-    cpdef _buildPolygon(self):
-        coordinates = [p['coordinates'] for p in self._buildParts(self.geom)]
+    cdef dict _buildPolygon(self, void *geom):
+        coordinates = [p['coordinates'] for p in self._buildParts(geom)]
         return {'type': 'Polygon', 'coordinates': coordinates}
 
-    cpdef _buildMultiPoint(self):
-        coordinates = [p['coordinates'] for p in self._buildParts(self.geom)]
+    cdef dict _buildMultiPoint(self, void *geom):
+        coordinates = [p['coordinates'] for p in self._buildParts(geom)]
         return {'type': 'MultiPoint', 'coordinates': coordinates}
 
-    cpdef _buildMultiLineString(self):
-        coordinates = [p['coordinates'] for p in self._buildParts(self.geom)]
+    cdef dict _buildMultiLineString(self, void *geom):
+        coordinates = [p['coordinates'] for p in self._buildParts(geom)]
         return {'type': 'MultiLineString', 'coordinates': coordinates}
 
-    cpdef _buildMultiPolygon(self):
-        coordinates = [p['coordinates'] for p in self._buildParts(self.geom)]
+    cdef dict _buildMultiPolygon(self, void *geom):
+        coordinates = [p['coordinates'] for p in self._buildParts(geom)]
         return {'type': 'MultiPolygon', 'coordinates': coordinates}
 
-    cpdef _buildGeometryCollection(self):
-        parts = self._buildParts(self.geom)
+    cdef dict _buildGeometryCollection(self, void *geom):
+        parts = self._buildParts(geom)
         return {'type': 'GeometryCollection', 'geometries': parts}
 
-    cdef build(self, void *geom):
-        # The only method anyone needs to call
+
+    cdef object build_from_feature(self, void *feature):
+        # Build Geometry from *OGRFeatureH
+        cdef void *cogr_geometry = NULL
+        cdef int code
+
+        cogr_geometry = OGR_F_GetGeometryRef(feature)
+        code = base_geometry_type_code(OGR_G_GetGeometryType(cogr_geometry))
+
+        # We need to take ownership of the geometry before we can call 
+        # OGR_G_ForceToPolygon or OGR_G_ForceToMultiPolygon
+        if code in (
+            OGRGeometryType.PolyhedralSurface.value,
+            OGRGeometryType.TIN.value,
+            OGRGeometryType.Triangle.value,
+        ):
+            cogr_geometry = OGR_F_StealGeometry(feature)
+        return self.build(cogr_geometry)
+
+    cdef object build(self, void *geom):
+        # Build Geometry from *OGRGeometryH
+
+        cdef void *geometry_to_dealloc = NULL
+
         if geom == NULL:
-            raise ValueError("Null geom")
+            return None
 
-        cdef unsigned int etype = OGR_G_GetGeometryType(geom)
+        code = base_geometry_type_code(OGR_G_GetGeometryType(geom))
 
-        self.code = base_geometry_type_code(etype)
-
-        if self.code not in GEOMETRY_TYPES:
-            raise UnsupportedGeometryTypeError(self.code)
-
-        self.geomtypename = GEOMETRY_TYPES[self.code]
+        # We convert special geometries (Curves, TIN, Triangle, ...)
+        # to GeoJSON compatible geometries (LineStrings, Polygons, MultiPolygon, ...)
+        if code in (
+            OGRGeometryType.CircularString.value,
+            OGRGeometryType.CompoundCurve.value,
+            OGRGeometryType.CurvePolygon.value,
+            OGRGeometryType.MultiCurve.value,
+            OGRGeometryType.MultiSurface.value,
+            # OGRGeometryType.Curve.value,  # Abstract type
+            # OGRGeometryType.Surface.value,  # Abstract type
+        ):
+            geometry_to_dealloc = OGR_G_GetLinearGeometry(geom, 0.0, NULL)
+            code = base_geometry_type_code(OGR_G_GetGeometryType(geometry_to_dealloc))
+            geom = geometry_to_dealloc
+        elif code in (
+            OGRGeometryType.PolyhedralSurface.value,
+            OGRGeometryType.TIN.value,
+            OGRGeometryType.Triangle.value,
+        ):
+            if code in (OGRGeometryType.PolyhedralSurface.value, OGRGeometryType.TIN.value):
+                geometry_to_dealloc = OGR_G_ForceToMultiPolygon(geom)
+            elif code == OGRGeometryType.Triangle.value:
+                geometry_to_dealloc = OGR_G_ForceToPolygon(geom)
+            code = base_geometry_type_code(OGR_G_GetGeometryType(geometry_to_dealloc))
+            geom = geometry_to_dealloc
         self.ndims = OGR_G_GetCoordinateDimension(geom)
-        self.geom = geom
-        built = getattr(self, '_build' + self.geomtypename)()
+
+        if code not in GEOMETRY_TYPES:
+            raise UnsupportedGeometryTypeError(code)
+
+        geomtypename = GEOMETRY_TYPES[code]
+        if geomtypename == "Point":
+            built = self._buildPoint(geom)
+        elif geomtypename == "LineString":
+            built = self._buildLineString(geom)
+        elif geomtypename == "LinearRing":
+            built = self._buildLinearRing(geom)
+        elif geomtypename == "Polygon":
+            built = self._buildPolygon(geom)
+        elif geomtypename == "MultiPoint":
+            built = self._buildMultiPoint(geom)
+        elif geomtypename == "MultiLineString":
+            built = self._buildMultiLineString(geom)
+        elif geomtypename == "MultiPolygon":
+            built = self._buildMultiPolygon(geom)
+        elif geomtypename == "GeometryCollection":
+            built = self._buildGeometryCollection(geom)
+        else:
+            raise UnsupportedGeometryTypeError(code)
+
+        # Cleanup geometries we have ownership over
+        if geometry_to_dealloc is not NULL:
+           OGR_G_DestroyGeometry(geometry_to_dealloc)
+
         return Geometry.from_dict(**built)
 
     cpdef build_wkb(self, object wkb):
-        # The only other method anyone needs to call
+        # Build geometry from wkb
         cdef object data = wkb
         cdef void *cogr_geometry = _createOgrGeomFromWKB(data)
         result = self.build(cogr_geometry)
@@ -247,6 +340,7 @@ cdef class OGRGeomBuilder:
         cdef object typename = geometry.type
         cdef object coordinates = geometry.coordinates
         cdef object geometries = geometry.geometries
+
         if typename == 'Point':
             return self._buildPoint(coordinates)
         elif typename == 'LineString':

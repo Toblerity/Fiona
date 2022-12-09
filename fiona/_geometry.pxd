@@ -108,21 +108,19 @@ cdef extern from "ogr_api.h":
 
 
 cdef class GeomBuilder:
-    cdef void *geom
-    cdef object code
-    cdef object geomtypename
     cdef object ndims
-    cdef _buildCoords(self, void *geom)
-    cpdef _buildPoint(self)
-    cpdef _buildLineString(self)
-    cpdef _buildLinearRing(self)
-    cdef _buildParts(self, void *geom)
-    cpdef _buildPolygon(self)
-    cpdef _buildMultiPoint(self)
-    cpdef _buildMultiLineString(self)
-    cpdef _buildMultiPolygon(self)
-    cpdef _buildGeometryCollection(self)
-    cdef build(self, void *geom)
+    cdef list _buildCoords(self, void *geom)
+    cdef dict _buildPoint(self, void *geom)
+    cdef dict _buildLineString(self, void *geom)
+    cdef dict _buildLinearRing(self, void *geom)
+    cdef list _buildParts(self, void *geom)
+    cdef dict _buildPolygon(self, void *geom)
+    cdef dict _buildMultiPoint(self, void *geom)
+    cdef dict _buildMultiLineString(self, void *geom)
+    cdef dict _buildMultiPolygon(self, void *geom)
+    cdef dict _buildGeometryCollection(self, void *geom)
+    cdef object build_from_feature(self, void *feature)
+    cdef object build(self, void *geom)
     cpdef build_wkb(self, object wkb)
 
 

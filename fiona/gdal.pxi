@@ -522,6 +522,7 @@ cdef extern from "ogr_api.h" nogil:
     void OGR_Fld_SetPrecision(OGRFieldDefnH, int n)
     void OGR_Fld_SetWidth(OGRFieldDefnH, int n)
     OGRErr OGR_G_AddGeometryDirectly(OGRGeometryH geometry, OGRGeometryH part)
+    OGRErr OGR_G_RemoveGeometry(OGRGeometryH geometry, int i, int delete)
     void OGR_G_AddPoint(OGRGeometryH geometry, double x, double y, double z)
     void OGR_G_AddPoint_2D(OGRGeometryH geometry, double x, double y)
     void OGR_G_CloseRings(OGRGeometryH geometry)
@@ -539,7 +540,7 @@ cdef extern from "ogr_api.h" nogil:
     double OGR_G_GetX(OGRGeometryH geometry, int n)
     double OGR_G_GetY(OGRGeometryH geometry, int n)
     double OGR_G_GetZ(OGRGeometryH geometry, int n)
-    void OGR_G_ImportFromWkb(OGRGeometryH geometry, unsigned char *bytes,
+    OGRErr OGR_G_ImportFromWkb(OGRGeometryH geometry, unsigned char *bytes,
                              int nbytes)
     int OGR_G_WkbSize(OGRGeometryH geometry)
     OGRErr OGR_L_CreateFeature(OGRLayerH layer, OGRFeatureH feature)
