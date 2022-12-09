@@ -8,33 +8,31 @@ import os
 import warnings
 from collections import OrderedDict
 
-import fiona._loading
-
-with fiona._loading.add_gdal_dll_directories():
-    from fiona import compat, vfs
-    from fiona.ogrext import Iterator, ItemsIterator, KeysIterator
-    from fiona.ogrext import Session, WritingSession
-    from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file, GEOMETRY_TYPES
-    from fiona.errors import (
-        DriverError,
-        SchemaError,
-        UnsupportedGeometryTypeError,
-        UnsupportedOperation,
-        DriverSupportError,
-    )
-    from fiona.logutils import FieldSkipLogFilter
-    from fiona.crs import CRS
-    from fiona._env import get_gdal_release_name, get_gdal_version_tuple
-    from fiona.env import env_ctx_if_needed
-    from fiona.errors import FionaDeprecationWarning
-    from fiona.drvsupport import (
-        driver_from_extension,
-        supported_drivers,
-        driver_mode_mingdal,
-        _driver_converts_field_type_silently_to_str,
-        _driver_supports_field,
-    )
-    from fiona.path import Path, vsi_path, parse_path
+from fiona import compat, vfs
+from fiona.ogrext import Iterator, ItemsIterator, KeysIterator
+from fiona.ogrext import Session, WritingSession
+from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file, GEOMETRY_TYPES
+from fiona.errors import (
+    DriverError,
+    SchemaError,
+    CRSError,
+    UnsupportedGeometryTypeError,
+    UnsupportedOperation,
+    DriverSupportError,
+)
+from fiona.logutils import FieldSkipLogFilter
+from fiona.crs import CRS
+from fiona._env import get_gdal_release_name, get_gdal_version_tuple
+from fiona.env import env_ctx_if_needed
+from fiona.errors import FionaDeprecationWarning
+from fiona.drvsupport import (
+    driver_from_extension,
+    supported_drivers,
+    driver_mode_mingdal,
+    _driver_converts_field_type_silently_to_str,
+    _driver_supports_field,
+)
+from fiona.path import Path, vsi_path, parse_path
 
 
 _GDAL_VERSION_TUPLE = get_gdal_version_tuple()

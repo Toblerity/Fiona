@@ -430,7 +430,13 @@ cdef class GDALEnv(ConfigEnv):
                                 log.debug("GDAL data found in other locations: path=%r.", path)
                                 self.update_config_options(GDAL_DATA=path)
 
-                    if 'PROJ_LIB' in os.environ:
+                    if 'PROJ_DATA' in os.environ:
+                        # PROJ 9.1+
+                        log.debug("PROJ_DATA found in environment.")
+                        path = os.environ["PROJ_DATA"]
+                        set_proj_data_search_path(path)
+                    elif 'PROJ_LIB' in os.environ:
+                        # PROJ < 9.1
                         log.debug("PROJ_LIB found in environment.")
                         path = os.environ["PROJ_LIB"]
                         set_proj_data_search_path(path)
@@ -462,16 +468,11 @@ cdef class GDALEnv(ConfigEnv):
                     # actually makes it this far.
                     self._have_registered_drivers = True
 
-        log.debug("Started GDALEnv: self=%r.", self)
-
     def stop(self):
         # NB: do not restore the CPL error handler to its default
         # state here. If you do, log messages will be written to stderr
         # by GDAL instead of being sent to Python's logging module.
-        log.debug("Stopping GDALEnv %r.", self)
         CPLPopErrorHandler()
-        log.debug("Error handler popped.")
-        log.debug("Stopped GDALEnv %r.", self)
 
     def drivers(self):
         cdef OGRSFDriverH driver = NULL

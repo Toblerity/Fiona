@@ -9,6 +9,7 @@ import pytest
 import fiona
 import fiona.ogrext
 from fiona.errors import DriverError, FionaDeprecationWarning, FionaValueError
+from fiona.io import ZipMemoryFile
 
 
 def test_single_file_private(path_coutwildrnp_shp):
@@ -96,3 +97,21 @@ def test_listdir_file(path_coutwildrnp_zip):
     """ Test list directories of a file"""
     with pytest.raises(FionaValueError):
         fiona.listdir('zip://{}/coutwildrnp.shp'.format(path_coutwildrnp_zip))
+
+
+def test_listdir_file(path_coutwildrnp_zip):
+    """Test list directories of a file"""
+    with pytest.raises(FionaValueError):
+        fiona.listdir("zip://{}/coutwildrnp.shp".format(path_coutwildrnp_zip))
+
+
+def test_listdir_zipmemoryfile(bytes_coutwildrnp_zip):
+    """Test list directories of a zipped memory file."""
+    with ZipMemoryFile(bytes_coutwildrnp_zip) as memfile:
+        print(memfile.name)
+        assert fiona.listdir(memfile.name) == [
+            "coutwildrnp.shp",
+            "coutwildrnp.shx",
+            "coutwildrnp.dbf",
+            "coutwildrnp.prj",
+        ]

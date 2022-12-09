@@ -16,6 +16,7 @@ log = logging.getLogger()
 
 
 @requires_gdal24
+@pytest.mark.gdal
 @pytest.mark.parametrize("format", ["GeoJSON", "ESRIJSON", "TopoJSON", "GeoJSONSeq"])
 def test_geojsonseq(format):
     """Format is available"""
@@ -25,6 +26,7 @@ def test_geojsonseq(format):
 @pytest.mark.parametrize(
     "driver", [driver for driver, raw in supported_drivers.items() if "w" in raw]
 )
+@pytest.mark.gdal
 def test_write_or_driver_error(tmpdir, driver, testdata_generator):
     """Test if write mode works."""
     if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
@@ -65,6 +67,7 @@ def test_write_or_driver_error(tmpdir, driver, testdata_generator):
 @pytest.mark.parametrize(
     "driver", [driver for driver in driver_mode_mingdal["w"].keys()]
 )
+@pytest.mark.gdal
 def test_write_does_not_work_when_gdal_smaller_mingdal(
     tmpdir, driver, testdata_generator, monkeypatch
 ):
@@ -96,6 +99,7 @@ def test_write_does_not_work_when_gdal_smaller_mingdal(
 @pytest.mark.parametrize(
     "driver", [driver for driver, raw in supported_drivers.items() if "a" in raw]
 )
+@pytest.mark.gdal
 def test_append_or_driver_error(tmpdir, testdata_generator, driver):
     """Test if driver supports append mode."""
     if driver == "DGN":
@@ -158,12 +162,17 @@ def test_append_or_driver_error(tmpdir, testdata_generator, driver):
         if driver in supported_drivers
     ],
 )
+@pytest.mark.gdal
 def test_append_does_not_work_when_gdal_smaller_mingdal(
     tmpdir, driver, testdata_generator, monkeypatch
 ):
     """Test if driver supports append mode."""
     if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
         pytest.skip("BNA driver segfaults with gdal 1.11")
+
+    if driver == "FlatGeobuf" and GDALVersion.runtime() < GDALVersion(3, 5):
+        pytest.skip("FlatGeobuf segfaults with GDAL < 3.5.1")
+
 
     path = str(tmpdir.join(get_temp_filename(driver)))
     schema, crs, records1, records2, _ = testdata_generator(
@@ -210,6 +219,7 @@ def test_append_does_not_work_when_gdal_smaller_mingdal(
 @pytest.mark.parametrize(
     "driver", [driver for driver, raw in supported_drivers.items() if raw == "r"]
 )
+@pytest.mark.gdal
 def test_no_write_driver_cannot_write(tmpdir, driver, testdata_generator, monkeypatch):
     """Test if read only driver cannot write."""
     monkeypatch.setitem(fiona.drvsupport.supported_drivers, driver, "rw")
@@ -238,14 +248,15 @@ def test_no_write_driver_cannot_write(tmpdir, driver, testdata_generator, monkey
         if "w" in raw and "a" not in raw
     ],
 )
+@pytest.mark.gdal
 def test_no_append_driver_cannot_append(
     tmpdir, driver, testdata_generator, monkeypatch
 ):
     """Test if a driver that supports write and not append cannot also append."""
     monkeypatch.setitem(fiona.drvsupport.supported_drivers, driver, "raw")
 
-    if driver == "FlatGeobuf" and GDALVersion.runtime() >= GDALVersion(3, 5):
-        pytest.skip("FlatGeobuf driver segfaults with gdal 3.5")
+    if driver == "FlatGeobuf" and get_gdal_version_num() == calc_gdal_version_num(3, 5, 0):
+        pytest.skip("FlatGeobuf driver segfaults with gdal 3.5.0")
 
     path = str(tmpdir.join(get_temp_filename(driver)))
     schema, crs, records1, records2, _ = testdata_generator(

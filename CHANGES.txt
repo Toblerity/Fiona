@@ -3,6 +3,31 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.9b1dev
+--------
+
+Changes:
+
+* Ensure that ZipMemoryFile have the proper GDAL name after creation so that we
+  can use listdir() (#1092).
+* The fiona._loading module, which supports DLL loading on Windows,
+  has been moved into __init__.py and is no longer used anywhere else (#1168).
+* Move project metadata to pyproject.toml (#1165).
+* Update drvsupport.py to reflect new format capabilities in GDAL 3.6.0
+  (#1122).
+* Added support for the OGR StringList field type (#1141).
+* Remove debug logging from env and _env modules.
+
+1.9a3 (2022-10-17)
+------------------
+
+Packaging:
+
+* Builds now require Cython >= 0.29.29 because of
+* https://github.com/cython/cython/issues/4609 (see #1143).
+* PyPI wheels now include GDAL 3.5.2, PROJ 9.0.1, and GEOS 3.11.0.
+* PyPI wheels are now available for Python 3.11.
+
 1.9a2 (2022-06-10)
 ------------------
 
