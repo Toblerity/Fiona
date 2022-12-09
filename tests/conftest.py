@@ -9,6 +9,7 @@ import zipfile
 from collections import OrderedDict
 from click.testing import CliRunner
 import pytest
+
 import fiona
 from fiona.crs import CRS
 from fiona.env import GDALVersion

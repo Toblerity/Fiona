@@ -95,6 +95,7 @@ class ZipMemoryFile(MemoryFile):
 
     def __init__(self, file_or_bytes=None):
         super().__init__(file_or_bytes, ext=".zip")
+        self.name = "/vsizip{}".format(self.name)
 
     def open(self, path=None, driver=None, encoding=None, layer=None,
              enabled_drivers=None, **kwargs):
@@ -114,10 +115,16 @@ class ZipMemoryFile(MemoryFile):
         if self.closed:
             raise OSError("I/O operation on closed file.")
         if path:
-            vsi_path = '/vsizip{0}/{1}'.format(self.name, path.lstrip('/'))
+            vsi_path = "{0}/{1}".format(self.name, path.lstrip("/"))
         else:
-            vsi_path = '/vsizip{0}'.format(self.name)
+            vsi_path = "{0}".format(self.name)
 
-        return Collection(vsi_path, 'r', driver=driver, encoding=encoding,
-                          layer=layer, enabled_drivers=enabled_drivers,
-                          **kwargs)
+        return Collection(
+            vsi_path,
+            "r",
+            driver=driver,
+            encoding=encoding,
+            layer=layer,
+            enabled_drivers=enabled_drivers,
+            **kwargs
+        )
