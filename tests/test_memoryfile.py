@@ -346,3 +346,14 @@ def test_allow_unsupported_drivers(monkeypatch):
         assert (
             False
         ), f"Using allow_unsupported_drivers=True should not raise an exception: {e}"
+
+
+def test_listdir_zipmemoryfile(bytes_coutwildrnp_zip):
+    """Test list directories of a zipped memory file."""
+    with ZipMemoryFile(bytes_coutwildrnp_zip) as memfile:
+        assert memfile.listdir() == [
+            "coutwildrnp.shp",
+            "coutwildrnp.shx",
+            "coutwildrnp.dbf",
+            "coutwildrnp.prj",
+        ]

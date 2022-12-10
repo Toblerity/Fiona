@@ -3,7 +3,7 @@
 
 import logging
 
-from fiona.ogrext import MemoryFileBase
+from fiona.ogrext import MemoryFileBase, _listdir
 from fiona.collection import Collection
 from fiona.meta import supports_vsi
 from fiona.errors import DriverError
@@ -94,6 +94,28 @@ class MemoryFile(MemoryFileBase):
             **kwargs
         )
 
+    def listdir(self, path=None):
+        """List files in a directory.
+
+        Parameters
+        ----------
+        path : URI (str or pathlib.Path)
+            A dataset resource identifier.
+
+        Returns
+        -------
+        list
+            A list of filename strings.
+
+        """
+        if self.closed:
+            raise OSError("I/O operation on closed file.")
+        if path:
+            vsi_path = "{0}/{1}".format(self.name, path.lstrip("/"))
+        else:
+            vsi_path = "{0}".format(self.name)
+        return _listdir(vsi_path)
+
     def __enter__(self):
         return self
 
@@ -152,3 +174,4 @@ class ZipMemoryFile(MemoryFile):
             allow_unsupported_drivers=allow_unsupported_drivers,
             **kwargs
         )
+
