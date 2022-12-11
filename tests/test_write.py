@@ -1,9 +1,12 @@
 """New tests of writing feature collections."""
 
+import pytest
+
 from .conftest import requires_gdal33
 
 import fiona
 from fiona.crs import CRS
+from fiona.errors import DriverError
 from fiona.model import Feature
 
 
@@ -114,3 +117,25 @@ def test_write__wkt_version(tmpdir):
         assert collection.crs_wkt.startswith(
             'PROJCRS["IaRCS_04_Sioux_City-Iowa_Falls_NAD_1983_2011_LCC_US_Feet"'
         )
+
+
+def test_issue1169():
+    """Don't swallow errors when a collection can't be written."""
+    with pytest.raises(DriverError):
+        with fiona.open(
+            "s3://non-existing-bucket/test.geojson",
+            mode="w",
+            driver="GeoJSON",
+            schema={"geometry": "Point"},
+        ) as collection:
+            collection.writerecords(
+                [
+                    Feature.from_dict(
+                        **{
+                            "id": "0",
+                            "type": "Feature",
+                            "geometry": {"type": "Point", "coordinates": (1.0, 2.0)},
+                        }
+                    )
+                ]
+            )

@@ -609,8 +609,13 @@ cdef class Session:
     cpdef stop(self):
         self.cogr_layer = NULL
         if self.cogr_ds != NULL:
-            GDALClose(self.cogr_ds)
-        self.cogr_ds = NULL
+            try:
+                with cpl_errs:
+                    GDALClose(self.cogr_ds)
+            except CPLE_BaseError as exc:
+                raise DriverError(str(exc))
+            finally:
+                self.cogr_ds = NULL
 
     def get_fileencoding(self):
         """DEPRECATED"""
@@ -1767,6 +1772,7 @@ def _remove_layer(path, layer, driver=None):
 
     result = GDALDatasetDeleteLayer(cogr_ds, layer_index)
     GDALClose(cogr_ds)
+
     if result == OGRERR_UNSUPPORTED_OPERATION:
         raise DatasetDeleteError("Removal of layer {} not supported by driver".format(layer_str))
     elif result != OGRERR_NONE:
