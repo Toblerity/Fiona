@@ -8,7 +8,7 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 New features:
 
-* Add a listdir method to io.MemoryFile (resolving #754).
+* Add listdir and listlayers method to io.MemoryFile (resolving #754).
 * Add support for TIN and triangle geometries (#1163).
 * Add an allow_unsupported_drivers option to fiona.open() (#1126).
 * Added support for the OGR StringList field type (#1141).

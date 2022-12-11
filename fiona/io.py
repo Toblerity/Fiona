@@ -3,7 +3,7 @@
 
 import logging
 
-from fiona.ogrext import MemoryFileBase, _listdir
+from fiona.ogrext import MemoryFileBase, _listdir, _listlayers
 from fiona.collection import Collection
 from fiona.meta import supports_vsi
 from fiona.errors import DriverError
@@ -116,12 +116,33 @@ class MemoryFile(MemoryFileBase):
             vsi_path = "{0}".format(self.name)
         return _listdir(vsi_path)
 
+    def listlayers(self, path=None):
+        """List layer names in their index order
+
+        Parameters
+        ----------
+        path : URI (str or pathlib.Path)
+            A dataset resource identifier.
+
+        Returns
+        -------
+        list
+            A list of layer name strings.
+
+        """
+        if self.closed:
+            raise OSError("I/O operation on closed file.")
+        if path:
+            vsi_path = "{0}/{1}".format(self.name, path.lstrip("/"))
+        else:
+            vsi_path = "{0}".format(self.name)
+        return _listlayers(vsi_path)
+
     def __enter__(self):
         return self
 
     def __exit__(self, *args, **kwargs):
         self.close()
-
 
 class ZipMemoryFile(MemoryFile):
     """A read-only BytesIO-like object backed by an in-memory zip file.

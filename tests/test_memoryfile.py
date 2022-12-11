@@ -357,3 +357,9 @@ def test_listdir_zipmemoryfile(bytes_coutwildrnp_zip):
             "coutwildrnp.dbf",
             "coutwildrnp.prj",
         ]
+
+
+def test_listlayers_zipmemoryfile(bytes_coutwildrnp_zip):
+    """Test layers of a zipped memory file."""
+    with ZipMemoryFile(bytes_coutwildrnp_zip) as memfile:
+        assert memfile.listlayers() == ["coutwildrnp"]
