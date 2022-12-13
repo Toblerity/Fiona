@@ -14,11 +14,11 @@ from fiona.ogrext import Session, WritingSession
 from fiona.ogrext import buffer_to_virtual_file, remove_virtual_file, GEOMETRY_TYPES
 from fiona.errors import (
     DriverError,
+    DriverSupportError,
+    GDALVersionError,
     SchemaError,
-    CRSError,
     UnsupportedGeometryTypeError,
     UnsupportedOperation,
-    DriverSupportError,
 )
 from fiona.logutils import FieldSkipLogFilter
 from fiona.crs import CRS

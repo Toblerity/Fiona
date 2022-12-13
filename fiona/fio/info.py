@@ -11,7 +11,7 @@ import fiona
 import fiona.crs
 from fiona.errors import DriverError
 from fiona.fio import options, with_context_env
-from fiona.errors import DriverError
+
 
 @click.command()
 # One or more files.

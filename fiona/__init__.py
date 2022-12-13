@@ -62,9 +62,9 @@ Because Fiona collections are context managers, they are closed and (in
 writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
+import glob
 import logging
 import os
-import sys
 import warnings
 import platform
 
@@ -116,7 +116,7 @@ import uuid
 
 
 __all__ = ['bounds', 'listlayers', 'listdir', 'open', 'prop_type', 'prop_width']
-__version__ = "1.9a4dev"
+__version__ = "1.9b2dev"
 __gdal_version__ = get_gdal_release_name()
 
 gdal_version = get_gdal_version_tuple()

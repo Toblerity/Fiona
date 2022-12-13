@@ -3,8 +3,8 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.9b1 (TBD)
------------
+1.9b1 (2022-12-13)
+------------------
 
 New features:
 
@@ -15,6 +15,7 @@ New features:
 
 Changes and bug fixes:
 
+* Missing and unused imports have been added or removed.
 * Make sure that errors aren't lost when a collection can't be saved properly
   (#1169).
 * Ensure that ZipMemoryFile have the proper GDAL name after creation so that we

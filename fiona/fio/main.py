@@ -21,8 +21,11 @@ def configure_logging(verbosity):
     logging.basicConfig(stream=sys.stderr, level=log_level)
 
 
-@with_plugins(ep for ep in list(iter_entry_points('fiona.fio_commands')) +
-              list(iter_entry_points('fiona.fio_plugins')))
+@with_plugins(
+    ep
+    for ep in list(iter_entry_points("fiona.fio_commands"))
+    + list(iter_entry_points("fiona.fio_plugins"))
+)
 @click.group()
 @verbose_opt
 @quiet_opt
