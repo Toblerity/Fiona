@@ -3,8 +3,8 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.9b1 (TBD)
------------
+1.9b1 (2022-12-13)
+------------------
 
 New features:
 
