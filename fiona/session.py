@@ -101,7 +101,7 @@ class Session(object):
 
         elif (
             path.scheme == "s3" or "amazonaws.com" in path.path
-        ) and not "X-Amz-Signature" in path.path:
+        ) and "X-Amz-Signature" not in path.path:
             if boto3 is not None:
                 return AWSSession
             else:

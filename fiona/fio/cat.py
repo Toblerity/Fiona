@@ -9,7 +9,7 @@ import cligj
 
 import fiona
 from fiona.transform import transform_geom
-from fiona.model import Feature, Geometry, ObjectEncoder
+from fiona.model import Feature, ObjectEncoder
 from fiona.fio import options, with_context_env
 from fiona.fio.helpers import recursive_round
 from fiona.errors import AttributeFilterError

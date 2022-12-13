@@ -62,9 +62,9 @@ Because Fiona collections are context managers, they are closed and (in
 writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
+import glob
 import logging
 import os
-import sys
 import warnings
 import platform
 

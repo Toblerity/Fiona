@@ -7,6 +7,7 @@ from fiona.fio import with_context_env
 
 logger = logging.getLogger(__name__)
 
+
 @click.command(help="Remove a datasource or an individual layer.")
 @click.argument("input", required=True)
 @click.option("--layer", type=str, default=None, required=False, help="Name of layer to remove.")

@@ -1,13 +1,16 @@
 """$ fio filter"""
 
-
 import json
+import logging
 
 import click
 from cligj import use_rs_opt
 
 from fiona.fio.helpers import obj_gen, eval_feature_expression
 from fiona.fio import with_context_env
+
+
+logger = logging.getLogger(__name__)
 
 
 @click.command()

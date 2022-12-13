@@ -47,7 +47,7 @@ supported_drivers = dict([
     ("OpenFileGDB", "raw"),
     # ESRI Personal GeoDatabase 	PGeo 	No 	Yes 	No, needs ODBC library
     # ESRI ArcSDE 	SDE 	No 	Yes 	No, needs ESRI SDE
-    # ESRIJSON 	ESRIJSON 	No 	Yes 	Yes 
+    # ESRIJSON 	ESRIJSON 	No 	Yes 	Yes
     ("ESRIJSON", "r"),
     # ESRI Shapefile 	ESRI Shapefile 	Yes 	Yes 	Yes
     ("ESRI Shapefile", "raw"),
@@ -55,7 +55,7 @@ supported_drivers = dict([
     ("FlatGeobuf", "raw"),
     # GeoJSON 	GeoJSON 	Yes 	Yes 	Yes
     ("GeoJSON", "raw"),
-    # GeoJSONSeq 	GeoJSON sequences 	Yes 	Yes 	Yes 
+    # GeoJSONSeq 	GeoJSON sequences 	Yes 	Yes 	Yes
     ("GeoJSONSeq", "raw"),
     # Géoconcept Export 	Geoconcept 	Yes 	Yes 	Yes
     # multi-layers
@@ -128,7 +128,7 @@ supported_drivers = dict([
     # SUA 	SUA 	No 	Yes 	Yes
     ("SUA", "r"),
     # SVG 	SVG 	No 	Yes 	No, needs libexpat
-    # TopoJSON 	TopoJSON 	No 	Yes 	Yes 
+    # TopoJSON 	TopoJSON 	No 	Yes 	Yes
     ("TopoJSON", "r"),
     # UK .NTF 	UK. NTF 	No 	Yes 	Yes
     # multi-layer
@@ -253,9 +253,11 @@ def driver_from_extension(path):
     except KeyError:
         raise ValueError("Unable to detect driver. Please specify driver.")
 
-# driver_converts_to_str contains field type, driver combinations that are silently converted to string
-# None: field type is always converted to str
-# (2, 0, 0): starting from gdal 2.0 field type is not converted to string
+
+# driver_converts_to_str contains field type, driver combinations that
+# are silently converted to string None: field type is always converted
+# to str (2, 0, 0): starting from gdal 2.0 field type is not converted
+# to string
 _driver_converts_to_str = {
     'time': {
         'CSV': None,
@@ -366,7 +368,7 @@ _drivers_not_supporting_timezones = {
         'CSV': None,
         'GMT': None,
         'OGR_GMT': None,
-        'SQLite': None 
+        'SQLite': None
     }
 }
 
@@ -408,4 +410,3 @@ def _driver_supports_milliseconds(driver):
             return False
 
     return True
-

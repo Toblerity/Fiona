@@ -1,7 +1,6 @@
 import logging
 import xml.etree.ElementTree as ET
 
-import fiona
 from fiona.env import require_gdal_version
 from fiona.ogrext import _get_metadata_item
 
@@ -271,4 +270,3 @@ def supported_sub_field_types(driver):
         return None
 
     return [field_type for field_type in field_types_str.split(" ") if len(field_type) > 0]
-

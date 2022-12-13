@@ -144,6 +144,7 @@ class MemoryFile(MemoryFileBase):
     def __exit__(self, *args, **kwargs):
         self.close()
 
+
 class ZipMemoryFile(MemoryFile):
     """A read-only BytesIO-like object backed by an in-memory zip file.
 
@@ -195,4 +196,3 @@ class ZipMemoryFile(MemoryFile):
             allow_unsupported_drivers=allow_unsupported_drivers,
             **kwargs
         )
-

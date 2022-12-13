@@ -1,6 +1,6 @@
 import platform
 import sys
-import os
+
 import fiona
 from fiona._env import get_gdal_release_name, get_proj_version_tuple
 
