@@ -6,7 +6,7 @@ import pytest
 import fiona
 import fiona.crs
 from fiona.errors import CRSError
-from .conftest import WGS84PATTERN, requires_gdal2, requires_gdal3
+from .conftest import WGS84PATTERN
 
 
 def test_collection_crs_wkt(path_coutwildrnp_shp):
@@ -23,10 +23,9 @@ def test_collection_no_crs_wkt(tmpdir, path_coutwildrnp_shp):
     del profile['crs_wkt']
     with fiona.open(filename, 'w', **profile) as dst:
         assert dst.crs_wkt == ""
-        assert dst.crs == {}
+        assert dst.crs == fiona.crs.CRS()
 
 
-@requires_gdal2
 def test_collection_create_crs_wkt(tmpdir):
     """A collection can be created using crs_wkt"""
     filename = str(tmpdir.join("test.geojson"))
@@ -38,7 +37,6 @@ def test_collection_create_crs_wkt(tmpdir):
         assert col.crs_wkt.startswith('GEOGCS["WGS 84') or col.crs_wkt.startswith('GEOGCS["GCS_WGS_1984')
 
 
-@requires_gdal3
 def test_collection_urn_crs(tmpdir):
     filename = str(tmpdir.join("test.geojson"))
     crs = "urn:ogc:def:crs:OGC:1.3:CRS84"

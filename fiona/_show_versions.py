@@ -1,6 +1,6 @@
 import platform
 import sys
-import os
+
 import fiona
 from fiona._env import get_gdal_release_name, get_proj_version_tuple
 
@@ -13,10 +13,7 @@ def show_versions():
     fiona_version = fiona.__version__
     gdal_release_name = get_gdal_release_name()
     proj_version_tuple = get_proj_version_tuple()
-    if proj_version_tuple is not None:
-        proj_version = ".".join(map(str, proj_version_tuple))
-    else:
-        proj_version = "Proj version not available"
+    proj_version = ".".join(map(str, proj_version_tuple))
     os_info = "{system} {release}".format(system=platform.system(),
                                           release=platform.release())
     python_version = platform.python_version()

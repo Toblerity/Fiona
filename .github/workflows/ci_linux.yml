@@ -13,76 +13,50 @@ jobs:
         include:
           # Test all supported gdal minor versions (except latest stable) with one python version
           - {
-              python: 3.6,
-              GDALVERSION: "3.0.4",
-              PROJVERSION: "6.2.1",
-              allow_failure: "false",
-            }
-          - {
-              python: 3.6,
+              python: 3.7,
               GDALVERSION: "3.1.4",
               PROJVERSION: "6.3.2",
               allow_failure: "false",
             }
           - {
-              python: 3.6,
+              python: 3.7,
               GDALVERSION: "3.2.3",
-              PROJVERSION: "8.2.0",
+              PROJVERSION: "7.2.1",
               allow_failure: "false",
             }
           - {
-              python: 3.6,
+              python: 3.8,
               GDALVERSION: "3.3.3",
-              PROJVERSION: "8.2.0",
-              allow_failure: "false",
-            }
-
-
-          # Test all supported python versions with latest stable gdal release
-          - {
-              python: "3.6",
-              GDALVERSION: "3.4.0",
-              PROJVERSION: "8.2.1",
+              PROJVERSION: "7.2.1",
               allow_failure: "false",
             }
           - {
-              python: "3.7",
-              GDALVERSION: "3.4.0",
-              PROJVERSION: "8.2.1",
-              allow_failure: "false",
-            }
-          - {
-              python: "3.8",
-              GDALVERSION: "3.4.0",
-              PROJVERSION: "8.2.1",
-              allow_failure: "false",
-            }
-          - {
-              python: "3.9",
-              GDALVERSION: "3.4.0",
+              python: 3.9,
+              GDALVERSION: "3.4.3",
               PROJVERSION: "8.2.1",
               allow_failure: "false",
             }
           - {
               python: "3.10",
-              GDALVERSION: "3.4.0",
-              PROJVERSION: "8.2.1",
+              GDALVERSION: "3.5.3",
+              PROJVERSION: "9.0.1",
               allow_failure: "false",
             }
           - {
-              python: "3.10",
-              GDALVERSION: "3.3.3",
-              PROJVERSION: "8.2.1",
+              python: "3.11",
+              GDALVERSION: "3.6.0",
+              PROJVERSION: "9.1.0",
               allow_failure: "false",
             }
 
           # Test GDAL master
           - {
-              python: "3.10",
+              python: "3.11",
               GDALVERSION: "master",
-              PROJVERSION: "8.2.1",
+              PROJVERSION: "9.1.0",
               allow_failure: "true",
             }
+
 
     env:
       CYTHON_COVERAGE: "true"
@@ -102,10 +76,10 @@ jobs:
       TRAVIS_OS_NAME: "linux"
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
 
@@ -114,7 +88,7 @@ jobs:
 
           # Additional env variables
           echo "GDAL_DATA=$GDALINST/gdal-$GDALVERSION/share/gdal" >> $GITHUB_ENV
-          echo "PROJ_LIB=$GDALINST/gdal-$GDALVERSION/share/proj" >> $GITHUB_ENV
+          echo "PROJ_DATA=$GDALINST/gdal-$GDALVERSION/share/proj" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$GDALINST/gdal-$GDALVERSION/lib:$GDALINST/proj-$PROJVERSION/lib:$FILEGDB/lib:\$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
           # Add PATH
@@ -134,20 +108,20 @@ jobs:
 
           # Unlike travis, packages from non default repositories are installed.
           # While default repositories e.g. bionic/universe or bionic/main) tend to keep packages at the same API / ABI level,
-          # this is not guaranteed with other repositories.  
+          # this is not guaranteed with other repositories.
           # The following command creates a list of these packages, which is used as key for the GDAL cache
           # The repositories of packages can be identified in the the output of `sudo apt-get install`
           apt list --installed | grep 'libgeos-dev\|libxml2-dev' > $GITHUB_WORKSPACE/apt_list
           cat $GITHUB_WORKSPACE/apt_list
 
       - name: Cache GDAL binaries
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: gdalinstall
-          key: ${{ runner.os }}-gdal-${{ matrix.GDALVERSION }}-proj-${{ matrix.PROJVERSION }}-${{ hashFiles('**/apt_list') }}
+          key: ${{ runner.os }}-gdal-${{ matrix.GDALVERSION }}-proj-${{ matrix.PROJVERSION }}-${{ hashFiles('**/apt_list') }}-${{ hashFiles('scripts/travis_gdal_install.sh', 'scripts/travis_proj_install.sh', 'scripts/travis_filegdb_install.sh') }}
 
       - name: Cache pip
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -180,7 +154,7 @@ jobs:
         continue-on-error: ${{ matrix.allow_failure == 'true' }}
         run: |
           if [ "$GDALVERSION" = "master" ]; then echo "Using gdal master"; elif [ $($GDALINST/gdal-$GDALVERSION/bin/gdal-config --version) == $(sed 's/[a-zA-Z].*//g' <<< $GDALVERSION) ]; then echo "Using gdal $GDALVERSION"; else echo "NOT using gdal $GDALVERSION as expected; aborting"; exit 1; fi
-          GDAL_CONFIG=$GDALINST/gdal-$GDALVERSION/bin/gdal-config python -m pip install --no-deps --force-reinstall --no-use-pep517 -e .
+          GDAL_CONFIG=$GDALINST/gdal-$GDALVERSION/bin/gdal-config python -m pip install --no-deps -v -e .
 
       - name: Print Environment
         continue-on-error: ${{ matrix.allow_failure == 'true' }}
@@ -203,7 +177,7 @@ jobs:
       - name: pytest
         continue-on-error: ${{ matrix.allow_failure == 'true' }}
         run: |
-          GDAL_ENABLE_DEPRECATED_DRIVER_GTM=YES python -m pytest -m "not wheel" --cov fiona --cov-report term-missing
+          GDAL_ENABLE_DEPRECATED_DRIVER_GTM=YES python -m pytest -m "not wheel or gdal" --cov fiona --cov-report term-missing
 
       - name: Coveralls
         continue-on-error: ${{ matrix.allow_failure == 'true' }}

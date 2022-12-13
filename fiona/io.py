@@ -1,14 +1,12 @@
 """Classes capable of reading and writing collections
 """
 
-from collections import OrderedDict
 import logging
 
-import fiona._loading
-with fiona._loading.add_gdal_dll_directories():
-    from fiona.ogrext import MemoryFileBase
-    from fiona.collection import Collection
-
+from fiona.ogrext import MemoryFileBase, _listdir, _listlayers
+from fiona.collection import Collection
+from fiona.meta import supports_vsi
+from fiona.errors import DriverError
 
 log = logging.getLogger(__name__)
 
@@ -32,9 +30,20 @@ class MemoryFile(MemoryFileBase):
         super().__init__(
             file_or_bytes=file_or_bytes, filename=filename, ext=ext)
 
-    def open(self, driver=None, schema=None, crs=None, encoding=None,
-             layer=None, vfs=None, enabled_drivers=None, crs_wkt=None,
-             **kwargs):
+    def open(
+        self,
+        mode=None,
+        driver=None,
+        schema=None,
+        crs=None,
+        encoding=None,
+        layer=None,
+        vfs=None,
+        enabled_drivers=None,
+        crs_wkt=None,
+        allow_unsupported_drivers=False,
+        **kwargs
+    ):
         """Open the file and return a Fiona collection object.
 
         If data has already been written, the file is opened in 'r'
@@ -52,33 +61,82 @@ class MemoryFile(MemoryFileBase):
         if self.closed:
             raise OSError("I/O operation on closed file.")
 
-        if not self.exists():
-            self._ensure_extension(driver)
-            this_schema = schema.copy()
-            this_schema["properties"] = OrderedDict(schema["properties"])
-            return Collection(
-                self.name,
-                "w",
-                crs=crs,
-                driver=driver,
-                schema=this_schema,
-                encoding=encoding,
-                layer=layer,
-                enabled_drivers=enabled_drivers,
-                crs_wkt=crs_wkt,
-                **kwargs
-            )
+        if (
+            not allow_unsupported_drivers
+            and driver is not None
+            and not supports_vsi(driver)
+        ):
+            raise DriverError("Driver {} does not support virtual files.")
 
-        elif self.mode in ("r", "r+"):
-            return Collection(
-                self.name,
-                "r",
-                driver=driver,
-                encoding=encoding,
-                layer=layer,
-                enabled_drivers=enabled_drivers,
-                **kwargs
-            )
+        if mode in ('r', 'a') and not self.exists():
+            raise IOError("MemoryFile does not exist.")
+        if layer is None and mode == 'w' and self.exists():
+            raise IOError("MemoryFile already exists.")
+
+        if not self.exists() or mode == 'w':
+            if driver is not None:
+                self._ensure_extension(driver)
+            mode = 'w'
+        elif mode is None:
+            mode = 'r'
+
+        return Collection(
+            self.name,
+            mode,
+            crs=crs,
+            driver=driver,
+            schema=schema,
+            encoding=encoding,
+            layer=layer,
+            enabled_drivers=enabled_drivers,
+            allow_unsupported_drivers=allow_unsupported_drivers,
+            crs_wkt=crs_wkt,
+            **kwargs
+        )
+
+    def listdir(self, path=None):
+        """List files in a directory.
+
+        Parameters
+        ----------
+        path : URI (str or pathlib.Path)
+            A dataset resource identifier.
+
+        Returns
+        -------
+        list
+            A list of filename strings.
+
+        """
+        if self.closed:
+            raise OSError("I/O operation on closed file.")
+        if path:
+            vsi_path = "{0}/{1}".format(self.name, path.lstrip("/"))
+        else:
+            vsi_path = "{0}".format(self.name)
+        return _listdir(vsi_path)
+
+    def listlayers(self, path=None):
+        """List layer names in their index order
+
+        Parameters
+        ----------
+        path : URI (str or pathlib.Path)
+            A dataset resource identifier.
+
+        Returns
+        -------
+        list
+            A list of layer name strings.
+
+        """
+        if self.closed:
+            raise OSError("I/O operation on closed file.")
+        if path:
+            vsi_path = "{0}/{1}".format(self.name, path.lstrip("/"))
+        else:
+            vsi_path = "{0}".format(self.name)
+        return _listlayers(vsi_path)
 
     def __enter__(self):
         return self
@@ -96,9 +154,18 @@ class ZipMemoryFile(MemoryFile):
 
     def __init__(self, file_or_bytes=None):
         super().__init__(file_or_bytes, ext=".zip")
+        self.name = "/vsizip{}".format(self.name)
 
-    def open(self, path=None, driver=None, encoding=None, layer=None,
-             enabled_drivers=None, **kwargs):
+    def open(
+        self,
+        path=None,
+        driver=None,
+        encoding=None,
+        layer=None,
+        enabled_drivers=None,
+        allow_unsupported_drivers=False,
+        **kwargs
+    ):
         """Open a dataset within the zipped stream.
 
         Parameters
@@ -120,9 +187,9 @@ class ZipMemoryFile(MemoryFile):
         if self.closed:
             raise OSError("I/O operation on closed file.")
         if path:
-            vsi_path = '/vsizip{0}/{1}'.format(self.name, path.lstrip('/'))
+            vsi_path = "{0}/{1}".format(self.name, path.lstrip("/"))
         else:
-            vsi_path = '/vsizip{0}'.format(self.name)
+            vsi_path = "{0}".format(self.name)
 
         return Collection(
             vsi_path,
@@ -131,5 +198,6 @@ class ZipMemoryFile(MemoryFile):
             encoding=encoding,
             layer=layer,
             enabled_drivers=enabled_drivers,
+            allow_unsupported_drivers=allow_unsupported_drivers,
             **kwargs
         )

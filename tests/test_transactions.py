@@ -1,10 +1,13 @@
-import os
-import fiona
-import fiona.ogrext
-import logging
-from random import uniform, randint
 from collections import defaultdict
+import logging
+import os
 import pytest
+from random import uniform, randint
+
+import fiona
+from fiona.model import Feature
+import fiona.ogrext
+
 from tests.conftest import requires_gdal2
 
 has_gpkg = "GPKG" in fiona.supported_drivers.keys()
@@ -13,10 +16,13 @@ has_gpkg = "GPKG" in fiona.supported_drivers.keys()
 def create_records(count):
     for n in range(count):
         record = {
-            "geometry": {"type": "Point", "coordinates": [uniform(-180, 180), uniform(-90, 90)]},
-            "properties": {"value": randint(0, 1000)}
+            "geometry": {
+                "type": "Point",
+                "coordinates": [uniform(-180, 180), uniform(-90, 90)],
+            },
+            "properties": {"value": randint(0, 1000)},
         }
-        yield record
+        yield Feature.from_dict(**record)
 
 
 class DebugHandler(logging.Handler):
@@ -61,17 +67,20 @@ class TestTransaction:
 
         path = str(tmpdir.join("output.gpkg"))
 
-        schema = {
-            "geometry": "Point",
-            "properties": {"value": "int"}
-        }
+        schema = {"geometry": "Point", "properties": {"value": "int"}}
 
         with fiona.open(path, "w", driver="GPKG", schema=schema) as dst:
             dst.writerecords(create_records(num_records))
 
         assert self.handler.history["Starting transaction (initial)"] == 1
-        assert self.handler.history["Starting transaction (intermediate)"] == num_records // transaction_size
-        assert self.handler.history["Committing transaction (intermediate)"] == num_records // transaction_size
+        assert (
+            self.handler.history["Starting transaction (intermediate)"]
+            == num_records // transaction_size
+        )
+        assert (
+            self.handler.history["Committing transaction (intermediate)"]
+            == num_records // transaction_size
+        )
         assert self.handler.history["Committing transaction (final)"] == 1
 
         with fiona.open(path, "r") as src:

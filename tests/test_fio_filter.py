@@ -13,7 +13,7 @@ def test_fail(runner):
 def test_seq(feature_seq, runner):
 
     result = runner.invoke(main_group, ['filter',
-        "f.properties.AREA > 0.01"], feature_seq)
+        "f.properties.AREA > 0.01"], feature_seq, catch_exceptions=False)
     assert result.exit_code == 0
     assert result.output.count('Feature') == 2
 

@@ -2,21 +2,20 @@
 
 
 import pytest
-import six
 
 import fiona
+from fiona.model import Geometry
 
 
 class TestReading(object):
     @pytest.fixture(autouse=True)
     def bytes_collection_object(self, path_coutwildrnp_json):
         with open(path_coutwildrnp_json) as src:
-            bytesbuf = src.read().encode('utf-8')
+            bytesbuf = src.read().encode("utf-8")
         self.c = fiona.BytesCollection(bytesbuf, encoding="utf-8")
         yield
         self.c.close()
 
-    @pytest.mark.skipif(six.PY2, reason='string are bytes in Python 2')
     def test_construct_with_str(self, path_coutwildrnp_json):
         with open(path_coutwildrnp_json) as src:
             strbuf = src.read()
@@ -49,10 +48,10 @@ class TestReading(object):
         assert len(self.c.name) > 0
 
     def test_mode(self):
-        assert self.c.mode == 'r'
+        assert self.c.mode == "r"
 
     def test_collection(self):
-        assert self.c.encoding == 'utf-8'
+        assert self.c.encoding == "utf-8"
 
     def test_iter(self):
         assert iter(self.c)
@@ -89,12 +88,12 @@ class TestReading(object):
         assert self.c.driver == "GeoJSON"
 
     def test_schema(self):
-        s = self.c.schema['properties']
-        assert s['PERIMETER'] == "float"
-        assert s['NAME'] == "str"
-        assert s['URL'] == "str"
-        assert s['STATE_FIPS'] == "str"
-        assert s['WILDRNP020'] == "int"
+        s = self.c.schema["properties"]
+        assert s["PERIMETER"] == "float"
+        assert s["NAME"] == "str"
+        assert s["URL"] == "str"
+        assert s["STATE_FIPS"] == "str"
+        assert s["WILDRNP020"] == "int"
 
     def test_closed_schema(self):
         # Schema is lazy too, never computed in this case. TODO?
@@ -104,10 +103,10 @@ class TestReading(object):
     def test_schema_closed_schema(self):
         self.c.schema
         self.c.close()
-        assert sorted(self.c.schema.keys()) == ['geometry', 'properties']
+        assert sorted(self.c.schema.keys()) == ["geometry", "properties"]
 
     def test_crs(self):
-        assert self.c.crs['init'] == 'epsg:4326'
+        assert self.c.crs["init"] == "epsg:4326"
 
     def test_crs_wkt(self):
         assert self.c.crs_wkt.startswith('GEOGCS["WGS 84"')
@@ -120,11 +119,10 @@ class TestReading(object):
     def test_crs_closed_crs(self):
         self.c.crs
         self.c.close()
-        assert sorted(self.c.crs.keys()) == ['init']
+        assert sorted(self.c.crs.keys()) == ["init"]
 
     def test_meta(self):
-        assert (sorted(self.c.meta.keys()) ==
-                ['crs', 'crs_wkt', 'driver', 'schema'])
+        assert sorted(self.c.meta.keys()) == ["crs", "crs_wkt", "driver", "schema"]
 
     def test_bounds(self):
         assert self.c.bounds[0] == pytest.approx(-113.564247)
@@ -135,24 +133,24 @@ class TestReading(object):
     def test_iter_one(self):
         itr = iter(self.c)
         f = next(itr)
-        assert f['id'] == "0"
-        assert f['properties']['STATE'] == 'UT'
+        assert f["id"] == "0"
+        assert f["properties"]["STATE"] == "UT"
 
     def test_iter_list(self):
         f = list(self.c)[0]
-        assert f['id'] == "0"
-        assert f['properties']['STATE'] == 'UT'
+        assert f["id"] == "0"
+        assert f["properties"]["STATE"] == "UT"
 
     def test_re_iter_list(self):
         f = list(self.c)[0]  # Run through iterator
         f = list(self.c)[0]  # Run through a new, reset iterator
-        assert f['id'] == "0"
-        assert f['properties']['STATE'] == 'UT'
+        assert f["id"] == "0"
+        assert f["properties"]["STATE"] == "UT"
 
     def test_getitem_one(self):
         f = self.c[0]
-        assert f['id'] == "0"
-        assert f['properties']['STATE'] == 'UT'
+        assert f["id"] == "0"
+        assert f["properties"]["STATE"] == "UT"
 
     def test_no_write(self):
         with pytest.raises(OSError):
@@ -161,8 +159,8 @@ class TestReading(object):
     def test_iter_items_list(self):
         i, f = list(self.c.items())[0]
         assert i == 0
-        assert f['id'] == "0"
-        assert f['properties']['STATE'] == 'UT'
+        assert f["id"] == "0"
+        assert f["properties"]["STATE"] == "UT"
 
     def test_iter_keys_list(self):
         i = list(self.c.keys())[0]
@@ -177,7 +175,7 @@ class TestFilterReading(object):
     @pytest.fixture(autouse=True)
     def bytes_collection_object(self, path_coutwildrnp_json):
         with open(path_coutwildrnp_json) as src:
-            bytesbuf = src.read().encode('utf-8')
+            bytesbuf = src.read().encode("utf-8")
         self.c = fiona.BytesCollection(bytesbuf)
         yield
         self.c.close()
@@ -186,8 +184,8 @@ class TestFilterReading(object):
         results = list(self.c.filter(bbox=(-120.0, 30.0, -100.0, 50.0)))
         assert len(results) == 67
         f = results[0]
-        assert f['id'] == "0"
-        assert f['properties']['STATE'] == 'UT'
+        assert f["id"] == "0"
+        assert f["properties"]["STATE"] == "UT"
 
     def test_filter_reset(self):
         results = list(self.c.filter(bbox=(-112.0, 38.0, -106.0, 40.0)))
@@ -196,10 +194,14 @@ class TestFilterReading(object):
         assert len(results) == 67
 
     def test_filter_mask(self):
-        mask = {
-            'type': 'Polygon',
-            'coordinates': (
-                ((-112, 38), (-112, 40), (-106, 40), (-106, 38), (-112, 38)),)}
+        mask = Geometry.from_dict(
+            **{
+                "type": "Polygon",
+                "coordinates": (
+                    ((-112, 38), (-112, 40), (-106, 40), (-106, 38), (-112, 38)),
+                ),
+            }
+        )
         results = list(self.c.filter(mask=mask))
         assert len(results) == 26
 
@@ -207,12 +209,15 @@ class TestFilterReading(object):
 def test_zipped_bytes_collection(bytes_coutwildrnp_zip):
     """Open a zipped stream of bytes as a collection"""
     with fiona.BytesCollection(bytes_coutwildrnp_zip) as col:
-        assert col.name == 'coutwildrnp'
+        assert col.name == "coutwildrnp"
         assert len(col) == 67
 
-@pytest.mark.skipif(fiona.gdal_version >= (2, 3, 0),
+
+@pytest.mark.skipif(
+    fiona.gdal_version >= (2, 3, 0),
     reason="Changed behavior with gdal 2.3, possibly related to RFC 70:"
-    "Guessing output format from output file name extension for utilities")
+    "Guessing output format from output file name extension for utilities",
+)
 def test_grenada_bytes_geojson(bytes_grenada_geojson):
     """Read grenada.geojson as BytesCollection.
 
@@ -226,5 +231,5 @@ def test_grenada_bytes_geojson(bytes_grenada_geojson):
             pass
 
     # If told what driver to use, we should be good.
-    with fiona.BytesCollection(bytes_grenada_geojson, driver='GeoJSON') as col:
+    with fiona.BytesCollection(bytes_grenada_geojson, driver="GeoJSON") as col:
         assert len(col) == 1

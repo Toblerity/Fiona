@@ -62,13 +62,11 @@ Because Fiona collections are context managers, they are closed and (in
 writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
-from contextlib import contextmanager
+import glob
 import logging
 import os
-import sys
 import warnings
-from six import string_types
-from collections import OrderedDict
+import platform
 
 try:
     from pathlib import Path
@@ -76,41 +74,46 @@ except ImportError:  # pragma: no cover
     class Path:
         pass
 
-# TODO: remove this? Or at least move it, flake8 complains.
-if sys.platform == "win32":
-    libdir = os.path.join(os.path.dirname(__file__), ".libs")
-    os.environ["PATH"] = os.environ["PATH"] + ";" + libdir
+if platform.system() == "Windows":
+    _whl_dir = os.path.join(os.path.dirname(__file__), ".libs")
+    if os.path.exists(_whl_dir):
+        os.add_dll_directory(_whl_dir)
+    else:
+        if "PATH" in os.environ:
+            for p in os.environ["PATH"].split(os.pathsep):
+                if glob.glob(os.path.join(p, "gdal*.dll")):
+                    os.add_dll_directory(p)
 
-import fiona._loading
 
-with fiona._loading.add_gdal_dll_directories():
-    from fiona.collection import BytesCollection, Collection
-    from fiona.drvsupport import supported_drivers
-    from fiona.env import ensure_env_with_credentials, Env
-    from fiona.errors import FionaDeprecationWarning
-    from fiona._env import driver_count
-    from fiona._env import (
-        calc_gdal_version_num,
-        get_gdal_version_num,
-        get_gdal_release_name,
-        get_gdal_version_tuple,
-    )
-    from fiona.io import MemoryFile
-    from fiona.ogrext import (
-        _bounds,
-        _listlayers,
-        _listdir,
-        FIELD_TYPES_MAP,
-        _remove,
-        _remove_layer,
-    )
-    from fiona.path import ParsedPath, parse_path, vsi_path
-    from fiona.vfs import parse_paths as vfs_parse_paths
-    from fiona._show_versions import show_versions
+from fiona.collection import BytesCollection, Collection
+from fiona.drvsupport import supported_drivers
+from fiona.env import ensure_env_with_credentials, Env
+from fiona.errors import FionaDeprecationWarning
+from fiona._env import driver_count
+from fiona._env import (
+    calc_gdal_version_num,
+    get_gdal_version_num,
+    get_gdal_release_name,
+    get_gdal_version_tuple,
+)
+from fiona.io import MemoryFile
+from fiona.ogrext import (
+    _bounds,
+    _listlayers,
+    _listdir,
+    FIELD_TYPES_MAP,
+    _remove,
+    _remove_layer,
+)
+from fiona.path import ParsedPath, parse_path, vsi_path
+from fiona.vfs import parse_paths as vfs_parse_paths
+from fiona._show_versions import show_versions
 
-    # These modules are imported by fiona.ogrext, but are also import here to
-    # help tools like cx_Freeze find them automatically
-    from fiona import _geometry, _err, rfc3339
+# These modules are imported by fiona.ogrext, but are also import here to
+# help tools like cx_Freeze find them automatically
+from fiona import _geometry, _err, rfc3339
+import uuid
+
 
 __all__ = ['bounds', 'listlayers', 'listdir', 'open', 'prop_type', 'prop_width']
 __version__ = "2.0dev"
@@ -123,9 +126,20 @@ log.addHandler(logging.NullHandler())
 
 
 @ensure_env_with_credentials
-def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
-         layer=None, vfs=None, enabled_drivers=None, crs_wkt=None,
-         **kwargs):
+def open(
+    fp,
+    mode="r",
+    driver=None,
+    schema=None,
+    crs=None,
+    encoding=None,
+    layer=None,
+    vfs=None,
+    enabled_drivers=None,
+    crs_wkt=None,
+    allow_unsupported_drivers=False,
+    **kwargs
+):
     """Open a collection for read, append, or write
 
     In write mode, a driver name such as "ESRI Shapefile" or "GPX" (see
@@ -200,6 +214,17 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
     crs_wkt : str
         An optional WKT representation of a coordinate reference
         system.
+    ignore_fields : list
+        List of field names to ignore on load.
+    ignore_geometry : bool
+        Ignore the geometry on load.
+    include_fields : list
+        List of a subset of field names to include on load.
+    wkt_version : fiona.enums.WktVersion or str, optional
+        Version to use to for the CRS WKT.
+        Defaults to GDAL's default (WKT1_GDAL for GDAL 3).
+    allow_unsupported_drivers : bool
+        If set to true do not limit GDAL drivers to set set of known working.
     kwargs : mapping
         Other driver-specific parameters that will be interpreted by
         the OGR library as layer creation or opening options.
@@ -209,96 +234,123 @@ def open(fp, mode='r', driver=None, schema=None, crs=None, encoding=None,
     Collection
 
     """
-    if mode == 'r' and hasattr(fp, 'read'):
+    if mode == "r" and hasattr(fp, "read"):
+        memfile = MemoryFile(fp.read())
+        colxn = memfile.open(
+            driver=driver,
+            crs=crs,
+            schema=schema,
+            layer=layer,
+            encoding=encoding,
+            enabled_drivers=enabled_drivers,
+            allow_unsupported_drivers=allow_unsupported_drivers,
+            **kwargs
+        )
+        colxn._env.enter_context(memfile)
+        return colxn
 
-        @contextmanager
-        def fp_reader(fp):
-            memfile = MemoryFile(fp.read())
-            dataset = memfile.open(
-                driver=driver, crs=crs, schema=schema, layer=layer,
-                encoding=encoding, enabled_drivers=enabled_drivers,
-                **kwargs)
-            try:
-                yield dataset
-            finally:
-                dataset.close()
-                memfile.close()
+    elif mode == "w" and hasattr(fp, "write"):
+        memfile = MemoryFile()
+        colxn = memfile.open(
+            driver=driver,
+            crs=crs,
+            schema=schema,
+            layer=layer,
+            encoding=encoding,
+            enabled_drivers=enabled_drivers,
+            allow_unsupported_drivers=allow_unsupported_drivers,
+            crs_wkt=crs_wkt,
+            **kwargs
+        )
+        colxn._env.enter_context(memfile)
 
-        return fp_reader(fp)
+        # For the writing case we push an extra callback onto the
+        # ExitStack. It ensures that the MemoryFile's contents are
+        # copied to the open file object.
+        def func(*args, **kwds):
+            memfile.seek(0)
+            fp.write(memfile.read())
 
-    elif mode == 'w' and hasattr(fp, 'write'):
-        if schema:
-            # Make an ordered dict of schema properties.
-            this_schema = schema.copy()
-            this_schema['properties'] = OrderedDict(schema['properties'])
-        else:
-            this_schema = None
-
-        @contextmanager
-        def fp_writer(fp):
-            memfile = MemoryFile()
-            dataset = memfile.open(
-                driver=driver,
-                crs=crs,
-                schema=this_schema,
-                layer=layer,
-                encoding=encoding,
-                enabled_drivers=enabled_drivers,
-                crs_wkt=crs_wkt,
-                **kwargs
-            )
-            try:
-                yield dataset
-            finally:
-                dataset.close()
-                memfile.seek(0)
-                fp.write(memfile.read())
-                memfile.close()
-
-        return fp_writer(fp)
+        colxn._env.callback(func)
+        return colxn
 
     elif mode == "a" and hasattr(fp, "write"):
         raise OSError(
             "Append mode is not supported for datasets in a Python file object."
         )
 
+    # TODO: test for a shared base class or abstract type.
+    elif isinstance(fp, MemoryFile):
+        if mode.startswith("r"):
+            colxn = fp.open(
+                driver=driver,
+                allow_unsupported_drivers=allow_unsupported_drivers,
+                **kwargs
+            )
+
+        # Note: FilePath does not support writing and an exception will
+        # result from this.
+        elif mode.startswith("w"):
+            colxn = fp.open(
+                driver=driver,
+                crs=crs,
+                schema=schema,
+                layer=layer,
+                encoding=encoding,
+                enabled_drivers=enabled_drivers,
+                allow_unsupported_drivers=allow_unsupported_drivers,
+                crs_wkt=crs_wkt,
+                **kwargs
+            )
+        return colxn
+
+    # At this point, the fp argument is a string or path-like object
+    # which can be converted to a string.
     else:
         # If a pathlib.Path instance is given, convert it to a string path.
         if isinstance(fp, Path):
             fp = str(fp)
 
         if vfs:
-            warnings.warn("The vfs keyword argument is deprecated. Instead, pass a URL that uses a zip or tar (for example) scheme.", FionaDeprecationWarning, stacklevel=2)
+            warnings.warn(
+                "The vfs keyword argument is deprecated and will be removed in version 2.0.0. Instead, pass a URL that uses a zip or tar (for example) scheme.",
+                FionaDeprecationWarning,
+                stacklevel=2,
+            )
             path, scheme, archive = vfs_parse_paths(fp, vfs=vfs)
             path = ParsedPath(path, archive, scheme)
         else:
             path = parse_path(fp)
 
-        if mode in ('a', 'r'):
-            c = Collection(path, mode, driver=driver, encoding=encoding,
-                           layer=layer, enabled_drivers=enabled_drivers, **kwargs)
-        elif mode == 'w':
-            if schema:
-                # Make an ordered dict of schema properties.
-                this_schema = schema.copy()
-                if "properties" in schema:
-                    this_schema["properties"] = OrderedDict(schema["properties"])
-                else:
-                    this_schema["properties"] = OrderedDict()
-
-                if "geometry" not in this_schema:
-                    this_schema["geometry"] = None
-
-            else:
-                this_schema = None
-            c = Collection(path, mode, crs=crs, driver=driver, schema=this_schema,
-                           encoding=encoding, layer=layer, enabled_drivers=enabled_drivers, crs_wkt=crs_wkt,
-                           **kwargs)
+        if mode in ("a", "r"):
+            colxn = Collection(
+                path,
+                mode,
+                driver=driver,
+                encoding=encoding,
+                layer=layer,
+                enabled_drivers=enabled_drivers,
+                allow_unsupported_drivers=allow_unsupported_drivers,
+                **kwargs
+            )
+        elif mode == "w":
+            colxn = Collection(
+                path,
+                mode,
+                crs=crs,
+                driver=driver,
+                schema=schema,
+                encoding=encoding,
+                layer=layer,
+                enabled_drivers=enabled_drivers,
+                crs_wkt=crs_wkt,
+                allow_unsupported_drivers=allow_unsupported_drivers,
+                **kwargs
+            )
         else:
-            raise ValueError(
-                "mode string must be one of 'r', 'w', or 'a', not %s" % mode)
+            raise ValueError("mode string must be one of {'r', 'w', 'a'}")
 
-        return c
+        return colxn
 
 
 collection = open
@@ -345,7 +397,7 @@ def listdir(path):
     """
     if isinstance(path, Path):
         path = str(path)
-    if not isinstance(path, string_types):
+    if not isinstance(path, str):
         raise TypeError("invalid path: %r" % path)
     pobj = parse_path(path)
     return _listdir(vsi_path(pobj))
@@ -379,9 +431,9 @@ def listlayers(fp, vfs=None):
         if isinstance(fp, Path):
             fp = str(fp)
 
-        if not isinstance(fp, string_types):
+        if not isinstance(fp, str):
             raise TypeError("invalid path: %r" % fp)
-        if vfs and not isinstance(vfs, string_types):
+        if vfs and not isinstance(vfs, str):
             raise TypeError("invalid vfs: %r" % vfs)
 
         if vfs:

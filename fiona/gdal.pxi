@@ -2,15 +2,36 @@
 
 from libc.stdio cimport FILE
 
+cdef extern from "gdal_version.h":
+    int    GDAL_COMPUTE_VERSION(int maj, int min, int rev)
 
-cdef extern from "cpl_conv.h" nogil:
 
-    void *CPLMalloc(size_t)
-    void CPLFree(void* ptr)
-    void CPLSetThreadLocalConfigOption(const char* key, const char* val)
+cdef extern from "cpl_conv.h":
+    void *  CPLMalloc (size_t)
+    void    CPLFree (void *ptr)
+    void    CPLSetThreadLocalConfigOption (char *key, char *val)
+    const char *CPLGetConfigOption (char *, char *)
     void CPLSetConfigOption(const char* key, const char* val)
-    const char* CPLGetConfigOption(const char* key, const char* default)
+    int CPLCheckForFile(char *, char **)
     const char *CPLFindFile(const char *pszClass, const char *pszBasename)
+
+
+cdef extern from "cpl_string.h":
+    char ** CSLAddNameValue (char **list, const char *name, const char *value)
+    char ** CSLSetNameValue (char **list, const char *name, const char *value)
+    void CSLDestroy (char **list)
+    char ** CSLAddString(char **list, const char *string)
+    int CSLCount(char **papszStrList)
+    char **CSLDuplicate(char **papszStrList)
+    int CSLFindName(char **papszStrList, const char *pszName)
+    int CSLFetchBoolean(char **papszStrList, const char *pszName, int default)
+    const char *CSLFetchNameValue(char **papszStrList, const char *pszName)
+    char **CSLMerge(char **first, char **second)
+
+
+cdef extern from "sys/stat.h" nogil:
+    struct stat:
+        int st_mode
 
 
 cdef extern from "cpl_error.h" nogil:
@@ -34,25 +55,11 @@ cdef extern from "cpl_error.h" nogil:
     void CPLPopErrorHandler()
 
 
-cdef extern from "cpl_string.h" nogil:
-
-    int CSLCount(char **papszStrList)
-    char **CSLAddString(char **strlist, const char *string)
-    char **CSLAddNameValue(char **papszStrList, const char *pszName,
-                           const char *pszValue)
-    char **CSLDuplicate(char **papszStrList)
-    int CSLFindName(char **papszStrList, const char *pszName)
-    int CSLFetchBoolean(char **papszStrList, const char *pszName, int default)
-    const char *CSLFetchNameValue(char **papszStrList, const char *pszName)
-    char **CSLSetNameValue(char **list, char *name, char *val)
-    void CSLDestroy(char **list)
-    char **CSLMerge(char **first, char **second)
-
-
 cdef extern from "cpl_vsi.h" nogil:
 
     ctypedef int vsi_l_offset
     ctypedef FILE VSILFILE
+    ctypedef stat VSIStatBufL
 
     unsigned char *VSIGetMemFileBuffer(const char *path,
                                        vsi_l_offset *data_len,
@@ -65,14 +72,21 @@ cdef extern from "cpl_vsi.h" nogil:
 
     int VSIFFlushL(VSILFILE *fp)
     size_t VSIFReadL(void *buffer, size_t nSize, size_t nCount, VSILFILE *fp)
+    char** VSIReadDir(const char* pszPath)
     int VSIFSeekL(VSILFILE *fp, vsi_l_offset nOffset, int nWhence)
     vsi_l_offset VSIFTellL(VSILFILE *fp)
     int VSIFTruncateL(VSILFILE *fp, vsi_l_offset nNewSize)
     size_t VSIFWriteL(void *buffer, size_t nSize, size_t nCount, VSILFILE *fp)
 
+    int VSIMkdir(const char *path, long mode)
+    int VSIRmdir(const char *path)
+    int VSIStatL(const char *pszFilename, VSIStatBufL *psStatBuf)
+    int VSI_ISDIR(int mode) 
+
 
 cdef extern from "ogr_srs_api.h" nogil:
 
+    ctypedef int OGRErr
     ctypedef void * OGRCoordinateTransformationH
     ctypedef void * OGRSpatialReferenceH
 
@@ -92,12 +106,147 @@ cdef extern from "ogr_srs_api.h" nogil:
     const char *OSRGetAuthorityCode(OGRSpatialReferenceH srs, const char *key)
     int OSRImportFromEPSG(OGRSpatialReferenceH srs, int code)
     int OSRImportFromProj4(OGRSpatialReferenceH srs, const char *proj)
+    int OSRImportFromWkt(OGRSpatialReferenceH srs, char **wkt)
     int OSRIsGeographic(OGRSpatialReferenceH srs)
     int OSRIsProjected(OGRSpatialReferenceH srs)
     int OSRIsSame(OGRSpatialReferenceH srs1, OGRSpatialReferenceH srs2)
     OGRSpatialReferenceH OSRNewSpatialReference(const char *wkt)
     void OSRRelease(OGRSpatialReferenceH srs)
     int OSRSetFromUserInput(OGRSpatialReferenceH srs, const char *input)
+    double OSRGetLinearUnits(OGRSpatialReferenceH srs, char **ppszName)
+    double OSRGetAngularUnits(OGRSpatialReferenceH srs, char **ppszName)
+    int OSREPSGTreatsAsLatLong(OGRSpatialReferenceH srs)
+    int OSREPSGTreatsAsNorthingEasting(OGRSpatialReferenceH srs)
+    OGRSpatialReferenceH *OSRFindMatches(OGRSpatialReferenceH srs, char **options, int *entries, int **matchConfidence)
+    void OSRFreeSRSArray(OGRSpatialReferenceH *srs)
+    ctypedef enum OSRAxisMappingStrategy:
+        OAMS_TRADITIONAL_GIS_ORDER
+
+    const char* OSRGetName(OGRSpatialReferenceH hSRS)
+    void OSRSetAxisMappingStrategy(OGRSpatialReferenceH hSRS, OSRAxisMappingStrategy)
+    void OSRSetPROJSearchPaths(const char *const *papszPaths)
+    char ** OSRGetPROJSearchPaths()
+    OGRErr OSRExportToWktEx(OGRSpatialReferenceH, char ** ppszResult,
+                            const char* const* papszOptions)
+    OGRErr OSRExportToPROJJSON(OGRSpatialReferenceH hSRS,
+                                char ** ppszReturn,
+                                const char* const* papszOptions)
+
+
+cdef extern from "ogr_core.h" nogil:
+
+    ctypedef int OGRErr
+    char *OGRGeometryTypeToName(int type)
+
+    ctypedef enum OGRwkbGeometryType:
+        wkbUnknown
+        wkbPoint
+        wkbLineString
+        wkbPolygon
+        wkbMultiPoint
+        wkbMultiLineString
+        wkbMultiPolygon
+        wkbGeometryCollection
+        wkbCircularString
+        wkbCompoundCurve
+        wkbCurvePolygon
+        wkbMultiCurve
+        wkbMultiSurface
+        wkbCurve
+        wkbSurface
+        wkbPolyhedralSurface
+        wkbTIN
+        wkbTriangle
+        wkbNone
+        wkbLinearRing
+        wkbCircularStringZ
+        wkbCompoundCurveZ
+        wkbCurvePolygonZ
+        wkbMultiCurveZ
+        wkbMultiSurfaceZ
+        wkbCurveZ
+        wkbSurfaceZ
+        wkbPolyhedralSurfaceZ
+        wkbTINZ
+        wkbTriangleZ
+        wkbPointM
+        wkbLineStringM
+        wkbPolygonM
+        wkbMultiPointM
+        wkbMultiLineStringM
+        wkbMultiPolygonM
+        wkbGeometryCollectionM
+        wkbCircularStringM
+        wkbCompoundCurveM
+        wkbCurvePolygonM
+        wkbMultiCurveM
+        wkbMultiSurfaceM
+        wkbCurveM
+        wkbSurfaceM
+        wkbPolyhedralSurfaceM
+        wkbTINM
+        wkbTriangleM
+        wkbPointZM
+        wkbLineStringZM
+        wkbPolygonZM
+        wkbMultiPointZM
+        wkbMultiLineStringZM
+        wkbMultiPolygonZM
+        wkbGeometryCollectionZM
+        wkbCircularStringZM
+        wkbCompoundCurveZM
+        wkbCurvePolygonZM
+        wkbMultiCurveZM
+        wkbMultiSurfaceZM
+        wkbCurveZM
+        wkbSurfaceZM
+        wkbPolyhedralSurfaceZM
+        wkbTINZM
+        wkbTriangleZM
+        wkbPoint25D
+        wkbLineString25D
+        wkbPolygon25D
+        wkbMultiPoint25D
+        wkbMultiLineString25D
+        wkbMultiPolygon25D
+        wkbGeometryCollection25D
+
+    ctypedef enum OGRFieldType:
+        OFTInteger
+        OFTIntegerList
+        OFTReal
+        OFTRealList
+        OFTString
+        OFTStringList
+        OFTWideString
+        OFTWideStringList
+        OFTBinary
+        OFTDate
+        OFTTime
+        OFTDateTime
+        OFTInteger64
+        OFTInteger64List
+        OFTMaxType
+
+    ctypedef int OGRFieldSubType
+    cdef int OFSTNone = 0
+    cdef int OFSTBoolean = 1
+    cdef int OFSTInt16 = 2
+    cdef int OFSTFloat32 = 3
+    cdef int OFSTMaxSubType = 3
+
+    ctypedef struct OGREnvelope:
+        double MinX
+        double MaxX
+        double MinY
+        double MaxY
+
+    char *  OGRGeometryTypeToName(int)
+
+
+    char * ODsCCreateLayer = "CreateLayer"
+    char * ODsCDeleteLayer = "DeleteLayer"
+    char * ODsCTransactions = "Transactions"
 
 
 cdef extern from "gdal.h" nogil:
@@ -264,6 +413,40 @@ cdef extern from "gdal.h" nogil:
     char** GDALGetFileList(GDALDatasetH hDS)
     CPLErr GDALCopyDatasetFiles (GDALDriverH hDriver, const char * pszNewName, const char * pszOldName)
 
+    void * GDALOpenEx(const char * pszFilename,
+                      unsigned int nOpenFlags,
+                      const char *const *papszAllowedDrivers,
+                      const char *const *papszOpenOptions,
+                      const char *const *papszSiblingFiles
+                      )
+    int GDAL_OF_UPDATE
+    int GDAL_OF_READONLY
+    int GDAL_OF_VECTOR
+    int GDAL_OF_VERBOSE_ERROR
+    int GDALDatasetGetLayerCount(void * hds)
+    void * GDALDatasetGetLayer(void * hDS, int iLayer)
+    void * GDALDatasetGetLayerByName(void * hDS, char * pszName)
+    void GDALClose(void * hDS)
+    void * GDALCreate(void * hDriver,
+                      const char * pszFilename,
+                      int nXSize,
+                      int     nYSize,
+                      int     nBands,
+                      GDALDataType eBandType,
+                      char ** papszOptions)
+    void * GDALDatasetCreateLayer(void * hDS,
+                                  const char * pszName,
+                                  void * hSpatialRef,
+                                  int eType,
+                                  char ** papszOptions)
+    int GDALDatasetDeleteLayer(void * hDS, int iLayer)
+    void GDALFlushCache(void * hDS)
+    char * GDALGetDriverShortName(void * hDriver)
+    OGRErr GDALDatasetStartTransaction (void * hDataset, int bForce)
+    OGRErr GDALDatasetCommitTransaction (void * hDataset)
+    OGRErr GDALDatasetRollbackTransaction (void * hDataset)
+    int GDALDatasetTestCapability (void * hDataset, char *)
+
 
 cdef extern from "ogr_api.h" nogil:
 
@@ -274,8 +457,6 @@ cdef extern from "ogr_api.h" nogil:
     ctypedef void * OGRFeatureDefnH
     ctypedef void * OGRFeatureH
     ctypedef void * OGRGeometryH
-
-    ctypedef int OGRErr
 
     ctypedef struct OGREnvelope:
         double MinX
@@ -341,6 +522,7 @@ cdef extern from "ogr_api.h" nogil:
     void OGR_Fld_SetPrecision(OGRFieldDefnH, int n)
     void OGR_Fld_SetWidth(OGRFieldDefnH, int n)
     OGRErr OGR_G_AddGeometryDirectly(OGRGeometryH geometry, OGRGeometryH part)
+    OGRErr OGR_G_RemoveGeometry(OGRGeometryH geometry, int i, int delete)
     void OGR_G_AddPoint(OGRGeometryH geometry, double x, double y, double z)
     void OGR_G_AddPoint_2D(OGRGeometryH geometry, double x, double y)
     void OGR_G_CloseRings(OGRGeometryH geometry)
@@ -358,7 +540,7 @@ cdef extern from "ogr_api.h" nogil:
     double OGR_G_GetX(OGRGeometryH geometry, int n)
     double OGR_G_GetY(OGRGeometryH geometry, int n)
     double OGR_G_GetZ(OGRGeometryH geometry, int n)
-    void OGR_G_ImportFromWkb(OGRGeometryH geometry, unsigned char *bytes,
+    OGRErr OGR_G_ImportFromWkb(OGRGeometryH geometry, unsigned char *bytes,
                              int nbytes)
     int OGR_G_WkbSize(OGRGeometryH geometry)
     OGRErr OGR_L_CreateFeature(OGRLayerH layer, OGRFeatureH feature)
@@ -381,6 +563,46 @@ cdef extern from "ogr_api.h" nogil:
     OGRDataSourceH OGROpen(const char *path, int mode, void *x)
     OGRDataSourceH OGROpenShared(const char *path, int mode, void *x)
     int OGRReleaseDataSource(OGRDataSourceH datasource)
+    const char * OGR_Dr_GetName (void *driver)
+    int     OGR_Dr_TestCapability (void *driver, const char *)
+    void *  OGR_F_Create (void *featuredefn)
+    void    OGR_F_Destroy (void *feature)
+    long    OGR_F_GetFID (void *feature)
+    int     OGR_F_IsFieldSet (void *feature, int n)
+    int     OGR_F_GetFieldAsDateTimeEx (void *feature, int n, int *y, int *m, int *d, int *h, int *m, float *s, int *z)
+    double  OGR_F_GetFieldAsDouble (void *feature, int n)
+    int     OGR_F_GetFieldAsInteger (void *feature, int n)
+    char *  OGR_F_GetFieldAsString (void *feature, int n)
+    unsigned char * OGR_F_GetFieldAsBinary(void *feature, int n, int *s)
+    int     OGR_F_GetFieldCount (void *feature)
+    void *  OGR_F_GetFieldDefnRef (void *feature, int n)
+    int     OGR_F_GetFieldIndex (void *feature, char *name)
+    void *  OGR_F_GetGeometryRef (void *feature)
+    void *  OGR_F_StealGeometry (void *feature)
+    void    OGR_F_SetFieldDateTimeEx (void *feature, int n, int y, int m, int d, int hh, int mm, float ss, int tz)
+    void    OGR_F_SetFieldDouble (void *feature, int n, double value)
+    void    OGR_F_SetFieldInteger (void *feature, int n, int value)
+    void    OGR_F_SetFieldString (void *feature, int n, char *value)
+    void    OGR_F_SetFieldBinary (void *feature, int n, int l, unsigned char *value)
+    void    OGR_F_SetFieldNull (void *feature, int n)  # new in GDAL 2.2
+    int     OGR_F_SetGeometryDirectly (void *feature, void *geometry)
+    void *  OGR_FD_Create (char *name)
+    int     OGR_FD_GetFieldCount (void *featuredefn)
+    void *  OGR_FD_GetFieldDefn (void *featuredefn, int n)
+    int     OGR_FD_GetGeomType (void *featuredefn)
+    char *  OGR_FD_GetName (void *featuredefn)
+    OGRFieldSubType OGR_Fld_GetSubType(void *fielddefn)
+    void    OGR_Fld_SetSubType(void *fielddefn, OGRFieldSubType subtype)
+    void *  OGR_G_ForceToMultiPolygon (void *geometry)
+    void *  OGR_G_ForceToPolygon (void *geometry)
+    void *  OGR_G_Clone(void *geometry)
+    void *  OGR_G_GetLinearGeometry (void *hGeom, double dfMaxAngleStepSizeDegrees, char **papszOptions)
+    OGRErr  OGR_L_SetIgnoredFields (void *layer, const char **papszFields)
+    OGRErr  OGR_L_SetAttributeFilter(void *layer, const char*)
+    OGRErr  OGR_L_SetNextByIndex (void *layer, long nIndex)
+    long long OGR_F_GetFieldAsInteger64 (void *feature, int n)
+    void    OGR_F_SetFieldInteger64 (void *feature, int n, long long value)
+    int OGR_F_IsFieldNull(void *feature, int n)
 
 
 cdef extern from "gdalwarper.h" nogil:
@@ -518,8 +740,3 @@ cdef extern from "gdal_alg.h" nogil:
             GDALDatasetH hSrcDS, GDALTransformerFunc pfnRawTransformer,
             void * pTransformArg, double * padfGeoTransformOut, int * pnPixels,
             int * pnLines, double * padfExtent, int nOptions)
-
-
-cdef extern from "ogr_core.h" nogil:
-
-    char *OGRGeometryTypeToName(int type)

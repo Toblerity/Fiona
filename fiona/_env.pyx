@@ -8,8 +8,6 @@ threads will inherit config options from the main thread unless the
 option is set to a new value inside the thread.
 """
 
-include "gdal.pxi"
-
 from collections import namedtuple
 import logging
 import os
@@ -18,10 +16,8 @@ import sys
 import threading
 
 from fiona._err cimport exc_wrap_int, exc_wrap_ogrerr
-from fiona._shim cimport set_proj_search_path, get_proj_version
 from fiona._err import CPLE_BaseError
 from fiona.errors import EnvError
-
 
 level_map = {
     0: 0,
@@ -57,11 +53,23 @@ log = logging.getLogger(__name__)
 
 try:
     import certifi
-    os.environ.setdefault("CURL_CA_BUNDLE", certifi.where())
+    ca_bundle = certifi.where()
+    os.environ.setdefault("GDAL_CURL_CA_BUNDLE", ca_bundle)
+    os.environ.setdefault("PROJ_CURL_CA_BUNDLE", ca_bundle)
 except ImportError:
     pass
 
+
+
 cdef bint is_64bit = sys.maxsize > 2 ** 32
+
+cdef void set_proj_search_path(object path):
+    cdef const char **paths = NULL
+    cdef const char *path_c = NULL
+    path_b = path.encode("utf-8")
+    path_c = path_b
+    paths = CSLAddString(paths, path_c)
+    OSRSetPROJSearchPaths(paths)
 
 
 cdef _safe_osr_release(OGRSpatialReferenceH srs):
@@ -121,17 +129,13 @@ def get_gdal_version_tuple():
 
 def get_proj_version_tuple():
     """
-    Returns proj version tuple for gdal >= 3.0.1, otherwise None
+    Returns proj version tuple
     """
-    cdef int major
-    cdef int minor
-    cdef int patch
-    gdal_version_num = get_gdal_version_num()
-    if gdal_version_num < calc_gdal_version_num(3, 0, 1):
-        proj_version = None
-    else:
-        get_proj_version(&major, &minor, &patch)
-        return (major, minor, patch)
+    cdef int major = 0
+    cdef int minor = 0
+    cdef int patch = 0
+    OSRGetPROJVersion(&major, &minor, &patch)
+    return (major, minor, patch)
 
 
 cdef void log_error(CPLErr err_class, int err_no, const char* msg) with gil:
@@ -426,7 +430,13 @@ cdef class GDALEnv(ConfigEnv):
                                 log.debug("GDAL data found in other locations: path=%r.", path)
                                 self.update_config_options(GDAL_DATA=path)
 
-                    if 'PROJ_LIB' in os.environ:
+                    if 'PROJ_DATA' in os.environ:
+                        # PROJ 9.1+
+                        log.debug("PROJ_DATA found in environment.")
+                        path = os.environ["PROJ_DATA"]
+                        set_proj_data_search_path(path)
+                    elif 'PROJ_LIB' in os.environ:
+                        # PROJ < 9.1
                         log.debug("PROJ_LIB found in environment.")
                         path = os.environ["PROJ_LIB"]
                         set_proj_data_search_path(path)
@@ -458,16 +468,11 @@ cdef class GDALEnv(ConfigEnv):
                     # actually makes it this far.
                     self._have_registered_drivers = True
 
-        log.debug("Started GDALEnv: self=%r.", self)
-
     def stop(self):
         # NB: do not restore the CPL error handler to its default
         # state here. If you do, log messages will be written to stderr
         # by GDAL instead of being sent to Python's logging module.
-        log.debug("Stopping GDALEnv %r.", self)
         CPLPopErrorHandler()
-        log.debug("Error handler popped.")
-        log.debug("Stopped GDALEnv %r.", self)
 
     def drivers(self):
         cdef OGRSFDriverH driver = NULL

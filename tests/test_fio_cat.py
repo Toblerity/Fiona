@@ -1,12 +1,9 @@
 """Tests for `$ fio cat`."""
 
 
-import os
-import pytest
 from click.testing import CliRunner
 
 from fiona.fio.main import main_group
-from fiona.fio import cat
 
 
 def test_one(path_coutwildrnp_shp):

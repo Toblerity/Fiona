@@ -3,8 +3,67 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.9dev
-------
+1.9b1 (2022-12-13)
+------------------
+
+New features:
+
+* Add listdir and listlayers method to io.MemoryFile (resolving #754).
+* Add support for TIN and triangle geometries (#1163).
+* Add an allow_unsupported_drivers option to fiona.open() (#1126).
+* Added support for the OGR StringList field type (#1141).
+
+Changes and bug fixes:
+
+* Missing and unused imports have been added or removed.
+* Make sure that errors aren't lost when a collection can't be saved properly
+  (#1169).
+* Ensure that ZipMemoryFile have the proper GDAL name after creation so that we
+  can use listdir() (#1092).
+* The fiona._loading module, which supports DLL loading on Windows,
+  has been moved into __init__.py and is no longer used anywhere else (#1168).
+* Move project metadata to pyproject.toml (#1165).
+* Update drvsupport.py to reflect new format capabilities in GDAL 3.6.0
+  (#1122).
+* Remove debug logging from env and _env modules.
+
+1.9a3 (2022-10-17)
+------------------
+
+Packaging:
+
+* Builds now require Cython >= 0.29.29 because of
+* https://github.com/cython/cython/issues/4609 (see #1143).
+* PyPI wheels now include GDAL 3.5.2, PROJ 9.0.1, and GEOS 3.11.0.
+* PyPI wheels are now available for Python 3.11.
+
+1.9a2 (2022-06-10)
+------------------
+
+Deprecations:
+
+- Fiona's API methods will accept feature and geometry dicts in 1.9.0, but this
+  usage is deprecated. Instances of Feature and Geometry will be required in
+  2.0.
+- The precision keyword argument of fiona.transform.transform_geom is
+  deprecated and will be removed in version 2.0.
+- Deprecated usage has been eliminated in the project. Fiona's tests pass when
+  run with a -Werror::DeprecationWarning filter.
+
+Changes:
+
+- Fiona's FionaDeprecationWarning now sub-classes DeprecationWarning.
+- Some test modules have beeen re-formatted using black.
+
+New features:
+
+- Fiona Collections now carry a context exit stack into which we can push fiona
+  Envs and MemoryFiles (#1059).
+- Fiona has a new CRS class, like rasterio's, which is compatible with the CRS
+  dicts of previous versions (#714).
+
+1.9a1 (2022-05-19)
+------------------
 
 Deprecations:
 
@@ -12,10 +71,38 @@ Deprecations:
   version 2.0. It should be replaced by fiona.Env().
 - The new fiona.meta module will be renamed to fiona.drivers in version 2.0.
 
+Packaging:
+
+- Source distributions contain no C source files and require Cython to create
+  them from .pyx files (#1096).
+
+Changes:
+
+- Shims for various versions of GDAL have been removed and are replaced by
+  Cython compilation conditions (#1093).
+- Use of CURL_CA_BUNDLE environment variable is replaced by a more specific
+  GDAL/PROJ_CURL_CA_BUNDLE (#1095).
+- Fiona's feature accessors now return instances of fiona.model.Feature instead
+  of Python dicts (#787). The Feature class is compatible with code that
+  expects GeoJSON-like dicts but also provides id, geometry, and properties
+  attributes. The last two of these are instances of fiona.model.Geometry and
+  fiona.model.Properties.
+- GDAL 3.1.0 is the minimum GDAL version.
+- Drop Python 2, and establish Python 3.7 as the minimum version (#1079).
+- Remove six and reduce footprint of fiona.compat (#985).
+
 New features:
 
+- The appropriate format driver can be detected from filename in write mode (#948).
 - Driver metadata including dataset open and dataset and layer creations
   options are now exposed through methods of the fiona.meta module (#950).
+- CRS WKT format support (#979).
+- Add 'where' SQL clause to set attribute filter (#961, #1097).
+
+Bug fixes:
+
+- Env and Session classes have been updated for parity with rasterio and to
+  resolve a credential refresh bug (#1055).
 
 1.8.21 (2022-02-07)
 -------------------

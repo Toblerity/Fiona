@@ -16,6 +16,7 @@ log = logging.getLogger()
 
 
 @requires_gdal24
+@pytest.mark.gdal
 @pytest.mark.parametrize("format", ["GeoJSON", "ESRIJSON", "TopoJSON", "GeoJSONSeq"])
 def test_geojsonseq(format):
     """Format is available"""
@@ -25,18 +26,13 @@ def test_geojsonseq(format):
 @pytest.mark.parametrize(
     "driver", [driver for driver, raw in supported_drivers.items() if "w" in raw]
 )
+@pytest.mark.gdal
 def test_write_or_driver_error(tmpdir, driver, testdata_generator):
-    """
-    Test if write mode works.
-
-    """
-
+    """Test if write mode works."""
     if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
         pytest.skip("BNA driver segfaults with gdal 1.11")
 
-    schema, crs, records1, _, test_equal, create_kwargs = testdata_generator(
-        driver, range(0, 10), []
-    )
+    schema, crs, records1, _, _ = testdata_generator(driver, range(0, 10), [])
     path = str(tmpdir.join(get_temp_filename(driver)))
 
     if driver in driver_mode_mingdal[
@@ -47,16 +43,12 @@ def test_write_or_driver_error(tmpdir, driver, testdata_generator):
 
         # Test if DriverError is raised for gdal < driver_mode_mingdal
         with pytest.raises(DriverError):
-            with fiona.open(
-                path, "w", driver=driver, crs=crs, schema=schema, **create_kwargs
-            ) as c:
+            with fiona.open(path, "w", driver=driver, crs=crs, schema=schema) as c:
                 c.writerecords(records1)
 
     else:
         # Test if we can write
-        with fiona.open(
-            path, "w", driver=driver, crs=crs, schema=schema, **create_kwargs
-        ) as c:
+        with fiona.open(path, "w", driver=driver, crs=crs, schema=schema) as c:
 
             c.writerecords(records1)
 
@@ -70,19 +62,16 @@ def test_write_or_driver_error(tmpdir, driver, testdata_generator):
             assert len(list(collection)) == len(records1)
 
 
+# If this test fails, it should be considered to update
+# driver_mode_mingdal in drvsupport.py.
 @pytest.mark.parametrize(
     "driver", [driver for driver in driver_mode_mingdal["w"].keys()]
 )
+@pytest.mark.gdal
 def test_write_does_not_work_when_gdal_smaller_mingdal(
     tmpdir, driver, testdata_generator, monkeypatch
 ):
-    """
-    Test if driver really can't write for gdal < driver_mode_mingdal
-
-    If this test fails, it should be considered to update driver_mode_mingdal in drvsupport.py.
-
-    """
-
+    """Test if driver really can't write for gdal < driver_mode_mingdal."""
     if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
         pytest.skip("BNA driver segfaults with gdal 1.11")
     if driver == "FlatGeobuf" and calc_gdal_version_num(
@@ -90,9 +79,7 @@ def test_write_does_not_work_when_gdal_smaller_mingdal(
     ) <= get_gdal_version_num() < calc_gdal_version_num(3, 1, 3):
         pytest.skip("See https://github.com/Toblerity/Fiona/pull/924")
 
-    schema, crs, records1, _, test_equal, create_kwargs = testdata_generator(
-        driver, range(0, 10), []
-    )
+    schema, crs, records1, _, _ = testdata_generator(driver, range(0, 10), [])
     path = str(tmpdir.join(get_temp_filename(driver)))
 
     if driver in driver_mode_mingdal[
@@ -103,21 +90,18 @@ def test_write_does_not_work_when_gdal_smaller_mingdal(
         monkeypatch.delitem(fiona.drvsupport.driver_mode_mingdal["w"], driver)
 
         with pytest.raises(Exception):
-            with fiona.open(
-                path, "w", driver=driver, crs=crs, schema=schema, **create_kwargs
-            ) as c:
+            with fiona.open(path, "w", driver=driver, crs=crs, schema=schema) as c:
                 c.writerecords(records1)
 
 
+# Some driver only allow a specific schema. These drivers can be
+# excluded by adding them to blacklist_append_drivers.
 @pytest.mark.parametrize(
     "driver", [driver for driver, raw in supported_drivers.items() if "a" in raw]
 )
+@pytest.mark.gdal
 def test_append_or_driver_error(tmpdir, testdata_generator, driver):
-    """Test if driver supports append mode.
-
-    Some driver only allow a specific schema. These drivers can be excluded by adding them to blacklist_append_drivers.
-
-    """
+    """Test if driver supports append mode."""
     if driver == "DGN":
         pytest.xfail("DGN schema has changed")
 
@@ -125,7 +109,7 @@ def test_append_or_driver_error(tmpdir, testdata_generator, driver):
         pytest.skip("BNA driver segfaults with gdal 1.11")
 
     path = str(tmpdir.join(get_temp_filename(driver)))
-    schema, crs, records1, records2, test_equal, create_kwargs = testdata_generator(
+    schema, crs, records1, records2, _ = testdata_generator(
         driver, range(0, 5), range(5, 10)
     )
 
@@ -138,9 +122,7 @@ def test_append_or_driver_error(tmpdir, testdata_generator, driver):
         return
 
     # Create test file to append to
-    with fiona.open(
-        path, "w", driver=driver, crs=crs, schema=schema, **create_kwargs
-    ) as c:
+    with fiona.open(path, "w", driver=driver, crs=crs, schema=schema) as c:
 
         c.writerecords(records1)
 
@@ -170,6 +152,8 @@ def test_append_or_driver_error(tmpdir, testdata_generator, driver):
             assert len(list(collection)) == len(records1) + len(records2)
 
 
+# If this test fails, it should be considered to update
+# driver_mode_mingdal in drvsupport.py.
 @pytest.mark.parametrize(
     "driver",
     [
@@ -178,20 +162,20 @@ def test_append_or_driver_error(tmpdir, testdata_generator, driver):
         if driver in supported_drivers
     ],
 )
+@pytest.mark.gdal
 def test_append_does_not_work_when_gdal_smaller_mingdal(
     tmpdir, driver, testdata_generator, monkeypatch
 ):
-    """Test if driver supports append mode.
-
-    If this test fails, it should be considered to update driver_mode_mingdal in drvsupport.py.
-
-    """
-
+    """Test if driver supports append mode."""
     if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
         pytest.skip("BNA driver segfaults with gdal 1.11")
 
+    if driver == "FlatGeobuf" and GDALVersion.runtime() < GDALVersion(3, 5):
+        pytest.skip("FlatGeobuf segfaults with GDAL < 3.5.1")
+
+
     path = str(tmpdir.join(get_temp_filename(driver)))
-    schema, crs, records1, records2, test_equal, create_kwargs = testdata_generator(
+    schema, crs, records1, records2, _ = testdata_generator(
         driver, range(0, 5), range(5, 10)
     )
 
@@ -204,9 +188,7 @@ def test_append_does_not_work_when_gdal_smaller_mingdal(
         return
 
     # Create test file to append to
-    with fiona.open(
-        path, "w", driver=driver, crs=crs, schema=schema, **create_kwargs
-    ) as c:
+    with fiona.open(path, "w", driver=driver, crs=crs, schema=schema) as c:
 
         c.writerecords(records1)
 
@@ -216,7 +198,6 @@ def test_append_does_not_work_when_gdal_smaller_mingdal(
         *driver_mode_mingdal["a"][driver]
     ):
         # Test if driver really can't append for gdal < driver_mode_mingdal
-
         monkeypatch.delitem(fiona.drvsupport.driver_mode_mingdal["a"], driver)
 
         with pytest.raises(Exception):
@@ -233,20 +214,16 @@ def test_append_does_not_work_when_gdal_smaller_mingdal(
                 assert len(list(collection)) == len(records1) + len(records2)
 
 
+# If this test fails, it should be considered to enable write support
+# for the respective driver in drvsupport.py.
 @pytest.mark.parametrize(
     "driver", [driver for driver, raw in supported_drivers.items() if raw == "r"]
 )
+@pytest.mark.gdal
 def test_no_write_driver_cannot_write(tmpdir, driver, testdata_generator, monkeypatch):
-    """Test if read only driver cannot write
-
-    If this test fails, it should be considered to enable write support for the respective driver in drvsupport.py.
-
-    """
-
+    """Test if read only driver cannot write."""
     monkeypatch.setitem(fiona.drvsupport.supported_drivers, driver, "rw")
-    schema, crs, records1, _, test_equal, create_kwargs = testdata_generator(
-        driver, range(0, 5), []
-    )
+    schema, crs, records1, _, _ = testdata_generator(driver, range(0, 5), [])
 
     if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
         pytest.skip("BNA driver segfaults with gdal 1.11")
@@ -257,12 +234,12 @@ def test_no_write_driver_cannot_write(tmpdir, driver, testdata_generator, monkey
     path = str(tmpdir.join(get_temp_filename(driver)))
 
     with pytest.raises(Exception):
-        with fiona.open(
-            path, "w", driver=driver, crs=crs, schema=schema, **create_kwargs
-        ) as c:
+        with fiona.open(path, "w", driver=driver, crs=crs, schema=schema) as c:
             c.writerecords(records1)
 
 
+# If this test fails, it should be considered to enable append support
+# for the respective driver in drvsupport.py.
 @pytest.mark.parametrize(
     "driver",
     [
@@ -271,23 +248,18 @@ def test_no_write_driver_cannot_write(tmpdir, driver, testdata_generator, monkey
         if "w" in raw and "a" not in raw
     ],
 )
+@pytest.mark.gdal
 def test_no_append_driver_cannot_append(
     tmpdir, driver, testdata_generator, monkeypatch
 ):
-    """
-    Test if a driver that supports write and not append cannot also append
-
-    If this test fails, it should be considered to enable append support for the respective driver in drvsupport.py.
-
-    """
-
+    """Test if a driver that supports write and not append cannot also append."""
     monkeypatch.setitem(fiona.drvsupport.supported_drivers, driver, "raw")
 
-    if driver == "BNA" and GDALVersion.runtime() < GDALVersion(2, 0):
-        pytest.skip("BNA driver segfaults with gdal 1.11")
+    if driver == "FlatGeobuf" and get_gdal_version_num() == calc_gdal_version_num(3, 5, 0):
+        pytest.skip("FlatGeobuf driver segfaults with gdal 3.5.0")
 
     path = str(tmpdir.join(get_temp_filename(driver)))
-    schema, crs, records1, records2, test_equal, create_kwargs = testdata_generator(
+    schema, crs, records1, records2, _ = testdata_generator(
         driver, range(0, 5), range(5, 10)
     )
 
@@ -300,16 +272,13 @@ def test_no_append_driver_cannot_append(
         return
 
     # Create test file to append to
-    with fiona.open(
-        path, "w", driver=driver, crs=crs, schema=schema, **create_kwargs
-    ) as c:
-
+    with fiona.open(path, "w", driver=driver, crs=crs, schema=schema) as c:
         c.writerecords(records1)
 
     try:
         with fiona.open(path, "a", driver=driver) as c:
             c.writerecords(records2)
-    except Exception as exc:
+    except Exception:
         log.exception("Caught exception in trying to append.")
         return
 
@@ -330,3 +299,34 @@ def test_mingdal_drivers_are_supported():
             # we cannot test drivers that are not present in the gdal installation
             if driver in supported_drivers:
                 assert mode in supported_drivers[driver]
+
+
+def test_allow_unsupported_drivers(monkeypatch, tmpdir):
+    """Test if allow unsupported drivers works as expected"""
+
+    # We delete a known working driver from fiona.drvsupport so that we can use it
+    monkeypatch.delitem(fiona.drvsupport.supported_drivers, "GPKG")
+
+    schema = {"geometry": "Polygon", "properties": {}}
+
+    # Test that indeed we can't create a file without allow_unsupported_drivers
+    path1 = str(tmpdir.join("test1.gpkg"))
+    with pytest.raises(DriverError):
+        with fiona.open(path1, mode="w", driver="GPKG", schema=schema):
+            pass
+
+    # Test that we can create file with allow_unsupported_drivers=True
+    path2 = str(tmpdir.join("test2.gpkg"))
+    try:
+        with fiona.open(
+            path2,
+            mode="w",
+            driver="GPKG",
+            schema=schema,
+            allow_unsupported_drivers=True,
+        ):
+            pass
+    except Exception as e:
+        assert (
+            False
+        ), f"Using allow_unsupported_drivers=True should not raise an exception: {e}"

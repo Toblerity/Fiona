@@ -1,4 +1,6 @@
-from six import text_type
+"""Fiona schema module."""
+
+from typing import List
 
 from typing import List
 
@@ -41,7 +43,7 @@ FIELD_TYPES = [
 FIELD_TYPES_MAP = {
     'int32': int,
     'float': float,
-    'str': text_type,
+    'str': str,
     'date': FionaDateType,
     'time': FionaTimeType,
     'datetime': FionaDateTimeType,

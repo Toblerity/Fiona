@@ -15,16 +15,18 @@ from .test_collection_legacy import ReadingTest
 
 # Custom markers (from rasterio)
 mingdalversion = pytest.mark.skipif(
-    fiona.gdal_version < (2, 1, 0),
-    reason="S3 raster access requires GDAL 2.1")
+    fiona.gdal_version < (2, 1, 0), reason="S3 raster access requires GDAL 2.1"
+)
 
 credentials = pytest.mark.skipif(
-    not(boto3.Session()._session.get_credentials()),
-    reason="S3 raster access requires credentials")
+    not (boto3.Session()._session.get_credentials()),
+    reason="S3 raster access requires credentials",
+)
 
 
 # TODO: remove this once we've successfully moved the tar tests over
 # to TestVsiReading.
+
 
 class VsiReadingTest(ReadingTest):
     # There's a bug in GDAL 1.9.2 http://trac.osgeo.org/gdal/ticket/5093
@@ -33,14 +35,16 @@ class VsiReadingTest(ReadingTest):
     # passes and creating a new method in this class that we can exclude
     # from the test runner at run time.
 
-    @pytest.mark.xfail(reason="The number of features present in the archive "
-                              "differs based on the GDAL version.")
+    @pytest.mark.xfail(
+        reason="The number of features present in the archive "
+        "differs based on the GDAL version."
+    )
     def test_filter_vsi(self):
         results = list(self.c.filter(bbox=(-114.0, 35.0, -104, 45.0)))
         assert len(results) == 67
         f = results[0]
-        assert f['id'] == "0"
-        assert f['properties']['STATE'] == 'UT'
+        assert f["id"] == "0"
+        assert f["properties"]["STATE"] == "UT"
 
 
 class TestVsiReading(TestReading):
@@ -50,80 +54,73 @@ class TestVsiReading(TestReading):
     # passes and creating a new method in this class that we can exclude
     # from the test runner at run time.
 
-    @pytest.mark.xfail(reason="The number of features present in the archive "
-                              "differs based on the GDAL version.")
+    @pytest.mark.xfail(
+        reason="The number of features present in the archive "
+        "differs based on the GDAL version."
+    )
     def test_filter_vsi(self):
         results = list(self.c.filter(bbox=(-114.0, 35.0, -104, 45.0)))
         assert len(results) == 67
         f = results[0]
-        assert f['id'] == "0"
-        assert f['properties']['STATE'] == 'UT'
+        assert f["id"] == "0"
+        assert f["properties"]["STATE"] == "UT"
 
 
 class TestZipReading(TestVsiReading):
     @pytest.fixture(autouse=True)
     def zipfile(self, data_dir, path_coutwildrnp_zip):
         self.c = fiona.open("zip://{}".format(path_coutwildrnp_zip, "r"))
-        self.path = os.path.join(data_dir, 'coutwildrnp.zip')
+        self.path = os.path.join(data_dir, "coutwildrnp.zip")
         yield
         self.c.close()
 
     def test_open_repr(self):
-        assert (
-            repr(self.c) ==
-            ("<open Collection '/vsizip/{path}:coutwildrnp', mode 'r' "
-            "at {id}>".format(
-                id=hex(id(self.c)),
-                path=self.path)))
+        assert repr(self.c) == (
+            "<open Collection '/vsizip/{path}:coutwildrnp', mode 'r' "
+            "at {id}>".format(id=hex(id(self.c)), path=self.path)
+        )
 
     def test_closed_repr(self):
         self.c.close()
-        assert (
-            repr(self.c) ==
-            ("<closed Collection '/vsizip/{path}:coutwildrnp', mode 'r' "
-            "at {id}>".format(
-                id=hex(id(self.c)),
-                path=self.path)))
+        assert repr(self.c) == (
+            "<closed Collection '/vsizip/{path}:coutwildrnp', mode 'r' "
+            "at {id}>".format(id=hex(id(self.c)), path=self.path)
+        )
 
     def test_path(self):
-        assert self.c.path == '/vsizip/{path}'.format(path=self.path)
+        assert self.c.path == "/vsizip/{path}".format(path=self.path)
 
 
 class TestZipArchiveReading(TestVsiReading):
     @pytest.fixture(autouse=True)
     def zipfile(self, data_dir, path_coutwildrnp_zip):
-        vfs = 'zip://{}'.format(path_coutwildrnp_zip)
+        vfs = "zip://{}".format(path_coutwildrnp_zip)
         self.c = fiona.open(vfs + "!coutwildrnp.shp", "r")
-        self.path = os.path.join(data_dir, 'coutwildrnp.zip')
+        self.path = os.path.join(data_dir, "coutwildrnp.zip")
         yield
         self.c.close()
 
     def test_open_repr(self):
-        assert (
-            repr(self.c) ==
-            ("<open Collection '/vsizip/{path}/coutwildrnp.shp:coutwildrnp', mode 'r' "
-            "at {id}>".format(
-                id=hex(id(self.c)),
-                path=self.path)))
+        assert repr(self.c) == (
+            "<open Collection '/vsizip/{path}/coutwildrnp.shp:coutwildrnp', mode 'r' "
+            "at {id}>".format(id=hex(id(self.c)), path=self.path)
+        )
 
     def test_closed_repr(self):
         self.c.close()
-        assert (
-            repr(self.c) ==
-            ("<closed Collection '/vsizip/{path}/coutwildrnp.shp:coutwildrnp', mode 'r' "
-            "at {id}>".format(
-                id=hex(id(self.c)),
-                path=self.path)))
+        assert repr(self.c) == (
+            "<closed Collection '/vsizip/{path}/coutwildrnp.shp:coutwildrnp', mode 'r' "
+            "at {id}>".format(id=hex(id(self.c)), path=self.path)
+        )
 
     def test_path(self):
-        assert (self.c.path ==
-                '/vsizip/{path}/coutwildrnp.shp'.format(path=self.path))
+        assert self.c.path == "/vsizip/{path}/coutwildrnp.shp".format(path=self.path)
 
 
 class TestZipArchiveReadingAbsPath(TestZipArchiveReading):
     @pytest.fixture(autouse=True)
     def zipfile(self, path_coutwildrnp_zip):
-        vfs = 'zip://{}'.format(os.path.abspath(path_coutwildrnp_zip))
+        vfs = "zip://{}".format(os.path.abspath(path_coutwildrnp_zip))
         self.c = fiona.open(vfs + "!coutwildrnp.shp", "r")
         yield
         self.c.close()
@@ -136,46 +133,43 @@ class TestZipArchiveReadingAbsPath(TestZipArchiveReading):
         assert repr(self.c).startswith("<closed Collection '/vsizip/")
 
     def test_path(self):
-        assert self.c.path.startswith('/vsizip/')
+        assert self.c.path.startswith("/vsizip/")
 
 
-@pytest.mark.usefixtures('uttc_path_coutwildrnp_tar', 'uttc_data_dir')
+@pytest.mark.usefixtures("uttc_path_coutwildrnp_tar", "uttc_data_dir")
 class TarArchiveReadingTest(VsiReadingTest):
-
     def setUp(self):
         vfs = "tar://{}".format(self.path_coutwildrnp_tar)
         self.c = fiona.open(vfs + "!testing/coutwildrnp.shp", "r")
-        self.path = os.path.join(self.data_dir, 'coutwildrnp.tar')
+        self.path = os.path.join(self.data_dir, "coutwildrnp.tar")
 
     def tearDown(self):
         self.c.close()
 
     def test_open_repr(self):
-        assert (
-            repr(self.c) ==
-            ("<open Collection '/vsitar/{path}/testing/coutwildrnp.shp:coutwildrnp', mode 'r' "
-            "at {id}>".format(
-                id=hex(id(self.c)),
-                path=self.path)))
+        assert repr(self.c) == (
+            "<open Collection '/vsitar/{path}/testing/coutwildrnp.shp:coutwildrnp', mode 'r' "
+            "at {id}>".format(id=hex(id(self.c)), path=self.path)
+        )
 
     def test_closed_repr(self):
         self.c.close()
-        assert (
-            repr(self.c) ==
-            ("<closed Collection '/vsitar/{path}/testing/coutwildrnp.shp:coutwildrnp', mode 'r' "
-            "at {id}>".format(
-                id=hex(id(self.c)),
-                path=self.path)))
+        assert repr(self.c) == (
+            "<closed Collection '/vsitar/{path}/testing/coutwildrnp.shp:coutwildrnp', mode 'r' "
+            "at {id}>".format(id=hex(id(self.c)), path=self.path)
+        )
 
     def test_path(self):
-        assert (
-            self.c.path ==
-            '/vsitar/{path}/testing/coutwildrnp.shp'.format(path=self.path))
+        assert self.c.path == "/vsitar/{path}/testing/coutwildrnp.shp".format(
+            path=self.path
+        )
 
 
 @pytest.mark.network
 def test_open_http():
-    ds = fiona.open('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.shp')
+    ds = fiona.open(
+        "https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.shp"
+    )
     assert len(ds) == 10
 
 
@@ -183,13 +177,14 @@ def test_open_http():
 @mingdalversion
 @pytest.mark.network
 def test_open_s3():
-    ds = fiona.open('zip+s3://fiona-testing/coutwildrnp.zip')
+    ds = fiona.open("zip+s3://fiona-testing/coutwildrnp.zip")
     assert len(ds) == 67
 
 
+@credentials
 @pytest.mark.network
 def test_open_zip_https():
-    ds = fiona.open('zip+https://s3.amazonaws.com/fiona-testing/coutwildrnp.zip')
+    ds = fiona.open("zip+https://s3.amazonaws.com/fiona-testing/coutwildrnp.zip")
     assert len(ds) == 67
 
 

@@ -1393,30 +1393,31 @@ The single shapefile may also be accessed like so:
 Unsupported drivers
 -------------------
 
-In :py:attr:`fiona.supported_drivers` a selection of GDAL/OGR's
-drivers that is tested to work with Fiona is maintained. By default, Fiona 
-allows only these drivers with their listed access modes:  r for read support,
-respectively a for append and w for write.
-
-These restrictions can be circumvented by modifying :py:attr:`fiona.supported_drivers`:
-
-.. code-block:: python
-
-    import fiona
-
-    fiona.drvsupport.supported_drivers["LIBKML"] = "raw"
-    with fiona.open("file.kmz") as collection:
-        pass
-
-It should, however, first be verified, if the local installation of GDAL/OGR 
-includes the required driver:
+Fiona maintains a list of OGR drivers in :py:attr:`fiona.supported_drivers`
+that are tested and known to work together with Fiona. Opening a dataset using
+an unsupported driver or access mode results in an :py:attr: `DriverError`
+exception. By passing `allow_unsupported_drivers=True` to :py:attr:`fiona.open` 
+no compatibility checks are performed and unsupported OGR drivers can be used.
+However, there are no guarantees that Fiona will be able to access or write 
+data correctly using an unsupported driver.  
 
 .. code-block:: python
 
-    from fiona.env import Env
+  import fiona
 
-    with Env() as gdalenv:
-        print(gdalenv.drivers().keys())
+  with fiona.open("file.kmz", allow_unsupported_drivers=True) as collection:
+    ...
+
+Not all OGR drivers are necessarily enabled in every GDAL distribution. The 
+following code snippet lists the drivers included in the GDAL installation
+used by Fiona:
+
+.. code-block:: python
+
+  from fiona.env import Env
+
+  with Env() as gdalenv:
+      print(gdalenv.drivers().keys())
 
 MemoryFile and ZipMemoryFile
 ----------------------------

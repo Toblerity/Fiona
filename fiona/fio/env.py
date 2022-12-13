@@ -6,9 +6,7 @@ import os
 import click
 
 import fiona
-import fiona._loading
-with fiona._loading.add_gdal_dll_directories():
-    from fiona._env import GDALDataFinder, PROJDataFinder
+from fiona._env import GDALDataFinder, PROJDataFinder
 
 
 @click.command(short_help="Print information about the fio environment.")
@@ -37,4 +35,4 @@ def env(ctx, key):
         elif key == 'gdal_data':
             click.echo(os.environ.get('GDAL_DATA') or GDALDataFinder().search())
         elif key == 'proj_data':
-            click.echo(os.environ.get('PROJ_LIB') or PROJDataFinder().search())
+            click.echo(os.environ.get('PROJ_DATA', os.environ.get('PROJ_LIB')) or PROJDataFinder().search())

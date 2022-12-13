@@ -6,10 +6,9 @@ import os
 import pytest
 
 import fiona
-from fiona._crs import crs_to_wkt
+from fiona.crs import CRS
 from fiona.errors import DriverError
-
-from .conftest import requires_gdal21
+from fiona.model import Feature
 
 
 def test_open_shp(path_coutwildrnp_shp):
@@ -23,8 +22,6 @@ def test_open_filename_with_exclamation(data_dir):
     assert fiona.open(path), "Failed to open !test.geojson"
 
 
-@requires_gdal21
-@pytest.mark.xfail(raises=DriverError)
 def test_write_memfile_crs_wkt():
     example_schema = {
         "geometry": "Point",
@@ -32,18 +29,24 @@ def test_write_memfile_crs_wkt():
     }
 
     example_features = [
-        {
-            "geometry": {"type": "Point", "coordinates": [0.0, 0.0]},
-            "properties": {"title": "One"},
-        },
-        {
-            "geometry": {"type": "Point", "coordinates": [1.0, 2.0]},
-            "properties": {"title": "Two"},
-        },
-        {
-            "geometry": {"type": "Point", "coordinates": [3.0, 4.0]},
-            "properties": {"title": "Three"},
-        },
+        Feature.from_dict(
+            **{
+                "geometry": {"type": "Point", "coordinates": [0.0, 0.0]},
+                "properties": {"title": "One"},
+            }
+        ),
+        Feature.from_dict(
+            **{
+                "geometry": {"type": "Point", "coordinates": [1.0, 2.0]},
+                "properties": {"title": "Two"},
+            }
+        ),
+        Feature.from_dict(
+            **{
+                "geometry": {"type": "Point", "coordinates": [3.0, 4.0]},
+                "properties": {"title": "Three"},
+            }
+        ),
     ]
 
     with io.BytesIO() as fd:
@@ -52,11 +55,11 @@ def test_write_memfile_crs_wkt():
             "w",
             driver="GPKG",
             schema=example_schema,
-            crs_wkt=crs_to_wkt("EPSG:32611"),
+            crs_wkt=CRS.from_epsg(32611).to_wkt(),
         ) as dst:
             dst.writerecords(example_features)
 
         fd.seek(0)
         with fiona.open(fd) as src:
             assert src.driver == "GPKG"
-            assert src.crs == {"init": "epsg:32611"}
+            assert src.crs == "EPSG:32611"

@@ -6,9 +6,12 @@ from io import BytesIO
 import os
 
 import pytest
-
 import fiona
+from fiona import supported_drivers
+from fiona.drvsupport import _driver_supports_mode
+from fiona.errors import DriverError
 from fiona.io import MemoryFile, ZipMemoryFile
+from fiona.meta import supports_vsi
 
 from .conftest import requires_gdal2, requires_gpkg
 
@@ -193,13 +196,130 @@ def test_append_bytesio_exception(data_coutwildrnp_json):
 
 def test_mapinfo_raises():
     """Reported to be a crasher in #937"""
-    driver = 'MapInfo File'
-    schema = {'geometry': 'Point', 'properties': OrderedDict([('position', 'str')])}
+    driver = "MapInfo File"
+    schema = {"geometry": "Point", "properties": OrderedDict([("position", "str")])}
 
     with BytesIO() as fout:
         with pytest.raises(OSError):
             with fiona.open(fout, "w", driver=driver, schema=schema) as collection:
-                collection.write({"type": "Feature", "geometry": {"type": "Point", "coordinates": (0, 0)}, "properties": {"position": "x"}})
+                collection.write(
+                    {
+                        "type": "Feature",
+                        "geometry": {"type": "Point", "coordinates": (0, 0)},
+                        "properties": {"position": "x"},
+                    }
+                )
+
+
+# TODO remove exclusion of MapInfo File once testdata_generator is fixed
+@pytest.mark.parametrize(
+    "driver",
+    [
+        driver
+        for driver in supported_drivers
+        if _driver_supports_mode(driver, "w")
+        and supports_vsi(driver)
+        and driver not in {"MapInfo File"}
+    ],
+)
+def test_write_memoryfile_drivers(driver, testdata_generator):
+    """ Test if driver is able to write to memoryfile """
+    range1 = list(range(0, 5))
+    schema, crs, records1, _, _ = testdata_generator(driver, range1, [])
+
+    with MemoryFile() as memfile:
+        with memfile.open(driver=driver, schema=schema) as c:
+            c.writerecords(records1)
+
+        with memfile.open(driver=driver) as c:
+            assert driver == c.driver
+            items = list(c)
+            assert len(items) == len(range1)
+
+
+def test_multiple_layer_memoryfile(testdata_generator):
+    """ Test ability to create multiple layers in memoryfile"""
+    driver = "GPKG"
+    range1 = list(range(0, 5))
+    range2 = list(range(5, 10))
+    schema, crs, records1, records2, _ = testdata_generator(driver, range1, range2)
+
+    with MemoryFile() as memfile:
+        with memfile.open(mode='w', driver=driver, schema=schema, layer="layer1") as c:
+            c.writerecords(records1)
+        with memfile.open(mode='w', driver=driver, schema=schema, layer="layer2") as c:
+            c.writerecords(records2)
+
+        with memfile.open(driver=driver, layer="layer1") as c:
+            assert driver == c.driver
+            items = list(c)
+            assert len(items) == len(range1)
+
+        with memfile.open(driver=driver, layer="layer2") as c:
+            assert driver == c.driver
+            items = list(c)
+            assert len(items) == len(range1)
+
+
+# TODO remove exclusion of MapInfo File once testdata_generator is fixed
+@pytest.mark.parametrize(
+    "driver",
+    [
+        driver
+        for driver in supported_drivers
+        if _driver_supports_mode(driver, "a")
+        and supports_vsi(driver)
+        and driver not in {"MapInfo File"}
+    ],
+)
+def test_append_memoryfile_drivers(driver, testdata_generator):
+    """Test if driver is able to append to memoryfile"""
+    range1 = list(range(0, 5))
+    range2 = list(range(5, 10))
+    schema, crs, records1, records2, _ = testdata_generator(driver, range1, range2)
+
+    with MemoryFile() as memfile:
+        with memfile.open(driver=driver, schema=schema) as c:
+            c.writerecords(records1)
+
+        with memfile.open(mode='a', driver=driver, schema=schema) as c:
+            c.writerecords(records2)
+
+        with memfile.open(driver=driver) as c:
+            assert driver == c.driver
+            items = list(c)
+            assert len(items) == len(range1 + range2)
+
+
+def test_memoryfile_driver_does_not_support_vsi():
+    """An exception is raised with a driver that does not support VSI"""
+    if "FileGDB" not in supported_drivers:
+        pytest.skip("FileGDB driver not available")
+    with pytest.raises(DriverError):
+        with MemoryFile() as memfile:
+            with memfile.open(driver="FileGDB"):
+                pass
+
+
+@pytest.mark.parametrize('mode', ['r', 'a'])
+def test_modes_on_non_existing_memoryfile(mode):
+    """Non existing memoryfile cannot opened in r or a mode"""
+    with MemoryFile() as memfile:
+        with pytest.raises(IOError):
+            with memfile.open(mode=mode):
+                pass
+
+
+def test_write_mode_on_non_existing_memoryfile(profile_first_coutwildrnp_shp):
+    """Exception is raised if a memoryfile is opened in write mode on a non empty memoryfile"""
+    profile, first = profile_first_coutwildrnp_shp
+    profile['driver'] = 'GeoJSON'
+    with MemoryFile() as memfile:
+        with memfile.open(**profile) as col:
+            col.write(first)
+        with pytest.raises(IOError):
+            with memfile.open(mode="w"):
+                pass
 
 
 @requires_gpkg
@@ -224,3 +344,47 @@ def test_read_multilayer_memoryfile(path_coutwildrnp_json, tmpdir):
         with fiona.open(f, layer="layer2") as src:
             assert src.name == "layer2"
             assert len(src) == 62
+
+
+def test_allow_unsupported_drivers(monkeypatch):
+    """Test if allow unsupported drivers works as expected"""
+
+    # We delete a known working driver from fiona.drvsupport so that we can use it
+    monkeypatch.delitem(fiona.drvsupport.supported_drivers, "GPKG")
+
+    schema = {"geometry": "Polygon", "properties": {}}
+
+    # Test that indeed we can't create a file without allow_unsupported_drivers
+    with pytest.raises(DriverError):
+        with MemoryFile() as memfile:
+            with memfile.open(mode="w", driver="GPKG", schema=schema):
+                pass
+
+    # Test that we can create file with allow_unsupported_drivers=True
+    try:
+        with MemoryFile() as memfile:
+            with memfile.open(
+                mode="w", driver="GPKG", schema=schema, allow_unsupported_drivers=True
+            ):
+                pass
+    except Exception as e:
+        assert (
+            False
+        ), f"Using allow_unsupported_drivers=True should not raise an exception: {e}"
+
+
+def test_listdir_zipmemoryfile(bytes_coutwildrnp_zip):
+    """Test list directories of a zipped memory file."""
+    with ZipMemoryFile(bytes_coutwildrnp_zip) as memfile:
+        assert memfile.listdir() == [
+            "coutwildrnp.shp",
+            "coutwildrnp.shx",
+            "coutwildrnp.dbf",
+            "coutwildrnp.prj",
+        ]
+
+
+def test_listlayers_zipmemoryfile(bytes_coutwildrnp_zip):
+    """Test layers of a zipped memory file."""
+    with ZipMemoryFile(bytes_coutwildrnp_zip) as memfile:
+        assert memfile.listlayers() == ["coutwildrnp"]

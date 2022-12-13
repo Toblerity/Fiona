@@ -10,7 +10,7 @@ contains extension modules that link the Geospatial Data Abstraction Library (`G
    :target: https://github.com/Toblerity/Fiona/actions?query=branch%3Amaster
 
 .. image:: https://ci.appveyor.com/api/projects/status/github/Toblerity/Fiona?svg=true
-   :target: https://ci.appveyor.com/project/sgillies/fiona/branch/master
+   :target: https://ci.appveyor.com/project/sgillies/fiona/branch/maint-1.9
 
 .. image:: https://coveralls.io/repos/Toblerity/Fiona/badge.svg
    :target: https://coveralls.io/r/Toblerity/Fiona
@@ -227,26 +227,24 @@ info`` pretty prints information about a data file.
 Installation
 ============
 
-Fiona requires Python versions 3.6+ and GDAL version 1.11-3.0.
-To build from a source distribution you will need a C compiler and GDAL and Python
-development headers and libraries (libgdal1-dev for Debian/Ubuntu, gdal-dev for
+Fiona requires Python versions 3.7+ and GDAL version 3.0+.  To build from a
+source distribution you will need a C compiler and GDAL and Python development
+headers and libraries (libgdal1-dev for Debian/Ubuntu, gdal-dev for
 CentOS/Fedora).
 
 To build from a repository copy, you will also need Cython to build C sources
 from the project's .pyx files. See the project's requirements-dev.txt file for
 guidance.
 
-The `Kyngchaos GDAL frameworks
-<https://www.kyngchaos.com/software/frameworks/#gdal_complete>`__ will satisfy
-the GDAL/OGR dependency for OS X, as will Homebrew's GDAL Formula (``brew install
-gdal``).
+Homebrew's GDAL Formula (``brew install gdal``) will satisfy the GDAL/OGR
+dependency for OS X.
 
 Python Requirements
 -------------------
 
-Fiona depends on the modules ``six``, ``cligj``,  and ``munch``.
-Pip will fetch these requirements for you, but users installing Fiona from a
-Windows installer must get them separately.
+Fiona depends on the modules ``cligj`` and ``munch``.  Pip will fetch these
+requirements for you, but users installing Fiona from a Windows installer must
+get them separately.
 
 Unix-like systems
 -----------------
@@ -317,7 +315,7 @@ Note: The following environment variables needs to be set so that Fiona works co
   Windows ``PATH`` (e.g. ``C:\gdal\bin``).
 * The gdal-data directory needs to be in your Windows ``PATH`` or the environment variable
   ``GDAL_DATA`` must be set (e.g. ``C:\gdal\bin\gdal-data``).
-* The environment variable ``PROJ_LIB`` must be set to the proj library directory (e.g.
+* The environment variable ``PROJ_LIB`` (PROJ < 9.1) | ``PROJ_DATA`` (PROJ 9.1+) must be set to the proj data directory (e.g.
   ``C:\gdal\bin\proj6\share``)
 
 The `Appveyor CI build <https://ci.appveyor.com/project/sgillies/fiona/history>`__
@@ -349,19 +347,13 @@ locations on your system (via your system's package manager), you can do this::
   (fiona_env)$ cd Fiona
   (fiona_env)$ pip install cython
   (fiona_env)$ pip install -e .[test]
-  (fiona_env)$ py.test
-
-Or you can use the ``pep-518-install`` script::
-
-  (fiona_env)$ git clone git://github.com/Toblerity/Fiona.git
-  (fiona_env)$ cd Fiona
-  (fiona_env)$ ./pep-518-install
+  (fiona_env)$ pytest
 
 If you have a non-standard environment, you'll need to specify the include and
 lib dirs and GDAL library on the command line::
 
   (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal --gdalversion 2 develop
-  (fiona_env)$ py.test
+  (fiona_env)$ pytest
 
 .. _GDAL: https://gdal.org
 .. _pyproj: https://pypi.org/project/pyproj/
