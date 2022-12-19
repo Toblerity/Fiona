@@ -12,6 +12,8 @@ import fiona.crs
 from fiona.errors import DriverError
 from fiona.fio import options, with_context_env
 
+logger = logging.getLogger(__name__)
+
 
 @click.command()
 # One or more files.
@@ -42,36 +44,34 @@ def info(ctx, input, indent, meta_member, layer):
 
     When working with a multi-layer dataset the first layer is used by default.
     Use the '--layer' option to select a different layer.
+
     """
+    with fiona.open(input, layer=layer) as src:
+        info = src.meta
+        info.update(name=src.name)
 
-    logger = logging.getLogger(__name__)
-    try:
-        with fiona.open(input, layer=layer) as src:
-            info = src.meta
-            info.update(name=src.name)
+        try:
+            info.update(bounds=src.bounds)
+        except DriverError:
+            info.update(bounds=None)
+            logger.debug(
+                "Setting 'bounds' to None - driver was not able to calculate bounds"
+            )
 
-            try:
-                info.update(bounds=src.bounds)
-            except DriverError:
-                info.update(bounds=None)
-                logger.debug("Setting 'bounds' to None - driver was not able to calculate bounds")
+        try:
+            info.update(count=len(src))
+        except TypeError:
+            info.update(count=None)
+            logger.debug(
+                "Setting 'count' to None/null - layer does not support counting"
+            )
 
-            try:
-                info.update(count=len(src))
-            except TypeError:
-                info.update(count=None)
-                logger.debug("Setting 'count' to None/null - layer does not support counting")
+        info["crs"] = src.crs.to_string()
 
-            info["crs"] = src.crs.to_string()
-
-            if meta_member:
-                if isinstance(info[meta_member], (list, tuple)):
-                    click.echo(" ".join(map(str, info[meta_member])))
-                else:
-                    click.echo(info[meta_member])
+        if meta_member:
+            if isinstance(info[meta_member], (list, tuple)):
+                click.echo(" ".join(map(str, info[meta_member])))
             else:
-                click.echo(json.dumps(info, indent=indent))
-
-    except Exception:
-        logger.exception("Exception caught during processing")
-        raise click.Abort()
+                click.echo(info[meta_member])
+        else:
+            click.echo(json.dumps(info, indent=indent))

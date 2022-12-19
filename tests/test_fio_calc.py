@@ -54,9 +54,10 @@ def test_bool_seq(feature_seq, runner):
 
 
 def test_existing_property(feature_seq, runner):
-    result = runner.invoke(main_group, ['calc', "AREA", "f.properties.AREA * 2"],
-                           feature_seq)
-    assert result.exit_code == 1
+    result = runner.invoke(
+        main_group, ["calc", "AREA", "f.properties.AREA * 2"], feature_seq
+    )
+    assert result.exit_code == 2
 
     result = runner.invoke(main_group, ['calc', "--overwrite", "AREA", "f.properties.AREA * 2"],
                            feature_seq)
