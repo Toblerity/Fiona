@@ -1,6 +1,5 @@
 from __future__ import division
 import json
-import logging
 
 import click
 from cligj import use_rs_opt
@@ -39,27 +38,27 @@ def calc(ctx, property_name, expression, overwrite, use_rs):
 
     \b
     $ fio cat data.shp | fio calc sumAB  "f.properties.A + f.properties.B"
+
     """
-    logger = logging.getLogger(__name__)
     stdin = click.get_text_stream('stdin')
-    try:
-        source = obj_gen(stdin)
-        for i, obj in enumerate(source):
-            features = obj.get('features') or [obj]
-            for j, feat in enumerate(features):
+    source = obj_gen(stdin)
 
-                if not overwrite and property_name in feat['properties']:
-                    raise click.UsageError(
-                        '{0} already exists in properties; '
-                        'rename or use --overwrite'.format(property_name))
+    for i, obj in enumerate(source):
+        features = obj.get("features") or [obj]
 
-                feat['properties'][property_name] = eval_feature_expression(
-                    feat, expression)
+        for j, feat in enumerate(features):
 
-                if use_rs:
-                    click.echo('\x1e', nl=False)
-                click.echo(json.dumps(feat, cls=ObjectEncoder))
+            if not overwrite and property_name in feat["properties"]:
+                raise click.UsageError(
+                    "{0} already exists in properties; "
+                    "rename or use --overwrite".format(property_name)
+                )
 
-    except Exception:
-        logger.exception("Exception caught during processing")
-        raise click.Abort()
+            feat["properties"][property_name] = eval_feature_expression(
+                feat, expression
+            )
+
+            if use_rs:
+                click.echo("\x1e", nl=False)
+
+            click.echo(json.dumps(feat, cls=ObjectEncoder))

@@ -1,8 +1,6 @@
 """$ fio load"""
 
-
 from functools import partial
-import logging
 
 import click
 import cligj
@@ -80,8 +78,6 @@ def load(ctx, output, driver, src_crs, dst_crs, features, layer, creation_option
     GeoJSON feature objects.
 
     """
-    logger = logging.getLogger(__name__)
-
     dst_crs = dst_crs or src_crs
 
     if src_crs and dst_crs and src_crs != dst_crs:
@@ -101,37 +97,39 @@ def load(ctx, output, driver, src_crs, dst_crs, features, layer, creation_option
         Feature
 
         """
-        for feat in features:
-            feat["geometry"] = transformer(Geometry.from_dict(**feat["geometry"]))
-            yield Feature.from_dict(**feat)
+        try:
+            for feat in features:
+                feat["geometry"] = transformer(Geometry.from_dict(**feat["geometry"]))
+                yield Feature.from_dict(**feat)
+        except TypeError:
+            raise click.ClickException("Invalid input.")
 
+    source = feature_gen()
+
+    # Use schema of first feature as a template.
+    # TODO: schema specified on command line?
     try:
-        source = feature_gen()
-
-        # Use schema of first feature as a template.
-        # TODO: schema specified on command line?
         first = next(source)
-        # print(first, first.geometry)
-        schema = {"geometry": first.geometry.type}
-        schema["properties"] = dict(
-            [
-                (k, FIELD_TYPES_MAP_REV.get(type(v)) or "str")
-                for k, v in first.properties.items()
-            ]
-        )
+    except TypeError:
+        raise click.ClickException("Invalid input.")
 
-        with fiona.open(
-            output,
-            "w",
-            driver=driver,
-            crs=dst_crs,
-            schema=schema,
-            layer=layer,
-            **creation_options
-        ) as dst:
-            dst.write(first)
-            dst.writerecords(source)
+    # print(first, first.geometry)
+    schema = {"geometry": first.geometry.type}
+    schema["properties"] = dict(
+        [
+            (k, FIELD_TYPES_MAP_REV.get(type(v)) or "str")
+            for k, v in first.properties.items()
+        ]
+    )
 
-    except Exception:
-        logger.exception("Exception caught during processing")
-        raise click.Abort()
+    with fiona.open(
+        output,
+        "w",
+        driver=driver,
+        crs=dst_crs,
+        schema=schema,
+        layer=layer,
+        **creation_options
+    ) as dst:
+        dst.write(first)
+        dst.writerecords(source)

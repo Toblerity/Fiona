@@ -150,47 +150,74 @@ def collect(
                 for line in stdin:
                     yield line
 
-    try:
-        source = feature_text_gen()
+    source = feature_text_gen()
 
-        if record_buffered:
-            # Buffer GeoJSON data at the feature level for smaller
-            # memory footprint.
-            indented = bool(indent)
-            rec_indent = "\n" + " " * (2 * (indent or 0))
+    if record_buffered:
+        # Buffer GeoJSON data at the feature level for smaller
+        # memory footprint.
+        indented = bool(indent)
+        rec_indent = "\n" + " " * (2 * (indent or 0))
 
-            collection = {"type": "FeatureCollection", "features": []}
+        collection = {"type": "FeatureCollection", "features": []}
+        if with_ld_context:
+            collection["@context"] = helpers.make_ld_context(add_ld_context_item)
+
+        head, tail = json.dumps(collection, cls=ObjectEncoder, **dump_kwds).split("[]")
+
+        sink.write(head)
+        sink.write("[")
+
+        # Try the first record.
+        try:
+            i, first = 0, next(source)
             if with_ld_context:
-                collection["@context"] = helpers.make_ld_context(add_ld_context_item)
+                first = helpers.id_record(first)
+            if indented:
+                sink.write(rec_indent)
+            sink.write(first.replace("\n", rec_indent))
+        except StopIteration:
+            pass
+        except Exception as exc:
+            # Ignoring errors is *not* the default.
+            if ignore_errors:
+                logger.error(
+                    "failed to serialize file record %d (%s), " "continuing", i, exc
+                )
+            else:
+                # Log error and close up the GeoJSON, leaving it
+                # more or less valid no matter what happens above.
+                logger.critical(
+                    "failed to serialize file record %d (%s), " "quiting", i, exc
+                )
+                sink.write("]")
+                sink.write(tail)
+                if indented:
+                    sink.write("\n")
+                raise
 
-            head, tail = json.dumps(collection, cls=ObjectEncoder, **dump_kwds).split(
-                "[]"
-            )
-
-            sink.write(head)
-            sink.write("[")
-
-            # Try the first record.
+        # Because trailing commas aren't valid in JSON arrays
+        # we'll write the item separator before each of the
+        # remaining features.
+        for i, rec in enumerate(source, 1):
             try:
-                i, first = 0, next(source)
                 if with_ld_context:
-                    first = helpers.id_record(first)
+                    rec = helpers.id_record(rec)
                 if indented:
                     sink.write(rec_indent)
-                sink.write(first.replace("\n", rec_indent))
-            except StopIteration:
-                pass
+                sink.write(item_sep)
+                sink.write(rec.replace("\n", rec_indent))
             except Exception as exc:
-                # Ignoring errors is *not* the default.
                 if ignore_errors:
                     logger.error(
-                        "failed to serialize file record %d (%s), " "continuing", i, exc
+                        "failed to serialize file record %d (%s), " "continuing",
+                        i,
+                        exc,
                     )
                 else:
-                    # Log error and close up the GeoJSON, leaving it
-                    # more or less valid no matter what happens above.
                     logger.critical(
-                        "failed to serialize file record %d (%s), " "quiting", i, exc
+                        "failed to serialize file record %d (%s), " "quiting",
+                        i,
+                        exc,
                     )
                     sink.write("]")
                     sink.write(tail)
@@ -198,58 +225,22 @@ def collect(
                         sink.write("\n")
                     raise
 
-            # Because trailing commas aren't valid in JSON arrays
-            # we'll write the item separator before each of the
-            # remaining features.
-            for i, rec in enumerate(source, 1):
-                try:
-                    if with_ld_context:
-                        rec = helpers.id_record(rec)
-                    if indented:
-                        sink.write(rec_indent)
-                    sink.write(item_sep)
-                    sink.write(rec.replace("\n", rec_indent))
-                except Exception as exc:
-                    if ignore_errors:
-                        logger.error(
-                            "failed to serialize file record %d (%s), " "continuing",
-                            i,
-                            exc,
-                        )
-                    else:
-                        logger.critical(
-                            "failed to serialize file record %d (%s), " "quiting",
-                            i,
-                            exc,
-                        )
-                        sink.write("]")
-                        sink.write(tail)
-                        if indented:
-                            sink.write("\n")
-                        raise
-
-            # Close up the GeoJSON after writing all features.
-            sink.write("]")
-            sink.write(tail)
-            if indented:
-                sink.write("\n")
-
-        else:
-            # Buffer GeoJSON data at the collection level. The default.
-            collection = {"type": "FeatureCollection", "features": []}
-            if with_ld_context:
-                collection["@context"] = helpers.make_ld_context(add_ld_context_item)
-
-            head, tail = json.dumps(collection, cls=ObjectEncoder, **dump_kwds).split(
-                "[]"
-            )
-            sink.write(head)
-            sink.write("[")
-            sink.write(",".join(source))
-            sink.write("]")
-            sink.write(tail)
+        # Close up the GeoJSON after writing all features.
+        sink.write("]")
+        sink.write(tail)
+        if indented:
             sink.write("\n")
 
-    except Exception:
-        logger.exception("Exception caught during processing")
-        raise click.Abort()
+    else:
+        # Buffer GeoJSON data at the collection level. The default.
+        collection = {"type": "FeatureCollection", "features": []}
+        if with_ld_context:
+            collection["@context"] = helpers.make_ld_context(add_ld_context_item)
+
+        head, tail = json.dumps(collection, cls=ObjectEncoder, **dump_kwds).split("[]")
+        sink.write(head)
+        sink.write("[")
+        sink.write(",".join(source))
+        sink.write("]")
+        sink.write(tail)
+        sink.write("\n")

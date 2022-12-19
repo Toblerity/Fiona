@@ -1,8 +1,6 @@
 """$ fio distrib"""
 
-
 import json
-import logging
 
 import click
 import cligj
@@ -21,23 +19,17 @@ def distrib(ctx, use_rs):
     Print the features of GeoJSON objects read from stdin.
 
     """
-    logger = logging.getLogger(__name__)
     stdin = click.get_text_stream('stdin')
+    source = helpers.obj_gen(stdin)
 
-    try:
-        source = helpers.obj_gen(stdin)
-        for i, obj in enumerate(source):
-            obj_id = obj.get('id', 'collection:' + str(i))
-            features = obj.get('features') or [obj]
-            for j, feat in enumerate(features):
-                if obj.get('type') == 'FeatureCollection':
-                    feat['parent'] = obj_id
-                feat_id = feat.get('id', 'feature:' + str(i))
-                feat['id'] = feat_id
-                if use_rs:
-                    click.echo('\x1e', nl=False)
-                click.echo(json.dumps(feat, cls=ObjectEncoder))
-
-    except Exception:
-        logger.exception("Exception caught during processing")
-        raise click.Abort()
+    for i, obj in enumerate(source):
+        obj_id = obj.get("id", "collection:" + str(i))
+        features = obj.get("features") or [obj]
+        for j, feat in enumerate(features):
+            if obj.get("type") == "FeatureCollection":
+                feat["parent"] = obj_id
+            feat_id = feat.get("id", "feature:" + str(i))
+            feat["id"] = feat_id
+            if use_rs:
+                click.echo("\x1e", nl=False)
+            click.echo(json.dumps(feat, cls=ObjectEncoder))

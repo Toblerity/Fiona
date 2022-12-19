@@ -1,7 +1,6 @@
 """fio-cat"""
 
 import json
-import logging
 import warnings
 
 import click
@@ -80,8 +79,6 @@ def cat(
     Use the '--layer' option to select a different layer.
 
     """
-    log = logging.getLogger(__name__)
-
     dump_kwds = {"sort_keys": True}
     if indent:
         dump_kwds["indent"] = indent
@@ -104,11 +101,13 @@ def cat(
                 bbox = tuple(map(float, bbox.split(",")))
             except ValueError:
                 bbox = json.loads(bbox)
+
         for i, path in enumerate(files, 1):
             for lyr in layer[str(i)]:
                 with fiona.open(path, layer=lyr) as src:
                     for i, feat in src.items(bbox=bbox, where=where):
                         geom = feat.geometry
+
                         if dst_crs:
                             geom = transform_geom(
                                 src.crs,
@@ -126,12 +125,11 @@ def cat(
                             geometry=geom,
                             bbox=fiona.bounds(geom),
                         )
+
                         if use_rs:
                             click.echo("\x1e", nl=False)
+
                         click.echo(json.dumps(feat, cls=ObjectEncoder, **dump_kwds))
 
     except AttributeFilterError as e:
         raise click.BadParameter("'where' clause is invalid: " + str(e))
-    except Exception:
-        log.exception("Exception caught during processing")
-        raise click.Abort()
