@@ -15,9 +15,10 @@ Shapefile. This project includes Python modules and a CLI.
    :target: https://coveralls.io/r/Toblerity/Fiona
 
 Fiona depends on `GDAL <https://gdal.org>`__ but is different from GDAL's own
-`bindings <https://gdal.org/api/python_bindings.html>`__. The goal of Fiona's
-design is to help developers write entirely new kinds of GIS systems which read
-and run like Python programs, not like C programs.
+`bindings <https://gdal.org/api/python_bindings.html>`__. Fiona is designed to
+be highly productive and easy to read, like Python itself. Its goal is to help
+developers write entirely new kinds of GIS systems which read and run like
+Python programs. 
 
 Fiona can read and write real-world data using multi-layered GIS formats,
 zipped and in-memory virtual file systems, from files on your hard drive or in
@@ -37,12 +38,12 @@ Installation
 Fiona has several `extension modules
 <https://docs.python.org/3/extending/extending.html>`__ which link against
 libgdal. This complicates installation. Binary distributions (wheels)
-containing libgdal and its own dependencies are availble from the Python
+containing libgdal and its own dependencies are available from the Python
 Package Index and can be installed using `pip`.
 
-```
-pip install fiona
-```
+.. code-block:: console
+
+    pip install fiona
 
 These wheels are mainly intended to make installation easy for simple
 applications, not so much for production. They are not tested for compatibility
@@ -71,22 +72,21 @@ file, change their geometry attributes, and write them to a new data file.
 
     import fiona
 
-    # Open a file for reading. We'll call this the "source."
+    # Open a file for reading. We'll call this the source.
 
     with fiona.open("tests/data/coutwildrnp.shp") as src:
 
-        # The file we'll write to, the "destination", must be initialized
-        # with a coordinate system, a format driver name, and
-        # a record schema.  We can get initial values from the open
-        # collection's ``meta`` property and then modify them as
-        # desired.
+        # The file we'll write to must be initialized with a coordinate
+        # system, a format driver name, and a record schema. We can get
+        # initial values from the open source's meta property and then
+        # modify them as we need.
 
         meta = src.meta
         meta["schema"]["geometry"] = "Point"
 
         # Open an output file, using the same format driver and
-        # coordinate reference system as the source. The ``meta``
-        # mapping fills in the keyword parameters of fiona.open().
+        # coordinate reference system as the source. The meta
+        # mapping fills in the keyword parameters of fiona.open.
 
         with fiona.open("test_write.shp", "w", **meta) as dst:
 
@@ -109,7 +109,7 @@ file, change their geometry attributes, and write them to a new data file.
                 )
 
     # The destination's contents are flushed to disk and the file is
-    # closed when its ``with`` block ends. This effectively
+    # closed when its with block ends. This effectively
     # executes ``dst.flush(); dst.close()``.
 
 CLI
