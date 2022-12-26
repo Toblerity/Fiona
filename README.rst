@@ -100,7 +100,7 @@ file.
 
                 # Write the feature out.
                 dst.write(
-                Feature(geometry=new_geom, properties=f.properties))
+                    Feature(geometry=new_geom, properties=f.properties)
                 )
 
         # The destination's contents are flushed to disk and the file is
