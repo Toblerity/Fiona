@@ -91,17 +91,17 @@ file.
         # keyword parameters of fiona.open.
         with fiona.open("/tmp/example.gpkg", "w", **profile) as dst:
 
-        # Process only the records intersecting a box.
-        for f in src.filter(bbox=(-107.0, 37.0, -105.0, 39.0)):
+            # Process only the records intersecting a box.
+            for f in src.filter(bbox=(-107.0, 37.0, -105.0, 39.0)):
 
-            # Get the feature's centroid.
-            centroid_shp = shape(f.geometry).centroid
-            new_geom = Geometry.from_dict(centroid_shp)
+                # Get the feature's centroid.
+                centroid_shp = shape(f.geometry).centroid
+                new_geom = Geometry.from_dict(centroid_shp)
 
-            # Write the feature out.
-            dst.write(
-            Feature(geometry=new_geom, properties=f.properties))
-            )
+                # Write the feature out.
+                dst.write(
+                Feature(geometry=new_geom, properties=f.properties))
+                )
 
         # The destination's contents are flushed to disk and the file is
         # closed when its with block ends. This effectively
