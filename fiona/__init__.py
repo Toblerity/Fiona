@@ -116,7 +116,17 @@ from fiona import _geometry, _err, rfc3339
 import uuid
 
 
-__all__ = ['bounds', 'listlayers', 'listdir', 'open', 'prop_type', 'prop_width']
+__all__ = [
+    "Feature",
+    "Geometry",
+    "Properties",
+    "bounds",
+    "listlayers",
+    "listdir",
+    "open",
+    "prop_type",
+    "prop_width",
+]
 __version__ = "1.9b2dev"
 __gdal_version__ = get_gdal_release_name()
 
