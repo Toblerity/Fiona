@@ -6,6 +6,11 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.9b2 (TBD)
 -----------
 
+- The readme doc has been shortened and freshened up, with a modern example for
+  version 1.9.0 (#1174).
+- The Geometry class now provides and looks for __geo_interface__ (#1174).
+- The top level fiona module now exports Feature, Geometry, and Properties
+  (#1174).
 - Python ignores SIGPIPE by default. By never catching BrokenPipeError via
   `except Exception` when, for example, piping the output of rio-shapes to
   the Unix head program, we avoid getting an unhandled BrokenPipeError message

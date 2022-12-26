@@ -18,7 +18,7 @@ Fiona depends on `GDAL <https://gdal.org>`__ but is different from GDAL's own
 `bindings <https://gdal.org/api/python_bindings.html>`__. Fiona is designed to
 be highly productive and easy to read, like Python itself. Its goal is to help
 developers write entirely new kinds of GIS systems which read and run like
-Python programs. 
+Python programs.
 
 Fiona can read and write real-world data using multi-layered GIS formats,
 zipped and in-memory virtual file systems, from files on your hard drive or in
@@ -71,41 +71,41 @@ file.
 
 .. code-block:: python
 
-	import fiona
-	from fiona import Feature, Geometry, Properties
-	from shapely.geometry import mapping, shape
+    import fiona
+    from fiona import Feature, Geometry, Properties
+    from shapely.geometry import mapping, shape
 
-	# Open a file for reading. We'll call this the source.
-	with fiona.open("tests/data/coutwildrnp.shp") as src:
+    # Open a file for reading. We'll call this the source.
+    with fiona.open("tests/data/coutwildrnp.shp") as src:
 
-	    # The file we'll write to must be initialized with a coordinate
-	    # system, a format driver name, and a record schema. We can get
-	    # initial values from the open source's profile property and then
-	    # modify them as we need.
-	    profile = src.profile
-	    profile["schema"]["geometry"] = "Point"
-	    profile["driver"] = "GPKG"
+        # The file we'll write to must be initialized with a coordinate
+        # system, a format driver name, and a record schema. We can get
+        # initial values from the open source's profile property and then
+        # modify them as we need.
+        profile = src.profile
+        profile["schema"]["geometry"] = "Point"
+        profile["driver"] = "GPKG"
 
-	    # Open an output file, using the same format driver and coordinate
-	    # reference system as the source. The profile mapping fills in the
-	    # keyword parameters of fiona.open.
-	    with fiona.open("/tmp/example.gpkg", "w", **profile) as dst:
+        # Open an output file, using the same format driver and coordinate
+        # reference system as the source. The profile mapping fills in the
+        # keyword parameters of fiona.open.
+        with fiona.open("/tmp/example.gpkg", "w", **profile) as dst:
 
-		# Process only the records intersecting a box.
-		for f in src.filter(bbox=(-107.0, 37.0, -105.0, 39.0)):
+        # Process only the records intersecting a box.
+        for f in src.filter(bbox=(-107.0, 37.0, -105.0, 39.0)):
 
-		    # Get the feature's centroid.
-		    centroid_shp = shape(f.geometry).centroid
-		    new_geom = Geometry.from_dict(centroid_shp)
+            # Get the feature's centroid.
+            centroid_shp = shape(f.geometry).centroid
+            new_geom = Geometry.from_dict(centroid_shp)
 
-		    # Write the feature out.
-		    dst.write(
-			Feature(geometry=new_geom, properties=f.properties))
-		    )
+            # Write the feature out.
+            dst.write(
+            Feature(geometry=new_geom, properties=f.properties))
+            )
 
-    # The destination's contents are flushed to disk and the file is
-    # closed when its with block ends. This effectively
-    # executes ``dst.flush(); dst.close()``.
+        # The destination's contents are flushed to disk and the file is
+        # closed when its with block ends. This effectively
+        # executes ``dst.flush(); dst.close()``.
 
 CLI
 ===
