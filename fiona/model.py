@@ -194,8 +194,8 @@ class Geometry(Object):
         super(Geometry, self).__init__(**data)
 
     @classmethod
-    def from_dict(cls, mapping=None, **kwargs):
-        data = dict(mapping or {}, **kwargs)
+    def from_dict(cls, ob=None, **kwargs):
+        data = dict(getattr(ob, "__geo_interface__", ob) or {}, **kwargs)
         return Geometry(
             coordinates=data.pop("coordinates", None),
             type=data.pop("type", None),
@@ -238,6 +238,10 @@ class Geometry(Object):
 
         """
         return self._delegate.geometries
+
+    @property
+    def __geo_interface__(self):
+        return dict(type=self.type, coordinates=self.coordinates)
 
 
 class _Feature(object):

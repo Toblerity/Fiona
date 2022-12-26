@@ -62,51 +62,46 @@ Collections
 -----------
 
 Features are read from and written to ``file``-like ``Collection`` objects
-returned from the ``fiona.open()`` function. Features are data classes modeled on
-the GeoJSON format. They don't have any spatial methods of their own, so if you
-want to do anything fancy with them you will need Shapely or something
-like it. Here is an example of using Fiona to read some features from one data
-file, change their geometry attributes, and write them to a new data file.
+returned from the ``fiona.open()`` function. Features are data classes modeled
+on the GeoJSON format. They don't have any spatial methods of their own, so if
+you want to do anything fancy with them you will need Shapely or something like
+it. Here is an example of using Fiona to read some features from one data file,
+change their geometry attributes using Shapely, and write them to a new data
+file.
 
 .. code-block:: python
 
-    import fiona
+	import fiona
+	from fiona import Feature, Geometry, Properties
+	from shapely.geometry import mapping, shape
 
-    # Open a file for reading. We'll call this the source.
+	# Open a file for reading. We'll call this the source.
+	with fiona.open("tests/data/coutwildrnp.shp") as src:
 
-    with fiona.open("tests/data/coutwildrnp.shp") as src:
+	    # The file we'll write to must be initialized with a coordinate
+	    # system, a format driver name, and a record schema. We can get
+	    # initial values from the open source's profile property and then
+	    # modify them as we need.
+	    profile = src.profile
+	    profile["schema"]["geometry"] = "Point"
+	    profile["driver"] = "GPKG"
 
-        # The file we'll write to must be initialized with a coordinate
-        # system, a format driver name, and a record schema. We can get
-        # initial values from the open source's meta property and then
-        # modify them as we need.
+	    # Open an output file, using the same format driver and coordinate
+	    # reference system as the source. The profile mapping fills in the
+	    # keyword parameters of fiona.open.
+	    with fiona.open("/tmp/example.gpkg", "w", **profile) as dst:
 
-        meta = src.meta
-        meta["schema"]["geometry"] = "Point"
+		# Process only the records intersecting a box.
+		for f in src.filter(bbox=(-107.0, 37.0, -105.0, 39.0)):
 
-        # Open an output file, using the same format driver and
-        # coordinate reference system as the source. The meta
-        # mapping fills in the keyword parameters of fiona.open.
+		    # Get the feature's centroid.
+		    centroid_shp = shape(f.geometry).centroid
+		    new_geom = Geometry.from_dict(centroid_shp)
 
-        with fiona.open("test_write.shp", "w", **meta) as dst:
-
-            # Process only the records intersecting a box.
-            for f in src.filter(bbox=(-107.0, 37.0, -105.0, 39.0)):
-
-                # Get a point on the boundary of the record's
-                # geometry.
-
-                new_geom = fiona.Geometry(
-                    type="Point", coordinates=f.geometry.coordinates[0][0]
-                )
-
-                # Write the feature out.
-
-                dst.write(
-                    fiona.Feature(
-                        geometry=new_geom, properties=Properties.from_dict(**f.properties)
-                    )
-                )
+		    # Write the feature out.
+		    dst.write(
+			Feature(geometry=new_geom, properties=f.properties))
+		    )
 
     # The destination's contents are flushed to disk and the file is
     # closed when its with block ends. This effectively
@@ -116,8 +111,9 @@ CLI
 ===
 
 Fiona's command line interface, named "fio", is documented at `docs/cli.rst
-<https://github.com/Toblerity/Fiona/blob/master/docs/cli.rst>`__. Its ``fio
-cat`` command streams GeoJSON features from any dataset.
+<https://github.com/Toblerity/Fiona/blob/master/docs/cli.rst>`__. The CLI has a
+number of different commands. Its ``fio cat`` command streams GeoJSON features
+from any dataset.
 
 .. code-block:: console
 
