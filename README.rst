@@ -43,7 +43,7 @@ Fiona 1.9 (coming soon) requires Python 3.7 or higher and GDAL 3.2 or higher.
 Python Usage
 ============
 
-Features are read from and written to ``file``-like ``Collection`` objects
+Features are read from and written to file-like ``Collection`` objects
 returned from the ``fiona.open()`` function. Features are data classes modeled
 on the GeoJSON format. They don't have any spatial methods of their own, so if
 you want to do anything fancy with them you will need Shapely or something like
@@ -54,7 +54,7 @@ file.
 .. code-block:: python
 
     import fiona
-    from fiona import Feature, Geometry, Properties
+    from fiona import Feature, Geometry
     from shapely.geometry import mapping, shape
 
     # Open a file for reading. We'll call this the source.
