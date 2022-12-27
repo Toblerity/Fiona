@@ -17,14 +17,6 @@ Fiona depends on `GDAL <https://gdal.org>`__ but is different from GDAL's own
 `bindings <https://gdal.org/api/python_bindings.html>`__. Fiona is designed to
 be highly productive and to make it easy to write code which is easy to read.
 
-For more details, please see:
-
-* Fiona `home page <https://github.com/Toblerity/Fiona>`__
-* `Docs and manual <https://fiona.readthedocs.io/>`__
-* `Examples <https://github.com/Toblerity/Fiona/tree/master/examples>`__
-* Main `user discussion group <https://fiona.groups.io/g/main>`__
-* `Developers discussion group <https://fiona.groups.io/g/dev>`__
-
 Installation
 ============
 
@@ -110,3 +102,14 @@ from any dataset.
     $ fio cat --compact tests/data/coutwildrnp.shp | jq -c '.'
     {"geometry":{"coordinates":[[[-111.73527526855469,41.995094299316406],...]]}}
     ...
+
+Documentation
+=============
+
+For more details about this project, please see:
+
+* Fiona `home page <https://github.com/Toblerity/Fiona>`__
+* `Docs and manual <https://fiona.readthedocs.io/>`__
+* `Examples <https://github.com/Toblerity/Fiona/tree/master/examples>`__
+* Main `user discussion group <https://fiona.groups.io/g/main>`__
+* `Developers discussion group <https://fiona.groups.io/g/dev>`__
