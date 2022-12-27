@@ -2,17 +2,11 @@
 Fiona
 =====
 
-Fiona streams simple feature data to and from GIS formats like GeoPackage and
-Shapefile. This project includes Python modules and a CLI.
-
 .. image:: https://github.com/Toblerity/Fiona/workflows/Linux%20CI/badge.svg?branch=maint-1.9
    :target: https://github.com/Toblerity/Fiona/actions?query=branch%3Amaint-1.9
 
-.. image:: https://ci.appveyor.com/api/projects/status/github/Toblerity/Fiona?svg=true
-   :target: https://ci.appveyor.com/project/sgillies/fiona/branch/maint-1.9
-
-.. image:: https://coveralls.io/repos/Toblerity/Fiona/badge.svg
-   :target: https://coveralls.io/r/Toblerity/Fiona
+Fiona streams simple feature data to and from GIS formats like GeoPackage and
+Shapefile. This project includes Python modules and a CLI.
 
 Fiona depends on `GDAL <https://gdal.org>`__ but is different from GDAL's own
 `bindings <https://gdal.org/api/python_bindings.html>`__. Fiona is designed to
