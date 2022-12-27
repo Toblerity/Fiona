@@ -8,15 +8,15 @@ Fiona
 Fiona streams simple feature data to and from GIS formats like GeoPackage and
 Shapefile. This project includes Python modules and a CLI.
 
+Fiona can read and write real-world data using multi-layered GIS formats,
+zipped and in-memory virtual file systems, from files on your hard drive or in
+cloud storage.
+
 Fiona depends on `GDAL <https://gdal.org>`__ but is different from GDAL's own
 `bindings <https://gdal.org/api/python_bindings.html>`__. Fiona is designed to
 be highly productive and easy to read, like Python itself. Its goal is to help
 developers write entirely new kinds of GIS systems which read and run like
 Python programs.
-
-Fiona can read and write real-world data using multi-layered GIS formats,
-zipped and in-memory virtual file systems, from files on your hard drive or in
-cloud storage.
 
 For more details, please see:
 
@@ -49,11 +49,8 @@ Many users find Anaconda and conda-forge a good way to install Fiona.
 
 Fiona 1.9 (coming soon) requires Python 3.7 or higher and GDAL 3.2 or higher.
 
-Usage
-=====
-
-Collections
------------
+Python Usage
+============
 
 Features are read from and written to ``file``-like ``Collection`` objects
 returned from the ``fiona.open()`` function. Features are data classes modeled
@@ -101,8 +98,8 @@ file.
         # closed when its with block ends. This effectively
         # executes ``dst.flush(); dst.close()``.
 
-CLI
-===
+CLI Usage
+=========
 
 Fiona's command line interface, named "fio", is documented at `docs/cli.rst
 <https://github.com/Toblerity/Fiona/blob/master/docs/cli.rst>`__. The CLI has a
