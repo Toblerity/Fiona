@@ -6,17 +6,16 @@ Fiona
    :target: https://github.com/Toblerity/Fiona/actions?query=branch%3Amaint-1.9
 
 Fiona streams simple feature data to and from GIS formats like GeoPackage and
-Shapefile. This project includes Python modules and a CLI.
+Shapefile.
 
 Fiona can read and write real-world data using multi-layered GIS formats,
 zipped and in-memory virtual file systems, from files on your hard drive or in
-cloud storage.
+cloud storage. This project includes Python modules and a command line
+interface (CLI).
 
 Fiona depends on `GDAL <https://gdal.org>`__ but is different from GDAL's own
 `bindings <https://gdal.org/api/python_bindings.html>`__. Fiona is designed to
-be highly productive and easy to read, like Python itself. Its goal is to help
-developers write entirely new kinds of GIS systems which read and run like
-Python programs.
+be highly productive and to make it easy to write code which is easy to read.
 
 For more details, please see:
 
