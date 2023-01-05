@@ -5,7 +5,7 @@ from warnings import warn
 from fiona._transform import _transform, _transform_geom
 from fiona.compat import DICT_TYPES
 from fiona.errors import FionaDeprecationWarning
-from fiona.model import _guard_model_object, Geometry
+from fiona.model import decode_object, Geometry
 
 
 def transform(src_crs, dst_crs, xs, ys):
@@ -108,7 +108,7 @@ def transform_geom(
         return _transform_geom(
             src_crs,
             dst_crs,
-            _guard_model_object(geom),
+            decode_object(geom),
             antimeridian_cutting,
             antimeridian_offset,
             precision,
@@ -117,7 +117,7 @@ def transform_geom(
         return _transform_geom(
             src_crs,
             dst_crs,
-            (_guard_model_object(g) for g in geom),
+            (decode_object(g) for g in geom),
             antimeridian_cutting,
             antimeridian_offset,
             precision,

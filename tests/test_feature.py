@@ -10,7 +10,6 @@ import pytest
 import fiona
 from fiona import collection
 from fiona.collection import Collection
-from fiona.errors import FionaDeprecationWarning
 from fiona.model import Feature
 from fiona.ogrext import featureRT
 
@@ -36,10 +35,9 @@ class TestPointRoundTrip(object):
             "geometry": {"type": "Point", "coordinates": (0.0, 0.0)},
             "properties": {"title": "foo"},
         }
-        with pytest.warns(FionaDeprecationWarning):
-            g = featureRT(f, self.c)
-            assert g.geometry.type == "Point"
-            assert g.geometry.coordinates == (0.0, 0.0)
+        g = featureRT(f, self.c)
+        assert g.geometry.type == "Point"
+        assert g.geometry.coordinates == (0.0, 0.0)
 
     def test_properties(self):
         f = Feature.from_dict(
