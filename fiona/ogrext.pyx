@@ -32,8 +32,8 @@ from fiona.env import Env
 from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
-    AttributeFilterError, FeatureWarning, FionaDeprecationWarning)
-from fiona.model import _guard_model_object, Feature, Geometry, Properties
+    AttributeFilterError, FeatureWarning, FionaDeprecationWarning, UnsupportedGeometryTypeError)
+from fiona.model import decode_object, Feature, Geometry, Properties
 from fiona.path import vsi_path
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -508,7 +508,7 @@ cdef _deleteOgrFeature(void *cogr_feature):
 
 def featureRT(feat, collection):
     # For testing purposes only, leaks the JSON data
-    feature = _guard_model_object(feat)
+    feature = decode_object(feat)
     cdef void *cogr_feature = OGRFeatureBuilder().build(feature, collection)
     cdef void *cogr_geometry = OGR_F_GetGeometryRef(cogr_feature)
     if cogr_geometry == NULL:
@@ -1273,18 +1273,27 @@ cdef class WritingSession(Session):
         log.debug("Writing started")
 
     def writerecs(self, records, collection):
-        """Writes buffered records to OGR."""
+        """Writes records to collection storage.
+
+        Parameters
+        ----------
+        records : Iterable
+            A stream of feature records.
+        collection : Collection
+            The collection in which feature records are stored.
+
+        Returns
+        -------
+        None
+
+        """
         cdef void *cogr_driver
         cdef void *cogr_feature
         cdef int features_in_transaction = 0
-
         cdef void *cogr_layer = self.cogr_layer
+
         if cogr_layer == NULL:
             raise ValueError("Null layer")
-
-        schema_geom_type = collection.schema['geometry']
-        cogr_driver = GDALGetDatasetDriver(self.cogr_ds)
-        driver_name = OGR_Dr_GetName(cogr_driver).decode("utf-8")
 
         valid_geom_types = collection._valid_geom_types
 
@@ -1295,6 +1304,7 @@ cdef class WritingSession(Session):
 
         transactions_supported = GDALDatasetTestCapability(self.cogr_ds, ODsCTransactions)
         log.debug("Transaction supported: {}".format(transactions_supported))
+
         if transactions_supported:
             log.debug("Starting transaction (initial)")
             result = GDALDatasetStartTransaction(self.cogr_ds, 0)
@@ -1304,13 +1314,7 @@ cdef class WritingSession(Session):
         schema_props_keys = set(collection.schema['properties'].keys())
 
         for _rec in records:
-            record = _guard_model_object(_rec)
-
-            # Check for optional elements
-            # if 'properties' not in _rec:
-            #     _rec['properties'] = {}
-            # if 'geometry' not in _rec:
-            #     _rec['geometry'] = None
+            record = decode_object(_rec)
 
             # Validate against collection's schema.
             if set(record.properties.keys()) != schema_props_keys:
@@ -1328,24 +1332,33 @@ cdef class WritingSession(Session):
 
             cogr_feature = OGRFeatureBuilder().build(record, collection)
             result = OGR_L_CreateFeature(cogr_layer, cogr_feature)
+
             if result != OGRERR_NONE:
                 msg = get_last_error_msg()
-                raise RuntimeError("GDAL Error: {msg} \n \n Failed to write record: "
-                                   "{record}".format(msg=msg, record=record))
+                raise RuntimeError(
+                    "GDAL Error: {msg}. Failed to write record: {record}".format(
+                        msg=msg, record=record
+                    )
+                )
 
             _deleteOgrFeature(cogr_feature)
 
             if transactions_supported:
                 features_in_transaction += 1
+
                 if features_in_transaction == DEFAULT_TRANSACTION_SIZE:
                     log.debug("Committing transaction (intermediate)")
                     result = GDALDatasetCommitTransaction(self.cogr_ds)
+
                     if result == OGRERR_FAILURE:
                         raise TransactionError("Failed to commit transaction")
+
                     log.debug("Starting transaction (intermediate)")
                     result = GDALDatasetStartTransaction(self.cogr_ds, 0)
+
                     if result == OGRERR_FAILURE:
                         raise TransactionError("Failed to start transaction")
+
                     features_in_transaction = 0
 
         if transactions_supported:
@@ -1475,7 +1488,7 @@ cdef class Iterator:
             OGR_L_SetSpatialFilterRect(
                 cogr_layer, bbox[0], bbox[1], bbox[2], bbox[3])
         elif mask:
-            mask_geom = _guard_model_object(mask)
+            mask_geom = decode_object(mask)
             cogr_geometry = OGRGeomBuilder().build(mask_geom)
             OGR_L_SetSpatialFilter(cogr_layer, cogr_geometry)
             OGR_G_DestroyGeometry(cogr_geometry)

@@ -71,10 +71,9 @@ def test_geometry_collection_round_trip():
         ],
     }
 
-    with pytest.warns(DeprecationWarning):
-        result = geometryRT(geom)
-        assert len(result["geometries"]) == 2
-        assert [g["type"] for g in result["geometries"]] == ["Point", "LineString"]
+    result = geometryRT(geom)
+    assert len(result["geometries"]) == 2
+    assert [g["type"] for g in result["geometries"]] == ["Point", "LineString"]
 
 
 def test_point_wkb():

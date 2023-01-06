@@ -119,15 +119,14 @@ def test_transform_issue971():
             }
         ],
     }
-    with pytest.warns(FionaDeprecationWarning):
-        geom_transformed = transform.transform_geom(source_crs, dest_src, geom)
-        assert geom_transformed.geometries[0].coordinates[0] == pytest.approx(
-            (9.18427, 52.94630)
-        )
+    geom_transformed = transform.transform_geom(source_crs, dest_src, geom)
+    assert geom_transformed.geometries[0].coordinates[0] == pytest.approx(
+        (9.18427, 52.94630)
+    )
 
 
 def test_transform_geom_precision_deprecation():
-    """Get a deprecation warning in 1.9"""
+    """Get a precision deprecation warning in 1.9."""
     with pytest.warns(FionaDeprecationWarning):
         transform.transform_geom(
             "epsg:4326",

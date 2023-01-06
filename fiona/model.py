@@ -380,12 +380,17 @@ def decode_object(obj):
     Feature, Geometry, or dict
 
     """
-    if (obj.get("type", None) == "Feature") or "geometry" in obj:
-        return Feature.from_dict(**obj)
-    elif obj.get("type", None) in list(GEOMETRY_TYPES.values())[:8]:
-        return Geometry.from_dict(**obj)
-    else:
+    if isinstance(obj, Object):
         return obj
+    else:
+        obj = obj.get("__geo_interface__", obj)
+
+        if (obj.get("type", None) == "Feature") or "geometry" in obj:
+            return Feature.from_dict(**obj)
+        elif obj.get("type", None) in list(GEOMETRY_TYPES.values())[:8]:
+            return Geometry.from_dict(**obj)
+        else:
+            return obj
 
 
 def to_dict(val):
@@ -396,18 +401,3 @@ def to_dict(val):
         return val
     else:
         return obj
-
-
-def _guard_model_object(obj):
-    """Convert dict to Geometry or Feature.
-
-    For use during the 1.9-2.0 transition. Will be removed in 2.0.
-
-    """
-    if not isinstance(obj, Object):
-        warn(
-            "Support for feature and geometry dicts is deprecated. Instances of Feature and Geometry will be required in 2.0.",
-            FionaDeprecationWarning,
-            stacklevel=2,
-        )
-    return decode_object(obj)

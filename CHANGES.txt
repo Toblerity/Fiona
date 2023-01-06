@@ -6,6 +6,9 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.9b2 (TBD)
 -----------
 
+- Functions that take Feature or Geometry objects will continue to take dicts
+  or objects that provide __geo_interface__ (#1177). This reverses the
+  deprecation introduced in 1.9a2.
 - Python ignores SIGPIPE by default. By never catching BrokenPipeError via
   `except Exception` when, for example, piping the output of rio-shapes to
   the Unix head program, we avoid getting an unhandled BrokenPipeError message
