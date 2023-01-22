@@ -6,6 +6,7 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.9b2 (TBD)
 -----------
 
+- Add Feature.__geo_interface__ property (#1181).
 - Invalid creation options are filtered and ignored (#1180).
 - The readme doc has been shortened and freshened up, with a modern example for
   version 1.9.0 (#1174).

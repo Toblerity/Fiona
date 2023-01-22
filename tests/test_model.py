@@ -130,6 +130,13 @@ def test_geometry__props():
     }
 
 
+def test_geometry_gi():
+    """Geometry __geo_interface__"""
+    gi = Geometry(coordinates=(0, 0), type="Point").__geo_interface__
+    assert gi["type"] == "Point"
+    assert gi["coordinates"] == (0, 0)
+
+
 def test_feature_no_geometry():
     """Feature has no attribute"""
     feat = Feature()
@@ -294,3 +301,16 @@ def test_decode_object_hook_fallback(o):
 def test_properties():
     """Property factory works"""
     assert Properties.from_dict(a=1, foo="bar")["a"] == 1
+
+
+def test_feature_gi():
+    """Feature __geo_interface__."""
+    gi = Feature(
+        id="foo",
+        geometry=Geometry(type="Point", coordinates=(0, 0)),
+        properties=Properties(a=1, foo="bar"),
+    )
+
+    assert gi["id"] == "foo"
+    assert gi["geometry"]["type"] == "Point"
+    assert gi["geometry"]["coordinates"] == (0, 0)
