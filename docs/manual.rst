@@ -5,7 +5,7 @@ The Fiona User Manual
 :Author: Sean Gillies, <sean.gillies@gmail.com>
 :Version: |release|
 :Date: |today|
-:Copyright: 
+:Copyright:
   This work is licensed under a `Creative Commons Attribution 3.0
   United States License`__.
 
@@ -88,23 +88,24 @@ In what cases would you not benefit from using Fiona?
 Example
 -------
 
-The first example of using Fiona is this: copying records from one file to
-another, adding two attributes and making sure that all polygons are facing
-"up". Orientation of polygons is significant in some applications, extruded
-polygons in Google Earth for one. No other library (like :py:mod:`Shapely`) is
-needed here, which keeps it uncomplicated. There's a :file:`test_uk` file in
-the Fiona repository for use in this and other examples.
+The first example of using Fiona is this: copying features (another word for
+record) from one file to another, adding two attributes and making sure that
+all polygons are facing "up". Orientation of polygons is significant in some
+applications, extruded polygons in Google Earth for one. No other library (like
+:py:mod:`Shapely`) is needed here, which keeps it uncomplicated. There's a
+:file:`test_uk` file in the Fiona repository for use in this and other
+examples.
 
 .. code-block:: python
 
   import datetime
   import logging
   import sys
-  
+
   import fiona
-  
+
   logging.basicConfig(stream=sys.stderr, level=logging.INFO)
-  
+
   def signed_area(coords):
       """Return the signed area enclosed by a ring using the linear time
       algorithm at http://www.cgafaq.info/wiki/Polygon_Area. A value >= 0
@@ -112,17 +113,17 @@ the Fiona repository for use in this and other examples.
       """
       xs, ys = map(list, zip(*coords))
       xs.append(xs[1])
-      ys.append(ys[1]) 
+      ys.append(ys[1])
       return sum(xs[i]*(ys[i+1]-ys[i-1]) for i in range(1, len(coords)))/2.0
-  
+
   with fiona.open('docs/data/test_uk.shp', 'r') as source:
-      
+
       # Copy the source schema and add two new properties.
       sink_schema = source.schema
       sink_schema['properties']['s_area'] = 'float'
       sink_schema['properties']['timestamp'] = 'datetime'
-      
-      # Create a sink for processed features with the same format and 
+
+      # Create a sink for processed features with the same format and
       # coordinate reference system as the source.
       with fiona.open(
               'oriented-ccw.shp', 'w',
@@ -130,11 +131,11 @@ the Fiona repository for use in this and other examples.
               driver=source.driver,
               schema=sink_schema,
               ) as sink:
-          
+
           for f in source:
-              
+
               try:
-  
+
                   # If any feature's polygon is facing "down" (has rings
                   # wound clockwise), its rings will be reordered to flip
                   # it "up".
@@ -146,15 +147,15 @@ the Fiona repository for use in this and other examples.
                       rings = [r[::-1] for r in rings]
                       g['coordinates'] = rings
                       f['geometry'] = g
-  
+
                   # Add the signed area of the polygon and a timestamp
                   # to the feature properties map.
                   f['properties'].update(
                       s_area=sa,
                       timestamp=datetime.datetime.now().isoformat() )
-  
+
                   sink.write(f)
-              
+
               except Exception as e:
                   logging.exception("Error processing feature %s:", f['id'])
 
@@ -199,7 +200,7 @@ not treat features as dictionaries? Use of existing Python idioms is one of
 Fiona's major design principles.
 
 .. admonition:: TL;DR
-   
+
    Fiona subscribes to the conventional record model of data, but provides
    GeoJSON-like access to the data via Python file-like and mapping protocols.
 
@@ -221,7 +222,7 @@ Reading a GIS vector file begins by opening it in mode ``'r'`` using Fiona's
 
 .. admonition:: API Change
 
-   :py:func:`fiona.collection` is deprecated, but aliased to 
+   :py:func:`fiona.collection` is deprecated, but aliased to
    :py:func:`fiona.open` in version 0.9.
 
 Mode ``'r'`` is the default and will be omitted in following examples.
@@ -264,7 +265,7 @@ collection to get back to the beginning.
    encoding of the Natural Earth dataset is Windows-1252. In this case, the
    proper encoding can be specified explicitly by using the ``encoding``
    keyword parameter of :py:func:`fiona.open`: ``encoding='Windows-1252'``.
-   
+
    New in version 0.9.1.
 
 Collection indexing
@@ -318,7 +319,7 @@ is a context guard, it is closed no matter what happens within the block.
   ... except:
   ...     print(c.closed)
   ...     raise
-  ... 
+  ...
   48
   True
   Traceback (most recent call last):
@@ -329,7 +330,7 @@ An exception is raised in the :keyword:`with` block above, but as you can see
 from the print statement in the :keyword:`except` clause :py:meth:`c.__exit__`
 (and thereby :py:meth:`c.close`) has been called.
 
-.. important:: Always call :py:meth:`~fiona.collection.Collection.close` or 
+.. important:: Always call :py:meth:`~fiona.collection.Collection.close` or
    use :keyword:`with` and you'll never stumble over tied-up external resources,
    locked files, etc.
 
@@ -422,7 +423,7 @@ dict with items having the same order as the fields in the data file.
                   'CNTRY_NAME': 'str',
                   'AREA': 'float:15.2',
                   'POP_CNTRY': 'float:15.2'}}
-  
+
 Keeping Schemas Simple
 ----------------------
 
@@ -719,7 +720,7 @@ A vector file can be opened for writing in mode ``'a'`` (append) or mode
 ``'w'`` (write).
 
 .. admonition:: Note
-   
+
    The in situ "update" mode of :program:`OGR` is quite format dependent
    and is therefore not supported by Fiona.
 
@@ -752,7 +753,7 @@ of the file grows from 48 to 49.
   ...     print(len(c))
   ...     c.write(rec)
   ...     print(len(c))
-  ... 
+  ...
   48
   49
 
@@ -763,7 +764,7 @@ type of record, remember). You'll get a :py:class:`ValueError` if it doesn't.
 
   >>> with fiona.open('/tmp/test_uk.shp', 'a') as c:
   ...     c.write({'properties': {'foo': 'bar'}})
-  ... 
+  ...
   Traceback (most recent call last):
     ...
   ValueError: Record data not match collection schema
@@ -794,7 +795,7 @@ iterator) of records.
   >>> with fiona.open('/tmp/test_uk.shp', 'a') as c:
   ...     c.writerecords([rec, rec, rec])
   ...     print(len(c))
-  ... 
+  ...
   52
 
 .. admonition:: Duplication
@@ -809,6 +810,11 @@ iterator) of records.
    :py:meth:`writerecords` are flushed to disk when the collection is closed.
    You may also call :py:meth:`flush` periodically to write the buffer contents
    to disk.
+
+.. admonition:: Format requirements
+
+   Format drivers may have specific requirements about what they store. For
+   example, the Shapefile driver may "fix" topologically invalid features.
 
 Creating files of the same structure
 ------------------------------------
@@ -827,7 +833,7 @@ Review the parameters of our demo file.
   ...     source_driver = source.driver
   ...     source_crs = source.crs
   ...     source_schema = source.schema
-  ... 
+  ...
   >>> source_driver
   'ESRI Shapefile'
   >>> source_crs
@@ -853,7 +859,7 @@ We can create a new file using them.
   ...     print(len(c))
   ...     c.write(rec)
   ...     print(len(c))
-  ... 
+  ...
   0
   1
   >>> c.closed
@@ -870,7 +876,7 @@ same order as those of the source file.
   $ ogrinfo /tmp/foo.shp foo -so
   INFO: Open of `/tmp/foo.shp'
         using driver `ESRI Shapefile' successful.
-  
+
   Layer name: foo
   Geometry: 3D Polygon
   Feature Count: 1
@@ -987,7 +993,7 @@ dict is given, the ordering is determined by the output of that dict's
 For example, since
 
 .. code-block:: pycon
-  
+
   >>> {'bar': 'int', 'foo': 'str'}.keys()
   ['foo', 'bar']
 
@@ -1066,13 +1072,13 @@ If you call ``fiona.open()`` with no surrounding ``Env`` environment, one will
 be created for you.
 
 When your program exits the environment's with block the configuration reverts
-to its previous state. 
+to its previous state.
 
 Driver configuration options
 ----------------------------
 
 Drivers can have dataset open, dataset creation, respectively layer creation options. These options can be found
-on the drivers page on `GDAL's homepage. <https://gdal.org/drivers/vector/index.html>`_ or using the 
+on the drivers page on `GDAL's homepage. <https://gdal.org/drivers/vector/index.html>`_ or using the
 ``fiona.meta`` module:
 
 .. code-block:: pycon
@@ -1148,7 +1154,7 @@ builtin :py:func:`list` as shown below.
   7
 
 The iterator method takes the same ``stop`` or ``start, stop[, step]``
-slicing arguments as :py:func:`itertools.islice`. 
+slicing arguments as :py:func:`itertools.islice`.
 To get just the first two items from that iterator, pass a stop index.
 
 .. code-block:: pycon
@@ -1328,7 +1334,7 @@ The single shapefile may also be accessed like so:
 .. code-block:: pycon
 
   >>> with fiona.open(
-  ...         '/docs/data/test_uk.shp', 
+  ...         '/docs/data/test_uk.shp',
   ...         vfs='zip:///tmp/zed.zip') as c:
   ...     print(len(c))
   ...
@@ -1340,10 +1346,10 @@ Unsupported drivers
 Fiona maintains a list of OGR drivers in :py:attr:`fiona.supported_drivers`
 that are tested and known to work together with Fiona. Opening a dataset using
 an unsupported driver or access mode results in an :py:attr: `DriverError`
-exception. By passing `allow_unsupported_drivers=True` to :py:attr:`fiona.open` 
+exception. By passing `allow_unsupported_drivers=True` to :py:attr:`fiona.open`
 no compatibility checks are performed and unsupported OGR drivers can be used.
-However, there are no guarantees that Fiona will be able to access or write 
-data correctly using an unsupported driver.  
+However, there are no guarantees that Fiona will be able to access or write
+data correctly using an unsupported driver.
 
 .. code-block:: python
 
@@ -1352,7 +1358,7 @@ data correctly using an unsupported driver.
   with fiona.open("file.kmz", allow_unsupported_drivers=True) as collection:
     ...
 
-Not all OGR drivers are necessarily enabled in every GDAL distribution. The 
+Not all OGR drivers are necessarily enabled in every GDAL distribution. The
 following code snippet lists the drivers included in the GDAL installation
 used by Fiona:
 
@@ -1399,7 +1405,7 @@ in an instance of ZipMemoryFile.
 Fiona command line interface
 ============================
 
-Fiona comes with a command line interface called "fio". See the 
+Fiona comes with a command line interface called "fio". See the
 `CLI Documentation <cli.html>`__ for detailed usage instructions.
 
 Final Notes
