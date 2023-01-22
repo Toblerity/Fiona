@@ -1180,6 +1180,9 @@ cdef class WritingSession(Session):
             geometry_code = geometry_type_code(geometry_type)
 
             try:
+                # In GDAL versions > 3.6.0 the following directive may
+                # suffice and we might be able to eliminate the import
+                # of fiona.meta in a future version of Fiona.
                 with Env(GDAL_VALIDATE_CREATION_OPTIONS="NO"):
                     self.cogr_layer = exc_wrap_pointer(
                         GDALDatasetCreateLayer(
