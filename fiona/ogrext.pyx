@@ -119,14 +119,16 @@ cdef void* gdal_open_vector(char* path_c, int mode, drivers, options) except NUL
                 drvs = CSLAddString(drvs, name_c)
 
     for k, v in options.items():
-        if v is None:
-            continue
-        k = k.upper().encode('utf-8')
-        if isinstance(v, bool):
-            v = ('ON' if v else 'OFF').encode('utf-8')
-        else:
-            v = str(v).encode('utf-8')
-        open_opts = CSLAddNameValue(open_opts, <const char *>k, <const char *>v)
+
+        if v is not None:
+            kb = k.upper().encode('utf-8')
+
+            if isinstance(v, bool):
+                vb = ('ON' if v else 'OFF').encode('utf-8')
+            else:
+                vb = str(v).encode('utf-8')
+
+            open_opts = CSLAddNameValue(open_opts, <const char *>kb, <const char *>vb)
 
     open_opts = CSLAddNameValue(open_opts, "VALIDATE_OPEN_OPTIONS", "NO")
 
@@ -148,13 +150,26 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except NU
     cdef char **creation_opts = NULL
     cdef void *cogr_ds = NULL
 
+    db = <const char *>GDALGetDriverShortName(cogr_driver)
+
+    # To avoid a circular import.
+    from fiona import meta
+
+    option_keys = set(key.upper() for key in options.keys())
+    creation_option_keys = option_keys & set(meta.dataset_creation_options(db.decode("utf-8")))
+
     for k, v in options.items():
-        k = k.upper().encode('utf-8')
-        if isinstance(v, bool):
-            v = ('ON' if v else 'OFF').encode('utf-8')
-        else:
-            v = str(v).encode('utf-8')
-        creation_opts = CSLAddNameValue(creation_opts, <const char *>k, <const char *>v)
+
+        if k.upper() in creation_option_keys:
+
+            kb = k.upper().encode('utf-8')
+
+            if isinstance(v, bool):
+                vb = ('ON' if v else 'OFF').encode('utf-8')
+            else:
+                vb = str(v).encode('utf-8')
+
+            creation_opts = CSLAddNameValue(creation_opts, <const char *>kb, <const char *>vb)
 
     try:
         return exc_wrap_pointer(GDALCreate(cogr_driver, path_c, 0, 0, 0, GDT_Unknown, creation_opts))
@@ -1131,40 +1146,45 @@ cdef class WritingSession(Session):
             name_b = collection.name.encode('utf-8')
             name_c = name_b
 
+            # To avoid circular import.
+            from fiona import meta
+
+            kwarg_keys = set(key.upper() for key in kwargs.keys())
+            lyr_creation_option_keys = kwarg_keys & set(meta.layer_creation_options(collection.driver))
+
             for k, v in kwargs.items():
 
-                if v is None:
-                    continue
+                if v is not None and k.upper() in lyr_creation_option_keys:
+                    kb = k.upper().encode('utf-8')
 
-                # We need to remove encoding from the layer creation
-                # options if we're not creating a shapefile.
-                if k == 'encoding' and "Shapefile" not in collection.driver:
-                    continue
+                    if isinstance(v, bool):
+                        vb = ('ON' if v else 'OFF').encode('utf-8')
+                    else:
+                        vb = str(v).encode('utf-8')
 
-                k = k.upper().encode('utf-8')
-
-                if isinstance(v, bool):
-                    v = ('ON' if v else 'OFF').encode('utf-8')
-                else:
-                    v = str(v).encode('utf-8')
-                options = CSLAddNameValue(options, <const char *>k, <const char *>v)
+                    options = CSLAddNameValue(options, <const char *>kb, <const char *>vb)
 
             geometry_type = collection.schema.get("geometry", "Unknown")
+
             if not isinstance(geometry_type, str) and geometry_type is not None:
                 geometry_types = set(geometry_type)
+
                 if len(geometry_types) > 1:
                     geometry_type = "Unknown"
                 else:
                     geometry_type = geometry_types.pop()
+
             if geometry_type == "Any" or geometry_type is None:
                 geometry_type = "Unknown"
+
             geometry_code = geometry_type_code(geometry_type)
 
             try:
-                self.cogr_layer = exc_wrap_pointer(
-                    GDALDatasetCreateLayer(
-                        self.cogr_ds, name_c, cogr_srs,
-                        <OGRwkbGeometryType>geometry_code, options))
+                with Env(GDAL_VALIDATE_CREATION_OPTIONS="NO"):
+                    self.cogr_layer = exc_wrap_pointer(
+                        GDALDatasetCreateLayer(
+                            self.cogr_ds, name_c, cogr_srs,
+                            <OGRwkbGeometryType>geometry_code, options))
 
             except Exception as exc:
                 GDALClose(self.cogr_ds)
@@ -2084,7 +2104,7 @@ def _get_metadata_item(driver, metadata_item):
 
     if get_gdal_version_tuple() < (2, ):
         return None
-    
+
     if driver is None:
         return None
 

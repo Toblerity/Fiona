@@ -6,6 +6,7 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.9b2 (TBD)
 -----------
 
+- Invalid creation options are filtered and ignored (#).
 - The readme doc has been shortened and freshened up, with a modern example for
   version 1.9.0 (#1174).
 - The Geometry class now provides and looks for __geo_interface__ (#1174).

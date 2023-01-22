@@ -1,11 +1,12 @@
 # Testing collections and workspaces
 
+from collections import OrderedDict
 import datetime
+import logging
 import os
 import random
-import sys
 import re
-from collections import OrderedDict
+import sys
 
 import pytest
 
@@ -1047,14 +1048,16 @@ def test_collection_zip_http():
 
 def test_encoding_option_warning(tmpdir, caplog):
     """There is no ENCODING creation option log warning for GeoJSON"""
-    fiona.Collection(
-        str(tmpdir.join("test.geojson")),
-        "w",
-        driver="GeoJSON",
-        crs="epsg:4326",
-        schema={"geometry": "Point", "properties": {"foo": "int"}},
-    )
-    assert not caplog.text
+    with caplog.at_level(logging.WARNING):
+        fiona.Collection(
+            str(tmpdir.join("test.geojson")),
+            "w",
+            driver="GeoJSON",
+            crs="EPSG:4326",
+            schema={"geometry": "Point", "properties": {"foo": "int"}},
+            encoding="bogus",
+        )
+        assert not caplog.text
 
 
 def test_closed_session_next(gdalenv, path_coutwildrnp_shp):
