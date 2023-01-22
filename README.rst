@@ -24,7 +24,7 @@ Fiona has several `extension modules
 <https://docs.python.org/3/extending/extending.html>`__ which link against
 libgdal. This complicates installation. Binary distributions (wheels)
 containing libgdal and its own dependencies are available from the Python
-Package Index and can be installed using `pip`.
+Package Index and can be installed using pip.
 
 .. code-block:: console
 
@@ -36,7 +36,8 @@ with all other binary wheels, conda packages, or QGIS, and omit many of GDAL's
 optional format drivers. If you need, for example, GML support you will need to
 build and install Fiona from a source distribution.
 
-Many users find Anaconda and conda-forge a good way to install Fiona.
+Many users find Anaconda and conda-forge a good way to install Fiona and get
+access to more optional format drivers (like GML).
 
 Fiona 1.9 (coming soon) requires Python 3.7 or higher and GDAL 3.2 or higher.
 
