@@ -241,7 +241,7 @@ class Geometry(Object):
 
     @property
     def __geo_interface__(self):
-        return dict(type=self.type, coordinates=self.coordinates)
+        return ObjectEncoder().default(self)
 
 
 class _Feature(object):
@@ -313,7 +313,7 @@ class Feature(Object):
 
         Returns
         ------
-        obejct
+        object
 
         """
         return self._delegate.id
@@ -324,7 +324,7 @@ class Feature(Object):
 
         Returns
         -------
-        Object
+        object
 
         """
         return self._delegate.properties
@@ -339,6 +339,10 @@ class Feature(Object):
 
         """
         return "Feature"
+
+    @property
+    def __geo_interface__(self):
+        return ObjectEncoder().default(self)
 
 
 class Properties(Object):
