@@ -270,8 +270,8 @@ class Feature(Object):
         super(Feature, self).__init__(**data)
 
     @classmethod
-    def from_dict(cls, mapping=None, **kwargs):
-        data = dict(mapping or {}, **kwargs)
+    def from_dict(cls, ob=None, **kwargs):
+        data = dict(getattr(ob, "__geo_interface__", ob) or {}, **kwargs)
         geom_data = data.pop("geometry", None)
 
         if isinstance(geom_data, Geometry):
