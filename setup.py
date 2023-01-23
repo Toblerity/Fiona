@@ -1,4 +1,4 @@
-from distutils import log
+import logging
 import os
 import shutil
 import subprocess
@@ -66,52 +66,53 @@ if 'clean' not in sys.argv:
                 extra_link_args.append(item)
         gdalversion = gdal_output[3]
         if gdalversion:
-            log.info("GDAL API version obtained from gdal-config: %s",
-                     gdalversion)
+            logging.info("GDAL API version obtained from gdal-config: %s",
+                         gdalversion)
 
     except Exception as e:
         if os.name == "nt":
-            log.info("Building on Windows requires extra options to setup.py "
-                     "to locate needed GDAL files.\nMore information is "
-                     "available in the README.")
+            logging.info("Building on Windows requires extra options to"
+                         " setup.py to locate needed GDAL files.\nMore"
+                         " information is available in the README.")
         else:
-            log.warn("Failed to get options via gdal-config: %s", str(e))
+            logging.warn("Failed to get options via gdal-config: %s", str(e))
 
     # Get GDAL API version from environment variable.
     if 'GDAL_VERSION' in os.environ:
         gdalversion = os.environ['GDAL_VERSION']
-        log.info("GDAL API version obtained from environment: %s", gdalversion)
+        logging.info("GDAL API version obtained from environment: %s",
+                     gdalversion)
 
     # Get GDAL API version from the command line if specified there.
     if '--gdalversion' in sys.argv:
         index = sys.argv.index('--gdalversion')
         sys.argv.pop(index)
         gdalversion = sys.argv.pop(index)
-        log.info("GDAL API version obtained from command line option: %s",
-                 gdalversion)
+        logging.info("GDAL API version obtained from command line option: %s",
+                     gdalversion)
 
     if not gdalversion:
-        log.fatal("A GDAL API version must be specified. Provide a path "
-                  "to gdal-config using a GDAL_CONFIG environment variable "
-                  "or use a GDAL_VERSION environment variable.")
+        logging.fatal("A GDAL API version must be specified. Provide a path "
+                      "to gdal-config using a GDAL_CONFIG environment "
+                      "variable or use a GDAL_VERSION environment variable.")
         sys.exit(1)
 
     if os.environ.get('PACKAGE_DATA'):
         destdir = 'fiona/gdal_data'
         if gdal_output[2]:
-            log.info("Copying gdal data from %s" % gdal_output[2])
+            logging.info("Copying gdal data from %s" % gdal_output[2])
             copy_data_tree(gdal_output[2], destdir)
         else:
             # check to see if GDAL_DATA is defined
             gdal_data = os.environ.get('GDAL_DATA', None)
             if gdal_data:
-                log.info("Copying gdal data from %s" % gdal_data)
+                logging.info("Copying gdal data from %s" % gdal_data)
                 copy_data_tree(gdal_data, destdir)
 
         # Conditionally copy PROJ DATA.
         projdatadir = os.environ.get('PROJ_DATA', os.environ.get('PROJ_LIB', '/usr/local/share/proj'))
         if os.path.exists(projdatadir):
-            log.info("Copying proj data from %s" % projdatadir)
+            logging.info("Copying proj data from %s" % projdatadir)
             copy_data_tree(projdatadir, 'fiona/proj_data')
 
     if "--cython-language" in sys.argv:
@@ -129,7 +130,8 @@ if 'clean' not in sys.argv:
             "Please upgrade GDAL."
         )
 
-    log.info("GDAL version major=%r minor=%r", gdal_major_version, gdal_minor_version)
+    logging.info("GDAL version major=%r minor=%r", gdal_major_version,
+                 gdal_minor_version)
 
 compile_time_env = {
     "CTE_GDAL_MAJOR_VERSION": gdal_major_version,
@@ -171,7 +173,7 @@ ext_modules = []
 
 if "clean" not in sys.argv:
     # When building from a repo, Cython is required.
-    log.info("MANIFEST.in found, presume a repo, cythonizing...")
+    logging.info("MANIFEST.in found, presume a repo, cythonizing...")
     if not cythonize:
         raise SystemExit(
             "Cython.Build.cythonize not found. "
