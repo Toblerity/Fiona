@@ -3,51 +3,51 @@ Credits
 
 Fiona is written by:
 
-- Sean Gillies <sean.gillies@gmail.com>
-- René Buffat <buffat@gmail.com>
-- Joshua Arnott <josh@snorfalorpagus.net>
-- Kevin Wurster <wursterk@gmail.com>
-- Micah Cochran <micahcochran@users.noreply.github.com>
-- Matthew Perry <perrygeo@gmail.com>
-- Elliott Sales de Andrade <quantum.analyst@gmail.com>
-- Kelsey Jordahl <kjordahl@enthought.com>
-- Patrick Young <patrick.mckendree.young@gmail.com>
-- Simon Norris <snorris@hillcrestgeo.ca>
-- Hannes Gräuler <graeuler@geoplex.de>
-- Johan Van de Wauw <johan.vandewauw@gmail.com>
-- Jacob Wasserman <jwasserman@gmail.com>
-- Michael Weisman <mweisman@gmail.com>
-- Ryan Grout <rgrout@continuum.io>
-- Bas Couwenberg <sebastic@xs4all.nl>
-- Brendan Ward <bcward@consbio.org>
-- Hannes <kannes@users.noreply.github.com>
-- Michele Citterio <michele@citterio.net>
-- Miro Hrončok <miro@hroncok.cz>
-- Sid Kapur <sid-kap@users.noreply.github.com>
-- Tim Tröndle <tim.troendle@usys.ethz.ch>
-- fredj <frederic.junod@camptocamp.com>
-- qinfeng <guo.qinfeng+github@gmail.com>
+- Alan D. Snow <alansnow21@gmail.com>
 - Ariel Nunez <ingenieroariel@gmail.com>
 - Ariki <Ariki@users.noreply.github.com>
+- Bas Couwenberg <sebastic@xs4all.nl>
 - Brandon Liu <bdon@bdon.org>
+- Brendan Ward <bcward@consbio.org>
 - Chris Mutel <cmutel@gmail.com>
 - Denis Rykov <rykovd@gmail.com>
+- dimlev <dimlev@gmail.com>
 - Efrén <chefren@users.noreply.github.com>
 - Egor Fedorov <egor.fedorov@emlid.com>
+- Elliott Sales de Andrade <quantum.analyst@gmail.com>
 - Even Rouault <even.rouault@mines-paris.org>
+- Ewout ter Hoeven <E.M.terHoeven@student.tudelft.nl>
 - Filipe Fernandes <ocefpaf@gmail.com>
+- fredj <frederic.junod@camptocamp.com>
 - Géraud <galak75@users.noreply.github.com>
 - Hannes Gräuler <hgraeule@uos.de>
+- Jacob Wasserman <jwasserman@gmail.com>
 - Jesse Crocker <jesse@gaiagps.com>
+- Johan Van de Wauw <johan.vandewauw@gmail.com>
+- Joris Van den Bossche <jorisvandenbossche@gmail.com>
+- Joshua Arnott <josh@snorfalorpagus.net>
 - Juan Luis Cano Rodríguez <Juanlu001@users.noreply.github.com>
+- Kelsey Jordahl <kjordahl@enthought.com>
+- Kevin Wurster <wursterk@gmail.com>
 - Ludovic Delauné <ludotux@gmail.com>
 - Martijn Visser <mgvisser@gmail.com>
-- Matthew Perry <perrygeo@users.noreply.github.com>
-- Michael Weisman <michael@urbanmapping.com>
+- Matthew Perry <perrygeo@gmail.com>
+- Micah Cochran <micahcochran@users.noreply.github.com>
+- Michael Weisman <mweisman@gmail.com>
+- Michele Citterio <michele@citterio.net>
+- Mike Taves <mwtoews@gmail.com>
+- Miro Hrončok <miro@hroncok.cz>
 - Oliver Tonnhofer <olt@bogosoft.com>
+- Patrick Young <patrick.mckendree.young@gmail.com>
+- qinfeng <guo.qinfeng+github@gmail.com>
+- René Buffat <buffat@gmail.com>
+- Ryan Grout <rgrout@continuum.io>
+- Sean Gillies <sean.gillies@gmail.com>
+- Sid Kapur <sid-kap@users.noreply.github.com>
+- Simon Norris <snorris@hillcrestgeo.ca>
 - Stefano Costa <steko@iosa.it>
 - Stephane Poss <stephposs@gmail.com>
-- dimlev <dimlev@gmail.com>
+- Tim Tröndle <tim.troendle@usys.ethz.ch>
 - wilsaj <wilson.andrew.j+github@gmail.com>
 
 The GeoPandas project (Joris Van den Bossche et al.) has been a major driver
