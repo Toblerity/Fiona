@@ -39,7 +39,7 @@ test_data = itertools.product(drivers, kinds, specify_drivers)
 def test_remove(tmpdir, kind, driver, specify_driver):
     """Test various dataset removal operations"""
     extension = {"ESRI Shapefile": "shp", "GeoJSON": "json"}[driver]
-    filename = "delete_me.{extension}".format(extension=extension)
+    filename = f"delete_me.{extension}"
     output_filename = str(tmpdir.join(filename))
 
     create_sample_data(output_filename, driver=driver)

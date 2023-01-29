@@ -24,7 +24,7 @@ class FieldSkipLogFilter(logging.Filter):
             return 1
 
 
-class LogFiltering(object):
+class LogFiltering:
     def __init__(self, logger, filter):
         self.logger = logger
         self.filter = filter

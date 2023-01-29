@@ -179,18 +179,18 @@ def test_unsupported_geometry_type():
 
 @pytest.mark.parametrize("x", list(range(1, 10)))
 def test_normalize_int32(x):
-    assert normalize_field_type("int:{}".format(x)) == "int32"
+    assert normalize_field_type(f"int:{x}") == "int32"
 
 
 @requires_gdal2
 @pytest.mark.parametrize("x", list(range(10, 20)))
 def test_normalize_int64(x):
-    assert normalize_field_type("int:{}".format(x)) == "int64"
+    assert normalize_field_type(f"int:{x}") == "int64"
 
 
 @pytest.mark.parametrize("x", list(range(0, 20)))
 def test_normalize_str(x):
-    assert normalize_field_type("str:{}".format(x)) == "str"
+    assert normalize_field_type(f"str:{x}") == "str"
 
 
 def test_normalize_bool():

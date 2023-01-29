@@ -1,7 +1,6 @@
 """Tests for `$ fio calc`."""
 
 
-from __future__ import division
 import json
 
 from click.testing import CliRunner

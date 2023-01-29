@@ -33,7 +33,7 @@ def _cb_key_val(ctx, param, value):
         for pair in value:
             if "=" not in pair:
                 raise click.BadParameter(
-                    "Invalid syntax for KEY=VAL arg: {}".format(pair)
+                    f"Invalid syntax for KEY=VAL arg: {pair}"
                 )
             else:
                 k, v = pair.split("=", 1)
@@ -115,12 +115,10 @@ def load(ctx, output, driver, src_crs, dst_crs, features, layer, creation_option
 
     # print(first, first.geometry)
     schema = {"geometry": first.geometry.type}
-    schema["properties"] = dict(
-        [
-            (k, FIELD_TYPES_MAP_REV.get(type(v)) or "str")
+    schema["properties"] = {
+            k: FIELD_TYPES_MAP_REV.get(type(v)) or "str"
             for k, v in first.properties.items()
-        ]
-    )
+    }
 
     with fiona.open(
         output,

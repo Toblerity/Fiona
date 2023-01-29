@@ -1,4 +1,3 @@
-from __future__ import division
 import json
 
 import click
@@ -50,7 +49,7 @@ def calc(ctx, property_name, expression, overwrite, use_rs):
 
             if not overwrite and property_name in feat["properties"]:
                 raise click.UsageError(
-                    "{0} already exists in properties; "
+                    "{} already exists in properties; "
                     "rename or use --overwrite".format(property_name)
                 )
 

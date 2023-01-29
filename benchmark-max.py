@@ -1,4 +1,3 @@
-
 import timeit
 from fiona import collection
 from osgeo import ogr

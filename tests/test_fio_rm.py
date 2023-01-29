@@ -32,7 +32,7 @@ drivers = ["ESRI Shapefile", "GeoJSON"]
 @pytest.mark.parametrize("driver", drivers)
 def test_remove(tmpdir, driver):
     extension = {"ESRI Shapefile": "shp", "GeoJSON": "json"}[driver]
-    filename = "delete_me.{extension}".format(extension=extension)
+    filename = f"delete_me.{extension}"
     filename = str(tmpdir.join(filename))
     create_sample_data(filename, driver)
 

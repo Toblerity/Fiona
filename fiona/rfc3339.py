@@ -32,7 +32,7 @@ pattern_datetime = re.compile(
     r"(\d\d\d\d)(-)?(\d\d)(-)?(\d\d)(T)?(\d\d)(:)?(\d\d)(:)?(\d\d)?(\.\d+)?(Z|([+-])?(\d\d)?(:)?(\d\d))?")
 
 
-class group_accessor(object):
+class group_accessor:
     def __init__(self, m):
         self.match = m
 

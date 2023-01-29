@@ -23,15 +23,15 @@ SCHEMES = {
     "az": "az",
 }
 
-CURLSCHEMES = set([k for k, v in SCHEMES.items() if v == 'curl'])
+CURLSCHEMES = {k for k, v in SCHEMES.items() if v == 'curl'}
 
 # TODO: extend for other cloud plaforms.
-REMOTESCHEMES = set(
-    [k for k, v in SCHEMES.items() if v in ("curl", "s3", "gs", "oss", "az")]
-)
+REMOTESCHEMES = {
+    k for k, v in SCHEMES.items() if v in ("curl", "s3", "gs", "oss", "az")
+}
 
 
-class Path(object):
+class Path:
     """Base class for dataset paths"""
 
 
@@ -76,9 +76,9 @@ class ParsedPath(Path):
         if not self.scheme:
             return self.path
         elif self.archive:
-            return "{}://{}!{}".format(self.scheme, self.archive, self.path)
+            return f"{self.scheme}://{self.archive}!{self.path}"
         else:
-            return "{}://{}".format(self.scheme, self.path)
+            return f"{self.scheme}://{self.path}"
 
     @property
     def is_remote(self):
@@ -177,13 +177,13 @@ def vsi_path(path):
             else:
                 suffix = ''
 
-            prefix = '/'.join('vsi{0}'.format(SCHEMES[p]) for p in path.scheme.split('+') if p != 'file')
+            prefix = '/'.join(f'vsi{SCHEMES[p]}' for p in path.scheme.split('+') if p != 'file')
 
             if prefix:
                 if path.archive:
                     result = '/{}/{}{}/{}'.format(prefix, suffix, path.archive, path.path.lstrip('/'))
                 else:
-                    result = '/{}/{}{}'.format(prefix, suffix, path.path)
+                    result = f'/{prefix}/{suffix}{path.path}'
             else:
                 result = path.path
             return result

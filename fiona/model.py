@@ -168,7 +168,7 @@ class Object(MutableMapping):
         return dict(**self) == dict(**other)
 
 
-class _Geometry(object):
+class _Geometry:
     def __init__(self, coordinates=None, type=None, geometries=None):
         self.coordinates = coordinates
         self.type = type
@@ -191,7 +191,7 @@ class Geometry(Object):
         self._delegate = _Geometry(
             coordinates=coordinates, type=type, geometries=geometries
         )
-        super(Geometry, self).__init__(**data)
+        super().__init__(**data)
 
     @classmethod
     def from_dict(cls, ob=None, **kwargs):
@@ -244,7 +244,7 @@ class Geometry(Object):
         return ObjectEncoder().default(self)
 
 
-class _Feature(object):
+class _Feature:
     def __init__(self, geometry=None, id=None, properties=None):
         self.geometry = geometry
         self.id = id
@@ -267,7 +267,7 @@ class Feature(Object):
         if properties is None:
             properties = Properties()
         self._delegate = _Feature(geometry=geometry, id=id, properties=properties)
-        super(Feature, self).__init__(**data)
+        super().__init__(**data)
 
     @classmethod
     def from_dict(cls, ob=None, **kwargs):
@@ -349,7 +349,7 @@ class Properties(Object):
     """A GeoJSON-like feature's properties"""
 
     def __init__(self, **kwds):
-        super(Properties, self).__init__(**kwds)
+        super().__init__(**kwds)
 
     @classmethod
     def from_dict(cls, mapping=None, **kwargs):

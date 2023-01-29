@@ -63,7 +63,7 @@ def test_object_delitem_warning():
 def test_object_setitem_delegated():
     """Delegation in __setitem__ works"""
 
-    class ThingDelegate(object):
+    class ThingDelegate:
         def __init__(self, value):
             self.value = value
 
@@ -72,7 +72,7 @@ def test_object_setitem_delegated():
 
         def __init__(self, value=None, **data):
             self._delegate = ThingDelegate(value)
-            super(Thing, self).__init__(**data)
+            super().__init__(**data)
 
     thing = Thing()
     assert thing["value"] is None
@@ -84,7 +84,7 @@ def test_object_setitem_delegated():
 def test_object_delitem_delegated():
     """Delegation in __delitem__ works"""
 
-    class ThingDelegate(object):
+    class ThingDelegate:
         def __init__(self, value):
             self.value = value
 
@@ -93,7 +93,7 @@ def test_object_delitem_delegated():
 
         def __init__(self, value=None, **data):
             self._delegate = ThingDelegate(value)
-            super(Thing, self).__init__(**data)
+            super().__init__(**data)
 
     thing = Thing(1)
     assert thing["value"] == 1

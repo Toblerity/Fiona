@@ -5,7 +5,7 @@ from fiona.errors import FionaDeprecationWarning
 
 
 @pytest.mark.usefixtures('uttc_path_gpx')
-class TestNonCountingLayer(object):
+class TestNonCountingLayer:
     def setup(self):
         self.c = fiona.open(self.path_gpx, "r", layer="track_points")
 

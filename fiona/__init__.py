@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Fiona is OGR's neat, nimble API.
 
