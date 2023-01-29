@@ -27,7 +27,7 @@ with fiona.open('docs/data/test_uk.shp', 'r') as source:
                 f['geometry'] = mapping(geom)
                 sink.write(f)
             
-            except Exception, e:
+            except Exception as e:
                 # Writing uncleanable features to a different shapefile
                 # is another option.
                 logging.exception("Error cleaning feature %s:", f['id'])
