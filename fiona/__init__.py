@@ -127,7 +127,7 @@ __all__ = [
     "prop_type",
     "prop_width",
 ]
-__version__ = "1.9b2"
+__version__ = "1.9.0"
 __gdal_version__ = get_gdal_release_name()
 
 gdal_version = get_gdal_version_tuple()

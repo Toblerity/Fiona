@@ -3,6 +3,13 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.9.0 (2023-01-30)
+------------------
+
+- CITATION.txt has been replaced by a new CITATION.cff file and the credits
+  have been updated.
+- In setup.py the distutils (deprecated) logger is no longer used.
+
 1.9b2 (2023-01-22)
 ------------------
 
