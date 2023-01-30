@@ -5,6 +5,7 @@ Fiona Documentation Contents
    :maxdepth: 2
 
    README
+   Installation <install>
    User Manual <manual>
    API Documentation <modules>
    CLI Documentation <cli>

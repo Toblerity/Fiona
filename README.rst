@@ -2,361 +2,115 @@
 Fiona
 =====
 
-Fiona reads and writes geographic data files and thereby helps Python programmers
-integrate geographic information systems with other computer systems. Fiona
-contains extension modules that link the Geospatial Data Abstraction Library (`GDAL`_).
-
 .. image:: https://github.com/Toblerity/Fiona/workflows/Linux%20CI/badge.svg?branch=master
    :target: https://github.com/Toblerity/Fiona/actions?query=branch%3Amaster
 
-.. image:: https://ci.appveyor.com/api/projects/status/github/Toblerity/Fiona?svg=true
-   :target: https://ci.appveyor.com/project/sgillies/fiona/branch/maint-1.9
+Fiona streams simple feature data to and from GIS formats like GeoPackage and
+Shapefile.
 
-.. image:: https://coveralls.io/repos/Toblerity/Fiona/badge.svg
-   :target: https://coveralls.io/r/Toblerity/Fiona
+Fiona can read and write real-world data using multi-layered GIS formats,
+zipped and in-memory virtual file systems, from files on your hard drive or in
+cloud storage. This project includes Python modules and a command line
+interface (CLI).
 
-Fiona is designed to be simple and dependable. It focuses on reading and
-writing data in standard Python IO style and relies upon familiar Python types
-and protocols such as files, dictionaries, mappings, and iterators instead of
-classes specific to GDAL's OpenGIS Reference Implementation (OGR). Fiona can read and write real-world data using
-multi-layered GIS formats and zipped virtual file systems and integrates
-readily with other Python GIS packages such as pyproj_, Rtree_, and Shapely_.
-
-Fiona is supported only on CPython versions 3.6+.
-
-Why the name "Fiona"? Because Fiona Is OGR's Neat and Nimble API for Python programmers. And a Shrek reference made us laugh.
-
-For more details, see:
-
-* Fiona `home page <https://github.com/Toblerity/Fiona>`__
-* `Docs and manual <https://fiona.readthedocs.io/>`__
-* `Examples <https://github.com/Toblerity/Fiona/tree/master/examples>`__
-
-For support and help:
-
-* Main `user discussion group <https://fiona.groups.io/g/main>`__
-
-For project discussions, see:
-
-* `Developers discussion group <https://fiona.groups.io/g/dev>`__
-
-Usage
-=====
-
-Collections
------------
-
-Records are read from and written to ``file``-like `Collection` objects
-returned from the ``fiona.open()`` function.  Records are mappings modeled on
-the GeoJSON format. They don't have any spatial methods of their own, so if you
-want to do anything fancy with them you will probably need Shapely or something
-like it. Here is an example of using Fiona to read some records from one data
-file, change their geometry attributes, and write them to a new data file.
-
-.. code-block:: python
-
-    import fiona
-
-    # Open a file for reading. We'll call this the "source."
-
-    with fiona.open('tests/data/coutwildrnp.shp') as src:
-
-        # The file we'll write to, the "destination", must be initialized
-        # with a coordinate system, a format driver name, and
-        # a record schema.  We can get initial values from the open
-        # collection's ``meta`` property and then modify them as
-        # desired.
-
-        meta = src.meta
-        meta['schema']['geometry'] = 'Point'
-
-        # Open an output file, using the same format driver and
-        # coordinate reference system as the source. The ``meta``
-        # mapping fills in the keyword parameters of fiona.open().
-
-        with fiona.open('test_write.shp', 'w', **meta) as dst:
-
-            # Process only the records intersecting a box.
-            for f in src.filter(bbox=(-107.0, 37.0, -105.0, 39.0)):
-
-                # Get a point on the boundary of the record's
-                # geometry.
-
-                f['geometry'] = {
-                    'type': 'Point',
-                    'coordinates': f['geometry']['coordinates'][0][0]}
-
-                # Write the record out.
-
-                dst.write(f)
-
-    # The destination's contents are flushed to disk and the file is
-    # closed when its ``with`` block ends. This effectively
-    # executes ``dst.flush(); dst.close()``.
-
-Reading Multilayer data
------------------------
-
-Collections can also be made from single layers within multilayer files or
-directories of data. The target layer is specified by name or by its integer
-index within the file or directory. The ``fiona.listlayers()`` function
-provides an index ordered list of layer names.
-
-.. code-block:: python
-
-    for layername in fiona.listlayers('tests/data'):
-        with fiona.open('tests/data', layer=layername) as src:
-            print(layername, len(src))
-
-    # Output:
-    # ('coutwildrnp', 67)
-
-Layer can also be specified by index. In this case, ``layer=0`` and
-``layer='test_uk'`` specify the same layer in the data file or directory.
-
-.. code-block:: python
-
-    for i, layername in enumerate(fiona.listlayers('tests/data')):
-        with fiona.open('tests/data', layer=i) as src:
-            print(i, layername, len(src))
-
-    # Output:
-    # (0, 'coutwildrnp', 67)
-
-Writing Multilayer data
------------------------
-
-Multilayer data can be written as well. Layers must be specified by name when
-writing.
-
-.. code-block:: python
-
-    with open('tests/data/cowildrnp.shp') as src:
-        meta = src.meta
-        f = next(src)
-
-    with fiona.open('/tmp/foo', 'w', layer='bar', **meta) as dst:
-        dst.write(f)
-
-    print(fiona.listlayers('/tmp/foo'))
-
-    with fiona.open('/tmp/foo', layer='bar') as src:
-        print(len(src))
-        f = next(src)
-        print(f['geometry']['type'])
-        print(f['properties'])
-
-        # Output:
-        # ['bar']
-        # 1
-        # Polygon
-        # OrderedDict([('PERIMETER', 1.22107), ('FEATURE2', None), ('NAME', 'Mount Naomi Wilderness'), ('FEATURE1', 'Wilderness'), ('URL', 'http://www.wilderness.net/index.cfm?fuse=NWPS&sec=wildView&wname=Mount%20Naomi'), ('AGBUR', 'FS'), ('AREA', 0.0179264), ('STATE_FIPS', '49'), ('WILDRNP020', 332), ('STATE', 'UT')])
-
-A view of the /tmp/foo directory will confirm the creation of the new files.
-
-.. code-block:: console
-
-    $ ls /tmp/foo
-    bar.cpg bar.dbf bar.prj bar.shp bar.shx
-
-Collections from archives and virtual file systems
---------------------------------------------------
-
-Zip and Tar archives can be treated as virtual filesystems and Collections can
-be made from paths and layers within them. In other words, Fiona lets you read
-and write zipped Shapefiles.
-
-.. code-block:: python
-
-    for i, layername in enumerate(fiona.listlayers('zip://tests/data/coutwildrnp.zip')):
-        with fiona.open('zip://tests/data/coutwildrnp.zip', layer=i) as src:
-            print(i, layername, len(src))
-
-    # Output:
-    # (0, 'coutwildrnp', 67)
-
-Fiona can also read from more exotic file systems. For instance, a
-zipped shape file in S3 can be accessed like so:
-
-.. code-block:: python
-
-   with fiona.open('zip+s3://mapbox/rasterio/coutwildrnp.zip') as src:
-       print(len(src))
-
-   # Output:
-   # 67
-
-
-Fiona CLI
-=========
-
-Fiona's command line interface, named "fio", is documented at `docs/cli.rst
-<https://github.com/Toblerity/Fiona/blob/master/docs/cli.rst>`__. Its ``fio
-info`` pretty prints information about a data file.
-
-.. code-block:: console
-
-    $ fio info --indent 2 tests/data/coutwildrnp.shp
-    {
-      "count": 67,
-      "crs": "EPSG:4326",
-      "driver": "ESRI Shapefile",
-      "bounds": [
-        -113.56424713134766,
-        37.0689811706543,
-        -104.97087097167969,
-        41.99627685546875
-      ],
-      "schema": {
-        "geometry": "Polygon",
-        "properties": {
-          "PERIMETER": "float:24.15",
-          "FEATURE2": "str:80",
-          "NAME": "str:80",
-          "FEATURE1": "str:80",
-          "URL": "str:101",
-          "AGBUR": "str:80",
-          "AREA": "float:24.15",
-          "STATE_FIPS": "str:80",
-          "WILDRNP020": "int:10",
-          "STATE": "str:80"
-        }
-      }
-    }
+Fiona depends on `GDAL <https://gdal.org>`__ but is different from GDAL's own
+`bindings <https://gdal.org/api/python_bindings.html>`__. Fiona is designed to
+be highly productive and to make it easy to write code which is easy to read.
 
 Installation
 ============
 
-Fiona requires Python versions 3.7+ and GDAL version 3.0+.  To build from a
-source distribution you will need a C compiler and GDAL and Python development
-headers and libraries (libgdal1-dev for Debian/Ubuntu, gdal-dev for
-CentOS/Fedora).
-
-To build from a repository copy, you will also need Cython to build C sources
-from the project's .pyx files. See the project's requirements-dev.txt file for
-guidance.
-
-Homebrew's GDAL Formula (``brew install gdal``) will satisfy the GDAL/OGR
-dependency for OS X.
-
-Python Requirements
--------------------
-
-Fiona depends on the modules ``cligj`` and ``munch``.  Pip will fetch these
-requirements for you, but users installing Fiona from a Windows installer must
-get them separately.
-
-Unix-like systems
------------------
-
-Assuming you're using a virtualenv (if not, skip to the 4th command) and
-GDAL/OGR libraries, headers, and `gdal-config`_ program are installed to well
-known locations on your system via your system's package manager (``brew
-install gdal`` using Homebrew on OS X), installation is this simple.
+Fiona has several `extension modules
+<https://docs.python.org/3/extending/extending.html>`__ which link against
+libgdal. This complicates installation. Binary distributions (wheels)
+containing libgdal and its own dependencies are available from the Python
+Package Index and can be installed using pip.
 
 .. code-block:: console
 
-  $ mkdir fiona_env
-  $ virtualenv fiona_env
-  $ source fiona_env/bin/activate
-  (fiona_env)$ pip install fiona
+    pip install fiona
 
-If gdal-config is not available or if GDAL/OGR headers and libs aren't
-installed to a well known location, you must set include dirs, library dirs,
-and libraries options via the setup.cfg file or setup command line as shown
-below (using ``git``). You must also specify the version of the GDAL API on the
-command line using the ``--gdalversion`` argument (see example below) or with
-the ``GDAL_VERSION`` environment variable (e.g. ``export GDAL_VERSION=2.1``).
+These wheels are mainly intended to make installation easy for simple
+applications, not so much for production. They are not tested for compatibility
+with all other binary wheels, conda packages, or QGIS, and omit many of GDAL's
+optional format drivers. If you need, for example, GML support you will need to
+build and install Fiona from a source distribution.
+
+Many users find Anaconda and conda-forge a good way to install Fiona and get
+access to more optional format drivers (like GML).
+
+Fiona 1.9 (coming soon) requires Python 3.7 or higher and GDAL 3.2 or higher.
+
+Python Usage
+============
+
+Features are read from and written to file-like ``Collection`` objects
+returned from the ``fiona.open()`` function. Features are data classes modeled
+on the GeoJSON format. They don't have any spatial methods of their own, so if
+you want to do anything fancy with them you will need Shapely or something like
+it. Here is an example of using Fiona to read some features from one data file,
+change their geometry attributes using Shapely, and write them to a new data
+file.
+
+.. code-block:: python
+
+    import fiona
+    from fiona import Feature, Geometry
+    from shapely.geometry import mapping, shape
+
+    # Open a file for reading. We'll call this the source.
+    with fiona.open("tests/data/coutwildrnp.shp") as src:
+
+        # The file we'll write to must be initialized with a coordinate
+        # system, a format driver name, and a record schema. We can get
+        # initial values from the open source's profile property and then
+        # modify them as we need.
+        profile = src.profile
+        profile["schema"]["geometry"] = "Point"
+        profile["driver"] = "GPKG"
+
+        # Open an output file, using the same format driver and coordinate
+        # reference system as the source. The profile mapping fills in the
+        # keyword parameters of fiona.open.
+        with fiona.open("/tmp/example.gpkg", "w", **profile) as dst:
+
+            # Process only the records intersecting a box.
+            for f in src.filter(bbox=(-107.0, 37.0, -105.0, 39.0)):
+
+                # Get the feature's centroid.
+                centroid_shp = shape(f.geometry).centroid
+                new_geom = Geometry.from_dict(centroid_shp)
+
+                # Write the feature out.
+                dst.write(
+                    Feature(geometry=new_geom, properties=f.properties)
+                )
+
+        # The destination's contents are flushed to disk and the file is
+        # closed when its with block ends. This effectively
+        # executes ``dst.flush(); dst.close()``.
+
+CLI Usage
+=========
+
+Fiona's command line interface, named "fio", is documented at `docs/cli.rst
+<https://github.com/Toblerity/Fiona/blob/master/docs/cli.rst>`__. The CLI has a
+number of different commands. Its ``fio cat`` command streams GeoJSON features
+from any dataset.
 
 .. code-block:: console
 
-  (fiona_env)$ git clone git://github.com/Toblerity/Fiona.git
-  (fiona_env)$ cd Fiona
-  (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal install --gdalversion 2.1
+    $ fio cat --compact tests/data/coutwildrnp.shp | jq -c '.'
+    {"geometry":{"coordinates":[[[-111.73527526855469,41.995094299316406],...]]}}
+    ...
 
-Or specify that build options and GDAL API version should be provided by a
-particular gdal-config program.
+Documentation
+=============
 
-.. code-block:: console
+For more details about this project, please see:
 
-  (fiona_env)$ GDAL_CONFIG=/path/to/gdal-config pip install fiona
-
-Windows
--------
-
-Binary installers are available at
-https://www.lfd.uci.edu/~gohlke/pythonlibs/#fiona and coming eventually to PyPI.
-
-You can download a binary distribution of GDAL from `here
-<https://www.gisinternals.com/release.php>`_.  You will also need to download
-the compiled libraries and headers (include files).
-
-When building from source on Windows, it is important to know that setup.py
-cannot rely on gdal-config, which is only present on UNIX systems, to discover
-the locations of header files and libraries that Fiona needs to compile its
-C extensions. On Windows, these paths need to be provided by the user.
-You will need to find the include files and the library files for gdal and
-use setup.py as follows. You must also specify the version of the GDAL API on the
-command line using the ``--gdalversion`` argument (see example below) or with
-the ``GDAL_VERSION`` environment variable (e.g. ``set GDAL_VERSION=2.1``).
-
-.. code-block:: console
-
-    $ python setup.py build_ext -I<path to gdal include files> -lgdal_i -L<path to gdal library> install --gdalversion 2.1
-    
-.. code-block:: console
-   
-   $ set GDAL_VERSION=3.0
-   $ pip install --install-option=build_ext --install-option="-I<drive letter>:\\<path to gdal include files>\\include" --install-option="-lgdal_i" --install-option="-L<drive letter>:\\<path to gdal lib files>\\libs" fiona
-
-Note: The following environment variables needs to be set so that Fiona works correctly:
-
-* The directory containing the GDAL DLL (``gdal304.dll`` or similar) needs to be in your
-  Windows ``PATH`` (e.g. ``C:\gdal\bin``).
-* The gdal-data directory needs to be in your Windows ``PATH`` or the environment variable
-  ``GDAL_DATA`` must be set (e.g. ``C:\gdal\bin\gdal-data``).
-* The environment variable ``PROJ_LIB`` (PROJ < 9.1) | ``PROJ_DATA`` (PROJ 9.1+) must be set to the proj data directory (e.g.
-  ``C:\gdal\bin\proj6\share``)
-
-The `Appveyor CI build <https://ci.appveyor.com/project/sgillies/fiona/history>`__
-uses the GISInternals GDAL binaries to build Fiona. This produces a binary wheel
-for successful builds, which includes GDAL and other dependencies, for users
-wanting to try an unstable development version.
-The `Appveyor configuration file <https://github.com/Toblerity/Fiona/blob/master/appveyor.yml>`__ may be a useful example for
-users building from source on Windows.
-
-Support
-=======
-
-The primary forum for questions about installation and usage of Fiona is
-https://fiona.groups.io/g/main. The authors and other users will answer
-questions when they have expertise to share and time to explain. Please take
-the time to craft a clear question and be patient about responses.
-
-Please do not bring these questions to Fiona's issue tracker, which we want
-to reserve for bug reports and other actionable issues.
-
-Development and testing
-=======================
-
-Building from the source requires Cython. Tests require `pytest <https://pytest.org>`_. If the GDAL/OGR
-libraries, headers, and `gdal-config`_ program are installed to well known
-locations on your system (via your system's package manager), you can do this::
-
-  (fiona_env)$ git clone git://github.com/Toblerity/Fiona.git
-  (fiona_env)$ cd Fiona
-  (fiona_env)$ pip install cython
-  (fiona_env)$ pip install -e .[test]
-  (fiona_env)$ pytest
-
-If you have a non-standard environment, you'll need to specify the include and
-lib dirs and GDAL library on the command line::
-
-  (fiona_env)$ python setup.py build_ext -I/path/to/gdal/include -L/path/to/gdal/lib -lgdal --gdalversion 2 develop
-  (fiona_env)$ pytest
-
-.. _GDAL: https://gdal.org
-.. _pyproj: https://pypi.org/project/pyproj/
-.. _Rtree: https://pypi.org/project/Rtree/
-.. _Shapely: https://pypi.org/project/Shapely/
-.. _gdal-config: https://gdal.org/programs/gdal-config.html
+* Fiona `home page <https://github.com/Toblerity/Fiona>`__
+* `Docs and manual <https://fiona.readthedocs.io/>`__
+* `Examples <https://github.com/Toblerity/Fiona/tree/master/examples>`__
+* Main `user discussion group <https://fiona.groups.io/g/main>`__
+* `Developers discussion group <https://fiona.groups.io/g/dev>`__

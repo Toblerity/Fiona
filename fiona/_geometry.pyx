@@ -7,7 +7,7 @@ include "gdal.pxi"
 import logging
 
 from fiona.errors import UnsupportedGeometryTypeError
-from fiona.model import _guard_model_object, GEOMETRY_TYPES, Geometry, OGRGeometryType
+from fiona.model import decode_object, GEOMETRY_TYPES, Geometry, OGRGeometryType
 from fiona._err cimport exc_wrap_int
 
 
@@ -363,7 +363,7 @@ cdef class OGRGeomBuilder:
 
 def geometryRT(geom):
     # For testing purposes only, leaks the JSON data
-    geometry = _guard_model_object(geom)
+    geometry = decode_object(geom)
     cdef void *cogr_geometry = OGRGeomBuilder().build(geometry)
     result = GeomBuilder().build(cogr_geometry)
     _deleteOgrGeom(cogr_geometry)

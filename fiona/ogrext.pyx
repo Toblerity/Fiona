@@ -32,8 +32,8 @@ from fiona.env import Env
 from fiona.errors import (
     DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
-    AttributeFilterError, FeatureWarning, FionaDeprecationWarning)
-from fiona.model import _guard_model_object, Feature, Geometry, Properties
+    AttributeFilterError, FeatureWarning, FionaDeprecationWarning, UnsupportedGeometryTypeError)
+from fiona.model import decode_object, Feature, Geometry, Properties
 from fiona.path import vsi_path
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
@@ -119,14 +119,16 @@ cdef void* gdal_open_vector(char* path_c, int mode, drivers, options) except NUL
                 drvs = CSLAddString(drvs, name_c)
 
     for k, v in options.items():
-        if v is None:
-            continue
-        k = k.upper().encode('utf-8')
-        if isinstance(v, bool):
-            v = ('ON' if v else 'OFF').encode('utf-8')
-        else:
-            v = str(v).encode('utf-8')
-        open_opts = CSLAddNameValue(open_opts, <const char *>k, <const char *>v)
+
+        if v is not None:
+            kb = k.upper().encode('utf-8')
+
+            if isinstance(v, bool):
+                vb = ('ON' if v else 'OFF').encode('utf-8')
+            else:
+                vb = str(v).encode('utf-8')
+
+            open_opts = CSLAddNameValue(open_opts, <const char *>kb, <const char *>vb)
 
     open_opts = CSLAddNameValue(open_opts, "VALIDATE_OPEN_OPTIONS", "NO")
 
@@ -148,13 +150,26 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except NU
     cdef char **creation_opts = NULL
     cdef void *cogr_ds = NULL
 
+    db = <const char *>GDALGetDriverShortName(cogr_driver)
+
+    # To avoid a circular import.
+    from fiona import meta
+
+    option_keys = set(key.upper() for key in options.keys())
+    creation_option_keys = option_keys & set(meta.dataset_creation_options(db.decode("utf-8")))
+
     for k, v in options.items():
-        k = k.upper().encode('utf-8')
-        if isinstance(v, bool):
-            v = ('ON' if v else 'OFF').encode('utf-8')
-        else:
-            v = str(v).encode('utf-8')
-        creation_opts = CSLAddNameValue(creation_opts, <const char *>k, <const char *>v)
+
+        if k.upper() in creation_option_keys:
+
+            kb = k.upper().encode('utf-8')
+
+            if isinstance(v, bool):
+                vb = ('ON' if v else 'OFF').encode('utf-8')
+            else:
+                vb = str(v).encode('utf-8')
+
+            creation_opts = CSLAddNameValue(creation_opts, <const char *>kb, <const char *>vb)
 
     try:
         return exc_wrap_pointer(GDALCreate(cogr_driver, path_c, 0, 0, 0, GDT_Unknown, creation_opts))
@@ -508,7 +523,7 @@ cdef _deleteOgrFeature(void *cogr_feature):
 
 def featureRT(feat, collection):
     # For testing purposes only, leaks the JSON data
-    feature = _guard_model_object(feat)
+    feature = decode_object(feat)
     cdef void *cogr_feature = OGRFeatureBuilder().build(feature, collection)
     cdef void *cogr_geometry = OGR_F_GetGeometryRef(cogr_feature)
     if cogr_geometry == NULL:
@@ -1131,40 +1146,48 @@ cdef class WritingSession(Session):
             name_b = collection.name.encode('utf-8')
             name_c = name_b
 
+            # To avoid circular import.
+            from fiona import meta
+
+            kwarg_keys = set(key.upper() for key in kwargs.keys())
+            lyr_creation_option_keys = kwarg_keys & set(meta.layer_creation_options(collection.driver))
+
             for k, v in kwargs.items():
 
-                if v is None:
-                    continue
+                if v is not None and k.upper() in lyr_creation_option_keys:
+                    kb = k.upper().encode('utf-8')
 
-                # We need to remove encoding from the layer creation
-                # options if we're not creating a shapefile.
-                if k == 'encoding' and "Shapefile" not in collection.driver:
-                    continue
+                    if isinstance(v, bool):
+                        vb = ('ON' if v else 'OFF').encode('utf-8')
+                    else:
+                        vb = str(v).encode('utf-8')
 
-                k = k.upper().encode('utf-8')
-
-                if isinstance(v, bool):
-                    v = ('ON' if v else 'OFF').encode('utf-8')
-                else:
-                    v = str(v).encode('utf-8')
-                options = CSLAddNameValue(options, <const char *>k, <const char *>v)
+                    options = CSLAddNameValue(options, <const char *>kb, <const char *>vb)
 
             geometry_type = collection.schema.get("geometry", "Unknown")
+
             if not isinstance(geometry_type, str) and geometry_type is not None:
                 geometry_types = set(geometry_type)
+
                 if len(geometry_types) > 1:
                     geometry_type = "Unknown"
                 else:
                     geometry_type = geometry_types.pop()
+
             if geometry_type == "Any" or geometry_type is None:
                 geometry_type = "Unknown"
+
             geometry_code = geometry_type_code(geometry_type)
 
             try:
-                self.cogr_layer = exc_wrap_pointer(
-                    GDALDatasetCreateLayer(
-                        self.cogr_ds, name_c, cogr_srs,
-                        <OGRwkbGeometryType>geometry_code, options))
+                # In GDAL versions > 3.6.0 the following directive may
+                # suffice and we might be able to eliminate the import
+                # of fiona.meta in a future version of Fiona.
+                with Env(GDAL_VALIDATE_CREATION_OPTIONS="NO"):
+                    self.cogr_layer = exc_wrap_pointer(
+                        GDALDatasetCreateLayer(
+                            self.cogr_ds, name_c, cogr_srs,
+                            <OGRwkbGeometryType>geometry_code, options))
 
             except Exception as exc:
                 GDALClose(self.cogr_ds)
@@ -1273,18 +1296,27 @@ cdef class WritingSession(Session):
         log.debug("Writing started")
 
     def writerecs(self, records, collection):
-        """Writes buffered records to OGR."""
+        """Writes records to collection storage.
+
+        Parameters
+        ----------
+        records : Iterable
+            A stream of feature records.
+        collection : Collection
+            The collection in which feature records are stored.
+
+        Returns
+        -------
+        None
+
+        """
         cdef void *cogr_driver
         cdef void *cogr_feature
         cdef int features_in_transaction = 0
-
         cdef void *cogr_layer = self.cogr_layer
+
         if cogr_layer == NULL:
             raise ValueError("Null layer")
-
-        schema_geom_type = collection.schema['geometry']
-        cogr_driver = GDALGetDatasetDriver(self.cogr_ds)
-        driver_name = OGR_Dr_GetName(cogr_driver).decode("utf-8")
 
         valid_geom_types = collection._valid_geom_types
 
@@ -1305,13 +1337,7 @@ cdef class WritingSession(Session):
         schema_props_keys = set(collection.schema['properties'].keys())
 
         for _rec in records:
-            record = _guard_model_object(_rec)
-
-            # Check for optional elements
-            # if 'properties' not in _rec:
-            #     _rec['properties'] = {}
-            # if 'geometry' not in _rec:
-            #     _rec['geometry'] = None
+            record = decode_object(_rec)
 
             # Validate against collection's schema.
             if set(record.properties.keys()) != schema_props_keys:
@@ -1332,22 +1358,30 @@ cdef class WritingSession(Session):
 
             if result != OGRERR_NONE:
                 msg = get_last_error_msg()
-                raise RuntimeError("GDAL Error: {msg} \n \n Failed to write record: "
-                                   "{record}".format(msg=msg, record=record))
+                raise RuntimeError(
+                    "GDAL Error: {msg}. Failed to write record: {record}".format(
+                        msg=msg, record=record
+                    )
+                )
 
             _deleteOgrFeature(cogr_feature)
 
             if transactions_supported:
                 features_in_transaction += 1
+
                 if features_in_transaction == DEFAULT_TRANSACTION_SIZE:
                     log.debug("Committing transaction (intermediate)")
                     result = GDALDatasetCommitTransaction(self.cogr_ds)
+
                     if result == OGRERR_FAILURE:
                         raise TransactionError("Failed to commit transaction")
+
                     log.debug("Starting transaction (intermediate)")
                     result = GDALDatasetStartTransaction(self.cogr_ds, 0)
+
                     if result == OGRERR_FAILURE:
                         raise TransactionError("Failed to start transaction")
+
                     features_in_transaction = 0
 
         if transactions_supported:
@@ -1477,7 +1511,7 @@ cdef class Iterator:
             OGR_L_SetSpatialFilterRect(
                 cogr_layer, bbox[0], bbox[1], bbox[2], bbox[3])
         elif mask:
-            mask_geom = _guard_model_object(mask)
+            mask_geom = decode_object(mask)
             cogr_geometry = OGRGeomBuilder().build(mask_geom)
             OGR_L_SetSpatialFilter(cogr_layer, cogr_geometry)
             OGR_G_DestroyGeometry(cogr_geometry)
@@ -2071,7 +2105,7 @@ def _get_metadata_item(driver, metadata_item):
 
     if get_gdal_version_tuple() < (2, ):
         return None
-    
+
     if driver is None:
         return None
 

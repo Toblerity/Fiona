@@ -85,29 +85,30 @@ if platform.system() == "Windows":
                     os.add_dll_directory(p)
 
 
+from fiona._env import (
+    calc_gdal_version_num,
+    get_gdal_release_name,
+    get_gdal_version_num,
+    get_gdal_version_tuple,
+)
+from fiona._env import driver_count
+from fiona._show_versions import show_versions
 from fiona.collection import BytesCollection, Collection
 from fiona.drvsupport import supported_drivers
 from fiona.env import ensure_env_with_credentials, Env
 from fiona.errors import FionaDeprecationWarning
-from fiona._env import driver_count
-from fiona._env import (
-    calc_gdal_version_num,
-    get_gdal_version_num,
-    get_gdal_release_name,
-    get_gdal_version_tuple,
-)
 from fiona.io import MemoryFile
+from fiona.model import Feature, Geometry, Properties
 from fiona.ogrext import (
-    _bounds,
-    _listlayers,
-    _listdir,
     FIELD_TYPES_MAP,
+    _bounds,
+    _listdir,
+    _listlayers,
     _remove,
     _remove_layer,
 )
 from fiona.path import ParsedPath, parse_path, vsi_path
 from fiona.vfs import parse_paths as vfs_parse_paths
-from fiona._show_versions import show_versions
 
 # These modules are imported by fiona.ogrext, but are also import here to
 # help tools like cx_Freeze find them automatically
@@ -115,7 +116,17 @@ from fiona import _geometry, _err, rfc3339
 import uuid
 
 
-__all__ = ['bounds', 'listlayers', 'listdir', 'open', 'prop_type', 'prop_width']
+__all__ = [
+    "Feature",
+    "Geometry",
+    "Properties",
+    "bounds",
+    "listlayers",
+    "listdir",
+    "open",
+    "prop_type",
+    "prop_width",
+]
 __version__ = "2.0dev"
 __gdal_version__ = get_gdal_release_name()
 
