@@ -40,6 +40,7 @@ dependencies = [
     "click-plugins>=1.0",
     "cligj>=0.5",
     "munch>=2.3.2",
+    "setuptools",
 ]
 
 [project.optional-dependencies]
