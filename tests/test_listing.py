@@ -84,7 +84,9 @@ def test_listing_pathobj(path_coutwildrnp_json):
 
 def test_listdir_path(path_coutwildrnp_zip):
     """List directories in a path"""
-    assert fiona.listdir('zip://{}'.format(path_coutwildrnp_zip)) == ['coutwildrnp.shp', 'coutwildrnp.shx', 'coutwildrnp.dbf', 'coutwildrnp.prj']
+    assert sorted(fiona.listdir('zip://{}'.format(path_coutwildrnp_zip))) == [
+        'coutwildrnp.dbf', 'coutwildrnp.prj', 'coutwildrnp.shp', 'coutwildrnp.shx'
+    ]
 
 
 def test_listdir_path_not_existing(data_dir):
@@ -116,9 +118,9 @@ def test_listdir_zipmemoryfile(bytes_coutwildrnp_zip):
     """Test list directories of a zipped memory file."""
     with ZipMemoryFile(bytes_coutwildrnp_zip) as memfile:
         print(memfile.name)
-        assert fiona.listdir(memfile.name) == [
-            "coutwildrnp.shp",
-            "coutwildrnp.shx",
+        assert sorted(fiona.listdir(memfile.name)) == [
             "coutwildrnp.dbf",
             "coutwildrnp.prj",
+            "coutwildrnp.shp",
+            "coutwildrnp.shx",
         ]
