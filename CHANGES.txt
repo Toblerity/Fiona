@@ -3,6 +3,12 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.9.1 (TBD)
+-----------
+
+- setuptools added to pyproject.toml. Its pkg_resources module is used by the
+  CLI (#1191).
+
 1.9.0 (2023-01-30)
 ------------------
 
