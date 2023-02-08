@@ -199,6 +199,7 @@ class Geometry(Object):
 
         if "geometries" in data and data["type"] == "GeometryCollection":
             _ = data.pop("coordinates", None)
+            _ = data.pop("type", None)
             return Geometry(
                 type="GeometryCollection",
                 geometries=[
