@@ -196,15 +196,23 @@ class Geometry(Object):
     @classmethod
     def from_dict(cls, ob=None, **kwargs):
         data = dict(getattr(ob, "__geo_interface__", ob) or {}, **kwargs)
-        return Geometry(
-            coordinates=data.pop("coordinates", None),
-            type=data.pop("type", None),
-            geometries=[
-                Geometry.from_dict(**part)
-                for part in data.pop("geometries", None) or []
-            ],
-            **data
-        )
+
+        if "geometries" in data and data["type"] == "GeometryCollection":
+            _ = data.pop("coordinates", None)
+            return Geometry(
+                type="GeometryCollection",
+                geometries=[
+                    Geometry.from_dict(**part) for part in data.pop("geometries")
+                ],
+                **data
+            )
+        else:
+            _ = data.pop("geometries", None)
+            return Geometry(
+                type=data.pop("type", None),
+                coordinates=data.pop("coordinates", []),
+                **data
+            )
 
     @property
     def coordinates(self):
