@@ -3,8 +3,8 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.9.1 (TBD)
------------
+1.9.1 (2023-02-09)
+------------------
 
 - Log a warning message when identically named fields are encountered (#1201).
 - Avoid dependence on listdir order in tests (#1193).
