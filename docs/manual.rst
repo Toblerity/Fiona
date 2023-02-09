@@ -450,10 +450,14 @@ be found in a dictionary named :py:attr:`fiona.FIELD_TYPES_MAP`.
 .. code-block:: pycon
 
   >>> pprint.pprint(fiona.FIELD_TYPES_MAP)
-  {'date': <class 'fiona.rfc3339.FionaDateType'>,
+  {'List[str]': typing.List[str],
+   'bytes': <class 'bytes'>,
+   'date': <class 'fiona.rfc3339.FionaDateType'>,
    'datetime': <class 'fiona.rfc3339.FionaDateTimeType'>,
    'float': <class 'float'>,
    'int': <class 'int'>,
+   'int32': <class 'int'>,
+   'int64': <class 'int'>,
    'str': <class 'str'>,
    'time': <class 'fiona.rfc3339.FionaTimeType'>}
 
