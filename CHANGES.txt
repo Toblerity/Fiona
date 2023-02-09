@@ -6,8 +6,9 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.9.1 (TBD)
 -----------
 
+- Log a warning message when identically named fields are encountered (#1201).
 - Avoid dependence on listdir order in tests (#1193).
-- Prevent empty geometries arrays from appearing in __geo_interface__ (#).
+- Prevent empty geometries arrays from appearing in __geo_interface__ (#1197).
 - setuptools added to pyproject.toml. Its pkg_resources module is used by the
   CLI (#1191).
 
