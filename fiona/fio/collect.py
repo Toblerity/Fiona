@@ -147,8 +147,7 @@ def collect(
 
             def feature_text_gen():
                 yield first_line
-                for line in stdin:
-                    yield line
+                yield from stdin
 
     source = feature_text_gen()
 

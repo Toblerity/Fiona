@@ -1,4 +1,3 @@
-
 import fiona
 
 # This module contains examples of opening files to get feature collections in

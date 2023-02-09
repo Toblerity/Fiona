@@ -43,15 +43,15 @@ for path in files:
     if os.path.basename(path) in ignored_files:
         continue
 
-    with open(path, 'r') as f:
+    with open(path) as f:
         for i, line in enumerate(f):
             for deprecated_method in deprecated:
-                match = re.search('{}\s*\('.format(deprecated_method), line)
+                match = re.search(fr'{deprecated_method}\s*\(', line)
                 if match:
                     found_lines[path].append((i+1, line.strip(), deprecated_method))
 
 for path in sorted(found_lines):
     print(path)
     for line_nr, line, method in found_lines[path]:
-        print("\t{}\t{}".format(line_nr, line))
+        print(f"\t{line_nr}\t{line}")
     print("")

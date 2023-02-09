@@ -1,4 +1,3 @@
-
 import logging
 import sys
 
@@ -34,7 +33,7 @@ with fiona.open('docs/data/test_uk.shp', 'r') as source:
                 f['geometry']['coordinates'] = new_coords
                 sink.write(f)
             
-            except Exception, e:
+            except Exception as e:
                 # Writing uncleanable features to a different shapefile
                 # is another option.
                 logging.exception("Error transforming feature %s:", f['id'])

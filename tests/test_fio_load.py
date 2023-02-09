@@ -143,7 +143,7 @@ def test_creation_options(tmpdir, runner, feature_seq):
     ("SHP", "ESRI Shapefile"),
 ])
 def test_load__auto_detect_format(tmpdir, runner, feature_seq, extension, driver):
-    tmpfile = str(tmpdir.mkdir('tests').join('test_src_vs_dst_crs.{}'.format(extension)))
+    tmpfile = str(tmpdir.mkdir('tests').join(f'test_src_vs_dst_crs.{extension}'))
     result = runner.invoke(main_group, [
         'load',
         '--src-crs',

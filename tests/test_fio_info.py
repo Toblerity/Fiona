@@ -80,7 +80,7 @@ def test_info_layer(path_gpx):
 def test_info_vfs(path_coutwildrnp_zip, path_coutwildrnp_shp):
     runner = CliRunner()
     zip_result = runner.invoke(main_group, [
-        'info', 'zip://{}'.format(path_coutwildrnp_zip)])
+        'info', f'zip://{path_coutwildrnp_zip}'])
     shp_result = runner.invoke(main_group, [
         'info', path_coutwildrnp_shp])
     assert zip_result.exit_code == shp_result.exit_code == 0

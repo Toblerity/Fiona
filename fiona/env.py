@@ -61,7 +61,7 @@ local = ThreadEnv()
 log = logging.getLogger(__name__)
 
 
-class Env(object):
+class Env:
     """Abstraction for GDAL and AWS configuration
 
     The GDAL library is stateful: it has a registry of format drivers,
@@ -354,7 +354,7 @@ def delenv():
     local._env = None
 
 
-class NullContextManager(object):
+class NullContextManager:
     def __init__(self):
         pass
 
@@ -461,7 +461,7 @@ def ensure_env_with_credentials(f):
 
 @attr.s(slots=True)
 @total_ordering
-class GDALVersion(object):
+class GDALVersion:
     """Convenience class for obtaining GDAL major and minor version
     components and comparing between versions.  This is highly
     simplistic and assumes a very normal numbering scheme for versions
@@ -479,10 +479,10 @@ class GDALVersion(object):
         return (self.major, self.minor) < tuple(other.major, other.minor)
 
     def __repr__(self):
-        return "GDALVersion(major={0}, minor={1})".format(self.major, self.minor)
+        return f"GDALVersion(major={self.major}, minor={self.minor})"
 
     def __str__(self):
-        return "{0}.{1}".format(self.major, self.minor)
+        return f"{self.major}.{self.minor}"
 
     @classmethod
     def parse(cls, input):
@@ -591,7 +591,7 @@ def require_gdal_version(
     version = GDALVersion.parse(version)
     runtime = GDALVersion.runtime()
     inequality = ">=" if runtime < version else "<="
-    reason = "\n{0}".format(reason) if reason else reason
+    reason = f"\n{reason}" if reason else reason
 
     def decorator(f):
         @wraps(f)
@@ -602,7 +602,7 @@ def require_gdal_version(
 
                 if param is None:
                     raise GDALVersionError(
-                        "GDAL version must be {0} {1}{2}".format(
+                        "GDAL version must be {} {}{}".format(
                             inequality, str(version), reason
                         )
                     )
@@ -627,16 +627,16 @@ def require_gdal_version(
                             full_kwds[param] != defaults[param]
                         ):
                             raise GDALVersionError(
-                                'usage of parameter "{0}" requires '
-                                "GDAL {1} {2}{3}".format(
+                                'usage of parameter "{}" requires '
+                                "GDAL {} {}{}".format(
                                     param, inequality, version, reason
                                 )
                             )
 
                     elif full_kwds[param] in values:
                         raise GDALVersionError(
-                            'parameter "{0}={1}" requires '
-                            "GDAL {2} {3}{4}".format(
+                            'parameter "{}={}" requires '
+                            "GDAL {} {}{}".format(
                                 param, full_kwds[param], inequality, version, reason
                             )
                         )

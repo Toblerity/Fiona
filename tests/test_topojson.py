@@ -18,7 +18,7 @@ has_driver = driver in fiona.drvsupport.supported_drivers.keys()
 
 
 @pytest.mark.skipif(not gdal_version.at_least((1, 11)), reason="Requires GDAL >= 1.11")
-@pytest.mark.skipif(not has_driver, reason="Requires {} driver".format(driver))
+@pytest.mark.skipif(not has_driver, reason=f"Requires {driver} driver")
 def test_read_topojson(data_dir):
     """Test reading a TopoJSON file
 

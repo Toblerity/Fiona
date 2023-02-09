@@ -18,10 +18,10 @@ SCHEMES = {
     'gs': 'gs',
 }
 
-CURLSCHEMES = set([k for k, v in SCHEMES.items() if v == 'curl'])
+CURLSCHEMES = {k for k, v in SCHEMES.items() if v == 'curl'}
 
 # TODO: extend for other cloud plaforms.
-REMOTESCHEMES = set([k for k, v in SCHEMES.items() if v in ('curl', 's3', 'gs')])
+REMOTESCHEMES = {k for k, v in SCHEMES.items() if v in ('curl', 's3', 'gs')}
 
 
 def valid_vsi(vsi):
@@ -39,11 +39,11 @@ def vsi_path(path, vsi=None, archive=None):
     # If a VSI and archive file are specified, we convert the path to
     # an OGR VSI path (see cpl_vsi.h).
     if vsi:
-        prefix = '/'.join('vsi{0}'.format(SCHEMES[p]) for p in vsi.split('+'))
+        prefix = '/'.join(f'vsi{SCHEMES[p]}' for p in vsi.split('+'))
         if archive:
-            result = '/{0}/{1}{2}'.format(prefix, archive, path)
+            result = f'/{prefix}/{archive}{path}'
         else:
-            result = '/{0}/{1}'.format(prefix, path)
+            result = f'/{prefix}/{path}'
     else:
         result = path
 

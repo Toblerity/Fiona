@@ -69,9 +69,9 @@ class MemoryFile(MemoryFileBase):
             raise DriverError("Driver {} does not support virtual files.")
 
         if mode in ('r', 'a') and not self.exists():
-            raise IOError("MemoryFile does not exist.")
+            raise OSError("MemoryFile does not exist.")
         if layer is None and mode == 'w' and self.exists():
-            raise IOError("MemoryFile already exists.")
+            raise OSError("MemoryFile already exists.")
 
         if not self.exists() or mode == 'w':
             if driver is not None:
@@ -111,9 +111,9 @@ class MemoryFile(MemoryFileBase):
         if self.closed:
             raise OSError("I/O operation on closed file.")
         if path:
-            vsi_path = "{0}/{1}".format(self.name, path.lstrip("/"))
+            vsi_path = "{}/{}".format(self.name, path.lstrip("/"))
         else:
-            vsi_path = "{0}".format(self.name)
+            vsi_path = f"{self.name}"
         return _listdir(vsi_path)
 
     def listlayers(self, path=None):
@@ -133,9 +133,9 @@ class MemoryFile(MemoryFileBase):
         if self.closed:
             raise OSError("I/O operation on closed file.")
         if path:
-            vsi_path = "{0}/{1}".format(self.name, path.lstrip("/"))
+            vsi_path = "{}/{}".format(self.name, path.lstrip("/"))
         else:
-            vsi_path = "{0}".format(self.name)
+            vsi_path = f"{self.name}"
         return _listlayers(vsi_path)
 
     def __enter__(self):
@@ -154,7 +154,7 @@ class ZipMemoryFile(MemoryFile):
 
     def __init__(self, file_or_bytes=None):
         super().__init__(file_or_bytes, ext=".zip")
-        self.name = "/vsizip{}".format(self.name)
+        self.name = f"/vsizip{self.name}"
 
     def open(
         self,
@@ -182,9 +182,9 @@ class ZipMemoryFile(MemoryFile):
         if self.closed:
             raise OSError("I/O operation on closed file.")
         if path:
-            vsi_path = "{0}/{1}".format(self.name, path.lstrip("/"))
+            vsi_path = "{}/{}".format(self.name, path.lstrip("/"))
         else:
-            vsi_path = "{0}".format(self.name)
+            vsi_path = f"{self.name}"
 
         return Collection(
             vsi_path,

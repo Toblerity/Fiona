@@ -9,7 +9,7 @@ from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import group_accessor, pattern_date
 
 
-class TestDateParse(object):
+class TestDateParse:
 
     def test_yyyymmdd(self):
         assert parse_date("2012-01-29") == (2012, 1, 29, 0, 0, 0, 0.0, None)
@@ -19,7 +19,7 @@ class TestDateParse(object):
             parse_date("xxx")
 
 
-class TestTimeParse(object):
+class TestTimeParse:
 
     def test_hhmmss(self):
         assert parse_time("10:11:12") == (0, 0, 0, 10, 11, 12, 0.0, None)
@@ -44,7 +44,7 @@ class TestTimeParse(object):
             parse_time("xxx")
 
 
-class TestDatetimeParse(object):
+class TestDatetimeParse:
 
     def test_yyyymmdd(self):
         assert (

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Fiona documentation build configuration file, created by
 # sphinx-quickstart on Mon Dec 26 12:16:26 2011.

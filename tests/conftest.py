@@ -40,13 +40,13 @@ def pytest_report_header(config):
     # gdal version number
     gdal_release_name = fiona.get_gdal_release_name()
     headers.append(
-        "GDAL: {} ({})".format(gdal_release_name, fiona.get_gdal_version_num())
+        f"GDAL: {gdal_release_name} ({fiona.get_gdal_version_num()})"
     )
     supported_drivers = ", ".join(
         sorted(list(fiona.drvsupport.supported_drivers.keys()))
     )
     # supported drivers
-    headers.append("Supported drivers: {}".format(supported_drivers))
+    headers.append(f"Supported drivers: {supported_drivers}")
     return "\n".join(headers)
 
 
@@ -57,8 +57,8 @@ def get_temp_filename(driver):
     if exts is None or len(exts) == 0:
         ext = ""
     else:
-        ext = ".{}".format(exts[0])
-    return "{basename}{extension}".format(basename=basename, extension=ext)
+        ext = f".{exts[0]}"
+    return f"{basename}{ext}"
 
 
 _COUTWILDRNP_FILES = [

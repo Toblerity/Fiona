@@ -6,7 +6,7 @@ import fiona
 from fiona.model import Feature, Geometry, Properties
 
 
-class TestReadAccess(object):
+class TestReadAccess:
     # To check that we'll be able to get multiple 'r' connections to layers
     # in a single file.
 
@@ -76,7 +76,7 @@ class TestReadWriteAccess:
         c2.close()
 
 
-class TestLayerCreation(object):
+class TestLayerCreation:
     @pytest.fixture(autouse=True)
     def layer_creation_shp(self, tmpdir):
         self.dir = tmpdir.mkdir("layer_creation")

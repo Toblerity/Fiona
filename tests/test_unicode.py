@@ -1,5 +1,3 @@
-# coding: utf-8
-
 import logging
 import os
 import shutil
@@ -14,7 +12,7 @@ from fiona.errors import SchemaError
 from fiona.model import Feature
 
 
-class TestUnicodePath(object):
+class TestUnicodePath:
     def setup(self):
         tempdir = tempfile.mkdtemp()
         self.dir = os.path.join(tempdir, "français")
@@ -41,7 +39,7 @@ class TestUnicodePath(object):
                 assert len(c) == 67
 
 
-class TestUnicodeStringField(object):
+class TestUnicodeStringField:
     def setup(self):
         self.tempdir = tempfile.mkdtemp()
 

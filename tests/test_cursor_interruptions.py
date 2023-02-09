@@ -19,7 +19,7 @@ def test_write_getextent(tmpdir, driver, testdata_generator):
         driver, range(0, 10), range(10, 20)
     )
     path = str(tmpdir.join(get_temp_filename(driver)))
-    positions = set([int(r['properties']['position']) for r in records1 + records2])
+    positions = {int(r['properties']['position']) for r in records1 + records2}
 
     with fiona.open(
         path,
@@ -39,7 +39,7 @@ def test_write_getextent(tmpdir, driver, testdata_generator):
         c.writerecords(records2)
 
     with fiona.open(path) as c:
-        data = set([int(f['properties']['position']) for f in c])
+        data = {int(f['properties']['position']) for f in c}
         assert len(positions) == len(data)
         for p in positions:
             assert p in data
@@ -59,7 +59,7 @@ def test_read_getextent(tmpdir, driver, testdata_generator):
         driver, range(0, 10), range(10, 20)
     )
     path = str(tmpdir.join(get_temp_filename(driver)))
-    positions = set([int(r['properties']['position']) for r in records1 + records2])
+    positions = {int(r['properties']['position']) for r in records1 + records2}
 
     with fiona.open(
         path,
@@ -105,7 +105,7 @@ def test_write_getfeaturecount(tmpdir, driver, testdata_generator):
         driver, range(0, 10), range(10, 20)
     )
     path = str(tmpdir.join(get_temp_filename(driver)))
-    positions = set([int(r['properties']['position']) for r in records1 + records2])
+    positions = {int(r['properties']['position']) for r in records1 + records2}
 
     with fiona.open(
         path,
@@ -124,7 +124,7 @@ def test_write_getfeaturecount(tmpdir, driver, testdata_generator):
         c.writerecords(records2)
 
     with fiona.open(path) as c:
-        data = set([int(f['properties']['position']) for f in c])
+        data = {int(f['properties']['position']) for f in c}
         assert len(positions) == len(data)
         for p in positions:
             assert p in data
@@ -144,7 +144,7 @@ def test_read_getfeaturecount(tmpdir, driver, testdata_generator):
         driver, range(0, 10), range(10, 20)
     )
     path = str(tmpdir.join(get_temp_filename(driver)))
-    positions = set([int(r['properties']['position']) for r in records1 + records2])
+    positions = {int(r['properties']['position']) for r in records1 + records2}
 
     with fiona.open(
         path,

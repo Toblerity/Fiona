@@ -468,7 +468,7 @@ def test_datefield(tmpdir, driver, field_type):
         for val, val_exp in zip(items, values_exp):
             assert _validate(
                 val, val_exp, field_type, driver
-            ), "{} does not match {}".format(val, val_exp.isoformat())
+            ), f"{val} does not match {val_exp.isoformat()}"
 
 
 @pytest.mark.parametrize("driver, field_type", test_cases_datefield_to_str)
@@ -548,7 +548,7 @@ def test_datefield_driver_converts_to_string(tmpdir, driver, field_type):
                         sign=sign, hours=int(hours), minutes=int(minutes)
                     )
                 else:
-                    tz = "{sign}{hours:02d}".format(sign=sign, hours=int(hours))
+                    tz = f"{sign}{int(hours):02d}"
                 print("tz", tz)
                 # No Milliseconds
                 if not _driver_supports_milliseconds(driver):
@@ -636,7 +636,7 @@ def test_datefield_driver_converts_to_string(tmpdir, driver, field_type):
                         sign=sign, hours=int(hours), minutes=int(minutes)
                     )
                 else:
-                    tz = "{sign}{hours:02d}".format(sign=sign, hours=int(hours))
+                    tz = f"{sign}{int(hours):02d}"
                 # No Milliseconds
                 if not _driver_supports_milliseconds(driver):
                     if (
@@ -685,7 +685,7 @@ def test_datefield_driver_converts_to_string(tmpdir, driver, field_type):
         for val, val_exp in zip(items, values_exp):
             assert _validate(
                 val, val_exp, field_type, driver
-            ), "{} does not match {}".format(val, val_exp.isoformat())
+            ), f"{val} does not match {val_exp.isoformat()}"
 
 
 @pytest.mark.filterwarnings("ignore:.*driver silently converts *:UserWarning")
@@ -725,7 +725,7 @@ def test_datefield_null(tmpdir, driver, field_type):
 
         assert _validate(
             items[0], None, field_type, driver
-        ), "{} does not match {}".format(items[0], None)
+        ), f"{items[0]} does not match {None}"
 
 
 @pytest.mark.parametrize("driver, field_type", test_cases_datefield_not_supported)

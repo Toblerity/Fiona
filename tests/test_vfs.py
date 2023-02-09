@@ -88,13 +88,13 @@ class TestZipReading(TestVsiReading):
         )
 
     def test_path(self):
-        assert self.c.path == "/vsizip/{path}".format(path=self.path)
+        assert self.c.path == f"/vsizip/{self.path}"
 
 
 class TestZipArchiveReading(TestVsiReading):
     @pytest.fixture(autouse=True)
     def zipfile(self, data_dir, path_coutwildrnp_zip):
-        vfs = "zip://{}".format(path_coutwildrnp_zip)
+        vfs = f"zip://{path_coutwildrnp_zip}"
         self.c = fiona.open(vfs + "!coutwildrnp.shp", "r")
         self.path = os.path.join(data_dir, "coutwildrnp.zip")
         yield
@@ -114,13 +114,13 @@ class TestZipArchiveReading(TestVsiReading):
         )
 
     def test_path(self):
-        assert self.c.path == "/vsizip/{path}/coutwildrnp.shp".format(path=self.path)
+        assert self.c.path == f"/vsizip/{self.path}/coutwildrnp.shp"
 
 
 class TestZipArchiveReadingAbsPath(TestZipArchiveReading):
     @pytest.fixture(autouse=True)
     def zipfile(self, path_coutwildrnp_zip):
-        vfs = "zip://{}".format(os.path.abspath(path_coutwildrnp_zip))
+        vfs = f"zip://{os.path.abspath(path_coutwildrnp_zip)}"
         self.c = fiona.open(vfs + "!coutwildrnp.shp", "r")
         yield
         self.c.close()
@@ -139,7 +139,7 @@ class TestZipArchiveReadingAbsPath(TestZipArchiveReading):
 @pytest.mark.usefixtures("uttc_path_coutwildrnp_tar", "uttc_data_dir")
 class TarArchiveReadingTest(VsiReadingTest):
     def setUp(self):
-        vfs = "tar://{}".format(self.path_coutwildrnp_tar)
+        vfs = f"tar://{self.path_coutwildrnp_tar}"
         self.c = fiona.open(vfs + "!testing/coutwildrnp.shp", "r")
         self.path = os.path.join(self.data_dir, "coutwildrnp.tar")
 

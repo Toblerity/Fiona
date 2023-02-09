@@ -60,6 +60,6 @@ with fiona.open('docs/data/test_uk.shp', 'r') as source:
 
                 sink.write(f)
             
-            except Exception, e:
+            except Exception as e:
                 logging.exception("Error processing feature %s:", f['id'])
 

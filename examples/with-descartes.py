@@ -1,4 +1,3 @@
-
 import subprocess
 
 from matplotlib import pyplot

@@ -28,7 +28,7 @@ def env(ctx, key):
         if key == 'formats':
             for k, v in sorted(fiona.supported_drivers.items()):
                 modes = ', '.join("'" + m + "'" for m in v)
-                stdout.write("%s (modes %s)\n" % (k, modes))
+                stdout.write(f"{k} (modes {modes})\n")
             stdout.write('\n')
         elif key == 'credentials':
             click.echo(json.dumps(env.session.credentials))

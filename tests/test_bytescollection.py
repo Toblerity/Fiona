@@ -7,7 +7,7 @@ import fiona
 from fiona.model import Geometry
 
 
-class TestReading(object):
+class TestReading:
     @pytest.fixture(autouse=True)
     def bytes_collection_object(self, path_coutwildrnp_json):
         with open(path_coutwildrnp_json) as src:
@@ -171,7 +171,7 @@ class TestReading(object):
         assert 0 in self.c
 
 
-class TestFilterReading(object):
+class TestFilterReading:
     @pytest.fixture(autouse=True)
     def bytes_collection_object(self, path_coutwildrnp_json):
         with open(path_coutwildrnp_json) as src:
