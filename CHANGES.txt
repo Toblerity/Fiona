@@ -6,6 +6,7 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.9.1 (TBD)
 -----------
 
+- Prevent empty geometries arrays from appearing in __geo_interface__ (#).
 - setuptools added to pyproject.toml. Its pkg_resources module is used by the
   CLI (#1191).
 
