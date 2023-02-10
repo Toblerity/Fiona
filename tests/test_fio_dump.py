@@ -4,6 +4,7 @@
 import json
 
 from click.testing import CliRunner
+import pytest
 
 import fiona
 from fiona.fio.main import main_group
@@ -16,12 +17,12 @@ def test_dump(path_coutwildrnp_shp):
     assert '"FeatureCollection"' in result.output
 
 
-def test_dump_layer(path_gpx):
-    for layer in ('routes', '1'):
-        runner = CliRunner()
-        result = runner.invoke(main_group, ['dump', path_gpx, '--layer', layer])
-        assert result.exit_code == 0
-        assert '"FeatureCollection"' in result.output
+@pytest.mark.parametrize("layer", ["routes", "1", "tracks", "track_points"])
+def test_dump_layer(path_gpx, layer):
+    runner = CliRunner()
+    result = runner.invoke(main_group, ["dump", path_gpx, "--layer", layer])
+    assert result.exit_code == 0
+    assert '"FeatureCollection"' in result.output
 
 
 def test_dump_layer_vfs(path_coutwildrnp_zip):
