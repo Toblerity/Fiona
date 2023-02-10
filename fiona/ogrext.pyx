@@ -608,16 +608,26 @@ cdef class Session:
         self.collection = collection
 
         if self.collection.include_fields is not None:
-            self.collection.ignore_fields = list(set(self.get_schema()["properties"]) - set(collection.include_fields))
+            self.collection.ignore_fields = list(
+                set(self.get_schema()["properties"]) - set(collection.include_fields)
+            )
+
         if self.collection.ignore_fields:
             try:
                 for name in self.collection.ignore_fields:
                     try:
                         name_b = name.encode(encoding)
                     except AttributeError:
-                        raise TypeError("Ignored field \"{}\" has type \"{}\", expected string".format(name, name.__class__.__name__))
-                    ignore_fields = CSLAddString(ignore_fields, <const char *>name_b)
+                        raise TypeError(
+                            "Ignored field \"{}\" has type \"{}\", expected string".format(
+                                name, name.__class__.__name__
+                            )
+                        )
+                    else:
+                        ignore_fields = CSLAddString(ignore_fields, <const char *>name_b)
+
                 OGR_L_SetIgnoredFields(self.cogr_layer, <const char**>ignore_fields)
+
             finally:
                 CSLDestroy(ignore_fields)
 
@@ -696,12 +706,27 @@ cdef class Session:
         return driver_name.decode()
 
     def get_schema(self):
+        """Get a dictionary representation of a collection's schema.
+
+        The schema dict contains "geometry" and "properties" items.
+
+        Returns
+        -------
+        dict
+
+        Warnings
+        --------
+        Fiona 1.9 does not support multiple fields with the name
+        name. When encountered, a warning message is logged and the
+        field is skipped.
+
+        """
         cdef int i
-        cdef int n
+        cdef int num_fields
         cdef void *cogr_featuredefn = NULL
         cdef void *cogr_fielddefn = NULL
         cdef const char *key_c
-        props = []
+        props = {}
 
         if self.cogr_layer == NULL:
             raise ValueError("Null layer")
@@ -712,30 +737,46 @@ cdef class Session:
             ignore_fields = set()
 
         cogr_featuredefn = OGR_L_GetLayerDefn(self.cogr_layer)
+
         if cogr_featuredefn == NULL:
             raise ValueError("Null feature definition")
 
         encoding = self._get_internal_encoding()
 
-        n = OGR_FD_GetFieldCount(cogr_featuredefn)
+        num_fields = OGR_FD_GetFieldCount(cogr_featuredefn)
 
-        for i from 0 <= i < n:
+        for i from 0 <= i < num_fields:
             cogr_fielddefn = OGR_FD_GetFieldDefn(cogr_featuredefn, i)
+
             if cogr_fielddefn == NULL:
                 raise ValueError("NULL field definition at index {}".format(i))
 
             key_c = OGR_Fld_GetNameRef(cogr_fielddefn)
+
             if key_c == NULL:
                 raise ValueError("NULL field name reference at index {}".format(i))
+
             key_b = key_c
             key = key_b.decode(encoding)
+
             if not key:
                 warnings.warn("Empty field name at index {}".format(i), FeatureWarning)
 
             if key in ignore_fields:
                 continue
 
+            # See gh-1178 for an example of a pathological collection
+            # with multiple identically name fields.
+            if key in props:
+                log.warning(
+                    "Field name collision detected, field is skipped: i=%r, key=%r",
+                    i,
+                    key
+                )
+                continue
+
             fieldtypename = FIELD_TYPES[OGR_Fld_GetType(cogr_fielddefn)]
+
             if not fieldtypename:
                 log.warning(
                     "Skipping field %s: invalid type %s",
@@ -744,35 +785,46 @@ cdef class Session:
                 continue
 
             val = fieldtypename
+
             if fieldtypename == 'float':
                 fmt = ""
                 width = OGR_Fld_GetWidth(cogr_fielddefn)
+
                 if width: # and width != 24:
-                    fmt = ":%d" % width
+                    fmt = ":{:d}".format(width)
+
                 precision = OGR_Fld_GetPrecision(cogr_fielddefn)
+
                 if precision: # and precision != 15:
-                    fmt += ".%d" % precision
+                    fmt += ".{:d}".format(precision)
+
                 val = "float" + fmt
+
             elif fieldtypename in ('int32', 'int64'):
                 fmt = ""
                 width = OGR_Fld_GetWidth(cogr_fielddefn)
+
                 if width:
-                    fmt = ":%d" % width
+                    fmt = ":{:d}".format(width)
+
                 val = 'int' + fmt
+
             elif fieldtypename == 'str':
                 fmt = ""
                 width = OGR_Fld_GetWidth(cogr_fielddefn)
+
                 if width:
-                    fmt = ":%d" % width
+                    fmt = ":{:d}".format(width)
+
                 val = fieldtypename + fmt
 
-            props.append((key, val))
+            # Store the field name and description value.
+            props[key] = val
 
-        ret = {"properties": OrderedDict(props)}
+        ret = {"properties": props}
 
         if not self.collection.ignore_geometry:
-            code = normalize_geometry_type_code(
-                OGR_FD_GetGeomType(cogr_featuredefn))
+            code = normalize_geometry_type_code(OGR_FD_GetGeomType(cogr_featuredefn))
             ret["geometry"] = GEOMETRY_TYPES[code]
 
         return ret

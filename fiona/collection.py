@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Collections provide file-like access to feature data."""
 
 from contextlib import ExitStack
@@ -41,7 +39,7 @@ _GDAL_RELEASE_NAME = get_gdal_release_name()
 log = logging.getLogger(__name__)
 
 
-class Collection(object):
+class Collection:
 
     """A file-like interface to features of a vector dataset
 
@@ -252,7 +250,7 @@ class Collection(object):
         self._closed = False
 
     def __repr__(self):
-        return "<%s Collection '%s', mode '%s' at %s>" % (
+        return "<{} Collection '{}', mode '{}' at {}>".format(
             self.closed and "closed" or "open",
             self.path + ":" + str(self.name),
             self.mode,
@@ -699,13 +697,11 @@ class Collection(object):
             self.close()
 
 
-ALL_GEOMETRY_TYPES = set(
-    [
+ALL_GEOMETRY_TYPES = {
         geom_type
         for geom_type in GEOMETRY_TYPES.values()
         if "3D " not in geom_type and geom_type != "None"
-    ]
-)
+}
 ALL_GEOMETRY_TYPES.add("None")
 
 
@@ -787,7 +783,7 @@ class BytesCollection(Collection):
             self.bytesbuf = None
 
     def __repr__(self):
-        return "<%s BytesCollection '%s', mode '%s' at %s>" % (
+        return "<{} BytesCollection '{}', mode '{}' at {}>".format(
             self.closed and "closed" or "open",
             self.path + ":" + str(self.name),
             self.mode,

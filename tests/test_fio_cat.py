@@ -127,7 +127,7 @@ def test_multi_layer_fail(data_dir):
 def test_vfs(path_coutwildrnp_zip):
     runner = CliRunner()
     result = runner.invoke(main_group, [
-        'cat', 'zip://{}'.format(path_coutwildrnp_zip)])
+        'cat', f'zip://{path_coutwildrnp_zip}'])
     assert result.exit_code == 0
     assert result.output.count('"Feature"') == 67
 

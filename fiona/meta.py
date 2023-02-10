@@ -145,12 +145,12 @@ def print_driver_options(driver):
                                  ("Dataset Creation Options", dataset_creation_options(driver)),
                                  ("Layer Creation Options", layer_creation_options(driver))]:
 
-        print("{option_type}:".format(option_type=option_type))
+        print(f"{option_type}:")
         if len(options) == 0:
             print("\tNo options available.")
         else:
             for option_name in options:
-                print("\t{option_name}:".format(option_name=option_name))
+                print(f"\t{option_name}:")
                 if 'description' in options[option_name]:
                     print("\t\tDescription: {description}".format(description=options[option_name]['description']))
                 if 'type' in options[option_name]:

@@ -25,7 +25,7 @@ def test_dump_layer(path_gpx):
 
 
 def test_dump_layer_vfs(path_coutwildrnp_zip):
-    path = "zip://{}".format(path_coutwildrnp_zip)
+    path = f"zip://{path_coutwildrnp_zip}"
     result = CliRunner().invoke(main_group, ["dump", path])
     assert result.exit_code == 0
     loaded = json.loads(result.output)

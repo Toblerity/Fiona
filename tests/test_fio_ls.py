@@ -53,7 +53,7 @@ def test_fio_ls_multi_layer(path_coutwildrnp_shp, tmpdir):
 def test_fio_ls_vfs(path_coutwildrnp_zip):
     runner = CliRunner()
     result = runner.invoke(main_group, [
-        'ls', 'zip://{}'.format(path_coutwildrnp_zip)])
+        'ls', f'zip://{path_coutwildrnp_zip}'])
     assert result.exit_code == 0
     loaded = json.loads(result.output)
     assert len(loaded) == 1

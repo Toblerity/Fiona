@@ -58,7 +58,7 @@ def test_invalid_crs(invalid_input):
 
 
 def test_custom_crs():
-    class CustomCRS(object):
+    class CustomCRS:
         def to_wkt(self):
             return (
                 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",'

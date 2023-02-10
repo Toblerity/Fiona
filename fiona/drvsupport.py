@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 
 from fiona.env import Env

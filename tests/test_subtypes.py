@@ -45,7 +45,7 @@ def test_write_bool_subtype(tmpdir):
     with fiona.open(str(path), "w", driver="GeoJSON", schema=schema) as dst:
         dst.write(feature)
 
-    with open(str(path), "r") as f:
+    with open(str(path)) as f:
         data = f.read()
 
     if fiona.gdal_version.major >= 2:

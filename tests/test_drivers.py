@@ -23,7 +23,7 @@ def test_options(tmpdir, path_coutwildrnp_shp):
         with fiona.drivers(CPL_DEBUG=True):
             c = fiona.open(path_coutwildrnp_shp)
             c.close()
-            with open(logfile, "r") as f:
+            with open(logfile) as f:
                 log = f.read()
             if fiona.gdal_version.major >= 2:
                 assert "GDALOpen" in log

@@ -24,7 +24,7 @@ from fiona.model import Feature, Geometry
 from .conftest import WGS84PATTERN, get_temp_filename
 
 
-class TestSupportedDrivers(object):
+class TestSupportedDrivers:
     def test_shapefile(self):
         assert "ESRI Shapefile" in supported_drivers
         assert set(supported_drivers["ESRI Shapefile"]) == set("raw")
@@ -34,7 +34,7 @@ class TestSupportedDrivers(object):
         assert set(supported_drivers["MapInfo File"]) == set("raw")
 
 
-class TestCollectionArgs(object):
+class TestCollectionArgs:
     def test_path(self):
         with pytest.raises(TypeError):
             Collection(0)
@@ -84,13 +84,13 @@ class TestCollectionArgs(object):
             Collection("foo", mode="w", driver="ARCGEN")
 
 
-class TestOpenException(object):
+class TestOpenException:
     def test_no_archive(self):
         with pytest.warns(FionaDeprecationWarning), pytest.raises(DriverError):
             fiona.open("/", mode="r", vfs="zip:///foo.zip")
 
 
-class TestReading(object):
+class TestReading:
     @pytest.fixture(autouse=True)
     def shapefile(self, path_coutwildrnp_shp):
         self.c = fiona.open(path_coutwildrnp_shp, "r")
@@ -262,7 +262,7 @@ class TestReading(object):
         assert 0 in self.c
 
 
-class TestReadingPathTest(object):
+class TestReadingPathTest:
     def test_open_path(self, path_coutwildrnp_shp):
         pathlib = pytest.importorskip("pathlib")
         with fiona.open(pathlib.Path(path_coutwildrnp_shp)) as collection:
@@ -270,7 +270,7 @@ class TestReadingPathTest(object):
 
 
 @pytest.mark.usefixtures("unittest_path_coutwildrnp_shp")
-class TestIgnoreFieldsAndGeometry(object):
+class TestIgnoreFieldsAndGeometry:
     def test_without_ignore(self):
         with fiona.open(self.path_coutwildrnp_shp, "r") as collection:
             assert "AREA" in collection.schema["properties"].keys()
@@ -360,7 +360,7 @@ class TestIgnoreFieldsAndGeometry(object):
             assert feature.geometry is None
 
 
-class TestFilterReading(object):
+class TestFilterReading:
     @pytest.fixture(autouse=True)
     def shapefile(self, path_coutwildrnp_shp):
         self.c = fiona.open(path_coutwildrnp_shp, "r")
@@ -419,7 +419,7 @@ class TestFilterReading(object):
         results = set(
             self.c.keys(bbox=(-120.0, 40.0, -100.0, 50.0), where="NAME LIKE 'Mount%'")
         )
-        assert results == set([0, 2, 5, 13])
+        assert results == {0, 2, 5, 13}
         results = set(self.c.keys())
         assert len(results) == 67
 
@@ -429,7 +429,7 @@ class TestFilterReading(object):
                 self.c.filter(where=w)
 
 
-class TestUnsupportedDriver(object):
+class TestUnsupportedDriver:
     def test_immediate_fail_driver(self, tmpdir):
         schema = {
             "geometry": "Point",
@@ -440,7 +440,7 @@ class TestUnsupportedDriver(object):
 
 
 @pytest.mark.iconv
-class TestGenericWritingTest(object):
+class TestGenericWritingTest:
     @pytest.fixture(autouse=True)
     def no_iter_shp(self, tmpdir):
         schema = {
@@ -469,7 +469,7 @@ class TestGenericWritingTest(object):
             self.c.filter()
 
 
-class TestPropertiesNumberFormatting(object):
+class TestPropertiesNumberFormatting:
     @pytest.fixture(autouse=True)
     def shapefile(self, tmpdir):
         self.filename = str(tmpdir.join("properties_number_formatting_test"))
@@ -688,7 +688,7 @@ class TestPropertiesNumberFormatting(object):
             assert 0 == rf1.properties["property1"]
 
 
-class TestPointWriting(object):
+class TestPointWriting:
     @pytest.fixture(autouse=True)
     def shapefile(self, tmpdir):
         self.filename = str(tmpdir.join("point_writing_test.shp"))
@@ -771,7 +771,7 @@ class TestPointWriting(object):
         assert not self.sink.validate_record(finvalid)
 
 
-class TestLineWriting(object):
+class TestLineWriting:
     @pytest.fixture(autouse=True)
     def shapefile(self, tmpdir):
         self.sink = fiona.open(
@@ -832,7 +832,7 @@ class TestLineWriting(object):
         assert self.sink.bounds == (0.0, -0.2, 0.0, 0.2)
 
 
-class TestPointAppend(object):
+class TestPointAppend:
     @pytest.fixture(autouse=True)
     def shapefile(self, tmpdir, path_coutwildrnp_shp):
         with fiona.open(path_coutwildrnp_shp, "r") as input:
@@ -880,7 +880,7 @@ class TestPointAppend(object):
             assert len(c) == 68
 
 
-class TestLineAppend(object):
+class TestLineAppend:
     @pytest.fixture(autouse=True)
     def shapefile(self, tmpdir):
         with fiona.open(
@@ -956,7 +956,7 @@ def test_shapefile_field_width(tmpdir):
     c.close()
 
 
-class TestCollection(object):
+class TestCollection:
     def test_invalid_mode(self, tmpdir):
         with pytest.raises(ValueError):
             fiona.open(str(tmpdir.join("bogus.shp")), "r+")
@@ -1193,7 +1193,7 @@ def test_collection__empty_column_name(tmpdir):
 )
 def test_driver_detection(tmpdir, extension, driver):
     with fiona.open(
-        str(tmpdir.join("test.{}".format(extension))),
+        str(tmpdir.join(f"test.{extension}")),
         "w",
         schema={
             "geometry": "MultiLineString",
