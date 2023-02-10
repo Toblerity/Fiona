@@ -363,3 +363,19 @@ def test_listlayers_zipmemoryfile(bytes_coutwildrnp_zip):
     """Test layers of a zipped memory file."""
     with ZipMemoryFile(bytes_coutwildrnp_zip) as memfile:
         assert memfile.listlayers() == ["coutwildrnp"]
+
+
+def test_listdir_gdbzipmemoryfile(bytes_testopenfilegdb_zip):
+    """Test list directories of a zipped GDB memory file."""
+    with ZipMemoryFile(bytes_testopenfilegdb_zip, ext=".gdb.zip") as memfile:
+        assert memfile.listdir() == [
+            "testopenfilegdb.gdb",
+        ]
+
+
+def test_listdir_gdbzipmemoryfile_bis(bytes_testopenfilegdb_zip):
+    """Test list directories of a zipped GDB memory file."""
+    with ZipMemoryFile(bytes_testopenfilegdb_zip, filename="temp.gdb.zip") as memfile:
+        assert memfile.listdir() == [
+            "testopenfilegdb.gdb",
+        ]

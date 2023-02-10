@@ -20,8 +20,16 @@ class MemoryFile(MemoryFileBase):
     MemoryFile created without initial bytes may be written to using
     either file-like or dataset interfaces.
 
-    Examples
-    --------
+    Parameters
+    ----------
+    file_or_bytes : an open Python file, bytes, or None
+        If not None, the MemoryFile becomes immutable and read-only.
+        If None, it is write-only.
+    filename : str
+        An optional filename. The default is a UUID-based name.
+    ext : str
+        An optional file extension. Some format drivers require a
+        specific value.
 
     """
     def __init__(self, file_or_bytes=None, filename=None, ext=""):
@@ -150,10 +158,21 @@ class ZipMemoryFile(MemoryFile):
 
     This allows a zip file containing formatted files to be read
     without I/O.
+
+    Parameters
+    ----------
+    file_or_bytes : an open Python file, bytes, or None
+        If not None, the MemoryFile becomes immutable and read-only. If
+        None, it is write-only.
+    filename : str
+        An optional filename. The default is a UUID-based name.
+    ext : str
+        An optional file extension. Some format drivers require a
+        specific value. The default is ".zip".
     """
 
-    def __init__(self, file_or_bytes=None):
-        super().__init__(file_or_bytes, ext=".zip")
+    def __init__(self, file_or_bytes=None, filename=None, ext=".zip"):
+        super().__init__(file_or_bytes, filename=filename, ext=ext)
         self.name = f"/vsizip{self.name}"
 
     def open(

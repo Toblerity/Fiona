@@ -192,6 +192,20 @@ def bytes_grenada_geojson(path_grenada_geojson):
 
 
 @pytest.fixture(scope="session")
+def path_testopenfilegdb_zip(data_dir):
+    """Creates .gdb.zip file."""
+    return os.path.join(data_dir, "testopenfilegdb.gdb.zip")
+
+
+
+@pytest.fixture(scope="session")
+def bytes_testopenfilegdb_zip(path_testopenfilegdb_zip):
+    """.gdb.zip bytes."""
+    with open(path_testopenfilegdb_zip, "rb") as f:
+        return f.read()
+
+
+@pytest.fixture(scope="session")
 def path_coutwildrnp_gpkg(data_dir):
     """Creates ``coutwildrnp.gpkg`` if it does not exist and returns the absolute
     file path."""
