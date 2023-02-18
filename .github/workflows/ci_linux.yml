@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   build:
     name: Python ${{ matrix.python }} / GDAL ${{ matrix.GDALVERSION }} / PROJ ${{ matrix.PROJVERSION }}
-    runs-on: [ubuntu-18.04]
+    runs-on: [ubuntu-20.04]
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
     strategy:
       fail-fast: false
