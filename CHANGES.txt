@@ -6,6 +6,7 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.9.2 (TBD)
 -----------
 
+- Fix a memory leak that can occur when iterating over a dataset using strides (#).
 - ZipMemoryFile now supports zipped GDB data (#).
 
 1.9.1 (2023-02-09)
