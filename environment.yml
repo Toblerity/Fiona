@@ -3,8 +3,8 @@ channels:
 - conda-forge
 - defaults
 dependencies:
-- python=3.8.*
-- libgdal=3.4.*
+- python=3.9.*
+- libgdal=3.5.*
 - sphinx-click
 - pip:
   - jinja2==3.0.3
