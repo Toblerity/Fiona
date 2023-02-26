@@ -1658,10 +1658,7 @@ cdef class Iterator:
 
     def _next(self):
         """Internal method to set read cursor to next item"""
-
-        cdef Session session
-        session = self.collection.session
-
+        cdef Session session = self.collection.session
 
         # Check if next_index is valid
         if self.next_index < 0:
@@ -1701,9 +1698,12 @@ cdef class Iterator:
                 # therefore self.step - 1 as one increment was performed
                 # when feature is read.
                 for _ in range(self.step - 1):
-                    cogr_feature = OGR_L_GetNextFeature(session.cogr_layer)
-                    if cogr_feature == NULL:
-                        raise StopIteration
+                    try:
+                        cogr_feature = OGR_L_GetNextFeature(session.cogr_layer)
+                        if cogr_feature == NULL:
+                            raise StopIteration
+                    finally:
+                        _deleteOgrFeature(cogr_feature)
 
             elif self.step > 1 and not self.fastindex and self.next_index == self.start:
                 exc_wrap_int(OGR_L_SetNextByIndex(session.cogr_layer, self.next_index))
@@ -1721,10 +1721,7 @@ cdef class Iterator:
 
     def __next__(self):
         cdef OGRFeatureH cogr_feature = NULL
-        cdef OGRLayerH cogr_layer = NULL
-        cdef Session session
-
-        session = self.collection.session
+        cdef Session session = self.collection.session
 
         if not session or not session.isactive:
             raise FionaValueError("Session is inactive, dataset is closed or layer is unavailable.")
@@ -1753,13 +1750,14 @@ cdef class Iterator:
 cdef class ItemsIterator(Iterator):
 
     def __next__(self):
-
         cdef long fid
-        cdef void * cogr_feature
-        cdef Session session
-        session = self.collection.session
+        cdef OGRFeatureH cogr_feature = NULL
+        cdef Session session = self.collection.session
 
-        #Update read cursor
+        if not session or not session.isactive:
+            raise FionaValueError("Session is inactive, dataset is closed or layer is unavailable.")
+
+        # Update read cursor
         self._next()
 
         # Get the next feature.
@@ -1767,30 +1765,33 @@ cdef class ItemsIterator(Iterator):
         if cogr_feature == NULL:
             raise StopIteration
 
-        fid = OGR_F_GetFID(cogr_feature)
-        feature = FeatureBuilder().build(
-            cogr_feature,
-            encoding=self.collection.session._get_internal_encoding(),
-            bbox=False,
-            driver=self.collection.driver,
-            ignore_fields=self.collection.ignore_fields,
-            ignore_geometry=self.collection.ignore_geometry,
-        )
-
-        _deleteOgrFeature(cogr_feature)
-
-        return fid, feature
+        try:
+            fid = OGR_F_GetFID(cogr_feature)
+            feature = FeatureBuilder().build(
+                cogr_feature,
+                encoding=self.collection.session._get_internal_encoding(),
+                bbox=False,
+                driver=self.collection.driver,
+                ignore_fields=self.collection.ignore_fields,
+                ignore_geometry=self.collection.ignore_geometry,
+            )
+        else:
+            return fid, feature
+        finally:
+            _deleteOgrFeature(cogr_feature)
 
 
 cdef class KeysIterator(Iterator):
 
     def __next__(self):
         cdef long fid
-        cdef void * cogr_feature
-        cdef Session session
-        session = self.collection.session
+        cdef OGRFeatureH cogr_feature = NULL
+        cdef Session session = self.collection.session
 
-        #Update read cursor
+        if not session or not session.isactive:
+            raise FionaValueError("Session is inactive, dataset is closed or layer is unavailable.")
+
+        # Update read cursor
         self._next()
 
         # Get the next feature.
