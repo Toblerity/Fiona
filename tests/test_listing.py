@@ -1,5 +1,6 @@
 """Test listing a datasource's layers."""
 
+from pathlib import Path
 import os
 
 import pytest
@@ -59,6 +60,11 @@ def test_invalid_vfs():
 def test_invalid_path_ioerror():
     with pytest.raises(DriverError):
         fiona.listlayers("foobar")
+
+
+def test_path_object(path_coutwildrnp_shp):
+    path_obj = Path(path_coutwildrnp_shp)
+    assert fiona.listlayers(path_obj) == ['coutwildrnp']
 
 
 def test_listing_file(path_coutwildrnp_json):

@@ -69,7 +69,6 @@ fiona/*.cpp
 fiona/ograpi.pxd
 tests/data/coutwildrnp.json
 tests/data/coutwildrnp.tar
-tests/data/coutwildrnp.zip
 tests/data/coutwildrnp.gpkg
 .DS_Store
 .ipynb_checkpoints

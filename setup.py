@@ -7,6 +7,10 @@ from setuptools import setup
 from setuptools.extension import Extension
 
 
+# Ensure minimum version of Python is running
+if sys.version_info[0:2] < (3, 6):
+    raise RuntimeError('Fiona requires Python>=3.6')
+
 # Use Cython if available.
 try:
     from Cython.Build import cythonize
@@ -204,7 +208,6 @@ if os.environ.get('PACKAGE_DATA'):
         '.libs/*',
         '.libs/licenses/*',
     ])
-
 
 # See pyproject.toml for project metadata
 setup(

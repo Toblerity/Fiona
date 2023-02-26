@@ -3,9 +3,7 @@
 # originally contributed by @rbuffat to Toblerity/Fiona
 set -e
 
-GDALOPTS="  --with-ogr \
-            --with-geos \
-            --with-expat \
+GDALOPTS="  --with-geos \
             --without-libtool \
             --with-libz=internal \
             --with-libtiff=internal \
@@ -16,9 +14,8 @@ GDALOPTS="  --with-ogr \
             --without-libgrass \
             --without-cfitsio \
             --without-pcraster \
-            --with-netcdf \
-            --with-png=internal \
-            --with-jpeg=internal \
+            --without-netcdf \
+            --without-openjpeg \
             --without-gif \
             --without-ogdi \
             --without-fme \
@@ -29,17 +26,13 @@ GDALOPTS="  --with-ogr \
             --without-kakadu \
             --without-mrsid \
             --without-jp2mrsid \
-            --without-bsb \
-            --without-grib \
             --without-mysql \
             --without-ingres \
             --without-xerces \
             --without-odbc \
             --with-curl \
-            --with-sqlite3 \
             --without-idb \
             --without-sde \
-            --without-ruby \
             --without-perl \
             --without-php \
             --without-python \
@@ -256,17 +249,8 @@ else
         2.3*)
             PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
             ;;
-        2.2*)
-            PROJOPT="--with-static-proj4=$GDALINST/gdal-$GDALVERSION"
-            ;;
-        2.1*)
-            PROJOPT="--with-static-proj4=$GDALINST/gdal-$GDALVERSION"
-            ;;
-        2.0*)
-            PROJOPT="--with-static-proj4=$GDALINST/gdal-$GDALVERSION"
-            ;;
-        1*)
-            PROJOPT="--with-static-proj4=$GDALINST/gdal-$GDALVERSION"
+        *)
+            PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
             ;;
         *)
             PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
@@ -279,6 +263,10 @@ else
         wget -q https://download.osgeo.org/gdal/$gdalver/gdal-$GDALVERSION.tar.gz
         tar -xzf gdal-$GDALVERSION.tar.gz
         cd gdal-$gdalver
+        echo "./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT"
+        ./configure --prefix=$GDALINST/gdal-$GDALVERSION $GDALOPTS $PROJOPT
+        make
+        make install
         if [ -f "CMakeLists.txt" ]; then
             mkdir build
             cd build
@@ -293,6 +281,9 @@ else
         fi
     fi
 fi
+
+# Remove gdalbuild to emulate travis cache
+rm -rf $GDALBUILD
 
 # change back to travis build dir
 cd $TRAVIS_BUILD_DIR

@@ -3,7 +3,6 @@
 from collections import OrderedDict
 import datetime
 import logging
-import os
 import random
 import re
 import sys
@@ -401,6 +400,19 @@ class TestFilterReading:
         assert len(results) == 0
         results = list(self.c.filter())
         assert len(results) == 67
+
+    def test_filter_bbox_where(self):
+        # combined filter criteria
+        results = set(self.c.keys(
+            bbox=(-120.0, 40.0, -100.0, 50.0), where="NAME LIKE 'Mount%'"))
+        assert results == set([0, 2, 5, 13])
+        results = set(self.c.keys())
+        assert len(results) == 67
+
+    def test_filter_where_error(self):
+        for w in ["bad stuff", "NAME=3", "NNAME LIKE 'Mount%'"]:
+            with pytest.raises(AttributeFilterError):
+                self.c.filter(where=w)
 
     def test_filter_bbox_where(self):
         # combined filter criteria
@@ -1039,10 +1051,7 @@ def test_collection_zip_http():
         "https://raw.githubusercontent.com/Toblerity/Fiona/master/tests/data/coutwildrnp.zip",
         vsi="zip+https",
     )
-    assert (
-        ds.path
-        == "/vsizip/vsicurl/https://raw.githubusercontent.com/Toblerity/Fiona/master/tests/data/coutwildrnp.zip"
-    )
+    assert ds.path == "/vsizip/vsicurl/https://raw.githubusercontent.com/Toblerity/Fiona/master/tests/data/coutwildrnp.zip"
     assert len(ds) == 67
 
 

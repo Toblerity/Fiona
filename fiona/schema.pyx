@@ -2,6 +2,8 @@
 
 from typing import List
 
+from typing import List
+
 from fiona.errors import SchemaError
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 

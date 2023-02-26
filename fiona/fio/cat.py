@@ -55,6 +55,8 @@ warnings.simplefilter("default")
     default=False,
     help="Optionally cut geometries at the anti-meridian. To be used only for a geographic destination CRS.",
 )
+@click.option('--where', default=None,
+              help="attribute filter using SQL where clause")
 @click.pass_context
 @with_context_env
 def cat(

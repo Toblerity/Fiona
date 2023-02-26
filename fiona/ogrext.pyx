@@ -2130,8 +2130,6 @@ cdef class MemoryFileBase:
         finally:
             CPLFree(buffer)
 
-        return result
-
     def write(self, data):
         """Write data bytes to MemoryFile"""
         cdef const unsigned char *view = <bytes>data

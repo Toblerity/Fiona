@@ -56,7 +56,7 @@ class TestTransaction:
         Test transaction start/commit is called the expected number of times,
         and that the default transaction size can be overloaded. The test uses
         a custom logging handler to listen for the debug messages produced
-        when the transaction is started/comitted.
+        when the transaction is started/committed.
         """
         num_records = 250
         transaction_size = 100

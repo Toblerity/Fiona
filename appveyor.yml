@@ -19,7 +19,6 @@ environment:
         # The 4-digit number in the GISInternals archives is the MSVC version used to build
         # the libraries. It does not need to match the version of MSVC used to build Python.
         # https://en.wikipedia.org/wiki/Microsoft_Visual_C%2B%2B#Internal_version_numbering
-
         # Test all supported gdal minor versions (except latest stable) with one python version
         - PYTHON: "C:\\Python38-x64"
           PYTHON_VERSION: "3.8"
@@ -52,7 +51,7 @@ environment:
           GIS_INTERNALS: "release-1911-x64-gdal-3-1-2-mapserver-7-6-1.zip"
           GIS_INTERNALS_LIBS: "release-1911-x64-gdal-3-1-2-mapserver-7-6-1-libs.zip"
           PROJ_LIB: "C:\\gdal\\bin\\proj6\\share"
-          
+
         - PYTHON: "C:\\Python38-x64"
           PYTHON_VERSION: "3.8"
           PYTHON_ARCH: "64"
@@ -110,11 +109,12 @@ install:
   # target Python version and architecture
   - "%CMD_IN_ENV% pip install -r requirements-dev.txt"
 
+  # Install coverage testing dependencies
+#  - ps: python -m pip install coveralls>=1.1 --upgrade
 
 build_script:
   # Build the compiled extension
   - cmd: echo %PATH%
-
   - cmd: echo %PYTHONPATH%
 
   # copy gisinternal gdal librarys into .libs

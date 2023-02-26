@@ -551,7 +551,11 @@ class Collection:
         self._bounds = None
 
     def write(self, record):
-        """Stages a record for writing to disk."""
+        """Stages a record for writing to disk.
+        
+        Note: Each call of this method will start and commit a
+        unique transaction with the data source.
+        """
         self.writerecords([record])
 
     def validate_record(self, record):
@@ -768,7 +772,6 @@ class BytesCollection(Collection):
 
         # Instantiate the parent class.
         super().__init__(self.virtual_file, vsi=filetype, **kwds)
-
         self._closed = False
 
     def close(self):

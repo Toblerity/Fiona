@@ -198,6 +198,11 @@ class ZipMemoryFile(MemoryFile):
         A Fiona collection object
 
         """
+        if path:
+            vsi_path = '/vsizip{0}/{1}'.format(self.name, path.lstrip('/'))
+        else:
+            vsi_path = '/vsizip{0}'.format(self.name)
+
         if self.closed:
             raise OSError("I/O operation on closed file.")
         if path:

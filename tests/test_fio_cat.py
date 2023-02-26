@@ -8,7 +8,7 @@ from fiona.fio.main import main_group
 
 def test_one(path_coutwildrnp_shp):
     runner = CliRunner()
-    result = runner.invoke(main_group, ['cat', path_coutwildrnp_shp], catch_exceptions=False)
+    result = runner.invoke(main_group, ['cat', path_coutwildrnp_shp])
     assert result.exit_code == 0
     assert result.output.count('"Feature"') == 67
 
