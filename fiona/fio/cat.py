@@ -57,6 +57,7 @@ warnings.simplefilter("default")
 )
 @click.option('--where', default=None,
               help="attribute filter using SQL where clause")
+@options.open_opt
 @click.pass_context
 @with_context_env
 def cat(
@@ -72,6 +73,7 @@ def cat(
     where,
     cut_at_antimeridian,
     layer,
+    open_options,
 ):
     """
     Concatenate and print the features of input datasets as a sequence of
@@ -106,7 +108,7 @@ def cat(
 
         for i, path in enumerate(files, 1):
             for lyr in layer[str(i)]:
-                with fiona.open(path, layer=lyr) as src:
+                with fiona.open(path, layer=lyr, **open_options) as src:
                     for i, feat in src.items(bbox=bbox, where=where):
                         geom = feat.geometry
 

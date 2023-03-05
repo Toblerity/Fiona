@@ -7,16 +7,18 @@ import sys
 import click
 
 import fiona
-from fiona.fio import with_context_env
+from fiona.fio import options, with_context_env
 
 
 @click.command(short_help="Open a dataset and start an interpreter.")
-@click.argument('src_path', required=True)
-@click.option('--ipython', 'interpreter', flag_value='ipython',
-              help="Use IPython as interpreter.")
+@click.argument("src_path", required=True)
+@click.option(
+    "--ipython", "interpreter", flag_value="ipython", help="Use IPython as interpreter."
+)
+@options.open_opt
 @click.pass_context
 @with_context_env
-def insp(ctx, src_path, interpreter):
+def insp(ctx, src_path, interpreter, open_options):
     """Open a collection within an interactive interpreter."""
     banner = (
         "Fiona %s Interactive Inspector (Python %s)\n"
@@ -25,7 +27,7 @@ def insp(ctx, src_path, interpreter):
         % (fiona.__version__, ".".join(map(str, sys.version_info[:3])))
     )
 
-    with fiona.open(src_path) as src:
+    with fiona.open(src_path, **open_options) as src:
         scope = locals()
         if not interpreter:
             code.interact(banner, local=scope)
