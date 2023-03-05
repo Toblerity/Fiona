@@ -6,6 +6,7 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.9.2 (TBD)
 -----------
 
+- Add support for open options to all CLI commands that call fiona.open (#),
 - Fix a memory leak that can occur when iterating over a dataset using strides
   (#1205).
 - ZipMemoryFile now supports zipped GDB data (#1203).
