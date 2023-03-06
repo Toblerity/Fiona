@@ -14,6 +14,7 @@ from fiona.crs cimport OGRSpatialReferenceH, osr_set_traditional_axis_mapping_st
 
 from fiona.compat import DICT_TYPES
 from fiona.crs import CRS
+from fiona.errors import TransformError
 from fiona.model import Geometry
 
 
@@ -114,11 +115,10 @@ cdef object _transform_single_geom(
                     <OGRCoordinateTransformation *>transform,
                     options)
 
-    if dst_ogr_geom == NULL:
-        warnings.warn(
+    if dst_ogr_geom == NULL and CPLGetConfigOption("OGR_ENABLE_PARTIAL_REPROJECTION", "OFF") != b"ON":
+        raise TransformError(
             "Full reprojection failed. To enable partial reprojection set OGR_ENABLE_PARTIAL_REPROJECTION=True"
         )
-        return None
     else:
         out_geom = _geometry.GeomBuilder().build(dst_ogr_geom)
         _geometry.OGR_G_DestroyGeometry(dst_ogr_geom)
