@@ -211,7 +211,7 @@ fi
 
 ls -l $GDALINST
 
-if [ "$GDALVERSION" = "master" ]; then
+if [ "$(printf "$GDALVERSION\n3.6" | sort -V | head -n1)" = "3.6" ]; then
     PROJOPT="--with-proj=$GDALINST/gdal-$GDALVERSION"
     cd $GDALBUILD
     git clone --depth 1 https://github.com/OSGeo/gdal gdal-$GDALVERSION
