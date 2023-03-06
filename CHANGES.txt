@@ -6,6 +6,9 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.9.2 (TBD)
 -----------
 
+- Instead of warning, transform_geom() raises an exception when some points
+  can't be reprojected unless the caller opts in to partial reprojection. This
+  restores the behavior of version 1.8.22.
 - Fix a memory leak that can occur when iterating over a dataset using strides
   (#1205).
 - ZipMemoryFile now supports zipped GDB data (#1203).

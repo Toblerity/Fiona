@@ -71,6 +71,10 @@ class GDALVersionError(FionaError):
     """
 
 
+class TransformError(FionaError):
+    """Raised if a coordinate transformation fails."""
+
+
 class FionaDeprecationWarning(DeprecationWarning):
     """A warning about deprecation of Fiona features"""
 
