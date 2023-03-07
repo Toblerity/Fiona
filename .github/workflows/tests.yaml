@@ -92,7 +92,7 @@ jobs:
       - name: run tests
         run: |
           . testenv/bin/activate
-          python -m pytest -v -m "not wheel" -rxXs --cov fiona --cov-report term-missing
+          python -m pytest -v -m "not wheel" -m gdal -rxXs --cov fiona --cov-report term-missing
 
   conda_test:
 #     needs: linting
