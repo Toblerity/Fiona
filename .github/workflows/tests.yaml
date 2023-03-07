@@ -87,7 +87,7 @@ jobs:
           python -m pip wheel -r requirements-dev.txt
           python -m pip install -r requirements-dev.txt
           python setup.py clean
-          python -m pip install --no-deps --force-reinstall --no-use-pep517 -e .[test]
+          python -m pip install --no-deps --force-reinstall -e .[test]
 
       - name: run tests
         run: |
@@ -121,7 +121,7 @@ jobs:
           conda config --set channel_priority strict
           conda create -n test python=${{ matrix.python-version }} libgdal geos=3.10.3 cython=0.29 numpy
           source activate test
-          python -m pip install -e . --no-use-pep517 || python -m pip install -e .
+          python -m pip install -e . || python -m pip install -e .
           python -m pip install -r requirements-dev.txt
 
       - name: Check and Log Environment
