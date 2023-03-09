@@ -2,7 +2,7 @@ name: Tests
 
 on:
   push:
-    branches: [ maint-1.9 ]
+    branches: [ master, 'maint-*' ]
     paths:
       - '.github/workflows/tests.yaml'
       - 'requirements*.txt'
@@ -14,7 +14,7 @@ on:
       - 'fiona/**'
       - 'tests/**'
   pull_request:
-    branches: [ maint-1.9 ]
+    branches: [ master, 'maint-*' ]
     paths:
       - '.github/workflows/tests.yaml'
       - 'requirements*.txt'
@@ -29,21 +29,7 @@ on:
     - cron:  '0 0 * * 0'
 
 jobs:
-#   linting:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v3
-#       - uses: actions/setup-python@v4
-#         with:
-#             python-version: 3.9
-#       - name: Code Linting
-#         shell: bash
-#         run: |
-#           python -m pip install pre-commit
-#           pre-commit run --show-diff-on-failure --all-files
-
   docker_tests:
-#     needs: linting
     runs-on: ubuntu-latest
     name: Docker | GDAL=${{ matrix.gdal-version }} | python=${{ matrix.python-version }}
     container: osgeo/gdal:ubuntu-small-${{ matrix.gdal-version }}
@@ -95,7 +81,6 @@ jobs:
           python -m pytest -v -m "not wheel or gdal" -rxXs --cov fiona --cov-report term-missing
 
   conda_test:
-#     needs: linting
     name: Conda | ${{ matrix.os }} | python=${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
