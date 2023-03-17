@@ -1,0 +1,133 @@
+name: Tests
+
+on:
+  push:
+    branches: [ master, 'maint-*' ]
+    paths:
+      - '.github/workflows/tests.yaml'
+      - 'requirements*.txt'
+      - 'setup.py'
+      - 'setup.cfg'
+      - 'MANIFEST.in'
+      - 'pyproject.toml'
+      - 'scripts/**'
+      - 'fiona/**'
+      - 'tests/**'
+  pull_request:
+    branches: [ master, 'maint-*' ]
+    paths:
+      - '.github/workflows/tests.yaml'
+      - 'requirements*.txt'
+      - 'setup.py'
+      - 'setup.cfg'
+      - 'MANIFEST.in'
+      - 'pyproject.toml'
+      - 'scripts/**'
+      - 'fiona/**'
+      - 'tests/**'
+  schedule:
+    - cron:  '0 0 * * 0'
+
+jobs:
+  docker_tests:
+    runs-on: ubuntu-latest
+    name: Docker | GDAL=${{ matrix.gdal-version }} | python=${{ matrix.python-version }}
+    container: osgeo/gdal:ubuntu-small-${{ matrix.gdal-version }}
+    env:
+        DEBIAN_FRONTEND: noninteractive
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10']
+        gdal-version: ['3.5.3', '3.6.2']
+        include:
+          - python-version: '3.9'
+            gdal-version: '3.4.3'
+          - python-version: '3.9'
+            gdal-version: '3.3.3'
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Update
+        run: |
+          apt-get update
+          apt-get -y install software-properties-common
+          add-apt-repository -y ppa:deadsnakes/ppa
+          apt-get update
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: |
+          apt-get install -y --no-install-recommends \
+            python${{ matrix.python-version }} \
+            python${{ matrix.python-version }}-dev \
+            python${{ matrix.python-version }}-venv \
+            python3-pip \
+            g++
+
+      - name: Install dependencies
+        run: |
+          python${{ matrix.python-version }} -m venv testenv
+          . testenv/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip wheel -r requirements-dev.txt
+          python -m pip install -r requirements-dev.txt
+          python setup.py clean
+          python -m pip install --no-deps --force-reinstall -e .[test]
+
+      - name: run tests
+        run: |
+          . testenv/bin/activate
+          python -m pytest -v -m "not wheel or gdal" -rxXs --cov fiona --cov-report term-missing
+
+  conda_test:
+    name: Conda | ${{ matrix.os }} | python=${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [macos-latest]
+        python-version: ['3.9', '3.10']
+        include:
+          - os: ubuntu-latest
+            python-version: '3.10'
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Conda Setup
+        uses: s-weigand/setup-conda@v1
+        with:
+          conda-channels: conda-forge
+
+      - name: Install Env
+        shell: bash
+        run: |
+          conda config --prepend channels conda-forge
+          conda config --set channel_priority strict
+          conda create -n test python=${{ matrix.python-version }} libgdal geos=3.10.3 cython=0.29 numpy
+          source activate test
+          python -m pip install -e . || python -m pip install -e .
+          python -m pip install -r requirements-dev.txt
+
+      - name: Check and Log Environment
+        shell: bash
+        run: |
+          source activate test
+          python -V
+          conda info
+
+      - name: Test with Coverage (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          source activate test
+          python -m pytest -v -m "not wheel" -rxXs --cov fiona --cov-report term-missing
+
+      - name: Test with Coverage (OSX)
+        if: matrix.os == 'macos-latest'
+        shell: bash
+        run: |
+          source activate test
+          python -m pytest -v -m "not wheel" -rxXs  --cov fiona --cov-report term-missing
+
+      - uses: codecov/codecov-action@v3
