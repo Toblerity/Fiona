@@ -12,37 +12,6 @@ from fiona.schema import FIELD_TYPES_MAP_REV
 from fiona.transform import transform_geom
 
 
-def _cb_key_val(ctx, param, value):
-    """
-    click callback to validate `--opt KEY1=VAL1 --opt KEY2=VAL2` and collect
-    in a dictionary like the one below, which is what the CLI function receives.
-    If no value or `None` is received then an empty dictionary is returned.
-
-        {
-            'KEY1': 'VAL1',
-            'KEY2': 'VAL2'
-        }
-
-    Note: `==VAL` breaks this as `str.split('=', 1)` is used.
-
-    """
-    if not value:
-        return {}
-    else:
-        out = {}
-        for pair in value:
-            if "=" not in pair:
-                raise click.BadParameter(
-                    f"Invalid syntax for KEY=VAL arg: {pair}"
-                )
-            else:
-                k, v = pair.split("=", 1)
-                k = k.lower()
-                v = v.lower()
-                out[k] = None if v.lower() in ["none", "null", "nil", "nada"] else v
-        return out
-
-
 @click.command(short_help="Load GeoJSON to a dataset in another format.")
 @click.argument("output", required=True)
 @click.option("-f", "--format", "--driver", "driver", help="Output format driver name.")
@@ -60,15 +29,7 @@ def _cb_key_val(ctx, param, value):
     help="Load features into specified layer.  Layers use "
     "zero-based numbering when accessed by index.",
 )
-@click.option(
-    "--co",
-    "--profile",
-    "creation_options",
-    metavar="NAME=VALUE",
-    multiple=True,
-    callback=_cb_key_val,
-    help="Driver specific creation options. See the documentation for the selected output driver for more information.",
-)
+@options.creation_opt
 @click.pass_context
 @with_context_env
 def load(ctx, output, driver, src_crs, dst_crs, features, layer, creation_options):
