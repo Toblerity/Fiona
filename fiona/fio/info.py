@@ -36,9 +36,10 @@ logger = logging.getLogger(__name__)
                    "(left, bottom, right, top).")
 @click.option('--name', 'meta_member', flag_value='name',
               help="Print the datasource's name.")
+@options.open_opt
 @click.pass_context
 @with_context_env
-def info(ctx, input, indent, meta_member, layer):
+def info(ctx, input, indent, meta_member, layer, open_options):
     """
     Print information about a dataset.
 
@@ -46,7 +47,7 @@ def info(ctx, input, indent, meta_member, layer):
     Use the '--layer' option to select a different layer.
 
     """
-    with fiona.open(input, layer=layer) as src:
+    with fiona.open(input, layer=layer, **open_options) as src:
         info = src.meta
         info.update(name=src.name)
 

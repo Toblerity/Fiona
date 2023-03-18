@@ -414,7 +414,7 @@ def listdir(path):
 
 
 @ensure_env_with_credentials
-def listlayers(fp, vfs=None):
+def listlayers(fp, vfs=None, **kwargs):
     """List layer names in their index order
 
     Parameters
@@ -424,6 +424,8 @@ def listlayers(fp, vfs=None):
     vfs : str
         This is a deprecated parameter. A URI scheme such as "zip://"
         should be used instead.
+    kwargs : dict
+        Dataset opening options and other keyword args.
 
     Returns
     -------
@@ -432,12 +434,9 @@ def listlayers(fp, vfs=None):
 
     """
     if hasattr(fp, 'read'):
-
         with MemoryFile(fp.read()) as memfile:
-            return _listlayers(memfile.name)
-
+            return _listlayers(memfile.name, **kwargs)
     else:
-
         if isinstance(fp, Path):
             fp = str(fp)
 
@@ -454,7 +453,7 @@ def listlayers(fp, vfs=None):
         else:
             pobj = parse_path(fp)
 
-        return _listlayers(vsi_path(pobj))
+        return _listlayers(vsi_path(pobj), **kwargs)
 
 
 def prop_width(val):

@@ -33,10 +33,23 @@ from fiona.transform import transform_geom
 @click.option('--add-ld-context-item', multiple=True,
               help="map a term to a URI and add it to the output's JSON LD "
                    "context.")
+@options.open_opt
 @click.pass_context
 @with_context_env
-def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
-         ignore_errors, with_ld_context, add_ld_context_item, layer):
+def dump(
+    ctx,
+    input,
+    encoding,
+    precision,
+    indent,
+    compact,
+    record_buffered,
+    ignore_errors,
+    with_ld_context,
+    add_ld_context_item,
+    layer,
+    open_options,
+):
 
     """Dump a dataset either as a GeoJSON feature collection (the default)
     or a sequence of GeoJSON features."""
@@ -51,18 +64,24 @@ def dump(ctx, input, encoding, precision, indent, compact, record_buffered,
         dump_kwds['separators'] = (',', ':')
     item_sep = compact and ',' or ', '
 
-    open_kwds = {}
     if encoding:
-        open_kwds['encoding'] = encoding
+        open_options["encoding"] = encoding
     if layer:
-        open_kwds['layer'] = layer
+        open_options["layer"] = layer
 
     def transformer(crs, feat):
-        tg = partial(transform_geom, crs, 'EPSG:4326',
-                     antimeridian_cutting=True, precision=precision)
-        return Feature(id=feat.id, properties=feat.properties, geometry=tg(feat.geometry))
+        tg = partial(
+            transform_geom,
+            crs,
+            "EPSG:4326",
+            antimeridian_cutting=True,
+            precision=precision,
+        )
+        return Feature(
+            id=feat.id, properties=feat.properties, geometry=tg(feat.geometry)
+        )
 
-    with fiona.open(input, **open_kwds) as source:
+    with fiona.open(input, **open_options) as source:
         meta = source.meta
         meta["fields"] = dict(source.schema["properties"].items())
 
