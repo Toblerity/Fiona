@@ -6,6 +6,7 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.9.2 (TBD)
 -----------
 
+- Get command entry points using importlib.metadata (#).
 - Instead of warning, transform_geom() raises an exception when some points
   can't be reprojected unless the caller opts in to partial reprojection. This
   restores the behavior of version 1.8.22.

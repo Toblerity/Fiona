@@ -39,6 +39,7 @@ dependencies = [
     "click~=8.0",
     "click-plugins>=1.0",
     "cligj>=0.5",
+    "importlib-metadata",
     "munch>=2.3.2",
     "setuptools",
 ]
