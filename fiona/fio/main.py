@@ -3,7 +3,6 @@ Main click group for the CLI.  Needs to be isolated for entry-point loading.
 """
 
 
-from importlib.metadata import entry_points
 import itertools
 import logging
 import sys
@@ -11,6 +10,7 @@ import sys
 import click
 from click_plugins import with_plugins
 from cligj import verbose_opt, quiet_opt
+from importlib_metadata import entry_points
 
 import fiona
 from fiona import __version__ as fio_version
