@@ -38,6 +38,6 @@ def insp(ctx, src_path, interpreter, open_options):
             IPython.start_ipython(argv=[], user_ns=scope)
         else:
             raise click.ClickException(
-                "Interpreter {} is unsupported or missing "
-                "dependencies".format(interpreter)
+                f"Interpreter {interpreter} is unsupported or missing "
+                "dependencies"
             )

@@ -85,4 +85,4 @@ def normalize_field_type(ftype):
     elif ftype.startswith('float'):
         return 'float'
     else:
-        raise SchemaError("Unknown field type: {}".format(ftype))
+        raise SchemaError(f"Unknown field type: {ftype}")

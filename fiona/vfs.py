@@ -75,7 +75,7 @@ def parse_paths(uri, vfs=None):
         if parts.netloc and parts.netloc != 'localhost':
             if scheme.split("+")[-1] in CURLSCHEMES:
                 # We need to deal with cases such as zip+https://server.com/data.zip
-                path = "{}://{}{}".format(scheme.split("+")[-1], parts.netloc, path)
+                path = f"{scheme.split('+')[-1]}://{parts.netloc}{path}"
             else:
                 path = parts.netloc + path
         if scheme in SCHEMES:

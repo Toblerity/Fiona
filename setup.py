@@ -104,19 +104,19 @@ if 'clean' not in sys.argv:
     if os.environ.get('PACKAGE_DATA'):
         destdir = 'fiona/gdal_data'
         if gdal_output[2]:
-            logging.info("Copying gdal data from %s" % gdal_output[2])
+            logging.info(f"Copying gdal data from {gdal_output[2]}")
             copy_data_tree(gdal_output[2], destdir)
         else:
             # check to see if GDAL_DATA is defined
             gdal_data = os.environ.get('GDAL_DATA', None)
             if gdal_data:
-                logging.info("Copying gdal data from %s" % gdal_data)
+                logging.info(f"Copying gdal data from {gdal_data}")
                 copy_data_tree(gdal_data, destdir)
 
         # Conditionally copy PROJ DATA.
         projdatadir = os.environ.get('PROJ_DATA', os.environ.get('PROJ_LIB', '/usr/local/share/proj'))
         if os.path.exists(projdatadir):
-            logging.info("Copying proj data from %s" % projdatadir)
+            logging.info(f"Copying proj data from {projdatadir}")
             copy_data_tree(projdatadir, 'fiona/proj_data')
 
     if "--cython-language" in sys.argv:

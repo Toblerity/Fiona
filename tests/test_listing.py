@@ -81,7 +81,7 @@ def test_listing_pathobj(path_coutwildrnp_json):
 
 def test_listdir_path(path_coutwildrnp_zip):
     """List directories in a path"""
-    assert sorted(fiona.listdir("zip://{}".format(path_coutwildrnp_zip))) == [
+    assert sorted(fiona.listdir(f"zip://{path_coutwildrnp_zip}")) == [
         "coutwildrnp.dbf",
         "coutwildrnp.prj",
         "coutwildrnp.shp",

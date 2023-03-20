@@ -32,8 +32,7 @@ def test_version_comparison():
 def test_show_versions(capsys):
     version_pattern = re.compile(r"(\d+).(\d+).(\d+)")
 
-    os_info = "{system} {release}".format(system=platform.system(),
-                                          release=platform.release())
+    os_info = f"{platform.system()} {platform.release()}"
     python_version = platform.python_version()
     python_exec = sys.executable
 

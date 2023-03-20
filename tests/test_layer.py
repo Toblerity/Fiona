@@ -17,17 +17,17 @@ class TestFileReading(TestReading):
         self.c.close()
 
     def test_open_repr(self, path_coutwildrnp_shp):
-        assert (
-            repr(self.c) ==
-            ("<open Collection '{path}:coutwildrnp', mode 'r' "
-             "at {id}>".format(path=path_coutwildrnp_shp, id=hex(id(self.c)))))
+        assert repr(self.c) == (
+            f"<open Collection '{path_coutwildrnp_shp}:coutwildrnp', "
+            f"mode 'r' at {hex(id(self.c))}>"
+        )
 
     def test_closed_repr(self, path_coutwildrnp_shp):
         self.c.close()
-        assert (
-            repr(self.c) ==
-            ("<closed Collection '{path}:coutwildrnp', mode 'r' "
-             "at {id}>".format(path=path_coutwildrnp_shp, id=hex(id(self.c)))))
+        assert repr(self.c) == (
+            f"<closed Collection '{path_coutwildrnp_shp}:coutwildrnp', "
+            f"mode 'r' at {hex(id(self.c))}>"
+        )
 
     def test_name(self):
         assert self.c.name == 'coutwildrnp'
@@ -41,17 +41,17 @@ class TestDirReading(TestReading):
         self.c.close()
 
     def test_open_repr(self, data_dir):
-        assert (
-            repr(self.c) ==
-            ("<open Collection '{path}:coutwildrnp', mode 'r' "
-             "at {id}>".format(path=data_dir, id=hex(id(self.c)))))
+        assert repr(self.c) == (
+            f"<open Collection '{data_dir}:coutwildrnp', "
+            f"mode 'r' at {hex(id(self.c))}>"
+        )
 
     def test_closed_repr(self, data_dir):
         self.c.close()
-        assert (
-            repr(self.c) ==
-            ("<closed Collection '{path}:coutwildrnp', mode 'r' "
-             "at {id}>".format(path=data_dir, id=hex(id(self.c)))))
+        assert repr(self.c) == (
+            f"<closed Collection '{data_dir}:coutwildrnp', "
+            f"mode 'r' at {hex(id(self.c))}>"
+        )
 
     def test_name(self):
         assert self.c.name == 'coutwildrnp'

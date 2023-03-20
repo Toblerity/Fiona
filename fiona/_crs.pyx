@@ -66,18 +66,18 @@ def crs_to_wkt(crs):
             proj_c = proj_b
             OSRImportFromProj4(cogr_srs, proj_c)
     else:
-        raise CRSError("Invalid input to create CRS: {}".format(crs))
+        raise CRSError(f"Invalid input to create CRS: {crs}")
 
     osr_set_traditional_axis_mapping_strategy(cogr_srs)
     OSRExportToWkt(cogr_srs, &proj_c)
 
     if proj_c == NULL:
-        raise CRSError("Invalid input to create CRS: {}".format(crs))
+        raise CRSError(f"Invalid input to create CRS: {crs}")
 
     proj_b = proj_c
     _cpl.CPLFree(proj_c)
 
     if not proj_b:
-        raise CRSError("Invalid input to create CRS: {}".format(crs))
+        raise CRSError(f"Invalid input to create CRS: {crs}")
 
     return proj_b.decode('utf-8')

@@ -99,15 +99,15 @@ class TestReading:
 
     def test_open_repr(self, path_coutwildrnp_shp):
         assert repr(self.c) == (
-            "<open Collection '{path}:coutwildrnp', mode 'r' "
-            "at {hexid}>".format(hexid=hex(id(self.c)), path=path_coutwildrnp_shp)
+            f"<open Collection '{path_coutwildrnp_shp}:coutwildrnp', "
+            f"mode 'r' at {hex(id(self.c))}>"
         )
 
     def test_closed_repr(self, path_coutwildrnp_shp):
         self.c.close()
         assert repr(self.c) == (
-            "<closed Collection '{path}:coutwildrnp', mode 'r' "
-            "at {hexid}>".format(hexid=hex(id(self.c)), path=path_coutwildrnp_shp)
+            f"<closed Collection '{path_coutwildrnp_shp}:coutwildrnp', "
+            f"mode 'r' at {hex(id(self.c))}>"
         )
 
     def test_path(self, path_coutwildrnp_shp):

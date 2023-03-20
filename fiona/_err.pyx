@@ -226,7 +226,7 @@ cdef inline object exc_check():
             err_no, CPLE_BaseError)(err_type, err_no, msg)
 
     if err_type == 4:
-        return SystemExit("Fatal error: {0}".format((err_type, err_no, msg)))
+        return SystemExit(f"Fatal error: {(err_type, err_no, msg)}")
 
     else:
         return
@@ -278,7 +278,7 @@ cdef OGRErr exc_wrap_ogrerr(OGRErr err) except -1:
     exc = exc_check()
     if exc:
         raise exc
-    raise CPLE_BaseError(3, err, "OGR Error code {}".format(err))
+    raise CPLE_BaseError(3, err, f"OGR Error code {err}")
 
 
 cdef void *exc_wrap_pointer(void *ptr) except NULL:

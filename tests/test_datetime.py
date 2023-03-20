@@ -544,11 +544,9 @@ def test_datefield_driver_converts_to_string(tmpdir, driver, field_type):
             else:
                 sign, hours, minutes = get_tz_offset(val_exp)
                 if minutes > 0:
-                    tz = "{sign}{hours:02d}{minutes:02d}".format(
-                        sign=sign, hours=int(hours), minutes=int(minutes)
-                    )
+                    tz = f"{sign}{hours:02d}{minutes:02d}"
                 else:
-                    tz = f"{sign}{int(hours):02d}"
+                    tz = f"{sign}{hours:02d}"
                 print("tz", tz)
                 # No Milliseconds
                 if not _driver_supports_milliseconds(driver):
@@ -632,11 +630,9 @@ def test_datefield_driver_converts_to_string(tmpdir, driver, field_type):
 
                 sign, hours, minutes = get_tz_offset(val_exp)
                 if minutes > 0:
-                    tz = "{sign}{hours:02d}{minutes:02d}".format(
-                        sign=sign, hours=int(hours), minutes=int(minutes)
-                    )
+                    tz = f"{sign}{hours:02d}{minutes:02d}"
                 else:
-                    tz = f"{sign}{int(hours):02d}"
+                    tz = f"{sign}{hours:02d}"
                 # No Milliseconds
                 if not _driver_supports_milliseconds(driver):
                     if (

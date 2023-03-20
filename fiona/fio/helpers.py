@@ -113,7 +113,7 @@ def make_ld_context(context_items):
 
 def id_record(rec):
     """Converts a record's id to a blank node id and returns the record."""
-    rec["id"] = "_:f%s" % rec["id"]
+    rec["id"] = f"_:f{rec['id']}"
     return rec
 
 
