@@ -10,7 +10,11 @@ import sys
 import click
 from click_plugins import with_plugins
 from cligj import verbose_opt, quiet_opt
-from importlib_metadata import entry_points
+
+if sys.version_info < (3, 10):
+    from importlib_metadata import entry_points
+else:
+    from importlib.metadata import entry_points
 
 import fiona
 from fiona import __version__ as fio_version
