@@ -79,7 +79,7 @@ jobs:
           python setup.py clean
           python -m pip install --no-deps --force-reinstall -e .[test]
 
-      - name: run tests
+      - name: Run tests
         run: |
           . testenv/bin/activate
           python -m pytest -v -m "not wheel or gdal" -rxXs --cov fiona --cov-report term-missing
@@ -108,7 +108,7 @@ jobs:
         run: |
           conda config --prepend channels conda-forge
           conda config --set channel_priority strict
-          conda create -n test python=${{ matrix.python-version }} libgdal geos=3.10.3 cython=0.29 numpy
+          conda create -n test python=${{ matrix.python-version }} libgdal geos=3.10.3 cython=0.29
           source activate test
           python -m pip install -e . || python -m pip install -e .
           python -m pip install -r requirements-dev.txt
