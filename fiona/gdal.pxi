@@ -28,7 +28,6 @@ cdef extern from "cpl_string.h":
     const char *CSLFetchNameValue(char **papszStrList, const char *pszName)
     char **CSLMerge(char **first, char **second)
 
-
 cdef extern from "sys/stat.h" nogil:
     struct stat:
         int st_mode

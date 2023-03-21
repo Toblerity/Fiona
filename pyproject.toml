@@ -39,8 +39,8 @@ dependencies = [
     "click~=8.0",
     "click-plugins>=1.0",
     "cligj>=0.5",
+    'importlib-metadata;python_version<"3.10"',
     "munch>=2.3.2",
-    "setuptools",
 ]
 
 [project.optional-dependencies]

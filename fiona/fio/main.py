@@ -3,13 +3,18 @@ Main click group for the CLI.  Needs to be isolated for entry-point loading.
 """
 
 
+import itertools
 import logging
-from pkg_resources import iter_entry_points
 import sys
 
 import click
 from click_plugins import with_plugins
 from cligj import verbose_opt, quiet_opt
+
+if sys.version_info < (3, 10):
+    from importlib_metadata import entry_points
+else:
+    from importlib.metadata import entry_points
 
 import fiona
 from fiona import __version__ as fio_version
@@ -22,9 +27,10 @@ def configure_logging(verbosity):
 
 
 @with_plugins(
-    ep
-    for ep in list(iter_entry_points("fiona.fio_commands"))
-    + list(iter_entry_points("fiona.fio_plugins"))
+    itertools.chain(
+        entry_points(group="fiona.fio_commands"),
+        entry_points(group="fiona.fio_plugins"),
+    )
 )
 @click.group()
 @verbose_opt
