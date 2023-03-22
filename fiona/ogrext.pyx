@@ -368,16 +368,17 @@ cdef class FeatureBuilder:
                 string_list = OGR_F_GetFieldAsStringList(feature, i)
                 string_list_index = 0
                 props[key] = []
-                while string_list[string_list_index] != NULL:
-                    val = string_list[string_list_index]
-                    try:
-                        val = val.decode(encoding)
-                    except UnicodeDecodeError:
-                        log.warning(
-                            "Failed to decode %s using %s codec", val, encoding
-                        )
-                    props[key].append(val)
-                    string_list_index += 1
+                if string_list != NULL:
+                    while string_list[string_list_index] != NULL:
+                        val = string_list[string_list_index]
+                        try:
+                            val = val.decode(encoding)
+                        except UnicodeDecodeError:
+                            log.warning(
+                                "Failed to decode %s using %s codec", val, encoding
+                            )
+                        props[key].append(val)
+                        string_list_index += 1
             else:
                 props[key] = None
 
