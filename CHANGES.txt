@@ -3,6 +3,11 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.9.3 (TBD)
+-----------
+
+- Reading a GeoJSON with an empty array property can result in a segmentation fault since version 1.9.0. This has been fixed.
+
 1.9.2 (2023-03-20)
 ------------------
 

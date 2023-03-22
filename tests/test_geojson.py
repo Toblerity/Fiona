@@ -1,3 +1,7 @@
+"""Tests of behavior specific to GeoJSON"""
+
+import json
+
 import pytest
 
 import fiona
@@ -136,3 +140,27 @@ def test_write_json_invalid_directory(tmpdir):
     schema = {"geometry": "Unknown", "properties": [("title", "str")]}
     with pytest.raises(DriverError):
         fiona.open(path, "w", driver="GeoJSON", schema=schema)
+
+
+def test_empty_array_property(tmp_path):
+    """Confirm fix for bug reported in gh-1227."""
+    tmp_path.joinpath("test.geojson").write_text(
+        json.dumps(
+            {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "geometry": {"type": "Point", "coordinates": [12, 24]},
+                        "properties": {"array_prop": ["some_value"]},
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": {"type": "Point", "coordinates": [12, 24]},
+                        "properties": {"array_prop": []},
+                    },
+                ],
+            }
+        )
+    )
+    list(fiona.open(tmp_path.joinpath("test.geojson")))
