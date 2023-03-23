@@ -510,7 +510,7 @@ class GDALVersion:
             if not match:
                 raise ValueError(
                     "value does not appear to be a valid GDAL version "
-                    "number: {}".format(input)
+                    f"number: {input}"
                 )
             major, minor = (int(c) for c in match.group().split("."))
             return cls(major=major, minor=minor)
@@ -602,9 +602,7 @@ def require_gdal_version(
 
                 if param is None:
                     raise GDALVersionError(
-                        "GDAL version must be {} {}{}".format(
-                            inequality, str(version), reason
-                        )
+                        f"GDAL version must be {inequality} {version}{reason}"
                     )
 
                 # normalize args and kwds to dict
@@ -627,18 +625,14 @@ def require_gdal_version(
                             full_kwds[param] != defaults[param]
                         ):
                             raise GDALVersionError(
-                                'usage of parameter "{}" requires '
-                                "GDAL {} {}{}".format(
-                                    param, inequality, version, reason
-                                )
+                                f'usage of parameter "{param}" requires '
+                                f"GDAL {inequality} {version}{reason}"
                             )
 
                     elif full_kwds[param] in values:
                         raise GDALVersionError(
-                            'parameter "{}={}" requires '
-                            "GDAL {} {}{}".format(
-                                param, full_kwds[param], inequality, version, reason
-                            )
+                            f'parameter "{param}={full_kwds[param]}" requires '
+                            f"GDAL {inequality} {version}{reason}"
                         )
 
             return f(*args, **kwds)

@@ -49,8 +49,8 @@ def calc(ctx, property_name, expression, overwrite, use_rs):
 
             if not overwrite and property_name in feat["properties"]:
                 raise click.UsageError(
-                    "{} already exists in properties; "
-                    "rename or use --overwrite".format(property_name)
+                    f"{property_name} already exists in properties; "
+                    "rename or use --overwrite"
                 )
 
             feat["properties"][property_name] = eval_feature_expression(

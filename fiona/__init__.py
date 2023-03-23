@@ -408,7 +408,7 @@ def listdir(path):
     if isinstance(path, Path):
         path = str(path)
     if not isinstance(path, str):
-        raise TypeError("invalid path: %r" % path)
+        raise TypeError(f"invalid path: {path!r}")
     pobj = parse_path(path)
     return _listdir(vsi_path(pobj))
 
@@ -441,9 +441,9 @@ def listlayers(fp, vfs=None, **kwargs):
             fp = str(fp)
 
         if not isinstance(fp, str):
-            raise TypeError("invalid path: %r" % fp)
+            raise TypeError(f"invalid path: {fp!r}")
         if vfs and not isinstance(vfs, str):
-            raise TypeError("invalid vfs: %r" % vfs)
+            raise TypeError(f"invalid vfs: {vfs!r}")
 
         if vfs:
             warnings.warn("The vfs keyword argument is deprecated. Instead, pass a URL that uses a zip or tar (for example) scheme.", FionaDeprecationWarning, stacklevel=2)

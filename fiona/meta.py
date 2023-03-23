@@ -152,11 +152,11 @@ def print_driver_options(driver):
             for option_name in options:
                 print(f"\t{option_name}:")
                 if 'description' in options[option_name]:
-                    print("\t\tDescription: {description}".format(description=options[option_name]['description']))
+                    print(f"\t\tDescription: {options[option_name]['description']}")
                 if 'type' in options[option_name]:
-                    print("\t\tType: {type}".format(type=options[option_name]['type']))
+                    print(f"\t\tType: {options[option_name]['type']}")
                 if 'values' in options[option_name] and len(options[option_name]['values']) > 0:
-                    print("\t\tAccepted values: {values}".format(values=",".join(options[option_name]['values'])))
+                    print(f"\t\tAccepted values: {','.join(options[option_name]['values'])}")
                 for attr_text, attribute in [('Default value', 'default'),
                                              ('Required', 'required'),
                                              ('Alias', 'aliasOf'),
@@ -166,8 +166,7 @@ def print_driver_options(driver):
                                              ('Scope', 'scope'),
                                              ('Alternative configuration option', 'alt_config_option')]:
                     if attribute in options[option_name]:
-                        print("\t\t{attr_text}: {attribute}".format(attr_text=attr_text,
-                                                                    attribute=options[option_name][attribute]))
+                        print(f"\t\t{attr_text}: {options[option_name][attribute]}")
         print("")
 
 

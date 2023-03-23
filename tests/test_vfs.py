@@ -69,22 +69,22 @@ class TestVsiReading(TestReading):
 class TestZipReading(TestVsiReading):
     @pytest.fixture(autouse=True)
     def zipfile(self, data_dir, path_coutwildrnp_zip):
-        self.c = fiona.open("zip://{}".format(path_coutwildrnp_zip, "r"))
+        self.c = fiona.open(f"zip://{path_coutwildrnp_zip}", "r")
         self.path = os.path.join(data_dir, "coutwildrnp.zip")
         yield
         self.c.close()
 
     def test_open_repr(self):
+        path = f"/vsizip/{self.path}:coutwildrnp"
         assert repr(self.c) == (
-            "<open Collection '/vsizip/{path}:coutwildrnp', mode 'r' "
-            "at {id}>".format(id=hex(id(self.c)), path=self.path)
+            f"<open Collection '{path}', mode 'r' at {hex(id(self.c))}>"
         )
 
     def test_closed_repr(self):
         self.c.close()
+        path = f"/vsizip/{self.path}:coutwildrnp"
         assert repr(self.c) == (
-            "<closed Collection '/vsizip/{path}:coutwildrnp', mode 'r' "
-            "at {id}>".format(id=hex(id(self.c)), path=self.path)
+            f"<closed Collection '{path}', mode 'r' at {hex(id(self.c))}>"
         )
 
     def test_path(self):
@@ -101,16 +101,16 @@ class TestZipArchiveReading(TestVsiReading):
         self.c.close()
 
     def test_open_repr(self):
+        path = f"/vsizip/{self.path}/coutwildrnp.shp:coutwildrnp"
         assert repr(self.c) == (
-            "<open Collection '/vsizip/{path}/coutwildrnp.shp:coutwildrnp', mode 'r' "
-            "at {id}>".format(id=hex(id(self.c)), path=self.path)
+            f"<open Collection '{path}', mode 'r' at {hex(id(self.c))}>"
         )
 
     def test_closed_repr(self):
         self.c.close()
+        path = f"/vsizip/{self.path}/coutwildrnp.shp:coutwildrnp"
         assert repr(self.c) == (
-            "<closed Collection '/vsizip/{path}/coutwildrnp.shp:coutwildrnp', mode 'r' "
-            "at {id}>".format(id=hex(id(self.c)), path=self.path)
+            f"<closed Collection '{path}', mode 'r' at {hex(id(self.c))}>"
         )
 
     def test_path(self):
@@ -147,22 +147,20 @@ class TarArchiveReadingTest(VsiReadingTest):
         self.c.close()
 
     def test_open_repr(self):
+        path = f"/vsitar/{self.path}/testing/coutwildrnp.shp:coutwildrnp"
         assert repr(self.c) == (
-            "<open Collection '/vsitar/{path}/testing/coutwildrnp.shp:coutwildrnp', mode 'r' "
-            "at {id}>".format(id=hex(id(self.c)), path=self.path)
+            f"<open Collection '{path}', mode 'r' at {hex(id(self.c))}>"
         )
 
     def test_closed_repr(self):
         self.c.close()
+        path = f"/vsitar/{self.path}/testing/coutwildrnp.shp:coutwildrnp"
         assert repr(self.c) == (
-            "<closed Collection '/vsitar/{path}/testing/coutwildrnp.shp:coutwildrnp', mode 'r' "
-            "at {id}>".format(id=hex(id(self.c)), path=self.path)
+            f"<closed Collection '{path}', mode 'r' at {hex(id(self.c))}>"
         )
 
     def test_path(self):
-        assert self.c.path == "/vsitar/{path}/testing/coutwildrnp.shp".format(
-            path=self.path
-        )
+        assert self.c.path == f"/vsitar/{self.path}/testing/coutwildrnp.shp"
 
 
 @pytest.mark.network

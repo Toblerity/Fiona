@@ -138,7 +138,8 @@ cdef void* gdal_open_vector(char* path_c, int mode, drivers, options) except NUL
         )
         return cogr_ds
     except FionaNullPointerError:
-        raise DriverError("Failed to open dataset (mode={}): {}".format(mode, path_c.decode("utf-8")))
+        raise DriverError(
+            f"Failed to open dataset (mode={mode}): {path_c.decode('utf-8')}")
     except CPLE_BaseError as exc:
         raise DriverError(str(exc))
     finally:
@@ -174,7 +175,7 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except NU
     try:
         return exc_wrap_pointer(GDALCreate(cogr_driver, path_c, 0, 0, 0, GDT_Unknown, creation_opts))
     except FionaNullPointerError:
-        raise DriverError("Failed to create dataset: {}".format(path_c.decode("utf-8")))
+        raise DriverError(f"Failed to create dataset: {path_c.decode('utf-8')}")
     except CPLE_BaseError as exc:
         raise DriverError(str(exc))
     finally:
@@ -276,14 +277,14 @@ cdef class FeatureBuilder:
         for i in range(OGR_F_GetFieldCount(feature)):
             fdefn = OGR_F_GetFieldDefnRef(feature, i)
             if fdefn == NULL:
-                raise ValueError("NULL field definition at index {}".format(i))
+                raise ValueError(f"NULL field definition at index {i}")
             key_c = OGR_Fld_GetNameRef(fdefn)
             if key_c == NULL:
-                raise ValueError("NULL field name reference at index {}".format(i))
+                raise ValueError(f"NULL field name reference at index {i}")
             key_b = key_c
             key = key_b.decode(encoding)
             if not key:
-                warnings.warn("Empty field name at index {}".format(i))
+                warnings.warn(f"Empty field name at index {i}")
 
             if key in ignore_fields:
                 continue
@@ -619,9 +620,8 @@ cdef class Session:
                         name_b = name.encode(encoding)
                     except AttributeError:
                         raise TypeError(
-                            "Ignored field \"{}\" has type \"{}\", expected string".format(
-                                name, name.__class__.__name__
-                            )
+                            f'Ignored field "{name}" has type '
+                            f'"{name.__class__.__name__}", expected string'
                         )
                     else:
                         ignore_fields = CSLAddString(ignore_fields, <const char *>name_b)
@@ -749,18 +749,18 @@ cdef class Session:
             cogr_fielddefn = OGR_FD_GetFieldDefn(cogr_featuredefn, i)
 
             if cogr_fielddefn == NULL:
-                raise ValueError("NULL field definition at index {}".format(i))
+                raise ValueError(f"NULL field definition at index {i}")
 
             key_c = OGR_Fld_GetNameRef(cogr_fielddefn)
 
             if key_c == NULL:
-                raise ValueError("NULL field name reference at index {}".format(i))
+                raise ValueError(f"NULL field name reference at index {i}")
 
             key_b = key_c
             key = key_b.decode(encoding)
 
             if not key:
-                warnings.warn("Empty field name at index {}".format(i), FeatureWarning)
+                warnings.warn(f"Empty field name at index {i}", FeatureWarning)
 
             if key in ignore_fields:
                 continue
@@ -791,12 +791,12 @@ cdef class Session:
                 width = OGR_Fld_GetWidth(cogr_fielddefn)
 
                 if width: # and width != 24:
-                    fmt = ":{:d}".format(width)
+                    fmt = f":{width:d}"
 
                 precision = OGR_Fld_GetPrecision(cogr_fielddefn)
 
                 if precision: # and precision != 15:
-                    fmt += ".{:d}".format(precision)
+                    fmt += f".{precision:d}"
 
                 val = "float" + fmt
 
@@ -805,7 +805,7 @@ cdef class Session:
                 width = OGR_Fld_GetWidth(cogr_fielddefn)
 
                 if width:
-                    fmt = ":{:d}".format(width)
+                    fmt = f":{width:d}"
 
                 val = 'int' + fmt
 
@@ -814,7 +814,7 @@ cdef class Session:
                 width = OGR_Fld_GetWidth(cogr_fielddefn)
 
                 if width:
-                    fmt = ":{:d}".format(width)
+                    fmt = f":{width:d}"
 
                 val = fieldtypename + fmt
 
@@ -935,7 +935,7 @@ cdef class Session:
             _deleteOgrFeature(cogr_feature)
             return feature
         else:
-            raise KeyError("There is no feature with fid {!r}".format(fid))
+            raise KeyError(f"There is no feature with fid {fid!r}")
 
     get = get_feature
 
@@ -1269,8 +1269,10 @@ cdef class WritingSession(Session):
             default_fields = self.get_schema()['properties']
             for key, value in default_fields.items():
                 if key in schema_fields and not schema_fields[key] == value:
-                    raise SchemaError("Property '{}' must have type '{}' "
-                    "for driver '{}'".format(key, value, self.collection.driver))
+                    raise SchemaError(
+                        f"Property '{key}' must have type '{value}' "
+                        f"for driver '{self.collection.driver}'"
+                    )
 
             new_fields = OrderedDict([(key, value) for key, value in schema_fields.items()
                                       if key not in default_fields])
@@ -1378,7 +1380,7 @@ cdef class WritingSession(Session):
             return record["geometry"]["type"].lstrip("3D ") in valid_geom_types
 
         transactions_supported = GDALDatasetTestCapability(self.cogr_ds, ODsCTransactions)
-        log.debug("Transaction supported: {}".format(transactions_supported))
+        log.debug("Transaction supported: %s", transactions_supported)
 
         if transactions_supported:
             log.debug("Starting transaction (initial)")
@@ -1411,9 +1413,7 @@ cdef class WritingSession(Session):
             if result != OGRERR_NONE:
                 msg = get_last_error_msg()
                 raise RuntimeError(
-                    "GDAL Error: {msg}. Failed to write record: {record}".format(
-                        msg=msg, record=record
-                    )
+                    f"GDAL Error: {msg}. Failed to write record: {record}"
                 )
 
             _deleteOgrFeature(cogr_feature)
@@ -1587,11 +1587,11 @@ cdef class Iterator:
 
         self.fastindex = OGR_L_TestCapability(
             session.cogr_layer, OLC_FASTSETNEXTBYINDEX)
-        log.debug("OLC_FASTSETNEXTBYINDEX: {}".format(self.fastindex))
+        log.debug("OLC_FASTSETNEXTBYINDEX: %s", self.fastindex)
 
         self.fastcount = OGR_L_TestCapability(
             session.cogr_layer, OLC_FASTFEATURECOUNT)
-        log.debug("OLC_FASTFEATURECOUNT: {}".format(self.fastcount))
+        log.debug("OLC_FASTFEATURECOUNT: %s", self.fastcount)
 
         # In some cases we need to force count of all features
         # We need to check if start is not greater ftcount: (start is not None and start > 0)
@@ -1818,21 +1818,21 @@ def _remove(path, driver=None):
         try:
             cogr_ds = gdal_open_vector(path.encode("utf-8"), 0, None, {})
         except (DriverError, FionaNullPointerError):
-            raise DatasetDeleteError("Failed to remove data source {}".format(path))
+            raise DatasetDeleteError(f"Failed to remove data source {path}")
         cogr_driver = GDALGetDatasetDriver(cogr_ds)
         GDALClose(cogr_ds)
     else:
         cogr_driver = GDALGetDriverByName(driver.encode("utf-8"))
 
     if cogr_driver == NULL:
-        raise DatasetDeleteError("Null driver when attempting to delete {}".format(path))
+        raise DatasetDeleteError(f"Null driver when attempting to delete {path}")
 
     if not OGR_Dr_TestCapability(cogr_driver, ODrCDeleteDataSource):
         raise DatasetDeleteError("Driver does not support dataset removal operation")
 
     result = GDALDeleteDataset(cogr_driver, path.encode('utf-8'))
     if result != OGRERR_NONE:
-        raise DatasetDeleteError("Failed to remove data source {}".format(path))
+        raise DatasetDeleteError(f"Failed to remove data source {path}")
 
 
 def _remove_layer(path, layer, driver=None):
@@ -1847,8 +1847,8 @@ def _remove_layer(path, layer, driver=None):
         try:
             layer_index = layer_names.index(layer)
         except ValueError:
-            raise ValueError("Layer \"{}\" does not exist in datasource: {}".format(layer, path))
-        layer_str = '"{}"'.format(layer)
+            raise ValueError(f'Layer "{layer}" does not exist in datasource: {path}')
+        layer_str = f'"{layer}"'
 
     if layer_index < 0:
         layer_names = _listlayers(path)
@@ -1857,15 +1857,15 @@ def _remove_layer(path, layer, driver=None):
     try:
         cogr_ds = gdal_open_vector(path.encode("utf-8"), 1, None, {})
     except (DriverError, FionaNullPointerError):
-        raise DatasetDeleteError("Failed to remove data source {}".format(path))
+        raise DatasetDeleteError(f"Failed to remove data source {path}")
 
     result = GDALDatasetDeleteLayer(cogr_ds, layer_index)
     GDALClose(cogr_ds)
 
     if result == OGRERR_UNSUPPORTED_OPERATION:
-        raise DatasetDeleteError("Removal of layer {} not supported by driver".format(layer_str))
+        raise DatasetDeleteError(f"Removal of layer {layer_str} not supported by driver")
     elif result != OGRERR_NONE:
-        raise DatasetDeleteError("Failed to remove layer {} from datasource: {}".format(layer_str, path))
+        raise DatasetDeleteError(f"Failed to remove layer {layer_str} from datasource: {path}")
 
 
 def _listlayers(path, **kwargs):
@@ -1913,9 +1913,9 @@ def _listdir(path):
         path_b = path
     path_c = path_b
     if not VSIStatL(path_c, &st_buf) == 0:
-        raise FionaValueError("Path '{}' does not exist.".format(path))
+        raise FionaValueError(f"Path '{path}' does not exist.")
     if not VSI_ISDIR(st_buf.st_mode):
-        raise FionaValueError("Path '{}' is not a directory.".format(path))
+        raise FionaValueError(f"Path '{path}' is not a directory.")
 
     papszFiles = VSIReadDir(path_c)
     n = CSLCount(papszFiles)
@@ -1933,7 +1933,7 @@ def buffer_to_virtual_file(bytesbuf, ext=''):
     `ext` is empty or begins with a period and contains at most one period.
     """
 
-    vsi_filename = '/vsimem/{}'.format(uuid4().hex + ext)
+    vsi_filename = f"/vsimem/{uuid4().hex}{ext}"
     vsi_cfilename = vsi_filename if not isinstance(vsi_filename, str) else vsi_filename.encode('utf-8')
 
     vsi_handle = VSIFileFromMemBuffer(vsi_cfilename, <unsigned char *>bytesbuf, len(bytesbuf), 0)
@@ -1985,15 +1985,15 @@ cdef class MemoryFileBase:
         # Make an in-memory directory specific to this dataset to help organize
         # auxiliary files.
         self._dirname = dirname or str(uuid4().hex)
-        VSIMkdir("/vsimem/{0}".format(self._dirname).encode("utf-8"), 0666)
+        VSIMkdir(f"/vsimem/{self._dirname}".encode("utf-8"), 0666)
 
         if filename:
             # GDAL's SRTMHGT driver requires the filename to be "correct" (match
             # the bounds being written)
-            self.name = "/vsimem/{0}/{1}".format(self._dirname, filename)
+            self.name = f"/vsimem/{self._dirname}/{filename}"
         else:
             # GDAL 2.1 requires a .zip extension for zipped files.
-            self.name = "/vsimem/{0}/{0}{1}".format(self._dirname, ext)
+            self.name = f"/vsimem/{self._dirname}/{self._dirname}{ext}"
 
         name_b = self.name.encode('utf-8')
         self._initial_bytes = initial_bytes
@@ -2165,7 +2165,7 @@ def _get_metadata_item(driver, metadata_item):
     driver_b = strencode(driver)
     cogr_driver = GDALGetDriverByName(driver_b)
     if cogr_driver == NULL:
-        raise FionaValueError("Could not find driver '{}'".format(driver))
+        raise FionaValueError(f"Could not find driver '{driver}'")
 
     metadata_c = GDALGetMetadataItem(cogr_driver, metadata_item.encode('utf-8'), NULL)
 

@@ -25,10 +25,7 @@ def test_urls(files):
                     warn = str(e)
 
                 if len(warn) > 0:
-                    print("\t {url} HTTP code: {http} {warn}".format(url=url,
-                                                                     http=http_code,
-                                                                     warn=warn)
-                          )
+                    print(f"\t {url} HTTP code: {http_code} {warn}")
 
 
 print("Test URLs in documentation")

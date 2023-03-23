@@ -58,7 +58,7 @@ def parse_time(text):
     """
     match = re.search(pattern_time, text)
     if match is None:
-        raise ValueError("Time data '%s' does not match pattern" % text)
+        raise ValueError(f"Time data '{text}' does not match pattern")
     g = group_accessor(match)
     log.debug("Match groups: %s", match.groups())
 
@@ -92,7 +92,7 @@ def parse_date(text):
     """
     match = re.search(pattern_date, text)
     if match is None:
-        raise ValueError("Time data '%s' does not match pattern" % text)
+        raise ValueError(f"Time data '{text}' does not match pattern")
     g = group_accessor(match)
     log.debug("Match groups: %s", match.groups())
     return (
@@ -116,7 +116,7 @@ def parse_datetime(text):
     """
     match = re.search(pattern_datetime, text)
     if match is None:
-        raise ValueError("Time data '%s' does not match pattern" % text)
+        raise ValueError(f"Time data '{text}' does not match pattern")
     g = group_accessor(match)
     log.debug("Match groups: %s", match.groups())
 

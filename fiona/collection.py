@@ -87,26 +87,26 @@ class Collection:
         self._closed = True
 
         if not isinstance(path, (str, Path)):
-            raise TypeError("invalid path: %r" % path)
+            raise TypeError(f"invalid path: {path!r}")
         if not isinstance(mode, str) or mode not in ("r", "w", "a"):
-            raise TypeError("invalid mode: %r" % mode)
+            raise TypeError(f"invalid mode: {mode!r}")
         if driver and not isinstance(driver, str):
-            raise TypeError("invalid driver: %r" % driver)
+            raise TypeError(f"invalid driver: {driver!r}")
         if schema and not hasattr(schema, "get"):
-            raise TypeError("invalid schema: %r" % schema)
+            raise TypeError(f"invalid schema: {schema!r}")
         if crs and not isinstance(crs, compat.DICT_TYPES + (str, CRS)):
-            raise TypeError("invalid crs: %r" % crs)
+            raise TypeError(f"invalid crs: {crs!r}")
         if crs_wkt and not isinstance(crs_wkt, str):
-            raise TypeError("invalid crs_wkt: %r" % crs_wkt)
+            raise TypeError(f"invalid crs_wkt: {crs_wkt!r}")
         if encoding and not isinstance(encoding, str):
-            raise TypeError("invalid encoding: %r" % encoding)
+            raise TypeError(f"invalid encoding: {encoding!r}")
         if layer and not isinstance(layer, (str, int)):
-            raise TypeError("invalid name: %r" % layer)
+            raise TypeError(f"invalid name: {layer!r}")
         if vsi:
             if not isinstance(vsi, str) or not vfs.valid_vsi(vsi):
-                raise TypeError("invalid vsi: %r" % vsi)
+                raise TypeError(f"invalid vsi: {vsi!r}")
         if archive and not isinstance(archive, str):
-            raise TypeError("invalid archive: %r" % archive)
+            raise TypeError(f"invalid archive: {archive!r}")
         if ignore_fields is not None and include_fields is not None:
             raise ValueError("Cannot specify both 'ignore_fields' and 'include_fields'")
 
@@ -123,13 +123,9 @@ class Collection:
             )
 
             raise DriverError(
-                "{driver} driver requires at least GDAL {min_gdal_version} for mode '{mode}', "
-                "Fiona was compiled against: {gdal}".format(
-                    driver=driver,
-                    mode=mode,
-                    min_gdal_version=min_gdal_version,
-                    gdal=get_gdal_release_name(),
-                )
+                f"{driver} driver requires at least GDAL {min_gdal_version} "
+                f"for mode '{mode}', "
+                f"Fiona was compiled against: {get_gdal_release_name()}"
             )
 
         self.session = None
@@ -158,13 +154,9 @@ class Collection:
             )
 
             raise DriverError(
-                "{driver} driver requires at least GDAL {min_gdal_version} for mode '{mode}', "
-                "Fiona was compiled against: {gdal}".format(
-                    driver=driver,
-                    mode=mode,
-                    min_gdal_version=min_gdal_version,
-                    gdal=get_gdal_release_name(),
-                )
+                f"{driver} driver requires at least GDAL {min_gdal_version} "
+                f"for mode '{mode}', "
+                f"Fiona was compiled against: {get_gdal_release_name()}"
             )
 
         if vsi:
@@ -199,9 +191,9 @@ class Collection:
                 raise DriverError("no driver")
             if not allow_unsupported_drivers:
                 if driver not in supported_drivers:
-                    raise DriverError("unsupported driver: %r" % driver)
+                    raise DriverError(f"unsupported driver: {driver!r}")
                 if self.mode not in supported_drivers[driver]:
-                    raise DriverError("unsupported mode: %r" % self.mode)
+                    raise DriverError(f"unsupported mode: {self.mode!r}")
             self._driver = driver
 
             if not schema:
@@ -261,9 +253,9 @@ class Collection:
         if not self._allow_unsupported_drivers:
             driver = self.session.get_driver()
             if driver not in supported_drivers:
-                raise DriverError("unsupported driver: %r" % driver)
+                raise DriverError(f"unsupported driver: {driver!r}")
             if self.mode not in supported_drivers[driver]:
-                raise DriverError("unsupported mode: %r" % self.mode)
+                raise DriverError(f"unsupported mode: {self.mode!r}")
 
     @property
     def driver(self):
@@ -317,7 +309,7 @@ class Collection:
         if _GDAL_VERSION_TUPLE.major < 2:
             raise GDALVersionError(
                 "tags requires GDAL 2+, fiona was compiled "
-                "against: {}".format(_GDAL_RELEASE_NAME)
+                f"against: {_GDAL_RELEASE_NAME}"
             )
         if self.session:
             return self.session.tags(ns=ns)
@@ -340,7 +332,7 @@ class Collection:
         if _GDAL_VERSION_TUPLE.major < 2:
             raise GDALVersionError(
                 "get_tag_item requires GDAL 2+, fiona was compiled "
-                "against: {}".format(_GDAL_RELEASE_NAME)
+                f"against: {_GDAL_RELEASE_NAME}"
             )
         if self.session:
             return self.session.get_tag_item(key=key, ns=ns)
@@ -367,7 +359,7 @@ class Collection:
         if _GDAL_VERSION_TUPLE.major < 2:
             raise GDALVersionError(
                 "update_tags requires GDAL 2+, fiona was compiled "
-                "against: {}".format(_GDAL_RELEASE_NAME)
+                f"against: {_GDAL_RELEASE_NAME}"
             )
         if not isinstance(self.session, WritingSession):
             raise UnsupportedOperation("Unable to update tags as not in writing mode.")
@@ -392,7 +384,7 @@ class Collection:
         if _GDAL_VERSION_TUPLE.major < 2:
             raise GDALVersionError(
                 "update_tag_item requires GDAL 2+, fiona was compiled "
-                "against: {}".format(_GDAL_RELEASE_NAME)
+                f"against: {_GDAL_RELEASE_NAME}"
             )
         if not isinstance(self.session, WritingSession):
             raise UnsupportedOperation("Unable to update tag as not in writing mode.")
@@ -625,8 +617,7 @@ class Collection:
                     )
                 else:
                     raise DriverSupportError(
-                        "{driver} does not support {field_type} "
-                        "fields".format(driver=self.driver, field_type=field_type)
+                        f"{self.driver} does not support {field_type} fields"
                     )
             elif (
                 field_type
@@ -643,13 +634,13 @@ class Collection:
                     and field_type in {"datetime", "date"}
                 ):
                     warnings.warn(
-                        "GeoJSON driver in GDAL 1.x silently converts {} to string"
-                        " in non-standard format".format(field_type)
+                        "GeoJSON driver in GDAL 1.x silently converts "
+                        f"{field_type} to string in non-standard format"
                     )
                 else:
                     warnings.warn(
-                        "{driver} driver silently converts {field_type} "
-                        "to string".format(driver=self.driver, field_type=field_type)
+                        f"{self.driver} driver silently converts {field_type} "
+                        "to string"
                     )
 
     def flush(self):

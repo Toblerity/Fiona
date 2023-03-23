@@ -173,7 +173,7 @@ def vsi_path(path):
 
         else:
             if path.scheme.split('+')[-1] in CURLSCHEMES:
-                suffix = '{}://'.format(path.scheme.split('+')[-1])
+                suffix = f"{path.scheme.split('+')[-1]}://"
             else:
                 suffix = ''
 
@@ -181,7 +181,7 @@ def vsi_path(path):
 
             if prefix:
                 if path.archive:
-                    result = '/{}/{}{}/{}'.format(prefix, suffix, path.archive, path.path.lstrip('/'))
+                    result = f"/{prefix}/{suffix}{path.archive}/{path.path.lstrip('/')}"
                 else:
                     result = f'/{prefix}/{suffix}{path.path}'
             else:

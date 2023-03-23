@@ -168,7 +168,7 @@ cdef class CRS:
         try:
             return bool(OSRIsGeographic(self._osr) == 1)
         except CPLE_BaseError as exc:
-            raise CRSError("{}".format(exc))
+            raise CRSError(str(exc))
 
     @property
     def is_projected(self):
@@ -186,7 +186,7 @@ cdef class CRS:
         try:
             return bool(OSRIsProjected(self._osr) == 1)
         except CPLE_BaseError as exc:
-            raise CRSError("{}".format(exc))
+            raise CRSError(str(exc))
 
     @property
     def linear_units(self):
@@ -232,7 +232,7 @@ cdef class CRS:
             else:
                 raise CRSError("Linear units factor is not defined for non projected CRS")
         except CPLE_BaseError as exc:
-            raise CRSError("{}".format(exc))
+            raise CRSError(str(exc))
         else:
             units_b = units_c
             return (units_b.decode('utf-8'), to_meters)
@@ -298,7 +298,7 @@ cdef class CRS:
         epsg_code = self.to_epsg()
 
         if epsg_code:
-            return {'init': 'epsg:{}'.format(epsg_code)}
+            return {"init": f"epsg:{epsg_code}"}
         else:
             try:
                 osr = exc_wrap_pointer(OSRClone(self._osr))
@@ -306,7 +306,7 @@ cdef class CRS:
 
             except CPLE_BaseError as exc:
                 return {}
-                # raise CRSError("The WKT could not be parsed. {}".format(exc))
+                # raise CRSError(f"The WKT could not be parsed. {exc}"
 
             else:
                 proj_b = proj_c
@@ -348,7 +348,7 @@ cdef class CRS:
         str
 
         """
-        return ' '.join(['+{}={}'.format(key, val) for key, val in self.data.items()])
+        return " ".join([f"+{key}={val}" for key, val in self.data.items()])
 
     def to_wkt(self, morph_to_esri_dialect=False, version=None):
         """Convert to a OGC WKT representation.
@@ -388,11 +388,11 @@ cdef class CRS:
                     )
                 if version:
                     version = WktVersion(version).value
-                    wkt_format = "FORMAT={}".format(version).encode("utf-8")
+                    wkt_format = f"FORMAT={version}".encode("utf-8")
                     options_wkt[0] = wkt_format
                 exc_wrap_ogrerr(OSRExportToWktEx(self._osr, &conv_wkt, options_wkt))
         except (CPLE_BaseError, ValueError) as exc:
-            raise CRSError("Cannot convert to WKT. {}".format(exc)) from exc
+            raise CRSError(f"Cannot convert to WKT. {exc}") from exc
 
         else:
             if conv_wkt != NULL:
@@ -586,7 +586,7 @@ cdef class CRS:
         except OverflowError as err:
             raise CRSError(f"Not in the range of valid EPSG codes: {code}") from err
         except CPLE_BaseError as exc:
-            raise CRSError("The EPSG code is unknown. {}".format(exc))
+            raise CRSError(f"The EPSG code is unknown. {exc}")
         else:
             osr_set_traditional_axis_mapping_strategy(obj._osr)
             obj._epsg = code
@@ -629,7 +629,7 @@ cdef class CRS:
         try:
             exc_wrap_ogrerr(exc_wrap_int(OSRImportFromProj4(obj._osr, <const char *>proj_b)))
         except CPLE_BaseError as exc:
-            raise CRSError("The PROJ4 dict could not be understood. {}".format(exc))
+            raise CRSError(f"The PROJ4 dict could not be understood. {exc}")
         else:
             osr_set_traditional_axis_mapping_strategy(obj._osr)
             return obj
@@ -675,11 +675,11 @@ cdef class CRS:
         for key in data.keys() & all_proj_keys:
             val = data[key]
             if val is None or val is True:
-                pjargs.append('+{}'.format(key))
+                pjargs.append(f"+{key}")
             elif val is False:
                 pass
             else:
-                pjargs.append('+{}={}'.format(key, val))
+                pjargs.append(f"+{key}={val}")
 
         proj = ' '.join(pjargs)
         b_proj = proj.encode('utf-8')
@@ -689,7 +689,7 @@ cdef class CRS:
         try:
             exc_wrap_ogrerr(OSRImportFromProj4(obj._osr, <const char *>b_proj))
         except CPLE_BaseError as exc:
-            raise CRSError("The PROJ4 dict could not be understood. {}".format(exc))
+            raise CRSError(f"The PROJ4 dict could not be understood. {exc}")
         else:
             osr_set_traditional_axis_mapping_strategy(obj._osr)
             return obj
@@ -728,7 +728,7 @@ cdef class CRS:
         try:
             errcode = exc_wrap_ogrerr(OSRImportFromWkt(obj._osr, &wkt_c))
         except CPLE_BaseError as exc:
-            raise CRSError("The WKT could not be parsed. {}".format(exc))
+            raise CRSError(f"The WKT could not be parsed. {exc}")
         else:
             osr_set_traditional_axis_mapping_strategy(obj._osr)
             return obj
@@ -773,13 +773,13 @@ cdef class CRS:
             try:
                 errcode = exc_wrap_ogrerr(OSRSetFromUserInput(obj._osr, text_c))
             except CPLE_BaseError as exc:
-                raise CRSError("The WKT could not be parsed. {}".format(exc))
+                raise CRSError(f"The WKT could not be parsed. {exc}")
             else:
                 osr_set_traditional_axis_mapping_strategy(obj._osr)
                 return obj
 
         else:
-            raise CRSError("CRS is invalid: {!r}".format(value))
+            raise CRSError(f"CRS is invalid: {value!r}")
 
     @staticmethod
     def from_authority(auth_name, code):
@@ -803,7 +803,7 @@ cdef class CRS:
         CRSError
 
         """
-        return CRS.from_string("{auth_name}:{code}".format(auth_name=auth_name, code=code))
+        return CRS.from_string(f"{auth_name}:{code}")
 
     @staticmethod
     def from_string(value, morph_from_esri_dialect=False):
@@ -832,12 +832,12 @@ cdef class CRS:
             pass
 
         if not value:
-            raise CRSError("CRS is empty or invalid: {!r}".format(value))
+            raise CRSError(f"CRS is empty or invalid: {value!r}")
 
         elif value.upper().startswith('EPSG:') and "+" not in value:
             auth, val = value.split(':')
             if not val:
-                raise CRSError("Invalid CRS: {!r}".format(value))
+                raise CRSError(f"Invalid CRS: {value!r}")
             return CRS.from_epsg(val)
 
         elif value.startswith('{') or value.startswith('['):
@@ -917,9 +917,9 @@ cdef class CRS:
     def __repr__(self):
         epsg_code = self.to_epsg()
         if epsg_code:
-            return "CRS.from_epsg({})".format(epsg_code)
+            return f"CRS.from_epsg({epsg_code})"
         else:
-            return "CRS.from_wkt('{}')".format(self.wkt)
+            return f"CRS.from_wkt('{self.wkt}')"
 
     def __eq__(self, other):
         cdef OGRSpatialReferenceH osr_s = NULL
@@ -1026,7 +1026,7 @@ cdef class CRS:
                 options[1] = NULL
                 exc_wrap_ogrerr(OSRExportToPROJJSON(self._osr, &conv_json, options))
         except CPLE_BaseError as exc:
-            raise CRSError("Cannot convert to PROJ JSON. {}".format(exc))
+            raise CRSError(f"Cannot convert to PROJ JSON. {exc}")
 
         else:
             if conv_json != NULL:
@@ -1081,7 +1081,7 @@ def epsg_treats_as_latlong(input_crs):
     try:
         return bool(OSREPSGTreatsAsLatLong(crs._osr) == 1)
     except CPLE_BaseError as exc:
-        raise CRSError("{}".format(exc))
+        raise CRSError(str(exc))
 
 
 def epsg_treats_as_northingeasting(input_crs):
@@ -1129,7 +1129,7 @@ def epsg_treats_as_northingeasting(input_crs):
     try:
         return bool(OSREPSGTreatsAsNorthingEasting(crs._osr) == 1)
     except CPLE_BaseError as exc:
-        raise CRSError("{}".format(exc))
+        raise CRSError(str(exc))
 
 
 # Below is the big list of PROJ4 parameters from

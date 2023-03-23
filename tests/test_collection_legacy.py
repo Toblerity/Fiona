@@ -20,17 +20,17 @@ class ReadingTest(unittest.TestCase):
         self.c.close()
 
     def test_open_repr(self):
-        assert (
-            repr(self.c) ==
-            ("<open Collection '{path}:coutwildrnp', mode 'r' "
-             "at {hexid}>".format(hexid=hex(id(self.c)), path=self.path_coutwildrnp_shp)))
+        assert repr(self.c) == (
+            f"<open Collection '{self.path_coutwildrnp_shp}:coutwildrnp', "
+            f"mode 'r' at {hex(id(self.c))}>"
+        )
 
     def test_closed_repr(self):
         self.c.close()
-        assert (
-            repr(self.c) ==
-            ("<closed Collection '{path}:coutwildrnp', mode 'r' "
-             "at {hexid}>".format(hexid=hex(id(self.c)), path=self.path_coutwildrnp_shp)))
+        assert repr(self.c) == (
+            f"<closed Collection '{self.path_coutwildrnp_shp}:coutwildrnp', "
+            f"mode 'r' at {hex(id(self.c))}>"
+        )
 
     def test_path(self):
         assert self.c.path == self.path_coutwildrnp_shp

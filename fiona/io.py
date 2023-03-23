@@ -74,7 +74,7 @@ class MemoryFile(MemoryFileBase):
             and driver is not None
             and not supports_vsi(driver)
         ):
-            raise DriverError("Driver {} does not support virtual files.")
+            raise DriverError(f"Driver {driver} does not support virtual files.")
 
         if mode in ('r', 'a') and not self.exists():
             raise OSError("MemoryFile does not exist.")
@@ -119,7 +119,7 @@ class MemoryFile(MemoryFileBase):
         if self.closed:
             raise OSError("I/O operation on closed file.")
         if path:
-            vsi_path = "{}/{}".format(self.name, path.lstrip("/"))
+            vsi_path = f"{self.name}/{path.lstrip('/')}"
         else:
             vsi_path = f"{self.name}"
         return _listdir(vsi_path)
@@ -141,7 +141,7 @@ class MemoryFile(MemoryFileBase):
         if self.closed:
             raise OSError("I/O operation on closed file.")
         if path:
-            vsi_path = "{}/{}".format(self.name, path.lstrip("/"))
+            vsi_path = f"{self.name}/{path.lstrip('/')}"
         else:
             vsi_path = f"{self.name}"
         return _listlayers(vsi_path)
@@ -199,14 +199,14 @@ class ZipMemoryFile(MemoryFile):
 
         """
         if path:
-            vsi_path = '/vsizip{0}/{1}'.format(self.name, path.lstrip('/'))
+            vsi_path = f"/vsizip{self.name}/{path.lstrip('/')}"
         else:
-            vsi_path = '/vsizip{0}'.format(self.name)
+            vsi_path = f"/vsizip{self.name}"
 
         if self.closed:
             raise OSError("I/O operation on closed file.")
         if path:
-            vsi_path = "{}/{}".format(self.name, path.lstrip("/"))
+            vsi_path = f"{self.name}/{path.lstrip('/')}"
         else:
             vsi_path = f"{self.name}"
 
