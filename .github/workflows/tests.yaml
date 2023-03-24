@@ -122,8 +122,7 @@ jobs:
           conda config --set channel_priority strict
           conda create -n test python=${{ matrix.python-version }} libgdal geos=3.10.3 cython=0.29
           source activate test
-          GDAL_VERSION="3.5" python setup.py build_ext -I"C:\\Miniconda\\envs\\test\\Library\\include" -lgdal_i -L"C:\\Miniconda\\envs\\test\\Library\\lib" bdist_wheel
-          python -m pip install --ignore-installed dist\\Fiona-2.0.dev0-cp310-cp310-win_amd64.whl 
+          GDAL_VERSION="3.5" python setup.py build_ext -I"C:\\Miniconda\\envs\\test\\Library\\include" -lgdal_i -L"C:\\Miniconda\\envs\\test\\Library\\lib" install
           python -m pip install -r requirements-dev.txt
 
       - name: Check and Log Environment
