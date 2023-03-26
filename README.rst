@@ -34,12 +34,18 @@ These wheels are mainly intended to make installation easy for simple
 applications, not so much for production. They are not tested for compatibility
 with all other binary wheels, conda packages, or QGIS, and omit many of GDAL's
 optional format drivers. If you need, for example, GML support you will need to
-build and install Fiona from a source distribution.
+build and install Fiona from a source distribution. It is possible to install
+Fiona from source using pip and the `--no-binary` option. A specific GDAL
+installation can be selected by setting the GDAL_CONFIG environment variable.
+
+.. code-block:: console
+
+    pip install --no-binary fiona fiona
 
 Many users find Anaconda and conda-forge a good way to install Fiona and get
 access to more optional format drivers (like GML).
 
-Fiona 1.9 (coming soon) requires Python 3.7 or higher and GDAL 3.2 or higher.
+Fiona 1.9 requires Python 3.7 or higher and GDAL 3.2 or higher.
 
 Python Usage
 ============
