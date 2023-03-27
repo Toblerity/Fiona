@@ -2,8 +2,8 @@
 Fiona
 =====
 
-.. image:: https://github.com/Toblerity/Fiona/workflows/Linux%20CI/badge.svg?branch=master
-   :target: https://github.com/Toblerity/Fiona/actions?query=branch%3Amaster
+.. image:: https://github.com/Toblerity/Fiona/workflows/Tests/badge.svg?branch=maint-1.9
+   :target: https://github.com/Toblerity/Fiona/actions?query=branch%3Amaint-1.9
 
 Fiona streams simple feature data to and from GIS formats like GeoPackage and
 Shapefile.
