@@ -1,7 +1,6 @@
 """Fiona data model"""
 
 import itertools
-from collections import OrderedDict
 from collections.abc import MutableMapping
 from enum import Enum
 from json import JSONEncoder
@@ -120,7 +119,7 @@ class Object(MutableMapping):
     _delegated_properties = []
 
     def __init__(self, **kwds):
-        self._data = OrderedDict(**kwds)
+        self._data = dict(**kwds)
 
     def _props(self):
         return {

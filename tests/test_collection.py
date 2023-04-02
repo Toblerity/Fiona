@@ -1,6 +1,5 @@
 # Testing collections and workspaces
 
-from collections import OrderedDict
 import datetime
 import logging
 import random
@@ -1101,7 +1100,7 @@ def test_mask_polygon_triangle(tmpdir, driver, filename):
     """Test if mask works for non trivial geometries"""
     schema = {
         "geometry": "Polygon",
-        "properties": OrderedDict([("position_i", "int"), ("position_j", "int")]),
+        "properties": {"position_i": "int", "position_j": "int"},
     }
     records = [
         Feature.from_dict(

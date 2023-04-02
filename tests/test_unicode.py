@@ -3,7 +3,6 @@ import os
 import shutil
 import sys
 import tempfile
-from collections import OrderedDict
 
 import pytest
 
@@ -155,7 +154,7 @@ class TestUnicodeStringField:
         field_name = "区县名称"
         meta = {
             "schema": {
-                "properties": OrderedDict([(field_name, "int")]),
+                "properties": {field_name: "int"},
                 "geometry": "Point",
             },
             "driver": "ESRI Shapefile",

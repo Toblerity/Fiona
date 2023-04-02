@@ -297,8 +297,7 @@ Features of a collection may also be accessed by index.
                                    (-4.663611, 51.158333)]],
                   'type': 'Polygon'},
      'id': '1',
-     'properties': OrderedDict([('CAT', 232.0), ('FIPS_CNTRY', 'UK'), ('CNTRY_NAME', 'United Kingdom'), ('AREA', 244820.0), ('POP_CNTRY', 60270708.0)]),
-     'type': 'Feature'}
+     'properties': {'CAT': 232.0, 'FIPS_CNTRY': 'UK', 'CNTRY_NAME': 'United Kingdom', 'AREA': 244820.0, 'POP_CNTRY': 60270708.0}
 
 Note that these indices are controlled by GDAL, and do not always follow Python conventions. They can start from 0, 1 (e.g. geopackages), or even other values, and have no guarantee of contiguity. Negative indices will only function correctly if indices start from 0 and are contiguous.
 
@@ -413,7 +412,7 @@ collection's records is obtained via a read-only
 Finally, the schema of its record type (a vector file has a single type of
 record, remember) is accessed via a read-only
 :py:attr:`~fiona.collection.Collection.schema` attribute. It has 'geometry'
-and 'properties' items. The former is a string and the latter is an ordered
+and 'properties' items. The former is a string and the latter is a
 dict with items having the same order as the fields in the data file.
 
 .. code-block:: pycon
@@ -601,8 +600,8 @@ value is a string unique within the data file.
 Record Properties
 -----------------
 
-A record has a ``properties`` key. Its corresponding value is a mapping: an
-ordered dict to be precise. The keys of the properties mapping are the same as
+A record has a ``properties`` key. Its corresponding value is a mapping: a
+dict built-in to be precise. The keys of the properties mapping are the same as
 the keys of the properties mapping in the schema of the collection the record
 comes from (see above).
 
@@ -927,12 +926,6 @@ Writing new files from scratch
 
 To write a new file from scratch we have to define our own specific driver, crs and schema.
 
-To ensure the order of the attribute fields is predictable, in both the schema and the actual manifestation as feature attributes, we will use ordered dictionaries.
-
-.. code-block:: pycon
-
-  >>> from collections import OrderedDict
-
 Consider the following record, structured in accordance to the `Python geo protocol <https://gist.github.com/sgillies/2217756>`__, representing the Eiffel Tower using a point geometry with UTM coordinates in zone 31N.
 
 .. code-block:: pycon
@@ -942,12 +935,12 @@ Consider the following record, structured in accordance to the `Python geo proto
   ...     'type': 'Point',
   ...     'coordinates': (448252, 5411935)
   ...   },
-  ...   'properties': OrderedDict([
-  ...     ('name', 'Eiffel Tower'),
-  ...     ('height', 300.01),
-  ...     ('view', 'scenic'),
-  ...     ('year', 1889)
-  ...   ])
+  ...   'properties': {
+  ...     'name': 'Eiffel Tower',
+  ...     'height': 300.01,
+  ...     'view': 'scenic',
+  ...     'year': 1889,
+  ...   },
   ... }
 
 A corresponding scheme could be:
@@ -956,12 +949,12 @@ A corresponding scheme could be:
 
   >>> landmarks_schema = {
   ...   'geometry': 'Point',
-  ...   'properties': OrderedDict([
-  ...     ('name', 'str'),
-  ...     ('height', 'float'),
-  ...     ('view', 'str'),
-  ...     ('year', 'int')
-  ...   ])
+  ...   'properties': {
+  ...     'name': 'str',
+  ...     'height': 'float',
+  ...     'view': 'str',
+  ...     'year': 'int',
+  ...   },
   ... }
 
 The coordinate reference system of these landmark coordinates is ETRS89 / UTM zone 31N which is referenced in the EPSG database as EPSG:25831.
@@ -996,31 +989,29 @@ Having specified schema, crs and driver, we are ready to open a file for writing
   ...     pprint.pprint(record)
   {'geometry': {'coordinates': (448252.0, 5411935.0), 'type': 'Point'},
    'id': '0',
-   'properties': OrderedDict([('name', 'Eiffel Tower'),
-                              ('height', 300.01),
-                              ('view', 'scenic'),
-                              ('year', 1889)]),
+   'properties': {'height': 300.01,
+                  'name': 'Eiffel Tower',
+                  'view': 'scenic',
+                  'year': 1889},
    'type': 'Feature'}
 
 Ordering Record Fields
 ......................
 
-Beginning with Fiona 1.0.1, the 'properties' item of :py:func:`fiona.open`'s
-'schema' keyword argument may be an ordered dict or a list of (key, value)
-pairs, specifying an ordering that carries into written files. If an ordinary
-dict is given, the ordering is determined by the output of that dict's
-:py:func:`~items` method.
+The 'properties' item of :py:func:`fiona.open`'s
+'schema' keyword argument is used to specify the ordering with written files.
+This usually a :py:func:`dict` built-in
 
-For example, since
+.. code-block:: python
 
-.. code-block:: pycon
+    fiona.open(
+        "/tmp/file.shp",
+        "w",
+        schema={"properties": {"bar": "int", "foo": "str"}},
+        **kwargs
+    )
 
-  >>> {'bar': 'int', 'foo': 'str'}.keys()
-  ['foo', 'bar']
-
-a schema of ``{'properties': {'bar': 'int', 'foo': 'str'}}`` will produce
-a shapefile where the first field is 'foo' and the second field is 'bar'. If
-you want 'bar' to be the first field, you must use a list of property items
+The order may alternatively be supplied as a list of property items
 
 .. code-block:: python
 
@@ -1028,20 +1019,6 @@ you want 'bar' to be the first field, you must use a list of property items
         "/tmp/file.shp",
         "w",
         schema={"properties": [("bar", "int"), ("foo", "str")]},
-        **kwargs
-    )
-
-or an ordered dict.
-
-.. code-block:: python
-
-    from collections import OrderedDict
-
-    schema_props = OrderedDict([("bar", "int"), ("foo", "str")])
-    fiona.open(
-        "/tmp/file.shp",
-        "w",
-        schema={"properties": schema_props},
         **kwargs
     )
 
@@ -1053,11 +1030,11 @@ If you write 3D coordinates, ones having (x, y, z) tuples, to a 2D file
 
 .. sourcecode:: python
 
-  schema_props = OrderedDict([("foo", "str")])
+  schema_props = {"foo": "str"}
 
   feature = {
       "geometry": {"type": "Point", "coordinates": (-1, 1, 5)},
-      "properties": OrderedDict([("foo", "bar")]),
+      "properties": {"foo": "bar"},
   }
 
   with fiona.open(
@@ -1080,7 +1057,7 @@ Point' schema geometry, for example) a default z value of 0 will be provided.
 
   feature = {
       "geometry": {"type": "Point", "coordinates": (-1, 1)},
-      "properties": OrderedDict([("foo", "bar")]),
+      "properties": {"foo": "bar"},
   }
 
   with fiona.open(
@@ -1457,7 +1434,7 @@ in an instance of ZipMemoryFile.
     ...         print(collection.schema)
     ...
     67
-    {'properties': OrderedDict([('PERIMETER', 'float:24.15'), ('FEATURE2', 'str:80'), ('NAME', 'str:80'), ('FEATURE1', 'str:80'), ('URL', 'str:101'), ('AGBUR', 'str:80'), ('AREA', 'float:24.15'), ('STATE_FIPS', 'str:80'), ('WILDRNP020', 'int:10'), ('STATE', 'str:80')]), 'geometry': 'Polygon'}
+    {'properties': {'PERIMETER': 'float:24.15', 'FEATURE2': 'str:80', 'NAME': 'str:80', 'FEATURE1': 'str:80', 'URL': 'str:101', 'AGBUR': 'str:80', 'AREA': 'float:24.15', 'STATE_FIPS': 'str:80', 'WILDRNP020': 'int:10', 'STATE': 'str:80'}, 'geometry': 'Polygon'}
 
 *New in 1.8.0*
 

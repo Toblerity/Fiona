@@ -1,4 +1,3 @@
-from collections import OrderedDict
 import glob
 import os
 import tempfile
@@ -12,7 +11,7 @@ from .conftest import get_temp_filename, requires_gdal2
 def test_gml_format_option(tmp_path):
     """Test GML dataset creation option FORMAT (see gh-968)"""
 
-    schema = {"geometry": "Point", "properties": OrderedDict([("position", "int")])}
+    schema = {"geometry": "Point", "properties": {"position": "int"}}
     records = [
         Feature.from_dict(
             **{

@@ -1,4 +1,3 @@
-from collections import OrderedDict
 import os
 import tempfile
 
@@ -404,7 +403,7 @@ def test_schema_default_fields_wrong_type(tmpdir):
 
     name = str(tmpdir.join("test.gpx"))
     schema = {
-        "properties": OrderedDict([("ele", "str"), ("time", "datetime")]),
+        "properties": {"ele": "str", "time": "datetime"},
         "geometry": "Point",
     }
 
