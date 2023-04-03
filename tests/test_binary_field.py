@@ -1,8 +1,6 @@
 """Binary BLOB field testing."""
 
-import pytest
 import struct
-from collections import OrderedDict
 
 import fiona
 from fiona.model import Feature
@@ -16,12 +14,7 @@ def test_binary_field(tmpdir):
         "driver": "GPKG",
         "schema": {
             "geometry": "Point",
-            "properties": OrderedDict(
-                [
-                    ("name", "str"),
-                    ("data", "bytes"),
-                ]
-            ),
+            "properties": {"name": "str", "data": "bytes"},
         },
     }
 

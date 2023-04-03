@@ -6,7 +6,6 @@ import os.path
 import shutil
 import tarfile
 import zipfile
-from collections import OrderedDict
 from click.testing import CliRunner
 import pytest
 
@@ -369,35 +368,33 @@ def testdata_generator():
 
     def get_schema(driver):
         special_schemas = {
-            "CSV": {"geometry": None, "properties": OrderedDict([("position", "int")])},
+            "CSV": {"geometry": None, "properties": {"position": "int"}},
             "BNA": {"geometry": "Point", "properties": {}},
             "DXF": {
-                "properties": OrderedDict(
-                    [
-                        ("Layer", "str"),
-                        ("SubClasses", "str"),
-                        ("Linetype", "str"),
-                        ("EntityHandle", "str"),
-                        ("Text", "str"),
-                    ]
-                ),
+                "properties": {
+                    "Layer": "str",
+                    "SubClasses": "str",
+                    "Linetype": "str",
+                    "EntityHandle": "str",
+                    "Text": "str",
+                },
                 "geometry": "Point",
             },
             "GPX": {
                 "geometry": "Point",
-                "properties": OrderedDict([("ele", "float"), ("time", "datetime")]),
+                "properties": {"ele": "float", "time": "datetime"},
             },
-            "GPSTrackMaker": {"properties": OrderedDict([]), "geometry": "Point"},
-            "DGN": {"properties": OrderedDict([]), "geometry": "LineString"},
+            "GPSTrackMaker": {"properties": {}, "geometry": "Point"},
+            "DGN": {"properties": {}, "geometry": "LineString"},
             "MapInfo File": {
                 "geometry": "Point",
-                "properties": OrderedDict([("position", "str")]),
+                "properties": {"position": "str"},
             },
         }
 
         return special_schemas.get(
             driver,
-            {"geometry": "Point", "properties": OrderedDict([("position", "int")])},
+            {"geometry": "Point", "properties": {"position": "int"}},
         )
 
     def get_crs(driver):
@@ -423,15 +420,13 @@ def testdata_generator():
                 Feature.from_dict(
                     **{
                         "geometry": {"type": "Point", "coordinates": (0.0, float(i))},
-                        "properties": OrderedDict(
-                            [
-                                ("Layer", "0"),
-                                ("SubClasses", "AcDbEntity:AcDbPoint"),
-                                ("Linetype", None),
-                                ("EntityHandle", str(i + 20000)),
-                                ("Text", None),
-                            ]
-                        ),
+                        "properties": {
+                            "Layer": "0",
+                            "SubClasses": "AcDbEntity:AcDbPoint",
+                            "Linetype": None,
+                            "EntityHandle": str(i + 20000),
+                            "Text": None,
+                        },
                     }
                 )
                 for i in range
@@ -510,7 +505,8 @@ def testdata_generator():
                             "type": "LineString",
                             "coordinates": [(float(i), 0.0), (0.0, 0.0)],
                         },
-                        "properties": OrderedDict(
+                        # TODO py39: use PEP 584 to union two dict objs
+                        "properties": dict(
                             [
                                 ("Type", 4),
                                 ("Level", 0),

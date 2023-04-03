@@ -10,7 +10,7 @@ import logging
 import os
 import warnings
 import math
-from collections import namedtuple, OrderedDict
+from collections import namedtuple
 from typing import List
 from uuid import uuid4
 
@@ -269,7 +269,7 @@ cdef class FeatureBuilder:
 
         # Skeleton of the feature to be returned.
         fid = OGR_F_GetFID(feature)
-        props = OrderedDict()
+        props = {}
 
         ignore_fields = set(ignore_fields or [])
 
@@ -1260,7 +1260,7 @@ cdef class WritingSession(Session):
             log.debug("Created layer %s", collection.name)
 
             # Next, make a layer definition from the given schema properties,
-            # which are an ordered dict since Fiona 1.0.1.
+            # which are a dict built-in since Fiona 2.0
 
             encoding = self._get_internal_encoding()
 
@@ -1274,8 +1274,8 @@ cdef class WritingSession(Session):
                         f"for driver '{self.collection.driver}'"
                     )
 
-            new_fields = OrderedDict([(key, value) for key, value in schema_fields.items()
-                                      if key not in default_fields])
+            new_fields = {key: value for key, value in schema_fields.items()
+                          if key not in default_fields}
             before_fields = default_fields.copy()
             before_fields.update(new_fields)
 

@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 import pytest
 
 import fiona
@@ -94,7 +92,7 @@ class TestLayerCreation:
         )
         self.f = Feature(
             geometry=Geometry(type="Point", coordinates=(0.0, 0.1)),
-            properties=OrderedDict([("title", "point one"), ("date", "2012-01-29")]),
+            properties={"title": "point one", "date": "2012-01-29"},
         )
         self.c.writerecords([self.f])
         self.c.flush()

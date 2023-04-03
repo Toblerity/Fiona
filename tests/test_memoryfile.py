@@ -1,9 +1,7 @@
 """Tests of MemoryFile and ZippedMemoryFile"""
 
 import os
-from collections import OrderedDict
 from io import BytesIO
-import os
 
 import pytest
 import fiona
@@ -197,7 +195,7 @@ def test_append_bytesio_exception(data_coutwildrnp_json):
 def test_mapinfo_raises():
     """Reported to be a crasher in #937"""
     driver = "MapInfo File"
-    schema = {"geometry": "Point", "properties": OrderedDict([("position", "str")])}
+    schema = {"geometry": "Point", "properties": {"position": "str"}}
 
     with BytesIO() as fout:
         with pytest.raises(OSError):

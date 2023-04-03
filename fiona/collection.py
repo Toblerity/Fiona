@@ -4,7 +4,6 @@ from contextlib import ExitStack
 import logging
 import os
 import warnings
-from collections import OrderedDict
 
 from fiona import compat, vfs
 from fiona.ogrext import Iterator, ItemsIterator, KeysIterator
@@ -199,12 +198,12 @@ class Collection:
             if not schema:
                 raise SchemaError("no schema")
             if "properties" in schema:
-                # Make an ordered dict of schema properties.
+                # Make properties as a dict built-in
                 this_schema = schema.copy()
-                this_schema["properties"] = OrderedDict(schema["properties"])
+                this_schema["properties"] = dict(schema["properties"])
                 schema = this_schema
             else:
-                schema["properties"] = OrderedDict()
+                schema["properties"] = {}
             if "geometry" not in schema:
                 schema["geometry"] = None
             self._schema = schema

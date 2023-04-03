@@ -3,7 +3,6 @@
 import tempfile
 import shutil
 import os
-from collections import OrderedDict
 import pytest
 
 from fiona.env import GDALVersion
@@ -65,11 +64,11 @@ def slice_dataset_path(request):
 
     def get_schema(driver):
         special_schemas = {
-            "CSV": {"geometry": None, "properties": OrderedDict([("position", "int")])}
+            "CSV": {"geometry": None, "properties": {"position": "int"}}
         }
         return special_schemas.get(
             driver,
-            {"geometry": "Point", "properties": OrderedDict([("position", "int")])},
+            {"geometry": "Point", "properties": {"position": "int"}},
         )
 
     def get_records(driver, range):

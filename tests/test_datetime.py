@@ -2,7 +2,6 @@
 See also test_rfc3339.py for datetime parser tests.
 """
 
-from collections import OrderedDict
 import fiona
 from fiona._env import get_gdal_version_num, calc_gdal_version_num
 import pytest
@@ -31,19 +30,17 @@ gdal_version = GDALVersion.runtime()
 def get_schema(driver, field_type):
     if driver == "GPX":
         return {
-            "properties": OrderedDict([("ele", "float"), ("time", field_type)]),
+            "properties": {"ele": "float", "time": field_type},
             "geometry": "Point",
         }
     if driver == "GPSTrackMaker":
         return {
-            "properties": OrderedDict(
-                [
-                    ("name", "str"),
-                    ("comment", "str"),
-                    ("icon", "int"),
-                    ("time", field_type),
-                ]
-            ),
+            "properties": {
+                "name": "str",
+                "comment": "str",
+                "icon": "int",
+                "time": field_type,
+            },
             "geometry": "Point",
         }
     if driver == "CSV":
@@ -67,9 +64,7 @@ def get_records(driver, values):
             Feature.from_dict(
                 **{
                     "geometry": {"type": "Point", "coordinates": [1, 2]},
-                    "properties": OrderedDict(
-                        [("name", ""), ("comment", ""), ("icon", 48), ("time", val)]
-                    ),
+                    "properties": {"name": "", "comment": "", "icon": 48, "time": val},
                 }
             )
             for val in values
