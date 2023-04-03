@@ -32,19 +32,23 @@ jobs:
   docker_tests:
     runs-on: ubuntu-latest
     name: Docker | GDAL=${{ matrix.gdal-version }} | python=${{ matrix.python-version }}
-    container: osgeo/gdal:ubuntu-small-${{ matrix.gdal-version }}
+    container: ghcr.io/osgeo/gdal:ubuntu-small-${{ matrix.gdal-version }}
     env:
         DEBIAN_FRONTEND: noninteractive
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10']
-        gdal-version: ['3.5.3', '3.6.2']
         include:
-          - python-version: '3.9'
+          - python-version: '3.7'
+            gdal-version: '3.4.3'
+          - python-version: '3.8'
             gdal-version: '3.4.3'
           - python-version: '3.9'
-            gdal-version: '3.3.3'
+            gdal-version: '3.5.3'
+          - python-version: '3.10'
+            gdal-version: '3.6.3'
+          - python-version: '3.11'
+            gdal-version: '3.6.3'
 
     steps:
       - uses: actions/checkout@v3
@@ -75,7 +79,7 @@ jobs:
           python setup.py clean
           python -m pip install --no-deps --force-reinstall -e .[test]
 
-      - name: run tests
+      - name: Run tests
         run: |
           . testenv/bin/activate
           python -m pytest -v -m "not wheel or gdal" -rxXs --cov fiona --cov-report term-missing
@@ -86,10 +90,10 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [macos-latest]
-        python-version: ['3.9', '3.10']
         include:
-          - os: ubuntu-latest
+          - os: macos-latest
+            python-version: '3.10'
+          - os: windows-latest
             python-version: '3.10'
     steps:
       - uses: actions/checkout@v3
@@ -99,14 +103,26 @@ jobs:
         with:
           conda-channels: conda-forge
 
-      - name: Install Env
+      - name: Install Env (OSX)
+        if: matrix.os == 'macos-latest'
         shell: bash
         run: |
           conda config --prepend channels conda-forge
           conda config --set channel_priority strict
-          conda create -n test python=${{ matrix.python-version }} libgdal geos=3.10.3 cython=0.29 numpy
+          conda create -n test python=${{ matrix.python-version }} libgdal geos=3.10.3 cython=0.29
           source activate test
           python -m pip install -e . || python -m pip install -e .
+          python -m pip install -r requirements-dev.txt
+
+      - name: Install Env (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          conda config --prepend channels conda-forge
+          conda config --set channel_priority strict
+          conda create -n test python=${{ matrix.python-version }} libgdal geos=3.10.3 cython=0.29
+          source activate test
+          GDAL_VERSION="3.5" python setup.py build_ext -I"C:\\Miniconda\\envs\\test\\Library\\include" -lgdal_i -L"C:\\Miniconda\\envs\\test\\Library\\lib" install
           python -m pip install -r requirements-dev.txt
 
       - name: Check and Log Environment
@@ -115,13 +131,14 @@ jobs:
           source activate test
           python -V
           conda info
+          conda list
 
-      - name: Test with Coverage (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
+      - name: Test with Coverage (Windows)
+        if: matrix.os == 'windows-latest'
         shell: bash
         run: |
           source activate test
-          python -m pytest -v -m "not wheel" -rxXs --cov fiona --cov-report term-missing
+          pytest -v -m "not wheel" -rxXs --cov fiona --cov-report term-missing
 
       - name: Test with Coverage (OSX)
         if: matrix.os == 'macos-latest'
@@ -129,5 +146,6 @@ jobs:
         run: |
           source activate test
           python -m pytest -v -m "not wheel" -rxXs  --cov fiona --cov-report term-missing
+
 
       - uses: codecov/codecov-action@v3

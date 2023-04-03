@@ -7,11 +7,13 @@ on:
       - ".github/workflows/rstcheck.yml"
       - "README.rst"
       - "docs/**"
+      - "ci/rstcheck/*"
   pull_request:
     paths:
       - ".github/workflows/rstcheck.yml"
       - "README.rst"
       - "docs/**"
+      - "ci/rstcheck/*"
 
 jobs:
   rstcheck:
@@ -25,11 +27,11 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.11
 
       - name: Install Python dependencies
         run: |
-          python -m pip install rstcheck[sphinx]==4.1.0
+          python -m pip install -r ci/rstcheck/requirements.txt
 
       - name: Run rstcheck
         run: |
