@@ -155,3 +155,57 @@ def test_load__auto_detect_format(tmpdir, runner, feature_seq, extension, driver
         assert src.crs == {'init': 'epsg:32617'}
         assert len(src) == len(feature_seq.splitlines())
         assert src.driver == driver
+
+
+def test_fio_load_layer_append(tmpdir, runner):
+    """Checking append mode."""
+    outdir = str(tmpdir.mkdir("tests").mkdir("test_fio_load_layer"))
+    try:
+        feature = {
+            "type": "Feature",
+            "properties": {"key": "value"},
+            "geometry": {"type": "Point", "coordinates": (5.0, 39.0)},
+        }
+        sequence = os.linesep.join(
+            map(partial(json.dumps, cls=ObjectEncoder), [feature, feature])
+        )
+
+        # Write mode to create layer.
+        result = runner.invoke(
+            main_group,
+            [
+                "load",
+                outdir,
+                "--driver",
+                "ESRI Shapefile",
+                "--src-crs",
+                "EPSG:4236",
+                "--layer",
+                "test_layer",
+            ],
+            input=sequence,
+        )
+        assert result.exit_code == 0
+
+        # Here's the append.
+        result = runner.invoke(
+            main_group,
+            [
+                "load",
+                outdir,
+                "--driver=ESRI Shapefile",
+                "--src-crs=EPSG:4236",
+                "--layer=test_layer",
+                "--append",
+            ],
+            input=sequence,
+        )
+        assert result.exit_code == 0
+
+        with fiona.open(outdir) as src:
+            assert len(src) == 4
+            assert src.name == "test_layer"
+            assert src.schema["geometry"] == "Point"
+
+    finally:
+        shutil.rmtree(outdir)
