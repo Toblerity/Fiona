@@ -400,19 +400,19 @@ dict with items having the same order as the fields in the data file.
 
 .. code-block:: pycon
 
-  	>>> import pprint
-	>>> pprint.pprint(colxn.schema)
-	{'geometry': 'Polygon',
- 	 'properties': {'AGBUR': 'str:80',
-     	            'AREA': 'float:24.15',
-         	        'FEATURE1': 'str:80',
-        	        'FEATURE2': 'str:80',
-        	        'NAME': 'str:80',
-          	        'PERIMETER': 'float:24.15',
-                	'STATE': 'str:80',
-                	'STATE_FIPS': 'str:80',
-                	'URL': 'str:101',
-                	'WILDRNP020': 'int:10'}}
+      >>> import pprint
+    >>> pprint.pprint(colxn.schema)
+    {'geometry': 'Polygon',
+      'properties': {'AGBUR': 'str:80',
+                     'AREA': 'float:24.15',
+                     'FEATURE1': 'str:80',
+                    'FEATURE2': 'str:80',
+                    'NAME': 'str:80',
+                      'PERIMETER': 'float:24.15',
+                    'STATE': 'str:80',
+                    'STATE_FIPS': 'str:80',
+                    'URL': 'str:101',
+                    'WILDRNP020': 'int:10'}}
 
 Keeping Schemas Simple
 ----------------------
@@ -424,11 +424,11 @@ keys of the collection's record mappings.
 
 .. code-block:: pycon
 
-  	>>> feat = next(iter(colxn))
-  	>>> set(feat.keys()) - set(colxn.schema.keys())
-  	{'id'}
-  	>>> set(feat['properties'].keys()) == set(colxn.schema['properties'].keys())
-  	True
+      >>> feat = next(iter(colxn))
+      >>> set(feat.keys()) - set(colxn.schema.keys())
+      {'id'}
+      >>> set(feat['properties'].keys()) == set(colxn.schema['properties'].keys())
+      True
 
 The values of the schema mapping are either additional mappings or field type
 names like 'Polygon', 'float', and 'str'. The corresponding Python types can
@@ -436,10 +436,10 @@ be found in a dictionary named :py:attr:`fiona.FIELD_TYPES_MAP`.
 
 .. code-block:: pycon
 
-  	>>> pprint.pprint(fiona.FIELD_TYPES_MAP)
-  	{'List[str]': typing.List[str],
-   	 'bytes': <class 'bytes'>,
-   	 'date': <class 'fiona.rfc3339.FionaDateType'>,
+      >>> pprint.pprint(fiona.FIELD_TYPES_MAP)
+      {'List[str]': typing.List[str],
+        'bytes': <class 'bytes'>,
+        'date': <class 'fiona.rfc3339.FionaDateType'>,
      'datetime': <class 'fiona.rfc3339.FionaDateTimeType'>,
      'float': <class 'float'>,
      'int': <class 'int'>,
@@ -574,19 +574,19 @@ the schema of the collection the record comes from (see above).
 
 .. code-block:: pycon
 
-	>>> for k, v in feat.properties.items():
-	...     print(k, v)
-	...
-	PERIMETER 1.22107
-	FEATURE2 None
-	NAME Mount Naomi Wilderness
-	FEATURE1 Wilderness
-	URL http://www.wilderness.net/index.cfm?fuse=NWPS&sec=wildView&wname=Mount%20Naomi
-	AGBUR FS
-	AREA 0.0179264
-	STATE_FIPS 49
-	WILDRNP020 332
-	STATE UT
+    >>> for k, v in feat.properties.items():
+    ...     print(k, v)
+    ...
+    PERIMETER 1.22107
+    FEATURE2 None
+    NAME Mount Naomi Wilderness
+    FEATURE1 Wilderness
+    URL http://www.wilderness.net/index.cfm?fuse=NWPS&sec=wildView&wname=Mount%20Naomi
+    AGBUR FS
+    AREA 0.0179264
+    STATE_FIPS 49
+    WILDRNP020 332
+    STATE UT
 
 Feature Geometry
 ---------------
@@ -596,10 +596,10 @@ and ``coordinates`` keys.
 
 .. code-block:: pycon
 
-	>>> feat.geometry["type"]
-	'Polygon'
-	>>> feat.geometry["coordinates"]
-	[[(-111.73527526855469, 41.995094299316406), ..., (-111.73527526855469, 41.995094299316406)]]
+    >>> feat.geometry["type"]
+    'Polygon'
+    >>> feat.geometry["coordinates"]
+    [[(-111.73527526855469, 41.995094299316406), ..., (-111.73527526855469, 41.995094299316406)]]
 
 Since the coordinates are just tuples, or lists of tuples, or lists of lists of
 tuples, the ``type`` tells you how to interpret them.
@@ -799,46 +799,46 @@ Review the parameters of our demo file.
 
 .. code-block:: pycon
 
-	>>> with fiona.open(
+    >>> with fiona.open(
     ...     "zip+https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip"
     ) as src:
-	...     driver = src.driver
-	...     crs = src.crs
-	...     schema = src.schema
-	...     feat = src[1]
-	...
-	>>> driver
-	'ESRI Shapefile'
-	>>> crs
-	CRS.from_epsg(4326)
-	>>> pprint.pprint(schema)
-	{'geometry': 'Polygon',
-	 'properties': {'AGBUR': 'str:80',
-					'AREA': 'float:24.15',
-					'FEATURE1': 'str:80',
-					'FEATURE2': 'str:80',
-					'NAME': 'str:80',
-					'PERIMETER': 'float:24.15',
-					'STATE': 'str:80',
-					'STATE_FIPS': 'str:80',
-					'URL': 'str:101',
-					'WILDRNP020': 'int:10'}}
+    ...     driver = src.driver
+    ...     crs = src.crs
+    ...     schema = src.schema
+    ...     feat = src[1]
+    ...
+    >>> driver
+    'ESRI Shapefile'
+    >>> crs
+    CRS.from_epsg(4326)
+    >>> pprint.pprint(schema)
+    {'geometry': 'Polygon',
+     'properties': {'AGBUR': 'str:80',
+                    'AREA': 'float:24.15',
+                    'FEATURE1': 'str:80',
+                    'FEATURE2': 'str:80',
+                    'NAME': 'str:80',
+                    'PERIMETER': 'float:24.15',
+                    'STATE': 'str:80',
+                    'STATE_FIPS': 'str:80',
+                    'URL': 'str:101',
+                    'WILDRNP020': 'int:10'}}
 
 We can create a new file using them.
 
 .. code-block:: pycon
 
-	>>> with fiona.open("example.shp", "w", driver=driver, crs=crs, schema=schema) as dst:
-	...     print(len(dst))
-	...     dst.write(feat)
-	...     print(len(dst))
-	...
-	0
-	1
-	>>> dst.closed
-	True
-	>>> len(dst)
-	1
+    >>> with fiona.open("example.shp", "w", driver=driver, crs=crs, schema=schema) as dst:
+    ...     print(len(dst))
+    ...     dst.write(feat)
+    ...     print(len(dst))
+    ...
+    0
+    1
+    >>> dst.closed
+    True
+    >>> len(dst)
+    1
 
 Because the properties of the source schema are ordered and are passed in the
 same order to the write-mode collection, the written file's fields have the
@@ -849,8 +849,8 @@ a file's meta properties even easier.
 
 .. code-block:: pycon
 
-  >>> src = fiona.open("zip+https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip")
-  >>> dst = fiona.open("example.shp", "w", **src.profile)
+    >>> src = fiona.open("zip+https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip")
+    >>> dst = fiona.open("example.shp", "w", **src.profile)
 
 Writing new files from scratch
 -------------------------------
@@ -870,61 +870,61 @@ Tower using a point geometry with UTM coordinates in zone 31N.
 
 .. code-block:: pycon
 
-  >>> eiffel_tower =  {
-  ...   'geometry': {
-  ...     'type': 'Point',
-  ...     'coordinates': (448252, 5411935)
-  ...   },
-  ...   'properties': dict([
-  ...     ('name', 'Eiffel Tower'),
-  ...     ('height', 300.01),
-  ...     ('view', 'scenic'),
-  ...     ('year', 1889)
-  ...   ])
-  ... }
+    >>> eiffel_tower =  {
+    ...   'geometry': {
+    ...     'type': 'Point',
+    ...     'coordinates': (448252, 5411935)
+    ...   },
+    ...   'properties': dict([
+    ...     ('name', 'Eiffel Tower'),
+    ...     ('height', 300.01),
+    ...     ('view', 'scenic'),
+    ...     ('year', 1889)
+    ...   ])
+    ... }
 
 A corresponding scheme could be:
 
 .. code-block:: pycon
 
-  >>> landmarks_schema = {
-  ...   'geometry': 'Point',
-  ...   'properties': dict([
-  ...     ('name', 'str'),
-  ...     ('height', 'float'),
-  ...     ('view', 'str'),
-  ...     ('year', 'int')
-  ...   ])
-  ... }
+    >>> landmarks_schema = {
+    ...   'geometry': 'Point',
+    ...   'properties': dict([
+    ...     ('name', 'str'),
+    ...     ('height', 'float'),
+    ...     ('view', 'str'),
+    ...     ('year', 'int')
+    ...   ])
+    ... }
 
 The coordinate reference system of these landmark coordinates is ETRS89 / UTM
 zone 31N which is referenced in the EPSG database as EPSG:25831.
 
 .. code-block:: pycon
 
-  >>> from fiona.crs import CRS
-  >>> landmarks_crs = CRS.from_epsg(25831)
+    >>> from fiona.crs import CRS
+    >>> landmarks_crs = CRS.from_epsg(25831)
 
 An appropriate driver could be:
 
 .. code-block:: pycon
 
-  >>> driver = "GeoJSON"
+    >>> driver = "GeoJSON"
 
 Having specified schema, crs and driver, we are ready to open a file for
 writing our record:
 
 .. code-block:: pycon
 
-  	>>> with fiona.open(
-  	... 	"landmarks.geojson",
-  	...   	"w",
-  	...   	driver="GeoJSON",
-  	...   	crs=CRS.from_epsg(25831),
-  	...   	schema=landmarks_schema
-  	... ) as colxn:
-  	...     colxn.write(eiffel_tower)
-  	...
+    >>> with fiona.open(
+    ...     "landmarks.geojson",
+    ...     "w",
+    ...     driver="GeoJSON",
+    ...     crs=CRS.from_epsg(25831),
+    ...     schema=landmarks_schema
+    ... ) as colxn:
+    ...     colxn.write(eiffel_tower)
+    ...
 
 Ordering Record Fields
 ......................
@@ -943,38 +943,38 @@ If you write 3D coordinates, ones having (x, y, z) tuples, to a 2D file
 
 .. code-block:: python
 
-	>>> feat = {"geometry": {"type": "Point", "coordinates": (-1, 1, 5)}}
-	>>> with fiona.open(
-	...     "example.shp",
-	...     "w",
-	...     driver="Shapefile",
-	...     schema={"geometry": "Point", "properties": {}}
-	... ) as dst:
-	...     dst.write(feat)
-	...
-	>>> with fiona.open("example.shp") as src:
-	...     print(src[0].geometry.coordinates)
-	...
-	(-1.0, 1.0)
+    >>> feat = {"geometry": {"type": "Point", "coordinates": (-1, 1, 5)}}
+    >>> with fiona.open(
+    ...     "example.shp",
+    ...     "w",
+    ...     driver="Shapefile",
+    ...     schema={"geometry": "Point", "properties": {}}
+    ... ) as dst:
+    ...     dst.write(feat)
+    ...
+    >>> with fiona.open("example.shp") as src:
+    ...     print(src[0].geometry.coordinates)
+    ...
+    (-1.0, 1.0)
 
 If you write 2D coordinates, ones having only (x, y) tuples, to a 3D file ('3D
 Point' schema geometry, for example) a default z value of 0 will be provided.
 
 .. code-block:: python
 
-	>>> feat = {"geometry": {"type": "Point", "coordinates": (-1, 1)}}
-	>>> with fiona.open(
-	...     "example.shp",
-	...     "w",
-	...     driver="Shapefile",
-	...     schema={"geometry": "3D Point", "properties": {}}
-	... ) as dst:
-	...     dst.write(feat)
-	...
-	>>> with fiona.open("example.shp") as src:
-	...     print(src[0].geometry.coordinates)
-	...
-	(-1.0, 1.0, 0.0)
+    >>> feat = {"geometry": {"type": "Point", "coordinates": (-1, 1)}}
+    >>> with fiona.open(
+    ...     "example.shp",
+    ...     "w",
+    ...     driver="Shapefile",
+    ...     schema={"geometry": "3D Point", "properties": {}}
+    ... ) as dst:
+    ...     dst.write(feat)
+    ...
+    >>> with fiona.open("example.shp") as src:
+    ...     print(src[0].geometry.coordinates)
+    ...
+    (-1.0, 1.0, 0.0)
 
 Advanced Topics
 ===============
@@ -991,17 +991,18 @@ To see debugging information from GDAL/OGR, for example, you may do the followin
 .. code-block:: python
 
     import logging
-
     import fiona
-
 
     logging.basicConfig(level=logging.DEBUG)
 
     with fiona.Env(CPL_DEBUG=True):
-        fiona.open("tests/data/coutwildrnp.shp")
+        fiona.open(
+            "zip+https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip"
+        )
 
-The following extra messages will appear in the Python logger's output.::
+The following extra messages will appear in the Python logger's output.
 
+.. code-block::
     DEBUG:fiona._env:CPLE_None in GNM: GNMRegisterAllInternal
     DEBUG:fiona._env:CPLE_None in GNM: RegisterGNMFile
     DEBUG:fiona._env:CPLE_None in GNM: RegisterGNMdatabase
@@ -1019,15 +1020,15 @@ to its previous state.
 Driver configuration options
 ----------------------------
 
-Drivers can have dataset open, dataset creation, respectively layer creation options. These options can be found
-on the drivers page on `GDAL's homepage. <https://gdal.org/drivers/vector/index.html>`_ or using the
-``fiona.meta`` module:
+Drivers can have dataset open, dataset creation, respectively layer creation
+options. These options can be found on the drivers page on `GDAL's homepage.
+<https://gdal.org/drivers/vector/index.html>`_ or using the ``fiona.meta``
+module:
 
 .. code-block:: pycon
 
     >>> import fiona.meta
     >>> fiona.meta.print_driver_options("GeoJSON")
-
 
 These options can be passed to ``fiona.open``:
 
@@ -1035,7 +1036,6 @@ These options can be passed to ``fiona.open``:
 
     import fiona
     fiona.open('tests/data/coutwildrnp.json', ARRAY_AS_STRING="YES")
-
 
 Cloud storage credentials
 -------------------------
@@ -1045,13 +1045,16 @@ accessing data stored in AWS S3 or another cloud storage system.
 
 .. code-block:: python
 
-        from fiona.session import AWSSession
-        import fiona
+    import fiona
+    from fiona.session import AWSSession
 
-        with fiona.Env(
-            session=AWSSession(aws_access_key_id="key", aws_secret_access_key="secret")
-        ):
-            fiona.open("zip+s3://example-bucket/example.zip")
+    with fiona.Env(
+        session=AWSSession(
+            aws_access_key_id="key",
+            aws_secret_access_key="secret"
+        )
+    ):
+        fiona.open("zip+s3://example-bucket/example.zip")
 
 The AWSSession class is currently the only credential session manager in Fiona.
 The source code has an example of how classes for other cloud storage providers
@@ -1079,18 +1082,20 @@ With some vector data formats a spatial index accompanies the data file,
 allowing efficient bounding box searches. A collection's
 :py:meth:`~fiona.collection.Collection.items` method returns an iterator over
 pairs of FIDs and records that intersect a given ``(minx, miny, maxx, maxy)``
-bounding box or geometry object. Spatial filtering may be inaccurate and returning
-all features overlapping the envelope of the geometry. The
+bounding box or geometry object. Spatial filtering may be inaccurate and
+returning all features overlapping the envelope of the geometry. The
 collection's own coordinate reference system (see below) is used to interpret
-the box's values. If you want a list of the iterator's items, pass it to Python's
-builtin :py:func:`list` as shown below.
+the box's values. If you want a list of the iterator's items, pass it to
+Python's builtin :py:func:`list` as shown below.
 
 .. code-block:: pycon
 
-  >>> c = fiona.open('docs/data/test_uk.shp')
-  >>> hits = list(c.items(bbox=(-5.0, 55.0, 0.0, 60.0)))
-  >>> len(hits)
-  7
+    >>> colxn = fiona.open(
+    ...     "zip+https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip"
+    ... )
+    >>> hits = list(colxn.items(bbox=(-110.0, 36.0, -108.0, 38.0)))
+    >>> len(hits)
+    5
 
 The iterator method takes the same ``stop`` or ``start, stop[, step]``
 slicing arguments as :py:func:`itertools.islice`.
@@ -1098,7 +1103,7 @@ To get just the first two items from that iterator, pass a stop index.
 
 .. code-block:: pycon
 
-    >>> hits = c.items(2, bbox=(-5.0, 55.0, 0.0, 60.0))
+    >>> hits = colxn.items(2, bbox=(-110.0, 36.0, -108.0, 38.0)))
     >>> len(list(hits))
     2
 
@@ -1107,7 +1112,7 @@ indexes.
 
 .. code-block:: pycon
 
-    >>> hits = c.items(2, 5, bbox=(-5.0, 55.0, 0.0, 60.0))
+    >>> hits = colxn.items(2, 5, bbox=(-110.0, 36.0, -108.0, 38.0)))
     >>> len(list(hits))
     3
 
@@ -1117,13 +1122,15 @@ record and returns ``True`` or ``False``.
 
 .. code-block:: pycon
 
-  >>> def pass_positive_area(rec):
-  ...     return rec['properties'].get('AREA', 0.0) > 0.0
-  ...
-  >>> c = fiona.open('docs/data/test_uk.shp')
-  >>> hits = filter(pass_positive_area, c)
-  >>> len(list(hits))
-  48
+    >>> def pass_positive_area(rec):
+    ...     return rec['properties'].get('AREA', 0.0) > 0.0
+    ...
+    >>> colxn = fiona.open(
+    ...     "zip+https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip"
+    ... )
+    >>> hits = filter(pass_positive_area, colxn)
+    >>> len(list(hits))
+    67
 
 Reading Multilayer data
 -----------------------
@@ -1131,25 +1138,20 @@ Reading Multilayer data
 Up to this point, only simple datasets with one thematic layer or feature type
 per file have been shown and the venerable Esri Shapefile has been the primary
 example. Other GIS data formats can encode multiple layers or feature types
-within a single file or directory. Esri's `File Geodatabase
-<https://gdal.org/drivers/vector/filegdb.html#vector-filegdb>`__ is one example of such a format.
-A more useful example, for the purpose of this manual, is a directory
-comprising multiple shapefiles. The following three shell commands will create
-just such a two layered data source from the test data distributed with Fiona.
+within a single file or directory. GeoPackage is one example of such a format.
+A more useful example, for the purpose of this manual, is a directory or
+zipfile comprising multiple shapefiles. The GitHub-hosted zipfile we've been
+using in these examples is, in fact, such a multilayer dataset.
 
-.. code-block:: console
-
-  $ mkdir /tmp/data
-  $ ogr2ogr /tmp/data/ docs/data/test_uk.shp test_uk -nln foo
-  $ ogr2ogr /tmp/data/ docs/data/test_uk.shp test_uk -nln bar
-
-The layers of a data source can be listed using :py:func:`fiona.listlayers`. In
+The layers of a dataset can be listed using :py:func:`fiona.listlayers`. In
 the shapefile format case, layer names match base names of the files.
 
 .. code-block:: pycon
 
-  >>> fiona.listlayers('/tmp/data')
-  ['bar', 'foo']
+    >>> fiona.listlayers(
+    ...     "zip+https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip"
+    ... )
+    ['coutwildrnp']
 
 Unlike OGR, Fiona has no classes representing layers or data sources. To access
 the features of a layer, open a collection using the path to the data source
@@ -1157,45 +1159,44 @@ and specify the layer by name using the `layer` keyword.
 
 .. code-block:: pycon
 
-  >>> import pprint
-  >>> datasrc_path = '/tmp/data'
-  >>> for name in fiona.listlayers(datasrc_path):
-  ...     with fiona.open(datasrc_path, layer=name) as c:
-  ...         pprint.pprint(c.schema)
-  ...
-  {'geometry': 'Polygon',
-   'properties': {'CAT': 'float:16',
-                  'FIPS_CNTRY': 'str',
-                  'CNTRY_NAME': 'str',
-                  'AREA': 'float:15.2',
-                  'POP_CNTRY': 'float:15.2'}}
-  {'geometry': 'Polygon',
-   'properties': {'CAT': 'float:16',
-                  'FIPS_CNTRY': 'str',
-                  'CNTRY_NAME': 'str',
-                  'AREA': 'float:15.2',
-                  'POP_CNTRY': 'float:15.2'}}
+    dataset_path = "zip+https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip"
+    >>> for name in fiona.listlayers(dataset_path):
+    ...     with fiona.open(dataset_path, layer=name) as colxn:
+    ...         pprint.pprint(colxn.schema)
+    ...
+    {'geometry': 'Polygon',
+     'properties': {'AGBUR': 'str:80',
+                    'AREA': 'float:24.15',
+                    'FEATURE1': 'str:80',
+                    'FEATURE2': 'str:80',
+                    'NAME': 'str:80',
+                    'PERIMETER': 'float:24.15',
+                    'STATE': 'str:80',
+                    'STATE_FIPS': 'str:80',
+                    'URL': 'str:101',
+                    'WILDRNP020': 'int:10'}}
 
-Layers may also be specified by their index.
+Layers may also be specified by their numerical index.
 
 .. code-block:: pycon
 
-  >>> for i, name in enumerate(fiona.listlayers(datasrc_path)):
-  ...     with fiona.open(datasrc_path, layer=i) as c:
-  ...         print(len(c))
-  ...
-  48
-  48
+    >>> for index, name in enumerate(fiona.listlayers(dataset_path)):
+    ...     with fiona.open(dataset_path, layer=index) as colxn:
+    ...         print(len(colxn))
+    ...
+    67
 
 If no layer is specified, :py:func:`fiona.open` returns an open collection
 using the first layer.
 
 .. code-block:: pycon
 
-  >>> with fiona.open(datasrc_path) as c:
-  ...     c.name == fiona.listlayers(datasrc_path)[0]
-  ...
-  True
+    >>> with fiona.open(dataset_path) as colxn:
+    ...     colxn.name == fiona.listlayers(datasset_path)[0]
+    ...
+    True
+
+We've been relying on this implicit behavior throughout the manual.
 
 The most general way to open a shapefile for reading, using all of the
 parameters of :py:func:`fiona.open`, is to treat it as a data source with
@@ -1203,14 +1204,20 @@ a named layer.
 
 .. code-block:: pycon
 
-  >>> fiona.open('docs/data/test_uk.shp', 'r', layer='test_uk')
+    >>> fiona.open(
+    ...     "zip+https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip",
+    ...     mode="r",
+    ...     layer="coutwildrnp"
+    ... )
 
 In practice, it is fine to rely on the implicit first layer and default ``'r'``
 mode and open a shapefile like this:
 
 .. code-block:: pycon
 
-  >>> fiona.open('docs/data/test_uk.shp')
+    >>> fiona.open(
+    ...     "zip+https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip",
+    ... )
 
 Writing Multilayer data
 -----------------------
@@ -1220,64 +1227,17 @@ a unique name to the `layer` keyword argument.
 
 .. code-block:: pycon
 
-  >>> 'wah' not in fiona.listlayers(datasrc_path)
-  True
-  >>> with fiona.open(datasrc_path, layer='bar') as c:
-  ...     with fiona.open(datasrc_path, 'w', layer='wah', **c.meta) as d:
-  ...         d.write(next(c))
-  ...
-  >>> fiona.listlayers(datasrc_path)
-  ['bar', 'foo', 'wah']
+    >>> with fiona.open(
+    ...     "zip+https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip",
+    ... ) as src:
+    ...     with fiona.open("example.gpkg", "w", layer="example one", **src.profile) as dst:
+    ...         dst.writerecords(src)
+    ...
+    >>> fiona.listlayers("example.gpkg")
+    ['example one']
 
 In ``'w'`` mode, existing layers will be overwritten if specified, just as normal
 files are overwritten by Python's :py:func:`open` function.
-
-.. code-block:: pycon
-
-  >>> 'wah' in fiona.listlayers(datasrc_path)
-  True
-  >>> with fiona.open(datasrc_path, layer='bar') as c:
-  ...     with fiona.open(datasrc_path, 'w', layer='wah', **c.meta) as d:
-  ...         # Overwrites the existing layer named 'wah'!
-
-Virtual filesystems
--------------------
-
-Zip and Tar archives can be treated as virtual filesystems and collections can
-be made from paths and layers within them. In other words, Fiona lets you read
-zipped shapefiles. For example, make a Zip archive from the shapefile
-distributed with Fiona.
-
-.. code-block:: console
-
-  $ zip /tmp/zed.zip docs/data/test_uk.*
-  adding: docs/data/test_uk.shp (deflated 48%)
-  adding: docs/data/test_uk.shx (deflated 37%)
-  adding: docs/data/test_uk.dbf (deflated 98%)
-  adding: docs/data/test_uk.prj (deflated 15%)
-
-The `vfs` keyword parameter for :py:func:`fiona.listlayers` and
-:py:func:`fiona.open` may be an Apache Commons VFS style string beginning with
-"zip://" or "tar://" and followed by an absolute or relative path to the
-archive file. When this parameter is used, the first argument to must be an
-absolute path within that archive. The layers in that Zip archive are:
-
-.. code-block:: pycon
-
-  >>> import fiona
-  >>> fiona.listlayers('/docs/data', vfs='zip:///tmp/zed.zip')
-  ['test_uk']
-
-The single shapefile may also be accessed like so:
-
-.. code-block:: pycon
-
-  >>> with fiona.open(
-  ...         '/docs/data/test_uk.shp',
-  ...         vfs='zip:///tmp/zed.zip') as c:
-  ...     print(len(c))
-  ...
-  48
 
 Unsupported drivers
 -------------------
