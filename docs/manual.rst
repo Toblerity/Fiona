@@ -95,7 +95,7 @@ record) from one file to another, adding two attributes and making sure that
 all polygons are facing "up". Orientation of polygons is significant in some
 applications, extruded polygons in Google Earth for one. No other library (like
 :py:mod:`Shapely`) is needed here, which keeps it uncomplicated. There's a
-:file:`test_uk` file in the Fiona repository for use in this and other
+:file:`coutwildrnp.zip` file in the Fiona repository for use in this and other
 examples.
 
 .. code-block:: python
@@ -120,7 +120,9 @@ examples.
       return sum(xs[i] * (ys[i + 1] - ys[i - 1]) for i in range(1, len(coords))) / 2.0
 
 
-  with fiona.open("docs/data/test_uk.shp", "r") as source:
+  with fiona.open(
+      "zip+https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip"
+  ) as source:
 
       # Copy the source schema and add two new properties.
       sink_schema = source.schema
@@ -130,10 +132,11 @@ examples.
       # Create a sink for processed features with the same format and
       # coordinate reference system as the source.
       with fiona.open(
-          "oriented-ccw.shp",
-          "w",
+          "example.gpkg",
+          mode="w",
+          layer="oriented-ccw",
           crs=source.crs,
-          driver=source.driver,
+          driver="GPKG",
           schema=sink_schema,
       ) as sink:
           for f in source:
@@ -216,17 +219,12 @@ Reading a GIS vector file begins by opening it in mode ``'r'`` using Fiona's
 
 .. code-block:: pycon
 
-  >>> import fiona
-  >>> c = fiona.open('docs/data/test_uk.shp', 'r')
-  >>> c
-  <open Collection 'docs/data/test_uk.shp:test_uk', mode 'r' at 0x...>
-  >>> c.closed
-  False
-
-.. admonition:: API Change
-
-   :py:func:`fiona.collection` is deprecated, but aliased to
-   :py:func:`fiona.open` in version 0.9.
+    >>> import fiona
+    >>> colxn = fiona.open("zip+https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip", "r")
+    >>> colxn
+    <open Collection '/vsizip/vsicurl/https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip:coutwildrnp', mode 'r' at 0x7f9555af8f50>
+    >>> collection.closed
+    False
 
 Mode ``'r'`` is the default and will be omitted in following examples.
 
@@ -235,31 +233,31 @@ Fiona's :py:class:`~fiona.collection.Collection` is like a Python
 
 .. code-block:: pycon
 
-  >>> next(c)
-  {'geometry': {'type': 'Polygon', 'coordinates': ...
-  >>> len(list(c))
-  48
+    >>> next(iter(colxn))
+    {'geometry': {'type': 'Polygon', 'coordinates': ...
+    >>> len(list(colxn))
+    67
 
 Note that :py:func:`list` iterates over the entire collection, effectively
 emptying it as with a Python :py:class:`file`.
 
 .. code-block:: pycon
 
-  >>> next(c)
-  Traceback (most recent call last):
-  ...
-  StopIteration
-  >>> len(list(c))
-  0
+    >>> next(iter(colxn))
+    Traceback (most recent call last):
+    ...
+    StopIteration
+    >>> len(list(colxn))
+    0
 
 Seeking the beginning of the file is not supported. You must reopen the
 collection to get back to the beginning.
 
 .. code-block:: pycon
 
-  >>> c = fiona.open('docs/data/test_uk.shp')
-  >>> len(list(c))
-  48
+    >>> colxn = fiona.open("zip+https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip")
+    >>> len(list(colxn))
+    67
 
 .. admonition:: File Encoding
 
@@ -278,29 +276,15 @@ Features of a collection may also be accessed by index.
 
 .. code-block:: pycon
 
-    >>> import pprint
-    >>> with fiona.open('docs/data/test_uk.shp') as src:
-    ...     pprint.pprint(src[1])
+    >>> with fiona.open("zip+https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip") as colxn:
+    ...     print(colxn[1])
     ...
-    {'geometry': {'coordinates': [[(-4.663611, 51.158333),
-                                   (-4.669168, 51.159439),
-                                   (-4.673334, 51.161385),
-                                   (-4.674445, 51.165276),
-                                   (-4.67139, 51.185272),
-                                   (-4.669445, 51.193054),
-                                   (-4.665556, 51.195),
-                                   (-4.65889, 51.195),
-                                   (-4.656389, 51.192215),
-                                   (-4.646389, 51.164444),
-                                   (-4.646945, 51.160828),
-                                   (-4.651668, 51.159439),
-                                   (-4.663611, 51.158333)]],
-                  'type': 'Polygon'},
-     'id': '1',
-     'properties': OrderedDict([('CAT', 232.0), ('FIPS_CNTRY', 'UK'), ('CNTRY_NAME', 'United Kingdom'), ('AREA', 244820.0), ('POP_CNTRY', 60270708.0)]),
-     'type': 'Feature'}
+    <fiona.model.Feature object at 0x7f954bfc5f50>
 
-Note that these indices are controlled by GDAL, and do not always follow Python conventions. They can start from 0, 1 (e.g. geopackages), or even other values, and have no guarantee of contiguity. Negative indices will only function correctly if indices start from 0 and are contiguous.
+Note that these indices are controlled by GDAL, and do not always follow Python
+conventions. They can start from 0, 1 (e.g. geopackages), or even other values,
+and have no guarantee of contiguity. Negative indices will only function
+correctly if indices start from 0 and are contiguous.
 
 New in version 1.1.6
 
@@ -315,23 +299,23 @@ is a context guard, it is closed no matter what happens within the block.
 
 .. code-block:: pycon
 
-  >>> try:
-  ...     with fiona.open('docs/data/test_uk.shp') as c:
-  ...         print(len(list(c)))
-  ...         assert True is False
-  ... except:
-  ...     print(c.closed)
-  ...     raise
-  ...
-  48
-  True
-  Traceback (most recent call last):
+    >>> try:
+    ...     with fiona.open("zip+https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip") as colxn:
+    ...         print(len(list(colxn)))
+    ...         assert True is False
+    ... except Exception:
+    ...     print(colxn.closed)
+    ...     raise
     ...
-  AssertionError
+    67
+    True
+    Traceback (most recent call last):
+      ...
+    AssertionError
 
 An exception is raised in the :keyword:`with` block above, but as you can see
-from the print statement in the :keyword:`except` clause :py:meth:`c.__exit__`
-(and thereby :py:meth:`c.close`) has been called.
+from the print statement in the :keyword:`except` clause :py:meth:`colxn.__exit__`
+(and thereby :py:meth:`colxn.close`) has been called.
 
 .. important:: Always call :py:meth:`~fiona.collection.Collection.close` or
    use :keyword:`with` and you'll never stumble over tied-up external resources,
@@ -348,44 +332,42 @@ a :py:class:`~fiona.collection.Collection` has a read-only
 
 .. code-block:: pycon
 
-  >>> c = fiona.open('docs/data/test_uk.shp')
-  >>> c.driver
-  'ESRI Shapefile'
+    >>> colxn = fiona.open("zip+https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip")
+    >>> colxn.driver
+    'ESRI Shapefile'
 
 The :dfn:`coordinate reference system` (CRS) of the collection's vector data is
 accessed via a read-only :py:attr:`~fiona.collection.Collection.crs` attribute.
 
 .. code-block:: pycon
 
-  >>> c.crs
-  {'no_defs': True, 'ellps': 'WGS84', 'datum': 'WGS84', 'proj': 'longlat'}
-
-The CRS is represented by a mapping of :program:`PROJ.4` parameters.
+    >>> colxn.crs
+    CRS.from_epsg(4326)
 
 The :py:mod:`fiona.crs` module provides 3 functions to assist with these
 mappings. :py:func:`~fiona.crs.to_string` converts mappings to PROJ.4 strings:
 
 .. code-block:: pycon
 
-  >>> from fiona.crs import to_string
-  >>> print(to_string(c.crs))
-  +datum=WGS84 +ellps=WGS84 +no_defs +proj=longlat
+    >>> from fiona.crs import to_string
+    >>> to_string(colxn.crs)
+    'EPSG:4326'
 
 :py:func:`~fiona.crs.from_string` does the inverse.
 
 .. code-block:: pycon
 
-  >>> from fiona.crs import from_string
-  >>> from_string("+datum=WGS84 +ellps=WGS84 +no_defs +proj=longlat")
-  {'no_defs': True, 'ellps': 'WGS84', 'datum': 'WGS84', 'proj': 'longlat'}
+    >>> from fiona.crs import from_string
+    >>> from_string("+datum=WGS84 +ellps=WGS84 +no_defs +proj=longlat")
+    CRS.from_epsg(4326)
 
 :py:func:`~fiona.crs.from_epsg` is a shortcut to CRS mappings from EPSG codes.
 
 .. code-block:: pycon
 
-  >>> from fiona.crs import from_epsg
-  >>> from_epsg(3857)
-  {'init': 'epsg:3857', 'no_defs': True}
+    >>> from fiona.crs import from_epsg
+    >>> from_epsg(3857)
+    CRS.from_epsg(3857)
 
 .. admonition:: No Validation
 
@@ -398,8 +380,8 @@ built in :py:func:`len` function.
 
 .. code-block:: pycon
 
-  >>> len(c)
-  48
+    >>> len(colxn)
+    67
 
 The :dfn:`minimum bounding rectangle` (MBR) or :dfn:`bounds` of the
 collection's records is obtained via a read-only
@@ -407,8 +389,8 @@ collection's records is obtained via a read-only
 
 .. code-block:: pycon
 
-  >>> c.bounds
-  (-8.621389, 49.911659, 1.749444, 60.844444)
+    >>> colxn.bounds
+    (-113.56424713134766, 37.0689811706543, -104.97087097167969, 41.99627685546875)
 
 Finally, the schema of its record type (a vector file has a single type of
 record, remember) is accessed via a read-only
@@ -418,14 +400,19 @@ dict with items having the same order as the fields in the data file.
 
 .. code-block:: pycon
 
-  >>> import pprint
-  >>> pprint.pprint(c.schema)
-  {'geometry': 'Polygon',
-   'properties': {'CAT': 'float:16',
-                  'FIPS_CNTRY': 'str',
-                  'CNTRY_NAME': 'str',
-                  'AREA': 'float:15.2',
-                  'POP_CNTRY': 'float:15.2'}}
+  	>>> import pprint
+	>>> pprint.pprint(colxn.schema)
+	{'geometry': 'Polygon',
+ 	 'properties': {'AGBUR': 'str:80',
+     	            'AREA': 'float:24.15',
+         	        'FEATURE1': 'str:80',
+        	        'FEATURE2': 'str:80',
+        	        'NAME': 'str:80',
+          	        'PERIMETER': 'float:24.15',
+                	'STATE': 'str:80',
+                	'STATE_FIPS': 'str:80',
+                	'URL': 'str:101',
+                	'WILDRNP020': 'int:10'}}
 
 Keeping Schemas Simple
 ----------------------
@@ -437,11 +424,11 @@ keys of the collection's record mappings.
 
 .. code-block:: pycon
 
-  >>> rec = next(c)
-  >>> set(rec.keys()) - set(c.schema.keys())
-  {'id'}
-  >>> set(rec['properties'].keys()) == set(c.schema['properties'].keys())
-  True
+  	>>> feat = next(iter(colxn))
+  	>>> set(feat.keys()) - set(colxn.schema.keys())
+  	{'id'}
+  	>>> set(feat['properties'].keys()) == set(colxn.schema['properties'].keys())
+  	True
 
 The values of the schema mapping are either additional mappings or field type
 names like 'Polygon', 'float', and 'str'. The corresponding Python types can
@@ -449,17 +436,17 @@ be found in a dictionary named :py:attr:`fiona.FIELD_TYPES_MAP`.
 
 .. code-block:: pycon
 
-  >>> pprint.pprint(fiona.FIELD_TYPES_MAP)
-  {'List[str]': typing.List[str],
-   'bytes': <class 'bytes'>,
-   'date': <class 'fiona.rfc3339.FionaDateType'>,
-   'datetime': <class 'fiona.rfc3339.FionaDateTimeType'>,
-   'float': <class 'float'>,
-   'int': <class 'int'>,
-   'int32': <class 'int'>,
-   'int64': <class 'int'>,
-   'str': <class 'str'>,
-   'time': <class 'fiona.rfc3339.FionaTimeType'>}
+  	>>> pprint.pprint(fiona.FIELD_TYPES_MAP)
+  	{'List[str]': typing.List[str],
+   	 'bytes': <class 'bytes'>,
+   	 'date': <class 'fiona.rfc3339.FionaDateType'>,
+     'datetime': <class 'fiona.rfc3339.FionaDateTimeType'>,
+     'float': <class 'float'>,
+     'int': <class 'int'>,
+     'int32': <class 'int'>,
+     'int64': <class 'int'>,
+     'str': <class 'str'>,
+     'time': <class 'fiona.rfc3339.FionaTimeType'>}
 
 Field Types
 -----------
@@ -470,11 +457,11 @@ may contain Unicode characters.
 
 .. code-block:: pycon
 
-  >>> type(rec['properties']['CNTRY_NAME'])
+  >>> type(feat.properties['NAME'])
   <class 'str'>
-  >>> c.schema['properties']['CNTRY_NAME']
+  >>> colxn.schema['properties']['NAME']
   'str'
-  >>> fiona.FIELD_TYPES_MAP[c.schema['properties']['CNTRY_NAME']]
+  >>> fiona.FIELD_TYPES_MAP[colxn.schema['properties']['NAME']]
   <class 'str'>
 
 String type fields may also indicate their maximum width. A value of 'str:25'
@@ -536,120 +523,83 @@ Note that one of the most common vector data formats, Esri's Shapefile, has no
 that indicates 'Polygon' in its schema may yield either 'Polygon' or
 'MultiPolygon' features.
 
-Records
-=======
+Features
+========
 
-A record you get from a collection is a Python :py:class:`dict` structured
-exactly like a GeoJSON Feature. Fiona records are self-describing; the names of
-its fields are contained within the data structure and the values in the fields
-are typed properly for the type of record. Numeric field values are instances
-of type :py:class:`int` and :py:class:`float`, for example, not strings.
-
-.. code-block:: pycon
-
-  >>> pprint.pprint(rec)
-  {'geometry': {'coordinates': [[(-4.663611, 51.158333),
-                                 (-4.669168, 51.159439),
-                                 (-4.673334, 51.161385),
-                                 (-4.674445, 51.165276),
-                                 (-4.67139, 51.185272),
-                                 (-4.669445, 51.193054),
-                                 (-4.665556, 51.195),
-                                 (-4.65889, 51.195),
-                                 (-4.656389, 51.192215),
-                                 (-4.646389, 51.164444),
-                                 (-4.646945, 51.160828),
-                                 (-4.651668, 51.159439),
-                                 (-4.663611, 51.158333)]],
-                'type': 'Polygon'},
-   'id': '1',
-   'properties': {'CAT': 232.0,
-                  'FIPS_CNTRY': 'UK',
-                  'CNTRY_NAME': 'United Kingdom',
-                  'AREA': 244820.0,
-                  'POP_CNTRY': 60270708.0}}
+A record you get from a collection is structured like a GeoJSON Feature. Fiona
+records are self-describing; the names of its fields are contained within the
+data structure and the values in the fields are typed properly for the type of
+record. Numeric field values are instances of type :py:class:`int` and
+:py:class:`float`, for example, not strings.
 
 The record data has no references to the
 :py:class:`~fiona.collection.Collection` from which it originates or to any
 other external resource. It's entirely independent and safe to use in any way.
 Closing the collection does not affect the record at all.
 
-.. code-block:: pycon
+.. admonition:: Features are mappings, not dicts
 
-  >>> c.close()
-  >>> rec['id']
-  '1'
+   In Fiona versions before 1.9.0 features were Python dicts, mutable and JSON
+   serializable. Since 1.9.0 features are mappings and not immediately JSON
+   serializable.
 
-Record Id
+   Instances of Feature can be converted to dicts with
+   :py:func:`fiona.model.to_dict` or serialized using the json module and
+   :py:class:`fiona.model.ObjectEncoder`.
+
+Feature Id
 ---------
 
-A record has an ``id`` key. As in the GeoJSON specification, its corresponding
-value is a string unique within the data file.
+A feature has an ``id`` attribute. As in the GeoJSON specification, its
+corresponding value is a string unique within the data file.
 
 .. code-block:: pycon
 
-  >>> c = fiona.open('docs/data/test_uk.shp')
-  >>> rec = next(c)
-  >>> rec['id']
-  '0'
+    >>> colxn = fiona.open("zip+https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip")
+    >>> feat = next(iter(colxn))
+    >>> feat.id
+    '0'
 
 .. admonition:: OGR Details
 
    In the :program:`OGR` model, feature ids are long integers. Fiona record ids
    are therefore usually string representations of integer record indexes.
 
-Record Properties
+Feature Properties
 -----------------
 
-A record has a ``properties`` key. Its corresponding value is a mapping: an
-ordered dict to be precise. The keys of the properties mapping are the same as
-the keys of the properties mapping in the schema of the collection the record
-comes from (see above).
+A feature has a ``properties`` attribute. Its value is a mapping.  The keys of
+the properties mapping are the same as the keys of the properties mapping in
+the schema of the collection the record comes from (see above).
 
 .. code-block:: pycon
 
-  >>> pprint.pprint(rec['properties'])
-  {'CAT': 232.0,
-   'FIPS_CNTRY': 'UK',
-   'CNTRY_NAME': 'United Kingdom',
-   'AREA': 244820.0,
-   'POP_CNTRY': 60270708.0}
+	>>> for k, v in feat.properties.items():
+	...     print(k, v)
+	...
+	PERIMETER 1.22107
+	FEATURE2 None
+	NAME Mount Naomi Wilderness
+	FEATURE1 Wilderness
+	URL http://www.wilderness.net/index.cfm?fuse=NWPS&sec=wildView&wname=Mount%20Naomi
+	AGBUR FS
+	AREA 0.0179264
+	STATE_FIPS 49
+	WILDRNP020 332
+	STATE UT
 
-Record Geometry
+Feature Geometry
 ---------------
 
-A record has a ``geometry`` key. Its corresponding value is a mapping with
-``type`` and ``coordinates`` keys.
+A feature has a ``geometry`` attribute. Its value is a mapping with ``type``
+and ``coordinates`` keys.
 
 .. code-block:: pycon
 
-  >>> pprint.pprint(rec['geometry'])
-  {'coordinates': [[(0.899167, 51.357216),
-                    (0.885278, 51.35833),
-                    (0.7875, 51.369438),
-                    (0.781111, 51.370552),
-                    (0.766111, 51.375832),
-                    (0.759444, 51.380829),
-                    (0.745278, 51.39444),
-                    (0.740833, 51.400276),
-                    (0.735, 51.408333),
-                    (0.740556, 51.429718),
-                    (0.748889, 51.443604),
-                    (0.760278, 51.444717),
-                    (0.791111, 51.439995),
-                    (0.892222, 51.421387),
-                    (0.904167, 51.418884),
-                    (0.908889, 51.416939),
-                    (0.930555, 51.398888),
-                    (0.936667, 51.393608),
-                    (0.943889, 51.384995),
-                    (0.9475, 51.378609),
-                    (0.947778, 51.374718),
-                    (0.946944, 51.371109),
-                    (0.9425, 51.369164),
-                    (0.904722, 51.358055),
-                    (0.899167, 51.357216)]],
-   'type': 'Polygon'}
+	>>> feat.geometry["type"]
+	'Polygon'
+	>>> feat.geometry["coordinates"]
+	[[(-111.73527526855469, 41.995094299316406), ..., (-111.73527526855469, 41.995094299316406)]]
 
 Since the coordinates are just tuples, or lists of tuples, or lists of lists of
 tuples, the ``type`` tells you how to interpret them.
@@ -735,46 +685,44 @@ Appending Data to Existing Files
 --------------------------------
 
 Let's start with the simplest if not most common use case, adding new records
-to an existing file. The file is copied before modification and a suitable
-record extracted in the example below.
+to an existing file.
 
-.. code-block:: pycon
+.. code-block:: console
 
-  >>> with fiona.open('docs/data/test_uk.shp') as c:
-  ...     rec = next(c)
-  >>> rec['id'] = '-1'
-  >>> rec['properties']['CNTRY_NAME'] = 'Gondor'
-  >>> import os
-  >>> os.system("cp docs/data/test_uk.* /tmp")
-  0
+    $ wget https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip
+    $ unzip coutwildrnp.zip
 
 The coordinate reference system. format, and schema of the file are already
 defined, so it's opened with just two arguments as for reading, but in ``'a'``
 mode. The new record is written to the end of the file using the
 :py:meth:`~fiona.collection.Collection.write` method. Accordingly, the length
-of the file grows from 48 to 49.
+of the file grows from 67 to 68.
 
 .. code-block:: pycon
 
-  >>> with fiona.open('/tmp/test_uk.shp', 'a') as c:
-  ...     print(len(c))
-  ...     c.write(rec)
-  ...     print(len(c))
-  ...
-  48
-  49
+    >>> with fiona.open("coutwildrnp.shp", "a") as dst:
+    ...     print(len(dst))
+    ...     with fiona.open("zip+https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip") as src:
+    ...         feat = src[0]
+    ...         print(feat.id, feat.properties["NAME"])
+    ...         dst.write(feat)
+    ...     print(len(c))
+    ...
+    67
+    ('0', 'Mount Naomi Wilderness')
+    68
 
-The record you write must match the file's schema (because a file contains one
+The feature you write must match the file's schema (because a file contains one
 type of record, remember). You'll get a :py:class:`ValueError` if it doesn't.
 
 .. code-block:: pycon
 
-  >>> with fiona.open('/tmp/test_uk.shp', 'a') as c:
-  ...     c.write({'properties': {'foo': 'bar'}})
-  ...
-  Traceback (most recent call last):
+    >>> with fiona.open("coutwildrnp.shp", "a") as dst:
+    ...     dst.write({'properties': {'foo': 'bar'}})
     ...
-  ValueError: Record data not match collection schema
+    Traceback (most recent call last):
+      ...
+    ValueError: Record data not match collection schema
 
 Now, what about record ids? The id of a record written to a file is ignored and
 replaced by the next value appropriate for the file. If you read the file just
@@ -782,15 +730,16 @@ appended to above,
 
 .. code-block:: pycon
 
-  >>> with fiona.open('/tmp/test_uk.shp', 'a') as c:
-  ...     records = list(c)
-  >>> records[-1]['id']
-  '48'
-  >>> records[-1]['properties']['CNTRY_NAME']
-  'Gondor'
+    >>> with fiona.open("coutwildrnp.shp") as colxn:
+    ...     feat = colxn[-1]
+    ...
+    >>> feat.id
+    '67'
+    >>> feat.properties["NAME"]
+    'Mount Naomi Wilderness'
 
-You'll see that the id of ``'-1'`` which the record had when written is
-replaced by ``'48'``.
+You'll see that the id of ``'0'`` which the record had when written is replaced
+by ``'67'``.
 
 The :py:meth:`~fiona.collection.Collection.write` method writes a single
 record to the collection's file. Its sibling
@@ -799,11 +748,11 @@ iterator) of records.
 
 .. code-block:: pycon
 
-  >>> with fiona.open('/tmp/test_uk.shp', 'a') as c:
-  ...     c.writerecords([rec, rec, rec])
-  ...     print(len(c))
-  ...
-  52
+    >>> with fiona.open("coutwildrnp.shp", "a") as colxn:
+    ...     colxn.writerecords([feat, feat, feat])
+    ...     print(len(colxn))
+    ...
+    71
 
 .. admonition:: Duplication
 
@@ -843,97 +792,81 @@ Creating files of the same structure
 Writing a new file is more complex than appending to an existing file because
 the file CRS, format, and schema have not yet been defined and must be done so
 by the programmer. Still, it's not very complicated. A schema is just
-a mapping, as described above. A CRS is also just a mapping, and the possible
+a mapping, as described above. The possible
 formats are enumerated in the :py:attr:`fiona.supported_drivers` dictionary.
 
 Review the parameters of our demo file.
 
 .. code-block:: pycon
 
-  >>> with fiona.open('docs/data/test_uk.shp') as source:
-  ...     source_driver = source.driver
-  ...     source_crs = source.crs
-  ...     source_schema = source.schema
-  ...
-  >>> source_driver
-  'ESRI Shapefile'
-  >>> source_crs
-  {'no_defs': True, 'ellps': 'WGS84', 'datum': 'WGS84', 'proj': 'longlat'}
-  >>> pprint.pprint(source_schema)
-  {'geometry': 'Polygon',
-   'properties': {'CAT': 'float:16',
-                  'FIPS_CNTRY': 'str',
-                  'CNTRY_NAME': 'str',
-                  'AREA': 'float:15.2',
-                  'POP_CNTRY': 'float:15.2'}}
+	>>> with fiona.open(
+    ...     "zip+https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip"
+    ) as src:
+	...     driver = src.driver
+	...     crs = src.crs
+	...     schema = src.schema
+	...     feat = src[1]
+	...
+	>>> driver
+	'ESRI Shapefile'
+	>>> crs
+	CRS.from_epsg(4326)
+	>>> pprint.pprint(schema)
+	{'geometry': 'Polygon',
+	 'properties': {'AGBUR': 'str:80',
+					'AREA': 'float:24.15',
+					'FEATURE1': 'str:80',
+					'FEATURE2': 'str:80',
+					'NAME': 'str:80',
+					'PERIMETER': 'float:24.15',
+					'STATE': 'str:80',
+					'STATE_FIPS': 'str:80',
+					'URL': 'str:101',
+					'WILDRNP020': 'int:10'}}
 
 We can create a new file using them.
 
 .. code-block:: pycon
 
-  >>> with fiona.open(
-  ...         '/tmp/foo.shp',
-  ...         'w',
-  ...         driver=source_driver,
-  ...         crs=source_crs,
-  ...         schema=source_schema) as c:
-  ...     print(len(c))
-  ...     c.write(rec)
-  ...     print(len(c))
-  ...
-  0
-  1
-  >>> c.closed
-  True
-  >>> len(c)
-  1
+	>>> with fiona.open("example.shp", "w", driver=driver, crs=crs, schema=schema) as dst:
+	...     print(len(dst))
+	...     dst.write(feat)
+	...     print(len(dst))
+	...
+	0
+	1
+	>>> dst.closed
+	True
+	>>> len(dst)
+	1
 
 Because the properties of the source schema are ordered and are passed in the
 same order to the write-mode collection, the written file's fields have the
 same order as those of the source file.
 
-.. code-block:: console
-
-  $ ogrinfo /tmp/foo.shp foo -so
-  INFO: Open of `/tmp/foo.shp'
-        using driver `ESRI Shapefile' successful.
-
-  Layer name: foo
-  Geometry: 3D Polygon
-  Feature Count: 1
-  Extent: (0.735000, 51.357216) - (0.947778, 51.444717)
-  Layer SRS WKT:
-  GEOGCS["GCS_WGS_1984",
-      DATUM["WGS_1984",
-          SPHEROID["WGS_84",6378137,298.257223563]],
-      PRIMEM["Greenwich",0],
-      UNIT["Degree",0.017453292519943295]]
-  CAT: Real (16.0)
-  FIPS_CNTRY: String (80.0)
-  CNTRY_NAME: String (80.0)
-  AREA: Real (15.2)
-  POP_CNTRY: Real (15.2)
-
-The :py:attr:`~fiona.collection.Collection.meta` attribute makes duplication of
+The :py:attr:`~fiona.collection.Collection.profile` attribute makes duplication of
 a file's meta properties even easier.
 
 .. code-block:: pycon
 
-  >>> source = fiona.open('docs/data/test_uk.shp')
-  >>> sink = fiona.open('/tmp/foo.shp', 'w', **source.meta)
+  >>> src = fiona.open("zip+https://github.com/Toblerity/Fiona/files/11151652/coutwildrnp.zip")
+  >>> dst = fiona.open("example.shp", "w", **src.profile)
 
 Writing new files from scratch
 -------------------------------
 
-To write a new file from scratch we have to define our own specific driver, crs and schema.
+To write a new file from scratch we have to define our own specific driver, crs
+and schema.
 
-To ensure the order of the attribute fields is predictable, in both the schema and the actual manifestation as feature attributes, we will use ordered dictionaries.
+To ensure the order of the attribute fields is predictable, in both the schema
+and the actual manifestation as feature attributes, we will use ordered
+dictionaries.
 
 .. code-block:: pycon
 
-  >>> from collections import OrderedDict
-
-Consider the following record, structured in accordance to the `Python geo protocol <https://gist.github.com/sgillies/2217756>`__, representing the Eiffel Tower using a point geometry with UTM coordinates in zone 31N.
+Consider the following record, structured in accordance to the `Python geo
+protocol <https://gist.github.com/sgillies/2217756>`__, representing the Eiffel
+Tower using a point geometry with UTM coordinates in zone 31N.
 
 .. code-block:: pycon
 
@@ -942,7 +875,7 @@ Consider the following record, structured in accordance to the `Python geo proto
   ...     'type': 'Point',
   ...     'coordinates': (448252, 5411935)
   ...   },
-  ...   'properties': OrderedDict([
+  ...   'properties': dict([
   ...     ('name', 'Eiffel Tower'),
   ...     ('height', 300.01),
   ...     ('view', 'scenic'),
@@ -956,7 +889,7 @@ A corresponding scheme could be:
 
   >>> landmarks_schema = {
   ...   'geometry': 'Point',
-  ...   'properties': OrderedDict([
+  ...   'properties': dict([
   ...     ('name', 'str'),
   ...     ('height', 'float'),
   ...     ('view', 'str'),
@@ -964,43 +897,34 @@ A corresponding scheme could be:
   ...   ])
   ... }
 
-The coordinate reference system of these landmark coordinates is ETRS89 / UTM zone 31N which is referenced in the EPSG database as EPSG:25831.
+The coordinate reference system of these landmark coordinates is ETRS89 / UTM
+zone 31N which is referenced in the EPSG database as EPSG:25831.
 
 .. code-block:: pycon
 
-  >>> from fiona.crs import from_epsg
-  >>> landmarks_crs = from_epsg(25831)
+  >>> from fiona.crs import CRS
+  >>> landmarks_crs = CRS.from_epsg(25831)
 
 An appropriate driver could be:
 
 .. code-block:: pycon
 
-  >>> output_driver = "GeoJSON"
+  >>> driver = "GeoJSON"
 
-Having specified schema, crs and driver, we are ready to open a file for writing our record:
+Having specified schema, crs and driver, we are ready to open a file for
+writing our record:
 
 .. code-block:: pycon
 
-  >>> with fiona.open(
-  ...         '/tmp/foo.geojson',
-  ...         'w',
-  ...         driver=output_driver,
-  ...         crs=landmarks_crs,
-  ...         schema=landmarks_schema) as c:
-  ...     c.write(eiffel_tower)
-  ...
-
-  >>> import pprint
-  >>> with fiona.open('/tmp/foo.geojson') as source:
-  ...   for record in source:
-  ...     pprint.pprint(record)
-  {'geometry': {'coordinates': (448252.0, 5411935.0), 'type': 'Point'},
-   'id': '0',
-   'properties': OrderedDict([('name', 'Eiffel Tower'),
-                              ('height', 300.01),
-                              ('view', 'scenic'),
-                              ('year', 1889)]),
-   'type': 'Feature'}
+  	>>> with fiona.open(
+  	... 	"landmarks.geojson",
+  	...   	"w",
+  	...   	driver="GeoJSON",
+  	...   	crs=CRS.from_epsg(25831),
+  	...   	schema=landmarks_schema
+  	... ) as colxn:
+  	...     colxn.write(eiffel_tower)
+  	...
 
 Ordering Record Fields
 ......................
@@ -1011,90 +935,46 @@ pairs, specifying an ordering that carries into written files. If an ordinary
 dict is given, the ordering is determined by the output of that dict's
 :py:func:`~items` method.
 
-For example, since
-
-.. code-block:: pycon
-
-  >>> {'bar': 'int', 'foo': 'str'}.keys()
-  ['foo', 'bar']
-
-a schema of ``{'properties': {'bar': 'int', 'foo': 'str'}}`` will produce
-a shapefile where the first field is 'foo' and the second field is 'bar'. If
-you want 'bar' to be the first field, you must use a list of property items
-
-.. code-block:: python
-
-    fiona.open(
-        "/tmp/file.shp",
-        "w",
-        schema={"properties": [("bar", "int"), ("foo", "str")]},
-        **kwargs
-    )
-
-or an ordered dict.
-
-.. code-block:: python
-
-    from collections import OrderedDict
-
-    schema_props = OrderedDict([("bar", "int"), ("foo", "str")])
-    fiona.open(
-        "/tmp/file.shp",
-        "w",
-        schema={"properties": schema_props},
-        **kwargs
-    )
-
 3D Coordinates and Geometry Types
 ---------------------------------
 
 If you write 3D coordinates, ones having (x, y, z) tuples, to a 2D file
 ('Point' schema geometry, for example) the z values will be lost.
 
-.. sourcecode:: python
+.. code-block:: python
 
-  schema_props = OrderedDict([("foo", "str")])
-
-  feature = {
-      "geometry": {"type": "Point", "coordinates": (-1, 1, 5)},
-      "properties": OrderedDict([("foo", "bar")]),
-  }
-
-  with fiona.open(
-      "/tmp/file.shp",
-      "w",
-      driver="ESRI Shapefile",
-      schema={"geometry": "Point", "properties": schema_props},
-  ) as collection:
-      collection.write(feature)
-
-  with fiona.open("/tmp/file.shp") as collection:
-      print(next(collection)["geometry"])
-
-  # {"type": "Point", "coordinates": (-1.0, 1.0)}
+	>>> feat = {"geometry": {"type": "Point", "coordinates": (-1, 1, 5)}}
+	>>> with fiona.open(
+	...     "example.shp",
+	...     "w",
+	...     driver="Shapefile",
+	...     schema={"geometry": "Point", "properties": {}}
+	... ) as dst:
+	...     dst.write(feat)
+	...
+	>>> with fiona.open("example.shp") as src:
+	...     print(src[0].geometry.coordinates)
+	...
+	(-1.0, 1.0)
 
 If you write 2D coordinates, ones having only (x, y) tuples, to a 3D file ('3D
 Point' schema geometry, for example) a default z value of 0 will be provided.
 
-.. sourcecode:: python
+.. code-block:: python
 
-  feature = {
-      "geometry": {"type": "Point", "coordinates": (-1, 1)},
-      "properties": OrderedDict([("foo", "bar")]),
-  }
-
-  with fiona.open(
-      "/tmp/file.shp",
-      "w",
-      driver="ESRI Shapefile",
-      schema={"geometry": "3D Point", "properties": schema_props},
-  ) as collection:
-      collection.write(feature)
-
-  with fiona.open("/tmp/file.shp") as collection:
-      print(next(collection)["geometry"])
-
-  # {"type": "Point", "coordinates": (-1.0, 1.0, 0.0)}
+	>>> feat = {"geometry": {"type": "Point", "coordinates": (-1, 1)}}
+	>>> with fiona.open(
+	...     "example.shp",
+	...     "w",
+	...     driver="Shapefile",
+	...     schema={"geometry": "3D Point", "properties": {}}
+	... ) as dst:
+	...     dst.write(feat)
+	...
+	>>> with fiona.open("example.shp") as src:
+	...     print(src[0].geometry.coordinates)
+	...
+	(-1.0, 1.0, 0.0)
 
 Advanced Topics
 ===============
