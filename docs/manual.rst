@@ -548,7 +548,7 @@ Closing the collection does not affect the record at all.
    :py:class:`fiona.model.ObjectEncoder`.
 
 Feature Id
----------
+----------
 
 A feature has an ``id`` attribute. As in the GeoJSON specification, its
 corresponding value is a string unique within the data file.
@@ -566,7 +566,7 @@ corresponding value is a string unique within the data file.
    are therefore usually string representations of integer record indexes.
 
 Feature Properties
------------------
+------------------
 
 A feature has a ``properties`` attribute. Its value is a mapping.  The keys of
 the properties mapping are the same as the keys of the properties mapping in
@@ -589,7 +589,7 @@ the schema of the collection the record comes from (see above).
     STATE UT
 
 Feature Geometry
----------------
+----------------
 
 A feature has a ``geometry`` attribute. Its value is a mapping with ``type``
 and ``coordinates`` keys.
