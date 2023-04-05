@@ -1003,6 +1003,7 @@ To see debugging information from GDAL/OGR, for example, you may do the followin
 The following extra messages will appear in the Python logger's output.
 
 .. code-block::
+
     DEBUG:fiona._env:CPLE_None in GNM: GNMRegisterAllInternal
     DEBUG:fiona._env:CPLE_None in GNM: RegisterGNMFile
     DEBUG:fiona._env:CPLE_None in GNM: RegisterGNMdatabase
