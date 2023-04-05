@@ -396,10 +396,12 @@ def remove(path_or_collection, driver=None, layer=None):
 
 def listdir(path):
     """List files in a directory
+    
     Parameters
     ----------
     path : URI (str or pathlib.Path)
         A dataset resource identifier.
+        
     Returns
     -------
     list

@@ -147,6 +147,7 @@ class Session:
     @staticmethod
     def aws_or_dummy(*args, **kwargs):
         """Create an AWSSession if boto3 is available, else DummySession
+        
         Parameters
         ----------
         path : str
@@ -155,6 +156,7 @@ class Session:
             Positional arguments for the foreign session constructor.
         kwargs : dict
             Keyword arguments for the foreign session constructor.
+            
         Returns
         -------
         Session
@@ -167,6 +169,7 @@ class Session:
     @staticmethod
     def from_environ(*args, **kwargs):
         """Create a session object suited to the environment.
+        
         Parameters
         ----------
         path : str
@@ -175,6 +178,7 @@ class Session:
             Positional arguments for the foreign session constructor.
         kwargs : dict
             Keyword arguments for the foreign session constructor.
+            
         Returns
         -------
         Session
