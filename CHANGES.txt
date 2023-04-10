@@ -3,9 +3,11 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.9.3 (TBD)
------------
+1.9.3 (2023-04-10)
+------------------
 
+- Rasterio CRS objects are compatible with the Collection constructor and are
+  now accepted (#1248).
 - Enable append mode for fio-load (#1237).
 - Reading a GeoJSON with an empty array property can result in a segmentation
   fault since version 1.9.0. This has been fixed (#1228).
