@@ -94,8 +94,17 @@ class Collection:
             raise TypeError("invalid driver: %r" % driver)
         if schema and not hasattr(schema, "get"):
             raise TypeError("invalid schema: %r" % schema)
-        if crs and not isinstance(crs, compat.DICT_TYPES + (str, CRS)):
+
+        # Rasterio's CRS is compatible with Fiona. This class
+        # constructor only requires that the crs value have a to_wkt()
+        # method.
+        if (
+            crs
+            and not isinstance(crs, compat.DICT_TYPES + (str, CRS))
+            and not (hasattr(crs, "to_wkt") and callable(crs.to_wkt))
+        ):
             raise TypeError("invalid crs: %r" % crs)
+
         if crs_wkt and not isinstance(crs_wkt, str):
             raise TypeError("invalid crs_wkt: %r" % crs_wkt)
         if encoding and not isinstance(encoding, str):
