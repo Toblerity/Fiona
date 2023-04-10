@@ -30,9 +30,22 @@ from fiona.transform import transform_geom
     "zero-based numbering when accessed by index.",
 )
 @options.creation_opt
+@options.open_opt
+@click.option("--append", is_flag=True, help="Open destination layer in append mode.")
 @click.pass_context
 @with_context_env
-def load(ctx, output, driver, src_crs, dst_crs, features, layer, creation_options):
+def load(
+    ctx,
+    output,
+    driver,
+    src_crs,
+    dst_crs,
+    features,
+    layer,
+    creation_options,
+    open_options,
+    append,
+):
     """Load features from JSON to a file in another format.
 
     The input is a GeoJSON feature collection or optionally a sequence of
@@ -81,14 +94,19 @@ def load(ctx, output, driver, src_crs, dst_crs, features, layer, creation_option
             for k, v in first.properties.items()
     }
 
-    with fiona.open(
-        output,
-        "w",
-        driver=driver,
-        crs=dst_crs,
-        schema=schema,
-        layer=layer,
-        **creation_options
-    ) as dst:
+    if append:
+        opener = fiona.open(output, "a", layer=layer, **open_options)
+    else:
+        opener = fiona.open(
+            output,
+            "w",
+            driver=driver,
+            crs=dst_crs,
+            schema=schema,
+            layer=layer,
+            **creation_options
+        )
+
+    with opener as dst:
         dst.write(first)
         dst.writerecords(source)

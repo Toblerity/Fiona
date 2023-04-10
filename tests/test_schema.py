@@ -431,7 +431,7 @@ def test_schema_string_list(tmp_path):
                     "properties": {
                         "time_range": '["2020-01-01", "2020-01-02"]',
                     },
-                }
+                },
             ]
         )
 
