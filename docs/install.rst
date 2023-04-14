@@ -44,10 +44,11 @@ Without pip:
 
     GDAL_CONFIG=/path/to/gdal-config python setup.py install
 
-With pip:
+With pip (version >= 22.3 is required):
 
 .. code-block:: console
 
+    python -m pip install --user -U pip
     GDAL_CONFIG=/path/to/gdal-config python -m pip install --user .
 
 These are pretty much equivalent. Pip will use setuptools as the build backend.
