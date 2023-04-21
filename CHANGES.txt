@@ -3,6 +3,12 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.9.4 (June 2023)
+-----------------
+
+- The munch package used by fio-filter and fio-calc is now vendored and patched
+  to remove usage of the deprecated pkg_resources module (#1255).
+
 1.9.3 (2023-04-10)
 ------------------
 
