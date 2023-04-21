@@ -81,4 +81,4 @@ jobs:
         run: |
           export PATH="${GDAL_DIR}/bin/:${PATH}"
           . testenv/bin/activate
-          python -We -m pytest -v -m "not wheel or gdal" -rxXs --cov fiona --cov-report term-missing
+          python -m pytest -v -m "not wheel or gdal" -rxXs --cov fiona --cov-report term-missing

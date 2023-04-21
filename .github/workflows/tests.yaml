@@ -78,7 +78,7 @@ jobs:
       - name: run tests
         run: |
           . testenv/bin/activate
-          python -We -m pytest -v -m "not wheel or gdal" -rxXs --cov fiona --cov-report term-missing
+          python -m pytest -v -m "not wheel or gdal" -rxXs --cov fiona --cov-report term-missing
 
   conda_test:
     name: Conda | ${{ matrix.os }} | python=${{ matrix.python-version }}
@@ -121,13 +121,13 @@ jobs:
         shell: bash
         run: |
           source activate test
-          python -We -m pytest -v -m "not wheel" -rxXs --cov fiona --cov-report term-missing
+          python -m pytest -v -m "not wheel" -rxXs --cov fiona --cov-report term-missing
 
       - name: Test with Coverage (OSX)
         if: matrix.os == 'macos-latest'
         shell: bash
         run: |
           source activate test
-          python -We -m pytest -v -m "not wheel" -rxXs  --cov fiona --cov-report term-missing
+          python -m pytest -v -m "not wheel" -rxXs  --cov fiona --cov-report term-missing
 
       - uses: codecov/codecov-action@v3
