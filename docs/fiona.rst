@@ -140,8 +140,8 @@ fiona.vfs module
     :show-inheritance:
 
 
-Module contents
----------------
+fiona module
+------------
 
 .. automodule:: fiona
     :members:

@@ -366,19 +366,31 @@ def open(
 collection = open
 
 
+@ensure_env_with_credentials
 def remove(path_or_collection, driver=None, layer=None):
-    """Deletes an OGR data source
+    """Delete an OGR data source or one of its layers.
 
-    The required ``path`` argument may be an absolute or relative file path.
-    Alternatively, a Collection can be passed instead in which case the path
-    and driver are automatically determined. Otherwise the ``driver`` argument
-    must be specified.
+    If no layer is specified, the entire dataset and all of its layers
+    and associated sidecar files will be deleted.
 
-    Raises a ``RuntimeError`` if the data source cannot be deleted.
+    Parameters
+    ----------
+    path_or_collection : str, pathlib.Path, or Collection
+        The target Collection or its path.
+    driver : str, optional
+        The name of a driver to be used for deletion, optional. Can
+        usually be detected.
+    layer : str or int, optional
+        The name or index of a specific layer.
 
-    Example usage:
+    Returns
+    -------
+    None
 
-      fiona.remove('test.shp', 'ESRI Shapefile')
+    Raises
+    ------
+    DatasetDeleteError
+        If the data source cannot be deleted.
 
     """
     if isinstance(path_or_collection, Collection):
@@ -386,6 +398,8 @@ def remove(path_or_collection, driver=None, layer=None):
         path = collection.path
         driver = collection.driver
         collection.close()
+    elif isinstance(path_or_collection, Path):
+        fp = str(fp)
     else:
         path = path_or_collection
     if layer is None:
@@ -394,16 +408,20 @@ def remove(path_or_collection, driver=None, layer=None):
         _remove_layer(path, layer, driver)
 
 
+@ensure_env_with_credentials
 def listdir(path):
-    """List files in a directory
+    """List collections in a directory.
+
     Parameters
     ----------
-    path : URI (str or pathlib.Path)
-        A dataset resource identifier.
+    path : str or pathlib.Path
+        A directory path or path to a group of collections.
+
     Returns
     -------
-    list
-        A list of filename strings.
+    list of str
+        A list of collection paths.
+
     """
     if isinstance(path, Path):
         path = str(path)
@@ -415,7 +433,7 @@ def listdir(path):
 
 @ensure_env_with_credentials
 def listlayers(fp, vfs=None, **kwargs):
-    """List layer names in their index order
+    """List layer names in their index order.
 
     Parameters
     ----------
@@ -446,7 +464,12 @@ def listlayers(fp, vfs=None, **kwargs):
             raise TypeError("invalid vfs: %r" % vfs)
 
         if vfs:
-            warnings.warn("The vfs keyword argument is deprecated. Instead, pass a URL that uses a zip or tar (for example) scheme.", FionaDeprecationWarning, stacklevel=2)
+            warnings.warn(
+                "The vfs keyword argument is deprecated and will be removed in 2.0. "
+                "Instead, pass a URL that uses a zip or tar (for example) scheme.",
+                FionaDeprecationWarning,
+                stacklevel=2,
+            )
             pobj_vfs = parse_path(vfs)
             pobj_path = parse_path(fp)
             pobj = ParsedPath(pobj_path.path, pobj_vfs.path, pobj_vfs.scheme)
@@ -459,12 +482,24 @@ def listlayers(fp, vfs=None, **kwargs):
 def prop_width(val):
     """Returns the width of a str type property.
 
-    Undefined for non-str properties. Example:
+    Undefined for non-str properties.
 
-      >>> prop_width('str:25')
-      25
-      >>> prop_width('str')
-      80
+    Parameters
+    ----------
+    val : str
+        A type:width string from a collection schema.
+
+    Returns
+    -------
+    int or None
+
+    Examples
+    --------
+    >>> prop_width('str:25')
+    25
+    >>> prop_width('str')
+    80
+
     """
     if val.startswith('str'):
         return int((val.split(":")[1:] or ["80"])[0])
@@ -474,12 +509,23 @@ def prop_width(val):
 def prop_type(text):
     """Returns a schema property's proper Python type.
 
-    Example:
+    Parameters
+    ----------
+    text : str
+        A type name, with or without width.
 
-      >>> prop_type('int')
-      <class 'int'>
-      >>> prop_type('str:25')
-      <class 'str'>
+    Returns
+    -------
+    obj
+        A Python class.
+
+    Examples
+    --------
+    >>> prop_type('int')
+    <class 'int'>
+    >>> prop_type('str:25')
+    <class 'str'>
+
     """
     key = text.split(':')[0]
     return FIELD_TYPES_MAP[key]
