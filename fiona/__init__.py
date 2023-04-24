@@ -23,14 +23,9 @@ features. One opened in a writing mode provides a ``write`` method.
 import glob
 import logging
 import os
-import warnings
+from pathlib import Path
 import platform
-
-try:
-    from pathlib import Path
-except ImportError:  # pragma: no cover
-    class Path:
-        pass
+import warnings
 
 if platform.system() == "Windows":
     _whl_dir = os.path.join(os.path.dirname(__file__), ".libs")
@@ -84,6 +79,7 @@ __all__ = [
     "open",
     "prop_type",
     "prop_width",
+    "remove",
 ]
 
 __version__ = "1.9.4dev"
@@ -359,7 +355,7 @@ def remove(path_or_collection, driver=None, layer=None):
         driver = collection.driver
         collection.close()
     elif isinstance(path_or_collection, Path):
-        fp = str(fp)
+        path = str(path_or_collection)
     else:
         path = path_or_collection
     if layer is None:
