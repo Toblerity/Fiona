@@ -1,0 +1,16 @@
+from logging import (
+    LogRecord,
+    RootLogger,
+)
+from typing import Union
+
+
+class FieldSkipLogFilter:
+    def __init__(self, name: str = ...) -> None: ...
+    def filter(self, record: LogRecord) -> Union[int, bool]: ...
+
+
+class LogFiltering:
+    def __enter__(self) -> None: ...
+    def __exit__(self, *args, **kwargs) -> None: ...
+    def __init__(self, logger: RootLogger, filter: FieldSkipLogFilter) -> None: ...
