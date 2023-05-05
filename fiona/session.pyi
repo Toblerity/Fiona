@@ -1,4 +1,4 @@
-from boto3.session import Session
+import boto3
 from typing import (
     Any,
     Dict,
@@ -11,7 +11,7 @@ from typing import (
 class AWSSession:
     def __init__(
         self,
-        session: Optional[Session] = ...,
+        session: Optional[boto3.Session] = ...,
         aws_unsigned: bool = ...,
         aws_access_key_id: Optional[str] = ...,
         aws_secret_access_key: Optional[str] = ...,
@@ -78,7 +78,7 @@ class Session:
     ) -> Union[Type[OSSSession], Type[DummySession], Type[AWSSession], Type[AzureSession]]: ...
     @staticmethod
     def from_foreign_session(
-        session: Optional[Session],
+        session: Optional[boto3.Session],
         cls: Optional[Type[AWSSession]] = ...
     ) -> Union[AWSSession, DummySession]: ...
     @staticmethod
@@ -87,9 +87,9 @@ class Session:
         *args,
         **kwargs
     ) -> Union[AWSSession, AzureSession, OSSSession, DummySession]: ...
-    def get_credential_options(self) -> NotImplementedType: ...
+    def get_credential_options(self) -> Dict[str, str]: ...
     @classmethod
-    def hascreds(cls, config: Dict[Any, Any]) -> NotImplementedType: ...
+    def hascreds(cls, config: Dict[str, Union[bool, str]]) -> bool: ...
 
 
 class SwiftSession:
