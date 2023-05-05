@@ -85,5 +85,5 @@ version = {attr = "fiona.__version__"}
 readme = {file = ["README.rst", "CHANGES.txt", "CREDITS.txt"]}
 
 [[tool.mypy.overrides]]
-module = ["boto3", "boto3.session", "cligj"]
+module = ["boto3", "boto3.session", "cligj", "IPython"]
 ignore_missing_imports = true
