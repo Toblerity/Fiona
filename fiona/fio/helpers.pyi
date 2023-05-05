@@ -8,6 +8,7 @@ from typing import (
     Tuple,
     Union,
 )
+from fiona.model import Geometry
 
 
 def eval_feature_expression(
@@ -20,3 +21,7 @@ def make_ld_context(context_items: Tuple[str]) -> Dict[str, Union[Dict[str, Unio
 
 
 def obj_gen(lines: _NamedTextIOWrapper, object_hook: None = ...) -> Iterator[Any]: ...
+
+
+RecRoundObj = Union[Geometry, int, float, List[Union[Geometry, int, float]]]
+def recursive_round(obj: RecRoundObj, precision: float) -> RecRoundObj: ...
