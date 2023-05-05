@@ -1,0 +1,3 @@
+class WktVersion:
+    @classmethod
+    def _missing_(cls, value: str): ...
