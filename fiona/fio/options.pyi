@@ -30,5 +30,7 @@ def cb_multilayer(
 def validate_multilayer_file_index(files: Tuple[str], layerdict: DefaultDict[str, List[str]]) -> None: ...
 
 
+src_crs_opt: Callable[[FC], FC]
+dst_crs_opt: Callable[[FC], FC]
 creation_opt: Callable[[FC], FC]
 open_opt: Callable[[FC], FC]
