@@ -83,3 +83,7 @@ packages = ["fiona", "fiona.fio"]
 [tool.setuptools.dynamic]
 version = {attr = "fiona.__version__"}
 readme = {file = ["README.rst", "CHANGES.txt", "CREDITS.txt"]}
+
+[[tool.mypy.overrides]]
+module = ["boto3.session", "cligj"]
+ignore_missing_imports = true
