@@ -5,6 +5,9 @@ from typing import (
 )
 
 
+class FionaDateType(str):...
+
+
 def parse_date(text: str) -> Tuple[int, int, int, int, int, int, int, None]: ...
 
 
