@@ -368,26 +368,29 @@ def remove(path_or_collection, driver=None, layer=None):
 def listdir(fp):
     """Lists the datasets in a directory or archive file.
 
+    Archive files must be prefixed like "zip://" or "tar://".
+
     Parameters
     ----------
-    fp : str, pathlib.Path, or file-like object
-        Directory or archive path, or a file object holding an archive.
+    fp : str or pathlib.Path
+        Directory or archive path.
 
     Returns
     -------
     list of str
         A list of datasets.
 
-    """
-    if hasattr(fp, 'read'):
-        with MemoryFile(fp.read()) as memfile:
-            return _listdir(memfile.name, **kwargs)
-    else:
-        if isinstance(fp, Path):
-            fp = str(fp)
+    Raises
+    ------
+    TypeError
+        If the input is not a str or Path.
 
-        if not isinstance(fp, str):
-            raise TypeError("invalid path: %r" % fp)
+    """
+    if isinstance(fp, Path):
+        fp = str(fp)
+
+    if not isinstance(fp, str):
+        raise TypeError("invalid path: %r" % fp)
 
     pobj = parse_path(fp)
     return _listdir(vsi_path(pobj))
@@ -396,6 +399,8 @@ def listdir(fp):
 @ensure_env_with_credentials
 def listlayers(fp, vfs=None, **kwargs):
     """Lists the layers (collections) in a dataset.
+
+    Archive files must be prefixed like "zip://" or "tar://".
 
     Parameters
     ----------
@@ -411,6 +416,11 @@ def listlayers(fp, vfs=None, **kwargs):
     -------
     list of str
         A list of layer name strings.
+
+    Raises
+    ------
+    TypeError
+        If the input is not a str, Path, or file object.
 
     """
     if hasattr(fp, 'read'):
