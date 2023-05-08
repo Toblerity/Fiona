@@ -365,36 +365,42 @@ def remove(path_or_collection, driver=None, layer=None):
 
 
 @ensure_env_with_credentials
-def listdir(path):
-    """List collections in a directory.
+def listdir(fp):
+    """Lists the datasets in a directory or archive file.
 
     Parameters
     ----------
-    path : str or pathlib.Path
-        A directory path or path to a group of collections.
+    fp : str, pathlib.Path, or file-like object
+        Directory or archive path, or a file object holding an archive.
 
     Returns
     -------
     list of str
-        A list of collection paths.
+        A list of datasets.
 
     """
-    if isinstance(path, Path):
-        path = str(path)
-    if not isinstance(path, str):
-        raise TypeError("invalid path: %r" % path)
-    pobj = parse_path(path)
+    if hasattr(fp, 'read'):
+        with MemoryFile(fp.read()) as memfile:
+            return _listdir(memfile.name, **kwargs)
+    else:
+        if isinstance(fp, Path):
+            fp = str(fp)
+
+        if not isinstance(fp, str):
+            raise TypeError("invalid path: %r" % fp)
+
+    pobj = parse_path(fp)
     return _listdir(vsi_path(pobj))
 
 
 @ensure_env_with_credentials
 def listlayers(fp, vfs=None, **kwargs):
-    """List layer names in their index order.
+    """Lists the layers (collections) in a dataset.
 
     Parameters
     ----------
-    fp : URI (str or pathlib.Path), or file-like object
-        A dataset resource identifier or file object.
+    fp : str, pathlib.Path, or file-like object
+        A dataset identifier or file object containing a dataset.
     vfs : str
         This is a deprecated parameter. A URI scheme such as "zip://"
         should be used instead.
@@ -403,7 +409,7 @@ def listlayers(fp, vfs=None, **kwargs):
 
     Returns
     -------
-    list
+    list of str
         A list of layer name strings.
 
     """
