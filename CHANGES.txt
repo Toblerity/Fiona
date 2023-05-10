@@ -6,6 +6,9 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.9.4 (June 2023)
 -----------------
 
+- The Parquet driver has been added to the list of supported drivers and will
+  be available if your system's GDAL library links libarrow. Note that fiona
+  wheels on PyPI do not include libarrow as it is rather large.
 - Ensure that fiona._vendor modules are found and included.
 - Docstrings for listdir and listlayers have been clarified and harmonized.
 - Nose style test cases have been converted to unittest.TestCase (#1256).
