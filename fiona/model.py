@@ -194,7 +194,11 @@ class Geometry(Object):
 
     @classmethod
     def from_dict(cls, ob=None, **kwargs):
-        data = dict(getattr(ob, "__geo_interface__", ob) or {}, **kwargs)
+        if ob is not None:
+            data = dict(getattr(ob, "__geo_interface__", ob))
+            data.update(kwargs)
+        else:
+            data = kwargs
 
         if "geometries" in data and data["type"] == "GeometryCollection":
             _ = data.pop("coordinates", None)
@@ -202,7 +206,7 @@ class Geometry(Object):
             return Geometry(
                 type="GeometryCollection",
                 geometries=[
-                    Geometry.from_dict(**part) for part in data.pop("geometries")
+                    Geometry.from_dict(part) for part in data.pop("geometries")
                 ],
                 **data
             )
@@ -371,6 +375,7 @@ class ObjectEncoder(JSONEncoder):
     def default(self, o):
         if isinstance(o, (Geometry, Properties)):
             return {k: v for k, v in o.items() if v is not None}
+            return 
         elif isinstance(o, Feature):
             o_dict = dict(**o)
             o_dict["type"] = "Feature"
