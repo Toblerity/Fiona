@@ -129,14 +129,13 @@ cdef class GeomBuilder:
         parts = []
         j = 0
         count = OGR_G_GetGeometryCount(geom)
+        SKIP_TYPES = {OGRGeometryType.PolyhedralSurface.value,
+                OGRGeometryType.TIN.value,
+                OGRGeometryType.Triangle.value}
         while j < count:
             part = OGR_G_GetGeometryRef(geom, j)
             code = base_geometry_type_code(OGR_G_GetGeometryType(part))
-            if code in (
-                OGRGeometryType.PolyhedralSurface.value,
-                OGRGeometryType.TIN.value,
-                OGRGeometryType.Triangle.value,
-            ):
+            if code in SKIP_TYPES:
                 OGR_G_RemoveGeometry(geom, j, False)
                 # Removing a geometry will cause the geometry count to drop by one,
                 # and all “higher” geometries will shuffle down one in index.
