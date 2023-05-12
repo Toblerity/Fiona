@@ -380,7 +380,6 @@ class ObjectEncoder(JSONEncoder):
     def default(self, o):
         if isinstance(o, (Geometry, Properties)):
             return {k: v for k, v in o.items() if v is not None}
-            return 
         elif isinstance(o, Feature):
             o_dict = dict(**o)
             o_dict["type"] = "Feature"
