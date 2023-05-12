@@ -22,6 +22,16 @@ log.addHandler(NullHandler())
 # mapping of GeoJSON type names to OGR integer geometry types
 GEOJSON2OGR_GEOMETRY_TYPES = dict((v, k) for k, v in GEOMETRY_TYPES.iteritems())
 
+cdef set LINEAR_GEOM_TYPES = {
+    OGRGeometryType.CircularString.value,
+    OGRGeometryType.CompoundCurve.value,
+    OGRGeometryType.CurvePolygon.value,
+    OGRGeometryType.MultiCurve.value,
+    OGRGeometryType.MultiSurface.value,
+    # OGRGeometryType.Curve.value,  # Abstract type
+    # OGRGeometryType.Surface.value,  # Abstract type
+}
+
 cdef set PS_TIN_Tri_TYPES = {
     OGRGeometryType.PolyhedralSurface.value,
     OGRGeometryType.TIN.value,
@@ -197,15 +207,7 @@ cdef class GeomBuilder:
 
         # We convert special geometries (Curves, TIN, Triangle, ...)
         # to GeoJSON compatible geometries (LineStrings, Polygons, MultiPolygon, ...)
-        if code in (
-            OGRGeometryType.CircularString.value,
-            OGRGeometryType.CompoundCurve.value,
-            OGRGeometryType.CurvePolygon.value,
-            OGRGeometryType.MultiCurve.value,
-            OGRGeometryType.MultiSurface.value,
-            # OGRGeometryType.Curve.value,  # Abstract type
-            # OGRGeometryType.Surface.value,  # Abstract type
-        ):
+        if code in LINEAR_GEOM_TYPES:
             geometry_to_dealloc = OGR_G_GetLinearGeometry(geom, 0.0, NULL)
             code = base_geometry_type_code(OGR_G_GetGeometryType(geometry_to_dealloc))
             geom = geometry_to_dealloc
