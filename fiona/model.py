@@ -84,7 +84,7 @@ class OGRGeometryType(Enum):
 
 
 # Mapping of OGR integer geometry types to GeoJSON type names.
-GEOMETRY_TYPES = {
+_GEO_TYPES = {
     OGRGeometryType.Unknown.value: "Unknown",
     OGRGeometryType.Point.value: "Point",
     OGRGeometryType.LineString.value: "LineString",
@@ -92,7 +92,11 @@ GEOMETRY_TYPES = {
     OGRGeometryType.MultiPoint.value: "MultiPoint",
     OGRGeometryType.MultiLineString.value: "MultiLineString",
     OGRGeometryType.MultiPolygon.value: "MultiPolygon",
-    OGRGeometryType.GeometryCollection.value: "GeometryCollection",
+    OGRGeometryType.GeometryCollection.value: "GeometryCollection"
+}
+
+GEOMETRY_TYPES = {
+    **_GEO_TYPES,
     OGRGeometryType.NONE.value: "None",
     OGRGeometryType.LinearRing.value: "LinearRing",
     OGRGeometryType.Point25D.value: "3D Point",
@@ -410,9 +414,10 @@ def decode_object(obj):
     else:
         obj = obj.get("__geo_interface__", obj)
 
-        if (obj.get("type", None) == "Feature") or "geometry" in obj:
+        _type = obj.get("type", None)
+        if (_type == "Feature") or "geometry" in obj:
             return Feature.from_dict(obj)
-        elif obj.get("type", None) in list(GEOMETRY_TYPES.values())[:8]:
+        elif _type in _GEO_TYPES.values():
             return Geometry.from_dict(obj)
         else:
             return obj
