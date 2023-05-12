@@ -381,7 +381,7 @@ class ObjectEncoder(JSONEncoder):
         if isinstance(o, (Geometry, Properties)):
             return {k: v for k, v in o.items() if v is not None}
         elif isinstance(o, Feature):
-            o_dict = dict(**o)
+            o_dict = dict(o)
             o_dict["type"] = "Feature"
             if o.geometry is not None:
                 o_dict["geometry"] = ObjectEncoder().default(o.geometry)
@@ -411,9 +411,9 @@ def decode_object(obj):
         obj = obj.get("__geo_interface__", obj)
 
         if (obj.get("type", None) == "Feature") or "geometry" in obj:
-            return Feature.from_dict(**obj)
+            return Feature.from_dict(obj)
         elif obj.get("type", None) in list(GEOMETRY_TYPES.values())[:8]:
-            return Geometry.from_dict(**obj)
+            return Geometry.from_dict(obj)
         else:
             return obj
 
