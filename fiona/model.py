@@ -283,13 +283,17 @@ class Feature(Object):
 
     @classmethod
     def from_dict(cls, ob=None, **kwargs):
-        data = dict(getattr(ob, "__geo_interface__", ob) or {}, **kwargs)
+        if ob is not None:
+            data = dict(getattr(ob, "__geo_interface__", ob))
+            data.update(kwargs)
+        else:
+            data = kwargs
         geom_data = data.pop("geometry", None)
 
         if isinstance(geom_data, Geometry):
             geom = geom_data
         else:
-            geom = Geometry.from_dict(**geom_data) if geom_data is not None else None
+            geom = Geometry.from_dict(geom_data) if geom_data is not None else None
 
         props_data = data.pop("properties", None)
 
