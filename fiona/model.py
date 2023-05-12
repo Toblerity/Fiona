@@ -365,8 +365,9 @@ class Properties(Object):
 
     @classmethod
     def from_dict(cls, mapping=None, **kwargs):
-        data = dict(mapping or {}, **kwargs)
-        return Properties(**data)
+        if mapping:
+            return Properties(**mapping, **kwargs)
+        return Properties(**kwargs)
 
 
 class ObjectEncoder(JSONEncoder):
