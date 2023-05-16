@@ -1,6 +1,6 @@
 """Fiona data model"""
 
-from base64 import b64encode
+from binascii import hexlify
 from collections.abc import MutableMapping
 from collections import OrderedDict
 from enum import Enum
@@ -382,7 +382,7 @@ class ObjectEncoder(JSONEncoder):
                 o_dict["properties"] = self.default(o.properties)
             return o_dict
         elif isinstance(o, bytes):
-            return b64encode(o)
+            return hexlify(o)
         else:
             return o
 

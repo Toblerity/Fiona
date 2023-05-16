@@ -255,7 +255,7 @@ def test_feature_encode():
     assert o_dict["id"] == "foo"
     assert o_dict["geometry"]["type"] == "Point"
     assert o_dict["geometry"]["coordinates"] == (0, 0)
-    assert o_dict["properties"]["bytes"] == b"MDEyMzQ="
+    assert o_dict["properties"]["bytes"] == b'3031323334'
 
 
 def test_decode_object_hook():
@@ -312,5 +312,5 @@ def test_feature_gi():
 
 def test_encode_bytes():
     """Bytes are encoded using base64."""
-    assert ObjectEncoder().default(b"01234") == b"MDEyMzQ="
+    assert ObjectEncoder().default(b"01234") == b'3031323334'
 
