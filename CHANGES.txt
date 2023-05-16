@@ -12,6 +12,8 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
   be available if your system's GDAL library links libarrow. Note that fiona
   wheels on PyPI do not include libarrow as it is rather large.
 - Ensure that fiona._vendor modules are found and included.
+- Bytes type feature properties are now hex encoded when serializing to GeoJSON
+  (#1263).
 - Docstrings for listdir and listlayers have been clarified and harmonized.
 - Nose style test cases have been converted to unittest.TestCase (#1256).
 - The munch package used by fio-filter and fio-calc is now vendored and patched

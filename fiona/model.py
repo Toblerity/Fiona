@@ -1,9 +1,10 @@
 """Fiona data model"""
 
-import itertools
-from collections import OrderedDict
+from binascii import hexlify
 from collections.abc import MutableMapping
+from collections import OrderedDict
 from enum import Enum
+import itertools
 from json import JSONEncoder
 from warnings import warn
 
@@ -367,21 +368,23 @@ class Properties(Object):
 
 
 class ObjectEncoder(JSONEncoder):
-    """Encodes Geometry and Feature"""
+    """Encodes Geometry, Feature, and Properties."""
 
     def default(self, o):
         if isinstance(o, (Geometry, Properties)):
-            return {k: v for k, v in o.items() if v is not None}
+            return {k: self.default(v) for k, v in o.items() if v is not None}
         elif isinstance(o, Feature):
             o_dict = dict(**o)
             o_dict["type"] = "Feature"
             if o.geometry is not None:
-                o_dict["geometry"] = ObjectEncoder().default(o.geometry)
+                o_dict["geometry"] = self.default(o.geometry)
             if o.properties is not None:
-                o_dict["properties"] = ObjectEncoder().default(o.properties)
+                o_dict["properties"] = self.default(o.properties)
             return o_dict
+        elif isinstance(o, bytes):
+            return hexlify(o)
         else:
-            return JSONEncoder().default(o)
+            return o
 
 
 def decode_object(obj):
