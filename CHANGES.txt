@@ -6,6 +6,12 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.9.4 (June 2023)
 -----------------
 
+- Several sources of meaningless log messages from fiona._geometry about NULL
+  geometries are avoided (#1264).
+- The Parquet driver has been added to the list of supported drivers and will
+  be available if your system's GDAL library links libarrow. Note that fiona
+  wheels on PyPI do not include libarrow as it is rather large.
+- Ensure that fiona._vendor modules are found and included.
 - Bytes type feature properties are now hex encoded when serializing to GeoJSON
   (#1263).
 - Docstrings for listdir and listlayers have been clarified and harmonized.

@@ -1,8 +1,11 @@
+# Fiona build script.
+
 import logging
 import os
 import shutil
 import subprocess
 import sys
+
 from setuptools import setup
 from setuptools.extension import Extension
 
@@ -20,6 +23,7 @@ except ImportError:
 
 def check_output(cmd):
     return subprocess.check_output(cmd).decode('utf')
+
 
 def copy_data_tree(datadir, destdir):
     try:
