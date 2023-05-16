@@ -8,6 +8,8 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 - Bytes type feature properties are now encoded using base64 when serializing
   to GeoJSON (#1263).
+- Several sources of meaningless log messages from fiona._geometry about NULL
+  geometries are avoided (#1264).
 - The Parquet driver has been added to the list of supported drivers and will
   be available if your system's GDAL library links libarrow. Note that fiona
   wheels on PyPI do not include libarrow as it is rather large.
