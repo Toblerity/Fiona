@@ -20,7 +20,7 @@ log.addHandler(NullHandler())
 
 
 # mapping of GeoJSON type names to OGR integer geometry types
-GEOJSON2OGR_GEOMETRY_TYPES = dict((v, k) for k, v in GEOMETRY_TYPES.iteritems())
+GEOJSON2OGR_GEOMETRY_TYPES = dict((v, k) for k, v in GEOMETRY_TYPES.items())
 
 cdef set LINEAR_GEOM_TYPES = {
     OGRGeometryType.CircularString.value,
