@@ -256,7 +256,7 @@ cdef class GeomBuilder:
         if geometry_to_dealloc is not NULL:
            OGR_G_DestroyGeometry(geometry_to_dealloc)
 
-        return Geometry.from_dict(**built)
+        return Geometry.from_dict(built)
 
     cpdef build_wkb(self, object wkb):
         # Build geometry from wkb
