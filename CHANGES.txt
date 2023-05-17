@@ -3,9 +3,10 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.9.4 (June 2023)
------------------
+1.9.4 (2023-05-16)
+------------------
 
+- The performance of Feature.from_dict() has been improved (#1267).
 - Several sources of meaningless log messages from fiona._geometry about NULL
   geometries are avoided (#1264).
 - The Parquet driver has been added to the list of supported drivers and will
