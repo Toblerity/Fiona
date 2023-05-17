@@ -243,25 +243,19 @@ def test_geometry_encode():
     }
 
 
-@pytest.mark.parametrize("value", [100, "foo"])
-def test_encode_error(value):
-    """Raises TypeError"""
-    with pytest.raises(TypeError):
-        ObjectEncoder().default(value)
-
-
 def test_feature_encode():
     """Can encode a feature"""
     o_dict = ObjectEncoder().default(
         Feature(
             id="foo",
             geometry=Geometry(type="Point", coordinates=(0, 0)),
-            properties=Properties(a=1, foo="bar"),
+            properties=Properties(a=1, foo="bar", bytes=b"01234"),
         )
     )
     assert o_dict["id"] == "foo"
     assert o_dict["geometry"]["type"] == "Point"
     assert o_dict["geometry"]["coordinates"] == (0, 0)
+    assert o_dict["properties"]["bytes"] == b'3031323334'
 
 
 def test_decode_object_hook():
@@ -314,3 +308,9 @@ def test_feature_gi():
     assert gi["id"] == "foo"
     assert gi["geometry"]["type"] == "Point"
     assert gi["geometry"]["coordinates"] == (0, 0)
+
+
+def test_encode_bytes():
+    """Bytes are encoded using base64."""
+    assert ObjectEncoder().default(b"01234") == b'3031323334'
+

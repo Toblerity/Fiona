@@ -7,9 +7,8 @@ import json
 import math
 import warnings
 
-from munch import munchify
-
 from fiona.model import Geometry, to_dict
+from fiona._vendor.munch import munchify
 
 
 warnings.simplefilter("default")

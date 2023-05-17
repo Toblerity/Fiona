@@ -6,71 +6,26 @@ source GIS community's most trusted geodata access library and
 integrates readily with other Python GIS packages such as pyproj, Rtree
 and Shapely.
 
-How minimal? Fiona can read features as mappings from shapefiles or
-other GIS vector formats and write mappings as features to files using
-the same formats. That's all. There aren't any feature or geometry
-classes. Features and their geometries are just data.
-
 A Fiona feature is a Python mapping inspired by the GeoJSON format. It
-has `id`, 'geometry`, and `properties` keys. The value of `id` is
-a string identifier unique within the feature's parent collection. The
-`geometry` is another mapping with `type` and `coordinates` keys. The
-`properties` of a feature is another mapping corresponding to its
-attribute table. For example:
+has ``id``, ``geometry``, and ``properties`` attributes. The value of
+``id`` is a string identifier unique within the feature's parent
+collection. The ``geometry`` is another mapping with ``type`` and
+``coordinates`` keys. The ``properties`` of a feature is another mapping
+corresponding to its attribute table.
 
-  {'id': '1',
-   'geometry': {'type': 'Point', 'coordinates': (0.0, 0.0)},
-   'properties': {'label': 'Null Island'} }
+Features are read and written using the ``Collection`` class.  These
+``Collection`` objects are a lot like Python ``file`` objects. A
+``Collection`` opened in reading mode serves as an iterator over
+features. One opened in a writing mode provides a ``write`` method.
 
-is a Fiona feature with a point geometry and one property.
-
-Features are read and written using objects returned by the
-``collection`` function. These ``Collection`` objects are a lot like
-Python ``file`` objects. A ``Collection`` opened in reading mode serves
-as an iterator over features. One opened in a writing mode provides
-a ``write`` method.
-
-Usage
------
-
-Here's an example of reading a select few polygon features from
-a shapefile and for each, picking off the first vertex of the exterior
-ring of the polygon and using that as the point geometry for a new
-feature writing to a "points.shp" file.
-
-  >>> import fiona
-  >>> with fiona.open('docs/data/test_uk.shp', 'r') as inp:
-  ...     output_schema = inp.schema.copy()
-  ...     output_schema['geometry'] = 'Point'
-  ...     with collection(
-  ...             "points.shp", "w",
-  ...             crs=inp.crs,
-  ...             driver="ESRI Shapefile",
-  ...             schema=output_schema
-  ...             ) as out:
-  ...         for f in inp.filter(
-  ...                 bbox=(-5.0, 55.0, 0.0, 60.0)
-  ...                 ):
-  ...             value = f['geometry']['coordinates'][0][0]
-  ...             f['geometry'] = {
-  ...                 'type': 'Point', 'coordinates': value}
-  ...             out.write(f)
-
-Because Fiona collections are context managers, they are closed and (in
-writing modes) flush contents to disk when their ``with`` blocks end.
 """
 
 import glob
 import logging
 import os
-import warnings
+from pathlib import Path
 import platform
-
-try:
-    from pathlib import Path
-except ImportError:  # pragma: no cover
-    class Path:
-        pass
+import warnings
 
 if platform.system() == "Windows":
     _whl_dir = os.path.join(os.path.dirname(__file__), ".libs")
@@ -124,6 +79,7 @@ __all__ = [
     "open",
     "prop_type",
     "prop_width",
+    "remove",
 ]
 
 __version__ = "2.0dev"
@@ -366,19 +322,31 @@ def open(
 collection = open
 
 
+@ensure_env_with_credentials
 def remove(path_or_collection, driver=None, layer=None):
-    """Deletes an OGR data source
+    """Delete an OGR data source or one of its layers.
 
-    The required ``path`` argument may be an absolute or relative file path.
-    Alternatively, a Collection can be passed instead in which case the path
-    and driver are automatically determined. Otherwise the ``driver`` argument
-    must be specified.
+    If no layer is specified, the entire dataset and all of its layers
+    and associated sidecar files will be deleted.
 
-    Raises a ``RuntimeError`` if the data source cannot be deleted.
+    Parameters
+    ----------
+    path_or_collection : str, pathlib.Path, or Collection
+        The target Collection or its path.
+    driver : str, optional
+        The name of a driver to be used for deletion, optional. Can
+        usually be detected.
+    layer : str or int, optional
+        The name or index of a specific layer.
 
-    Example usage:
+    Returns
+    -------
+    None
 
-      fiona.remove('test.shp', 'ESRI Shapefile')
+    Raises
+    ------
+    DatasetDeleteError
+        If the data source cannot be deleted.
 
     """
     if isinstance(path_or_collection, Collection):
@@ -386,6 +354,8 @@ def remove(path_or_collection, driver=None, layer=None):
         path = collection.path
         driver = collection.driver
         collection.close()
+    elif isinstance(path_or_collection, Path):
+        path = str(path_or_collection)
     else:
         path = path_or_collection
     if layer is None:
@@ -394,35 +364,48 @@ def remove(path_or_collection, driver=None, layer=None):
         _remove_layer(path, layer, driver)
 
 
-def listdir(path):
-    """List files in a directory
-    
+@ensure_env_with_credentials
+def listdir(fp):
+    """Lists the datasets in a directory or archive file.
+
+    Archive files must be prefixed like "zip://" or "tar://".
+
     Parameters
     ----------
-    path : URI (str or pathlib.Path)
-        A dataset resource identifier.
-        
+    fp : str or pathlib.Path
+        Directory or archive path.
+
     Returns
     -------
-    list
-        A list of filename strings.
+    list of str
+        A list of datasets.
+
+    Raises
+    ------
+    TypeError
+        If the input is not a str or Path.
+
     """
-    if isinstance(path, Path):
-        path = str(path)
-    if not isinstance(path, str):
-        raise TypeError(f"invalid path: {path!r}")
-    pobj = parse_path(path)
+    if isinstance(fp, Path):
+        fp = str(fp)
+
+    if not isinstance(fp, str):
+        raise TypeError("invalid path: %r" % fp)
+
+    pobj = parse_path(fp)
     return _listdir(vsi_path(pobj))
 
 
 @ensure_env_with_credentials
 def listlayers(fp, vfs=None, **kwargs):
-    """List layer names in their index order
+    """Lists the layers (collections) in a dataset.
+
+    Archive files must be prefixed like "zip://" or "tar://".
 
     Parameters
     ----------
-    fp : URI (str or pathlib.Path), or file-like object
-        A dataset resource identifier or file object.
+    fp : str, pathlib.Path, or file-like object
+        A dataset identifier or file object containing a dataset.
     vfs : str
         This is a deprecated parameter. A URI scheme such as "zip://"
         should be used instead.
@@ -431,8 +414,13 @@ def listlayers(fp, vfs=None, **kwargs):
 
     Returns
     -------
-    list
+    list of str
         A list of layer name strings.
+
+    Raises
+    ------
+    TypeError
+        If the input is not a str, Path, or file object.
 
     """
     if hasattr(fp, 'read'):
@@ -448,7 +436,12 @@ def listlayers(fp, vfs=None, **kwargs):
             raise TypeError(f"invalid vfs: {vfs!r}")
 
         if vfs:
-            warnings.warn("The vfs keyword argument is deprecated. Instead, pass a URL that uses a zip or tar (for example) scheme.", FionaDeprecationWarning, stacklevel=2)
+            warnings.warn(
+                "The vfs keyword argument is deprecated and will be removed in 2.0. "
+                "Instead, pass a URL that uses a zip or tar (for example) scheme.",
+                FionaDeprecationWarning,
+                stacklevel=2,
+            )
             pobj_vfs = parse_path(vfs)
             pobj_path = parse_path(fp)
             pobj = ParsedPath(pobj_path.path, pobj_vfs.path, pobj_vfs.scheme)
@@ -461,12 +454,24 @@ def listlayers(fp, vfs=None, **kwargs):
 def prop_width(val):
     """Returns the width of a str type property.
 
-    Undefined for non-str properties. Example:
+    Undefined for non-str properties.
 
-      >>> prop_width('str:25')
-      25
-      >>> prop_width('str')
-      80
+    Parameters
+    ----------
+    val : str
+        A type:width string from a collection schema.
+
+    Returns
+    -------
+    int or None
+
+    Examples
+    --------
+    >>> prop_width('str:25')
+    25
+    >>> prop_width('str')
+    80
+
     """
     if val.startswith('str'):
         return int((val.split(":")[1:] or ["80"])[0])
@@ -476,12 +481,23 @@ def prop_width(val):
 def prop_type(text):
     """Returns a schema property's proper Python type.
 
-    Example:
+    Parameters
+    ----------
+    text : str
+        A type name, with or without width.
 
-      >>> prop_type('int')
-      <class 'int'>
-      >>> prop_type('str:25')
-      <class 'str'>
+    Returns
+    -------
+    obj
+        A Python class.
+
+    Examples
+    --------
+    >>> prop_type('int')
+    <class 'int'>
+    >>> prop_type('str:25')
+    <class 'str'>
+
     """
     key = text.split(':')[0]
     return FIELD_TYPES_MAP[key]

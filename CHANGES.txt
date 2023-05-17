@@ -3,6 +3,23 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.9.4 (2023-05-16)
+------------------
+
+- The performance of Feature.from_dict() has been improved (#1267).
+- Several sources of meaningless log messages from fiona._geometry about NULL
+  geometries are avoided (#1264).
+- The Parquet driver has been added to the list of supported drivers and will
+  be available if your system's GDAL library links libarrow. Note that fiona
+  wheels on PyPI do not include libarrow as it is rather large.
+- Ensure that fiona._vendor modules are found and included.
+- Bytes type feature properties are now hex encoded when serializing to GeoJSON
+  (#1263).
+- Docstrings for listdir and listlayers have been clarified and harmonized.
+- Nose style test cases have been converted to unittest.TestCase (#1256).
+- The munch package used by fio-filter and fio-calc is now vendored and patched
+  to remove usage of the deprecated pkg_resources module (#1255).
+
 1.9.3 (2023-04-10)
 ------------------
 
