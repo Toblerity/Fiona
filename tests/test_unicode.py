@@ -1,8 +1,10 @@
-import logging
+"""Tests of path and field encoding."""
+
 import os
 import shutil
 import sys
 import tempfile
+import unittest
 
 import pytest
 
@@ -11,13 +13,13 @@ from fiona.errors import SchemaError
 from fiona.model import Feature
 
 
-class TestUnicodePath:
-    def setup(self):
+class TestUnicodePath(unittest.TestCase):
+    def setUp(self):
         tempdir = tempfile.mkdtemp()
         self.dir = os.path.join(tempdir, "français")
         shutil.copytree(os.path.join(os.path.dirname(__file__), "data"), self.dir)
 
-    def teardown(self):
+    def tearDown(self):
         shutil.rmtree(os.path.dirname(self.dir))
 
     def test_unicode_path(self):
@@ -38,11 +40,11 @@ class TestUnicodePath:
                 assert len(c) == 67
 
 
-class TestUnicodeStringField:
-    def setup(self):
+class TestUnicodeStringField(unittest.TestCase):
+    def setUp(self):
         self.tempdir = tempfile.mkdtemp()
 
-    def teardown(self):
+    def tearDown(self):
         shutil.rmtree(self.tempdir)
 
     @pytest.mark.xfail(reason="OGR silently fails to convert strings")

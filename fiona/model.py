@@ -1,8 +1,9 @@
 """Fiona data model"""
 
-import itertools
+from binascii import hexlify
 from collections.abc import MutableMapping
 from enum import Enum
+import itertools
 from json import JSONEncoder
 from warnings import warn
 
@@ -84,7 +85,7 @@ class OGRGeometryType(Enum):
 
 
 # Mapping of OGR integer geometry types to GeoJSON type names.
-GEOMETRY_TYPES = {
+_GEO_TYPES = {
     OGRGeometryType.Unknown.value: "Unknown",
     OGRGeometryType.Point.value: "Point",
     OGRGeometryType.LineString.value: "LineString",
@@ -92,7 +93,11 @@ GEOMETRY_TYPES = {
     OGRGeometryType.MultiPoint.value: "MultiPoint",
     OGRGeometryType.MultiLineString.value: "MultiLineString",
     OGRGeometryType.MultiPolygon.value: "MultiPolygon",
-    OGRGeometryType.GeometryCollection.value: "GeometryCollection",
+    OGRGeometryType.GeometryCollection.value: "GeometryCollection"
+}
+
+GEOMETRY_TYPES = {
+    **_GEO_TYPES,
     OGRGeometryType.NONE.value: "None",
     OGRGeometryType.LinearRing.value: "LinearRing",
     OGRGeometryType.Point25D.value: "3D Point",
@@ -194,7 +199,11 @@ class Geometry(Object):
 
     @classmethod
     def from_dict(cls, ob=None, **kwargs):
-        data = dict(getattr(ob, "__geo_interface__", ob) or {}, **kwargs)
+        if ob is not None:
+            data = dict(getattr(ob, "__geo_interface__", ob))
+            data.update(kwargs)
+        else:
+            data = kwargs
 
         if "geometries" in data and data["type"] == "GeometryCollection":
             _ = data.pop("coordinates", None)
@@ -202,7 +211,7 @@ class Geometry(Object):
             return Geometry(
                 type="GeometryCollection",
                 geometries=[
-                    Geometry.from_dict(**part) for part in data.pop("geometries")
+                    Geometry.from_dict(part) for part in data.pop("geometries")
                 ],
                 **data
             )
@@ -279,13 +288,17 @@ class Feature(Object):
 
     @classmethod
     def from_dict(cls, ob=None, **kwargs):
-        data = dict(getattr(ob, "__geo_interface__", ob) or {}, **kwargs)
+        if ob is not None:
+            data = dict(getattr(ob, "__geo_interface__", ob))
+            data.update(kwargs)
+        else:
+            data = kwargs
         geom_data = data.pop("geometry", None)
 
         if isinstance(geom_data, Geometry):
             geom = geom_data
         else:
-            geom = Geometry.from_dict(**geom_data) if geom_data is not None else None
+            geom = Geometry.from_dict(geom_data) if geom_data is not None else None
 
         props_data = data.pop("properties", None)
 
@@ -361,26 +374,29 @@ class Properties(Object):
 
     @classmethod
     def from_dict(cls, mapping=None, **kwargs):
-        data = dict(mapping or {}, **kwargs)
-        return Properties(**data)
+        if mapping:
+            return Properties(**mapping, **kwargs)
+        return Properties(**kwargs)
 
 
 class ObjectEncoder(JSONEncoder):
-    """Encodes Geometry and Feature"""
+    """Encodes Geometry, Feature, and Properties."""
 
     def default(self, o):
         if isinstance(o, (Geometry, Properties)):
-            return {k: v for k, v in o.items() if v is not None}
+            return {k: self.default(v) for k, v in o.items() if v is not None}
         elif isinstance(o, Feature):
-            o_dict = dict(**o)
+            o_dict = dict(o)
             o_dict["type"] = "Feature"
             if o.geometry is not None:
-                o_dict["geometry"] = ObjectEncoder().default(o.geometry)
+                o_dict["geometry"] = self.default(o.geometry)
             if o.properties is not None:
-                o_dict["properties"] = ObjectEncoder().default(o.properties)
+                o_dict["properties"] = self.default(o.properties)
             return o_dict
+        elif isinstance(o, bytes):
+            return hexlify(o)
         else:
-            return JSONEncoder().default(o)
+            return o
 
 
 def decode_object(obj):
@@ -401,10 +417,11 @@ def decode_object(obj):
     else:
         obj = obj.get("__geo_interface__", obj)
 
-        if (obj.get("type", None) == "Feature") or "geometry" in obj:
-            return Feature.from_dict(**obj)
-        elif obj.get("type", None) in list(GEOMETRY_TYPES.values())[:8]:
-            return Geometry.from_dict(**obj)
+        _type = obj.get("type", None)
+        if (_type == "Feature") or "geometry" in obj:
+            return Feature.from_dict(obj)
+        elif _type in _GEO_TYPES.values():
+            return Geometry.from_dict(obj)
         else:
             return obj
 

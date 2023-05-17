@@ -5,6 +5,8 @@ import os
 import shutil
 import sys
 import tempfile
+import unittest
+
 import pytest
 
 import fiona
@@ -14,8 +16,8 @@ from fiona.model import Feature
 from fiona.ogrext import featureRT
 
 
-class TestPointRoundTrip:
-    def setup(self):
+class TestPointRoundTrip(unittest.TestCase):
+    def setUp(self):
         self.tempdir = tempfile.mkdtemp()
         schema = {"geometry": "Point", "properties": {"title": "str"}}
         self.c = Collection(
@@ -25,7 +27,7 @@ class TestPointRoundTrip:
             schema=schema,
         )
 
-    def teardown(self):
+    def tearDdown(self):
         self.c.close()
         shutil.rmtree(self.tempdir)
 
@@ -62,15 +64,15 @@ class TestPointRoundTrip:
         assert g.properties["title"] is None
 
 
-class TestLineStringRoundTrip:
-    def setup(self):
+class TestLineStringRoundTrip(unittest.TestCase):
+    def setUp(self):
         self.tempdir = tempfile.mkdtemp()
         schema = {"geometry": "LineString", "properties": {"title": "str"}}
         self.c = Collection(
             os.path.join(self.tempdir, "foo.shp"), "w", "ESRI Shapefile", schema=schema
         )
 
-    def teardown(self):
+    def tearDown(self):
         self.c.close()
         shutil.rmtree(self.tempdir)
 
@@ -101,15 +103,15 @@ class TestLineStringRoundTrip:
         assert g.properties["title"] == "foo"
 
 
-class TestPolygonRoundTrip:
-    def setup(self):
+class TestPolygonRoundTrip(unittest.TestCase):
+    def setUp(self):
         self.tempdir = tempfile.mkdtemp()
         schema = {"geometry": "Polygon", "properties": {"title": "str"}}
         self.c = Collection(
             os.path.join(self.tempdir, "foo.shp"), "w", "ESRI Shapefile", schema=schema
         )
 
-    def teardown(self):
+    def tearDown(self):
         self.c.close()
         shutil.rmtree(self.tempdir)
 

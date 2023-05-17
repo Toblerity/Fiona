@@ -39,7 +39,7 @@ dependencies = [
     "click-plugins>=1.0",
     "cligj>=0.5",
     'importlib-metadata;python_version<"3.10"',
-    "munch>=2.3.2",
+    "six",
 ]
 
 [project.optional-dependencies]
@@ -77,8 +77,10 @@ Repository = "https://github.com/Toblerity/Fiona"
 
 [tool.setuptools]
 include-package-data = false
-packages = ["fiona", "fiona.fio"]
 
 [tool.setuptools.dynamic]
 version = {attr = "fiona.__version__"}
 readme = {file = ["README.rst", "CHANGES.txt", "CREDITS.txt"]}
+
+[tool.setuptools.packages]
+find = {}

@@ -1,3 +1,5 @@
+import unittest
+
 import pytest
 
 import fiona
@@ -5,11 +7,11 @@ from fiona.errors import FionaDeprecationWarning
 
 
 @pytest.mark.usefixtures('uttc_path_gpx')
-class TestNonCountingLayer:
-    def setup(self):
+class TestNonCountingLayer(unittest.TestCase):
+    def setUp(self):
         self.c = fiona.open(self.path_gpx, "r", layer="track_points")
 
-    def teardown(self):
+    def tearDown(self):
         self.c.close()
 
     def test_len_fail(self):

@@ -39,6 +39,13 @@ cdef set PS_TIN_Tri_TYPES = {
 }
 
 
+cdef int ogr_get_geometry_type(void *geometry):
+    # OGR_G_GetGeometryType with NULL geometry support
+    if geometry == NULL:
+        return 0 # unknown
+    return OGR_G_GetGeometryType(geometry)
+
+
 cdef unsigned int geometry_type_code(name) except? 9999:
     """Map OGC geometry type names to integer codes."""
     offset = 0
@@ -187,7 +194,7 @@ cdef class GeomBuilder:
         cdef int code
 
         cogr_geometry = OGR_F_GetGeometryRef(feature)
-        code = base_geometry_type_code(OGR_G_GetGeometryType(cogr_geometry))
+        code = base_geometry_type_code(ogr_get_geometry_type(cogr_geometry))
 
         # We need to take ownership of the geometry before we can call 
         # OGR_G_ForceToPolygon or OGR_G_ForceToMultiPolygon
@@ -203,13 +210,13 @@ cdef class GeomBuilder:
         if geom == NULL:
             return None
 
-        code = base_geometry_type_code(OGR_G_GetGeometryType(geom))
+        code = base_geometry_type_code(ogr_get_geometry_type(geom))
 
         # We convert special geometries (Curves, TIN, Triangle, ...)
         # to GeoJSON compatible geometries (LineStrings, Polygons, MultiPolygon, ...)
         if code in LINEAR_GEOM_TYPES:
             geometry_to_dealloc = OGR_G_GetLinearGeometry(geom, 0.0, NULL)
-            code = base_geometry_type_code(OGR_G_GetGeometryType(geometry_to_dealloc))
+            code = base_geometry_type_code(ogr_get_geometry_type(geometry_to_dealloc))
             geom = geometry_to_dealloc
         elif code in PS_TIN_Tri_TYPES:
             if code == OGRGeometryType.Triangle.value:
@@ -247,7 +254,7 @@ cdef class GeomBuilder:
         if geometry_to_dealloc is not NULL:
            OGR_G_DestroyGeometry(geometry_to_dealloc)
 
-        return Geometry.from_dict(**built)
+        return Geometry.from_dict(built)
 
     cpdef build_wkb(self, object wkb):
         # Build geometry from wkb
