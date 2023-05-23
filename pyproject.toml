@@ -84,4 +84,4 @@ version = {attr = "fiona.__version__"}
 readme = {file = ["README.rst", "CHANGES.txt", "CREDITS.txt"]}
 
 [tool.setuptools.packages.find]
-exclude = ["docs*", "examples*", "scripts*", "tests*", "venv*"]
+include = ["fiona", "fiona.*"]
