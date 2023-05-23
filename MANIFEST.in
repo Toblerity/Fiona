@@ -2,6 +2,7 @@ global-exclude .DS_Store
 global-exclude *.pyc
 recursive-exclude docs/data *
 recursive-exclude docs/_build *
+recursive-exclude _build *
 recursive-exclude venv *
 exclude *.txt *.py
 recursive-include docs *.rst *.txt

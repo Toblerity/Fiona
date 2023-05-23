@@ -3,6 +3,12 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.9.4.post1 (2023-05-23)
+------------------------
+
+Extraneous files were unintentionally packaged in the 1.9.4 wheels. This post1
+release excludes them so that wheel contents are as in version 1.9.3.
+
 1.9.4 (2023-05-16)
 ------------------
 
