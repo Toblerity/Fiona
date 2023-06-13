@@ -1,13 +1,17 @@
+from __future__ import annotations  # for Python 3.7-3.9
+
 from collections import OrderedDict
 from itertools import chain
 from typing import (
     Any,
     Dict,
     List,
+    Literal,
     Optional,
     Tuple,
     Union,
 )
+from typing_extensions import NotRequired, Required, TypedDict  # for Python <3.11 with (Not)Required
 
 
 def decode_object(obj: Any) -> Union[Dict[str, str], Dict[str, int], Geometry, Feature]: ...
@@ -16,6 +20,61 @@ def decode_object(obj: Any) -> Union[Dict[str, str], Dict[str, int], Geometry, F
 def to_dict(
     val: Dict[str, Union[Dict[str, Union[str, List[List[List[float]]]]], str, Dict[str, Optional[Union[float, str, int]]]]]
 ) -> Dict[str, Union[Dict[str, Union[str, List[List[List[float]]]]], str, Dict[str, Optional[Union[float, str, int]]]]]: ...
+
+
+GeoJSONPosition = tuple[float, float] | tuple[float, float, float]
+GeoJSONLineStringCoordinateArray = list[GeoJSONPosition]  # two or more positions
+GeoJSONLinearRing = list[GeoJSONPosition]  # closed with four or more positions
+GeoJSONPolygonCoordinateArray = list[GeoJSONLinearRing]
+
+
+class GeoJSONPoint(TypedDict):
+    type:  Required[Literal["Point"]]
+    coordinates: Required[GeoJSONPosition]
+
+
+class GeoJSONMultiPoint(TypedDict):
+    type:  Literal["MultiPoint"]
+    coordinates: list[GeoJSONPosition]
+
+
+class GeoJSONLineString(TypedDict):
+    type: Literal["LineString"]
+    coordinates: GeoJSONLineStringCoordinateArray
+
+
+class GeoJSONMultiLineString(TypedDict):
+    type: Literal["MultiLineString"]
+    coordinates: list[GeoJSONLineStringCoordinateArray]
+
+
+class GeoJSONPolygon(TypedDict):
+    type: Literal["Polygon"]
+    coordinates: GeoJSONPolygonCoordinateArray
+
+
+class GeoJSONMultiPolygon(TypedDict):
+    type: Literal["MultiPolygon"]
+    coordinates: list[GeoJSONPolygonCoordinateArray]
+
+
+GeoJSONGeometry = GeoJSONPoint | GeoJSONMultiPoint | GeoJSONLineString | GeoJSONMultiLineString | GeoJSONPolygon | GeoJSONMultiPolygon
+
+
+class GeoJSONGeometryCollection(TypedDict):
+    geometries: list[GeoJSONGeometry]
+
+
+class GeoJSONFeature(TypedDict):
+    type: Literal["Feature"]
+    geometry: GeoJSONGeometry | None
+    properties: dict | None
+    id: NotRequired[str | float]
+
+
+class GeoJSONFeatureCollection(TypedDict):
+    type: Literal["FeatureCollection"]
+    features: list[GeoJSONFeature]
 
 
 class Feature:
