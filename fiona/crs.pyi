@@ -1,4 +1,4 @@
-from typing import Tuple, Optional, Union
+from typing import Literal, Tuple, Optional, TypedDict, Union
 
 
 class CRS:
@@ -41,3 +41,17 @@ class CRS:
     def from_authority(auth_name: str, code: Union[int, str]) -> "CRS": ...
     @staticmethod
     def from_string(value: str, morph_from_esri_dialect: bool = False) -> "CRS": ...
+
+
+class CRSDict(TypedDict):
+    init: str
+    no_defs: Literal[True]
+
+
+def from_epsg(code: Union[int, str]) -> CRSDict: ...
+
+
+def from_string(prjs: str) -> dict: ...
+
+
+def to_string(crs: dict) -> str: ...
