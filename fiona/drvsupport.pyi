@@ -21,7 +21,17 @@ def driver_from_extension(path: Union[str, UnparsedPath]) -> str: ...
 def vector_driver_extensions() -> Dict[str, str]: ...
 
 
+def _driver_supports_milliseconds(driver: str) -> bool: ...
+
+
+def _driver_supports_mode(driver: str, mode: Any) -> bool: ...
+
+
 supported_drivers: Dict[str, str]
 
+driver_mode_mingdal: Dict[str, dict[str, Any]]
 
-def _driver_supports_mode(driver: Any, mode: Any) -> bool: ...
+_driver_converts_to_str: Dict[str, dict[str, Any]]
+
+
+
