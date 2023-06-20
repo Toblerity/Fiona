@@ -2,6 +2,7 @@ from re import Match
 from typing import (
     Tuple,
     Union,
+    Pattern
 )
 
 
@@ -19,6 +20,9 @@ def parse_datetime(
 def parse_time(
     text: str
 ) -> Union[Tuple[int, int, int, int, int, int, int, float], Tuple[int, int, int, int, int, int, int, None], Tuple[int, int, int, int, int, int, int, int]]: ...
+
+
+def pattern_date() -> Pattern[str]: ...
 
 
 class group_accessor:
