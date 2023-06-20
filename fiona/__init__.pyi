@@ -66,3 +66,6 @@ def remove(
     driver: Optional[str] = ...,
     layer: Optional[Union[str, int]] = ...
 ) -> None: ...
+
+
+supported_drivers: Dict[str, str]

@@ -1,4 +1,5 @@
 import os
+from typing import Dict
 
 from fiona.env import Env
 from fiona._env import get_gdal_version_tuple
@@ -13,7 +14,7 @@ _GDAL_VERSION = get_gdal_version_tuple()
 # entries for each at https://gdal.org/drivers/vector/index.html to screen
 # out the multi-layer formats.
 
-supported_drivers = dict(
+supported_drivers: Dict[str, str] = dict(
     [
         # OGR Vector Formats
         # Format Name 	Code 	Creation 	Georeferencing 	Compiled by default

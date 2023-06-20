@@ -95,3 +95,6 @@ class Collection:
         record: Union[Feature, Dict[str, Union[str, Dict[str, Union[str, Tuple[int, int]]], Dict[str, str]]]]
     ) -> None: ...
     def writerecords(self, records: Any) -> None: ...
+
+
+supported_drivers: dict
