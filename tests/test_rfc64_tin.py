@@ -4,10 +4,9 @@ See https://trac.osgeo.org/gdal/wiki/rfc64_triangle_polyhedralsurface_tin.
 """
 
 import fiona
-from fiona.model import Geometry
 
 
-def _test_tin(geometry: Geometry) -> None:
+def _test_tin(geometry: dict) -> None:
     """Test if TIN (((0 0 0, 0 0 1, 0 1 0, 0 0 0)), ((0 0 0, 0 1 0, 1 1 0, 0 0 0)))
     is correctly converted to MultiPolygon.
     """
@@ -18,7 +17,7 @@ def _test_tin(geometry: Geometry) -> None:
     ]
 
 
-def _test_triangle(geometry: Geometry) -> None:
+def _test_triangle(geometry: dict) -> None:
     """Test if TRIANGLE((0 0 0,0 1 0,1 1 0,0 0 0))
     is correctly converted to MultiPolygon."""
     assert geometry["type"] == "Polygon"
