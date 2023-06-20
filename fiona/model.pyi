@@ -10,6 +10,7 @@ from typing import (
     Optional,
     Tuple,
     Union,
+    Protocol,
 )
 from typing_extensions import NotRequired, Required, TypedDict  # for Python <3.11 with (Not)Required
 
@@ -77,6 +78,11 @@ class GeoJSONFeatureCollection(TypedDict):
     features: list[GeoJSONFeature]
 
 
+class GeoInterface(Protocol):
+    @property
+    def __geo_interface__(self) -> dict: ...
+
+
 class Feature:
     def __init__(
         self,
@@ -88,8 +94,8 @@ class Feature:
     @classmethod
     def from_dict(
         cls,
-        ob: Optional[Dict[str, Union[str, Dict[str, Union[str, Tuple[int, int]]], Dict[str, Union[int, str]], Dict[str, int]]]] = ...,
-        **kwargs
+        ob: Optional[Union[Dict[str, object], GeoInterface]] = None,
+        **kwargs: Any
     ) -> Feature: ...
     @property
     def geometry(self) -> Optional[Geometry]: ...
