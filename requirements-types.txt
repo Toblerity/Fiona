@@ -1,5 +1,6 @@
 -r requirements.txt
 mypy
+pytest
 types-six
 types-pytz
 types-setuptools
