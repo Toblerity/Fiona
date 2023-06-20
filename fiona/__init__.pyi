@@ -2,12 +2,13 @@ from io import (
     BufferedReader,
     BytesIO,
 )
+from fiona._env import GDALVersion
 from fiona.collection import Collection
 from fiona.crs import CRS
 from fiona.env import Env
 from fiona.model import Geometry
 from fiona.rfc3339 import FionaDateType
-from fiona.env import GDALVersion
+
 from pathlib import PosixPath
 from typing import (
     Any,

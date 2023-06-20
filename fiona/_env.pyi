@@ -1,9 +1,13 @@
-from fiona.env import GDALVersion as GDALVersion  # mypy treats this as explicit export
+from typing import NamedTuple
 
 
 class GDALDataFinder:
     ...
 
+class GDALVersion(NamedTuple):
+    major: int
+    minor: int
+    revision: int
 
 class PROJDataFinder:
     ...
