@@ -1,4 +1,8 @@
 from boto3.session import Session
+from fiona._env import (
+    calc_gdal_version_num as calc_gdal_version_num,  # mypy treats this as explicit export
+    get_gdal_version_num as get_gdal_version_num  # mypy treats this as explicit export
+)
 from fiona.session import (
     AWSSession,
     DummySession,
@@ -53,11 +57,15 @@ class Env:
     @classmethod
     def from_defaults(cls, *args, **kwargs) -> Env: ...
 
+GDALVersionLike = Union[str, tuple[int, int], GDALVersion]
 
 class GDALVersion:
-    def at_least(self, other: str) -> bool: ...
+    major: int
+    minor: int
+
+    def at_least(self, other: GDALVersionLike) -> bool: ...
     @classmethod
-    def parse(cls, input: str) -> GDALVersion: ...
+    def parse(cls, input: GDALVersionLike) -> GDALVersion: ...
     @classmethod
     def runtime(cls) -> GDALVersion: ...
 

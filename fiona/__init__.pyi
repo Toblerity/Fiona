@@ -1,3 +1,4 @@
+from env import GDALVersion
 from io import (
     BufferedReader,
     BytesIO,
@@ -18,6 +19,7 @@ from typing import (
     Union,
 )
 
+gdal_version: GDALVersion
 
 def bounds(
     ob: Union[Dict[str, Union[str, List[List[List[int]]]]], Geometry, Dict[str, Union[str, List[List[int]]]], Dict[str, Union[Dict[str, Union[str, List[List[List[float]]]]], str, Dict[str, Optional[Union[float, str, int]]]]], Dict[str, Union[str, List[int]]]]
