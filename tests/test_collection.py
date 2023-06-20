@@ -403,19 +403,6 @@ class TestFilterReading:
 
     def test_filter_bbox_where(self):
         # combined filter criteria
-        results = set(self.c.keys(
-            bbox=(-120.0, 40.0, -100.0, 50.0), where="NAME LIKE 'Mount%'"))
-        assert results == set([0, 2, 5, 13])
-        results = set(self.c.keys())
-        assert len(results) == 67
-
-    def test_filter_where_error(self):
-        for w in ["bad stuff", "NAME=3", "NNAME LIKE 'Mount%'"]:
-            with pytest.raises(AttributeFilterError):
-                self.c.filter(where=w)
-
-    def test_filter_bbox_where(self):
-        # combined filter criteria
         results = set(
             self.c.keys(bbox=(-120.0, 40.0, -100.0, 50.0), where="NAME LIKE 'Mount%'")
         )
