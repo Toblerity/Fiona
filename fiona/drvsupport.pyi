@@ -2,6 +2,7 @@ from fiona.path import UnparsedPath
 from typing import (
     Dict,
     Union,
+    Any
 )
 
 
@@ -21,3 +22,6 @@ def vector_driver_extensions() -> Dict[str, str]: ...
 
 
 def supported_drivers() -> Dict[str, str]: ...
+
+
+def _driver_supports_mode(driver: Any, mode: Any) -> bool: ...
