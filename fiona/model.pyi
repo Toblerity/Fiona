@@ -95,6 +95,9 @@ class Feature:
     def from_dict(
         cls,
         ob: Optional[Union[Dict[str, object], GeoInterface]] = None,
+        # NOTE: Make ob positional only as per https://github.com/python/mypy/issues/15321#issuecomment-1567408831
+        # It is unlikely that people are using from_dict(ob=...)
+        /,
         **kwargs: Any
     ) -> Feature: ...
     @property
