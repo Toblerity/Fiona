@@ -314,3 +314,22 @@ def test_encode_bytes():
     """Bytes are encoded using base64."""
     assert ObjectEncoder().default(b"01234") == b'3031323334'
 
+
+def test_null_property_encoding():
+    """A null feature property is retained."""
+    # Verifies fix for gh-1270.
+    assert ObjectEncoder().default(Properties(a=1, b=None)) == {"a": 1, "b": None}
+
+
+def test_null_geometry_encoding():
+    """A null feature geometry is retained."""
+    # Verifies fix for gh-1270.
+    o_dict = ObjectEncoder().default(Feature())
+    assert o_dict["geometry"] is None
+
+
+def test_geometry_collection_encoding():
+    """No coordinates in a GeometryCollection."""
+    assert "coordinates" not in ObjectEncoder().default(
+        Geometry(type="GeometryCollection", geometries=[])
+    )

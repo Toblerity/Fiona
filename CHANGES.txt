@@ -3,6 +3,11 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.9.5 (TBD)
+-----------
+
+- Preserve the null properties and geometry of a Feature when serializing.
+
 1.9.4.post1 (2023-05-23)
 ------------------------
 
