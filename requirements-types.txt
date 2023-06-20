@@ -2,3 +2,4 @@
 mypy
 types-six
 types-pytz
+types-setuptools
