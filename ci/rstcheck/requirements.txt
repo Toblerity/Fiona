@@ -34,7 +34,7 @@ packaging==23.0
     # via sphinx
 pydantic==1.10.6
     # via rstcheck-core
-pygments==2.14.0
+pygments==2.15.0
     # via
     #   rich
     #   sphinx
