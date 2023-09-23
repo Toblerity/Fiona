@@ -1,5 +1,4 @@
 # These are extension functions and classes using the OGR C API.
-from __future__ import absolute_import
 
 include "gdal.pxi"
 
