@@ -21,7 +21,7 @@
     converted via Munch.to/fromDict().
 """
 
-from .python3_compat import iterkeys, iteritems, Mapping  #, u
+from collections.abc import Mapping
 
 __version__ = "2.5.0"
 VERSION = tuple(map(int, __version__.split('.')[:3]))
@@ -190,7 +190,7 @@ class Munch(dict):
         return '{0}({1})'.format(self.__class__.__name__, dict.__repr__(self))
 
     def __dir__(self):
-        return list(iterkeys(self))
+        return list(self.keys())
 
     def __getstate__(self):
         """ Implement a serializable interface used for pickling.
@@ -229,7 +229,7 @@ class Munch(dict):
         Override built-in method to call custom __setitem__ method that may
         be defined in subclasses.
         """
-        for k, v in iteritems(dict(*args, **kwargs)):
+        for k, v in dict(*args, **kwargs).items():
             self[k] = v
 
     def get(self, k, d=None):
@@ -428,7 +428,7 @@ def munchify(x, factory=Munch):
         # Here we finish munchifying the parts of obj that were deferred by pre_munchify because they
         # might be involved in a cycle
         if isinstance(obj, Mapping):
-            partial.update((k, munchify_cycles(obj[k])) for k in iterkeys(obj))
+            partial.update((k, munchify_cycles(obj[k])) for k in obj.keys())
         elif isinstance(obj, list):
             partial.extend(munchify_cycles(item) for item in obj)
         elif isinstance(obj, tuple):
@@ -490,7 +490,7 @@ def unmunchify(x):
         # Here we finish unmunchifying the parts of obj that were deferred by pre_unmunchify because they
         # might be involved in a cycle
         if isinstance(obj, Mapping):
-            partial.update((k, unmunchify_cycles(obj[k])) for k in iterkeys(obj))
+            partial.update((k, unmunchify_cycles(obj[k])) for k in obj.keys())
         elif isinstance(obj, list):
             partial.extend(unmunchify_cycles(v) for v in obj)
         elif isinstance(obj, tuple):
