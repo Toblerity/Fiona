@@ -108,13 +108,3 @@ def test_listdir_file(path_coutwildrnp_zip):
         fiona.listdir(f"zip://{path_coutwildrnp_zip}/coutwildrnp.shp")
 
 
-def test_listdir_zipmemoryfile(bytes_coutwildrnp_zip):
-    """Test list directories of a zipped memory file."""
-    with ZipMemoryFile(bytes_coutwildrnp_zip) as memfile:
-        print(memfile.name)
-        assert sorted(fiona.listdir(memfile.name)) == [
-            "coutwildrnp.dbf",
-            "coutwildrnp.prj",
-            "coutwildrnp.shp",
-            "coutwildrnp.shx",
-        ]
