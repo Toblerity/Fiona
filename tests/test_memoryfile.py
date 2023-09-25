@@ -374,11 +374,11 @@ def test_allow_unsupported_drivers(monkeypatch):
 def test_listdir_zipmemoryfile(bytes_coutwildrnp_zip):
     """Test list directories of a zipped memory file."""
     with ZipMemoryFile(bytes_coutwildrnp_zip) as memfile:
-        assert memfile.listdir() == [
-            "coutwildrnp.shp",
-            "coutwildrnp.shx",
+        assert sorted(memfile.listdir()) == [
             "coutwildrnp.dbf",
             "coutwildrnp.prj",
+            "coutwildrnp.shp",
+            "coutwildrnp.shx",
         ]
 
 
