@@ -132,7 +132,7 @@ def test_geometry__props():
 
 def test_geometry_gi():
     """Geometry __geo_interface__"""
-    gi = Geometry(coordinates=(0, 0), type="Point").__geo_interface__
+    gi = Geometry(coordinates=(0, 0), type="Point", geometries=[]).__geo_interface__
     assert gi["type"] == "Point"
     assert gi["coordinates"] == (0, 0)
 
