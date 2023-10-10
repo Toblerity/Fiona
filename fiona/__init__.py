@@ -135,7 +135,7 @@ def open(
 
     The drivers used by Fiona will try to detect the encoding of data
     files. If they fail, you may provide the proper ``encoding``, such
-    as 'Windows-1252' for the Natural Earth datasets.
+    as 'Windows-1252' for the original Natural Earth datasets.
 
     When the provided path is to a file containing multiple named layers
     of data, a layer can be singled out by ``layer``.

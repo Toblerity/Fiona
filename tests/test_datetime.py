@@ -174,10 +174,10 @@ def generate_testdata(field_type, driver):
             ),
             (
                 datetime.datetime(2020, 1, 21, 12, 0, 0, tzinfo=pytz.utc).astimezone(
-                    timezone("US/Mountain")
+                    timezone("America/Denver")
                 ),
                 datetime.datetime(2020, 1, 21, 12, 0, 0, tzinfo=pytz.utc).astimezone(
-                    timezone("US/Mountain")
+                    timezone("America/Denver")
                 ),
             ),
             (
@@ -270,7 +270,7 @@ def test_compare_datetimes_utc():
         timezone("Europe/Zurich")
     )
     d2 = datetime.datetime(2020, 1, 21, 12, 0, 0, tzinfo=pytz.utc).astimezone(
-        timezone("US/Mountain")
+        timezone("America/Denver")
     )
     assert d1 == d2
     assert compare_datetimes_utc(d1, d2)
@@ -279,7 +279,7 @@ def test_compare_datetimes_utc():
         timezone("Europe/Zurich")
     )
     d2 = datetime.datetime(2020, 6, 21, 12, 0, 0, tzinfo=pytz.utc).astimezone(
-        timezone("US/Mountain")
+        timezone("America/Denver")
     )
     assert d1 == d2
     assert compare_datetimes_utc(d1, d2)
