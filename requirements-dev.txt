@@ -5,4 +5,5 @@ cython~=0.29.29
 pytest~=7.2
 pytest-cov~=4.0
 pytz==2022.6
+setuptools
 wheel
