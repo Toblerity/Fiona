@@ -7,6 +7,8 @@ import shutil
 import tarfile
 import zipfile
 from collections import OrderedDict
+import warnings
+
 from click.testing import CliRunner
 import pytest
 
