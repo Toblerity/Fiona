@@ -1396,7 +1396,7 @@ cdef class WritingSession(Session):
             if set(record.properties.keys()) != schema_props_keys:
                 raise ValueError(
                     "Record does not match collection schema: %r != %r" % (
-                        record.properties.keys(),
+                        list(record.properties.keys()),
                         list(schema_props_keys) ))
 
             if not validate_geometry_type(record):

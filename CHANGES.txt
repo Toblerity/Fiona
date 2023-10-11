@@ -6,6 +6,7 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.9.5 (TBD)
 -----------
 
+- Expand keys in schema mismatch exception, resolving #1278.
 - Require Cython >= 3 and recent setuptools to build (#1276).
 - Preserve the null properties and geometry of a Feature when serializing
   (#1276).
