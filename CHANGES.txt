@@ -14,6 +14,8 @@ Bug fixes:
 
 Packaging:
 
+* The distribution name is now officially "fiona", not "Fiona". The import
+  name remains "fiona".
 * Builds now require Cython >= 3.0.2 (#1276).
 * PyPI wheels include GDAL 3.6.4, PROJ 9.0.1, and GEOS 3.11.2.
 * PyPI wheels include curl 8.4.0, addressing CVE-2023-38545 and CVE-38546.
