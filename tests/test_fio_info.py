@@ -2,9 +2,13 @@
 
 
 import json
-from pkg_resources import iter_entry_points
 import re
 import sys
+
+if sys.version_info < (3, 10):
+    from importlib_metadata import entry_points
+else:
+    from importlib.metadata import entry_points
 
 from click.testing import CliRunner
 import pytest
@@ -41,7 +45,7 @@ def test_info_bounds(path_coutwildrnp_shp):
 def test_all_registered():
     """Make sure all the subcommands are actually registered to the main CLI
     group."""
-    for ep in iter_entry_points('fiona.fio_commands'):
+    for ep in entry_points(group="fiona.fio_commands"):
         assert ep.name in main_group.commands
 
 
