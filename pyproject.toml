@@ -42,6 +42,7 @@ dependencies = [
     "cligj>=0.5",
     'importlib-metadata;python_version<"3.10"',
     "six",
+    "setuptools",
 ]
 
 [project.optional-dependencies]
