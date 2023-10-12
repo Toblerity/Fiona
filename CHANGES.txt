@@ -3,13 +3,23 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.9.5 (TBD)
------------
+1.9.5 (2023-10-11)
+------------------
+
+Bug fixes:
 
 - Expand keys in schema mismatch exception, resolving #1278.
-- Require Cython >= 3 and recent setuptools to build (#1276).
 - Preserve the null properties and geometry of a Feature when serializing
   (#1276).
+
+Packaging:
+
+* The distribution name is now officially "fiona", not "Fiona". The import
+  name remains "fiona".
+* Builds now require Cython >= 3.0.2 (#1276).
+* PyPI wheels include GDAL 3.6.4, PROJ 9.0.1, and GEOS 3.11.2.
+* PyPI wheels include curl 8.4.0, addressing CVE-2023-38545 and CVE-38546.
+* PyPI wheels are now available for Python 3.12.
 
 1.9.4.post1 (2023-05-23)
 ------------------------
