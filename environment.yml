@@ -6,7 +6,7 @@ dependencies:
 - pip
 - python=3.9.*
 - libgdal=3.4.*
-- geos=3.10.3
+- geos
 - cython=3
 - sphinx-click
 - sphinx-rtd-theme
