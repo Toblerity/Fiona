@@ -383,15 +383,15 @@ class ObjectEncoder(JSONEncoder):
     """Encodes Geometry, Feature, and Properties."""
 
     def default(self, o):
-        if isinstance(o, (Geometry, Properties)):
-            return {k: self.default(v) for k, v in o.items() if v is not None}
-        elif isinstance(o, Feature):
-            o_dict = dict(o)
-            o_dict["type"] = "Feature"
-            if o.geometry is not None:
-                o_dict["geometry"] = self.default(o.geometry)
-            if o.properties is not None:
-                o_dict["properties"] = self.default(o.properties)
+        if isinstance(o, Object):
+            o_dict = {k: self.default(v) for k, v in o.items()}
+            if isinstance(o, Geometry):
+                if o.type == "GeometryCollection":
+                    _ = o_dict.pop("coordinates", None)
+                else:
+                    _ = o_dict.pop("geometries", None)
+            elif isinstance(o, Feature):
+                o_dict["type"] = "Feature"
             return o_dict
         elif isinstance(o, bytes):
             return hexlify(o)

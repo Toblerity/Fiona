@@ -2,9 +2,9 @@ cff-version: 1.2.0
 message: "Please cite this software using these metadata."
 type: software
 title: Fiona
-version: "1.9.0"
-date-released: "2023-01-30"
-abstract: "OGR's neat, nimble, no-nonsense API."
+version: "1.9.5"
+date-released: "2023-10-11"
+abstract: "Fiona streams simple feature data to and from GIS formats like GeoPackage and Shapefile."
 keywords:
   - cartography
   - GIS

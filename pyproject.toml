@@ -1,12 +1,14 @@
 [build-system]
 requires = [
-    "cython>=3",
-    "setuptools>=61",
+    "cython~=3.0.2",
+    "oldest-supported-numpy",
+    "setuptools>=67.8",
+    "wheel",
 ]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "Fiona"
+name = "fiona"
 dynamic = ["readme", "version"]
 authors = [
     {name = "Sean Gillies"},

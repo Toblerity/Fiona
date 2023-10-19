@@ -49,6 +49,8 @@ jobs:
             gdal-version: '3.6.4'
           - python-version: '3.11'
             gdal-version: '3.7.1'
+          - python-version: '3.12'
+            gdal-version: '3.7.1'
 
     steps:
       - uses: actions/checkout@v4
