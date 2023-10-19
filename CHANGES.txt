@@ -3,6 +3,11 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.9.6 (TBD)
+-----------
+
+- Remove install requirement of setuptools, a regression introduced in 1.9.5.
+
 1.9.5 (2023-10-11)
 ------------------
 
