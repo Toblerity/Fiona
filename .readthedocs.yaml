@@ -7,3 +7,8 @@ build:
 
 conda:
   environment: environment.yml
+
+python:
+  install:
+    - method: setuptools
+      path: .
