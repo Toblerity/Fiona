@@ -6,6 +6,8 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.9.6 (TBD)
 -----------
 
+- Ensure that geometry types in a schema are translated to a linear type, as
+  geometry instances are (#).
 - Fix broken stable API documentation on Read The Docs (#).
 - Remove install requirement of setuptools, a regression introduced in 1.9.5.
 

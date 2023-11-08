@@ -9,7 +9,7 @@ import fiona
 def test_line_curve_conversion(path_curves_line_csv):
     """Convert curved geometries to linear approximations"""
     with fiona.open(path_curves_line_csv) as col:
-        assert col.schema['geometry'] == 'Unknown'
+        assert col.schema["geometry"] == "Unknown"
         features = list(col)
         assert len(features) == 9
 
@@ -17,6 +17,6 @@ def test_line_curve_conversion(path_curves_line_csv):
 def test_multicurve_conversion(path_multicurve_gml):
     """Convert curved geometries to linear approximations"""
     with fiona.open(path_multicurve_gml) as col:
-        assert col.schema['geometry'] == 'MultiCurve'
+        assert col.schema["geometry"] == "MultiLineString"
         features = list(col)
         assert len(features) == 1
