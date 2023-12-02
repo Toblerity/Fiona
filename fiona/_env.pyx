@@ -64,12 +64,13 @@ except ImportError:
 cdef bint is_64bit = sys.maxsize > 2 ** 32
 
 cdef void set_proj_search_path(object path):
-    cdef const char **paths = NULL
+    cdef char **paths = NULL
     cdef const char *path_c = NULL
     path_b = path.encode("utf-8")
     path_c = path_b
     paths = CSLAddString(paths, path_c)
-    OSRSetPROJSearchPaths(paths)
+    OSRSetPROJSearchPaths(<const char *const *>paths)
+    CSLDestroy(paths)
 
 
 cdef _safe_osr_release(OGRSpatialReferenceH srs):
