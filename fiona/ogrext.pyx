@@ -97,7 +97,7 @@ cdef void gdal_flush_cache(void *cogr_ds):
         GDALFlushCache(cogr_ds)
 
 
-cdef void* gdal_open_vector(char* path_c, int mode, drivers, options) except NULL:
+cdef void* gdal_open_vector(const char* path_c, int mode, drivers, options) except NULL:
     cdef void* cogr_ds = NULL
     cdef char **drvs = NULL
     cdef void* drv = NULL
@@ -1039,7 +1039,7 @@ cdef class Session:
         else:
             obj = self.cogr_ds
 
-        cdef char *value = NULL
+        cdef const char *value = NULL
         value = GDALGetMetadataItem(obj, name, domain)
         if value == NULL:
             return None
@@ -1055,7 +1055,7 @@ cdef class WritingSession(Session):
     def start(self, collection, **kwargs):
         cdef OGRSpatialReferenceH cogr_srs = NULL
         cdef char **options = NULL
-        cdef const char *path_c = NULL
+        cdef char *path_c = NULL
         cdef const char *driver_c = NULL
         cdef const char *name_c = NULL
         cdef const char *proj_c = NULL
@@ -2153,7 +2153,7 @@ def _get_metadata_item(driver, metadata_item):
     str or None
         Metadata item
     """
-    cdef char* metadata_c = NULL
+    cdef const char* metadata_c = NULL
     cdef void *cogr_driver
 
     if get_gdal_version_tuple() < (2, ):
