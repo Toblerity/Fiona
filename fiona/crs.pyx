@@ -908,9 +908,6 @@ cdef class CRS:
     def __copy__(self):
         return pickle.loads(pickle.dumps(self))
 
-    def __hash__(self):
-        return hash(self.to_wkt())
-
     def __str__(self):
         return self.to_string()
 
