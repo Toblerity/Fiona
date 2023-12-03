@@ -1104,6 +1104,7 @@ cdef class WritingSession(Session):
             driver_c = driver_b
             cogr_driver = exc_wrap_pointer(GDALGetDriverByName(driver_c))
 
+            cogr_ds = NULL
             if not CPLCheckForFile(path_c, NULL):
                 log.debug("File doesn't exist. Creating a new one...")
                 with Env(GDAL_VALIDATE_CREATION_OPTIONS="NO"):
