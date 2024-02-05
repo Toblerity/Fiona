@@ -150,4 +150,4 @@ jobs:
           python -m pytest -v -m "not wheel" -rxXs  --cov fiona --cov-report term-missing
 
 
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
