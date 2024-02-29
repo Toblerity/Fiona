@@ -1,11 +1,7 @@
-# cython: language_level=3, boundscheck=False
-# distutils: language = c++
 """Bridge between Python file openers and GDAL VSI.
 
 Based on _filepath.pyx.
 """
-
-# include "gdal.pxi"
 
 import contextlib
 from contextvars import ContextVar
@@ -24,15 +20,6 @@ cimport numpy as np
 from fiona.errors import OpenerRegistrationError
 
 log = logging.getLogger(__name__)
-
-
-# NOTE: This has to be defined outside of gdal.pxi or other C extensions will
-# try to compile C++ only code included in this header.
-cdef extern from "cpl_vsi_virtual.h":
-    cdef cppclass VSIFileManager:
-        @staticmethod
-        void* GetHandler(const char*)
-
 
 # Prefix for all in-memory paths used by GDAL's VSI system
 # Except for errors and log messages this shouldn't really be seen by the user
