@@ -55,6 +55,12 @@ language = None
 gdal_major_version = 0
 gdal_minor_version = 0
 
+try:
+    import numpy as np
+    include_dirs.append(np.get_include())
+except ImportError:
+    raise SystemExit("ERROR: Numpy and its headers are required to run setup().")
+
 if 'clean' not in sys.argv:
     try:
         gdal_config = os.environ.get('GDAL_CONFIG', 'gdal-config')
@@ -191,6 +197,7 @@ if "clean" not in sys.argv:
     ext_modules = cythonize(
         [
             Extension("fiona._geometry", ["fiona/_geometry.pyx"], **ext_options),
+            Extension("fiona._vsiopener", ["fiona/_vsiopener.pyx"], **ext_options),
             Extension("fiona.schema", ["fiona/schema.pyx"], **ext_options),
             Extension("fiona._transform", ["fiona/_transform.pyx"], **ext_options_cpp),
             Extension("fiona.crs", ["fiona/crs.pyx"], **ext_options),

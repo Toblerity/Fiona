@@ -33,7 +33,7 @@ from fiona.errors import (
     TransactionError, GeometryTypeValidationError, DatasetDeleteError,
     AttributeFilterError, FeatureWarning, FionaDeprecationWarning, UnsupportedGeometryTypeError)
 from fiona.model import decode_object, Feature, Geometry, Properties
-from fiona.path import vsi_path
+from fiona._path import _vsi_path
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 from fiona.schema import FIELD_TYPES, FIELD_TYPES_MAP, normalize_field_type
