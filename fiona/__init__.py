@@ -20,6 +20,7 @@ features. One opened in a writing mode provides a ``write`` method.
 
 """
 
+from contextlib import ExitStack
 import glob
 import logging
 import os
@@ -46,6 +47,7 @@ from fiona._env import (
 )
 from fiona._env import driver_count
 from fiona._show_versions import show_versions
+from fiona._vsiopener import _opener_registration
 from fiona.collection import BytesCollection, Collection
 from fiona.drvsupport import supported_drivers
 from fiona.env import ensure_env_with_credentials, Env
@@ -60,7 +62,7 @@ from fiona.ogrext import (
     _remove,
     _remove_layer,
 )
-from fiona.path import ParsedPath, parse_path, vsi_path
+from fiona._path import _ParsedPath, _UnparsedPath, _parse_path, _vsi_path
 from fiona.vfs import parse_paths as vfs_parse_paths
 
 # These modules are imported by fiona.ogrext, but are also import here to
@@ -82,7 +84,7 @@ __all__ = [
     "remove",
 ]
 
-__version__ = "2.0dev"
+__version__ = "1.10dev"
 __gdal_version__ = get_gdal_release_name()
 
 gdal_version = get_gdal_version_tuple()
@@ -104,6 +106,7 @@ def open(
     enabled_drivers=None,
     crs_wkt=None,
     allow_unsupported_drivers=False,
+    opener=None,
     **kwargs
 ):
     """Open a collection for read, append, or write
@@ -191,6 +194,19 @@ def open(
         Defaults to GDAL's default (WKT1_GDAL for GDAL 3).
     allow_unsupported_drivers : bool
         If set to true do not limit GDAL drivers to set set of known working.
+    opener : callable or obj, optional
+        A custom dataset opener which can serve GDAL's virtual
+        filesystem machinery via Python file-like objects. The
+        underlying file-like object is obtained by calling *opener* with
+        (*fp*, *mode*) or (*fp*, *mode* + "b") depending on the format
+        driver's native mode. *opener* must return a Python file-like
+        object that provides read, seek, tell, and close methods. Note:
+        only one opener at a time per fp, mode pair is allowed.
+
+        Alternatively, opener may be a filesystem object from a package
+        like fsspec that provides the following methods: isdir(),
+        isfile(), ls(), mtime(), open(), and size(). The exact interface
+        is defined in the fiona._vsiopener._AbstractOpener class.
     kwargs : mapping
         Other driver-specific parameters that will be interpreted by
         the OGR library as layer creation or opening options.
@@ -273,49 +289,67 @@ def open(
     # At this point, the fp argument is a string or path-like object
     # which can be converted to a string.
     else:
-        # If a pathlib.Path instance is given, convert it to a string path.
-        if isinstance(fp, Path):
-            fp = str(fp)
+        stack = ExitStack()
 
-        if vfs:
-            warnings.warn(
-                "The vfs keyword argument is deprecated and will be removed in version 2.0.0. Instead, pass a URL that uses a zip or tar (for example) scheme.",
-                FionaDeprecationWarning,
-                stacklevel=2,
-            )
-            path, scheme, archive = vfs_parse_paths(fp, vfs=vfs)
-            path = ParsedPath(path, archive, scheme)
+        if hasattr(fp, "path") and hasattr(fp, "fs"):
+            log.debug("Detected fp is an OpenFile: fp=%r", fp)
+            raw_dataset_path = fp.path
+            opener = fp.fs.open
         else:
-            path = parse_path(fp)
+            raw_dataset_path = os.fspath(fp)
 
-        if mode in ("a", "r"):
-            colxn = Collection(
-                path,
-                mode,
-                driver=driver,
-                encoding=encoding,
-                layer=layer,
-                enabled_drivers=enabled_drivers,
-                allow_unsupported_drivers=allow_unsupported_drivers,
-                **kwargs
-            )
-        elif mode == "w":
-            colxn = Collection(
-                path,
-                mode,
-                crs=crs,
-                driver=driver,
-                schema=schema,
-                encoding=encoding,
-                layer=layer,
-                enabled_drivers=enabled_drivers,
-                crs_wkt=crs_wkt,
-                allow_unsupported_drivers=allow_unsupported_drivers,
-                **kwargs
-            )
-        else:
-            raise ValueError("mode string must be one of {'r', 'w', 'a'}")
+        try:
+            if opener:
+                log.debug("Registering opener: raw_dataset_path=%r, mode=%r, opener=%r", raw_dataset_path, mode, opener)
+                vsi_path_ctx = _opener_registration(raw_dataset_path, mode[0], opener)
+                registered_vsi_path = stack.enter_context(vsi_path_ctx)
+                log.debug("Registered vsi path: registered_vsi_path%r", registered_vsi_path)
+                path = _UnparsedPath(registered_vsi_path)
+            else:
+                if vfs:
+                    warnings.warn(
+                        "The vfs keyword argument is deprecated and will be removed in version 2.0.0. Instead, pass a URL that uses a zip or tar (for example) scheme.",
+                        FionaDeprecationWarning,
+                        stacklevel=2,
+                    )
+                    path, scheme, archive = vfs_parse_paths(fp, vfs=vfs)
+                    path = _ParsedPath(path, archive, scheme)
+                else:
+                    path = _parse_path(fp)
 
+            if mode in ("a", "r"):
+                colxn = Collection(
+                    path,
+                    mode,
+                    driver=driver,
+                    encoding=encoding,
+                    layer=layer,
+                    enabled_drivers=enabled_drivers,
+                    allow_unsupported_drivers=allow_unsupported_drivers,
+                    **kwargs
+                )
+            elif mode == "w":
+                colxn = Collection(
+                    path,
+                    mode,
+                    crs=crs,
+                    driver=driver,
+                    schema=schema,
+                    encoding=encoding,
+                    layer=layer,
+                    enabled_drivers=enabled_drivers,
+                    crs_wkt=crs_wkt,
+                    allow_unsupported_drivers=allow_unsupported_drivers,
+                    **kwargs
+                )
+            else:
+                raise ValueError("mode string must be one of {'r', 'w', 'a'}")
+
+        except Exception:
+            stack.close()
+            raise
+
+        colxn._env = stack
         return colxn
 
 
@@ -392,8 +426,8 @@ def listdir(fp):
     if not isinstance(fp, str):
         raise TypeError("invalid path: %r" % fp)
 
-    pobj = parse_path(fp)
-    return _listdir(vsi_path(pobj))
+    pobj = _parse_path(fp)
+    return _listdir(_vsi_path(pobj))
 
 
 @ensure_env_with_credentials
@@ -442,13 +476,13 @@ def listlayers(fp, vfs=None, **kwargs):
                 FionaDeprecationWarning,
                 stacklevel=2,
             )
-            pobj_vfs = parse_path(vfs)
-            pobj_path = parse_path(fp)
-            pobj = ParsedPath(pobj_path.path, pobj_vfs.path, pobj_vfs.scheme)
+            pobj_vfs = _parse_path(vfs)
+            pobj_path = _parse_path(fp)
+            pobj = _ParsedPath(pobj_path.path, pobj_vfs.path, pobj_vfs.scheme)
         else:
-            pobj = parse_path(fp)
+            pobj = _parse_path(fp)
 
-        return _listlayers(vsi_path(pobj), **kwargs)
+        return _listlayers(_vsi_path(pobj), **kwargs)
 
 
 def prop_width(val):
