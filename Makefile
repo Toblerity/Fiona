@@ -46,3 +46,9 @@ dockergdb: dockertestimage
 
 dockerdocs: dockertestimage
 	docker run -it -v $(shell pwd):/app --entrypoint=/bin/bash fiona:$(GDAL)-py$(PYTHON_VERSION) -c 'source /venv/bin/activate && cd docs && make clean && make html'
+
+dockertestimage-amd64:
+	docker build --platform linux/amd64 --target gdal --build-arg GDAL=$(GDAL) --build-arg PYTHON_VERSION=$(PYTHON_VERSION) -t fiona-amd64:$(GDAL)-py$(PYTHON_VERSION) .
+
+dockertest-amd64: dockertestimage-amd64
+	docker run -it -v $(shell pwd):/app -v /tmp:/tmp --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --entrypoint=/bin/bash fiona-amd64:$(GDAL)-py$(PYTHON_VERSION) -c '/venv/bin/python -m pip install --editable . --no-build-isolation && /venv/bin/python -B -m pytest -m "not wheel" --cov fiona --cov-report term-missing $(OPTS)'
