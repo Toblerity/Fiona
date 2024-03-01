@@ -3,6 +3,14 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+Next
+----
+
+Python version:
+
+Fiona 1.10 will be compatible with Numpy versions 1 and 2 and will require
+Python version 3.9 or higher.
+
 1.9.5 (2023-10-11)
 ------------------
 
