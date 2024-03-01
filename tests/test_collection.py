@@ -111,7 +111,7 @@ class TestReading:
         )
 
     def test_path(self, path_coutwildrnp_shp):
-        assert self.c.path == path_coutwildrnp_shp
+        assert self.c.path == Path(path_coutwildrnp_shp).as_posix()
 
     def test_name(self):
         assert self.c.name == "coutwildrnp"

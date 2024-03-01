@@ -21,14 +21,14 @@ class ReadingTest(unittest.TestCase):
 
     def test_open_repr(self):
         assert repr(self.c) == (
-            f"<open Collection '{self.path_coutwildrnp_shp}:coutwildrnp', "
+            f"<open Collection '{Path(self.path_coutwildrnp_shp).as_posix()}:coutwildrnp', "
             f"mode 'r' at {hex(id(self.c))}>"
         )
 
     def test_closed_repr(self):
         self.c.close()
         assert repr(self.c) == (
-            f"<closed Collection '{self.path_coutwildrnp_shp}:coutwildrnp', "
+            f"<closed Collection '{Path(self.path_coutwildrnp_shp).as_posix()}:coutwildrnp', "
             f"mode 'r' at {hex(id(self.c))}>"
         )
 
