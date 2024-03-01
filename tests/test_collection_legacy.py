@@ -1,5 +1,6 @@
 # Testing collections and workspaces
 
+from pathlib import Path
 import unittest
 import re
 
