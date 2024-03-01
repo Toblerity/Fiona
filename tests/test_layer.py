@@ -1,3 +1,7 @@
+"""Layer tests."""
+
+from pathlib import Path
+
 import pytest
 
 import fiona
@@ -18,14 +22,14 @@ class TestFileReading(TestReading):
 
     def test_open_repr(self, path_coutwildrnp_shp):
         assert repr(self.c) == (
-            f"<open Collection '{path_coutwildrnp_shp}:coutwildrnp', "
+            f"<open Collection '{Path(path_coutwildrnp_shp).as_posix()}:coutwildrnp', "
             f"mode 'r' at {hex(id(self.c))}>"
         )
 
     def test_closed_repr(self, path_coutwildrnp_shp):
         self.c.close()
         assert repr(self.c) == (
-            f"<closed Collection '{path_coutwildrnp_shp}:coutwildrnp', "
+            f"<closed Collection '{Path(path_coutwildrnp_shp).as_posix()}:coutwildrnp', "
             f"mode 'r' at {hex(id(self.c))}>"
         )
 
@@ -42,14 +46,14 @@ class TestDirReading(TestReading):
 
     def test_open_repr(self, data_dir):
         assert repr(self.c) == (
-            f"<open Collection '{data_dir}:coutwildrnp', "
+            f"<open Collection '{Path(data_dir).as_posix()}:coutwildrnp', "
             f"mode 'r' at {hex(id(self.c))}>"
         )
 
     def test_closed_repr(self, data_dir):
         self.c.close()
         assert repr(self.c) == (
-            f"<closed Collection '{data_dir}:coutwildrnp', "
+            f"<closed Collection '{Path(data_dir).as_posix()}:coutwildrnp', "
             f"mode 'r' at {hex(id(self.c))}>"
         )
 
