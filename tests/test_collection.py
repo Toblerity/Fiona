@@ -99,19 +99,19 @@ class TestReading:
 
     def test_open_repr(self, path_coutwildrnp_shp):
         assert repr(self.c) == (
-            f"<open Collection '{Path(path_coutwildrnp_shp).as_posix()}:coutwildrnp', "
+            f"<open Collection '{path_coutwildrnp_shp}:coutwildrnp', "
             f"mode 'r' at {hex(id(self.c))}>"
         )
 
     def test_closed_repr(self, path_coutwildrnp_shp):
         self.c.close()
         assert repr(self.c) == (
-            f"<closed Collection '{Path(path_coutwildrnp_shp).as_posix()}:coutwildrnp', "
+            f"<closed Collection '{path_coutwildrnp_shp}:coutwildrnp', "
             f"mode 'r' at {hex(id(self.c))}>"
         )
 
     def test_path(self, path_coutwildrnp_shp):
-        assert self.c.path == Path(path_coutwildrnp_shp).as_posix()
+        assert self.c.path == path_coutwildrnp_shp
 
     def test_name(self):
         assert self.c.name == "coutwildrnp"
