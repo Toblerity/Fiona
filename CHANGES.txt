@@ -3,13 +3,25 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-Next
-----
+1.10a1 (2024-03-01)
+-------------------
 
 Python version:
 
 Fiona 1.10 will be compatible with Numpy versions 1 and 2 and will require
 Python version 3.9 or higher.
+
+New features:
+
+- Python openers can now support discovery of auxiliary "sidecar" files like
+  .aux.xml, .msk, and .tfw files for GeoTIFFs (#1331). Additionally, filesystem
+  objects, such as those from fsspec, can be used as openers. This will become
+  the recommended usage, supplanting the use of single file openers.
+
+Bug fixes:
+
+- gzip, tar, and zip archive URIs containing drive letters were not always
+  parsed properly on Windows, but are now (#1334).
 
 1.9.5 (2023-10-11)
 ------------------
