@@ -1,6 +1,5 @@
 """_path tests."""
 
-from pathlib import Path
 import sys
 
 from fiona._path import _parse_path, _vsi_path

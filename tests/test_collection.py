@@ -2,7 +2,6 @@
 
 import datetime
 import logging
-from pathlib import Path
 import random
 import re
 import sys
