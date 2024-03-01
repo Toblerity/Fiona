@@ -66,8 +66,8 @@ class _ParsedPath(_Path):
     @classmethod
     def from_uri(cls, uri):
         parts = urlparse(uri)
-        if sys.platform == "win32" and re.match(r"^[a-zA-Z]\:", parts.netloc) and not parts.path:
-            parsed_path = parts.netloc
+        if sys.platform == "win32" and re.match(r"^[a-zA-Z]\:", parts.netloc):
+            parsed_path = f"{parts.netloc}{parts.path}"
             parsed_netloc = None
         else:
             parsed_path = parts.path
