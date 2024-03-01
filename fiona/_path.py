@@ -65,7 +65,13 @@ class _ParsedPath(_Path):
     @classmethod
     def from_uri(cls, uri):
         parts = urlparse(uri)
-        path = pathlib.Path(parts.path).as_posix() if parts.path else parts.path
+        if sys.platform == "win32" and re.match(r"^[a-zA-Z]\:", parts.netloc) and not parts.path:
+            parsed_path = parts.netloc
+            parsed_netloc = None
+        else:
+            parsed_path = parts.path
+            parsed_netloc = parts.netloc
+        path = pathlib.Path(parsed_path).as_posix() if parsed_path else parsed_path
         scheme = parts.scheme or None
 
         if parts.query:
@@ -78,11 +84,11 @@ class _ParsedPath(_Path):
         else:
             archive = None
 
-        if parts.scheme and parts.netloc:
+        if scheme and parsed_netloc:
             if archive:
-                archive = parts.netloc + archive
+                archive = parsed_netloc + archive
             else:
-                path = parts.netloc + path
+                path = parsed_netloc + path
 
         return _ParsedPath(path, archive, scheme)
 
