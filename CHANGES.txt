@@ -20,6 +20,7 @@ New features:
 
 Bug fixes:
 
+- Use of pkg_resources in test_rio_info.py has been eliminated.
 - gzip, tar, and zip archive URIs containing drive letters were not always
   parsed properly on Windows, but are now (#1334).
 
