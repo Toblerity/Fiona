@@ -84,7 +84,7 @@ __all__ = [
     "remove",
 ]
 
-__version__ = "1.10a1"
+__version__ = "1.10dev"
 __gdal_version__ = get_gdal_release_name()
 
 gdal_version = get_gdal_version_tuple()
