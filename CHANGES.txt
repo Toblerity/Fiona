@@ -11,12 +11,18 @@ Python version:
 Fiona 1.10 will be compatible with Numpy versions 1 and 2 and will require
 Python version 3.9 or higher.
 
+Deprecations:
+
+The fiona.path module will be removed in version 2.0 and a deprecation warning
+is issued when the module is imported (#1334). Additionally, members of that
+module are no longer exported from the top level module.
+
 New features:
 
-- Python openers can now support discovery of auxiliary "sidecar" files like
-  .aux.xml, .msk, and .tfw files for GeoTIFFs (#1331). Additionally, filesystem
-  objects, such as those from fsspec, can be used as openers. This will become
-  the recommended usage, supplanting the use of single file openers.
+Python openers can now support discovery of auxiliary "sidecar" files like
+.aux.xml, .msk, and .tfw files for GeoTIFFs (#1331). Additionally, filesystem
+objects, such as those from fsspec, can be used as openers. This will become
+the recommended usage, supplanting the use of single file openers.
 
 Bug fixes:
 

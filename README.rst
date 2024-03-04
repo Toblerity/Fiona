@@ -47,7 +47,7 @@ environment variable.
 Many users find Anaconda and conda-forge a good way to install Fiona and get
 access to more optional format drivers (like GML).
 
-Fiona 1.10 requires Python 3.9 or higher and GDAL 3.4 or higher.
+Fiona 1.10 requires Python 3.8 or higher and GDAL 3.4 or higher.
 
 Python Usage
 ============
