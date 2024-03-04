@@ -6,6 +6,7 @@ import fsspec
 import pytest
 
 import fiona
+from fiona.model import Feature
 
 
 def test_opener_io_open(path_grenada_geojson):
@@ -52,3 +53,28 @@ def test_opener_tiledb_file():
         assert len(colxn) == 67
         assert colxn.schema["geometry"] == "Polygon"
         assert "AGBUR" in colxn.schema["properties"]
+
+
+def test_opener_fsspec_fs_write(tmp_path):
+    """Write a feature via an fsspec fs opener."""
+    schema = {"geometry": "Point", "properties": {"zero": "int"}}
+    feature = Feature.from_dict(
+        **{
+            "geometry": {"type": "Point", "coordinates": (0, 0)},
+            "properties": {"zero": "0"},
+        }
+    )
+    fs = fsspec.filesystem("file")
+    outputfile = tmp_path.joinpath("test.shp")
+
+    with fiona.open(
+        str(outputfile),
+        "w",
+        driver="ESRI Shapefile",
+        schema=schema,
+        crs="OGC:CRS84",
+        opener=fs,
+    ) as collection:
+        collection.write(feature)
+        assert len(collection) == 1
+        assert collection.crs == "OGC:CRS84"

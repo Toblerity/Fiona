@@ -15,7 +15,6 @@ from urllib.parse import urlparse
 from uuid import uuid4
 
 from libc.string cimport memcpy
-cimport numpy as np
 
 from fiona.errors import OpenerRegistrationError
 
@@ -52,6 +51,7 @@ cdef int install_pyopener_plugin(VSIFilesystemPluginCallbacksStruct *callbacks_s
         callbacks_struct.seek = <VSIFilesystemPluginSeekCallback>pyopener_seek
         callbacks_struct.read = <VSIFilesystemPluginReadCallback>pyopener_read
         callbacks_struct.write = <VSIFilesystemPluginWriteCallback>pyopener_write
+        callbacks_struct.flush = <VSIFilesystemPluginFlushCallback>pyopener_flush
         callbacks_struct.close = <VSIFilesystemPluginCloseCallback>pyopener_close
         callbacks_struct.read_dir = <VSIFilesystemPluginReadDirCallback>pyopener_read_dir
         callbacks_struct.stat = <VSIFilesystemPluginStatCallback>pyopener_stat
@@ -83,11 +83,7 @@ cdef int pyopener_stat(
     urlpath = pszFilename.decode("utf-8")
     parsed_uri = urlparse(urlpath)
     parent = Path(parsed_uri.path).parent
-
-    # Note that "r" mode is used here under the assumption that GDAL
-    # doesn't read_dir when writing data. Could be wrong!
-    mode = "r"
-    key = ((parsed_uri.scheme, parsed_uri.netloc, parent.as_posix()), mode)
+    key = (parsed_uri.scheme, parsed_uri.netloc, parent.as_posix())
 
     registry = _OPENER_REGISTRY.get()
     log.debug("Looking up opener in pyopener_stat: registry=%r, key=%r", registry, key)
@@ -130,11 +126,7 @@ cdef char ** pyopener_read_dir(
     """Provides a directory listing to GDAL from a Python filesystem."""
     urlpath = pszDirname.decode("utf-8")
     parsed_uri = urlparse(urlpath)
-
-    # Note that "r" mode is used here under the assumption that GDAL
-    # doesn't read_dir when writing data. Could be wrong!
-    mode = "r"
-    key = ((parsed_uri.scheme, parsed_uri.netloc, parsed_uri.path), mode[0])
+    key = (parsed_uri.scheme, parsed_uri.netloc, parsed_uri.path)
 
     registry = _OPENER_REGISTRY.get()
     log.debug("Looking up opener in pyopener_read_dir: registry=%r, key=%r", registry, key)
@@ -182,7 +174,7 @@ cdef void* pyopener_open(
     parsed_uri = urlparse(urlpath)
     path_to_check = Path(parsed_uri.path)
     parent = path_to_check.parent
-    key = ((parsed_uri.scheme, parsed_uri.netloc, parent.as_posix()), mode[0])
+    key = (parsed_uri.scheme, parsed_uri.netloc, parent.as_posix())
 
     registry = _OPENER_REGISTRY.get()
     log.debug("Looking up opener in pyopener_open: registry=%r, key=%r", registry, key)
@@ -261,11 +253,27 @@ cdef size_t pyopener_read(void *pFile, void *pBuffer, size_t nSize, size_t nCoun
 
 
 cdef size_t pyopener_write(void *pFile, void *pBuffer, size_t nSize, size_t nCount) with gil:
+    if pBuffer == NULL:
+        return -1
     cdef object file_obj = <object>pFile
     buffer_len = nSize * nCount
-    cdef np.uint8_t [:] buff_view = <np.uint8_t[:buffer_len]>pBuffer
-    log.debug("Writing data: buff_view=%r", buff_view)
-    return <size_t>file_obj.write(buff_view)
+    cdef unsigned char [:] buff_view = <unsigned char[:buffer_len]>pBuffer
+    log.debug("Writing data: file_obj=%r, buff_view=%r, buffer_len=%r", file_obj, buff_view, buffer_len)
+    try:
+        num = file_obj.write(buff_view)
+    except TypeError:
+        num = file_obj.write(str(buff_view))
+    return 1  # <size_t>num
+
+
+cdef int pyopener_flush(void *pFile) with gil:
+    cdef object file_obj = <object>pFile
+    log.debug("Flushing: file_obj=%r", file_obj)
+    try:
+        file_obj.flush()
+        return 0
+    except AttributeError:
+        return 1
 
 
 cdef int pyopener_close(void *pFile) with gil:
@@ -279,18 +287,19 @@ cdef int pyopener_close(void *pFile) with gil:
 
 
 @contextlib.contextmanager
-def _opener_registration(urlpath, mode, obj):
+def _opener_registration(urlpath, obj):
     parsed_uri = urlparse(urlpath)
     path_to_check = Path(parsed_uri.path)
     parent = path_to_check.parent
-    key = ((parsed_uri.scheme, parsed_uri.netloc, parent.as_posix()), mode[0])
+    key = (parsed_uri.scheme, parsed_uri.netloc, parent.as_posix())
+
     # Might raise.
     opener = _create_opener(obj)
 
     registry = _OPENER_REGISTRY.get()
     if key in registry:
         if registry[key] != opener:
-            raise OpenerRegistrationError(f"Opener already registered for urlpath and mode.")
+            raise OpenerRegistrationError(f"Opener already registered for urlpath.")
         else:
             try:
                 yield f"{PREFIX}{urlpath}"

@@ -55,12 +55,6 @@ language = None
 gdal_major_version = 0
 gdal_minor_version = 0
 
-try:
-    import numpy as np
-    include_dirs.append(np.get_include())
-except ImportError:
-    raise SystemExit("ERROR: Numpy and its headers are required to run setup().")
-
 if 'clean' not in sys.argv:
     try:
         gdal_config = os.environ.get('GDAL_CONFIG', 'gdal-config')
