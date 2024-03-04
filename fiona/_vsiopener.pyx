@@ -263,7 +263,7 @@ cdef size_t pyopener_write(void *pFile, void *pBuffer, size_t nSize, size_t nCou
         num = file_obj.write(buff_view)
     except TypeError:
         num = file_obj.write(str(buff_view))
-    return 1  # <size_t>num
+    return <size_t>(num // nSize)
 
 
 cdef int pyopener_flush(void *pFile) with gil:
