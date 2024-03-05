@@ -8,6 +8,8 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Bug fixes:
 
+- The legacy crs.py module which was shadowed by the new crs.pyx module has
+  been deleted (#1344).
 - Python 3.8 has been added back to the list of supported versions and
   a dependency on Numpy added in 1.10a1 has been removed.
 - An implementation of the VSI flush callback has been added to _vsiopener.pyx.
