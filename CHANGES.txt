@@ -12,7 +12,7 @@ Bug fixes:
   a dependency on Numpy added in 1.10a1 has been removed.
 - An implementation of the VSI flush callback has been added to _vsiopener.pyx.
 - Openers are now registered only by urlpath. The mode is no longer considered
-  as OGR drivers may use a mix of modes.
+  as OGR drivers may use a mix of modes when creating a new dataset.
 
 1.10a1 (2024-03-01)
 -------------------
