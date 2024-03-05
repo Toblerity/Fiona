@@ -11,7 +11,6 @@ from pathlib import Path
 
 import stat
 
-from urllib.parse import urlparse
 from uuid import uuid4
 
 from libc.string cimport memcpy
@@ -81,9 +80,7 @@ cdef int pyopener_stat(
     # Reminder: openers are registered by URI scheme, authority, and 
     # *directory* path.
     urlpath = pszFilename.decode("utf-8")
-    parsed_uri = urlparse(urlpath)
-    parent = Path(parsed_uri.path).parent
-    key = (parsed_uri.scheme, parsed_uri.netloc, parent.as_posix())
+    key = Path(urlpath).parent
 
     registry = _OPENER_REGISTRY.get()
     log.debug("Looking up opener in pyopener_stat: registry=%r, key=%r", registry, key)
@@ -125,8 +122,7 @@ cdef char ** pyopener_read_dir(
 ) with gil:
     """Provides a directory listing to GDAL from a Python filesystem."""
     urlpath = pszDirname.decode("utf-8")
-    parsed_uri = urlparse(urlpath)
-    key = (parsed_uri.scheme, parsed_uri.netloc, parsed_uri.path)
+    key = Path(urlpath).parent
 
     registry = _OPENER_REGISTRY.get()
     log.debug("Looking up opener in pyopener_read_dir: registry=%r, key=%r", registry, key)
@@ -171,10 +167,7 @@ cdef void* pyopener_open(
     """
     urlpath = pszFilename.decode("utf-8")
     mode = pszAccess.decode("utf-8")
-    parsed_uri = urlparse(urlpath)
-    path_to_check = Path(parsed_uri.path)
-    parent = path_to_check.parent
-    key = (parsed_uri.scheme, parsed_uri.netloc, parent.as_posix())
+    key = Path(urlpath).parent
 
     registry = _OPENER_REGISTRY.get()
     log.debug("Looking up opener in pyopener_open: registry=%r, key=%r", registry, key)
@@ -288,10 +281,7 @@ cdef int pyopener_close(void *pFile) with gil:
 
 @contextlib.contextmanager
 def _opener_registration(urlpath, obj):
-    parsed_uri = urlparse(urlpath)
-    path_to_check = Path(parsed_uri.path)
-    parent = path_to_check.parent
-    key = (parsed_uri.scheme, parsed_uri.netloc, parent.as_posix())
+    key = Path(urlpath).parent
 
     # Might raise.
     opener = _create_opener(obj)
