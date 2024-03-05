@@ -11,8 +11,6 @@ from pathlib import Path
 
 import stat
 
-from uuid import uuid4
-
 from libc.string cimport memcpy
 
 from fiona.errors import OpenerRegistrationError
@@ -122,7 +120,7 @@ cdef char ** pyopener_read_dir(
 ) with gil:
     """Provides a directory listing to GDAL from a Python filesystem."""
     urlpath = pszDirname.decode("utf-8")
-    key = Path(urlpath).parent
+    key = Path(urlpath)
 
     registry = _OPENER_REGISTRY.get()
     log.debug("Looking up opener in pyopener_read_dir: registry=%r, key=%r", registry, key)
@@ -241,7 +239,7 @@ cdef size_t pyopener_read(void *pFile, void *pBuffer, size_t nSize, size_t nCoun
     cdef bytes python_data = file_obj.read(nSize * nCount)
     cdef int num_bytes = len(python_data)
     # NOTE: We have to cast to char* first, otherwise Cython doesn't do the conversion properly
-    memcpy(pBuffer, <void*><char*>python_data, num_bytes)
+    memcpy(pBuffer, <void*><unsigned char*>python_data, num_bytes)
     return <size_t>(num_bytes / nSize)
 
 
