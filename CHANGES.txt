@@ -3,8 +3,8 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.9.6 (TBD)
------------
+1.9.6 (2024-03-07)
+------------------
 
 - Ensure that geometry types in a schema are translated to a linear type, as
   geometry instances are (#1313).
