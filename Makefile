@@ -1,4 +1,4 @@
-PYTHON_VERSION ?= 3.9
+PYTHON_VERSION ?= 3.10
 GDAL ?= ubuntu-small-3.6.4
 all: deps clean install test
 
@@ -37,7 +37,6 @@ dockertest: dockertestimage
 
 dockershell: dockertestimage
 	docker run -it -v $(shell pwd):/app --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --entrypoint=/bin/bash fiona:$(GDAL)-py$(PYTHON_VERSION) -c '/venv/bin/python -m pip install --editable . --no-build-isolation && /bin/bash'
-
 dockersdist: dockertestimage
 	docker run -it -v $(shell pwd):/app --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --entrypoint=/bin/bash fiona:$(GDAL)-py$(PYTHON_VERSION) -c '/venv/bin/python -m build --sdist'
 

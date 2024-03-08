@@ -43,6 +43,14 @@ Bug fixes:
 - gzip, tar, and zip archive URIs containing drive letters were not always
   parsed properly on Windows, but are now (#1334).
 
+1.9.6 (2024-03-07)
+------------------
+
+- Ensure that geometry types in a schema are translated to a linear type, as
+  geometry instances are (#1313).
+- Fix broken stable API documentation on Read The Docs (#).
+- Remove install requirement of setuptools, a regression introduced in 1.9.5.
+
 1.9.5 (2023-10-11)
 ------------------
 
@@ -54,10 +62,12 @@ Bug fixes:
 
 Packaging:
 
-* Builds now require Cython >= 3.0.2 (#1276).
-* PyPI wheels include GDAL 3.6.4, PROJ 9.0.1, and GEOS 3.11.2.
-* PyPI wheels include curl 8.4.0, addressing CVE-2023-38545 and CVE-38546.
-* PyPI wheels are now available for Python 3.12.
+- The distribution name is now officially "fiona", not "Fiona". The import
+  name remains "fiona".
+- Builds now require Cython >= 3.0.2 (#1276).
+- PyPI wheels include GDAL 3.6.4, PROJ 9.0.1, and GEOS 3.11.2.
+- PyPI wheels include curl 8.4.0, addressing CVE-2023-38545 and CVE-38546.
+- PyPI wheels are now available for Python 3.12.
 
 1.9.4.post1 (2023-05-23)
 ------------------------

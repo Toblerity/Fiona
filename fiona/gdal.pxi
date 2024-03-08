@@ -651,6 +651,7 @@ cdef extern from "ogr_api.h" nogil:
     long long OGR_F_GetFieldAsInteger64 (void *feature, int n)
     void    OGR_F_SetFieldInteger64 (void *feature, int n, long long value)
     int OGR_F_IsFieldNull(void *feature, int n)
+    OGRwkbGeometryType OGR_GT_GetLinear(OGRwkbGeometryType eType)
 
 
 cdef extern from "gdalwarper.h" nogil:

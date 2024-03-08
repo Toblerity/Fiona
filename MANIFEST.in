@@ -8,6 +8,9 @@ exclude *.txt *.py
 recursive-include docs *.rst *.txt
 recursive-include tests *.py
 recursive-include tests/data *
+exclude tests/data/coutwildrnp.gpkg
+exclude tests/data/coutwildrnp.json
+exclude tests/data/coutwildrnp.tar
 recursive-include fiona *.pyx *.pxd *.pxi
 recursive-exclude fiona *.c *.cpp
 include CHANGES.txt CITATION.cff CREDITS.txt LICENSE.txt README.rst
