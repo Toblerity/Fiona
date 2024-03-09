@@ -447,7 +447,7 @@ Upcoming changes:
   1.9 is intended to be backwards compatible with 1.8 except where user code
   tests `isinstance(feature, dict)`. In version 2.0 the new Feature, Geometry,
   and Properties classes will become immutable mappings. See
-  https://github.com/Toblerity/fiona-rfc/blob/master/rfc/0001-fiona-2-0-changes.md
+  https://github.com/Toblerity/fiona-rfc/blob/main/rfc/0001-fiona-2-0-changes.md
   for more discussion of the upcoming changes for version 2.0.
 
 1.8.6 (2019-03-18)

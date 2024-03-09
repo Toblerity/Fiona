@@ -2,8 +2,8 @@
 Fiona
 =====
 
-.. image:: https://github.com/Toblerity/Fiona/workflows/Tests/badge.svg?branch=master
-   :target: https://github.com/Toblerity/Fiona/actions?query=branch%3Amaster
+.. image:: https://github.com/Toblerity/Fiona/workflows/Tests/badge.svg?branch=main
+   :target: https://github.com/Toblerity/Fiona/actions?query=branch%3Amain
 
 Fiona streams simple feature data to and from GIS formats like GeoPackage and
 Shapefile.
@@ -103,7 +103,7 @@ CLI Usage
 =========
 
 Fiona's command line interface, named "fio", is documented at `docs/cli.rst
-<https://github.com/Toblerity/Fiona/blob/master/docs/cli.rst>`__. The CLI has a
+<https://github.com/Toblerity/Fiona/blob/main/docs/cli.rst>`__. The CLI has a
 number of different commands. Its ``fio cat`` command streams GeoJSON features
 from any dataset.
 
@@ -120,6 +120,6 @@ For more details about this project, please see:
 
 * Fiona `home page <https://github.com/Toblerity/Fiona>`__
 * `Docs and manual <https://fiona.readthedocs.io/>`__
-* `Examples <https://github.com/Toblerity/Fiona/tree/master/examples>`__
+* `Examples <https://github.com/Toblerity/Fiona/tree/main/examples>`__
 * Main `user discussion group <https://fiona.groups.io/g/main>`__
 * `Developers discussion group <https://fiona.groups.io/g/dev>`__

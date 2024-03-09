@@ -2,7 +2,7 @@ name: Tests
 
 on:
   push:
-    branches: [ master, 'maint-*' ]
+    branches: [ main, 'maint-*' ]
     paths:
       - '.github/workflows/tests.yaml'
       - 'requirements*.txt'
@@ -14,7 +14,7 @@ on:
       - 'fiona/**'
       - 'tests/**'
   pull_request:
-    branches: [ master, 'maint-*' ]
+    branches: [ main, 'maint-*' ]
     paths:
       - '.github/workflows/tests.yaml'
       - 'requirements*.txt'
