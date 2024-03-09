@@ -2,7 +2,7 @@ name: Test GDAL Latest
 
 on:
   push:
-    branches: [ master, 'maint-*' ]
+    branches: [ main, 'maint-*' ]
   schedule:
     - cron:  '0 0 * * 0'
   pull_request:  # also build on PRs touching this file

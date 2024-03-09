@@ -1034,12 +1034,12 @@ def test_open_kwargs(tmpdir, path_coutwildrnp_shp):
 @pytest.mark.network
 def test_collection_http():
     ds = fiona.Collection(
-        "https://raw.githubusercontent.com/Toblerity/Fiona/master/tests/data/coutwildrnp.shp",
+        "https://raw.githubusercontent.com/Toblerity/Fiona/main/tests/data/coutwildrnp.shp",
         vsi="https",
     )
     assert (
         ds.path
-        == "/vsicurl/https://raw.githubusercontent.com/Toblerity/Fiona/master/tests/data/coutwildrnp.shp"
+        == "/vsicurl/https://raw.githubusercontent.com/Toblerity/Fiona/main/tests/data/coutwildrnp.shp"
     )
     assert len(ds) == 67
 
@@ -1047,10 +1047,10 @@ def test_collection_http():
 @pytest.mark.network
 def test_collection_zip_http():
     ds = fiona.Collection(
-        "https://raw.githubusercontent.com/Toblerity/Fiona/master/tests/data/coutwildrnp.zip",
+        "https://raw.githubusercontent.com/Toblerity/Fiona/main/tests/data/coutwildrnp.zip",
         vsi="zip+https",
     )
-    assert ds.path == "/vsizip/vsicurl/https://raw.githubusercontent.com/Toblerity/Fiona/master/tests/data/coutwildrnp.zip"
+    assert ds.path == "/vsizip/vsicurl/https://raw.githubusercontent.com/Toblerity/Fiona/main/tests/data/coutwildrnp.zip"
     assert len(ds) == 67
 
 
