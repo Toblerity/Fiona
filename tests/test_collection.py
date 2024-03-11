@@ -1193,6 +1193,10 @@ def test_driver_detection(tmpdir, extension, driver):
         assert output.driver == driver
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="Windows test runners don't have full unicode support",
+)
 def test_collection_name(tmp_path):
     """A Collection name is plumbed all the way through."""
     filename = os.fspath(tmp_path.joinpath("test.geojson"))
