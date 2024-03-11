@@ -2,10 +2,12 @@
 Fiona
 =====
 
-.. image:: https://github.com/Toblerity/Fiona/actions/workflows/tests.yml/badge.svg?branch=main
+.. image:: https://github.com/Toblerity/Fiona/actions/workflows/tests.yml/badge.svg
    :target: https://github.com/Toblerity/Fiona/actions/workflows/tests.yml
-.. image:: https://github.com/Toblerity/Fiona/actions/workflows/test_gdal_latest.yml/badge.svg?branch=main
+.. image:: https://github.com/Toblerity/Fiona/actions/workflows/test_gdal_latest.yml/badge.svg
    :target: https://github.com/Toblerity/Fiona/actions/workflows/test_gdal_latest.yml
+.. image:: https://img.shields.io/pypi/v/fiona
+   :target: https://pypi.org/project/fiona/
 
 Fiona streams simple feature data to and from GIS formats like GeoPackage and
 Shapefile.
