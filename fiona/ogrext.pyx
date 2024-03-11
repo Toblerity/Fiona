@@ -587,18 +587,20 @@ cdef class Session:
 
         self.cogr_ds = gdal_open_vector(path_c, 0, drivers, kwargs)
 
-        if isinstance(collection.name, str):
-            name_b = collection.name.encode('utf-8')
-            name_c = name_b
-            self.cogr_layer = GDALDatasetGetLayerByName(self.cogr_ds, name_c)
-        elif isinstance(collection.name, int):
-            self.cogr_layer = GDALDatasetGetLayer(self.cogr_ds, collection.name)
+        layername = collection.name  # collection.layer or 0  # if collection.layer is not None else collection.name
+
+        if isinstance(layername, str):
+            layername_b = layername.encode('utf-8')
+            self.cogr_layer = GDALDatasetGetLayerByName(self.cogr_ds, <const char *>layername_b)
+        elif isinstance(layername, int):
+            self.cogr_layer = GDALDatasetGetLayer(self.cogr_ds, <int>layername)
+
+        if self.cogr_layer == NULL:
+            raise ValueError(f"Null layer: {collection} {layername}")
+        else:
             name_c = OGR_L_GetName(self.cogr_layer)
             name_b = name_c
             collection.name = name_b.decode('utf-8')
-
-        if self.cogr_layer == NULL:
-            raise ValueError("Null layer: " + repr(collection.name))
 
         encoding = self._get_internal_encoding()
 
@@ -1196,8 +1198,8 @@ cdef class WritingSession(Session):
                 GDALDatasetDeleteLayer(self.cogr_ds, idx)
 
             # Create the named layer in the datasource.
-            name_b = collection.name.encode('utf-8')
-            name_c = name_b
+            layername = collection.name
+            layername_b = layername.encode('utf-8')
 
             # To avoid circular import.
             from fiona import meta
@@ -1239,7 +1241,7 @@ cdef class WritingSession(Session):
                 with Env(GDAL_VALIDATE_CREATION_OPTIONS="NO"):
                     self.cogr_layer = exc_wrap_pointer(
                         GDALDatasetCreateLayer(
-                            self.cogr_ds, name_c, cogr_srs,
+                            self.cogr_ds, <const char *>layername_b, cogr_srs,
                             <OGRwkbGeometryType>geometry_code, options))
 
             except Exception as exc:
