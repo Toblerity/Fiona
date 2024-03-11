@@ -8,6 +8,8 @@ Fiona
    :target: https://github.com/Toblerity/Fiona/actions/workflows/test_gdal_latest.yml
 .. image:: https://img.shields.io/pypi/v/fiona
    :target: https://pypi.org/project/fiona/
+.. image:: https://api.securityscorecards.dev/projects/github.com/Toblerity/Fiona/badge
+   :target: https://securityscorecards.dev/viewer/?uri=github.com/Toblerity/Fiona
 
 Fiona streams simple feature data to and from GIS formats like GeoPackage and
 Shapefile.
