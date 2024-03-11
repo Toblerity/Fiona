@@ -10,7 +10,6 @@ on:
       - 'setup.cfg'
       - 'MANIFEST.in'
       - 'pyproject.toml'
-      - 'scripts/**'
       - 'fiona/**'
       - 'tests/**'
   pull_request:
@@ -22,11 +21,13 @@ on:
       - 'setup.cfg'
       - 'MANIFEST.in'
       - 'pyproject.toml'
-      - 'scripts/**'
       - 'fiona/**'
       - 'tests/**'
   schedule:
     - cron:  '0 0 * * 0'
+
+permissions:
+  contents: read
 
 jobs:
   docker_tests:
