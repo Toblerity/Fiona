@@ -587,7 +587,7 @@ cdef class Session:
 
         self.cogr_ds = gdal_open_vector(path_c, 0, drivers, kwargs)
 
-        layername = collection.name  # collection.layer or 0  # if collection.layer is not None else collection.name
+        layername = collection.name
 
         if isinstance(layername, str):
             layername_b = layername.encode('utf-8')
