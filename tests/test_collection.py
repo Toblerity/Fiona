@@ -1,7 +1,10 @@
-# Testing collections and workspaces
+"""Testing collections and workspaces."""
+# coding=utf-8
 
 import datetime
+import json
 import logging
+import os
 import random
 import re
 import sys
@@ -10,8 +13,8 @@ import pytest
 
 import fiona
 from fiona.collection import Collection
-from fiona.drvsupport import supported_drivers, driver_mode_mingdal
-from fiona.env import getenv, GDALVersion
+from fiona.drvsupport import supported_drivers
+from fiona.env import getenv
 from fiona.errors import (
     AttributeFilterError,
     FionaValueError,
@@ -20,7 +23,7 @@ from fiona.errors import (
 )
 from fiona.model import Feature, Geometry
 
-from .conftest import WGS84PATTERN, get_temp_filename
+from .conftest import WGS84PATTERN
 
 
 class TestSupportedDrivers:
@@ -340,7 +343,7 @@ class TestIgnoreFieldsAndGeometry:
                 "r",
                 include_fields=["AREA"],
                 ignore_fields=["STATE"],
-            ) as collection:
+            ):
                 pass
 
     def test_ignore_geometry(self):
@@ -400,14 +403,6 @@ class TestFilterReading:
         results = list(self.c.filter())
         assert len(results) == 67
 
-    def test_filter_bbox_where(self):
-        # combined filter criteria
-        results = set(self.c.keys(
-            bbox=(-120.0, 40.0, -100.0, 50.0), where="NAME LIKE 'Mount%'"))
-        assert results == set([0, 2, 5, 13])
-        results = set(self.c.keys())
-        assert len(results) == 67
-
     def test_filter_where_error(self):
         for w in ["bad stuff", "NAME=3", "NNAME LIKE 'Mount%'"]:
             with pytest.raises(AttributeFilterError):
@@ -421,11 +416,6 @@ class TestFilterReading:
         assert results == {0, 2, 5, 13}
         results = set(self.c.keys())
         assert len(results) == 67
-
-    def test_filter_where_error(self):
-        for w in ["bad stuff", "NAME=3", "NNAME LIKE 'Mount%'"]:
-            with pytest.raises(AttributeFilterError):
-                self.c.filter(where=w)
 
 
 class TestUnsupportedDriver:
@@ -1201,3 +1191,28 @@ def test_driver_detection(tmpdir, extension, driver):
         crs="EPSG:4326",
     ) as output:
         assert output.driver == driver
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="Windows test runners don't have full unicode support",
+)
+def test_collection_name(tmp_path):
+    """A Collection name is plumbed all the way through."""
+    filename = os.fspath(tmp_path.joinpath("test.geojson"))
+
+    with fiona.Collection(
+        filename,
+        "w",
+        driver="GeoJSON",
+        crs="EPSG:4326",
+        schema={"geometry": "Point", "properties": {"foo": "int"}},
+        layer="Darwin Núñez",
+        write_name=True,
+    ) as colxn:
+        assert colxn.name == "Darwin Núñez"
+
+    with open(filename) as f:
+        geojson = json.load(f)
+
+    assert geojson["name"] == "Darwin Núñez"

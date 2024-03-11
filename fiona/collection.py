@@ -2,7 +2,7 @@
 
 from contextlib import ExitStack
 import logging
-import os
+from pathlib import Path
 import warnings
 
 from fiona import compat, vfs
@@ -173,21 +173,14 @@ class Collection:
             path = _parse_path(path)
             self.path = _vsi_path(path)
 
+        self.layer = layer or 0
+
         if mode == "w":
             if layer and not isinstance(layer, str):
                 raise ValueError("in 'w' mode, layer names must be strings")
-            if driver == "GeoJSON":
-                if layer is not None:
-                    raise ValueError("the GeoJSON format does not have layers")
-                self.name = "OgrGeoJSON"
-            # TODO: raise ValueError as above for other single-layer formats.
-            else:
-                self.name = layer or os.path.basename(os.path.splitext(path.path)[0])
+            self.name = layer or Path(self.path).stem
         else:
-            if layer in (0, None):
-                self.name = 0
-            else:
-                self.name = layer or os.path.basename(os.path.splitext(path)[0])
+            self.name = 0 if layer is None else layer or Path(self.path).stem
 
         self.mode = mode
 
@@ -551,7 +544,7 @@ class Collection:
 
     def write(self, record):
         """Stages a record for writing to disk.
-        
+
         Note: Each call of this method will start and commit a
         unique transaction with the data source.
         """
