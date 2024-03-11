@@ -1,4 +1,5 @@
-# Testing collections and workspaces
+"""Testing collections and workspaces."""
+# coding=utf-8
 
 import datetime
 import json
