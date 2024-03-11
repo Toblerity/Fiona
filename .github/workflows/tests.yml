@@ -10,7 +10,6 @@ on:
       - 'setup.cfg'
       - 'MANIFEST.in'
       - 'pyproject.toml'
-      - 'scripts/**'
       - 'fiona/**'
       - 'tests/**'
   pull_request:
@@ -22,7 +21,6 @@ on:
       - 'setup.cfg'
       - 'MANIFEST.in'
       - 'pyproject.toml'
-      - 'scripts/**'
       - 'fiona/**'
       - 'tests/**'
   schedule:

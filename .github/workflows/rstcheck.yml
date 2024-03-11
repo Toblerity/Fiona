@@ -15,7 +15,8 @@ on:
       - "docs/**"
       - "ci/rstcheck/*"
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   rstcheck:
