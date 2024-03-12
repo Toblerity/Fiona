@@ -8,6 +8,8 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Bug fixes:
 
+- Add a 16-bit integer type "int16" based on OGR's OSFTInt16 integer sub-type
+  (#).
 - Allow a GeoJSON collection's layer name to be set on opening in write mode
   (#1352).
 - The legacy crs.py module which was shadowed by the new crs.pyx module has
