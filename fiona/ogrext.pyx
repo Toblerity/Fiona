@@ -787,24 +787,17 @@ cdef class Session:
                     OGR_Fld_GetType(cogr_fielddefn))
                 continue
 
-            val = fieldtypename
-
-            if fieldtypename == 'float':
-                fmt = ""
+            if fieldtypename == "float":
                 width = OGR_Fld_GetWidth(cogr_fielddefn)
-
-                if width: # and width != 24:
-                    fmt = f":{width:d}"
-
                 precision = OGR_Fld_GetPrecision(cogr_fielddefn)
-
-                if precision: # and precision != 15:
+                fmt = ""
+                if width:
+                    fmt = f":{width:d}"
+                if precision:
                     fmt += f".{precision:d}"
-
-                val = "float" + fmt
+                val = f"float{fmt}"
 
             elif fieldtypename == "int32":
-                log.debug("Checking field type name: fieldtypename=%r, fieldsubtype=%r, OFSTInt16=%r", fieldtypename, fieldsubtype, OFSTInt16)
                 if fieldsubtype == OFSTBoolean:
                     val = "bool"
                 elif fieldsubtype == OFSTInt16:
@@ -814,23 +807,24 @@ cdef class Session:
                     width = OGR_Fld_GetWidth(cogr_fielddefn)
                     if width:
                         fmt = f":{width:d}"
-                    val = fieldtypename + fmt
+                    val = f"int32{fmt}"
 
             elif fieldtypename == "int64":
                 fmt = ""
                 width = OGR_Fld_GetWidth(cogr_fielddefn)
                 if width:
                     fmt = f":{width:d}"
-                val = "int" + fmt
+                val = f"int{fmt}"
 
-            elif fieldtypename == 'str':
+            elif fieldtypename == "str":
                 fmt = ""
                 width = OGR_Fld_GetWidth(cogr_fielddefn)
-
                 if width:
                     fmt = f":{width:d}"
+                val = f"str{fmt}"
 
-                val = fieldtypename + fmt
+            else:
+                val = fieldtypename
 
             # Store the field name and description value.
             props[key] = val
