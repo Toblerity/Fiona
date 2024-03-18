@@ -3,8 +3,15 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.01a2 (TBD)
+1.10a2 (TBD)
 ------------
+
+New features:
+
+The filter, map, and reduce CLI commands from fio-planet version 1.1.0 have
+been incorporated into Fiona's core set of commands (#). These commands are
+only available if pyparsing and shapely (each of these are declared in the
+"calc" set of extra requirements) are installed.
 
 Bug fixes:
 
