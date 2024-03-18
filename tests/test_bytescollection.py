@@ -93,7 +93,7 @@ class TestReading:
         assert s["NAME"] == "str"
         assert s["URL"] == "str"
         assert s["STATE_FIPS"] == "str"
-        assert s["WILDRNP020"] == "int"
+        assert s["WILDRNP020"] == "int32"
 
     def test_closed_schema(self):
         # Schema is lazy too, never computed in this case. TODO?
