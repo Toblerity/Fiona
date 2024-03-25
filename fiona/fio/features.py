@@ -167,6 +167,11 @@ def filter_cmd(ctx, pipeline, use_rs, snuggs_only):
         except ParseException:
             # It's likely an old-style Python expression.
             log.info("Detected a legacy Python expression.")
+            warnings.warn(
+                "This style of filter expression is deprecated. "
+                "Version 2.0 will only support the new parenthesized list expressions.",
+                FutureWarning,
+            )
             for i, obj in enumerate(features):
                 feats = obj.get("features") or [obj]
                 for j, feat in enumerate(feats):

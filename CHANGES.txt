@@ -6,12 +6,18 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 1.10a2 (TBD)
 ------------
 
+Deprecations:
+
+The Python style of rio-filter expressions introduced in version 1.0 are
+deprecated. Only the parenthesized list type of expression will be supported by
+version 2.0.
+
 New features:
 
-The filter, map, and reduce CLI commands from fio-planet version 1.1.0 have
-been incorporated into Fiona's core set of commands (#). These commands are
-only available if pyparsing and shapely (each of these are declared in the
-"calc" set of extra requirements) are installed.
+The filter, map, and reduce CLI commands from the public domain version 1.1.0
+of fio-planet have been incorporated into Fiona's core set of commands (#1362).
+These commands are only available if pyparsing and shapely (each of these are
+declared in the "calc" set of extra requirements) are installed.
 
 Bug fixes:
 

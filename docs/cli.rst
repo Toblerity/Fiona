@@ -10,12 +10,15 @@ Fiona's new command line interface is a program named "fio".
       Fiona command line interface.
 
     Options:
-      -v, --verbose     Increase verbosity.
-      -q, --quiet       Decrease verbosity.
-      --version         Show the version and exit.
-      --gdal-version    Show the version and exit.
-      --python-version  Show the version and exit.
-      --help            Show this message and exit.
+      -v, --verbose           Increase verbosity.
+      -q, --quiet             Decrease verbosity.
+      --aws-profile TEXT      Select a profile from the AWS credentials file
+      --aws-no-sign-requests  Make requests anonymously
+      --aws-requester-pays    Requester pays data transfer costs
+      --version               Show the version and exit.
+      --gdal-version          Show the version and exit.
+      --python-version        Show the version and exit.
+      --help                  Show this message and exit.
 
     Commands:
       bounds   Print the extent of GeoJSON objects
@@ -25,21 +28,21 @@ Fiona's new command line interface is a program named "fio".
       distrib  Distribute features from a collection.
       dump     Dump a dataset to GeoJSON.
       env      Print information about the fio environment.
-      filter   Filter GeoJSON features by python expression.
+      filter   Evaluate pipeline expressions to filter GeoJSON features.
       info     Print information about a dataset.
       insp     Open a dataset and start an interpreter.
       load     Load GeoJSON to a dataset in another format.
       ls       List layers in a datasource.
+      map      Map a pipeline expression over GeoJSON features.
+      reduce   Reduce a stream of GeoJSON features to one value.
       rm       Remove a datasource or an individual layer.
 
-It is developed using the ``click`` package and is new in 1.1.6.
+It is developed using the ``click`` package.
 
 bounds
 ------
 
-New in 1.4.5.
-
-Fio-bounds reads LF or RS-delimited GeoJSON texts, either features or
+The bounds command reads LF or RS-delimited GeoJSON texts, either features or
 collections, from stdin and prints their bounds with or without other data to
 stdout.
 
@@ -61,8 +64,6 @@ Using ``--with-id`` gives you
 
 calc
 ----
-
-New in 1.7b1
 
 The calc command creates a new property on GeoJSON features using the
 specified expression.
@@ -102,8 +103,6 @@ concatenated datasets.
     $ fio info docs/data/test_uk.shp --count
     48
 
-New in 1.4.0.
-
 The cat command provides optional methods to filter data, which are
 different to the ``fio filter`` tool.
 A bounding box ``--bbox w,s,e,n`` tests for a spatial intersection with
@@ -125,8 +124,6 @@ as the output of ``fio cat`` and writes a GeoJSON feature collection.
     $ fio info /tmp/collected.json --count
     96
 
-New in 1.4.0.
-
 distrib
 -------
 
@@ -139,8 +136,6 @@ and writes a JSON text sequence of GeoJSON feature objects.
     67
     $ fio cat tests/data/coutwildrnp.shp | fio collect | fio distrib | wc -l
     67
-
-New in 1.4.0.
 
 dump
 ----
@@ -274,41 +269,263 @@ collection into a feature sequence.
 
 filter
 ------
-The filter command reads GeoJSON features from stdin and writes the feature to 
-stdout *if* the provided expression evalutates to `True` for that feature. 
 
-The python expression is evaluated in a restricted namespace containing 3 functions 
-(`sum`, `min`, `max`), the `math` module, the shapely `shape` function, 
-and an object `f` representing the feature to be evaluated. This `f` object allows
-access in javascript-style dot notation for convenience. 
+For each feature read from stdin, filter evaluates a pipeline of one or
+more steps described using methods from the Shapely library in Lisp-like
+expressions. If the pipeline expression evaluates to True, the feature passes
+through the filter. Otherwise the feature does not pass.
 
-If the expression evaluates to a "truthy" value, the feature is printed verbatim.
-Otherwise, the feature is excluded from the output.
+For example, this pipeline expression
 
 .. code-block:: console
 
-    $ fio cat data.shp \
-    > | fio filter "f.properties.area > 1000.0" \
-    > | fio collect > large_polygons.geojson
+    $ fio cat zip+https://s3.amazonaws.com/fiona-testing/coutwildrnp.zip \
+    | fio filter '< (distance g (Point -109.0 38.5)) 100'
 
-Would create a geojson file with only those features from `data.shp` where the
-area was over a given threshold.
+lets through all features that are less than 100 meters from the given point
+and filters out all other features.
 
-Note this tool is different than ``fio cat --where TEXT ...``, which provides
+*New in version 1.10*: these parenthesized list expressions.
+
+The older style Python expressions like
+
+.. code-block::
+
+    'f.properties.area > 1000.0'
+
+are deprecated and will not be supported in version 2.0.
+
+Note this tool is different from ``fio cat --where TEXT ...``, which provides
 SQL WHERE clause filtering of feature attributes.
+
+map
+---
+
+For each feature read from stdin, fio-map applies a transformation pipeline and
+writes a copy of the feature, containing the modified geometry, to stdout. For
+example, polygonal features can be roughly "cleaned" by using a ``buffer g 0``
+pipeline.
+
+.. code-block:: console
+
+    $ fio cat zip+https://s3.amazonaws.com/fiona-testing/coutwildrnp.zip \
+    | fio map 'buffer g 0'
+
+reduce
+------
+
+Given a sequence of GeoJSON features (RS-delimited or not) on stdin this prints
+a single value using a provided transformation pipeline.  The set of geometries
+of the input features in the context of these expressions is named ``c``.
+
+For example, the pipeline expression
+
+.. code-block:: console
+
+    $ fio cat zip+https://s3.amazonaws.com/fiona-testing/coutwildrnp.zip \
+    | fio reduce 'unary_union c'
+
+dissolves the geometries of input features.
 
 rm
 --
-The ``fio rm`` command deletes an entire datasource or a single layer in a
-multi-layer datasource. If the datasource is composed of multiple files
-(e.g. an ESRI Shapefile) all of the files will be removed.
+
+The rm command deletes an entire datasource or a single layer in a multi-layer
+datasource. If the datasource is composed of multiple files (e.g. an ESRI
+Shapefile) all of the files will be removed.
 
 .. code-block:: console
 
     $ fio rm countries.shp
     $ fio rm --layer forests land_cover.gpkg
 
-New in 1.8.0.
+Expressions and functions
+-------------------------
+
+filter, map, and reduce expressions take the form of parenthesized lists that
+may contain other expressions. The first item in a list is the name of
+a function or method, or an expression that evaluates to a function. The second
+item is the function's first argument or the object to which the method is
+bound. The remaining list items are the positional and keyword arguments for
+the named function or method. The list of functions and callables available in
+an expression includes:
+
+* Python operators such as ``+``, ``/``, and ``<=``
+* Python builtins such as ``dict``, ``list``, and ``map``
+* All public functions from itertools, e.g. ``islice``, and ``repeat``
+* All functions importable from Shapely 2.0, e.g. ``Point``, and ``unary_union``
+* All methods of Shapely geometry classes
+* Functions specific to Fiona
+
+Expressions are evaluated by ``fiona.features.snuggs.eval()``. Let's look at
+some examples using that function.
+
+.. note::
+
+   The outer parentheses are not optional within ``snuggs.eval()``.
+
+.. note::
+
+   ``snuggs.eval()`` does not use Python's builtin ``eval()`` but isn't intended
+   to be a secure computing environment. Expressions which access the
+   computer's filesystem and create new processes are possible.
+
+Builtin Python functions
+------------------------
+
+``bool``:
+
+.. code-block:: python
+
+    >>> snuggs.eval('(bool 0)')
+    False
+
+``range``:
+
+.. code-block:: python
+
+    >>> snuggs.eval('(range 1 4)')
+    range(1, 4)
+
+``list``:
+
+.. code-block:: python
+
+    >>> snuggs.eval('(list (range 1 4))')
+    [1, 2, 3]
+
+Values can be bound to names for use in expressions.
+
+.. code-block:: python
+
+    >>> snuggs.eval('(list (range start stop))', start=0, stop=5)
+    [0, 1, 2, 3, 4]
+
+Itertools functions
+-------------------
+
+Here's an example of using ``itertools.repeat()``.
+
+.. code-block:: python
+
+    >>> snuggs.eval('(list (repeat "*" times))', times=6)
+    ['*', '*', '*', '*', '*', '*']
+
+Shapely functions
+-----------------
+
+Here's an expression that evaluates to a Shapely Point instance.
+
+.. code-block:: python
+
+    >>> snuggs.eval('(Point 0 0)')
+    <POINT (0 0)>
+
+The expression below evaluates to a MultiPoint instance.
+
+.. code-block:: python
+
+    >>> snuggs.eval('(union (Point 0 0) (Point 1 1))')
+    <MULTIPOINT (0 0, 1 1)>
+
+Functions specific to fiona
+---------------------------
+
+The fio CLI introduces four new functions not available in Python's
+standard library, or Shapely: ``collect``, ``dump``, ``identity``, and
+``vertex_count``.
+
+The ``collect`` function turns a list of geometries into a geometry collection
+and ``dump`` does the inverse, turning a geometry collection into a sequence of
+geometries.
+
+.. code-block:: python
+
+    >>> snuggs.eval('(collect (Point 0 0) (Point 1 1))')
+    <GEOMETRYCOLLECTION (POINT (0 0), POINT (1 1))>
+    >>> snuggs.eval('(list (dump (collect (Point 0 0) (Point 1 1))))')
+    [<POINT (0 0)>, <POINT (1 1)>]
+
+The ``identity`` function returns its single argument.
+
+.. code-block:: python
+
+    >>> snuggs.eval('(identity 42)')
+    42
+
+To count the number of vertices in a geometry, use ``vertex_count``.
+
+.. code-block:: python
+
+    >>> snuggs.eval('(vertex_count (Point 0 0))')
+    1
+
+The ``area``, ``buffer``, ``distance``, ``length``, ``simplify``, and ``set_precision``
+functions shadow, or override, functions from the shapely module. They
+automatically reproject geometry objects from their natural coordinate
+reference system (CRS) of ``OGC:CRS84`` to ``EPSG:6933`` so that the shapes can be
+measured or modified using meters as units.
+
+``buffer`` dilates (or erodes) a given geometry, with coordinates in decimal
+longitude and latitude degrees, by a given distance in meters.
+
+.. code-block:: python
+
+    >>> snuggs.eval('(buffer (Point 0 0) :distance 100)')
+    <POLYGON ((0.001 0, 0.001 0, 0.001 0, 0.001 0, 0.001 -0.001, 0.001 -0.001, 0...>
+
+The ``area`` and ``length`` of this polygon have units of square meter and meter.
+
+.. code-block:: python
+
+    >>> snuggs.eval('(area (buffer (Point 0 0) :distance 100))')
+    31214.451487413342
+    >>> snuggs.eval('(length (buffer (Point 0 0) :distance 100))')
+    627.3096977558143
+
+The ``distance`` between two geometries is in meters.
+
+.. code-block:: python
+
+    >>> snuggs.eval('(distance (Point 0 0) (Point 0.1 0.1))')
+    15995.164946207413
+
+A geometry can be simplified to a tolerance value in meters using ``simplify``.
+There are more examples of this function under `topics:simplification
+<topics/simplification/>``_.
+
+.. code-block:: python
+
+    >>> snuggs.eval('(simplify (buffer (Point 0 0) :distance 100) :tolerance 100)')
+    <POLYGON ((0.001 0, 0 -0.001, -0.001 0, 0 0.001, 0.001 0))>
+
+The ``set_precision`` function snaps a geometry to a fixed precision grid with a
+size in meters.
+
+.. code-block:: python
+
+    >>> snuggs.eval('(set_precision (Point 0.001 0.001) :grid_size 500)')
+    <POINT (0 0)>
+
+Feature and geometry context for expressions
+--------------------------------------------
+
+``fio filter`` and ``fio map`` evaluate expressions in the context of a GeoJSON
+feature and its geometry attribute. These are named ``f`` and ``g``. For example,
+here is an expression that tests whether the input feature is within 62.5
+kilometers of the given point.
+
+.. code-block:: lisp
+
+   < (distance g (Point 4 43)) 62.5E3
+
+``fio reduce`` evaluates expressions in the context of the sequence of all input
+geometries, named ``c``. For example, this expression dissolves input
+geometries using Shapely's ``unary_union``.
+
+.. code-block:: lisp
+
+   unary_union c
 
 Coordinate Reference System Transformations
 -------------------------------------------
@@ -336,5 +553,3 @@ by fio cat. The following,
     > /tmp/foo.shp
 
 does the same thing, but for ESRI Shapefile output.
-
-New in 1.4.2.
