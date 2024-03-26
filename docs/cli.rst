@@ -583,9 +583,10 @@ does the same thing, but for ESRI Shapefile output.
 Sizing up and simplifying shapes
 --------------------------------
 
-The following examples use a 25-feature shapefile. You can get it from
-[rmnp.zip](https://github.com/Toblerity/Fiona/files/14749922/rmnp.zip) or
-access it in a streaming fashion as shown in the examples below.
+The following examples use the program ``jq`` and a 25-feature shapefile. You
+can get the data from from `rmnp.zip
+<https://github.com/Toblerity/Fiona/files/14749922/rmnp.zip>`__ or access it in
+a streaming fashion as shown in the examples below.
 
 Counting vertices in a feature collection
 +++++++++++++++++++++++++++++++++++++++++
