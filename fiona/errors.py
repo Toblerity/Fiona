@@ -89,3 +89,7 @@ class FionaDeprecationWarning(DeprecationWarning):
 
 class FeatureWarning(UserWarning):
     """A warning about serialization of a feature"""
+
+
+class ReduceError(FionaError):
+    """"Raised when reduce operation fails."""
