@@ -82,6 +82,11 @@ will not be overwritten by default (an `Exception` is raised).
 
     $ fio cat data.shp | fio calc sumAB  "f.properties.A + f.properties.B"
 
+.. note::
+
+   ``fio calc`` requires installation of the "calc" set of extra requirements
+   that will be installed by ``pip install fiona[calc]``.
+
 cat
 ---
 
@@ -298,10 +303,15 @@ are deprecated and will not be supported in version 2.0.
 Note this tool is different from ``fio cat --where TEXT ...``, which provides
 SQL WHERE clause filtering of feature attributes.
 
+.. note::
+
+   ``fio filter`` requires installation of the "calc" set of extra requirements
+   that will be installed by ``pip install fiona[calc]``.
+
 map
 ---
 
-For each feature read from stdin, fio-map applies a transformation pipeline and
+For each feature read from stdin, ``fio map`` applies a transformation pipeline and
 writes a copy of the feature, containing the modified geometry, to stdout. For
 example, polygonal features can be roughly "cleaned" by using a ``buffer g 0``
 pipeline.
@@ -310,6 +320,14 @@ pipeline.
 
     $ fio cat zip+https://s3.amazonaws.com/fiona-testing/coutwildrnp.zip \
     | fio map 'buffer g 0'
+
+*New in version 1.10*.
+
+.. note::
+
+   ``fio map`` requires installation of the "calc" set of extra requirements
+   that will be installed by ``pip install fiona[calc]``.
+
 
 reduce
 ------
@@ -327,6 +345,13 @@ For example, the pipeline expression
 
 dissolves the geometries of input features.
 
+*New in version 1.10*.
+
+.. note::
+
+   ``fio reduce`` requires installation of the "calc" set of extra requirements
+   that will be installed by ``pip install fiona[calc]``.
+
 rm
 --
 
@@ -342,13 +367,13 @@ Shapefile) all of the files will be removed.
 Expressions and functions
 -------------------------
 
-filter, map, and reduce expressions take the form of parenthesized lists that
-may contain other expressions. The first item in a list is the name of
-a function or method, or an expression that evaluates to a function. The second
-item is the function's first argument or the object to which the method is
-bound. The remaining list items are the positional and keyword arguments for
-the named function or method. The list of functions and callables available in
-an expression includes:
+``fio filter``, ``fio map``, and ``fio reduce`` expressions take the form of
+parenthesized lists that may contain other expressions. The first item in a
+list is the name of a function or method, or an expression that evaluates to a
+function. The second item is the function's first argument or the object to
+which the method is bound. The remaining list items are the positional and
+keyword arguments for the named function or method. The list of functions and
+callables available in an expression includes:
 
 * Python operators such as ``+``, ``/``, and ``<=``
 * Python builtins such as ``dict``, ``list``, and ``map``
@@ -373,21 +398,21 @@ some examples using that function.
 Builtin Python functions
 ------------------------
 
-``bool``:
+``bool()``
 
 .. code-block:: python
 
     >>> snuggs.eval('(bool 0)')
     False
 
-``range``:
+``range()``
 
 .. code-block:: python
 
     >>> snuggs.eval('(range 1 4)')
     range(1, 4)
 
-``list``:
+``list()``
 
 .. code-block:: python
 
@@ -431,13 +456,13 @@ The expression below evaluates to a MultiPoint instance.
 Functions specific to fiona
 ---------------------------
 
-The fio CLI introduces four new functions not available in Python's
-standard library, or Shapely: ``collect``, ``dump``, ``identity``, and
-``vertex_count``.
+The fio CLI introduces four new functions not available in Python's standard
+library, or Shapely: ``collect()``, ``dump()``, ``identity()``, and
+``vertex_count()``.
 
-The ``collect`` function turns a list of geometries into a geometry collection
-and ``dump`` does the inverse, turning a geometry collection into a sequence of
-geometries.
+The ``collect()`` function turns a list of geometries into a geometry
+collection and ``dump()`` does the inverse, turning a geometry collection into
+a sequence of geometries.
 
 .. code-block:: python
 
@@ -446,27 +471,27 @@ geometries.
     >>> snuggs.eval('(list (dump (collect (Point 0 0) (Point 1 1))))')
     [<POINT (0 0)>, <POINT (1 1)>]
 
-The ``identity`` function returns its single argument.
+The ``identity()`` function returns its single argument.
 
 .. code-block:: python
 
     >>> snuggs.eval('(identity 42)')
     42
 
-To count the number of vertices in a geometry, use ``vertex_count``.
+To count the number of vertices in a geometry, use ``vertex_count()``.
 
 .. code-block:: python
 
     >>> snuggs.eval('(vertex_count (Point 0 0))')
     1
 
-The ``area``, ``buffer``, ``distance``, ``length``, ``simplify``, and ``set_precision``
-functions shadow, or override, functions from the shapely module. They
-automatically reproject geometry objects from their natural coordinate
-reference system (CRS) of ``OGC:CRS84`` to ``EPSG:6933`` so that the shapes can be
-measured or modified using meters as units.
+The ``area()``, ``buffer()``, ``distance()``, ``length()``, ``simplify()``, and
+``set_precision()`` functions shadow, or override, functions from the shapely
+module. They automatically reproject geometry objects from their natural
+coordinate reference system (CRS) of ``OGC:CRS84`` to ``EPSG:6933`` so that the
+shapes can be measured or modified using meters as units.
 
-``buffer`` dilates (or erodes) a given geometry, with coordinates in decimal
+``buffer()`` dilates (or erodes) a given geometry, with coordinates in decimal
 longitude and latitude degrees, by a given distance in meters.
 
 .. code-block:: python
@@ -474,7 +499,8 @@ longitude and latitude degrees, by a given distance in meters.
     >>> snuggs.eval('(buffer (Point 0 0) :distance 100)')
     <POLYGON ((0.001 0, 0.001 0, 0.001 0, 0.001 0, 0.001 -0.001, 0.001 -0.001, 0...>
 
-The ``area`` and ``length`` of this polygon have units of square meter and meter.
+The ``area()`` and ``length()`` of this polygon have units of square meter and
+meter.
 
 .. code-block:: python
 
@@ -483,24 +509,24 @@ The ``area`` and ``length`` of this polygon have units of square meter and meter
     >>> snuggs.eval('(length (buffer (Point 0 0) :distance 100))')
     627.3096977558143
 
-The ``distance`` between two geometries is in meters.
+The ``distance()`` between two geometries is in meters.
 
 .. code-block:: python
 
     >>> snuggs.eval('(distance (Point 0 0) (Point 0.1 0.1))')
     15995.164946207413
 
-A geometry can be simplified to a tolerance value in meters using ``simplify``.
-There are more examples of this function under `topics:simplification
-<topics/simplification/>``_.
+A geometry can be simplified to a tolerance value in meters using
+``simplify()``.  There are more examples of this function later in this
+document.
 
 .. code-block:: python
 
     >>> snuggs.eval('(simplify (buffer (Point 0 0) :distance 100) :tolerance 100)')
     <POLYGON ((0.001 0, 0 -0.001, -0.001 0, 0 0.001, 0.001 0))>
 
-The ``set_precision`` function snaps a geometry to a fixed precision grid with a
-size in meters.
+The ``set_precision()`` function snaps a geometry to a fixed precision grid
+with a size in meters.
 
 .. code-block:: python
 
@@ -553,3 +579,101 @@ by fio cat. The following,
     > /tmp/foo.shp
 
 does the same thing, but for ESRI Shapefile output.
+
+Sizing up and simplifying shapes
+--------------------------------
+
+The following examples use a 25-feature shapefile. You can get it from
+[rmnp.zip](https://github.com/Toblerity/Fiona/files/14749922/rmnp.zip) or
+access it in a streaming fashion as shown in the examples below.
+
+Counting vertices in a feature collection
++++++++++++++++++++++++++++++++++++++++++
+
+The builtin ``vertex_count()`` function, in conjunction with ``fio map``'s
+``--raw`` option, prints out the number of vertices in each feature. The
+default for fio-map is to wrap the result of every evaluated expression in a
+GeoJSON feature; ``--raw`` disables this. The program jq provides a nice way of
+summing the sequence of numbers.
+
+.. code-block:: console
+
+    fio cat zip+https://github.com/Toblerity/Fiona/files/14749922/rmnp.zip \
+    | fio map 'vertex_count g' --raw \
+    | jq -s 'add'
+    28915
+
+Here's what the RMNP wilderness patrol zones features look like in QGIS.
+
+.. image:: img/zones.png
+
+Counting vertices after making a simplified buffer
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+One traditional way of simplifying an area of interest is to buffer and
+simplify. There's no need to use jq here because ``fio reduce`` prints out a
+sequence of exactly one feature. The effectiveness of this method depends a bit
+on the nature of the data, especially the distance between vertices. The total
+length of the perimeters of all zones is 889 kilometers.
+
+.. code-block:: console
+
+    fio cat zip+https://github.com/Toblerity/Fiona/files/14749922/rmnp.zip \
+    | fio map 'length g' --raw \
+    | jq -s 'add'
+    889332.0900809917
+
+The mean distance between vertices on the edges of zones is 889332 / 28915, or
+30.7 meters.  You need to buffer and simplify by this value or more to get
+a significant reduction in the number of vertices. Choosing 40 as a buffer
+distance and simplification tolerance results in a shape with 469 vertices.
+It's a suitable area of interest for applications that require this number to
+be less than 500.
+
+.. code-block:: console
+
+    fio cat zip+https://github.com/Toblerity/Fiona/files/14749922/rmnp.zip \
+    | fio reduce 'unary_union c' \
+    | fio map 'simplify (buffer g 40) 40' \
+    | fio map 'vertex_count g' --raw
+    469
+
+.. image:: img/simplified-buffer.png
+
+Counting vertices after dissolving convex hulls of features
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Convex hulls are an easy means of simplification as there are no distance
+parameters to tweak. The ``--dump-parts`` option of ``fio map`` turns the parts of
+multi-part features into separate single-part features. This is one of the ways
+in which fio-map can multiply its inputs, printing out more features than it
+receives.
+
+.. code-block:: console
+
+    fio cat zip+https://github.com/Toblerity/Fiona/files/14749922/rmnp.zip \
+    | fio map 'convex_hull g' --dump-parts \
+    | fio reduce 'unary_union c' \
+    | fio map 'vertex_count g' --raw
+    157
+
+.. image:: img/convex.png
+
+Counting vertices after dissolving concave hulls of features
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Convex hulls simplify, but also dilate concave areas of interest. They fill the
+"bays", so to speak, and this can be undesirable. Concave hulls do a better job
+at preserving the concave nature of a shape and result in a smaller increase of
+area.
+
+.. code-block:: console
+
+    fio cat zip+https://github.com/Toblerity/Fiona/files/14749922/rmnp.zip \
+    | fio map 'concave_hull g :ratio 0.4' --dump-parts \
+    | fio reduce 'unary_union c' \
+    | fio map 'vertex_count g' --raw
+    301
+
+.. image:: img/concave.png
+
