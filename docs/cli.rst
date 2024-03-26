@@ -593,9 +593,9 @@ Counting vertices in a feature collection
 
 The builtin ``vertex_count()`` function, in conjunction with ``fio map``'s
 ``--raw`` option, prints out the number of vertices in each feature. The
-default for fio-map is to wrap the result of every evaluated expression in a
-GeoJSON feature; ``--raw`` disables this. The program jq provides a nice way of
-summing the sequence of numbers.
+default for fio-map is to wrap the result of every evaluated expression in
+a GeoJSON feature; ``--raw`` disables this. The program ``jq`` provides a nice
+way of summing the sequence of numbers.
 
 .. code-block:: console
 
@@ -612,10 +612,10 @@ Counting vertices after making a simplified buffer
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 
 One traditional way of simplifying an area of interest is to buffer and
-simplify. There's no need to use jq here because ``fio reduce`` prints out a
-sequence of exactly one feature. The effectiveness of this method depends a bit
-on the nature of the data, especially the distance between vertices. The total
-length of the perimeters of all zones is 889 kilometers.
+simplify. There's no need to use ``jq`` here because ``fio reduce`` prints out
+a sequence of exactly one feature. The effectiveness of this method depends
+a bit on the nature of the data, especially the distance between vertices. The
+total length of the perimeters of all zones is 889 kilometers.
 
 .. code-block:: console
 
