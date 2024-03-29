@@ -46,6 +46,7 @@ from fiona._env import (
     get_gdal_version_tuple,
 )
 from fiona._env import driver_count
+from fiona._path import _ParsedPath, _UnparsedPath, _parse_path, _vsi_path
 from fiona._show_versions import show_versions
 from fiona._vsiopener import _opener_registration
 from fiona.collection import BytesCollection, Collection
@@ -54,15 +55,8 @@ from fiona.env import ensure_env_with_credentials, Env
 from fiona.errors import FionaDeprecationWarning
 from fiona.io import MemoryFile
 from fiona.model import Feature, Geometry, Properties
-from fiona.ogrext import (
-    FIELD_TYPES_MAP,
-    _bounds,
-    _listdir,
-    _listlayers,
-    _remove,
-    _remove_layer,
-)
-from fiona._path import _ParsedPath, _UnparsedPath, _parse_path, _vsi_path
+from fiona.ogrext import FIELD_TYPES_MAP, _bounds, _listdir, _listlayers, _remove, _remove_layer
+from fiona.schema import NAMED_FIELD_TYPES
 from fiona.vfs import parse_paths as vfs_parse_paths
 
 # These modules are imported by fiona.ogrext, but are also import here to
@@ -534,7 +528,7 @@ def prop_type(text):
 
     """
     key = text.split(':')[0]
-    return FIELD_TYPES_MAP[key]
+    return NAMED_FIELD_TYPES[key].type
 
 
 def drivers(*args, **kwargs):
