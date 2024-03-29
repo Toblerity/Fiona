@@ -31,6 +31,7 @@ def test_types():
     assert prop_type("date") == str
 
 
+@pytest.mark.xfail(not gdal_version.at_least("3.5"), reason="Requires at least GDAL 3.5.0")
 def test_read_json_object_properties():
     """JSON object properties are properly serialized"""
     data = """
