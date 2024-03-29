@@ -202,7 +202,6 @@ def path_testopenfilegdb_zip(data_dir):
     return os.path.join(data_dir, "testopenfilegdb.gdb.zip")
 
 
-
 @pytest.fixture(scope="session")
 def bytes_testopenfilegdb_zip(path_testopenfilegdb_zip):
     """.gdb.zip bytes."""

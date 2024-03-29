@@ -8,9 +8,6 @@ from typing import List
 from fiona.errors import SchemaError
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 
-# cdef extern from "gdal.h":
-#     char * GDALVersionInfo (char *pszRequest)
-
 
 def _get_gdal_version_num():
     """Return current internal version number of gdal"""
