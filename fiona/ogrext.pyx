@@ -778,6 +778,7 @@ cdef class Session:
                 continue
 
             fieldtypename = FIELD_TYPES[OGR_Fld_GetType(cogr_fielddefn)]
+            fieldsubtype = OGR_Fld_GetSubType(cogr_fielddefn)
 
             if not fieldtypename:
                 log.warning(
@@ -786,39 +787,44 @@ cdef class Session:
                     OGR_Fld_GetType(cogr_fielddefn))
                 continue
 
-            val = fieldtypename
-
-            if fieldtypename == 'float':
-                fmt = ""
+            if fieldtypename == "float":
                 width = OGR_Fld_GetWidth(cogr_fielddefn)
-
-                if width: # and width != 24:
-                    fmt = f":{width:d}"
-
                 precision = OGR_Fld_GetPrecision(cogr_fielddefn)
-
-                if precision: # and precision != 15:
+                fmt = ""
+                if width:
+                    fmt = f":{width:d}"
+                if precision:
                     fmt += f".{precision:d}"
+                val = f"float{fmt}"
 
-                val = "float" + fmt
+            elif fieldtypename == "int32":
+                if fieldsubtype == OFSTBoolean:
+                    val = "bool"
+                elif fieldsubtype == OFSTInt16:
+                    val = "int16"
+                else:
+                    fmt = ""
+                    width = OGR_Fld_GetWidth(cogr_fielddefn)
+                    if width:
+                        fmt = f":{width:d}"
+                    val = f"int32{fmt}"
 
-            elif fieldtypename in ('int32', 'int64'):
+            elif fieldtypename == "int64":
                 fmt = ""
                 width = OGR_Fld_GetWidth(cogr_fielddefn)
-
                 if width:
                     fmt = f":{width:d}"
+                val = f"int{fmt}"
 
-                val = 'int' + fmt
-
-            elif fieldtypename == 'str':
+            elif fieldtypename == "str":
                 fmt = ""
                 width = OGR_Fld_GetWidth(cogr_fielddefn)
-
                 if width:
                     fmt = f":{width:d}"
+                val = f"str{fmt}"
 
-                val = fieldtypename + fmt
+            else:
+                val = fieldtypename
 
             # Store the field name and description value.
             props[key] = val
@@ -1287,14 +1293,16 @@ cdef class WritingSession(Session):
 
                 # Convert 'long' to 'int'. See
                 # https://github.com/Toblerity/Fiona/issues/101.
-                if fiona.gdal_version.major >= 2 and value in ('int', 'long'):
+                if value in ('int', 'long'):
                     value = 'int64'
-                elif value == 'int':
-                    value = 'int32'
 
-                if value == 'bool':
+                elif value == 'bool':
                     value = 'int32'
                     field_subtype = OFSTBoolean
+
+                elif value == 'int16':
+                    value = 'int32'
+                    field_subtype = OFSTInt16
 
                 # Is there a field width/precision?
                 width = precision = None
@@ -1307,7 +1315,7 @@ cdef class WritingSession(Session):
                         width = int(fmt)
 
                     if value == 'int':
-                        if GDAL_VERSION_NUM >= 2000000 and (width == 0 or width >= 10):
+                        if width == 0 or width >= 10:
                             value = 'int64'
                         else:
                             value = 'int32'
@@ -1324,6 +1332,7 @@ cdef class WritingSession(Session):
                     if field_subtype != OFSTNone:
                         # subtypes are new in GDAL 2.x, ignored in 1.x
                         OGR_Fld_SetSubType(cogr_fielddefn, field_subtype)
+
                     exc_wrap_int(OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1))
 
                 except (UnicodeEncodeError, CPLE_BaseError) as exc:

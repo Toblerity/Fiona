@@ -74,6 +74,8 @@ def normalize_field_type(ftype):
         return ftype
     elif ftype == 'bool':
         return 'bool'
+    elif ftype == "int16":
+        return 'int32'
     elif ftype.startswith('int'):
         width = int((ftype.split(':')[1:] or ['0'])[0])
         if GDAL_VERSION_NUM >= 2000000 and (width == 0 or width >= 10):
