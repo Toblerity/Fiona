@@ -236,7 +236,9 @@ cdef extern from "ogr_core.h" nogil:
     cdef int OFSTBoolean = 1
     cdef int OFSTInt16 = 2
     cdef int OFSTFloat32 = 3
-    cdef int OFSTMaxSubType = 3
+    cdef int OFSTJSON = 4
+    cdef int OFSTUUID = 5
+    cdef int OFSTMaxSubType = 5
 
     ctypedef struct OGREnvelope:
         double MinX

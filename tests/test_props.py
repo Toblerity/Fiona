@@ -24,7 +24,7 @@ def test_types():
     assert prop_type("str") == str
     assert isinstance(0, prop_type("int"))
     assert isinstance(0.0, prop_type("float"))
-    assert prop_type("date") == FionaDateType
+    assert prop_type("date") == str
 
 
 def test_read_json_object_properties():

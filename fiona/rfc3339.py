@@ -13,16 +13,22 @@ log = logging.getLogger("Fiona")
 # Fiona's 'date', 'time', and 'datetime' types are sub types of 'str'.
 
 
-class FionaDateType(str):
+class FionaDateType:
     """Dates without time."""
+    names = ["date"]
+    type = str
 
 
-class FionaTimeType(str):
+class FionaTimeType:
     """Times without dates."""
+    names = ["time"]
+    type = str
 
 
-class FionaDateTimeType(str):
+class FionaDateTimeType:
     """Dates and times."""
+    names = ["datetime"]
+    type = str
 
 
 pattern_date = re.compile(r"(\d\d\d\d)(-)?(\d\d)(-)?(\d\d)")

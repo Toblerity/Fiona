@@ -1,15 +1,15 @@
 """Fiona schema module."""
 
-from typing import List
+include "gdal.pxi"
 
+import itertools
 from typing import List
 
 from fiona.errors import SchemaError
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 
-
-cdef extern from "gdal.h":
-    char * GDALVersionInfo (char *pszRequest)
+# cdef extern from "gdal.h":
+#     char * GDALVersionInfo (char *pszRequest)
 
 
 def _get_gdal_version_num():
@@ -17,7 +17,50 @@ def _get_gdal_version_num():
     return int(GDALVersionInfo("VERSION_NUM"))
 
 
-GDAL_VERSION_NUM = _get_gdal_version_num()
+class FionaIntegerType:
+    names = ["int32"]
+    type = int
+
+
+class FionaInt16Type:
+    names = ["int16"]
+    type = int
+
+
+class FionaBooleanType:
+    names = ["bool"]
+    type = bool
+
+
+class FionaInteger64Type:
+    names = ["int", "int64"]
+    type = int
+
+
+class FionaRealType:
+    names = ["float", "float64"]
+    type = float
+
+
+class FionaStringType:
+    names = ["str"]
+    type = str
+
+
+class FionaBinaryType:
+    names = ["bytes"]
+    type = bytes
+
+
+class FionaStringListType:
+    names = ["List[str]", "list[str]"]
+    type = List[str]
+
+
+class FionaJSONType:
+    names = ["json"]
+    type = str
+
 
 # Mapping of OGR integer field types to Fiona field type names.
 # Lists are currently unsupported in this version, but might be done as
@@ -57,6 +100,25 @@ FIELD_TYPES_MAP_REV = dict([(v, k) for k, v in FIELD_TYPES_MAP.items()])
 FIELD_TYPES_MAP_REV[int] = 'int'
 
 
+FIELD_TYPES_MAP2_REV = {
+    (OFTInteger, OFSTNone): FionaIntegerType,
+    (OFTInteger, OFSTBoolean): FionaBooleanType,
+    (OFTInteger, OFSTInt16): FionaInt16Type,
+    (OFTInteger64, OFSTNone): FionaInteger64Type,
+    (OFTReal, OFSTNone): FionaRealType,
+    (OFTString, OFSTNone): FionaStringType,
+    (OFTDate, OFSTNone): FionaDateType,
+    (OFTTime, OFSTNone): FionaTimeType,
+    (OFTDateTime, OFSTNone): FionaDateTimeType,
+    (OFTBinary, OFSTNone): FionaBinaryType,
+    (OFTStringList, OFSTNone): FionaStringListType,
+    (OFTString, OFSTJSON): FionaJSONType,
+}
+FIELD_TYPES_MAP2 = {v: k for k, v in FIELD_TYPES_MAP2_REV.items()}
+FIELD_TYPES_NAMES = list(itertools.chain.from_iterable((k.names for k in FIELD_TYPES_MAP2)))
+NAMED_FIELD_TYPES = {n: k for k in FIELD_TYPES_MAP2 for n in k.names}
+
+
 def normalize_field_type(ftype):
     """Normalize free form field types to an element of FIELD_TYPES
 
@@ -70,15 +132,11 @@ def normalize_field_type(ftype):
     str
         An element from FIELD_TYPES
     """
-    if ftype in FIELD_TYPES:
+    if ftype in FIELD_TYPES_NAMES:
         return ftype
-    elif ftype == 'bool':
-        return 'bool'
-    elif ftype == "int16":
-        return 'int32'
     elif ftype.startswith('int'):
         width = int((ftype.split(':')[1:] or ['0'])[0])
-        if GDAL_VERSION_NUM >= 2000000 and (width == 0 or width >= 10):
+        if width == 0 or width >= 10:
             return 'int64'
         else:
             return 'int32'

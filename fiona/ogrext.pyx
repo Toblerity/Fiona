@@ -1,4 +1,4 @@
-# These are extension functions and classes using the OGR C API.
+"""Extension classes and functions using the OGR C API."""
 
 include "gdal.pxi"
 
@@ -36,7 +36,7 @@ from fiona.model import decode_object, Feature, Geometry, Properties
 from fiona._path import _vsi_path
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
 from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
-from fiona.schema import FIELD_TYPES, FIELD_TYPES_MAP, normalize_field_type
+from fiona.schema import FIELD_TYPES, FIELD_TYPES_MAP, FIELD_TYPES_MAP2, normalize_field_type, NAMED_FIELD_TYPES
 
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcmp
@@ -81,15 +81,6 @@ OGRERR_CORRUPT_DATA = 5
 OGRERR_FAILURE = 6
 OGRERR_UNSUPPORTED_SRS = 7
 OGRERR_INVALID_HANDLE = 8
-
-
-cdef bint is_field_null(void *feature, int n):
-    if OGR_F_IsFieldNull(feature, n):
-        return True
-    elif not OGR_F_IsFieldSet(feature, n):
-        return True
-    else:
-        return False
 
 
 cdef void gdal_flush_cache(void *cogr_ds):
@@ -203,7 +194,6 @@ def _bounds(geometry):
     except (KeyError, TypeError):
         return None
 
-
 cdef int GDAL_VERSION_NUM = get_gdal_version_num()
 
 
@@ -215,7 +205,142 @@ class TZ(datetime.tzinfo):
     def utcoffset(self, dt):
         return datetime.timedelta(minutes=self.minutes)
 
-# Feature extension classes and functions follow.
+
+cdef bint is_field_null(OGRFeatureH feature, int i):
+    return OGR_F_IsFieldNull(feature, i) or not OGR_F_IsFieldSet(feature, i)
+
+
+cdef class AbstractPropertyGetter:
+    cdef object get(self, OGRFeatureH feature, int i, object kwds):
+        raise NotImplementedError
+
+
+cdef class IntegerPropertyGetter(AbstractPropertyGetter):
+    cdef object get(self, OGRFeatureH feature, int i, object kwds):
+        return OGR_F_GetFieldAsInteger(feature, i)
+
+
+cdef class Integer64PropertyGetter(AbstractPropertyGetter):
+    cdef object get(self, OGRFeatureH feature, int i, object kwds):
+        return OGR_F_GetFieldAsInteger64(feature, i)
+
+
+cdef class RealPropertyGetter(AbstractPropertyGetter):
+    cdef object get(self, OGRFeatureH feature, int i, object kwds):
+        return OGR_F_GetFieldAsDouble(feature, i)
+
+
+cdef class BooleanPropertyGetter(AbstractPropertyGetter):
+    cdef object get(self, OGRFeatureH feature, int i, object kwds):
+        return bool(OGR_F_GetFieldAsInteger(feature, i))
+
+
+cdef class StringPropertyGetter(AbstractPropertyGetter):
+    cdef object get(self, OGRFeatureH feature, int i, object kwds):
+        encoding = kwds["encoding"]
+        val = OGR_F_GetFieldAsString(feature, i)
+        try:
+            val = val.decode(encoding)
+        except UnicodeDecodeError:
+            log.warning(
+                "Failed to decode %s using %s codec", val, encoding)
+        else:
+            return val
+
+
+cdef class DatePropertyGetter(AbstractPropertyGetter):
+    cdef object get(self, OGRFeatureH feature, int i, object kwds):
+        cdef int retval
+        cdef int y = 0
+        cdef int m = 0
+        cdef int d = 0
+        cdef int hh = 0
+        cdef int mm = 0
+        cdef float fss = 0.0
+        cdef int tz = 0
+        retval = OGR_F_GetFieldAsDateTimeEx(feature, i, &y, &m, &d, &hh, &mm, &fss, &tz)
+        return datetime.date(y, m, d).isoformat()
+
+
+cdef class TimePropertyGetter(AbstractPropertyGetter):
+    cdef object get(self, OGRFeatureH feature, int i, object kwds):
+        cdef int retval
+        cdef int y = 0
+        cdef int m = 0
+        cdef int d = 0
+        cdef int hh = 0
+        cdef int mm = 0
+        cdef float fss = 0.0
+        cdef int tz = 0
+        retval = OGR_F_GetFieldAsDateTimeEx(feature, i, &y, &m, &d, &hh, &mm, &fss, &tz)
+        ms, ss = math.modf(fss)
+        ss = int(ss)
+        ms = int(round(ms * 10**6))
+        # OGR_F_GetFieldAsDateTimeEx: (0=unknown, 1=localtime, 100=GMT, see data model for details)
+        # CPLParseRFC822DateTime: (0=unknown, 100=GMT, 101=GMT+15minute, 99=GMT-15minute), or NULL
+        tzinfo = None
+        if tz > 1:
+            tz_minutes = (tz - 100) * 15
+            tzinfo = TZ(tz_minutes)
+        return datetime.time(hh, mm, ss, ms, tzinfo).isoformat()
+
+
+cdef class DateTimePropertyGetter(AbstractPropertyGetter):
+    cdef object get(self, OGRFeatureH feature, int i, object kwds):
+        cdef int retval
+        cdef int y = 0
+        cdef int m = 0
+        cdef int d = 0
+        cdef int hh = 0
+        cdef int mm = 0
+        cdef float fss = 0.0
+        cdef int tz = 0
+        retval = OGR_F_GetFieldAsDateTimeEx(feature, i, &y, &m, &d, &hh, &mm, &fss, &tz)
+        ms, ss = math.modf(fss)
+        ss = int(ss)
+        ms = int(round(ms * 10**6))
+        # OGR_F_GetFieldAsDateTimeEx: (0=unknown, 1=localtime, 100=GMT, see data model for details)
+        # CPLParseRFC822DateTime: (0=unknown, 100=GMT, 101=GMT+15minute, 99=GMT-15minute), or NULL
+        tzinfo = None
+        if tz > 1:
+            tz_minutes = (tz - 100) * 15
+            tzinfo = TZ(tz_minutes)
+        return datetime.datetime(y, m, d, hh, mm, ss, ms, tzinfo).isoformat()
+
+
+cdef class JSONPropertyGetter(AbstractPropertyGetter):
+    cdef object get(self, OGRFeatureH feature, int i, object kwds):
+        val = OGR_F_GetFieldAsString(feature, i)
+        return json.loads(val)
+
+
+cdef class BytesPropertyGetter(AbstractPropertyGetter):
+    cdef object get(self, OGRFeatureH feature, int i, object kwds):
+        cdef unsigned char *data = NULL
+        cdef int l
+        data = OGR_F_GetFieldAsBinary(feature, i, &l)
+        return data[:l]
+
+
+cdef class StringListPropertyGetter(AbstractPropertyGetter):
+    cdef object get(self, OGRFeatureH feature, int i, object kwds):
+        cdef char **string_list = NULL
+        encoding = kwds["encoding"]
+        string_list = OGR_F_GetFieldAsStringList(feature, i)
+        string_list_index = 0
+        vals = []
+        if string_list != NULL:
+            while string_list[string_list_index] != NULL:
+                val = string_list[string_list_index]
+                try:
+                    val = val.decode(encoding)
+                except UnicodeDecodeError:
+                    log.warning(
+                        "Failed to decode %s using %s codec", val, encoding
+                    )
+                vals.append(val)
+                string_list_index += 1
+        return vals
 
 
 cdef class FeatureBuilder:
@@ -225,7 +350,29 @@ cdef class FeatureBuilder:
     argument is not destroyed.
     """
 
-    cdef build(self, void *feature, encoding='utf-8', bbox=False, driver=None, ignore_fields=None, ignore_geometry=False):
+    OGRPropertyGetter = {
+        (OFTInteger, OFSTNone): IntegerPropertyGetter(),
+        (OFTInteger, OFSTBoolean): BooleanPropertyGetter(),
+        (OFTInteger64, OFSTNone): Integer64PropertyGetter(),
+        (OFTReal, OFSTNone): RealPropertyGetter(),
+        (OFTString, OFSTNone): StringPropertyGetter(),
+        (OFTDate, OFSTNone): DatePropertyGetter(),
+        (OFTTime, OFSTNone): TimePropertyGetter(),
+        (OFTDateTime, OFSTNone): DateTimePropertyGetter(),
+        (OFTBinary, OFSTNone): BytesPropertyGetter(),
+        (OFTStringList, OFSTNone): StringListPropertyGetter(),
+        (OFTString, OFSTJSON): JSONPropertyGetter(),
+    }
+
+    cdef build(
+        self,
+        OGRFeatureH feature,
+        encoding='utf-8',
+        bbox=False,
+        driver=None,
+        ignore_fields=None,
+        ignore_geometry=False
+    ):
         """Build a Fiona feature object from an OGR feature
 
         Parameters
@@ -248,23 +395,12 @@ cdef class FeatureBuilder:
         -------
         dict
         """
-        cdef void *fdefn = NULL
+        cdef OGRFieldDefnH fdefn
         cdef int i
-        cdef unsigned char *data = NULL
-        cdef char **string_list = NULL
-        cdef int string_list_index = 0
-        cdef int l
-        cdef int retval
+        cdef int fieldtype
         cdef int fieldsubtype
-        cdef const char *key_c = NULL
-        # Parameters for OGR_F_GetFieldAsDateTimeEx
-        cdef int y = 0
-        cdef int m = 0
-        cdef int d = 0
-        cdef int hh = 0
-        cdef int mm = 0
-        cdef float fss = 0.0
-        cdef int tz = 0
+        cdef const char *key_c
+        cdef AbstractPropertyGetter getter
 
         # Skeleton of the feature to be returned.
         fid = OGR_F_GetFID(feature)
@@ -272,118 +408,45 @@ cdef class FeatureBuilder:
 
         ignore_fields = set(ignore_fields or [])
 
-        # Iterate over the fields of the OGR feature.
         for i in range(OGR_F_GetFieldCount(feature)):
             fdefn = OGR_F_GetFieldDefnRef(feature, i)
             if fdefn == NULL:
                 raise ValueError(f"NULL field definition at index {i}")
+
             key_c = OGR_Fld_GetNameRef(fdefn)
             if key_c == NULL:
                 raise ValueError(f"NULL field name reference at index {i}")
+
             key_b = key_c
             key = key_b.decode(encoding)
+
+            # Some field names are empty strings, apparently.
+            # We warn in this case.
             if not key:
                 warnings.warn(f"Empty field name at index {i}")
 
             if key in ignore_fields:
                 continue
 
-            fieldtypename = FIELD_TYPES[OGR_Fld_GetType(fdefn)]
+            fieldtype = OGR_Fld_GetType(fdefn)
             fieldsubtype = OGR_Fld_GetSubType(fdefn)
-            if not fieldtypename:
-                log.warning(
-                    "Skipping field %s: invalid type %s",
-                    key,
-                    OGR_Fld_GetType(fdefn))
-                continue
-
-            # TODO: other types
-            fieldtype = FIELD_TYPES_MAP[fieldtypename]
 
             if is_field_null(feature, i):
                 props[key] = None
-
-            elif fieldtypename is 'int32':
-                if fieldsubtype == OFSTBoolean:
-                    props[key] = bool(OGR_F_GetFieldAsInteger(feature, i))
-                else:
-                    props[key] = OGR_F_GetFieldAsInteger(feature, i)
-
-            elif fieldtype is int:
-                if fieldsubtype == OFSTBoolean:
-                    props[key] = bool(OGR_F_GetFieldAsInteger64(feature, i))
-                else:
-                    props[key] = OGR_F_GetFieldAsInteger64(feature, i)
-
-            elif fieldtype is float:
-                props[key] = OGR_F_GetFieldAsDouble(feature, i)
-
-            elif fieldtype is str:
-                val = OGR_F_GetFieldAsString(feature, i)
-                try:
-                    val = val.decode(encoding)
-                except UnicodeDecodeError:
-                    log.warning(
-                        "Failed to decode %s using %s codec", val, encoding)
-
-                # Does the text contain a JSON object? Let's check.
-                # Let's check as cheaply as we can.
-                if driver == 'GeoJSON' and val.startswith('{'):
-                    try:
-                        val = json.loads(val)
-                    except ValueError as err:
-                        log.warning(str(err))
-
-                # Now add to the properties object.
-                props[key] = val
-
-            elif fieldtype in (FionaDateType, FionaTimeType, FionaDateTimeType):
-                retval = OGR_F_GetFieldAsDateTimeEx(feature, i, &y, &m, &d, &hh, &mm, &fss, &tz)
-                ms, ss = math.modf(fss)
-                ss = int(ss)
-                ms = int(round(ms * 10**6))
-
-                # OGR_F_GetFieldAsDateTimeEx: (0=unknown, 1=localtime, 100=GMT, see data model for details)
-                # CPLParseRFC822DateTime: (0=unknown, 100=GMT, 101=GMT+15minute, 99=GMT-15minute), or NULL
-                tzinfo = None
-                if tz > 1:
-                    tz_minutes = (tz - 100) * 15
-                    tzinfo = TZ(tz_minutes)
-
-                try:
-                    if fieldtype is FionaDateType:
-                        props[key] = datetime.date(y, m, d).isoformat()
-                    elif fieldtype is FionaTimeType:
-                        props[key] = datetime.time(hh, mm, ss, ms, tzinfo).isoformat()
-                    else:
-                        props[key] = datetime.datetime(y, m, d, hh, mm, ss, ms, tzinfo).isoformat()
-                except ValueError as err:
-                    log.exception(err)
-                    props[key] = None
-
-            elif fieldtype is bytes:
-                data = OGR_F_GetFieldAsBinary(feature, i, &l)
-                props[key] = data[:l]
-            elif fieldtype is List[str]:
-                string_list = OGR_F_GetFieldAsStringList(feature, i)
-                string_list_index = 0
-                props[key] = []
-                if string_list != NULL:
-                    while string_list[string_list_index] != NULL:
-                        val = string_list[string_list_index]
-                        try:
-                            val = val.decode(encoding)
-                        except UnicodeDecodeError:
-                            log.warning(
-                                "Failed to decode %s using %s codec", val, encoding
-                            )
-                        props[key].append(val)
-                        string_list_index += 1
             else:
-                props[key] = None
+                getter = self.OGRPropertyGetter.get((fieldtype, fieldsubtype), None)
+                if getter:
+                    props[key] = getter.get(feature, i, {"encoding": encoding})
+                else:
+                    log.warning(
+                        "Skipping field %s: invalid type %s",
+                        key,
+                        OGR_Fld_GetType(fdefn))
+                    continue
 
         cdef void *cogr_geometry = NULL
         geom = None
+
         if not ignore_geometry:
             cogr_geometry = OGR_F_GetGeometryRef(feature)
             geom = GeomBuilder().build_from_feature(feature)
@@ -502,8 +565,7 @@ cdef class OGRFeatureBuilder:
 
             elif isinstance(value, bytes) and schema_type == "bytes":
                 string_c = value
-                OGR_F_SetFieldBinary(cogr_feature, i, len(value),
-                    <unsigned char*>string_c)
+                OGR_F_SetFieldBinary(cogr_feature, i, len(value), <unsigned char*>string_c)
             elif isinstance(value, str):
                 value_bytes = strencode(value, encoding)
                 string_c = value_bytes
@@ -541,6 +603,94 @@ def featureRT(feat, collection):
 
 # Collection-related extension classes and functions
 
+cdef class AbstractFieldGetter:
+    cdef object get(self, OGRFieldDefnH fdefn):
+        raise NotImplementedError
+
+
+cdef class RealFieldGetter(AbstractFieldGetter):
+    cdef object get(self, OGRFieldDefnH fdefn):
+        cdef int width = OGR_Fld_GetWidth(fdefn)
+        cdef int precision = OGR_Fld_GetPrecision(fdefn)
+        fmt = ""
+        if width:
+            fmt = f":{width:d}"
+        if precision:
+            fmt += f".{precision:d}"
+        return f"float{fmt}"
+
+
+cdef class BooleanFieldGetter(AbstractFieldGetter):
+    cdef object get(self, OGRFieldDefnH fdefn):
+        return "bool"
+
+
+cdef class Int16FieldGetter(AbstractFieldGetter):
+    cdef object get(self, OGRFieldDefnH fdefn):
+        cdef int width = OGR_Fld_GetWidth(fdefn)
+        fmt = ""
+        if width:
+            fmt = f":{width:d}"
+        return f"int16{fmt}"
+
+
+cdef class IntegerFieldGetter(AbstractFieldGetter):
+    cdef object get(self, OGRFieldDefnH fdefn):
+        cdef int width = OGR_Fld_GetWidth(fdefn)
+        fmt = ""
+        if width:
+            fmt = f":{width:d}"
+        return f"int32{fmt}"
+
+
+cdef class Integer64FieldGetter(AbstractFieldGetter):
+    cdef object get(self, OGRFieldDefnH fdefn):
+        cdef int width = OGR_Fld_GetWidth(fdefn)
+        fmt = ""
+        if width:
+            fmt = f":{width:d}"
+        return f"int{fmt}"
+
+
+cdef class StringFieldGetter(AbstractFieldGetter):
+    cdef object get(self, OGRFieldDefnH fdefn):
+        cdef int width = OGR_Fld_GetWidth(fdefn)
+        fmt = ""
+        if width:
+            fmt = f":{width:d}"
+        return f"str{fmt}"
+
+
+cdef class DateFieldGetter(AbstractFieldGetter):
+    cdef object get(self, OGRFieldDefnH fdefn):
+        return "date"
+
+
+cdef class TimeFieldGetter(AbstractFieldGetter):
+    cdef object get(self, OGRFieldDefnH fdefn):
+        return "time"
+
+
+cdef class DateTimeFieldGetter(AbstractFieldGetter):
+    cdef object get(self, OGRFieldDefnH fdefn):
+        return "datetime"
+
+
+cdef class JSONFieldGetter(AbstractFieldGetter):
+    cdef object get(self, OGRFieldDefnH fdefn):
+        return "json"
+
+
+cdef class BinaryFieldGetter(AbstractFieldGetter):
+    cdef object get(self, OGRFieldDefnH fdefn):
+        return "bytes"
+
+
+cdef class StringListFieldGetter(AbstractFieldGetter):
+    cdef object get(self, OGRFieldDefnH fdefn):
+        return "List[str]"
+
+
 cdef class Session:
 
     cdef void *cogr_ds
@@ -549,6 +699,21 @@ cdef class Session:
     cdef object _encoding
     cdef object collection
     cdef bint cursor_interrupted
+
+    OGRFieldGetter = {
+        (OFTInteger, OFSTNone): IntegerFieldGetter(),
+        (OFTInteger, OFSTBoolean): BooleanFieldGetter(),
+        (OFTInteger, OFSTInt16): Int16FieldGetter(),
+        (OFTInteger64, OFSTNone): Integer64FieldGetter(),
+        (OFTReal, OFSTNone): RealFieldGetter(),
+        (OFTString, OFSTNone): StringFieldGetter(),
+        (OFTDate, OFSTNone): DateFieldGetter(),
+        (OFTTime, OFSTNone): TimeFieldGetter(),
+        (OFTDateTime, OFSTNone): DateTimeFieldGetter(),
+        (OFTBinary, OFSTNone): BinaryFieldGetter(),
+        (OFTStringList, OFSTNone): StringListFieldGetter(),
+        (OFTString, OFSTJSON): JSONFieldGetter(),
+    }
 
     def __init__(self):
         self.cogr_ds = NULL
@@ -725,9 +890,11 @@ cdef class Session:
         """
         cdef int i
         cdef int num_fields
-        cdef void *cogr_featuredefn = NULL
-        cdef void *cogr_fielddefn = NULL
+        cdef OGRFeatureDefnH featuredefn = NULL
+        cdef OGRFieldDefnH fielddefn = NULL
         cdef const char *key_c
+        cdef AbstractFieldGetter getter
+
         props = {}
 
         if self.cogr_layer == NULL:
@@ -738,22 +905,22 @@ cdef class Session:
         else:
             ignore_fields = set()
 
-        cogr_featuredefn = OGR_L_GetLayerDefn(self.cogr_layer)
+        featuredefn = OGR_L_GetLayerDefn(self.cogr_layer)
 
-        if cogr_featuredefn == NULL:
+        if featuredefn == NULL:
             raise ValueError("Null feature definition")
 
         encoding = self._get_internal_encoding()
 
-        num_fields = OGR_FD_GetFieldCount(cogr_featuredefn)
+        num_fields = OGR_FD_GetFieldCount(featuredefn)
 
         for i from 0 <= i < num_fields:
-            cogr_fielddefn = OGR_FD_GetFieldDefn(cogr_featuredefn, i)
+            fielddefn = OGR_FD_GetFieldDefn(featuredefn, i)
 
-            if cogr_fielddefn == NULL:
+            if fielddefn == NULL:
                 raise ValueError(f"NULL field definition at index {i}")
 
-            key_c = OGR_Fld_GetNameRef(cogr_fielddefn)
+            key_c = OGR_Fld_GetNameRef(fielddefn)
 
             if key_c == NULL:
                 raise ValueError(f"NULL field name reference at index {i}")
@@ -777,62 +944,23 @@ cdef class Session:
                 )
                 continue
 
-            fieldtypename = FIELD_TYPES[OGR_Fld_GetType(cogr_fielddefn)]
-            fieldsubtype = OGR_Fld_GetSubType(cogr_fielddefn)
+            fieldtype = OGR_Fld_GetType(fielddefn)
+            fieldsubtype = OGR_Fld_GetSubType(fielddefn)
 
-            if not fieldtypename:
+            getter = self.OGRFieldGetter.get((fieldtype, fieldsubtype), None)
+            if getter:
+                props[key] = getter.get(fielddefn)
+            else:
                 log.warning(
                     "Skipping field %s: invalid type %s",
                     key,
-                    OGR_Fld_GetType(cogr_fielddefn))
+                    OGR_Fld_GetType(fielddefn))
                 continue
-
-            if fieldtypename == "float":
-                width = OGR_Fld_GetWidth(cogr_fielddefn)
-                precision = OGR_Fld_GetPrecision(cogr_fielddefn)
-                fmt = ""
-                if width:
-                    fmt = f":{width:d}"
-                if precision:
-                    fmt += f".{precision:d}"
-                val = f"float{fmt}"
-
-            elif fieldtypename == "int32":
-                if fieldsubtype == OFSTBoolean:
-                    val = "bool"
-                elif fieldsubtype == OFSTInt16:
-                    val = "int16"
-                else:
-                    fmt = ""
-                    width = OGR_Fld_GetWidth(cogr_fielddefn)
-                    if width:
-                        fmt = f":{width:d}"
-                    val = f"int32{fmt}"
-
-            elif fieldtypename == "int64":
-                fmt = ""
-                width = OGR_Fld_GetWidth(cogr_fielddefn)
-                if width:
-                    fmt = f":{width:d}"
-                val = f"int{fmt}"
-
-            elif fieldtypename == "str":
-                fmt = ""
-                width = OGR_Fld_GetWidth(cogr_fielddefn)
-                if width:
-                    fmt = f":{width:d}"
-                val = f"str{fmt}"
-
-            else:
-                val = fieldtypename
-
-            # Store the field name and description value.
-            props[key] = val
 
         ret = {"properties": props}
 
         if not self.collection.ignore_geometry:
-            code = normalize_geometry_type_code(OGR_FD_GetGeomType(cogr_featuredefn))
+            code = normalize_geometry_type_code(OGR_FD_GetGeomType(featuredefn))
             ret["geometry"] = GEOMETRY_TYPES[code]
 
         return ret
@@ -1271,11 +1399,10 @@ cdef class WritingSession(Session):
             # Next, make a layer definition from the given schema properties,
             # which are a dict built-in since Fiona 2.0
 
-            encoding = self._get_internal_encoding()
-
             # Test if default fields are included in provided schema
             schema_fields = collection.schema['properties']
             default_fields = self.get_schema()['properties']
+
             for key, value in default_fields.items():
                 if key in schema_fields and not schema_fields[key] == value:
                     raise SchemaError(
@@ -1283,29 +1410,17 @@ cdef class WritingSession(Session):
                         f"for driver '{self.collection.driver}'"
                     )
 
-            new_fields = {key: value for key, value in schema_fields.items()
-                          if key not in default_fields}
+            new_fields = {k: v for k, v in schema_fields.items() if k not in default_fields}
             before_fields = default_fields.copy()
             before_fields.update(new_fields)
 
+            encoding = self._get_internal_encoding()
+
             for key, value in new_fields.items():
-                field_subtype = OFSTNone
-
-                # Convert 'long' to 'int'. See
-                # https://github.com/Toblerity/Fiona/issues/101.
-                if value in ('int', 'long'):
-                    value = 'int64'
-
-                elif value == 'bool':
-                    value = 'int32'
-                    field_subtype = OFSTBoolean
-
-                elif value == 'int16':
-                    value = 'int32'
-                    field_subtype = OFSTInt16
 
                 # Is there a field width/precision?
                 width = precision = None
+
                 if ':' in value:
                     value, fmt = value.split(':')
 
@@ -1314,24 +1429,30 @@ cdef class WritingSession(Session):
                     else:
                         width = int(fmt)
 
+                    # Type inference based on field width is something
+                    # we should reconsider down the road.
                     if value == 'int':
                         if width == 0 or width >= 10:
                             value = 'int64'
                         else:
                             value = 'int32'
 
-                field_type = FIELD_TYPES.index(value)
+                value = normalize_field_type(value)
+                ftype = NAMED_FIELD_TYPES[value]
+                ogrfieldtype, ogrfieldsubtype = FIELD_TYPES_MAP2[ftype]
 
                 try:
-                    key_bytes = key.encode(encoding)
-                    cogr_fielddefn = exc_wrap_pointer(OGR_Fld_Create(key_bytes, <OGRFieldType>field_type))
+                    key_b = key.encode(encoding)
+                    cogr_fielddefn = exc_wrap_pointer(
+                        OGR_Fld_Create(<char *>key_b, <OGRFieldType>ogrfieldtype)
+                    )
+
                     if width:
                         OGR_Fld_SetWidth(cogr_fielddefn, width)
                     if precision:
                         OGR_Fld_SetPrecision(cogr_fielddefn, precision)
-                    if field_subtype != OFSTNone:
-                        # subtypes are new in GDAL 2.x, ignored in 1.x
-                        OGR_Fld_SetSubType(cogr_fielddefn, field_subtype)
+                    if ogrfieldsubtype != OFSTNone:
+                        OGR_Fld_SetSubType(cogr_fielddefn, ogrfieldsubtype)
 
                     exc_wrap_int(OGR_L_CreateField(self.cogr_layer, cogr_fielddefn, 1))
 
