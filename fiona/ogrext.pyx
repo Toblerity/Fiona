@@ -327,7 +327,6 @@ cdef class StringField(AbstractField):
 
     cdef set(self, OGRFeatureH feature, int i, object value, object kwds):
         encoding = kwds["encoding"]
-        print(f"{value=}")
         cdef object value_b = str(value).encode(encoding)
         OGR_F_SetFieldString(feature, i, <const char *>value_b)
 
@@ -491,7 +490,7 @@ cdef class DateTimeField(AbstractField):
 
     def __init__(self, driver=None):
         self.driver = driver
-        self.supports_tz = _driver_supports_timezones(self.driver, "time")
+        self.supports_tz = _driver_supports_timezones(self.driver, "datetime")
 
     cdef object name(self, OGRFieldDefnH fdefn):
         return "datetime"
@@ -743,7 +742,6 @@ cdef class OGRFeatureBuilder:
             else:
                 schema_type = session._schema_normalized_field_types[key]
                 fieldkey = FIELD_TYPES_MAP2[NAMED_FIELD_TYPES[schema_type]]
-                print(f"{schema_type=}, {fieldkey=}")
                 if fieldkey in self.property_setter_cache:
                     setter = self.property_setter_cache[fieldkey]
                 else:
