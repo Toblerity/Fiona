@@ -6,7 +6,6 @@ import itertools
 from typing import List
 
 from fiona.errors import SchemaError
-from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 
 
 def _get_gdal_version_num():
@@ -14,48 +13,70 @@ def _get_gdal_version_num():
     return int(GDALVersionInfo("VERSION_NUM"))
 
 
-class FionaIntegerType:
+cdef class AbstractFieldType:
+    pass
+
+
+cdef class FionaIntegerType(AbstractFieldType):
     names = ["int32"]
     type = int
 
 
-class FionaInt16Type:
+cdef class FionaInt16Type(AbstractFieldType):
     names = ["int16"]
     type = int
 
 
-class FionaBooleanType:
+cdef class FionaBooleanType(AbstractFieldType):
     names = ["bool"]
     type = bool
 
 
-class FionaInteger64Type:
+cdef class FionaInteger64Type(AbstractFieldType):
     names = ["int", "int64"]
     type = int
 
 
-class FionaRealType:
+cdef class FionaRealType(AbstractFieldType):
     names = ["float", "float64"]
     type = float
 
 
-class FionaStringType:
+cdef class FionaStringType(AbstractFieldType):
     names = ["str"]
     type = str
 
 
-class FionaBinaryType:
+cdef class FionaBinaryType(AbstractFieldType):
     names = ["bytes"]
     type = bytes
 
 
-class FionaStringListType:
+cdef class FionaStringListType(AbstractFieldType):
     names = ["List[str]", "list[str]"]
     type = List[str]
 
 
-class FionaJSONType:
+cdef class FionaJSONType(AbstractFieldType):
     names = ["json"]
+    type = str
+
+
+cdef class FionaDateType(AbstractFieldType):
+    """Dates without time."""
+    names = ["date"]
+    type = str
+
+
+cdef class FionaTimeType(AbstractFieldType):
+    """Times without dates."""
+    names = ["time"]
+    type = str
+
+
+cdef class FionaDateTimeType(AbstractFieldType):
+    """Dates and times."""
+    names = ["datetime"]
     type = str
 
 

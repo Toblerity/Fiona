@@ -555,6 +555,7 @@ cdef extern from "ogr_api.h" nogil:
     void OGR_F_SetFieldDouble(OGRFeatureH feature, int n, double value)
     void OGR_F_SetFieldInteger(OGRFeatureH feature, int n, int value)
     void OGR_F_SetFieldString(OGRFeatureH feature, int n, const char *value)
+    void OGR_F_SetFieldStringList(OGRFeatureH feature, int n, const char **value)
     int OGR_F_SetGeometryDirectly(OGRFeatureH feature, OGRGeometryH geometry)
     OGRFeatureDefnH OGR_FD_Create(const char *name)
     int OGR_FD_GetFieldCount(OGRFeatureDefnH featuredefn)

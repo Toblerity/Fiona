@@ -55,8 +55,8 @@ from fiona.env import ensure_env_with_credentials, Env
 from fiona.errors import FionaDeprecationWarning
 from fiona.io import MemoryFile
 from fiona.model import Feature, Geometry, Properties
-from fiona.ogrext import FIELD_TYPES_MAP, _bounds, _listdir, _listlayers, _remove, _remove_layer
-from fiona.schema import NAMED_FIELD_TYPES
+from fiona.ogrext import _bounds, _listdir, _listlayers, _remove, _remove_layer
+from fiona.schema import FIELD_TYPES_MAP, NAMED_FIELD_TYPES
 from fiona.vfs import parse_paths as vfs_parse_paths
 
 # These modules are imported by fiona.ogrext, but are also import here to
