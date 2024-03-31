@@ -35,7 +35,6 @@ from fiona.errors import (
 from fiona.model import decode_object, Feature, Geometry, Properties
 from fiona._path import _vsi_path
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
-from fiona.rfc3339 import FionaDateType, FionaDateTimeType, FionaTimeType
 from fiona.schema import FIELD_TYPES_MAP2, normalize_field_type, NAMED_FIELD_TYPES
 
 from libc.stdlib cimport malloc, free
@@ -656,7 +655,7 @@ cdef class FeatureBuilder:
                     getter = self.property_getter_cache[fieldkey]
                 else:
                     try:
-                        getter = self.OGRPropertyGetter[fieldkey](driver=self.driver)
+                        getter = self.OGRPropertyGetter[fieldkey](driver=driver or self.driver)
                         self.property_getter_cache[fieldkey] = getter
                     except KeyError:
                         log.warning(

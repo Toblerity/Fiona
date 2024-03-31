@@ -7,7 +7,6 @@ import pytest
 import fiona
 from fiona import prop_type, prop_width
 from fiona.model import Feature
-from fiona.rfc3339 import FionaDateType
 
 from .conftest import gdal_version
 

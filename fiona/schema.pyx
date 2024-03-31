@@ -8,114 +8,67 @@ from typing import List
 from fiona.errors import SchemaError
 
 
-def _get_gdal_version_num():
-    """Return current internal version number of gdal"""
-    return int(GDALVersionInfo("VERSION_NUM"))
-
-
-cdef class AbstractFieldType:
-    pass
-
-
-cdef class FionaIntegerType(AbstractFieldType):
+cdef class FionaIntegerType:
     names = ["int32"]
     type = int
 
 
-cdef class FionaInt16Type(AbstractFieldType):
+cdef class FionaInt16Type:
     names = ["int16"]
     type = int
 
 
-cdef class FionaBooleanType(AbstractFieldType):
+cdef class FionaBooleanType:
     names = ["bool"]
     type = bool
 
 
-cdef class FionaInteger64Type(AbstractFieldType):
+cdef class FionaInteger64Type:
     names = ["int", "int64"]
     type = int
 
 
-cdef class FionaRealType(AbstractFieldType):
+cdef class FionaRealType:
     names = ["float", "float64"]
     type = float
 
 
-cdef class FionaStringType(AbstractFieldType):
+cdef class FionaStringType:
     names = ["str"]
     type = str
 
 
-cdef class FionaBinaryType(AbstractFieldType):
+cdef class FionaBinaryType:
     names = ["bytes"]
     type = bytes
 
 
-cdef class FionaStringListType(AbstractFieldType):
+cdef class FionaStringListType:
     names = ["List[str]", "list[str]"]
     type = List[str]
 
 
-cdef class FionaJSONType(AbstractFieldType):
+cdef class FionaJSONType:
     names = ["json"]
     type = str
 
 
-cdef class FionaDateType(AbstractFieldType):
+cdef class FionaDateType:
     """Dates without time."""
     names = ["date"]
     type = str
 
 
-cdef class FionaTimeType(AbstractFieldType):
+cdef class FionaTimeType:
     """Times without dates."""
     names = ["time"]
     type = str
 
 
-cdef class FionaDateTimeType(AbstractFieldType):
+cdef class FionaDateTimeType:
     """Dates and times."""
     names = ["datetime"]
     type = str
-
-
-# Mapping of OGR integer field types to Fiona field type names.
-# Lists are currently unsupported in this version, but might be done as
-# arrays in a future version.
-FIELD_TYPES = [
-    'int32',        # OFTInteger, Simple 32bit integer
-    None,           # OFTIntegerList, List of 32bit integers
-    'float',        # OFTReal, Double Precision floating point
-    None,           # OFTRealList, List of doubles
-    'str',          # OFTString, String of UTF-8 chars
-    'List[str]',    # OFTStringList, Array of strings
-    None,           # OFTWideString, deprecated
-    None,           # OFTWideStringList, deprecated
-    'bytes',        # OFTBinary, Raw Binary data
-    'date',         # OFTDate, Date
-    'time',         # OFTTime, Time
-    'datetime',     # OFTDateTime, Date and Time
-    'int64',        # OFTInteger64, Single 64bit integer
-    None            # OFTInteger64List, List of 64bit integers
-]
-
-# Mapping of Fiona field type names to Python types.
-FIELD_TYPES_MAP = {
-    'int32': int,
-    'float': float,
-    'str': str,
-    'date': FionaDateType,
-    'time': FionaTimeType,
-    'datetime': FionaDateTimeType,
-    'bytes': bytes,
-    'int64': int,
-    'int': int,
-    'List[str]': List[str],
-}
-
-FIELD_TYPES_MAP_REV = dict([(v, k) for k, v in FIELD_TYPES_MAP.items()])
-FIELD_TYPES_MAP_REV[int] = 'int'
 
 
 FIELD_TYPES_MAP2_REV = {
@@ -164,3 +117,44 @@ def normalize_field_type(ftype):
         return 'float'
     else:
         raise SchemaError(f"Unknown field type: {ftype}")
+
+
+# Fiona field type names indexed by their major OGR integer field type.
+# This data is deprecated, no longer used by the project and is left
+# only for other projects that import it.
+FIELD_TYPES = [
+    'int32',        # OFTInteger, Simple 32bit integer
+    None,           # OFTIntegerList, List of 32bit integers
+    'float',        # OFTReal, Double Precision floating point
+    None,           # OFTRealList, List of doubles
+    'str',          # OFTString, String of UTF-8 chars
+    'List[str]',    # OFTStringList, Array of strings
+    None,           # OFTWideString, deprecated
+    None,           # OFTWideStringList, deprecated
+    'bytes',        # OFTBinary, Raw Binary data
+    'date',         # OFTDate, Date
+    'time',         # OFTTime, Time
+    'datetime',     # OFTDateTime, Date and Time
+    'int64',        # OFTInteger64, Single 64bit integer
+    None            # OFTInteger64List, List of 64bit integers
+]
+
+# Mapping of Fiona field type names to Python types.
+# This data is deprecated, no longer used by the project and is left
+# only for other projects that import it.
+FIELD_TYPES_MAP = {
+    'int32': int,
+    'float': float,
+    'str': str,
+    'date': FionaDateType,
+    'time': FionaTimeType,
+    'datetime': FionaDateTimeType,
+    'bytes': bytes,
+    'int64': int,
+    'int': int,
+    'List[str]': List[str],
+}
+FIELD_TYPES_MAP_REV = dict([(v, k) for k, v in FIELD_TYPES_MAP.items()])
+FIELD_TYPES_MAP_REV[int] = 'int'
+
+
