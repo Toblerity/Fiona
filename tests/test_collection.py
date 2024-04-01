@@ -535,7 +535,6 @@ class TestPropertiesNumberFormatting:
             assert 12.2 == rf1.properties["property1"]
             assert 12.9 == rf2.properties["property1"]
 
-    @pytest.mark.xfail(reason="Corner case not supported by new feature builder implementation")
     def test_string_is_converted_to_number_and_truncated_to_requested_int_by_shape_driver(
         self,
     ):
@@ -572,7 +571,6 @@ class TestPropertiesNumberFormatting:
             assert 12.2 == rf1.properties["property1"]
             assert 12.9 == rf2.properties["property1"]
 
-    @pytest.mark.xfail(reason="Corner case not supported by new feature builder implementation")
     def test_invalid_number_is_converted_to_0_and_written_by_shape_driver(self):
         driver = "ESRI Shapefile"
         self._write_collection(
@@ -625,7 +623,6 @@ class TestPropertiesNumberFormatting:
             assert 12.22 == rf1.properties["property1"]
             assert 12.88 == rf2.properties["property1"]
 
-    @pytest.mark.xfail(reason="Corner case not supported by new feature builder implementation")
     def test_string_is_converted_to_number_and_truncated_to_requested_int_by_geojson_driver(
         self,
     ):
@@ -664,7 +661,6 @@ class TestPropertiesNumberFormatting:
             assert 12.22 == rf1.properties["property1"]
             assert 12.88 == rf2.properties["property1"]
 
-    @pytest.mark.xfail(reason="Corner case not supported by new feature builder implementation")
     def test_invalid_number_is_converted_to_0_and_written_by_geojson_driver(self):
         driver = "GeoJSON"
         self._write_collection(

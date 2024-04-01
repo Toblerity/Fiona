@@ -689,18 +689,36 @@ cdef class OGRFeatureBuilder:
     cdef object property_setter_cache
 
     OGRPropertySetter = {
-        (OFTInteger, OFSTNone): IntegerField,
-        (OFTInteger, OFSTBoolean): BooleanField,
-        (OFTInteger, OFSTInt16): Int16Field,
-        (OFTInteger64, OFSTNone): Integer64Field,
-        (OFTReal, OFSTNone): RealField,
-        (OFTString, OFSTNone): StringField,
-        (OFTDate, OFSTNone): DateField,
-        (OFTTime, OFSTNone): TimeField,
-        (OFTDateTime, OFSTNone): DateTimeField,
-        (OFTBinary, OFSTNone): BinaryField,
-        (OFTStringList, OFSTNone): StringListField,
-        (OFTString, OFSTJSON): JSONField,
+        (OFTInteger, OFSTNone, "int"): IntegerField,
+        (OFTInteger, OFSTNone, "int32"): IntegerField,
+        (OFTInteger, OFSTNone, "float"): RealField,
+        (OFTInteger, OFSTNone, "str"): StringField,
+        (OFTInteger, OFSTBoolean, "bool"): BooleanField,
+        (OFTInteger, OFSTBoolean, "int"): BooleanField,
+        (OFTInteger, OFSTInt16, "int"): Int16Field,
+        (OFTInteger, OFSTInt16, "str"): StringField,
+        (OFTInteger64, OFSTNone, "int"): Integer64Field,
+        (OFTInteger64, OFSTNone, "int64"): Integer64Field,
+        (OFTInteger64, OFSTNone, "float"): RealField,
+        (OFTInteger64, OFSTNone, "str"): StringField,
+        (OFTReal, OFSTNone, "float"): RealField,
+        (OFTReal, OFSTNone, "str"): StringField,
+        (OFTReal, OFSTFloat32, "float"): RealField,
+        (OFTReal, OFSTFloat32, "float32"): RealField,
+        (OFTReal, OFSTFloat32, "str"): StringField,
+        (OFTString, OFSTNone, "str"): StringField,
+        (OFTString, OFSTNone, "dict"): StringField,
+        (OFTDate, OFSTNone, "date"): DateField,
+        (OFTDate, OFSTNone, "str"): DateField,
+        (OFTTime, OFSTNone, "time"): TimeField,
+        (OFTTime, OFSTNone, "str"): TimeField,
+        (OFTDateTime, OFSTNone, "datetime"): DateTimeField,
+        (OFTDateTime, OFSTNone, "str"): DateTimeField,
+        (OFTBinary, OFSTNone, "bytes"): BinaryField,
+        (OFTBinary, OFSTNone, "bytearray"): BinaryField,
+        (OFTBinary, OFSTNone, "memoryview"): BinaryField,
+        (OFTStringList, OFSTNone, "list"): StringListField,
+        (OFTString, OFSTJSON, "dict"): JSONField,
     }
 
     def __init__(self, driver=None):
@@ -741,7 +759,7 @@ cdef class OGRFeatureBuilder:
                 OGR_F_SetFieldNull(cogr_feature, i)
             else:
                 schema_type = session._schema_normalized_field_types[key]
-                fieldkey = FIELD_TYPES_MAP2[NAMED_FIELD_TYPES[schema_type]]
+                fieldkey = (*FIELD_TYPES_MAP2[NAMED_FIELD_TYPES[schema_type]], type(value).__name__)
                 if fieldkey in self.property_setter_cache:
                     setter = self.property_setter_cache[fieldkey]
                 else:
@@ -760,6 +778,7 @@ cdef class OGRFeatureBuilder:
                 if isinstance(value, dict):
                     value = json.dumps(value)
 
+                log.debug("Setting feature property: fieldkey=%r, setter=%r, i=%r, value=%r", fieldkey, setter, i, value)
                 setter.set(cogr_feature, i, value, {"encoding": encoding})
 
         return cogr_feature
