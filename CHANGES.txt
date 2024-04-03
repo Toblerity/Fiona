@@ -8,16 +8,23 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Deprecations:
 
-The Python style of rio-filter expressions introduced in version 1.0 are
-deprecated. Only the parenthesized list type of expression will be supported by
-version 2.0.
+- The FIELD_TYPES, FIELD_TYPES_MAP, and FIELD_TYPES_MAP_REV attributes
+  of fiona.schema are no longer used by the project and will be removed
+  in version 2.0 (#1366).
+- The Python style of rio-filter expressions introduced in version 1.0 are
+  deprecated. Only the parenthesized list type of expression will be supported
+  by version 2.0.
 
 New features:
 
-The filter, map, and reduce CLI commands from the public domain version 1.1.0
-of fio-planet have been incorporated into Fiona's core set of commands (#1362).
-These commands are only available if pyparsing and shapely (each of these are
-declared in the "calc" set of extra requirements) are installed.
+- All supported Fiona field types are now represented by classes in
+  fiona.schema. These classes are mapped in FIELD_TYPES_MAP2 and
+  FIELD_TYPES_MAP2_REV to OGR field type and field subtype pairs
+  (#1366).
+- The filter, map, and reduce CLI commands from the public domain version 1.1.0
+  of fio-planet have been incorporated into Fiona's core set of commands
+  (#1362).  These commands are only available if pyparsing and shapely (each of
+  these are declared in the "calc" set of extra requirements) are installed.
 
 Bug fixes:
 
@@ -32,6 +39,11 @@ Bug fixes:
 - An implementation of the VSI flush callback has been added to _vsiopener.pyx.
 - Openers are now registered only by urlpath. The mode is no longer considered
   as OGR drivers may use a mix of modes when creating a new dataset.
+
+Other changes:
+
+- Feature builder and field getter/setter instances are reused when
+  reading and writing features (#1366).
 
 1.10a1 (2024-03-01)
 -------------------

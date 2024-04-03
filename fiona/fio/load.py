@@ -8,7 +8,6 @@ import cligj
 import fiona
 from fiona.fio import options, with_context_env
 from fiona.model import Feature, Geometry
-from fiona.schema import FIELD_TYPES_MAP_REV
 from fiona.transform import transform_geom
 
 
@@ -87,11 +86,14 @@ def load(
     except TypeError:
         raise click.ClickException("Invalid input.")
 
-    # print(first, first.geometry)
+    # TODO: this inference of a property's type from its value needs some
+    # work. It works reliably only for the basic JSON serializable types.
+    # The fio-load command does require JSON input but that may change
+    # someday.
     schema = {"geometry": first.geometry.type}
     schema["properties"] = {
-            k: FIELD_TYPES_MAP_REV.get(type(v)) or "str"
-            for k, v in first.properties.items()
+        k: type(v if v is not None else "").__name__
+        for k, v in first.properties.items()
     }
 
     if append:

@@ -236,7 +236,9 @@ cdef extern from "ogr_core.h" nogil:
     cdef int OFSTBoolean = 1
     cdef int OFSTInt16 = 2
     cdef int OFSTFloat32 = 3
-    cdef int OFSTMaxSubType = 3
+    cdef int OFSTJSON = 4
+    cdef int OFSTUUID = 5
+    cdef int OFSTMaxSubType = 5
 
     ctypedef struct OGREnvelope:
         double MinX
@@ -553,6 +555,7 @@ cdef extern from "ogr_api.h" nogil:
     void OGR_F_SetFieldDouble(OGRFeatureH feature, int n, double value)
     void OGR_F_SetFieldInteger(OGRFeatureH feature, int n, int value)
     void OGR_F_SetFieldString(OGRFeatureH feature, int n, const char *value)
+    void OGR_F_SetFieldStringList(OGRFeatureH feature, int n, const char **value)
     int OGR_F_SetGeometryDirectly(OGRFeatureH feature, OGRGeometryH geometry)
     OGRFeatureDefnH OGR_FD_Create(const char *name)
     int OGR_FD_GetFieldCount(OGRFeatureDefnH featuredefn)
