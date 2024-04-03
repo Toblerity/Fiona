@@ -719,6 +719,7 @@ cdef class OGRFeatureBuilder:
         (OFTBinary, OFSTNone, "memoryview"): BinaryField,
         (OFTStringList, OFSTNone, "list"): StringListField,
         (OFTString, OFSTJSON, "dict"): JSONField,
+        (OFTString, OFSTJSON, "list"): JSONField,
     }
 
     def __init__(self, driver=None):
