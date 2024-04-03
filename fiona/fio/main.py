@@ -19,6 +19,28 @@ else:
 import fiona
 from fiona import __version__ as fio_version
 from fiona.session import AWSSession, DummySession
+from fiona.fio.bounds import bounds
+from fiona.fio.calc import calc
+from fiona.fio.cat import cat
+from fiona.fio.collect import collect
+from fiona.fio.distrib import distrib
+from fiona.fio.dump import dump
+from fiona.fio.env import env
+from fiona.fio.info import info
+from fiona.fio.insp import insp
+from fiona.fio.load import load
+from fiona.fio.ls import ls
+from fiona.fio.rm import rm
+
+# The "calc" extras require pyparsing and shapely.
+try:
+    import pyparsing
+    import shapely
+    from fiona.fio.features import filter_cmd, map_cmd, reduce_cmd
+
+    supports_calc = True
+except ImportError:
+    supports_calc = False
 
 
 def configure_logging(verbosity):
@@ -28,7 +50,6 @@ def configure_logging(verbosity):
 
 @with_plugins(
     itertools.chain(
-        entry_points(group="fiona.fio_commands"),
         entry_points(group="fiona.fio_plugins"),
     )
 )
@@ -71,3 +92,22 @@ def main_group(
     else:
         session = DummySession()
     ctx.obj["env"] = fiona.Env(session=session, **envopts)
+
+
+main_group.add_command(bounds)
+main_group.add_command(calc)
+main_group.add_command(cat)
+main_group.add_command(collect)
+main_group.add_command(distrib)
+main_group.add_command(dump)
+main_group.add_command(env)
+main_group.add_command(info)
+main_group.add_command(insp)
+main_group.add_command(load)
+main_group.add_command(ls)
+main_group.add_command(rm)
+
+if supports_calc:
+    main_group.add_command(map_cmd)
+    main_group.add_command(filter_cmd)
+    main_group.add_command(reduce_cmd)
