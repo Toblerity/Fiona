@@ -3,7 +3,7 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.10a2 (2024-04-03)
+1.10a2 (2024-04-05)
 -------------------
 
 Deprecations:
