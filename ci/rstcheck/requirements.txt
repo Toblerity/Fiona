@@ -22,7 +22,7 @@ docutils==0.19
     # via
     #   rstcheck-core
     #   sphinx
-idna==3.4
+idna==3.7
     # via requests
 imagesize==1.4.1
     # via sphinx
@@ -43,9 +43,7 @@ requests==2.31.0
 rich==12.6.0
     # via typer
 rstcheck==6.1.2
-    # via
-    #   -r requirements.in
-    #   rstcheck
+    # via -r requirements.in
 rstcheck-core==1.0.3
     # via rstcheck
 shellingham==1.5.3
@@ -73,9 +71,7 @@ sphinxcontrib-qthelp==1.0.6
 sphinxcontrib-serializinghtml==1.1.9
     # via sphinx
 typer==0.7.0
-    # via
-    #   rstcheck
-    #   typer
+    # via rstcheck
 types-docutils==0.19.1.9
     # via rstcheck-core
 typing-extensions==4.7.1
