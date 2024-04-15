@@ -3,7 +3,15 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.10a2 (TBD)
+1.10b1 (TBD)
+------------
+
+Bug fixes:
+
+- Fiona can again set fields with values that are instances of classes derived
+  from date, time, and datetime (#).  This was broken by changes in 1.10a2.
+
+1.10a2 ()
 ------------
 
 Deprecations:

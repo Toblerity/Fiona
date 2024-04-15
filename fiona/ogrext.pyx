@@ -760,26 +760,30 @@ cdef class OGRFeatureBuilder:
                 OGR_F_SetFieldNull(cogr_feature, i)
             else:
                 schema_type = session._schema_normalized_field_types[key]
-                fieldkey = (*FIELD_TYPES_MAP2[NAMED_FIELD_TYPES[schema_type]], type(value).__name__)
-                if fieldkey in self.property_setter_cache:
-                    setter = self.property_setter_cache[fieldkey]
+                val_type = type(value)
+
+                if val_type in self.property_setter_cache:
+                    setter = self.property_setter_cache[val_type]
                 else:
-                    try:
-                        setter = self.OGRPropertySetter[fieldkey](driver=self.driver)
-                        self.property_setter_cache[fieldkey] = setter
-                    except KeyError:
-                        log.warning(
-                            "Skipping field %s: invalid type %s",
-                            key,
-                            fieldkey
-                        )
+                    for cls in val_type.mro():
+                        fieldkey = (*FIELD_TYPES_MAP2[NAMED_FIELD_TYPES[schema_type]], cls.__name__)
+                        try:
+                            setter = self.OGRPropertySetter[fieldkey](driver=self.driver)
+                        except KeyError:
+                            continue
+                        else:
+                            self.property_setter_cache[val_type] = setter
+                            break
+                    else:
+                        log.warning("Skipping field because of invalid value: key=%r, value=%r", key, value)
                         continue
 
                 # Special case: serialize dicts to assist OGR.
                 if isinstance(value, dict):
                     value = json.dumps(value)
 
-                log.debug("Setting feature property: fieldkey=%r, setter=%r, i=%r, value=%r", fieldkey, setter, i, value)
+                log.debug("Setting feature property: key=%r, value=%r, i=%r, setter=%r", key, value, i, setter)
+
                 setter.set(cogr_feature, i, value, {"encoding": encoding})
 
         return cogr_feature

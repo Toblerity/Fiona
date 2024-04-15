@@ -827,3 +827,30 @@ def test_read_timezone_geojson(path_test_tz_geojson):
     with fiona.open(path_test_tz_geojson) as c:
         items = list(c)
         assert items[0]["properties"]["test"] == "2015-04-22T00:00:00+07:00"
+
+
+def test_property_setter_lookup(tmp_path):
+    """Demonstrate fix for #1376."""
+
+    class MyDate(datetime.date):
+        pass
+
+    feat = Feature.from_dict(
+        {
+            "properties": {"when": MyDate(2024, 4, 15)},
+            "geometry": {"type": "Point", "coordinates": [0, 0]},
+        }
+    )
+    with fiona.open(
+        tmp_path / "test.gpkg",
+        "w",
+        driver="GPKG",
+        crs="EPSG:4326",
+        schema={"geometry": "Point", "properties": {"when": "date"}},
+    ) as colxn:
+        colxn.writerecords([feat])
+
+    with fiona.open(tmp_path / "test.gpkg") as colxn:
+        assert colxn.schema["properties"]["when"] == "date"
+        feat = next(colxn)
+        assert feat.properties["when"] == "2024-04-15"
