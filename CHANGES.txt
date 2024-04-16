@@ -3,14 +3,14 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.10a2 (TBD)
-------------
+1.10a2 (2024-04-05)
+-------------------
 
 Deprecations:
 
-- The FIELD_TYPES, FIELD_TYPES_MAP, and FIELD_TYPES_MAP_REV attributes
-  of fiona.schema are no longer used by the project and will be removed
-  in version 2.0 (#1366).
+- The FIELD_TYPES, FIELD_TYPES_MAP, and FIELD_TYPES_MAP_REV attributes of
+  fiona.schema are no longer used by the project and will be removed in version
+  2.0 (#1366).
 - The Python style of rio-filter expressions introduced in version 1.0 are
   deprecated. Only the parenthesized list type of expression will be supported
   by version 2.0.
@@ -19,8 +19,7 @@ New features:
 
 - All supported Fiona field types are now represented by classes in
   fiona.schema. These classes are mapped in FIELD_TYPES_MAP2 and
-  FIELD_TYPES_MAP2_REV to OGR field type and field subtype pairs
-  (#1366).
+  FIELD_TYPES_MAP2_REV to OGR field type and field subtype pairs (#1366).
 - The filter, map, and reduce CLI commands from the public domain version 1.1.0
   of fio-planet have been incorporated into Fiona's core set of commands
   (#1362).  These commands are only available if pyparsing and shapely (each of
@@ -28,6 +27,8 @@ New features:
 
 Bug fixes:
 
+- Fiona's python opener VSI plugin prefix has been changed to "vsifiopener" to
+  not conflict with Rasterio (#1368).
 - Add a 16-bit integer type "int16" based on OGR's OSFTInt16 integer sub-type
   (#1358).
 - Allow a GeoJSON collection's layer name to be set on opening in write mode
@@ -42,16 +43,15 @@ Bug fixes:
 
 Other changes:
 
-- Feature builder and field getter/setter instances are reused when
-  reading and writing features (#1366).
+- Feature builder and field getter/setter instances are reused when reading and
+  writing features (#1366).
 
 1.10a1 (2024-03-01)
 -------------------
 
 Python version:
 
-Fiona 1.10 will be compatible with Numpy versions 1 and 2 and will require
-Python version 3.9 or higher.
+Fiona 1.10 will require Python version 3.9 or higher.
 
 Deprecations:
 
