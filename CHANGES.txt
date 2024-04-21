@@ -3,6 +3,13 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.10b2 (TBD)
+------------
+
+Bug fixes:
+
+- Fiona model objects have a informative, printable representation again (#).
+
 1.10b1 (2024-04-16)
 -------------------
 

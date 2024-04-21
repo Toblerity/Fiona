@@ -5,9 +5,13 @@ from collections.abc import MutableMapping
 from enum import Enum
 import itertools
 from json import JSONEncoder
+import reprlib
 from warnings import warn
 
 from fiona.errors import FionaDeprecationWarning
+
+_coord_repr = reprlib.Repr()
+_coord_repr.maxlist = 1
 
 
 class OGRGeometryType(Enum):
@@ -197,6 +201,10 @@ class Geometry(Object):
         )
         super().__init__(**data)
 
+    def __repr__(self):
+        kvs = [f"{k}={_coord_repr.repr(v)}" for k, v in self.items() if v is not None]
+        return "fiona.Geometry({})".format(", ".join(kvs))
+
     @classmethod
     def from_dict(cls, ob=None, **kwargs):
         if ob is not None:
@@ -286,6 +294,10 @@ class Feature(Object):
         self._delegate = _Feature(geometry=geometry, id=id, properties=properties)
         super().__init__(**data)
 
+    def __repr__(self):
+        kvs = [f"{k}={repr(v)}" for k, v in self.items() if v is not None]
+        return "fiona.Feature({})".format(", ".join(kvs))
+
     @classmethod
     def from_dict(cls, ob=None, **kwargs):
         if ob is not None:
@@ -371,6 +383,10 @@ class Properties(Object):
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
+
+    def __repr__(self):
+        kvs = [f"{k}={repr(v)}" for k, v in self.items()]
+        return "fiona.Properties({})".format(", ".join(kvs))
 
     @classmethod
     def from_dict(cls, mapping=None, **kwargs):

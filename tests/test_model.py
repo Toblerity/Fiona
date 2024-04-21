@@ -333,3 +333,12 @@ def test_geometry_collection_encoding():
     assert "coordinates" not in ObjectEncoder().default(
         Geometry(type="GeometryCollection", geometries=[])
     )
+
+
+def test_feature_repr():
+    feat = Feature(
+        id="1",
+        geometry=Geometry(type="LineString", coordinates=[(0, 0)] * 100),
+        properties=Properties(a=1, foo="bar"),
+    )
+    assert repr(feat) == "fiona.Feature(geometry=fiona.Geometry(coordinates=[(0, 0), ...], type='LineString'), id='1', properties=fiona.Properties(a=1, foo='bar'))"
