@@ -52,7 +52,7 @@ jobs:
             gdal-version: '3.8.3'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.1.3
 
       - name: Update
         run: |
@@ -97,7 +97,7 @@ jobs:
           - os: windows-latest
             python-version: '3.11'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.1.3
 
       - name: Conda Setup
         uses: s-weigand/setup-conda@v1
