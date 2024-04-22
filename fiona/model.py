@@ -151,6 +151,10 @@ class Object(MutableMapping):
         props = self._props()
         return len(props) + len(self._data)
 
+    def __repr__(self):
+        kvs = [f"{k}={v!r}" for k, v in self.items()]
+        return "fiona.{}({})".format(self.__class__.__name__, ", ".join(kvs))  
+
     def __setitem__(self, key, value):
         warn(
             "instances of this class -- CRS, geometry, and feature objects -- will become immutable in fiona version 2.0",
@@ -295,10 +299,6 @@ class Feature(Object):
         self._delegate = _Feature(geometry=geometry, id=id, properties=properties)
         super().__init__(**data)
 
-    def __repr__(self):
-        kvs = [f"{k}={repr(v)}" for k, v in self.items() if v is not None]
-        return "fiona.Feature({})".format(", ".join(kvs))
-
     @classmethod
     def from_dict(cls, ob=None, **kwargs):
         if ob is not None:
@@ -384,10 +384,6 @@ class Properties(Object):
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
-
-    def __repr__(self):
-        kvs = [f"{k}={repr(v)}" for k, v in self.items()]
-        return "fiona.Properties({})".format(", ".join(kvs))
 
     @classmethod
     def from_dict(cls, mapping=None, **kwargs):
