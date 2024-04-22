@@ -10,8 +10,9 @@ from warnings import warn
 
 from fiona.errors import FionaDeprecationWarning
 
-_coord_repr = reprlib.Repr()
-_coord_repr.maxlist = 1
+_model_repr = reprlib.Repr()
+_model_repr.maxlist = 1
+_model_repr.maxdict = 5
 
 
 class OGRGeometryType(Enum):
@@ -202,7 +203,7 @@ class Geometry(Object):
         super().__init__(**data)
 
     def __repr__(self):
-        kvs = [f"{k}={_coord_repr.repr(v)}" for k, v in self.items() if v is not None]
+        kvs = [f"{k}={_model_repr.repr(v)}" for k, v in self.items() if v is not None]
         return "fiona.Geometry({})".format(", ".join(kvs))
 
     @classmethod
