@@ -32,6 +32,6 @@ def test_read_topojson(data_dir):
 
     assert len(features) == 3, "unexpected number of features"
     for feature in features:
-        assert isinstance(feature["properties"], Properties)
-        assert len(feature["properties"]) > 0
-        assert feature["geometry"]["type"] in {"Point", "LineString", "Polygon"}
+        assert isinstance(feature.properties, Properties)
+        assert len(feature.properties) > 0
+        assert feature.geometry.type in {"Point", "LineString", "Polygon"}
