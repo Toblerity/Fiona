@@ -139,7 +139,10 @@ class Object(MutableMapping):
         }
 
     def __getitem__(self, item):
-        props = self._props()
+        props = {
+            k: (dict(v) if isinstance(v, Object) else v)
+            for k, v in self._props().items()
+        }
         props.update(**self._data)
         return props[item]
 
@@ -152,8 +155,11 @@ class Object(MutableMapping):
         return len(props) + len(self._data)
 
     def __repr__(self):
-        kvs = [f"{k}={v!r}" for k, v in self.items()]
-        return "fiona.{}({})".format(self.__class__.__name__, ", ".join(kvs))  
+        kvs = [
+            f"{k}={v!r}"
+            for k, v in itertools.chain(self._props().items(), self._data.items())
+        ]
+        return "fiona.{}({})".format(self.__class__.__name__, ", ".join(kvs))
 
     def __setitem__(self, key, value):
         warn(
@@ -397,7 +403,10 @@ class ObjectEncoder(JSONEncoder):
 
     def default(self, o):
         if isinstance(o, Object):
-            o_dict = {k: self.default(v) for k, v in o.items()}
+            o_dict = {
+                k: self.default(v)
+                for k, v in itertools.chain(o._props().items(), o._data.items())
+            }
             if isinstance(o, Geometry):
                 if o.type == "GeometryCollection":
                     _ = o_dict.pop("coordinates", None)
