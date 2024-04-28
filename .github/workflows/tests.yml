@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main, 'maint-*' ]
     paths:
-      - '.github/workflows/tests.yaml'
+      - '.github/workflows/tests.yml'
       - 'requirements*.txt'
       - 'setup.py'
       - 'setup.cfg'
@@ -15,7 +15,7 @@ on:
   pull_request:
     branches: [ main, 'maint-*' ]
     paths:
-      - '.github/workflows/tests.yaml'
+      - '.github/workflows/tests.yml'
       - 'requirements*.txt'
       - 'setup.py'
       - 'setup.cfg'
