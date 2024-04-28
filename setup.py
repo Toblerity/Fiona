@@ -83,7 +83,7 @@ if 'clean' not in sys.argv:
                          " setup.py to locate needed GDAL files.\nMore"
                          " information is available in the README.")
         else:
-            logging.warn("Failed to get options via gdal-config: %s", str(e))
+            logging.warning("Failed to get options via gdal-config: %s", str(e))
 
     # Get GDAL API version from environment variable.
     if 'GDAL_VERSION' in os.environ:
