@@ -92,7 +92,7 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          - os: macos-latest
+          - os: [macos-13, macos-14]
             python-version: '3.11'
           - os: windows-latest
             python-version: '3.11'
@@ -142,7 +142,7 @@ jobs:
           pytest -v -m "not wheel" -rxXs --cov fiona --cov-report term-missing
 
       - name: Test with Coverage (OSX)
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-13' || matrix.os == 'macos-14'
         shell: bash
         run: |
           source activate test
