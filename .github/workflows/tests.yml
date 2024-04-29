@@ -127,6 +127,7 @@ jobs:
           conda config --set channel_priority strict
           conda create -n test python=${{ matrix.python-version }} libgdal geos=3.11 cython=3
           conda activate test
+          ls -l ${{ env.CONDA}}/envs/test/Library/lib
           GDAL_VERSION="3.7" python setup.py build_ext -I"${{ env.CONDA }}/envs/test/Library/include" -lgdal_i -L"${{ env.CONDA }}/envs/test/Library/lib" install
           python -m pip install -r requirements-dev.txt
 
