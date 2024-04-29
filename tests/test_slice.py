@@ -113,7 +113,9 @@ def slice_dataset_path(request):
     tmpdir = tempfile.mkdtemp()
     path = os.path.join(tmpdir, get_temp_filename(driver))
 
-    with fiona.open(path, "w", driver=driver, schema=schema, **create_kwargs) as c:
+    with fiona.open(
+        path, "w", driver=driver, crs="OGC:CRS84", schema=schema, **create_kwargs
+    ) as c:
         c.writerecords(records)
     yield path
     shutil.rmtree(tmpdir)
