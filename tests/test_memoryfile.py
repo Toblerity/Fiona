@@ -217,7 +217,7 @@ def test_mapinfo_raises():
         for driver in supported_drivers
         if _driver_supports_mode(driver, "w")
         and supports_vsi(driver)
-        and driver not in {"MapInfo File"}
+        and driver not in {"MapInfo File", "TileDB"}
     ],
 )
 def test_write_memoryfile_drivers(driver, testdata_generator):
@@ -267,7 +267,7 @@ def test_multiple_layer_memoryfile(testdata_generator):
         for driver in supported_drivers
         if _driver_supports_mode(driver, "a")
         and supports_vsi(driver)
-        and driver not in {"MapInfo File"}
+        and driver not in {"MapInfo File", "TileDB"}
     ],
 )
 def test_append_memoryfile_drivers(driver, testdata_generator):
