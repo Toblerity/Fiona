@@ -97,20 +97,24 @@ jobs:
           - os: windows-latest
             python-version: '3.11'
     steps:
-      - uses: actions/checkout@v4.1.3
+      - uses: actions/checkout@v4
 
       - name: Conda Setup
-        uses: s-weigand/setup-conda@v1
+        uses: conda-incubator/setup-miniconda@v3
         with:
-          conda-channels: conda-forge
+          miniforge-variant: Mambaforge
+          miniforge-version: latest
+          use-mamba: true
+          auto-update-conda: true
+          use-only-tar-bz2: false
 
       - name: Install Env (OSX)
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-13'
         shell: bash
         run: |
           conda config --prepend channels conda-forge
           conda config --set channel_priority strict
-          conda create -n test python=${{ matrix.python-version }} libgdal geos=3.10.3 cython=3
+          conda create -n test python=${{ matrix.python-version }} libgdal geos=3.11 cython=3
           source activate test
           python -m pip install -e . || python -m pip install -e .
           python -m pip install -r requirements-dev.txt
@@ -121,9 +125,9 @@ jobs:
         run: |
           conda config --prepend channels conda-forge
           conda config --set channel_priority strict
-          conda create -n test python=${{ matrix.python-version }} libgdal geos=3.10.3 cython=3
+          conda create -n test python=${{ matrix.python-version }} libgdal geos=3.11 cython=3
           source activate test
-          GDAL_VERSION="3.5" python setup.py build_ext -I"C:\\Miniconda\\envs\\test\\Library\\include" -lgdal_i -L"C:\\Miniconda\\envs\\test\\Library\\lib" install
+          GDAL_VERSION="3.8" python setup.py build_ext -I"C:\\Miniconda\\envs\\test\\Library\\include" -lgdal_i -L"C:\\Miniconda\\envs\\test\\Library\\lib" install
           python -m pip install -r requirements-dev.txt
 
       - name: Check and Log Environment
@@ -147,6 +151,5 @@ jobs:
         run: |
           source activate test
           python -m pytest -v -m "not wheel" -rxXs  --cov fiona --cov-report term-missing
-
 
       - uses: codecov/codecov-action@v3
