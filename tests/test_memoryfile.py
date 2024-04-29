@@ -226,7 +226,7 @@ def test_write_memoryfile_drivers(driver, testdata_generator):
     schema, crs, records1, _, _ = testdata_generator(driver, range1, [])
 
     with MemoryFile() as memfile:
-        with memfile.open(driver=driver, schema=schema) as c:
+        with memfile.open(driver=driver, crs=crs, schema=schema) as c:
             c.writerecords(records1)
 
         with memfile.open(driver=driver) as c:
@@ -277,7 +277,7 @@ def test_append_memoryfile_drivers(driver, testdata_generator):
     schema, crs, records1, records2, _ = testdata_generator(driver, range1, range2)
 
     with MemoryFile() as memfile:
-        with memfile.open(driver=driver, schema=schema) as c:
+        with memfile.open(driver=driver, crs=crs, schema=schema) as c:
             c.writerecords(records1)
 
         with memfile.open(mode='a', driver=driver, schema=schema) as c:
