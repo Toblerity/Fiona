@@ -115,7 +115,7 @@ jobs:
           conda config --prepend channels conda-forge
           conda config --set channel_priority strict
           conda create -n test python=${{ matrix.python-version }} libgdal geos=3.11 cython=3
-          source activate test
+          conda activate test
           python -m pip install -e . || python -m pip install -e .
           python -m pip install -r requirements-dev.txt
 
@@ -126,30 +126,29 @@ jobs:
           conda config --prepend channels conda-forge
           conda config --set channel_priority strict
           conda create -n test python=${{ matrix.python-version }} libgdal geos=3.11 cython=3
-          source activate test
+          conda activate test
           GDAL_VERSION="3.8" python setup.py build_ext -I"C:\\Miniconda\\envs\\test\\Library\\include" -lgdal_i -L"C:\\Miniconda\\envs\\test\\Library\\lib" install
           python -m pip install -r requirements-dev.txt
 
       - name: Check and Log Environment
-        shell: bash
+        shell: bash -l {0}
         run: |
-          source activate test
+          conda activate test
           python -V
           conda info
-          conda list
 
       - name: Test with Coverage (Windows)
         if: matrix.os == 'windows-latest'
-        shell: bash
+        shell: bash -l {0}
         run: |
-          source activate test
+          conda activate test
           pytest -v -m "not wheel" -rxXs --cov fiona --cov-report term-missing
 
       - name: Test with Coverage (OSX)
         if: matrix.os == 'macos-13'
-        shell: bash
+        shell: bash -l {0}
         run: |
-          source activate test
+          conda activate test
           python -m pytest -v -m "not wheel" -rxXs  --cov fiona --cov-report term-missing
 
       - uses: codecov/codecov-action@v3
