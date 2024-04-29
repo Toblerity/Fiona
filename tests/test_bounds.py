@@ -69,7 +69,7 @@ def test_bounds(tmpdir, driver, testdata_generator):
             ys.append(r.geometry["coordinates"][1])
         return min(xs), max(xs), min(ys), max(ys)
 
-    with fiona.open(path, "w", driver=driver, schema=schema) as c:
+    with fiona.open(path, "w", crs="OGC:CRS84", driver=driver, schema=schema) as c:
         c.writerecords(records1)
 
         try:
