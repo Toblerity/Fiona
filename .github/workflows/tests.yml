@@ -110,7 +110,7 @@ jobs:
 
       - name: Install Env (OSX)
         if: matrix.os == 'macos-13'
-        shell: bash
+        shell: bash -l {0}
         run: |
           conda config --prepend channels conda-forge
           conda config --set channel_priority strict
@@ -121,7 +121,7 @@ jobs:
 
       - name: Install Env (Windows)
         if: matrix.os == 'windows-latest'
-        shell: bash
+        shell: bash -l {0}
         run: |
           conda config --prepend channels conda-forge
           conda config --set channel_priority strict
