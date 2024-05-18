@@ -280,13 +280,20 @@ def test_append_memoryfile_drivers(driver, testdata_generator):
         with memfile.open(driver=driver, crs="OGC:CRS84", schema=schema) as c:
             c.writerecords(records1)
 
-        with memfile.open(mode='a', driver=driver, schema=schema) as c:
-            c.writerecords(records2)
+        # The parquet dataset does not seem to support append mode
+        if driver == "Parquet":
+            with memfile.open(driver=driver) as c:
+                assert driver == c.driver
+                items = list(c)
+                assert len(items) == len(range1)
+        else:
+            with memfile.open(mode='a', driver=driver, schema=schema) as c:
+                c.writerecords(records2)
 
-        with memfile.open(driver=driver) as c:
-            assert driver == c.driver
-            items = list(c)
-            assert len(items) == len(range1 + range2)
+            with memfile.open(driver=driver) as c:
+                assert driver == c.driver
+                items = list(c)
+                assert len(items) == len(range1 + range2)
 
 
 def test_memoryfile_driver_does_not_support_vsi():
