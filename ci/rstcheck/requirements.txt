@@ -38,7 +38,7 @@ pygments==2.16.1
     # via
     #   rich
     #   sphinx
-requests==2.31.0
+requests==2.32.0
     # via sphinx
 rich==12.6.0
     # via typer
