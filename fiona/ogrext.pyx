@@ -376,7 +376,7 @@ cdef class StringListField(AbstractField):
         for item in value:
             item_b = item.encode(encoding)
             string_list = CSLAddString(string_list, <const char *>item_b)
-        OGR_F_SetFieldStringList(feature, i, string_list)
+        OGR_F_SetFieldStringList(feature, i, <CSLConstList>string_list)
 
 
 cdef class JSONField(AbstractField):

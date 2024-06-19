@@ -16,6 +16,10 @@ cdef extern from "cpl_conv.h":
     const char *CPLFindFile(const char *pszClass, const char *pszBasename)
 
 
+cdef extern from "cpl_port.h":
+    ctypedef char **CSLConstList
+
+
 cdef extern from "cpl_string.h":
     char ** CSLAddNameValue (char **list, const char *name, const char *value)
     char ** CSLSetNameValue (char **list, const char *name, const char *value)
