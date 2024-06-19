@@ -21,17 +21,17 @@ cdef extern from "cpl_port.h":
 
 
 cdef extern from "cpl_string.h":
-    char ** CSLAddNameValue (char **list, const char *name, const char *value)
-    char ** CSLSetNameValue (char **list, const char *name, const char *value)
-    void CSLDestroy (char **list)
+    char ** CSLAddNameValue(char **list, const char *name, const char *value)
+    char ** CSLSetNameValue(char **list, const char *name, const char *value)
+    void CSLDestroy(char **list)
     char ** CSLAddString(char **list, const char *string)
-    int CSLCount(char **papszStrList)
-    char **CSLDuplicate(char **papszStrList)
-    int CSLFindName(char **papszStrList, const char *pszName)
-    int CSLFindString(char **papszStrList, const char *pszString)
-    int CSLFetchBoolean(char **papszStrList, const char *pszName, int default)
-    const char *CSLFetchNameValue(char **papszStrList, const char *pszName)
-    char **CSLMerge(char **first, char **second)
+    int CSLCount(CSLConstList papszStrList)
+    char **CSLDuplicate(CSLConstList papszStrList)
+    int CSLFindName(CSLConstList papszStrList, const char *pszName)
+    int CSLFindString(CSLConstList papszStrList, const char *pszString)
+    int CSLFetchBoolean(CSLConstList papszStrList, const char *pszName, int default)
+    const char *CSLFetchNameValue(CSLConstList papszStrList, const char *pszName)
+    char **CSLMerge(char **first, CSLConstList second)
 
 
 cdef extern from "cpl_error.h" nogil:
