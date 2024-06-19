@@ -33,7 +33,7 @@ dockertestimage:
 	docker build --target gdal --build-arg GDAL=$(GDAL) --build-arg PYTHON_VERSION=$(PYTHON_VERSION) -t fiona:$(GDAL)-py$(PYTHON_VERSION) .
 
 dockertest: dockertestimage
-	docker run -it -v $(shell pwd):/app -v /tmp:/tmp --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --entrypoint=/bin/bash fiona:$(GDAL)-py$(PYTHON_VERSION) -c '/venv/bin/python -m pip install --editable .[all] --no-build-isolation && /venv/bin/python -B -m pytest -m "not wheel" --cov fiona --cov-report term-missing $(OPTS)'
+	docker run -it -v $(shell pwd):/app -v /tmp:/tmp --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --entrypoint=/bin/bash fiona:$(GDAL)-py$(PYTHON_VERSION) -c '/venv/bin/python -m pip install -vvv --editable .[all] --no-build-isolation && /venv/bin/python -B -m pytest -m "not wheel" --cov fiona --cov-report term-missing $(OPTS)'
 
 dockershell: dockertestimage
 	docker run -it -v $(shell pwd):/app --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --entrypoint=/bin/bash fiona:$(GDAL)-py$(PYTHON_VERSION) -c '/venv/bin/python -m pip install --editable . --no-build-isolation && /bin/bash'
