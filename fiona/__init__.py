@@ -99,6 +99,10 @@ def open(
     vfs=None,
     enabled_drivers=None,
     crs_wkt=None,
+    ignore_fields=None,
+    ignore_geometry=False,
+    include_fields=None,
+    wkt_version=None,
     allow_unsupported_drivers=False,
     opener=None,
     **kwargs
@@ -209,6 +213,11 @@ def open(
     -------
     Collection
 
+    Raises
+    ------
+    DriverError
+        When the selected format driver cannot provide requested capabilities.
+
     """
     if mode == "r" and hasattr(fp, "read"):
         memfile = MemoryFile(fp.read())
@@ -218,6 +227,10 @@ def open(
             schema=schema,
             layer=layer,
             encoding=encoding,
+            ignore_fields=ignore_fields,
+            include_fields=include_fields,
+            ignore_geometry=ignore_geometry,
+            wkt_version=wkt_version,
             enabled_drivers=enabled_drivers,
             allow_unsupported_drivers=allow_unsupported_drivers,
             **kwargs
@@ -233,6 +246,10 @@ def open(
             schema=schema,
             layer=layer,
             encoding=encoding,
+            ignore_fields=ignore_fields,
+            include_fields=include_fields,
+            ignore_geometry=ignore_geometry,
+            wkt_version=wkt_version,
             enabled_drivers=enabled_drivers,
             allow_unsupported_drivers=allow_unsupported_drivers,
             crs_wkt=crs_wkt,
@@ -273,6 +290,10 @@ def open(
                 schema=schema,
                 layer=layer,
                 encoding=encoding,
+                ignore_fields=ignore_fields,
+                include_fields=include_fields,
+                ignore_geometry=ignore_geometry,
+                wkt_version=wkt_version,
                 enabled_drivers=enabled_drivers,
                 allow_unsupported_drivers=allow_unsupported_drivers,
                 crs_wkt=crs_wkt,
@@ -318,6 +339,10 @@ def open(
                     driver=driver,
                     encoding=encoding,
                     layer=layer,
+                    ignore_fields=ignore_fields,
+                    include_fields=include_fields,
+                    ignore_geometry=ignore_geometry,
+                    wkt_version=wkt_version,
                     enabled_drivers=enabled_drivers,
                     allow_unsupported_drivers=allow_unsupported_drivers,
                     **kwargs
@@ -331,6 +356,10 @@ def open(
                     schema=schema,
                     encoding=encoding,
                     layer=layer,
+                    ignore_fields=ignore_fields,
+                    include_fields=include_fields,
+                    ignore_geometry=ignore_geometry,
+                    wkt_version=wkt_version,
                     enabled_drivers=enabled_drivers,
                     crs_wkt=crs_wkt,
                     allow_unsupported_drivers=allow_unsupported_drivers,
