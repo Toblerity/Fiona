@@ -2,7 +2,7 @@
 
 from contextlib import ExitStack
 import logging
-import os
+from pathlib import Path
 import warnings
 
 from fiona import compat, vfs
@@ -29,7 +29,7 @@ from fiona.drvsupport import (
     _driver_converts_field_type_silently_to_str,
     _driver_supports_field,
 )
-from fiona.path import Path, vsi_path, parse_path
+from fiona._path import _Path, _vsi_path, _parse_path
 
 
 _GDAL_VERSION_TUPLE = get_gdal_version_tuple()
@@ -85,7 +85,7 @@ class Collection:
         """
         self._closed = True
 
-        if not isinstance(path, (str, Path)):
+        if not isinstance(path, (str, _Path)):
             raise TypeError(f"invalid path: {path!r}")
         if not isinstance(mode, str) or mode not in ("r", "w", "a"):
             raise TypeError(f"invalid mode: {mode!r}")
@@ -149,7 +149,6 @@ class Collection:
         self.ignore_fields = ignore_fields
         self.ignore_geometry = bool(ignore_geometry)
         self._allow_unsupported_drivers = allow_unsupported_drivers
-        self._env = None
         self._closed = True
 
         # Check GDAL version against drivers
@@ -169,26 +168,19 @@ class Collection:
 
         if vsi:
             self.path = vfs.vsi_path(path, vsi, archive)
-            path = parse_path(self.path)
+            path = _parse_path(self.path)
         else:
-            path = parse_path(path)
-            self.path = vsi_path(path)
+            path = _parse_path(path)
+            self.path = _vsi_path(path)
+
+        self.layer = layer or 0
 
         if mode == "w":
             if layer and not isinstance(layer, str):
                 raise ValueError("in 'w' mode, layer names must be strings")
-            if driver == "GeoJSON":
-                if layer is not None:
-                    raise ValueError("the GeoJSON format does not have layers")
-                self.name = "OgrGeoJSON"
-            # TODO: raise ValueError as above for other single-layer formats.
-            else:
-                self.name = layer or os.path.basename(os.path.splitext(path.path)[0])
+            self.name = layer or Path(self.path).stem
         else:
-            if layer in (0, None):
-                self.name = 0
-            else:
-                self.name = layer or os.path.basename(os.path.splitext(path)[0])
+            self.name = 0 if layer is None else layer or Path(self.path).stem
 
         self.mode = mode
 
@@ -552,7 +544,7 @@ class Collection:
 
     def write(self, record):
         """Stages a record for writing to disk.
-        
+
         Note: Each call of this method will start and commit a
         unique transaction with the data source.
         """

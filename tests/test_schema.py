@@ -8,7 +8,7 @@ from fiona.drvsupport import driver_mode_mingdal
 from fiona.env import GDALVersion
 from fiona.errors import SchemaError, UnsupportedGeometryTypeError, DriverSupportError
 from fiona.model import Feature
-from fiona.schema import FIELD_TYPES, normalize_field_type
+from fiona.schema import NAMED_FIELD_TYPES, normalize_field_type
 
 from .conftest import get_temp_filename
 from .conftest import requires_only_gdal1, requires_gdal2
@@ -200,15 +200,18 @@ def test_normalize_float():
     assert normalize_field_type("float:25.8") == "float"
 
 
+def test_normalize_():
+    assert normalize_field_type("float:25.8") == "float"
+
+
 def generate_field_types():
     """
     Produce a unique set of field types in a consistent order.
 
     This ensures that tests are able to run in parallel.
     """
-    types = set(FIELD_TYPES)
-    types.remove(None)
-    return list(sorted(types)) + [None]
+    types = set(NAMED_FIELD_TYPES.keys())
+    return list(sorted(types))
 
 
 @pytest.mark.parametrize("x", generate_field_types())

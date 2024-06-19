@@ -1,7 +1,5 @@
 # Coordinate and geometry transformations.
 
-from __future__ import absolute_import
-
 include "gdal.pxi"
 
 import logging
@@ -73,6 +71,10 @@ cdef object normalize_geometry_type_code(unsigned int code):
     # Normalize 'ZM' types to 3D types.
     elif 3000 < code < 4000:
         code = (code % 1000) | 0x80000000
+
+    # Normalize to a linear type.
+    code = OGR_GT_GetLinear(<OGRwkbGeometryType>code)
+
     if code not in GEOMETRY_TYPES:
         raise UnsupportedGeometryTypeError(code)
 

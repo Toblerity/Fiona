@@ -24,17 +24,13 @@ cdef extern from "cpl_string.h":
     int CSLCount(char **papszStrList)
     char **CSLDuplicate(char **papszStrList)
     int CSLFindName(char **papszStrList, const char *pszName)
+    int CSLFindString(char **papszStrList, const char *pszString)
     int CSLFetchBoolean(char **papszStrList, const char *pszName, int default)
     const char *CSLFetchNameValue(char **papszStrList, const char *pszName)
     char **CSLMerge(char **first, char **second)
 
-cdef extern from "sys/stat.h" nogil:
-    struct stat:
-        int st_mode
-
 
 cdef extern from "cpl_error.h" nogil:
-
     ctypedef enum CPLErr:
         CE_None
         CE_Debug
@@ -42,10 +38,10 @@ cdef extern from "cpl_error.h" nogil:
         CE_Failure
         CE_Fatal
 
-    # CPLErrorNum eludes me at the moment, I'm calling it 'int'
-    # for now.
+    ctypedef int CPLErrorNum
     ctypedef void (*CPLErrorHandler)(CPLErr, int, const char*)
 
+    void CPLError(CPLErr eErrClass, CPLErrorNum err_no, const char *template, ...)
     void CPLErrorReset()
     int CPLGetLastErrorNo()
     const char* CPLGetLastErrorMsg()
@@ -55,10 +51,66 @@ cdef extern from "cpl_error.h" nogil:
 
 
 cdef extern from "cpl_vsi.h" nogil:
-
-    ctypedef int vsi_l_offset
+    ctypedef unsigned long long vsi_l_offset
     ctypedef FILE VSILFILE
-    ctypedef stat VSIStatBufL
+    ctypedef struct VSIStatBufL:
+        long st_size
+        long st_mode
+        int st_mtime
+    ctypedef enum VSIRangeStatus:
+        VSI_RANGE_STATUS_UNKNOWN,
+        VSI_RANGE_STATUS_DATA,
+        VSI_RANGE_STATUS_HOLE,
+
+    # GDAL Plugin System (GDAL 3.0+)
+    # Filesystem functions
+    ctypedef int (*VSIFilesystemPluginStatCallback)(void*, const char*, VSIStatBufL*, int)  # Optional
+    ctypedef int (*VSIFilesystemPluginUnlinkCallback)(void*, const char*)  # Optional
+    ctypedef int (*VSIFilesystemPluginRenameCallback)(void*, const char*, const char*)  # Optional
+    ctypedef int (*VSIFilesystemPluginMkdirCallback)(void*, const char*, long)  # Optional
+    ctypedef int (*VSIFilesystemPluginRmdirCallback)(void*, const char*)  # Optional
+    ctypedef char** (*VSIFilesystemPluginReadDirCallback)(void*, const char*, int)  # Optional
+    ctypedef char** (*VSIFilesystemPluginSiblingFilesCallback)(void*, const char*)  # Optional (GDAL 3.2+)
+    ctypedef void* (*VSIFilesystemPluginOpenCallback)(void*, const char*, const char*)
+    # File functions
+    ctypedef vsi_l_offset (*VSIFilesystemPluginTellCallback)(void*)
+    ctypedef int (*VSIFilesystemPluginSeekCallback)(void*, vsi_l_offset, int)
+    ctypedef size_t (*VSIFilesystemPluginReadCallback)(void*, void*, size_t, size_t)
+    ctypedef int (*VSIFilesystemPluginReadMultiRangeCallback)(void*, int, void**, const vsi_l_offset*, const size_t*)  # Optional
+    ctypedef VSIRangeStatus (*VSIFilesystemPluginGetRangeStatusCallback)(void*, vsi_l_offset, vsi_l_offset)  # Optional
+    ctypedef int (*VSIFilesystemPluginEofCallback)(void*)  # Mandatory?
+    ctypedef size_t (*VSIFilesystemPluginWriteCallback)(void*, const void*, size_t, size_t)
+    ctypedef int (*VSIFilesystemPluginFlushCallback)(void*)  # Optional
+    ctypedef int (*VSIFilesystemPluginTruncateCallback)(void*, vsi_l_offset)
+    ctypedef int (*VSIFilesystemPluginCloseCallback)(void*)  # Optional
+    # Plugin function container struct
+    ctypedef struct VSIFilesystemPluginCallbacksStruct:
+        void *pUserData
+        VSIFilesystemPluginStatCallback stat
+        VSIFilesystemPluginUnlinkCallback unlink
+        VSIFilesystemPluginRenameCallback rename
+        VSIFilesystemPluginMkdirCallback mkdir
+        VSIFilesystemPluginRmdirCallback rmdir
+        VSIFilesystemPluginReadDirCallback read_dir
+        VSIFilesystemPluginOpenCallback open
+        VSIFilesystemPluginTellCallback tell
+        VSIFilesystemPluginSeekCallback seek
+        VSIFilesystemPluginReadCallback read
+        VSIFilesystemPluginReadMultiRangeCallback read_multi_range
+        VSIFilesystemPluginGetRangeStatusCallback get_range_status
+        VSIFilesystemPluginEofCallback eof
+        VSIFilesystemPluginWriteCallback write
+        VSIFilesystemPluginFlushCallback flush
+        VSIFilesystemPluginTruncateCallback truncate
+        VSIFilesystemPluginCloseCallback close
+        size_t nBufferSize
+        size_t nCacheSize
+        VSIFilesystemPluginSiblingFilesCallback sibling_files
+
+    int VSIInstallPluginHandler(const char*, const VSIFilesystemPluginCallbacksStruct*)
+    VSIFilesystemPluginCallbacksStruct* VSIAllocFilesystemPluginCallbacksStruct()
+    void VSIFreeFilesystemPluginCallbacksStruct(VSIFilesystemPluginCallbacksStruct*)
+    char** VSIGetFileSystemsPrefixes()
 
     unsigned char *VSIGetMemFileBuffer(const char *path,
                                        vsi_l_offset *data_len,
@@ -68,72 +120,24 @@ cdef extern from "cpl_vsi.h" nogil:
     VSILFILE* VSIFOpenL(const char *path, const char *mode)
     int VSIFCloseL(VSILFILE *fp)
     int VSIUnlink(const char *path)
-
+    int VSIMkdir(const char *path, long mode)
+    char** VSIReadDir(const char *path)
+    int VSIRmdir(const char *path)
+    int VSIRmdirRecursive(const char *path)
     int VSIFFlushL(VSILFILE *fp)
     size_t VSIFReadL(void *buffer, size_t nSize, size_t nCount, VSILFILE *fp)
-    char** VSIReadDir(const char* pszPath)
     int VSIFSeekL(VSILFILE *fp, vsi_l_offset nOffset, int nWhence)
     vsi_l_offset VSIFTellL(VSILFILE *fp)
     int VSIFTruncateL(VSILFILE *fp, vsi_l_offset nNewSize)
     size_t VSIFWriteL(void *buffer, size_t nSize, size_t nCount, VSILFILE *fp)
-
+    int VSIStatL(const char *pszFilename, VSIStatBufL *psStatBuf)
     int VSIMkdir(const char *path, long mode)
     int VSIRmdir(const char *path)
     int VSIStatL(const char *pszFilename, VSIStatBufL *psStatBuf)
-    int VSI_ISDIR(int mode) 
-
-
-cdef extern from "ogr_srs_api.h" nogil:
-
-    ctypedef int OGRErr
-    ctypedef void * OGRCoordinateTransformationH
-    ctypedef void * OGRSpatialReferenceH
-
-    OGRCoordinateTransformationH OCTNewCoordinateTransformation(
-                                        OGRSpatialReferenceH source,
-                                        OGRSpatialReferenceH dest)
-    void OCTDestroyCoordinateTransformation(
-        OGRCoordinateTransformationH source)
-    int OCTTransform(OGRCoordinateTransformationH ct, int nCount, double *x,
-                     double *y, double *z)
-    int OSRAutoIdentifyEPSG(OGRSpatialReferenceH srs)
-    void OSRCleanup()
-    OGRSpatialReferenceH OSRClone(OGRSpatialReferenceH srs)
-    int OSRExportToProj4(OGRSpatialReferenceH srs, char **params)
-    int OSRExportToWkt(OGRSpatialReferenceH srs, char **params)
-    const char *OSRGetAuthorityName(OGRSpatialReferenceH srs, const char *key)
-    const char *OSRGetAuthorityCode(OGRSpatialReferenceH srs, const char *key)
-    int OSRImportFromEPSG(OGRSpatialReferenceH srs, int code)
-    int OSRImportFromProj4(OGRSpatialReferenceH srs, const char *proj)
-    int OSRImportFromWkt(OGRSpatialReferenceH srs, char **wkt)
-    int OSRIsGeographic(OGRSpatialReferenceH srs)
-    int OSRIsProjected(OGRSpatialReferenceH srs)
-    int OSRIsSame(OGRSpatialReferenceH srs1, OGRSpatialReferenceH srs2)
-    OGRSpatialReferenceH OSRNewSpatialReference(const char *wkt)
-    void OSRRelease(OGRSpatialReferenceH srs)
-    int OSRSetFromUserInput(OGRSpatialReferenceH srs, const char *input)
-    double OSRGetLinearUnits(OGRSpatialReferenceH srs, char **ppszName)
-    double OSRGetAngularUnits(OGRSpatialReferenceH srs, char **ppszName)
-    int OSREPSGTreatsAsLatLong(OGRSpatialReferenceH srs)
-    int OSREPSGTreatsAsNorthingEasting(OGRSpatialReferenceH srs)
-    OGRSpatialReferenceH *OSRFindMatches(OGRSpatialReferenceH srs, char **options, int *entries, int **matchConfidence)
-    void OSRFreeSRSArray(OGRSpatialReferenceH *srs)
-    ctypedef enum OSRAxisMappingStrategy:
-        OAMS_TRADITIONAL_GIS_ORDER
-
-    const char* OSRGetName(OGRSpatialReferenceH hSRS)
-    void OSRSetAxisMappingStrategy(OGRSpatialReferenceH hSRS, OSRAxisMappingStrategy)
-    void OSRSetPROJSearchPaths(const char *const *papszPaths)
-    char ** OSRGetPROJSearchPaths()
-    OGRErr OSRExportToWktEx(OGRSpatialReferenceH, char ** ppszResult,
-                            const char* const* papszOptions)
-    OGRErr OSRExportToPROJJSON(OGRSpatialReferenceH hSRS,
-                                char ** ppszReturn,
-                                const char* const* papszOptions)
+    int VSI_ISDIR(int mode)
 
 
 cdef extern from "ogr_core.h" nogil:
-
     ctypedef int OGRErr
     char *OGRGeometryTypeToName(int type)
 
@@ -232,7 +236,9 @@ cdef extern from "ogr_core.h" nogil:
     cdef int OFSTBoolean = 1
     cdef int OFSTInt16 = 2
     cdef int OFSTFloat32 = 3
-    cdef int OFSTMaxSubType = 3
+    cdef int OFSTJSON = 4
+    cdef int OFSTUUID = 5
+    cdef int OFSTMaxSubType = 5
 
     ctypedef struct OGREnvelope:
         double MinX
@@ -241,11 +247,56 @@ cdef extern from "ogr_core.h" nogil:
         double MaxY
 
     char *  OGRGeometryTypeToName(int)
-
-
     char * ODsCCreateLayer = "CreateLayer"
     char * ODsCDeleteLayer = "DeleteLayer"
     char * ODsCTransactions = "Transactions"
+
+
+cdef extern from "ogr_srs_api.h" nogil:
+    ctypedef void * OGRCoordinateTransformationH
+    ctypedef void * OGRSpatialReferenceH
+
+    OGRCoordinateTransformationH OCTNewCoordinateTransformation(
+                                        OGRSpatialReferenceH source,
+                                        OGRSpatialReferenceH dest)
+    void OCTDestroyCoordinateTransformation(
+        OGRCoordinateTransformationH source)
+    int OCTTransform(OGRCoordinateTransformationH ct, int nCount, double *x,
+                     double *y, double *z)
+    int OSRAutoIdentifyEPSG(OGRSpatialReferenceH srs)
+    void OSRCleanup()
+    OGRSpatialReferenceH OSRClone(OGRSpatialReferenceH srs)
+    int OSRExportToProj4(OGRSpatialReferenceH srs, char **params)
+    int OSRExportToWkt(OGRSpatialReferenceH srs, char **params)
+    const char *OSRGetAuthorityName(OGRSpatialReferenceH srs, const char *key)
+    const char *OSRGetAuthorityCode(OGRSpatialReferenceH srs, const char *key)
+    int OSRImportFromEPSG(OGRSpatialReferenceH srs, int code)
+    int OSRImportFromProj4(OGRSpatialReferenceH srs, const char *proj)
+    int OSRImportFromWkt(OGRSpatialReferenceH srs, char **wkt)
+    int OSRIsGeographic(OGRSpatialReferenceH srs)
+    int OSRIsProjected(OGRSpatialReferenceH srs)
+    int OSRIsSame(OGRSpatialReferenceH srs1, OGRSpatialReferenceH srs2)
+    OGRSpatialReferenceH OSRNewSpatialReference(const char *wkt)
+    void OSRRelease(OGRSpatialReferenceH srs)
+    int OSRSetFromUserInput(OGRSpatialReferenceH srs, const char *input)
+    double OSRGetLinearUnits(OGRSpatialReferenceH srs, char **ppszName)
+    double OSRGetAngularUnits(OGRSpatialReferenceH srs, char **ppszName)
+    int OSREPSGTreatsAsLatLong(OGRSpatialReferenceH srs)
+    int OSREPSGTreatsAsNorthingEasting(OGRSpatialReferenceH srs)
+    OGRSpatialReferenceH *OSRFindMatches(OGRSpatialReferenceH srs, char **options, int *entries, int **matchConfidence)
+    void OSRFreeSRSArray(OGRSpatialReferenceH *srs)
+    ctypedef enum OSRAxisMappingStrategy:
+        OAMS_TRADITIONAL_GIS_ORDER
+
+    const char* OSRGetName(OGRSpatialReferenceH hSRS)
+    void OSRSetAxisMappingStrategy(OGRSpatialReferenceH hSRS, OSRAxisMappingStrategy)
+    void OSRSetPROJSearchPaths(const char *const *papszPaths)
+    char ** OSRGetPROJSearchPaths()
+    OGRErr OSRExportToWktEx(OGRSpatialReferenceH, char ** ppszResult,
+                            const char* const* papszOptions)
+    OGRErr OSRExportToPROJJSON(OGRSpatialReferenceH hSRS,
+                                char ** ppszReturn,
+                                const char* const* papszOptions)
 
 
 cdef extern from "gdal.h" nogil:
@@ -504,6 +555,7 @@ cdef extern from "ogr_api.h" nogil:
     void OGR_F_SetFieldDouble(OGRFeatureH feature, int n, double value)
     void OGR_F_SetFieldInteger(OGRFeatureH feature, int n, int value)
     void OGR_F_SetFieldString(OGRFeatureH feature, int n, const char *value)
+    void OGR_F_SetFieldStringList(OGRFeatureH feature, int n, const char **value)
     int OGR_F_SetGeometryDirectly(OGRFeatureH feature, OGRGeometryH geometry)
     OGRFeatureDefnH OGR_FD_Create(const char *name)
     int OGR_FD_GetFieldCount(OGRFeatureDefnH featuredefn)
@@ -602,6 +654,7 @@ cdef extern from "ogr_api.h" nogil:
     long long OGR_F_GetFieldAsInteger64 (void *feature, int n)
     void    OGR_F_SetFieldInteger64 (void *feature, int n, long long value)
     int OGR_F_IsFieldNull(void *feature, int n)
+    OGRwkbGeometryType OGR_GT_GetLinear(OGRwkbGeometryType eType)
 
 
 cdef extern from "gdalwarper.h" nogil:

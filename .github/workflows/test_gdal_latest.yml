@@ -2,7 +2,7 @@ name: Test GDAL Latest
 
 on:
   push:
-    branches: [ master, 'maint-*' ]
+    branches: [ main, 'maint-*' ]
   schedule:
     - cron:  '0 0 * * 0'
   pull_request:  # also build on PRs touching this file
@@ -14,6 +14,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   test_gdal_latest:
     name: GDAL Latest
@@ -24,7 +27,7 @@ jobs:
       GDAL_DATA: ${{ github.workspace }}/gdal_install/share/gdal
       LD_LIBRARY_PATH: "${{ github.workspace }}/gdal_install/lib/:${LD_LIBRARY_PATH}"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4.1.3
       - name: Update
         run: |
           apt-get update

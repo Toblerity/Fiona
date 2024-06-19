@@ -8,11 +8,11 @@ alabaster==0.7.13
     # via sphinx
 babel==2.12.1
     # via sphinx
-certifi==2022.12.7
+certifi==2023.7.22
     # via requests
-charset-normalizer==3.1.0
+charset-normalizer==3.2.0
     # via requests
-click==8.1.3
+click==8.1.7
     # via typer
 colorama==0.4.6
     # via typer
@@ -22,23 +22,23 @@ docutils==0.19
     # via
     #   rstcheck-core
     #   sphinx
-idna==3.4
+idna==3.7
     # via requests
 imagesize==1.4.1
     # via sphinx
-jinja2==3.1.2
+jinja2==3.1.4
     # via sphinx
-markupsafe==2.1.2
+markupsafe==2.1.3
     # via jinja2
-packaging==23.0
+packaging==23.1
     # via sphinx
-pydantic==1.10.6
+pydantic==1.10.13
     # via rstcheck-core
-pygments==2.14.0
+pygments==2.16.1
     # via
     #   rich
     #   sphinx
-requests==2.28.2
+requests==2.32.0
     # via sphinx
 rich==12.6.0
     # via typer
@@ -46,29 +46,35 @@ rstcheck==6.1.2
     # via -r requirements.in
 rstcheck-core==1.0.3
     # via rstcheck
-shellingham==1.5.0.post1
+shellingham==1.5.3
     # via typer
 snowballstemmer==2.2.0
     # via sphinx
-sphinx==6.1.3
-    # via rstcheck
-sphinxcontrib-applehelp==1.0.4
+sphinx==7.2.5
+    # via
+    #   rstcheck
+    #   sphinxcontrib-applehelp
+    #   sphinxcontrib-devhelp
+    #   sphinxcontrib-htmlhelp
+    #   sphinxcontrib-qthelp
+    #   sphinxcontrib-serializinghtml
+sphinxcontrib-applehelp==1.0.7
     # via sphinx
-sphinxcontrib-devhelp==1.0.2
+sphinxcontrib-devhelp==1.0.5
     # via sphinx
-sphinxcontrib-htmlhelp==2.0.1
+sphinxcontrib-htmlhelp==2.0.4
     # via sphinx
 sphinxcontrib-jsmath==1.0.1
     # via sphinx
-sphinxcontrib-qthelp==1.0.3
+sphinxcontrib-qthelp==1.0.6
     # via sphinx
-sphinxcontrib-serializinghtml==1.1.5
+sphinxcontrib-serializinghtml==1.1.9
     # via sphinx
 typer==0.7.0
     # via rstcheck
-types-docutils==0.19.1.6
+types-docutils==0.19.1.9
     # via rstcheck-core
-typing-extensions==4.5.0
+typing-extensions==4.7.1
     # via pydantic
-urllib3==1.26.15
+urllib3==2.2.2
     # via requests

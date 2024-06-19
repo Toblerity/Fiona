@@ -1,7 +1,6 @@
 # distutils: language = c++
 #
 # Coordinate and geometry transformations.
-from __future__ import absolute_import
 
 include "gdal.pxi"
 

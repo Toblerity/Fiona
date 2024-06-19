@@ -75,9 +75,21 @@ class TransformError(FionaError):
     """Raised if a coordinate transformation fails."""
 
 
+class OpenerRegistrationError(FionaError):
+    """Raised when a Python file opener can not be registered."""
+
+
+class PathError(FionaError):
+    """Raised when a dataset path is malformed or invalid"""
+
+
 class FionaDeprecationWarning(DeprecationWarning):
     """A warning about deprecation of Fiona features"""
 
 
 class FeatureWarning(UserWarning):
     """A warning about serialization of a feature"""
+
+
+class ReduceError(FionaError):
+    """"Raised when reduce operation fails."""

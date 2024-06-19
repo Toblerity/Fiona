@@ -83,7 +83,7 @@ if 'clean' not in sys.argv:
                          " setup.py to locate needed GDAL files.\nMore"
                          " information is available in the README.")
         else:
-            logging.warn("Failed to get options via gdal-config: %s", str(e))
+            logging.warning("Failed to get options via gdal-config: %s", str(e))
 
     # Get GDAL API version from environment variable.
     if 'GDAL_VERSION' in os.environ:
@@ -191,6 +191,7 @@ if "clean" not in sys.argv:
     ext_modules = cythonize(
         [
             Extension("fiona._geometry", ["fiona/_geometry.pyx"], **ext_options),
+            Extension("fiona._vsiopener", ["fiona/_vsiopener.pyx"], **ext_options),
             Extension("fiona.schema", ["fiona/schema.pyx"], **ext_options),
             Extension("fiona._transform", ["fiona/_transform.pyx"], **ext_options_cpp),
             Extension("fiona.crs", ["fiona/crs.pyx"], **ext_options),

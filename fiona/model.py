@@ -5,9 +5,14 @@ from collections.abc import MutableMapping
 from enum import Enum
 import itertools
 from json import JSONEncoder
+import reprlib
 from warnings import warn
 
 from fiona.errors import FionaDeprecationWarning
+
+_model_repr = reprlib.Repr()
+_model_repr.maxlist = 1
+_model_repr.maxdict = 5
 
 
 class OGRGeometryType(Enum):
@@ -134,7 +139,10 @@ class Object(MutableMapping):
         }
 
     def __getitem__(self, item):
-        props = self._props()
+        props = {
+            k: (dict(v) if isinstance(v, Object) else v)
+            for k, v in self._props().items()
+        }
         props.update(**self._data)
         return props[item]
 
@@ -145,6 +153,13 @@ class Object(MutableMapping):
     def __len__(self):
         props = self._props()
         return len(props) + len(self._data)
+
+    def __repr__(self):
+        kvs = [
+            f"{k}={v!r}"
+            for k, v in itertools.chain(self._props().items(), self._data.items())
+        ]
+        return "fiona.{}({})".format(self.__class__.__name__, ", ".join(kvs))
 
     def __setitem__(self, key, value):
         warn(
@@ -196,6 +211,10 @@ class Geometry(Object):
             coordinates=coordinates, type=type, geometries=geometries
         )
         super().__init__(**data)
+
+    def __repr__(self):
+        kvs = [f"{k}={_model_repr.repr(v)}" for k, v in self.items() if v is not None]
+        return "fiona.Geometry({})".format(", ".join(kvs))
 
     @classmethod
     def from_dict(cls, ob=None, **kwargs):
@@ -383,15 +402,18 @@ class ObjectEncoder(JSONEncoder):
     """Encodes Geometry, Feature, and Properties."""
 
     def default(self, o):
-        if isinstance(o, (Geometry, Properties)):
-            return {k: self.default(v) for k, v in o.items() if v is not None}
-        elif isinstance(o, Feature):
-            o_dict = dict(o)
-            o_dict["type"] = "Feature"
-            if o.geometry is not None:
-                o_dict["geometry"] = self.default(o.geometry)
-            if o.properties is not None:
-                o_dict["properties"] = self.default(o.properties)
+        if isinstance(o, Object):
+            o_dict = {
+                k: self.default(v)
+                for k, v in itertools.chain(o._props().items(), o._data.items())
+            }
+            if isinstance(o, Geometry):
+                if o.type == "GeometryCollection":
+                    _ = o_dict.pop("coordinates", None)
+                else:
+                    _ = o_dict.pop("geometries", None)
+            elif isinstance(o, Feature):
+                o_dict["type"] = "Feature"
             return o_dict
         elif isinstance(o, bytes):
             return hexlify(o)

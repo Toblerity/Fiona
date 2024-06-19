@@ -2,13 +2,16 @@
 
 import logging
 import os
+import warnings
 
-from fiona.path import parse_path, UnparsedPath
+from fiona._path import _parse_path, _UnparsedPath
 
 log = logging.getLogger(__name__)
 
 try:
-    import boto3
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        import boto3
 except ImportError:
     log.debug("Could not import boto3, continuing with reduced functionality.")
     boto3 = None
@@ -94,9 +97,9 @@ class Session:
         if not path:
             return DummySession
 
-        path = parse_path(path)
+        path = _parse_path(path)
 
-        if isinstance(path, UnparsedPath) or path.is_local:
+        if isinstance(path, _UnparsedPath) or path.is_local:
             return DummySession
 
         elif (

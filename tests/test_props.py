@@ -2,10 +2,13 @@ import json
 import os.path
 import tempfile
 
+import pytest
+
 import fiona
 from fiona import prop_type, prop_width
 from fiona.model import Feature
-from fiona.rfc3339 import FionaDateType
+
+from .conftest import gdal_version
 
 
 def test_width_str():
@@ -24,9 +27,10 @@ def test_types():
     assert prop_type("str") == str
     assert isinstance(0, prop_type("int"))
     assert isinstance(0.0, prop_type("float"))
-    assert prop_type("date") == FionaDateType
+    assert prop_type("date") == str
 
 
+@pytest.mark.xfail(not gdal_version.at_least("3.5"), reason="Requires at least GDAL 3.5.0")
 def test_read_json_object_properties():
     """JSON object properties are properly serialized"""
     data = """
@@ -87,6 +91,7 @@ def test_read_json_object_properties():
         assert props["tricky"] == "{gotcha"
 
 
+@pytest.mark.xfail(not gdal_version.at_least("3.5"), reason="Requires at least GDAL 3.5.0")
 def test_write_json_object_properties():
     """Python object properties are properly serialized"""
     data = """

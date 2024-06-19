@@ -217,7 +217,7 @@ def test_mapinfo_raises():
         for driver in supported_drivers
         if _driver_supports_mode(driver, "w")
         and supports_vsi(driver)
-        and driver not in {"MapInfo File"}
+        and driver not in {"MapInfo File", "TileDB"}
     ],
 )
 def test_write_memoryfile_drivers(driver, testdata_generator):
@@ -226,7 +226,7 @@ def test_write_memoryfile_drivers(driver, testdata_generator):
     schema, crs, records1, _, _ = testdata_generator(driver, range1, [])
 
     with MemoryFile() as memfile:
-        with memfile.open(driver=driver, schema=schema) as c:
+        with memfile.open(driver=driver, crs="OGC:CRS84", schema=schema) as c:
             c.writerecords(records1)
 
         with memfile.open(driver=driver) as c:
@@ -267,7 +267,7 @@ def test_multiple_layer_memoryfile(testdata_generator):
         for driver in supported_drivers
         if _driver_supports_mode(driver, "a")
         and supports_vsi(driver)
-        and driver not in {"MapInfo File"}
+        and driver not in {"MapInfo File", "TileDB"}
     ],
 )
 def test_append_memoryfile_drivers(driver, testdata_generator):
@@ -277,16 +277,23 @@ def test_append_memoryfile_drivers(driver, testdata_generator):
     schema, crs, records1, records2, _ = testdata_generator(driver, range1, range2)
 
     with MemoryFile() as memfile:
-        with memfile.open(driver=driver, schema=schema) as c:
+        with memfile.open(driver=driver, crs="OGC:CRS84", schema=schema) as c:
             c.writerecords(records1)
 
-        with memfile.open(mode='a', driver=driver, schema=schema) as c:
-            c.writerecords(records2)
+        # The parquet dataset does not seem to support append mode
+        if driver == "Parquet":
+            with memfile.open(driver=driver) as c:
+                assert driver == c.driver
+                items = list(c)
+                assert len(items) == len(range1)
+        else:
+            with memfile.open(mode='a', driver=driver, schema=schema) as c:
+                c.writerecords(records2)
 
-        with memfile.open(driver=driver) as c:
-            assert driver == c.driver
-            items = list(c)
-            assert len(items) == len(range1 + range2)
+            with memfile.open(driver=driver) as c:
+                assert driver == c.driver
+                items = list(c)
+                assert len(items) == len(range1 + range2)
 
 
 def test_memoryfile_driver_does_not_support_vsi():
@@ -374,11 +381,11 @@ def test_allow_unsupported_drivers(monkeypatch):
 def test_listdir_zipmemoryfile(bytes_coutwildrnp_zip):
     """Test list directories of a zipped memory file."""
     with ZipMemoryFile(bytes_coutwildrnp_zip) as memfile:
-        assert memfile.listdir() == [
-            "coutwildrnp.shp",
-            "coutwildrnp.shx",
+        assert sorted(memfile.listdir()) == [
             "coutwildrnp.dbf",
             "coutwildrnp.prj",
+            "coutwildrnp.shp",
+            "coutwildrnp.shx",
         ]
 
 

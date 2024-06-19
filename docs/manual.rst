@@ -254,10 +254,9 @@ collection to get back to the beginning.
 .. admonition:: File Encoding
 
    The format drivers will attempt to detect the encoding of your data, but may
-   fail. In my experience GDAL 1.7.2 (for example) doesn't detect that the
-   encoding of the Natural Earth dataset is Windows-1252. In this case, the
-   proper encoding can be specified explicitly by using the ``encoding``
-   keyword parameter of :py:func:`fiona.open`: ``encoding='Windows-1252'``.
+   fail. In this case, the proper encoding can be specified explicitly by using
+   the ``encoding`` keyword parameter of :py:func:`fiona.open`, for example:
+   ``encoding='Windows-1252'``.
 
    New in version 0.9.1.
 

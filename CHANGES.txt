@@ -3,6 +3,122 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.10b2 (TBD)
+------------
+
+Bug fixes:
+
+- Fiona model objects have a informative, printable representation again (#).
+
+1.10b1 (2024-04-16)
+-------------------
+
+Bug fixes:
+
+- Fiona can again set fields with values that are instances of classes derived
+  from date, time, and datetime (#1377).  This was broken by changes in 1.10a2.
+
+1.10a2 (2024-04-05)
+-------------------
+
+Deprecations:
+
+- The FIELD_TYPES, FIELD_TYPES_MAP, and FIELD_TYPES_MAP_REV attributes of
+  fiona.schema are no longer used by the project and will be removed in version
+  2.0 (#1366).
+- The Python style of rio-filter expressions introduced in version 1.0 are
+  deprecated. Only the parenthesized list type of expression will be supported
+  by version 2.0.
+
+New features:
+
+- All supported Fiona field types are now represented by classes in
+  fiona.schema. These classes are mapped in FIELD_TYPES_MAP2 and
+  FIELD_TYPES_MAP2_REV to OGR field type and field subtype pairs (#1366).
+- The filter, map, and reduce CLI commands from the public domain version 1.1.0
+  of fio-planet have been incorporated into Fiona's core set of commands
+  (#1362).  These commands are only available if pyparsing and shapely (each of
+  these are declared in the "calc" set of extra requirements) are installed.
+
+Bug fixes:
+
+- Fiona's python opener VSI plugin prefix has been changed to "vsifiopener" to
+  not conflict with Rasterio (#1368).
+- Add a 16-bit integer type "int16" based on OGR's OSFTInt16 integer sub-type
+  (#1358).
+- Allow a GeoJSON collection's layer name to be set on opening in write mode
+  (#1352).
+- The legacy crs.py module which was shadowed by the new crs.pyx module has
+  been deleted (#1344).
+- Python 3.8 has been added back to the list of supported versions and
+  a dependency on Numpy added in 1.10a1 has been removed.
+- An implementation of the VSI flush callback has been added to _vsiopener.pyx.
+- Openers are now registered only by urlpath. The mode is no longer considered
+  as OGR drivers may use a mix of modes when creating a new dataset.
+
+Other changes:
+
+- Feature builder and field getter/setter instances are reused when reading and
+  writing features (#1366).
+
+1.10a1 (2024-03-01)
+-------------------
+
+Python version:
+
+Fiona 1.10 will require Python version 3.9 or higher.
+
+Deprecations:
+
+The fiona.path module will be removed in version 2.0 and a deprecation warning
+is issued when the module is imported (#1334). Additionally, members of that
+module are no longer exported from the top level module.
+
+New features:
+
+Python openers can now support discovery of auxiliary "sidecar" files like
+.aux.xml, .msk, and .tfw files for GeoTIFFs (#1331). Additionally, filesystem
+objects, such as those from fsspec, can be used as openers. This will become
+the recommended usage, supplanting the use of single file openers.
+
+Bug fixes:
+
+- Use of pkg_resources in test_rio_info.py has been eliminated.
+- gzip, tar, and zip archive URIs containing drive letters were not always
+  parsed properly on Windows, but are now (#1334).
+
+1.9.6 (2024-03-07)
+------------------
+
+- Ensure that geometry types in a schema are translated to a linear type, as
+  geometry instances are (#1313).
+- Fix broken stable API documentation on Read The Docs (#).
+- Remove install requirement of setuptools, a regression introduced in 1.9.5.
+
+1.9.5 (2023-10-11)
+------------------
+
+Bug fixes:
+
+- Expand keys in schema mismatch exception, resolving #1278.
+- Preserve the null properties and geometry of a Feature when serializing
+  (#1276).
+
+Packaging:
+
+- The distribution name is now officially "fiona", not "Fiona". The import
+  name remains "fiona".
+- Builds now require Cython >= 3.0.2 (#1276).
+- PyPI wheels include GDAL 3.6.4, PROJ 9.0.1, and GEOS 3.11.2.
+- PyPI wheels include curl 8.4.0, addressing CVE-2023-38545 and CVE-38546.
+- PyPI wheels are now available for Python 3.12.
+
+1.9.4.post1 (2023-05-23)
+------------------------
+
+Extraneous files were unintentionally packaged in the 1.9.4 wheels. This post1
+release excludes them so that wheel contents are as in version 1.9.3.
+
 1.9.4 (2023-05-16)
 ------------------
 
@@ -375,7 +491,7 @@ Upcoming changes:
   1.9 is intended to be backwards compatible with 1.8 except where user code
   tests `isinstance(feature, dict)`. In version 2.0 the new Feature, Geometry,
   and Properties classes will become immutable mappings. See
-  https://github.com/Toblerity/fiona-rfc/blob/master/rfc/0001-fiona-2-0-changes.md
+  https://github.com/Toblerity/fiona-rfc/blob/main/rfc/0001-fiona-2-0-changes.md
   for more discussion of the upcoming changes for version 2.0.
 
 1.8.6 (2019-03-18)

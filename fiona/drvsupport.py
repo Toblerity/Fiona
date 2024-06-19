@@ -103,7 +103,7 @@ supported_drivers = dict(
         # multi-layer
         #   ("OpenAir", "r"),
         # (Geo)Parquet
-        ("Parquet", "raw"),
+        ("Parquet", "rw"),
         # PCI Geomatics Database File 	PCIDSK 	No 	No 	Yes, using internal PCIDSK SDK (from GDAL 1.7.0)
         ("PCIDSK", "raw"),
         # PDS 	PDS 	No 	Yes 	Yes
@@ -130,6 +130,7 @@ supported_drivers = dict(
         # SUA 	SUA 	No 	Yes 	Yes
         ("SUA", "r"),
         # SVG 	SVG 	No 	Yes 	No, needs libexpat
+        ("TileDB", "raw"),
         # TopoJSON 	TopoJSON 	No 	Yes 	Yes
         ("TopoJSON", "r"),
         # UK .NTF 	UK. NTF 	No 	Yes 	Yes

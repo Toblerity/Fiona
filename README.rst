@@ -2,8 +2,14 @@
 Fiona
 =====
 
-.. image:: https://github.com/Toblerity/Fiona/workflows/Tests/badge.svg?branch=master
-   :target: https://github.com/Toblerity/Fiona/actions?query=branch%3Amaster
+.. image:: https://github.com/Toblerity/Fiona/actions/workflows/tests.yml/badge.svg
+   :target: https://github.com/Toblerity/Fiona/actions/workflows/tests.yml
+.. image:: https://github.com/Toblerity/Fiona/actions/workflows/test_gdal_latest.yml/badge.svg
+   :target: https://github.com/Toblerity/Fiona/actions/workflows/test_gdal_latest.yml
+.. image:: https://img.shields.io/pypi/v/fiona
+   :target: https://pypi.org/project/fiona/
+.. image:: https://api.securityscorecards.dev/projects/github.com/Toblerity/Fiona/badge
+   :target: https://securityscorecards.dev/viewer/?uri=github.com/Toblerity/Fiona
 
 Fiona streams simple feature data to and from GIS formats like GeoPackage and
 Shapefile.
@@ -47,7 +53,7 @@ environment variable.
 Many users find Anaconda and conda-forge a good way to install Fiona and get
 access to more optional format drivers (like GML).
 
-Fiona 2.0 requires Python 3.7 or higher and GDAL 3.2 or higher.
+Fiona 1.10 requires Python 3.8 or higher and GDAL 3.4 or higher.
 
 Python Usage
 ============
@@ -103,7 +109,7 @@ CLI Usage
 =========
 
 Fiona's command line interface, named "fio", is documented at `docs/cli.rst
-<https://github.com/Toblerity/Fiona/blob/master/docs/cli.rst>`__. The CLI has a
+<https://github.com/Toblerity/Fiona/blob/main/docs/cli.rst>`__. The CLI has a
 number of different commands. Its ``fio cat`` command streams GeoJSON features
 from any dataset.
 
@@ -120,6 +126,6 @@ For more details about this project, please see:
 
 * Fiona `home page <https://github.com/Toblerity/Fiona>`__
 * `Docs and manual <https://fiona.readthedocs.io/>`__
-* `Examples <https://github.com/Toblerity/Fiona/tree/master/examples>`__
+* `Examples <https://github.com/Toblerity/Fiona/tree/main/examples>`__
 * Main `user discussion group <https://fiona.groups.io/g/main>`__
 * `Developers discussion group <https://fiona.groups.io/g/dev>`__
