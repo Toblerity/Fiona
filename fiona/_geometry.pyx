@@ -20,6 +20,23 @@ log.addHandler(NullHandler())
 # mapping of GeoJSON type names to OGR integer geometry types
 GEOJSON2OGR_GEOMETRY_TYPES = dict((v, k) for k, v in GEOMETRY_TYPES.items())
 
+cdef set LINEAR_GEOM_TYPES = {
+    OGRGeometryType.CircularString.value,
+    OGRGeometryType.CompoundCurve.value,
+    OGRGeometryType.CurvePolygon.value,
+    OGRGeometryType.MultiCurve.value,
+    OGRGeometryType.MultiSurface.value,
+    # OGRGeometryType.Curve.value,  # Abstract type
+    # OGRGeometryType.Surface.value,  # Abstract type
+}
+
+cdef set PS_TIN_Tri_TYPES = {
+    OGRGeometryType.PolyhedralSurface.value,
+    OGRGeometryType.TIN.value,
+    OGRGeometryType.Triangle.value
+}
+
+
 cdef int ogr_get_geometry_type(void *geometry):
     # OGR_G_GetGeometryType with NULL geometry support
     if geometry == NULL:
@@ -137,14 +154,11 @@ cdef class GeomBuilder:
         parts = []
         j = 0
         count = OGR_G_GetGeometryCount(geom)
+
         while j < count:
             part = OGR_G_GetGeometryRef(geom, j)
-            code = base_geometry_type_code(ogr_get_geometry_type(part))
-            if code in (
-                OGRGeometryType.PolyhedralSurface.value,
-                OGRGeometryType.TIN.value,
-                OGRGeometryType.Triangle.value,
-            ):
+            code = base_geometry_type_code(OGR_G_GetGeometryType(part))
+            if code in PS_TIN_Tri_TYPES:
                 OGR_G_RemoveGeometry(geom, j, False)
                 # Removing a geometry will cause the geometry count to drop by one,
                 # and all “higher” geometries will shuffle down one in index.
@@ -186,11 +200,7 @@ cdef class GeomBuilder:
 
         # We need to take ownership of the geometry before we can call 
         # OGR_G_ForceToPolygon or OGR_G_ForceToMultiPolygon
-        if code in (
-            OGRGeometryType.PolyhedralSurface.value,
-            OGRGeometryType.TIN.value,
-            OGRGeometryType.Triangle.value,
-        ):
+        if code in PS_TIN_Tri_TYPES:
             cogr_geometry = OGR_F_StealGeometry(feature)
         return self.build(cogr_geometry)
 
@@ -206,28 +216,16 @@ cdef class GeomBuilder:
 
         # We convert special geometries (Curves, TIN, Triangle, ...)
         # to GeoJSON compatible geometries (LineStrings, Polygons, MultiPolygon, ...)
-        if code in (
-            OGRGeometryType.CircularString.value,
-            OGRGeometryType.CompoundCurve.value,
-            OGRGeometryType.CurvePolygon.value,
-            OGRGeometryType.MultiCurve.value,
-            OGRGeometryType.MultiSurface.value,
-            # OGRGeometryType.Curve.value,  # Abstract type
-            # OGRGeometryType.Surface.value,  # Abstract type
-        ):
+        if code in LINEAR_GEOM_TYPES:
             geometry_to_dealloc = OGR_G_GetLinearGeometry(geom, 0.0, NULL)
             code = base_geometry_type_code(ogr_get_geometry_type(geometry_to_dealloc))
             geom = geometry_to_dealloc
-        elif code in (
-            OGRGeometryType.PolyhedralSurface.value,
-            OGRGeometryType.TIN.value,
-            OGRGeometryType.Triangle.value,
-        ):
-            if code in (OGRGeometryType.PolyhedralSurface.value, OGRGeometryType.TIN.value):
-                geometry_to_dealloc = OGR_G_ForceToMultiPolygon(geom)
-            elif code == OGRGeometryType.Triangle.value:
+        elif code in PS_TIN_Tri_TYPES:
+            if code == OGRGeometryType.Triangle.value:
                 geometry_to_dealloc = OGR_G_ForceToPolygon(geom)
-            code = base_geometry_type_code(ogr_get_geometry_type(geometry_to_dealloc))
+            else:
+                geometry_to_dealloc = OGR_G_ForceToMultiPolygon(geom)
+            code = base_geometry_type_code(OGR_G_GetGeometryType(geometry_to_dealloc))
             geom = geometry_to_dealloc
         self.ndims = OGR_G_GetCoordinateDimension(geom)
 
