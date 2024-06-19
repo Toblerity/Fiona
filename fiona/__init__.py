@@ -216,7 +216,8 @@ def open(
     Raises
     ------
     DriverError
-        When the selected format driver cannot provide requested capabilities.
+        When the selected format driver cannot provide requested
+        capabilities such as ignoring fields or geometries.
 
     """
     if mode == "r" and hasattr(fp, "read"):
