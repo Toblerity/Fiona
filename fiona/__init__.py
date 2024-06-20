@@ -154,6 +154,11 @@ def open(
       fiona.open(
           'example.shp', enabled_drivers=['GeoJSON', 'ESRI Shapefile'])
 
+    Some format drivers permit low-level filtering of fields. Specific
+    fields can be ommitted by using the ``ignore_fields`` parameter.
+    Specific fields can be selected, excluding all others, by using the
+    ``include_fields`` parameter.
+
     Parameters
     ----------
     fp : URI (str or pathlib.Path), or file-like object
@@ -181,12 +186,12 @@ def open(
     crs_wkt : str
         An optional WKT representation of a coordinate reference
         system.
-    ignore_fields : list
+    ignore_fields : list[str], optional
         List of field names to ignore on load.
+    include_fields : list[str], optional
+        List of a subset of field names to include on load.
     ignore_geometry : bool
         Ignore the geometry on load.
-    include_fields : list
-        List of a subset of field names to include on load.
     wkt_version : fiona.enums.WktVersion or str, optional
         Version to use to for the CRS WKT.
         Defaults to GDAL's default (WKT1_GDAL for GDAL 3).
@@ -217,7 +222,7 @@ def open(
     ------
     DriverError
         When the selected format driver cannot provide requested
-        capabilities such as ignoring fields or geometries.
+        capabilities such as ignoring fields.
 
     """
     if mode == "r" and hasattr(fp, "read"):
