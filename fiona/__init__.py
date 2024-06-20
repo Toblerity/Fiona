@@ -99,6 +99,10 @@ def open(
     vfs=None,
     enabled_drivers=None,
     crs_wkt=None,
+    ignore_fields=None,
+    ignore_geometry=False,
+    include_fields=None,
+    wkt_version=None,
     allow_unsupported_drivers=False,
     opener=None,
     **kwargs
@@ -150,6 +154,11 @@ def open(
       fiona.open(
           'example.shp', enabled_drivers=['GeoJSON', 'ESRI Shapefile'])
 
+    Some format drivers permit low-level filtering of fields. Specific
+    fields can be ommitted by using the ``ignore_fields`` parameter.
+    Specific fields can be selected, excluding all others, by using the
+    ``include_fields`` parameter.
+
     Parameters
     ----------
     fp : URI (str or pathlib.Path), or file-like object
@@ -177,12 +186,12 @@ def open(
     crs_wkt : str
         An optional WKT representation of a coordinate reference
         system.
-    ignore_fields : list
+    ignore_fields : list[str], optional
         List of field names to ignore on load.
+    include_fields : list[str], optional
+        List of a subset of field names to include on load.
     ignore_geometry : bool
         Ignore the geometry on load.
-    include_fields : list
-        List of a subset of field names to include on load.
     wkt_version : fiona.enums.WktVersion or str, optional
         Version to use to for the CRS WKT.
         Defaults to GDAL's default (WKT1_GDAL for GDAL 3).
@@ -209,6 +218,12 @@ def open(
     -------
     Collection
 
+    Raises
+    ------
+    DriverError
+        When the selected format driver cannot provide requested
+        capabilities such as ignoring fields.
+
     """
     if mode == "r" and hasattr(fp, "read"):
         memfile = MemoryFile(fp.read())
@@ -218,6 +233,10 @@ def open(
             schema=schema,
             layer=layer,
             encoding=encoding,
+            ignore_fields=ignore_fields,
+            include_fields=include_fields,
+            ignore_geometry=ignore_geometry,
+            wkt_version=wkt_version,
             enabled_drivers=enabled_drivers,
             allow_unsupported_drivers=allow_unsupported_drivers,
             **kwargs
@@ -233,6 +252,10 @@ def open(
             schema=schema,
             layer=layer,
             encoding=encoding,
+            ignore_fields=ignore_fields,
+            include_fields=include_fields,
+            ignore_geometry=ignore_geometry,
+            wkt_version=wkt_version,
             enabled_drivers=enabled_drivers,
             allow_unsupported_drivers=allow_unsupported_drivers,
             crs_wkt=crs_wkt,
@@ -273,6 +296,10 @@ def open(
                 schema=schema,
                 layer=layer,
                 encoding=encoding,
+                ignore_fields=ignore_fields,
+                include_fields=include_fields,
+                ignore_geometry=ignore_geometry,
+                wkt_version=wkt_version,
                 enabled_drivers=enabled_drivers,
                 allow_unsupported_drivers=allow_unsupported_drivers,
                 crs_wkt=crs_wkt,
@@ -318,6 +345,10 @@ def open(
                     driver=driver,
                     encoding=encoding,
                     layer=layer,
+                    ignore_fields=ignore_fields,
+                    include_fields=include_fields,
+                    ignore_geometry=ignore_geometry,
+                    wkt_version=wkt_version,
                     enabled_drivers=enabled_drivers,
                     allow_unsupported_drivers=allow_unsupported_drivers,
                     **kwargs
@@ -331,6 +362,10 @@ def open(
                     schema=schema,
                     encoding=encoding,
                     layer=layer,
+                    ignore_fields=ignore_fields,
+                    include_fields=include_fields,
+                    ignore_geometry=ignore_geometry,
+                    wkt_version=wkt_version,
                     enabled_drivers=enabled_drivers,
                     crs_wkt=crs_wkt,
                     allow_unsupported_drivers=allow_unsupported_drivers,
