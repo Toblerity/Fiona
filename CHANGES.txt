@@ -8,6 +8,7 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Bug fixes:
 
+- A CSLConstList ctypedef has been added and is used where appropriate (#1404).
 - Fiona model objects have a informative, printable representation again (#).
 
 1.10b1 (2024-04-16)

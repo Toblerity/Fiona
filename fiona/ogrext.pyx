@@ -376,7 +376,7 @@ cdef class StringListField(AbstractField):
         for item in value:
             item_b = item.encode(encoding)
             string_list = CSLAddString(string_list, <const char *>item_b)
-        OGR_F_SetFieldStringList(feature, i, <const char **>string_list)
+        OGR_F_SetFieldStringList(feature, i, <CSLConstList>string_list)
 
 
 cdef class JSONField(AbstractField):
@@ -1264,7 +1264,7 @@ cdef class Session:
 
         cdef char **metadata = NULL
         metadata = GDALGetMetadata(obj, domain)
-        num_items = CSLCount(metadata)
+        num_items = CSLCount(<CSLConstList>metadata)
 
         return dict(metadata[i].decode('utf-8').split('=', 1) for i in range(num_items))
 
@@ -2175,7 +2175,7 @@ def _listdir(path):
         raise FionaValueError(f"Path '{path}' is not a directory.")
 
     papszFiles = VSIReadDir(path_c)
-    n = CSLCount(papszFiles)
+    n = CSLCount(<CSLConstList>papszFiles)
     files = []
     for i in range(n):
         files.append(papszFiles[i].decode("utf-8"))

@@ -36,7 +36,7 @@ _OPEN_FILE_EXIT_STACKS.set({})
 cdef int install_pyopener_plugin(VSIFilesystemPluginCallbacksStruct *callbacks_struct):
     """Install handlers for python file openers if it isn't already installed."""
     cdef char **registered_prefixes = VSIGetFileSystemsPrefixes()
-    cdef int prefix_index = CSLFindString(registered_prefixes, PREFIX_BYTES)
+    cdef int prefix_index = CSLFindString(<CSLConstList>registered_prefixes, PREFIX_BYTES)
     CSLDestroy(registered_prefixes)
 
     if prefix_index < 0:
