@@ -165,6 +165,8 @@ cdef void* pyopener_open(
     """
     urlpath = pszFilename.decode("utf-8")
     mode = pszAccess.decode("utf-8")
+    if not "b" in mode:
+        mode += "b"
     key = Path(urlpath).parent
 
     registry = _OPENER_REGISTRY.get()
@@ -207,7 +209,7 @@ cdef void* pyopener_open(
         errmsg = "OpenFile didn't resolve".encode("utf-8")
         return NULL
     else:
-        exit_stacks = _OPEN_FILE_EXIT_STACKS.get()
+        exit_stacks = _OPEN_FILE_EXIT_STACKS.get({})
         exit_stacks[file_obj] = stack
         _OPEN_FILE_EXIT_STACKS.set(exit_stacks)
         log.debug("Returning: file_obj=%r", file_obj)
@@ -284,7 +286,8 @@ def _opener_registration(urlpath, obj):
     # Might raise.
     opener = _create_opener(obj)
 
-    registry = _OPENER_REGISTRY.get()
+    registry = _OPENER_REGISTRY.get({})
+
     if key in registry:
         if registry[key] != opener:
             raise OpenerRegistrationError(f"Opener already registered for urlpath.")
