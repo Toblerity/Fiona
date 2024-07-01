@@ -51,7 +51,9 @@ cdef extern from "cpl_error.h" nogil:
     const char* CPLGetLastErrorMsg()
     CPLErr CPLGetLastErrorType()
     void CPLPushErrorHandler(CPLErrorHandler handler)
+    void CPLPushErrorHandlerEx(CPLErrorHandler handler, void *userdata)
     void CPLPopErrorHandler()
+    void CPLQuietErrorHandler(CPLErr eErrClass, CPLErrorNum nError, const char *pszErrorMsg)
 
 
 cdef extern from "cpl_vsi.h" nogil:
@@ -139,6 +141,11 @@ cdef extern from "cpl_vsi.h" nogil:
     int VSIRmdir(const char *path)
     int VSIStatL(const char *pszFilename, VSIStatBufL *psStatBuf)
     int VSI_ISDIR(int mode)
+
+
+IF (CTE_GDAL_MAJOR_VERSION, CTE_GDAL_MINOR_VERSION) >= (3, 9):
+    cdef extern from "cpl_vsi.h" nogil:
+        int VSIRemovePluginHandler(const char*)
 
 
 cdef extern from "ogr_core.h" nogil:
@@ -301,7 +308,7 @@ cdef extern from "ogr_srs_api.h" nogil:
     OGRErr OSRExportToPROJJSON(OGRSpatialReferenceH hSRS,
                                 char ** ppszReturn,
                                 const char* const* papszOptions)
-
+    void OSRGetPROJVersion	(int *pnMajor, int *pnMinor, int *pnPatch)
 
 cdef extern from "gdal.h" nogil:
 

@@ -78,3 +78,19 @@ def test_opener_fsspec_fs_write(tmp_path):
         collection.write(feature)
         assert len(collection) == 1
         assert collection.crs == "OGC:CRS84"
+
+
+def test_threads_context():
+    import io
+    from threading import Thread
+
+
+    def target():
+        with fiona.open("tests/data/coutwildrnp.shp", opener=io.open) as colxn:
+            print(colxn.profile)
+            assert len(colxn) == 67
+
+
+    thread = Thread(target=target)
+    thread.start()
+    thread.join()
