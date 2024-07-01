@@ -18,11 +18,12 @@ from fiona._geometry cimport (
     GeomBuilder, OGRGeomBuilder, geometry_type_code,
     normalize_geometry_type_code, base_geometry_type_code)
 from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile, get_last_error_msg
+from fiona._err cimport StackChecker
 
 import fiona
 from fiona._env import get_gdal_version_num, calc_gdal_version_num, get_gdal_version_tuple
 from fiona._err import (
-    cpl_errs, FionaNullPointerError, CPLE_BaseError, CPLE_AppDefinedError,
+    cpl_errs, stack_errors, FionaNullPointerError, CPLE_BaseError, CPLE_AppDefinedError,
     CPLE_OpenFailedError)
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
@@ -92,6 +93,10 @@ cdef void* gdal_open_vector(const char* path_c, int mode, drivers, options) exce
     cdef char **drvs = NULL
     cdef void* drv = NULL
     cdef char **open_opts = NULL
+    cdef char **registered_prefixes = NULL
+    cdef int prefix_index = 0
+    cdef VSIFilesystemPluginCallbacksStruct *callbacks_struct = NULL
+    cdef StackChecker checker
 
     flags = GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR
     if mode == 1:
@@ -122,15 +127,13 @@ cdef void* gdal_open_vector(const char* path_c, int mode, drivers, options) exce
     open_opts = CSLAddNameValue(open_opts, "VALIDATE_OPEN_OPTIONS", "NO")
 
     try:
-        cogr_ds = exc_wrap_pointer(
-            GDALOpenEx(path_c, flags, <const char *const *>drvs, <const char *const *>open_opts, NULL)
-        )
-        return cogr_ds
-    except FionaNullPointerError:
-        raise DriverError(
-            f"Failed to open dataset (mode={mode}): {path_c.decode('utf-8')}")
+        with stack_errors() as checker:
+            cogr_ds = GDALOpenEx(
+                path_c, flags, <const char *const *>drvs, <const char *const *>open_opts, NULL
+            )
+            return checker.exc_wrap_pointer(cogr_ds)
     except CPLE_BaseError as exc:
-        raise DriverError(str(exc))
+        raise DriverError(f"Failed to open dataset (flags={flags}): {path_c.decode('utf-8')}") from exc
     finally:
         CSLDestroy(drvs)
         CSLDestroy(open_opts)
@@ -149,9 +152,7 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except NU
     creation_option_keys = option_keys & set(meta.dataset_creation_options(db.decode("utf-8")))
 
     for k, v in options.items():
-
         if k.upper() in creation_option_keys:
-
             kb = k.upper().encode('utf-8')
 
             if isinstance(v, bool):
@@ -169,7 +170,6 @@ cdef void* gdal_create(void* cogr_driver, const char *path_c, options) except NU
         raise DriverError(str(exc))
     finally:
         CSLDestroy(creation_opts)
-
 
 
 def _explode(coords):
@@ -192,6 +192,7 @@ def _bounds(geometry):
         return min(xyz[0]), min(xyz[1]), max(xyz[0]), max(xyz[1])
     except (KeyError, TypeError):
         return None
+
 
 cdef int GDAL_VERSION_NUM = get_gdal_version_num()
 

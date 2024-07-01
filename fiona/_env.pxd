@@ -1,11 +1,6 @@
 include "gdal.pxi"
 
 
-cdef extern from "ogr_srs_api.h":
-    void OSRSetPROJSearchPaths(const char *const *papszPaths)
-    void OSRGetPROJVersion	(int *pnMajor, int *pnMinor, int *pnPatch)
-
-
 cdef class ConfigEnv(object):
     cdef public object options
 

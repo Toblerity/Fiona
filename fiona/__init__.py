@@ -324,7 +324,7 @@ def open(
                 log.debug("Registering opener: raw_dataset_path=%r, opener=%r", raw_dataset_path, opener)
                 vsi_path_ctx = _opener_registration(raw_dataset_path, opener)
                 registered_vsi_path = stack.enter_context(vsi_path_ctx)
-                log.debug("Registered vsi path: registered_vsi_path%r", registered_vsi_path)
+                log.debug("Registered vsi path: registered_vsi_path=%r", registered_vsi_path)
                 path = _UnparsedPath(registered_vsi_path)
             else:
                 if vfs:

@@ -8,19 +8,17 @@ from contextvars import ContextVar
 import logging
 import os
 from pathlib import Path
-
 import stat
+from uuid import uuid4
 
 from libc.string cimport memcpy
 
+from fiona._env import get_gdal_version_tuple
 from fiona.errors import OpenerRegistrationError
 
 log = logging.getLogger(__name__)
 
-# Prefix for all in-memory paths used by GDAL's VSI system
-# Except for errors and log messages this shouldn't really be seen by the user
-cdef str PREFIX = "/vsifiopener/"
-cdef bytes PREFIX_BYTES = PREFIX.encode("utf-8")
+cdef str VSI_NS_ROOT = "vsifiopener"
 
 # This is global state for the Python filesystem plugin. It currently only
 # contains path -> PyOpenerBase (or subclass) instances. This is used by
@@ -33,38 +31,12 @@ _OPEN_FILE_EXIT_STACKS = ContextVar("open_file_exit_stacks")
 _OPEN_FILE_EXIT_STACKS.set({})
 
 
-cdef int install_pyopener_plugin(VSIFilesystemPluginCallbacksStruct *callbacks_struct):
-    """Install handlers for python file openers if it isn't already installed."""
-    cdef char **registered_prefixes = VSIGetFileSystemsPrefixes()
-    cdef int prefix_index = CSLFindString(<CSLConstList>registered_prefixes, PREFIX_BYTES)
-    CSLDestroy(registered_prefixes)
-
-    if prefix_index < 0:
-        log.debug("Installing Python opener handler plugin...")
-        callbacks_struct = VSIAllocFilesystemPluginCallbacksStruct()
-        callbacks_struct.open = <VSIFilesystemPluginOpenCallback>pyopener_open
-        callbacks_struct.eof = <VSIFilesystemPluginEofCallback>pyopener_eof
-        callbacks_struct.tell = <VSIFilesystemPluginTellCallback>pyopener_tell
-        callbacks_struct.seek = <VSIFilesystemPluginSeekCallback>pyopener_seek
-        callbacks_struct.read = <VSIFilesystemPluginReadCallback>pyopener_read
-        callbacks_struct.write = <VSIFilesystemPluginWriteCallback>pyopener_write
-        callbacks_struct.flush = <VSIFilesystemPluginFlushCallback>pyopener_flush
-        callbacks_struct.close = <VSIFilesystemPluginCloseCallback>pyopener_close
-        callbacks_struct.read_dir = <VSIFilesystemPluginReadDirCallback>pyopener_read_dir
-        callbacks_struct.stat = <VSIFilesystemPluginStatCallback>pyopener_stat
-        callbacks_struct.pUserData = <void*>_OPENER_REGISTRY
-        retval = VSIInstallPluginHandler(PREFIX_BYTES, callbacks_struct)
-        VSIFreeFilesystemPluginCallbacksStruct(callbacks_struct)
-        return retval
-    else:
-        return 0
-
-
-cdef void uninstall_pyopener_plugin(VSIFilesystemPluginCallbacksStruct *callbacks_struct):
-    if callbacks_struct is not NULL:
-        callbacks_struct.pUserData = NULL
-        VSIFreeFilesystemPluginCallbacksStruct(callbacks_struct)
-    callbacks_struct = NULL
+# When an opener is registered for a path, this structure captures the
+# path and unique registration instance. VSI stat, read_dir, and open
+# calls have access to the struct instance.
+cdef struct FSData:
+    char *path
+    char *uuid
 
 
 cdef int pyopener_stat(
@@ -74,14 +46,20 @@ cdef int pyopener_stat(
     int nFlags
 ) with gil:
     """Provides POSIX stat data to GDAL from a Python filesystem."""
-    # Convert the given filename to a registry key.
-    # Reminder: openers are registered by URI scheme, authority, and 
-    # *directory* path.
+    cdef FSData *fsdata = <FSData *>pUserData
+    path = fsdata.path.decode("utf-8")
+    uuid = fsdata.uuid.decode("utf-8")
+    key = (Path(path), uuid)
     urlpath = pszFilename.decode("utf-8")
-    key = Path(urlpath).parent
 
     registry = _OPENER_REGISTRY.get()
-    log.debug("Looking up opener in pyopener_stat: registry=%r, key=%r", registry, key)
+    log.debug(
+        "Looking up opener in pyopener_stat: urlpath=%r, registry=%r, key=%r",
+        urlpath,
+        registry,
+        key
+    )
+
     try:
         file_opener = registry[key]
     except KeyError as err:
@@ -99,10 +77,12 @@ cdef int pyopener_stat(
             return -1
         size = file_opener.size(urlpath)
         mtime = file_opener.mtime(urlpath)
-    except (FileNotFoundError, KeyError):
+    except (FileNotFoundError, KeyError) as err:
         # No such file or directory.
+        log.error("File or key not found: err=%r", err)
         return -1
     except Exception as err:
+        log.error("Other error: err=%r", err)
         errmsg = f"Opener failed to determine file info: {repr(err)}".encode("utf-8")
         CPLError(CE_Failure, <CPLErrorNum>4, <const char *>"%s", <const char *>errmsg)
         return -1
@@ -119,11 +99,20 @@ cdef char ** pyopener_read_dir(
     int nMaxFiles
 ) with gil:
     """Provides a directory listing to GDAL from a Python filesystem."""
+    cdef FSData *fsdata = <FSData *>pUserData
+    path = fsdata.path.decode("utf-8")
+    uuid = fsdata.uuid.decode("utf-8")
+    key = (Path(path), uuid)
     urlpath = pszDirname.decode("utf-8")
-    key = Path(urlpath)
 
     registry = _OPENER_REGISTRY.get()
-    log.debug("Looking up opener in pyopener_read_dir: registry=%r, key=%r", registry, key)
+    log.debug(
+        "Looking up opener in pyopener_read_dir: urlpath=%r, registry=%r, key=%r",
+        urlpath,
+        registry,
+        key
+    )
+
     try:
         file_opener = registry[key]
     except KeyError as err:
@@ -135,8 +124,9 @@ cdef char ** pyopener_read_dir(
         # GDAL wants relative file names.
         contents = [Path(item).name for item in file_opener.ls(urlpath)]
         log.debug("Looking for dir contents: urlpath=%r, contents=%r", urlpath, contents)
-    except (FileNotFoundError, KeyError):
+    except (FileNotFoundError, KeyError) as err:
         # No such file or directory.
+        log.error("File or key not found: err=%r", err)
         return NULL
     except Exception as err:
         errmsg = f"Opener failed to determine directory contents: {repr(err)}".encode("utf-8")
@@ -163,17 +153,31 @@ cdef void* pyopener_open(
     GDAL may call this function multiple times per filename and each
     result must be seperately seekable.
     """
+    cdef FSData *fsdata = <FSData *>pUserData
+    path = fsdata.path.decode("utf-8")
+    uuid = fsdata.uuid.decode("utf-8")
+    key = (Path(path), uuid)
     urlpath = pszFilename.decode("utf-8")
+
     mode = pszAccess.decode("utf-8")
     if not "b" in mode:
         mode += "b"
-    key = Path(urlpath).parent
+
+    log.debug("Getting key from user data: key=%r", key)
 
     registry = _OPENER_REGISTRY.get()
-    log.debug("Looking up opener in pyopener_open: registry=%r, key=%r", registry, key)
+    log.debug(
+        "Looking up opener in pyopener_open: urlpath=%r, registry=%r, key=%r",
+        urlpath,
+        registry,
+        key
+    )
+
     try:
         file_opener = registry[key]
     except KeyError as err:
+        print(f"{type(key)} {len(key)}")
+        print(f"{registry=}, {key=}, {err=}")
         errmsg = f"Opener not found: {repr(err)}".encode("utf-8")
         CPLError(CE_Failure, <CPLErrorNum>4, <const char *>"%s", <const char *>errmsg)
         return NULL
@@ -223,6 +227,7 @@ cdef int pyopener_eof(void *pFile) with gil:
         return 1
     else:
         return 0
+
 
 cdef vsi_l_offset pyopener_tell(void *pFile) with gil:
     cdef object file_obj = <object>pFile
@@ -281,7 +286,28 @@ cdef int pyopener_close(void *pFile) with gil:
 
 @contextlib.contextmanager
 def _opener_registration(urlpath, obj):
-    key = Path(urlpath).parent
+    cdef char **registered_prefixes = NULL
+    cdef int prefix_index = 0
+    cdef VSIFilesystemPluginCallbacksStruct *callbacks_struct = NULL
+    cdef FSData fsdata
+    cdef char *path_c = NULL
+    cdef char *uuid_c = NULL
+
+    # To resolve issue 1406 we add the opener or filesystem id to the
+    # registry key.
+    kpath = Path(urlpath).parent
+    kid = uuid4().hex
+    key = (kpath, kid)
+
+    path_b = kpath.as_posix().encode("utf-8")
+    path_c = path_b
+    uuid_b = kid.encode("utf-8")
+    uuid_c = uuid_b
+
+    fsdata = FSData(path_c, uuid_c)
+
+    namespace = f"{VSI_NS_ROOT}_{kid}"
+    cdef bytes prefix_bytes = f"/{namespace}/".encode("utf-8")
 
     # Might raise.
     opener = _create_opener(obj)
@@ -293,20 +319,52 @@ def _opener_registration(urlpath, obj):
             raise OpenerRegistrationError(f"Opener already registered for urlpath.")
         else:
             try:
-                yield f"{PREFIX}{urlpath}"
+                yield f"/{namespace}/{urlpath}"
             finally:
                 registry = _OPENER_REGISTRY.get()
                 _ = registry.pop(key, None)
                 _OPENER_REGISTRY.set(registry)
+
     else:
+        # Install handler.
+        registered_prefixes = VSIGetFileSystemsPrefixes()
+        prefix_index = CSLFindString(<CSLConstList>registered_prefixes, prefix_bytes)
+        CSLDestroy(registered_prefixes)
+
+        if prefix_index < 0:
+            log.debug("Installing Python opener handler plugin: prefix_bytes=%r", prefix_bytes)
+            callbacks_struct = VSIAllocFilesystemPluginCallbacksStruct()
+            callbacks_struct.open = <VSIFilesystemPluginOpenCallback>pyopener_open
+            callbacks_struct.eof = <VSIFilesystemPluginEofCallback>pyopener_eof
+            callbacks_struct.tell = <VSIFilesystemPluginTellCallback>pyopener_tell
+            callbacks_struct.seek = <VSIFilesystemPluginSeekCallback>pyopener_seek
+            callbacks_struct.read = <VSIFilesystemPluginReadCallback>pyopener_read
+            callbacks_struct.write = <VSIFilesystemPluginWriteCallback>pyopener_write
+            callbacks_struct.flush = <VSIFilesystemPluginFlushCallback>pyopener_flush
+            callbacks_struct.close = <VSIFilesystemPluginCloseCallback>pyopener_close
+            callbacks_struct.read_dir = <VSIFilesystemPluginReadDirCallback>pyopener_read_dir
+            callbacks_struct.stat = <VSIFilesystemPluginStatCallback>pyopener_stat
+            callbacks_struct.pUserData = &fsdata
+            retval = VSIInstallPluginHandler(prefix_bytes, callbacks_struct)
+            VSIFreeFilesystemPluginCallbacksStruct(callbacks_struct)
+
+        registered_prefixes = VSIGetFileSystemsPrefixes()
+        prefix_index = CSLFindString(<CSLConstList>registered_prefixes, prefix_bytes)
+        CSLDestroy(registered_prefixes)
+        log.debug("Prefix indexed: prefix_index=%r", prefix_index)
+
         registry[key] = opener
         _OPENER_REGISTRY.set(registry)
+
         try:
-            yield f"{PREFIX}{urlpath}"
+            yield f"/{namespace}/{urlpath}"
         finally:
             registry = _OPENER_REGISTRY.get()
             _ = registry.pop(key, None)
             _OPENER_REGISTRY.set(registry)
+
+            IF (CTE_GDAL_MAJOR_VERSION, CTE_GDAL_MINOR_VERSION) >= (3, 9):
+                retval = VSIRemovePluginHandler(prefix_bytes)
 
 
 class _AbstractOpener:

@@ -86,8 +86,9 @@ def test_threads_context():
 
 
     def target():
-        with fiona.open("tests/data/coutwildrnp.shp", opener=io.open):
-            pass
+        with fiona.open("tests/data/coutwildrnp.shp", opener=io.open) as colxn:
+            print(colxn.profile)
+            assert len(colxn) == 67
 
 
     thread = Thread(target=target)
