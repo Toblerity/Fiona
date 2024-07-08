@@ -79,10 +79,8 @@ cdef int pyopener_stat(
         mtime = file_opener.mtime(urlpath)
     except (FileNotFoundError, KeyError) as err:
         # No such file or directory.
-        log.error("File or key not found: err=%r", err)
         return -1
     except Exception as err:
-        log.error("Other error: err=%r", err)
         errmsg = f"Opener failed to determine file info: {repr(err)}".encode("utf-8")
         CPLError(CE_Failure, <CPLErrorNum>4, <const char *>"%s", <const char *>errmsg)
         return -1
@@ -124,10 +122,8 @@ cdef int pyopener_unlink(
         return 0
     except (FileNotFoundError, KeyError) as err:
         # No such file or directory.
-        log.error("File or key not found: err=%r", err)
         return -1
     except Exception as err:
-        log.error("Other error: err=%r", err)
         errmsg = f"Opener failed to determine file info: {repr(err)}".encode("utf-8")
         CPLError(CE_Failure, <CPLErrorNum>4, <const char *>"%s", <const char *>errmsg)
         return -1
@@ -166,7 +162,6 @@ cdef char ** pyopener_read_dir(
         log.debug("Looking for dir contents: urlpath=%r, contents=%r", urlpath, contents)
     except (FileNotFoundError, KeyError) as err:
         # No such file or directory.
-        log.error("File or key not found: err=%r", err)
         return NULL
     except Exception as err:
         errmsg = f"Opener failed to determine directory contents: {repr(err)}".encode("utf-8")
@@ -542,6 +537,7 @@ class _FilesystemOpener(_AbstractOpener):
     def isdir(self, path):
         return self._obj.isdir(path)
     def ls(self, path):
+        # return value of ls() varies between file and zip fsspec filesystems.
         return [item if isinstance(item, str) else item["filename"] for item in self._obj.ls(path)]
     def mtime(self, path):
         try:

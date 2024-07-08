@@ -405,10 +405,8 @@ cdef class GDALEnv(ConfigEnv):
         if not self._have_registered_drivers:
             with threading.Lock():
                 if not self._have_registered_drivers:
-
                     GDALAllRegister()
                     OGRRegisterAll()
-                    # install_pyopener_plugin(pyopener_plugin)
 
                     if 'GDAL_DATA' in os.environ:
                         log.debug("GDAL_DATA found in environment.")
