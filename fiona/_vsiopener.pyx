@@ -69,9 +69,9 @@ cdef int pyopener_stat(
 
     try:
         if file_opener.isfile(urlpath):
-            fmode = 0o170000 | stat.S_IFREG
+            fmode = stat.S_IFREG
         elif file_opener.isdir(urlpath):
-            fmode = 0o170000 | stat.S_IFDIR
+            fmode = stat.S_IFDIR
         else:
             # No such file or directory.
             return -1
@@ -91,6 +91,46 @@ cdef int pyopener_stat(
     pStatBuf.st_mode = fmode
     pStatBuf.st_mtime = mtime
     return 0
+
+
+cdef int pyopener_unlink(
+    void *pUserData,
+    const char *pszFilename,
+) with gil:
+    """Unlink a file from a Python filesystem."""
+    cdef FSData *fsdata = <FSData *>pUserData
+    path = fsdata.path.decode("utf-8")
+    uuid = fsdata.uuid.decode("utf-8")
+    key = (Path(path), uuid)
+    urlpath = pszFilename.decode("utf-8")
+
+    registry = _OPENER_REGISTRY.get()
+    log.debug(
+        "Looking up opener in pyopener_unlink: urlpath=%r, registry=%r, key=%r",
+        urlpath,
+        registry,
+        key
+    )
+
+    try:
+        file_opener = registry[key]
+    except KeyError as err:
+        errmsg = f"Opener not found: {repr(err)}".encode("utf-8")
+        CPLError(CE_Failure, <CPLErrorNum>4, <const char *>"%s", <const char *>errmsg)
+        return -1
+
+    try:
+        file_opener.rm(urlpath)
+        return 0
+    except (FileNotFoundError, KeyError) as err:
+        # No such file or directory.
+        log.error("File or key not found: err=%r", err)
+        return -1
+    except Exception as err:
+        log.error("Other error: err=%r", err)
+        errmsg = f"Opener failed to determine file info: {repr(err)}".encode("utf-8")
+        CPLError(CE_Failure, <CPLErrorNum>4, <const char *>"%s", <const char *>errmsg)
+        return -1
 
 
 cdef char ** pyopener_read_dir(
@@ -344,6 +384,7 @@ def _opener_registration(urlpath, obj):
             callbacks_struct.close = <VSIFilesystemPluginCloseCallback>pyopener_close
             callbacks_struct.read_dir = <VSIFilesystemPluginReadDirCallback>pyopener_read_dir
             callbacks_struct.stat = <VSIFilesystemPluginStatCallback>pyopener_stat
+            callbacks_struct.unlink = <VSIFilesystemPluginUnlinkCallback>pyopener_unlink
             callbacks_struct.pUserData = &fsdata
             retval = VSIInstallPluginHandler(prefix_bytes, callbacks_struct)
             VSIFreeFilesystemPluginCallbacksStruct(callbacks_struct)
@@ -442,6 +483,19 @@ class _AbstractOpener:
             Modification timestamp in seconds.
         """
         raise NotImplementedError
+    def rm(self, path):
+        """Remove a resource.
+
+        Parameters
+        ----------
+        path : str
+            The identifier/locator for a resource within a filesystem.
+
+        Returns
+        -------
+        None
+        """
+        raise NotImplementedError
     def size(self, path):
         """Get the size, in bytes, of a resource..
 
@@ -488,7 +542,7 @@ class _FilesystemOpener(_AbstractOpener):
     def isdir(self, path):
         return self._obj.isdir(path)
     def ls(self, path):
-        return self._obj.ls(path)
+        return [item if isinstance(item, str) else item["filename"] for item in self._obj.ls(path)]
     def mtime(self, path):
         try:
             mtime = int(self._obj.modified(path).timestamp())
@@ -496,6 +550,8 @@ class _FilesystemOpener(_AbstractOpener):
             mtime = 0
         log.debug("Modification time: mtime=%r", mtime)
         return mtime
+    def rm(self, path):
+        return self._obj.rm(path)
     def size(self, path):
         return self._obj.size(path)
 
@@ -508,6 +564,8 @@ class _AltFilesystemOpener(_FilesystemOpener):
         return self._obj.is_dir(path)
     def mtime(self, path):
         return 0
+    def rm(self, path):
+        self._obj.remove_file(path)
     def size(self, path):
         return self._obj.file_size(path)
 

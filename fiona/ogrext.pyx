@@ -2127,10 +2127,8 @@ def _remove_layer(path, layer, driver=None):
 
 
 def _listlayers(path, **kwargs):
-
     """Provides a list of the layers in an OGR data source.
     """
-
     cdef void *cogr_ds = NULL
     cdef void *cogr_layer = NULL
     cdef const char *path_c
