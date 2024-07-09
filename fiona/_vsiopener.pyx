@@ -159,7 +159,6 @@ cdef char ** pyopener_read_dir(
     try:
         # GDAL wants relative file names.
         contents = [Path(item).name for item in file_opener.ls(urlpath)]
-        log.debug("Looking for dir contents: urlpath=%r, contents=%r", urlpath, contents)
     except (FileNotFoundError, KeyError) as err:
         # No such file or directory.
         return NULL
@@ -198,8 +197,6 @@ cdef void* pyopener_open(
     if not "b" in mode:
         mode += "b"
 
-    log.debug("Getting key from user data: key=%r", key)
-
     registry = _OPENER_REGISTRY.get()
     log.debug(
         "Looking up opener in pyopener_open: urlpath=%r, registry=%r, key=%r",
@@ -211,8 +208,6 @@ cdef void* pyopener_open(
     try:
         file_opener = registry[key]
     except KeyError as err:
-        print(f"{type(key)} {len(key)}")
-        print(f"{registry=}, {key=}, {err=}")
         errmsg = f"Opener not found: {repr(err)}".encode("utf-8")
         CPLError(CE_Failure, <CPLErrorNum>4, <const char *>"%s", <const char *>errmsg)
         return NULL
@@ -240,7 +235,6 @@ cdef void* pyopener_open(
     try:
         file_obj = stack.enter_context(file_obj)
     except (AttributeError, TypeError) as err:
-        log.error("File object is not a context manager: file_obj=%r", file_obj)
         errmsg = f"Opener failed to open file with arguments ({repr(urlpath)}, {repr(mode)}): {repr(err)}".encode("utf-8")
         CPLError(CE_Failure, <CPLErrorNum>4, <const char *>"%s", <const char *>errmsg)
         return NULL
@@ -251,7 +245,6 @@ cdef void* pyopener_open(
         exit_stacks = _OPEN_FILE_EXIT_STACKS.get({})
         exit_stacks[file_obj] = stack
         _OPEN_FILE_EXIT_STACKS.set(exit_stacks)
-        log.debug("Returning: file_obj=%r", file_obj)
         return <void *>file_obj
 
 
@@ -291,7 +284,11 @@ cdef size_t pyopener_write(void *pFile, void *pBuffer, size_t nSize, size_t nCou
     cdef object file_obj = <object>pFile
     buffer_len = nSize * nCount
     cdef unsigned char [:] buff_view = <unsigned char[:buffer_len]>pBuffer
-    log.debug("Writing data: file_obj=%r, buff_view=%r, buffer_len=%r", file_obj, buff_view, buffer_len)
+    log.debug(
+        "Writing data: file_obj=%r, buff_view=%r, buffer_len=%r",
+        file_obj,
+        buff_view,
+        buffer_len)
     try:
         num = file_obj.write(buff_view)
     except TypeError:
@@ -387,7 +384,6 @@ def _opener_registration(urlpath, obj):
         registered_prefixes = VSIGetFileSystemsPrefixes()
         prefix_index = CSLFindString(<CSLConstList>registered_prefixes, prefix_bytes)
         CSLDestroy(registered_prefixes)
-        log.debug("Prefix indexed: prefix_index=%r", prefix_index)
 
         registry[key] = opener
         _OPENER_REGISTRY.set(registry)
@@ -544,7 +540,6 @@ class _FilesystemOpener(_AbstractOpener):
             mtime = int(self._obj.modified(path).timestamp())
         except NotImplementedError:
             mtime = 0
-        log.debug("Modification time: mtime=%r", mtime)
         return mtime
     def rm(self, path):
         return self._obj.rm(path)
