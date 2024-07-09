@@ -1,6 +1,7 @@
 """Tests of the Python opener VSI plugin."""
 
 import io
+import os
 
 import fsspec
 import pytest
@@ -78,3 +79,85 @@ def test_opener_fsspec_fs_write(tmp_path):
         collection.write(feature)
         assert len(collection) == 1
         assert collection.crs == "OGC:CRS84"
+
+
+def test_threads_context():
+    import io
+    from threading import Thread
+
+
+    def target():
+        with fiona.open("tests/data/coutwildrnp.shp", opener=io.open) as colxn:
+            print(colxn.profile)
+            assert len(colxn) == 67
+
+
+    thread = Thread(target=target)
+    thread.start()
+    thread.join()
+
+
+def test_overwrite(data):
+    """Opener can overwrite data."""
+    schema = {"geometry": "Point", "properties": {"zero": "int"}}
+    feature = Feature.from_dict(
+        **{
+            "geometry": {"type": "Point", "coordinates": (0, 0)},
+            "properties": {"zero": "0"},
+        }
+    )
+    fs = fsspec.filesystem("file")
+    outputfile = os.path.join(str(data), "coutwildrnp.shp")
+
+    with fiona.open(
+        str(outputfile),
+        "w",
+        driver="ESRI Shapefile",
+        schema=schema,
+        crs="OGC:CRS84",
+        opener=fs,
+    ) as collection:
+        collection.write(feature)
+        assert len(collection) == 1
+        assert collection.crs == "OGC:CRS84"
+
+
+def test_opener_fsspec_zip_fs_listlayers():
+    """Use fsspec zip filesystem as opener for listlayers()."""
+    fs = fsspec.filesystem("zip", fo="tests/data/coutwildrnp.zip")
+    assert fiona.listlayers("coutwildrnp.shp", opener=fs) == ["coutwildrnp"]
+
+
+def test_opener_fsspec_zip_fs_listdir():
+    """Use fsspec zip filesystem as opener for listdir()."""
+    fs = fsspec.filesystem("zip", fo="tests/data/coutwildrnp.zip")
+    listing = fiona.listdir("/", opener=fs)
+    assert len(listing) == 4
+    assert set(
+        ["coutwildrnp.shp", "coutwildrnp.dbf", "coutwildrnp.shx", "coutwildrnp.prj"]
+    ) & set(listing)
+
+
+
+def test_opener_fsspec_file_fs_listdir():
+    """Use fsspec file filesystem as opener for listdir()."""
+    fs = fsspec.filesystem("file")
+    listing = fiona.listdir("tests/data", opener=fs)
+    assert len(listing) >= 35
+    assert set(
+        ["coutwildrnp.shp", "coutwildrnp.dbf", "coutwildrnp.shx", "coutwildrnp.prj"]
+    ) & set(listing)
+
+
+def test_opener_fsspec_file_remove(data):
+    """Opener can remove data."""
+    fs = fsspec.filesystem("file")
+    listing = fiona.listdir(str(data), opener=fs)
+    assert len(listing) == 4
+    outputfile = os.path.join(str(data), "coutwildrnp.shp")
+    fiona.remove(outputfile)
+    listing = fiona.listdir(str(data), opener=fs)
+    assert len(listing) == 0
+    assert not set(
+        ["coutwildrnp.shp", "coutwildrnp.dbf", "coutwildrnp.shx", "coutwildrnp.prj"]
+    ) & set(listing)

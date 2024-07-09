@@ -17,7 +17,6 @@ import threading
 
 from fiona._err cimport exc_wrap_int, exc_wrap_ogrerr
 from fiona._err import CPLE_BaseError
-from fiona._vsiopener cimport install_pyopener_plugin
 from fiona.errors import EnvError
 
 level_map = {
@@ -406,10 +405,8 @@ cdef class GDALEnv(ConfigEnv):
         if not self._have_registered_drivers:
             with threading.Lock():
                 if not self._have_registered_drivers:
-
                     GDALAllRegister()
                     OGRRegisterAll()
-                    install_pyopener_plugin(pyopener_plugin)
 
                     if 'GDAL_DATA' in os.environ:
                         log.debug("GDAL_DATA found in environment.")

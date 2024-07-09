@@ -324,7 +324,7 @@ def open(
                 log.debug("Registering opener: raw_dataset_path=%r, opener=%r", raw_dataset_path, opener)
                 vsi_path_ctx = _opener_registration(raw_dataset_path, opener)
                 registered_vsi_path = stack.enter_context(vsi_path_ctx)
-                log.debug("Registered vsi path: registered_vsi_path%r", registered_vsi_path)
+                log.debug("Registered vsi path: registered_vsi_path=%r", registered_vsi_path)
                 path = _UnparsedPath(registered_vsi_path)
             else:
                 if vfs:
@@ -386,7 +386,7 @@ collection = open
 
 
 @ensure_env_with_credentials
-def remove(path_or_collection, driver=None, layer=None):
+def remove(path_or_collection, driver=None, layer=None, opener=None):
     """Delete an OGR data source or one of its layers.
 
     If no layer is specified, the entire dataset and all of its layers
@@ -396,6 +396,19 @@ def remove(path_or_collection, driver=None, layer=None):
     ----------
     path_or_collection : str, pathlib.Path, or Collection
         The target Collection or its path.
+    opener : callable or obj, optional
+        A custom dataset opener which can serve GDAL's virtual
+        filesystem machinery via Python file-like objects. The
+        underlying file-like object is obtained by calling *opener* with
+        (*fp*, *mode*) or (*fp*, *mode* + "b") depending on the format
+        driver's native mode. *opener* must return a Python file-like
+        object that provides read, seek, tell, and close methods. Note:
+        only one opener at a time per fp, mode pair is allowed.
+
+        Alternatively, opener may be a filesystem object from a package
+        like fsspec that provides the following methods: isdir(),
+        isfile(), ls(), mtime(), open(), and size(). The exact interface
+        is defined in the fiona._vsiopener._AbstractOpener class.
     driver : str, optional
         The name of a driver to be used for deletion, optional. Can
         usually be detected.
@@ -414,21 +427,37 @@ def remove(path_or_collection, driver=None, layer=None):
     """
     if isinstance(path_or_collection, Collection):
         collection = path_or_collection
-        path = collection.path
+        raw_dataset_path = collection.path
         driver = collection.driver
         collection.close()
-    elif isinstance(path_or_collection, Path):
-        path = str(path_or_collection)
+
     else:
-        path = path_or_collection
-    if layer is None:
-        _remove(path, driver)
+        fp = path_or_collection
+        if hasattr(fp, "path") and hasattr(fp, "fs"):
+            log.debug("Detected fp is an OpenFile: fp=%r", fp)
+            raw_dataset_path = fp.path
+            opener = fp.fs.open
+        else:
+            raw_dataset_path = os.fspath(fp)
+
+    if opener:
+        log.debug("Registering opener: raw_dataset_path=%r, opener=%r", raw_dataset_path, opener)
+        with _opener_registration(raw_dataset_path, opener) as registered_vsi_path:
+            log.debug("Registered vsi path: registered_vsi_path=%r", registered_vsi_path)
+            if layer is None:
+                _remove(registered_vsi_path, driver)
+            else:
+                _remove_layer(registered_vsi_path, layer, driver)
     else:
-        _remove_layer(path, layer, driver)
+        pobj = _parse_path(raw_dataset_path)
+        if layer is None:
+            _remove(_vsi_path(pobj), driver)
+        else:
+            _remove_layer(_vsi_path(pobj), layer, driver)
 
 
 @ensure_env_with_credentials
-def listdir(fp):
+def listdir(fp, opener=None):
     """Lists the datasets in a directory or archive file.
 
     Archive files must be prefixed like "zip://" or "tar://".
@@ -437,6 +466,19 @@ def listdir(fp):
     ----------
     fp : str or pathlib.Path
         Directory or archive path.
+    opener : callable or obj, optional
+        A custom dataset opener which can serve GDAL's virtual
+        filesystem machinery via Python file-like objects. The
+        underlying file-like object is obtained by calling *opener* with
+        (*fp*, *mode*) or (*fp*, *mode* + "b") depending on the format
+        driver's native mode. *opener* must return a Python file-like
+        object that provides read, seek, tell, and close methods. Note:
+        only one opener at a time per fp, mode pair is allowed.
+
+        Alternatively, opener may be a filesystem object from a package
+        like fsspec that provides the following methods: isdir(),
+        isfile(), ls(), mtime(), open(), and size(). The exact interface
+        is defined in the fiona._vsiopener._AbstractOpener class.
 
     Returns
     -------
@@ -449,18 +491,25 @@ def listdir(fp):
         If the input is not a str or Path.
 
     """
-    if isinstance(fp, Path):
-        fp = str(fp)
+    if hasattr(fp, "path") and hasattr(fp, "fs"):
+        log.debug("Detected fp is an OpenFile: fp=%r", fp)
+        raw_dataset_path = fp.path
+        opener = fp.fs.open
+    else:
+        raw_dataset_path = os.fspath(fp)
 
-    if not isinstance(fp, str):
-        raise TypeError("invalid path: %r" % fp)
-
-    pobj = _parse_path(fp)
-    return _listdir(_vsi_path(pobj))
+    if opener:
+        log.debug("Registering opener: raw_dataset_path=%r, opener=%r", raw_dataset_path, opener)
+        with _opener_registration(raw_dataset_path, opener) as registered_vsi_path:
+            log.debug("Registered vsi path: registered_vsi_path=%r", registered_vsi_path)
+            return _listdir(registered_vsi_path)
+    else:
+        pobj = _parse_path(raw_dataset_path)
+        return _listdir(_vsi_path(pobj))
 
 
 @ensure_env_with_credentials
-def listlayers(fp, vfs=None, **kwargs):
+def listlayers(fp, opener=None, vfs=None, **kwargs):
     """Lists the layers (collections) in a dataset.
 
     Archive files must be prefixed like "zip://" or "tar://".
@@ -469,6 +518,19 @@ def listlayers(fp, vfs=None, **kwargs):
     ----------
     fp : str, pathlib.Path, or file-like object
         A dataset identifier or file object containing a dataset.
+    opener : callable or obj, optional
+        A custom dataset opener which can serve GDAL's virtual
+        filesystem machinery via Python file-like objects. The
+        underlying file-like object is obtained by calling *opener* with
+        (*fp*, *mode*) or (*fp*, *mode* + "b") depending on the format
+        driver's native mode. *opener* must return a Python file-like
+        object that provides read, seek, tell, and close methods. Note:
+        only one opener at a time per fp, mode pair is allowed.
+
+        Alternatively, opener may be a filesystem object from a package
+        like fsspec that provides the following methods: isdir(),
+        isfile(), ls(), mtime(), open(), and size(). The exact interface
+        is defined in the fiona._vsiopener._AbstractOpener class.
     vfs : str
         This is a deprecated parameter. A URI scheme such as "zip://"
         should be used instead.
@@ -486,18 +548,26 @@ def listlayers(fp, vfs=None, **kwargs):
         If the input is not a str, Path, or file object.
 
     """
+    if vfs and not isinstance(vfs, str):
+        raise TypeError(f"invalid vfs: {vfs!r}")
+
     if hasattr(fp, 'read'):
         with MemoryFile(fp.read()) as memfile:
             return _listlayers(memfile.name, **kwargs)
+
+    if hasattr(fp, "path") and hasattr(fp, "fs"):
+        log.debug("Detected fp is an OpenFile: fp=%r", fp)
+        raw_dataset_path = fp.path
+        opener = fp.fs.open
     else:
-        if isinstance(fp, Path):
-            fp = str(fp)
+        raw_dataset_path = os.fspath(fp)
 
-        if not isinstance(fp, str):
-            raise TypeError(f"invalid path: {fp!r}")
-        if vfs and not isinstance(vfs, str):
-            raise TypeError(f"invalid vfs: {vfs!r}")
-
+    if opener:
+        log.debug("Registering opener: raw_dataset_path=%r, opener=%r", raw_dataset_path, opener)
+        with _opener_registration(raw_dataset_path, opener) as registered_vsi_path:
+            log.debug("Registered vsi path: registered_vsi_path=%r", registered_vsi_path)
+            return _listlayers(registered_vsi_path, **kwargs)
+    else:
         if vfs:
             warnings.warn(
                 "The vfs keyword argument is deprecated and will be removed in 2.0. "
@@ -506,10 +576,10 @@ def listlayers(fp, vfs=None, **kwargs):
                 stacklevel=2,
             )
             pobj_vfs = _parse_path(vfs)
-            pobj_path = _parse_path(fp)
+            pobj_path = _parse_path(raw_dataset_path)
             pobj = _ParsedPath(pobj_path.path, pobj_vfs.path, pobj_vfs.scheme)
         else:
-            pobj = _parse_path(fp)
+            pobj = _parse_path(raw_dataset_path)
 
         return _listlayers(_vsi_path(pobj), **kwargs)
 
