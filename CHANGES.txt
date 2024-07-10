@@ -3,8 +3,8 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.10b2 (TBD)
-------------
+1.10b2 (2024-07-10)
+-------------------
 
 Bug fixes:
 
@@ -14,7 +14,12 @@ Bug fixes:
   plugin handlers cannot not be removed and so it may be observed that the size
   of the Pyopener registry grows during the execution of a program.
 - A CSLConstList ctypedef has been added and is used where appropriate (#1404).
-- Fiona model objects have a informative, printable representation again (#).
+- Fiona model objects have a informative, printable representation again
+  (#1380).
+
+Packaging:
+
+- PyPI wheels include GDAL 3.9.1 and curl 8.8.0.
 
 1.10b1 (2024-04-16)
 -------------------
