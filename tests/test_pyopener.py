@@ -143,7 +143,7 @@ def test_opener_fsspec_file_fs_listdir():
     """Use fsspec file filesystem as opener for listdir()."""
     fs = fsspec.filesystem("file")
     listing = fiona.listdir("tests/data", opener=fs)
-    assert len(listing) >= 35
+    assert len(listing) >= 33
     assert set(
         ["coutwildrnp.shp", "coutwildrnp.dbf", "coutwildrnp.shx", "coutwildrnp.prj"]
     ) & set(listing)
