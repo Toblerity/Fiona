@@ -8,7 +8,7 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Bug fixes:
 
-- The truncate VSI plugin callback has been implemented (#).
+- The truncate VSI plugin callback has been implemented (#1413).
 
 1.10b2 (2024-07-10)
 -------------------
