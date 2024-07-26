@@ -378,6 +378,16 @@ def _opener_registration(urlpath, obj):
     # Might raise.
     opener = to_pyopener(obj)
 
+    # Before returning we do a quick check that the opener will
+    # plausibly function.
+    try:
+        _ = opener.size("test")
+    except (AttributeError, TypeError, ValueError) as err:
+        raise OpenerRegistrationError(f"Opener is invalid.") from err
+    except Exception:
+        # We expect the path to not resolve.
+        pass
+
     registry = _OPENER_REGISTRY.get({})
 
     if key in registry:
