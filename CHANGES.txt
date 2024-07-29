@@ -3,13 +3,13 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.10b3 (TBD)
-------------
+1.10b3 (2024-07-29)
+-------------------
 
 Bug fixes:
 
-- sketchy Python opener interfaces have been replaced by ABCs in fiona.abc (#
-  ).
+- The sketchy, semi-private Python opener interfaces of version 1.10b2 have
+  been replaced by ABCs that are exported from fiona.abc (#1415).
 - The truncate VSI plugin callback has been implemented (#1413).
 
 1.10b2 (2024-07-10)
