@@ -138,7 +138,6 @@ def test_opener_fsspec_zip_fs_listdir():
     ) & set(listing)
 
 
-
 def test_opener_fsspec_file_fs_listdir():
     """Use fsspec file filesystem as opener for listdir()."""
     fs = fsspec.filesystem("file")
@@ -159,5 +158,47 @@ def test_opener_fsspec_file_remove(data):
     listing = fiona.listdir(str(data), opener=fs)
     assert len(listing) == 0
     assert not set(
+        ["coutwildrnp.shp", "coutwildrnp.dbf", "coutwildrnp.shx", "coutwildrnp.prj"]
+    ) & set(listing)
+
+
+def test_opener_tiledb_vfs_listdir():
+    """Use tiledb VFS as opener for listdir()."""
+    tiledb = pytest.importorskip("tiledb")
+    fs = tiledb.VFS()
+    listing = fiona.listdir("tests/data", opener=fs)
+    assert len(listing) >= 33
+    assert set(
+        ["coutwildrnp.shp", "coutwildrnp.dbf", "coutwildrnp.shx", "coutwildrnp.prj"]
+    ) & set(listing)
+
+
+def test_opener_interface():
+    """Demonstrate implementation of a custom opener."""
+    import pathlib
+    from fiona.abc import FileContainer
+
+    class CustomContainer:
+        """GDAL's VSI ReadDir() uses 5 of FileContainer's methods."""
+        def isdir(self, path):
+            return pathlib.Path(path).is_dir()
+
+        def isfile(self, path):
+            return pathlib.Path(path).is_file()
+
+        def ls(self, path):
+            return list(pathlib.Path(path).iterdir())
+
+        def mtime(self, path):
+            return pathlib.Path(path).stat().st_mtime
+
+        def size(self, path):
+            return pathlib.Path(path).stat().st_size
+
+    FileContainer.register(CustomContainer)
+
+    listing = fiona.listdir("tests/data", opener=CustomContainer())
+    assert len(listing) >= 33
+    assert set(
         ["coutwildrnp.shp", "coutwildrnp.dbf", "coutwildrnp.shx", "coutwildrnp.prj"]
     ) & set(listing)
