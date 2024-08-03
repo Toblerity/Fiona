@@ -109,6 +109,7 @@ jobs:
           use-mamba: true
           auto-update-conda: true
           use-only-tar-bz2: false
+          python-version: ${{ matrix.python-version }}
 
       - name: Install Env (OSX)
         if: matrix.os == 'macos-13' || matrix.os == 'macos-14'
