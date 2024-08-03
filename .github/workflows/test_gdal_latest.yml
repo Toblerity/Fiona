@@ -21,7 +21,7 @@ jobs:
   test_gdal_latest:
     name: GDAL Latest
     runs-on: ubuntu-latest
-    container: osgeo/proj:9.1.0
+    container: osgeo/proj:9.4.1
     env:
       GDAL_DIR: ${{ github.workspace }}/gdal_install
       GDAL_DATA: ${{ github.workspace }}/gdal_install/share/gdal
