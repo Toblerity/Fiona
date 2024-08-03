@@ -7,7 +7,7 @@ on:
     - cron:  '0 0 * * 0'
   pull_request:  # also build on PRs touching this file
     paths:
-      - ".github/workflows/test_gdal_latest.yaml"
+      - ".github/workflows/test_gdal_latest.yml"
       - "ci/gdal-compile.sh"
 
 concurrency:
