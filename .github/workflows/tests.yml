@@ -93,11 +93,11 @@ jobs:
       matrix:
         include:
           - os: macos-13
-            python-version: '3.11'
+            python-version: '3.12'
           - os: macos-14
-            python-version: '3.11'
+            python-version: '3.12'
           - os: windows-latest
-            python-version: '3.11'
+            python-version: '3.12'
     steps:
       - uses: actions/checkout@v4
 
@@ -109,6 +109,7 @@ jobs:
           use-mamba: true
           auto-update-conda: true
           use-only-tar-bz2: false
+          python-version: ${{ matrix.python-version }}
 
       - name: Install Env (OSX)
         if: matrix.os == 'macos-13' || matrix.os == 'macos-14'
@@ -116,7 +117,7 @@ jobs:
         run: |
           conda config --prepend channels conda-forge
           conda config --set channel_priority strict
-          conda create -n test python=${{ matrix.python-version }} libgdal geos=3.11 cython=3
+          conda create -n test python=${{ matrix.python-version }} libgdal geos=3.12 cython=3
           conda activate test
           python -m pip install -e . || python -m pip install -e .
           python -m pip install -r requirements-dev.txt
@@ -127,7 +128,7 @@ jobs:
         run: |
           conda config --prepend channels conda-forge
           conda config --set channel_priority strict
-          conda create -n test python=${{ matrix.python-version }} libgdal geos=3.11 cython=3
+          conda create -n test python=${{ matrix.python-version }} libgdal geos=3.12 cython=3
           conda activate test
           GDAL_VERSION="3.7" python setup.py build_ext -I"/c/Users/runneradmin/miniconda3/envs/test/Library/include" -lgdal -L"/c/Users/runneradmin/miniconda3/envs/test/Library/lib" install
           python -m pip install -r requirements-dev.txt
@@ -152,5 +153,3 @@ jobs:
         run: |
           conda activate test
           python -m pytest -v -m "not wheel" -rxXs  --cov fiona --cov-report term-missing
-
-      - uses: codecov/codecov-action@v3
