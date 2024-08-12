@@ -8,6 +8,11 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 This is the first release candidate for 1.10.0.
 
+Changes:
+
+- The setup.cfg duplicates project configuration in pyproject.toml and has been
+  removed.
+
 1.10b3 (2024-07-29)
 -------------------
 
