@@ -1,0 +1,13 @@
+aiohttp
+attrs
+boto3
+click
+fsspec
+hypothesis
+mock
+packaging
+pyparsing
+pytest
+pytz
+requests
+shapely

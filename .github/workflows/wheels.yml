@@ -1,0 +1,299 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main # just build the sdist & wheel, skip release
+    tags:
+      - "v*"
+  pull_request: # also build on PRs touching files that affect building sdist / wheels
+    paths:
+      - ".github/workflows/wheels.yml"
+      - "ci/**"
+      - "MANIFEST.in"
+      - "pyproject.toml"
+      - "setup.py"
+  workflow_dispatch:
+
+# cancel running jobs on new commit to PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build-sdist:
+    name: Build fiona sdist
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Build a source tarball
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+          python -m build --sdist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fiona-sdist
+          path: ./dist/*.tar.gz
+          retention-days: 5
+          compression-level: 0
+
+  test-sdist:
+    name: Test sdist
+    needs: [build-sdist]
+    runs-on: ubuntu-latest
+    container:
+      image: "ghcr.io/osgeo/gdal:ubuntu-small-3.9.1"
+
+    steps:
+      - name: Download sdist from artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: fiona-sdist
+          path: wheelhouse
+
+      - name: Install pip
+        run: |
+          apt-get update && apt-get install -y python3-pip
+
+      - name: Build from sdist and install test dependencies
+        shell: bash
+        run: |
+          python3 -m pip install --no-cache-dir wheelhouse/*.tar.gz
+          python3 -m pip install attrs pytest click mock boto3 packaging hypothesis wheel pytz fsspec aiohttp requests pyparsing shapely
+          python3 -m pip list
+
+      - name: Run tests
+        shell: bash
+        run: |
+          cd ..
+          python3 -m pytest -v -m "not wheel"
+
+  build-wheels-linux:
+    name: Build wheels on Linux
+    runs-on: "ubuntu-20.04"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+          buildkitd-flags: --debug
+
+      - name: Build Docker image with vcpkg and gdal
+        # using build-push-action (without push) to make use of cache arguments
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ci/manylinux2014_x86_64-vcpkg-gdal.Dockerfile
+          tags: manylinux-vcpkg-gdal:latest
+          push: false
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        env:
+          BUILDKIT_PROGRESS: plain
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.20.0
+        env:
+          CIBW_BEFORE_BUILD: pip install -I "auditwheel @ git+https://github.com/sgillies/auditwheel.git@extra-lib-name-tag"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fiona-wheel-linux
+          path: ./wheelhouse/*.whl
+          compression-level: 0
+
+  build-wheels-mac-win:
+    name: Build wheels on ${{ matrix.os }} (${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: "macos-12"
+            triplet: "x64-osx-dynamic"
+            arch: x86_64
+            vcpkg_cache: "/Users/runner/.cache/vcpkg/archives"
+            vcpkg_logs: "/usr/local/share/vcpkg/buildtrees/**/*.log"
+
+          - os: "macos-12"
+            triplet: "arm64-osx-dynamic-release"
+            arch: arm64
+            vcpkg_cache: "/Users/runner/.cache/vcpkg/archives"
+            vcpkg_logs: "/usr/local/share/vcpkg/buildtrees/**/*.log"
+
+          - os: "windows-2019"
+            triplet: "x64-windows-dynamic-release"
+            arch: AMD64
+            # windows requires windows-specific paths
+            vcpkg_cache: "c:\\vcpkg\\installed"
+            vcpkg_logs: "c:\\vcpkg\\buildtrees\\**\\*.log"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        id: vcpkgcache
+        with:
+          path: |
+            ${{ matrix.vcpkg_cache }}
+          # bump the last digit to avoid using previous build cache
+          key: ${{ matrix.os }}-${{ matrix.arch }}-vcpkg-gdal3.9.1-cache0
+
+      # MacOS build requires aclocal, which is part of automake, but appears
+      # to be missing in default image
+      - name: Reinstall automake
+        if: runner.os == 'macOS'
+        run: |
+          brew reinstall automake
+          echo $(which aclocal)
+
+      - name: Checkout specific version of vcpkg
+        shell: bash
+        run: |
+          cd $VCPKG_INSTALLATION_ROOT
+          # on mac the clone is not clean, otherwise git pull fails
+          git reset --hard
+          git pull
+          git checkout 2024.07.12
+
+      - name: Install GDAL
+        env:
+          VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
+        shell: bash
+        run: |
+          vcpkg install --overlay-triplets=./ci/custom-triplets --feature-flags="versions,manifests" --x-manifest-root=./ci --x-install-root=$VCPKG_INSTALLATION_ROOT/installed
+          vcpkg list
+
+      - name: Upload vcpkg build logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pyogrio-vcpkg-logs-${{ matrix.triplet }}
+          path: ${{ matrix.vcpkg_logs }}
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.20.0
+        env:
+          # CIBW needs to know triplet for the correct install path
+          VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
+          CIBW_ARCHS: ${{ matrix.arch }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fiona-wheel-${{ matrix.triplet }}
+          path: ./wheelhouse/*.whl
+          compression-level: 0
+
+  test-wheels:
+    name: Test wheels on ${{ matrix.os }} (Python ${{ matrix.python-version }})
+    needs: [build-wheels-linux, build-wheels-mac-win]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-20.04", "windows-latest", "macos-12", "macos-latest"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        include:
+          - os: "ubuntu-20.04"
+            artifact: fiona-wheel-linux
+          - os: "windows-latest"
+            artifact: fiona-wheel-x64-windows-dynamic-release
+          - os: "macos-12"
+            artifact: fiona-wheel-x64-osx-dynamic
+          - os: "macos-latest"
+            artifact: fiona-wheel-x64-osx-dynamic
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+          cache: "pip"
+          cache-dependency-path: "ci/requirements-wheel-test.txt"
+
+      - name: Download wheels from artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: wheelhouse
+
+      - name: Install dependencies and fiona wheel
+        shell: bash
+        run: |
+          python -m pip install -r ci/requirements-wheel-test.txt
+          python -m pip install --pre --find-links wheelhouse fiona
+          python -m pip list
+
+      - name: Run tests
+        shell: bash
+        run: |
+          cd ..
+          ls -l
+          cp -R Fiona/tests ./tests
+          GDAL_ENABLE_DEPRECATED_DRIVER_GTM=YES python -m pytest -vv tests -k "not test_collection_zip_http and not test_mask_polygon_triangle and not test_show_versions and not test_append_or_driver_error and not [PCIDSK] and not cannot_append[FlatGeobuf]"
+          fio --version
+          fio env --formats
+          python test_fiona_issue383.py
+
+#   publish:
+#     name: Publish pyogrio to GitHub / PyPI
+#     needs: [test-sdist, test-wheels]
+#     runs-on: ubuntu-latest
+#     environment:
+#       name: pypi
+#       url: https://pypi.org/p/pyogrio
+#     permissions:
+#       id-token: write # IMPORTANT: this permission is mandatory for trusted publishing to PyPI
+#       contents: write # this permission is required for the Github release action
+# 
+#     # release on every tag
+#     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/')
+# 
+#     steps:
+#       - uses: actions/download-artifact@v4
+#         with:
+#           pattern: pyogrio-*
+#           path: dist
+#           merge-multiple: true
+# 
+#       - name: Publish distribution to PyPI
+#         uses: pypa/gh-action-pypi-publish@release/v1
+# 
+#       - name: Create GitHub Release
+#         id: create_release
+#         uses: softprops/action-gh-release@v2
+#         with:
+#           name: Version ${{ github.ref_name }}
+#           tag_name: ${{ github.ref }}
+#           draft: false
+#           prerelease: false
+#           files: dist/*.tar.gz
+#           token: ${{ secrets.GITHUB_TOKEN }}
