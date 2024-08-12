@@ -153,5 +153,3 @@ jobs:
         run: |
           conda activate test
           python -m pytest -v -m "not wheel" -rxXs  --cov fiona --cov-report term-missing
-
-      - uses: codecov/codecov-action@v3
