@@ -24,22 +24,27 @@ jobs:
   build-sdist:
     name: Build fiona sdist
     runs-on: ubuntu-latest
+    container:
+      image: "ghcr.io/osgeo/gdal:ubuntu-small-3.9.1"
 
     steps:
+      - name: Install packages
+        run: |
+          apt-get update && apt-get install -y software-properties-common
+          add-apt-repository -y ppa:deadsnakes/ppa
+          apt-get update && apt-get install -y --no-install-recommends python3-pip python3.10 python3.1--dev python3.10-venv 
+
       - name: Checkout source
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
-
-      - name: Build a source tarball
+      - name: Build source tarball
         run: |
+          python3.10 -m venv venv && source venv/bin/activate
           python -m pip install --upgrade pip
           python -m pip install build
+          python -m pip install -r requirements-dev.text
           python -m build --sdist
 
       - uses: actions/upload-artifact@v4
