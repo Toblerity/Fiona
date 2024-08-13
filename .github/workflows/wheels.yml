@@ -79,15 +79,21 @@ jobs:
         shell: bash
         run: |
           python3 -m venv venv && source venv/bin/activate
-          python3 -m pip install --no-cache-dir wheelhouse/*.tar.gz
-          python3 -m pip install attrs pytest click mock boto3 packaging hypothesis wheel pytz fsspec aiohttp requests pyparsing shapely
-          python3 -m pip list
+          python -m pip install --upgrade pip
+          python -m pip install --no-cache-dir wheelhouse/*.tar.gz
+          python -m pip install attrs pytest click mock boto3 packaging hypothesis wheel pytz fsspec aiohttp requests pyparsing shapely
+          python -m pip list
+
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Run tests
         shell: bash
         run: |
-          cd ..
-          python3 -m pytest -v -m "not wheel"
+          source venv/bin/activate
+          python -m pytest -v -m "not wheel" Fiona/tests
 
   build-wheels-linux:
     name: Build wheels on Linux
