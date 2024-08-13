@@ -15,7 +15,6 @@ on:
       - "setup.py"
   workflow_dispatch:
 
-# cancel running jobs on new commit to PR
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
@@ -92,6 +91,7 @@ jobs:
       - name: Run tests
         shell: bash
         run: |
+          cd ..
           source venv/bin/activate
           python -m pytest -v -m "not wheel" Fiona/tests
 
