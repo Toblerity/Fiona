@@ -47,7 +47,7 @@ jobs:
           python3.10 -m venv venv && source venv/bin/activate
           python -m pip install --upgrade pip
           python -m pip install build
-          python -m pip install -r requirements-dev.text
+          python -m pip install -r requirements-dev.txt
           python -m build --sdist
 
       - uses: actions/upload-artifact@v4
