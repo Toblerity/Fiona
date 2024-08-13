@@ -77,6 +77,8 @@ jobs:
       - name: Build from sdist and install test dependencies
         shell: bash
         run: |
+          pwd
+          ls -l
           python3 -m venv venv && source venv/bin/activate
           python -m pip install --upgrade pip
           python -m pip install --no-cache-dir wheelhouse/*.tar.gz
@@ -94,6 +96,7 @@ jobs:
           pwd
           ls -l
           cd ..
+          ls -l
           source venv/bin/activate
           python -m pytest -v -m "not wheel" Fiona/tests
 
