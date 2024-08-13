@@ -23,8 +23,8 @@ jobs:
   build-sdist:
     name: Build fiona sdist
     runs-on: ubuntu-latest
-    # container:
-    #   image: "ghcr.io/osgeo/gdal:ubuntu-small-3.9.1"
+    container:
+      image: "ghcr.io/osgeo/gdal:ubuntu-small-3.9.1"
 
     steps:
       - name: Install packages
