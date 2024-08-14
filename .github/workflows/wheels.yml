@@ -84,7 +84,8 @@ jobs:
         run: |
           source venv/bin/activate
           cd ..
-          python -m pytest -v -m "not wheel" Fiona/tests
+          mv Fiona/tests ./tests
+          python -m pytest -v -m "not wheel" tests
 
   build-wheels-linux:
     name: Build wheels on Linux
