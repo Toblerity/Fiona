@@ -82,10 +82,6 @@ jobs:
       - name: Run tests
         shell: bash
         run: |
-          pwd
-          ls -l
-          cd ..
-          ls -l
           source venv/bin/activate
           python -m pytest -v -m "not wheel" Fiona/tests
 
