@@ -23,8 +23,6 @@ jobs:
   build-sdist:
     name: Build fiona sdist
     runs-on: ubuntu-latest
-    container:
-      image: "ghcr.io/osgeo/gdal:ubuntu-small-3.9.1"
 
     steps:
       - name: Install packages
@@ -41,8 +39,6 @@ jobs:
       - name: Build source tarball
         shell: bash
         run: |
-          pwd
-          ls -l
           python3.10 -m venv venv && source venv/bin/activate
           python -m pip install --upgrade pip
           python -m pip install build
@@ -64,6 +60,11 @@ jobs:
       image: "ghcr.io/osgeo/gdal:ubuntu-small-3.9.1"
 
     steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Download sdist from artifacts
         uses: actions/download-artifact@v4
         with:
@@ -84,11 +85,6 @@ jobs:
           python -m pip install --no-cache-dir wheelhouse/*.tar.gz
           python -m pip install attrs pytest click mock boto3 packaging hypothesis wheel pytz fsspec aiohttp requests pyparsing shapely
           python -m pip list
-
-      - name: Checkout source
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Run tests
         shell: bash
