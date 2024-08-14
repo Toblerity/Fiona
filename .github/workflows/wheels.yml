@@ -83,6 +83,7 @@ jobs:
         shell: bash
         run: |
           source venv/bin/activate
+          cd ..
           python -m pytest -v -m "not wheel" Fiona/tests
 
   build-wheels-linux:
