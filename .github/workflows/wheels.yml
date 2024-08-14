@@ -25,12 +25,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install packages
-        run: |
-          apt-get update && apt-get install -y software-properties-common
-          add-apt-repository -y ppa:deadsnakes/ppa
-          apt-get update && apt-get install -y --no-install-recommends python3.10 python3.10-dev python3.10-venv 
-
       - name: Checkout source
         uses: actions/checkout@v4
         with:
@@ -39,7 +33,7 @@ jobs:
       - name: Build source tarball
         shell: bash
         run: |
-          python3.10 -m venv venv && source venv/bin/activate
+          python3 -m venv venv && source venv/bin/activate
           python -m pip install --upgrade pip
           python -m pip install build
           python -m pip install -r requirements-dev.txt
