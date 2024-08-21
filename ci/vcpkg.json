@@ -1,6 +1,0 @@
-{
-    "name": "fiona",
-    "version": "1.10.0-rc1",
-    "dependencies": [ "gdal" ],
-    "builtin-baseline": "2024.07.12"
-}
