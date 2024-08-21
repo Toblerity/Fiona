@@ -10,6 +10,9 @@ This is the first release candidate for 1.10.0.
 
 Changes:
 
+- Mutable item access to Feature, Geometry, and Properties instances has been
+  restored (reported in #1430). This usage should be avoided as instances of
+  these classes will be immutable in a future version.
 - The setup.cfg duplicates project configuration in pyproject.toml and has been
   removed.
 

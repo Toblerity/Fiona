@@ -342,3 +342,12 @@ def test_feature_repr():
         properties=Properties(a=1, foo="bar"),
     )
     assert repr(feat) == "fiona.Feature(geometry=fiona.Geometry(coordinates=[(0, 0), ...], type='LineString'), id='1', properties=fiona.Properties(a=1, foo='bar'))"
+
+
+def test_issue1430():
+    """__getitem__() returns property, not disconnected dict."""
+    feat = Feature(properties=Properties())
+    with pytest.warns(FionaDeprecationWarning, match="immutable"):
+        feat["properties"]["foo"] = "bar"
+    assert feat["properties"]["foo"] == "bar"
+    assert feat.properties["foo"] == "bar"

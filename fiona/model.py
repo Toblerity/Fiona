@@ -139,12 +139,15 @@ class Object(MutableMapping):
         }
 
     def __getitem__(self, item):
-        props = {
-            k: (dict(v) if isinstance(v, Object) else v)
-            for k, v in self._props().items()
-        }
-        props.update(**self._data)
-        return props[item]
+        if item in self._delegated_properties:
+            return getattr(self._delegate, item)
+        else:
+            props = {
+                k: (dict(v) if isinstance(v, Object) else v)
+                for k, v in self._props().items()
+            }
+            props.update(**self._data)
+            return props[item]
 
     def __iter__(self):
         props = self._props()
