@@ -3,7 +3,7 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.10.0rc1 (2024-08-13)
+1.10.0rc1 (2024-08-21)
 ----------------------
 
 This is the first release candidate for 1.10.0.
