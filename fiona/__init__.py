@@ -55,7 +55,15 @@ from fiona.env import ensure_env_with_credentials, Env
 from fiona.errors import FionaDeprecationWarning
 from fiona.io import MemoryFile
 from fiona.model import Feature, Geometry, Properties
-from fiona.ogrext import _bounds, _listdir, _listlayers, _remove, _remove_layer
+from fiona.ogrext import (
+    _bounds,
+    _dir_exists,
+    _isdir,
+    _listdir,
+    _listlayers,
+    _remove,
+    _remove_layer
+)
 from fiona.schema import FIELD_TYPES_MAP, NAMED_FIELD_TYPES
 from fiona.vfs import parse_paths as vfs_parse_paths
 
@@ -454,6 +462,108 @@ def remove(path_or_collection, driver=None, layer=None, opener=None):
             _remove(_vsi_path(pobj), driver)
         else:
             _remove_layer(_vsi_path(pobj), layer, driver)
+
+
+@ensure_env_with_credentials
+def isdir(fp, opener=None):
+    """Checks if the path is a directory.
+
+    Parameters
+    ----------
+    fp : str or pathlib.Path
+        Directory or archive path.
+    opener : callable or obj, optional
+        A custom dataset opener which can serve GDAL's virtual
+        filesystem machinery via Python file-like objects. The
+        underlying file-like object is obtained by calling *opener* with
+        (*fp*, *mode*) or (*fp*, *mode* + "b") depending on the format
+        driver's native mode. *opener* must return a Python file-like
+        object that provides read, seek, tell, and close methods. Note:
+        only one opener at a time per fp, mode pair is allowed.
+
+        Alternatively, opener may be a filesystem object from a package
+        like fsspec that provides the following methods: isdir(),
+        isfile(), ls(), mtime(), open(), and size(). The exact interface
+        is defined in the fiona._vsiopener._AbstractOpener class.
+
+    Returns
+    -------
+    bool
+        Whether the path is a directory.
+
+    Raises
+    ------
+    TypeError
+        If the input is not a str or Path.
+    """
+    if hasattr(fp, "path") and hasattr(fp, "fs"):
+        log.debug("Detected fp is an OpenFile: fp=%r", fp)
+        raw_dataset_path = fp.path
+        opener = fp.fs.open
+    else:
+        raw_dataset_path = os.fspath(fp)
+
+    if opener:
+        log.debug("Registering opener: raw_dataset_path=%r, opener=%r",
+                  raw_dataset_path, opener)
+        with _opener_registration(raw_dataset_path, opener) as registered_vsi_path:
+            log.debug("Registered vsi path: registered_vsi_path=%r",
+                      registered_vsi_path)
+            return _isdir(registered_vsi_path)
+    else:
+        pobj = _parse_path(raw_dataset_path)
+        return _isdir(_vsi_path(pobj))
+
+
+@ensure_env_with_credentials
+def dir_exists(fp, opener=None):
+    """Checks if the directory exists.
+
+    Archive files must be prefixed like "zip://" or "tar://".
+
+    Parameters
+    ----------
+    fp : str or pathlib.Path
+        Directory or archive path.
+    opener : callable or obj, optional
+        A custom dataset opener which can serve GDAL's virtual
+        filesystem machinery via Python file-like objects. The
+        underlying file-like object is obtained by calling *opener* with
+        (*fp*, *mode*) or (*fp*, *mode* + "b") depending on the format
+        driver's native mode. *opener* must return a Python file-like
+        object that provides read, seek, tell, and close methods. Note:
+        only one opener at a time per fp, mode pair is allowed.
+
+        Alternatively, opener may be a filesystem object from a package
+        like fsspec that provides the following methods: isdir(),
+        isfile(), ls(), mtime(), open(), and size(). The exact interface
+        is defined in the fiona._vsiopener._AbstractOpener class.
+
+    Returns
+    -------
+    bool
+        Whether the path exists.
+
+    Raises
+    ------
+    TypeError
+        If the input is not a str or Path.
+    """
+    if hasattr(fp, "path") and hasattr(fp, "fs"):
+        log.debug("Detected fp is an OpenFile: fp=%r", fp)
+        raw_dataset_path = fp.path
+        opener = fp.fs.open
+    else:
+        raw_dataset_path = os.fspath(fp)
+
+    if opener:
+        log.debug("Registering opener: raw_dataset_path=%r, opener=%r", raw_dataset_path, opener)
+        with _opener_registration(raw_dataset_path, opener) as registered_vsi_path:
+            log.debug("Registered vsi path: registered_vsi_path=%r", registered_vsi_path)
+            return _dir_exists(registered_vsi_path)
+    else:
+        pobj = _parse_path(raw_dataset_path)
+        return _dir_exists(_vsi_path(pobj))
 
 
 @ensure_env_with_credentials

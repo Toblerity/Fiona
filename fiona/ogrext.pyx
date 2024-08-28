@@ -2156,18 +2156,38 @@ def _listlayers(path, **kwargs):
     return layer_names
 
 
+def _encode_path(path):
+    """Encodes a path to utf-8."""
+    try:
+        path_b = path.encode('utf-8')
+    except UnicodeDecodeError:
+        path_b = path
+    return path_b
+
+
+def _dir_exists(path):
+    """Checks if a path exists."""
+    cdef const char *path_c
+    cdef VSIStatBufL st_buf
+    path_c = _encode_path(path)
+    return VSIStatL(path_c, &st_buf) == 0
+
+
+def _isdir(path_c):
+    """Checks if a path is a directory."""
+    cdef const char *path_c
+    cdef VSIStatBufL st_buf
+    return VSI_ISDIR(st_buf.st_mode)
+
+
 def _listdir(path):
-    """List all files in path, if path points to a directory"""
+    """List all files in path, if path points to a directory."""
     cdef const char *path_c
     cdef int n
     cdef char** papszFiles
     cdef VSIStatBufL st_buf
 
-    try:
-        path_b = path.encode('utf-8')
-    except UnicodeDecodeError:
-        path_b = path
-    path_c = path_b
+    path_c = _encode_path(path)
     if not VSIStatL(path_c, &st_buf) == 0:
         raise FionaValueError(f"Path '{path}' does not exist.")
     if not VSI_ISDIR(st_buf.st_mode):
