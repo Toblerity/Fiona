@@ -2169,8 +2169,8 @@ def _dir_exists(path):
     """Checks if a path exists."""
     cdef const char *path_c
     cdef VSIStatBufL st_buf
-    py_path = _encode_path(path)
-    path_c = py_path
+    path_b = _encode_path(path)
+    path_c = path_b
     return VSIStatL(path_c, &st_buf) == 0
 
 
@@ -2188,7 +2188,8 @@ def _listdir(path):
     cdef char** papszFiles
     cdef VSIStatBufL st_buf
 
-    path_c = _encode_path(path)
+    path_b = _encode_path(path)
+    path_c = path_b
     if not VSIStatL(path_c, &st_buf) == 0:
         raise FionaValueError(f"Path '{path}' does not exist.")
     if not VSI_ISDIR(st_buf.st_mode):
