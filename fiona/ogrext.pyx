@@ -2169,15 +2169,16 @@ def _dir_exists(path):
     """Checks if a path exists."""
     cdef const char *path_c
     cdef VSIStatBufL st_buf
-    path_c = _encode_path(path)
+    py_path = _encode_path(path)
+    path_c = py_path
     return VSIStatL(path_c, &st_buf) == 0
 
 
 def _isdir(path_c):
     """Checks if a path is a directory."""
-    cdef const char *path_c
     cdef VSIStatBufL st_buf
     return VSI_ISDIR(st_buf.st_mode)
+
 
 
 def _listdir(path):
