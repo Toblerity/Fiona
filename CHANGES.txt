@@ -3,6 +3,13 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.10.0 (2024-09-03)
+-------------------
+
+The package version, credits, and citation file have been updated. There have
+been no other changes since 1.10.0rc1. Fiona is the work of 73 contributors,
+including 25 new contributors since 1.9.0.
+
 1.10.0rc1 (2024-08-21)
 ----------------------
 

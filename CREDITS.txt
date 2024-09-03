@@ -3,13 +3,20 @@ Credits
 
 Fiona is written by:
 
+- Adam J. Stewart <ajstewart426@gmail.com>
 - Alan D. Snow <alansnow21@gmail.com>
+- Alexandre Detiste <alexandre.detiste@gmail.com>
 - Ariel Nunez <ingenieroariel@gmail.com>
 - Ariki <Ariki@users.noreply.github.com>
 - Bas Couwenberg <sebastic@xs4all.nl>
 - Brandon Liu <bdon@bdon.org>
 - Brendan Ward <bcward@consbio.org>
+- Chad Hawkins <cwh@chadwhawkins.com>
 - Chris Mutel <cmutel@gmail.com>
+- Christoph Gohlke <cjgohlke@gmail.com>
+- Dan "Ducky" Little <theduckylittle@gmail.com>
+- daryl herzmann <akrherz@iastate.edu>
+- Denis <carriere.denis@gmail.com>
 - Denis Rykov <rykovd@gmail.com>
 - dimlev <dimlev@gmail.com>
 - Efrén <chefren@users.noreply.github.com>
@@ -19,36 +26,54 @@ Fiona is written by:
 - Ewout ter Hoeven <E.M.terHoeven@student.tudelft.nl>
 - Filipe Fernandes <ocefpaf@gmail.com>
 - fredj <frederic.junod@camptocamp.com>
+- Gavin S <gavinswanson@gmail.com>
 - Géraud <galak75@users.noreply.github.com>
 - Hannes Gräuler <hgraeule@uos.de>
+- Hao Lyu <20434183+IncubatorShokuhou@users.noreply.github.com>
+- Herz <gustavo.herzmann@gmail.com>
+- Ian Rose <ian.r.rose@gmail.com>
 - Jacob Wasserman <jwasserman@gmail.com>
+- James McBride <jdmcbr@gmail.com>
+- James Wilshaw <jrw1n15@soton.ac.uk>
+- Jelle van der Waa <jelle@vdwaa.nl>
 - Jesse Crocker <jesse@gaiagps.com>
+- joehuanguf <51337028+joehuanguf@users.noreply.github.com>
 - Johan Van de Wauw <johan.vandewauw@gmail.com>
 - Joris Van den Bossche <jorisvandenbossche@gmail.com>
 - Joshua Arnott <josh@snorfalorpagus.net>
 - Juan Luis Cano Rodríguez <Juanlu001@users.noreply.github.com>
+- Keith Jenkins <kgjenkins@gmail.com>
 - Kelsey Jordahl <kjordahl@enthought.com>
 - Kevin Wurster <wursterk@gmail.com>
+- lgolston <30876419+lgolston@users.noreply.github.com>
+- Loïc Dutrieux <loic.dutrieux@gmail.com>
 - Ludovic Delauné <ludotux@gmail.com>
 - Martijn Visser <mgvisser@gmail.com>
 - Matthew Perry <perrygeo@gmail.com>
-- Micah Cochran <micahcochran@users.noreply.github.com>
+- Micah Cochran <micah@micahcochran.net>
 - Michael Weisman <mweisman@gmail.com>
 - Michele Citterio <michele@citterio.net>
 - Mike Taves <mwtoews@gmail.com>
 - Miro Hrončok <miro@hroncok.cz>
 - Oliver Tonnhofer <olt@bogosoft.com>
 - Patrick Young <patrick.mckendree.young@gmail.com>
+- Phillip Cloud <417981+cpcloud@users.noreply.github.com>
+- pmav99 <pmav99@users.noreply.github.com>
 - qinfeng <guo.qinfeng+github@gmail.com>
 - René Buffat <buffat@gmail.com>
+- Reuben Fletcher-Costin <reuben.fletchercostin@gmail.com>
 - Ryan Grout <rgrout@continuum.io>
+- Ryan Munro <ryan@subc.io>
+- Sandro Mani <manisandro@gmail.com>
 - Sean Gillies <sean.gillies@gmail.com>
 - Sid Kapur <sid-kap@users.noreply.github.com>
 - Simon Norris <snorris@hillcrestgeo.ca>
+- Stefan Brand <StefanBrand@users.noreply.github.com>
 - Stefano Costa <steko@iosa.it>
 - Stephane Poss <stephposs@gmail.com>
 - Tim Tröndle <tim.troendle@usys.ethz.ch>
 - wilsaj <wilson.andrew.j+github@gmail.com>
+- Yann-Sebastien Tremblay-Johnston <underchemist@users.noreply.github.com>
 
 The GeoPandas project (Joris Van den Bossche et al.) has been a major driver
 for new features in 1.8.0.
