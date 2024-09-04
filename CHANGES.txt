@@ -3,6 +3,26 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.10.0 (2024-09-03)
+-------------------
+
+The package version, credits, and citation file have been updated. There have
+been no other changes since 1.10.0rc1. Fiona is the work of 73 contributors,
+including 25 new contributors since 1.9.0.
+
+1.10.0rc1 (2024-08-21)
+----------------------
+
+This is the first release candidate for 1.10.0.
+
+Changes:
+
+- Mutable item access to Feature, Geometry, and Properties instances has been
+  restored (reported in #1430). This usage should be avoided as instances of
+  these classes will be immutable in a future version.
+- The setup.cfg duplicates project configuration in pyproject.toml and has been
+  removed.
+
 1.10b3 (2024-07-29)
 -------------------
 
