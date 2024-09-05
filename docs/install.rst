@@ -28,7 +28,7 @@ build and install Fiona from a source distribution.
 Many users find Anaconda and conda-forge a good way to install Fiona and get
 access to more optional format drivers (like GML).
 
-Fiona 1.9 (coming soon) requires Python 3.7 or higher and GDAL 3.2 or higher.
+Fiona requires Python 3.7 or higher and GDAL 3.2 or higher.
 
 Advanced installation
 =====================
