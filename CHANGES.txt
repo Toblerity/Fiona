@@ -3,6 +3,9 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+Next (TBD)
+----------
+
 1.10.0 (2024-09-03)
 -------------------
 
