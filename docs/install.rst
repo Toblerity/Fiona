@@ -30,6 +30,8 @@ access to more optional format drivers (like GML).
 
 Fiona requires Python 3.7 or higher and GDAL 3.2 or higher.
 
+Fiona 2.0 (in development and unreleased) requires Python 3.8 or higher and GDAL 3.4 or higher.
+
 Advanced installation
 =====================
 
