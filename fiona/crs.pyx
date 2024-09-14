@@ -487,12 +487,13 @@ cdef class CRS:
         cdef int *confidences = NULL
         cdef int num_matches = 0
         cdef int i = 0
+        cdef char *c_code = NULL
+        cdef char *c_name = NULL
 
         results = defaultdict(list)
 
         try:
             osr = exc_wrap_pointer(OSRClone(self._osr))
-
             matches = OSRFindMatches(osr, NULL, &num_matches, &confidences)
 
             for i in range(num_matches):
@@ -500,18 +501,11 @@ cdef class CRS:
                 c_code = OSRGetAuthorityCode(matches[i], NULL)
                 c_name = OSRGetAuthorityName(matches[i], NULL)
 
-                if c_code == NULL:
-                    log.debug("returned authority code was null")
-                if c_name == NULL:
-                    log.debug("returned authority name was null")
-
                 if c_code != NULL and c_name != NULL and confidence >= confidence_threshold:
-                    log.debug(
-                        "Matched. confidence=%r, c_code=%r, c_name=%r",
-                        confidence, c_code, c_name)
                     code = c_code.decode('utf-8')
                     name = c_name.decode('utf-8')
                     results[name].append(code)
+
             return results
 
         finally:
@@ -966,22 +960,19 @@ cdef class CRS:
         cdef int *confidences = NULL
         cdef int num_matches = 0
         cdef int i = 0
+        cdef char *c_code = NULL
+        cdef char *c_name = NULL
 
         results = defaultdict(list)
 
         try:
             osr = exc_wrap_pointer(OSRClone(self._osr))
-
             matches = OSRFindMatches(osr, NULL, &num_matches, &confidences)
 
             for i in range(num_matches):
                 confidence = confidences[i]
                 c_code = OSRGetAuthorityCode(matches[i], NULL)
                 c_name = OSRGetAuthorityName(matches[i], NULL)
-
-                log.debug(
-                    "Matched. confidence=%r, c_code=%r, c_name=%r",
-                    confidence, c_code, c_name)
 
                 if c_code != NULL and c_name != NULL and confidence >= confidence_threshold:
                     code = c_code.decode('utf-8')
