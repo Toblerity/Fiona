@@ -9,7 +9,7 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 Bug fixes:
 
 - Logging in the CRS class no longer tries to print representations of NULL
-  objects when searching for authority matches (#).
+  objects when searching for authority matches (#1445).
 
 1.10.0 (2024-09-03)
 -------------------
