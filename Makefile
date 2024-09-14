@@ -1,5 +1,5 @@
-PYTHON_VERSION ?= 3.10
-GDAL ?= ubuntu-small-3.9.0
+PYTHON_VERSION ?= 3.12
+GDAL ?= ubuntu-small-3.9.2
 all: deps clean install test
 
 .PHONY: docs
