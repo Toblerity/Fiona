@@ -4,7 +4,7 @@ import logging
 
 
 class FieldSkipLogFilter(logging.Filter):
-    """Filter field skip log messges.
+    """Filter field skip log messages.
 
     At most, one message per field skipped per loop will be passed.
     """

@@ -275,7 +275,7 @@ class AWSSession(Session):
         profile_name : str, optional
             A shared credentials profile name, as per boto3.
         endpoint_url: str, optional
-            An endpoint_url, as per GDAL's AWS_S3_ENPOINT
+            An endpoint_url, as per GDAL's AWS_S3_ENDPOINT
         requester_pays : bool, optional
             True if the requester agrees to pay transfer costs (default:
             False)
@@ -359,7 +359,7 @@ class GSSession(Session):
     """Configures access to secured resources stored in Google Cloud Storage
     """
     def __init__(self, google_application_credentials=None):
-        """Create new Google Cloude Storage session
+        """Create new Google Cloud Storage session
 
         Parameters
         ----------
