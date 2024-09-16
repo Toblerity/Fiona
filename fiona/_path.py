@@ -16,7 +16,7 @@ import attr
 from fiona.errors import PathError
 
 # Supported URI schemes and their mapping to GDAL's VSI suffix.
-# TODO: extend for other cloud plaforms.
+# TODO: extend for other cloud platforms.
 SCHEMES = {
     'ftp': 'curl',
     'gzip': 'gzip',
@@ -34,7 +34,7 @@ SCHEMES = {
 ARCHIVESCHEMES = set
 CURLSCHEMES = set([k for k, v in SCHEMES.items() if v == 'curl'])
 
-# TODO: extend for other cloud plaforms.
+# TODO: extend for other cloud platforms.
 REMOTESCHEMES = set([k for k, v in SCHEMES.items() if v in ('curl', 's3', 'oss', 'gs', 'az',)])
 
 
