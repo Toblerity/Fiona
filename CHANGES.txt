@@ -3,13 +3,15 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
-1.10.1 (TBD)
-------------
+1.10.1 (2024-09-16)
+-------------------
 
 Bug fixes:
 
-- Logging in the CRS class no longer tries to print representations of NULL
-  objects when searching for authority matches (#1445).
+- Several typos were found and fixed (#1448). One variable was renamed and one
+  the ContextVar in _vsipyopener.pyx was renamed.
+- Logging in the CRS class no longer tries to print representations of objects
+  that may be NULL when searching for authority matches (#1445).
 
 1.10.0 (2024-09-03)
 -------------------
