@@ -232,7 +232,7 @@ dataset using another format.
     > | fio load /tmp/test.shp --driver Shapefile
 
 This command also supports GeoJSON text sequences. RS-separated sequences will
-be detected. If you want to load LF-separated sequences, you must specfiy
+be detected. If you want to load LF-separated sequences, you must specify
 ``--x-json-seq``.
 
 .. code-block:: console

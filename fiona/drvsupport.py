@@ -221,7 +221,7 @@ def vector_driver_extensions():
 
     extension_to_driver = {}
     for drv, modes in supported_drivers.items():
-        # update extensions based on driver suppport
+        # update extensions based on driver support
         for extension in extensions(drv) or ():
             if "w" in modes:
                 extension_to_driver[extension] = extension_to_driver.get(extension, drv)

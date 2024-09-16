@@ -740,7 +740,7 @@ def test_datetime_field_type_marked_not_supported_is_not_supported(
 ):
     """Test if a date/datetime/time field type marked as not not supported is really not supported
 
-    Warning: Success of this test does not necessary mean that a field is not supported. E.g. errors can occour due to
+    Warning: Success of this test does not necessary mean that a field is not supported. E.g. errors can occur due to
     special schema requirements of drivers. This test only covers the standard case.
 
     """

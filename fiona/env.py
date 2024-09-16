@@ -540,7 +540,7 @@ def require_gdal_version(
         def some_func():
 
     calling `some_func` with a runtime version of GDAL that is < 2.2 raises a
-    GDALVersionErorr.
+    GDALVersionError.
 
     \b
         @require_gdal_version('2.2', param='foo')

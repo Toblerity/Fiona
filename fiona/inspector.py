@@ -10,7 +10,7 @@ logger = logging.getLogger('fiona.inspector')
 
 
 def main(srcfile):
-    """Open a dataset in an iteractive session."""
+    """Open a dataset in an interactive session."""
     with fiona.drivers():
         with fiona.open(srcfile) as src:
             code.interact(

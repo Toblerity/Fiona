@@ -28,7 +28,7 @@ cdef str VSI_NS_ROOT = "vsifiopener"
 # the plugin to determine what "files" exist on "disk".
 # Currently the only way to "create" a file in the filesystem is to add
 # an entry to this dictionary. GDAL will then Open the path later.
-_OPENER_REGISTRY = ContextVar("opener_registery")
+_OPENER_REGISTRY = ContextVar("opener_registry")
 _OPENER_REGISTRY.set({})
 _OPEN_FILE_EXIT_STACKS = ContextVar("open_file_exit_stacks")
 _OPEN_FILE_EXIT_STACKS.set({})
@@ -188,7 +188,7 @@ cdef void* pyopener_open(
 
     This function is mandatory in the GDAL Filesystem Plugin API.
     GDAL may call this function multiple times per filename and each
-    result must be seperately seekable.
+    result must be separately seekable.
     """
     cdef FSData *fsdata = <FSData *>pUserData
     path = fsdata.path.decode("utf-8")
