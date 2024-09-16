@@ -5,7 +5,7 @@ characters, so to be unambiguously read as OFTInteger (and if specifying
 integer that require 10 or 11 characters. the field is dynamically extended
 like managed since a few versions). OFTInteger64 fields are created by default
 with a width of 18 digits, so to be unambiguously read as OFTInteger64, and
-extented to 19 or 20 if needed. Integer fields of width between 10 and 18
+extended to 19 or 20 if needed. Integer fields of width between 10 and 18
 will be read as OFTInteger64. Above they will be treated as OFTReal. In
 previous GDAL versions, Integer fields were created with a default with of 10,
 and thus will be now read as OFTInteger64. An open option, DETECT_TYPE=YES, can

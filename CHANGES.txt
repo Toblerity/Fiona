@@ -290,7 +290,7 @@ Deprecations:
 Changes:
 
 - Fiona's FionaDeprecationWarning now sub-classes DeprecationWarning.
-- Some test modules have beeen re-formatted using black.
+- Some test modules have been re-formatted using black.
 
 New features:
 
@@ -1017,7 +1017,7 @@ can't unhear Love Coffin.
 - New BytesCollection class (#215).
 - Add GDAL's OpenFileGDB driver to registered drivers (#221).
 - Implement CLI commands as plugins (#228).
-- Raise click.abort instead of calling sys.exit, preventing suprising exits
+- Raise click.abort instead of calling sys.exit, preventing surprising exits
   (#236).
 
 1.5.1 (2015-03-19)

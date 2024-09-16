@@ -223,8 +223,8 @@ def supports_vsi(driver):
     bool
 
     """
-    virutal_io = _get_metadata_item(driver, MetadataItem.VIRTUAL_IO)
-    return virutal_io is not None and virutal_io.upper() == "YES"
+    virtual_io = _get_metadata_item(driver, MetadataItem.VIRTUAL_IO)
+    return virtual_io is not None and virtual_io.upper() == "YES"
 
 
 @require_gdal_version('2.0')

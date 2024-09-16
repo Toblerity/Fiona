@@ -155,7 +155,7 @@ def open(
           'example.shp', enabled_drivers=['GeoJSON', 'ESRI Shapefile'])
 
     Some format drivers permit low-level filtering of fields. Specific
-    fields can be ommitted by using the ``ignore_fields`` parameter.
+    fields can be omitted by using the ``ignore_fields`` parameter.
     Specific fields can be selected, excluding all others, by using the
     ``include_fields`` parameter.
 

@@ -132,7 +132,7 @@ def dump(
                     # Log error and close up the GeoJSON, leaving it
                     # more or less valid no matter what happens above.
                     logger.critical(
-                        "failed to serialize file record %d (%s), " "quiting", i, exc
+                        "failed to serialize file record %d (%s), " "quitting", i, exc
                     )
                     sink.write("]")
                     sink.write(tail)
@@ -165,7 +165,7 @@ def dump(
                     else:
                         logger.critical(
                             "failed to serialize file record %d (%s), "
-                            "quiting",
+                            "quitting",
                             i, exc)
                         sink.write("]")
                         sink.write(tail)

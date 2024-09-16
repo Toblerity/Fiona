@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 
 
 # Supported URI schemes and their mapping to GDAL's VSI suffix.
-# TODO: extend for other cloud plaforms.
+# TODO: extend for other cloud platforms.
 SCHEMES = {
     'ftp': 'curl',
     'gzip': 'gzip',
@@ -20,7 +20,7 @@ SCHEMES = {
 
 CURLSCHEMES = {k for k, v in SCHEMES.items() if v == 'curl'}
 
-# TODO: extend for other cloud plaforms.
+# TODO: extend for other cloud platforms.
 REMOTESCHEMES = {k for k, v in SCHEMES.items() if v in ('curl', 's3', 'gs')}
 
 
