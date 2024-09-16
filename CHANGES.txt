@@ -8,6 +8,8 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Bug fixes:
 
+- Several typos were found and fixed (#1448). One variable was renamed and one
+  the ContextVar in _vsipyopener.pyx was renamed.
 - Logging in the CRS class no longer tries to print representations of objects
   that may be NULL when searching for authority matches (#1445).
 
