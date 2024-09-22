@@ -386,8 +386,21 @@ cdef class JSONField(AbstractField):
         return "json"
 
     cdef object get(self, OGRFeatureH feature, int i, object kwds):
+        cdef void *fdefn = OGR_F_GetFieldDefnRef(feature, i)
+        cdef char *key_c = OGR_Fld_GetNameRef(fdefn)
+        key_b = key_c
+        key = key_b.decode("utf-8")
         val = OGR_F_GetFieldAsString(feature, i)
-        return json.loads(val)
+        log.debug("Here is the value: val=%r, key=%r, i=%r", val, key, i)
+
+        # String(JSON) seems to be the fallback for GDAL in the case of
+        # properties that are a mix of strings and numbers. See gh-1451.
+        # Return a string that contains the field value and an error
+        # message seems helpful.
+        try:
+            return json.loads(val)
+        except json.JSONDecodeError as error:
+            return f"String(JSON) field could not be decoded: {val=}, {error=}"
 
     cdef set(self, OGRFeatureH feature, int i, object value, object kwds):
         value_b = json.dumps(value).encode("utf-8")

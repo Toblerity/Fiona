@@ -2,6 +2,7 @@
 
 import pytest
 
+import fiona
 from fiona.errors import FionaDeprecationWarning
 from fiona.model import (
     _Geometry,
@@ -351,3 +352,15 @@ def test_issue1430():
         feat["properties"]["foo"] = "bar"
     assert feat["properties"]["foo"] == "bar"
     assert feat.properties["foo"] == "bar"
+
+
+def test_issue1451():
+    """Report when a JSON property can't be decoded."""
+    with fiona.open("tests/data/issue1451.geojson") as collection:
+        # Heterogeneous types of country_code values cause GDAL to
+        # detect the field type as String(JSON).
+        assert collection.schema["properties"]["country_code"] == "json"
+        first, second = list(collection)
+        assert first.properties["country_code"].startswith("String(JSON)")
+        assert "val=b'0583'" in first.properties["country_code"]
+        assert "Extra data: line 1 column 2 (char 1)" in first.properties["country_code"]
