@@ -3,6 +3,7 @@
 import pytest
 
 import fiona
+from fiona.env import GDALVersion
 from fiona.errors import FionaDeprecationWarning
 from fiona.model import (
     _Geometry,
@@ -13,6 +14,8 @@ from fiona.model import (
     Properties,
     decode_object,
 )
+
+gdal_version = GDALVersion.runtime()
 
 
 def test_object_len():
