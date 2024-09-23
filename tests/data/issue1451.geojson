@@ -1,0 +1,74 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          158.197,
+          6.978
+        ]
+      },
+      "properties": {
+        "name": "Pohnpei",
+        "uhslc_id": 1,
+        "ssc_id": "deke",
+        "gloss_id": 115,
+        "country": "Micronesia (Federated States of)",
+        "country_code": "0583",
+        "fd_span": {
+          "oldest": "2001-12-17",
+          "latest": "2024-07-31"
+        },
+        "rq_span": {
+          "oldest": "1969-05-09",
+          "latest": "2021-12-31"
+        },
+        "rq_basin": "pacific",
+        "rq_versions": {
+          "b": {
+            "begin": "1974-04-22",
+            "end": "2004-12-31"
+          },
+          "a": {
+            "begin": "1969-05-09",
+            "end": "1971-02-27"
+          },
+          "c": {
+            "begin": "2001-12-17",
+            "end": "2021-12-31"
+          }
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          338.017,
+          70.483
+        ]
+      },
+      "properties": {
+        "name": "Upernavi",
+        "uhslc_id": 817,
+        "ssc_id": "none",
+        "gloss_id": 0,
+        "country": "Unknown",
+        "country_code": 0,
+        "fd_span": {
+          "oldest": "2024-08-16",
+          "latest": "2024-08-31"
+        },
+        "rq_span": {
+          "oldest": null,
+          "latest": null
+        },
+        "rq_basin": null,
+        "rq_versions": null
+      }
+    }
+  ]
+}

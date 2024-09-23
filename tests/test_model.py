@@ -2,6 +2,8 @@
 
 import pytest
 
+import fiona
+from fiona.env import GDALVersion
 from fiona.errors import FionaDeprecationWarning
 from fiona.model import (
     _Geometry,
@@ -12,6 +14,8 @@ from fiona.model import (
     Properties,
     decode_object,
 )
+
+gdal_version = GDALVersion.runtime()
 
 
 def test_object_len():
@@ -255,7 +259,7 @@ def test_feature_encode():
     assert o_dict["id"] == "foo"
     assert o_dict["geometry"]["type"] == "Point"
     assert o_dict["geometry"]["coordinates"] == (0, 0)
-    assert o_dict["properties"]["bytes"] == b'3031323334'
+    assert o_dict["properties"]["bytes"] == b"3031323334"
 
 
 def test_decode_object_hook():
@@ -312,7 +316,7 @@ def test_feature_gi():
 
 def test_encode_bytes():
     """Bytes are encoded using base64."""
-    assert ObjectEncoder().default(b"01234") == b'3031323334'
+    assert ObjectEncoder().default(b"01234") == b"3031323334"
 
 
 def test_null_property_encoding():
@@ -341,7 +345,10 @@ def test_feature_repr():
         geometry=Geometry(type="LineString", coordinates=[(0, 0)] * 100),
         properties=Properties(a=1, foo="bar"),
     )
-    assert repr(feat) == "fiona.Feature(geometry=fiona.Geometry(coordinates=[(0, 0), ...], type='LineString'), id='1', properties=fiona.Properties(a=1, foo='bar'))"
+    assert (
+        repr(feat)
+        == "fiona.Feature(geometry=fiona.Geometry(coordinates=[(0, 0), ...], type='LineString'), id='1', properties=fiona.Properties(a=1, foo='bar'))"
+    )
 
 
 def test_issue1430():
@@ -351,3 +358,20 @@ def test_issue1430():
         feat["properties"]["foo"] = "bar"
     assert feat["properties"]["foo"] == "bar"
     assert feat.properties["foo"] == "bar"
+
+
+@pytest.mark.skipif(
+    not gdal_version.at_least("3.6"), reason="Requires at least GDAL 3.6"
+)
+def test_issue1451():
+    """Report when a JSON property can't be decoded."""
+    with fiona.open("tests/data/issue1451.geojson") as collection:
+        # Heterogeneous types of country_code values cause GDAL to
+        # detect the field type as String(JSON).
+        assert collection.schema["properties"]["country_code"] == "json"
+        first, second = list(collection)
+        assert first.properties["country_code"].startswith("String(JSON)")
+        assert "val=b'0583'" in first.properties["country_code"]
+        assert (
+            "Extra data: line 1 column 2 (char 1)" in first.properties["country_code"]
+        )
