@@ -318,12 +318,12 @@ def test_compare_times_utc():
 
     d1 = (
         datetime.datetime(2020, 6, 21, 12, 0, 0, tzinfo=pytz.utc)
-        .astimezone(timezone("MET"))
+        .astimezone(timezone("Europe/Brussels"))
         .timetz()
     )
     d2 = (
         datetime.datetime(2020, 6, 21, 12, 0, 0, tzinfo=pytz.utc)
-        .astimezone(timezone("EST"))
+        .astimezone(timezone("America/Panama"))
         .timetz()
     )
     assert compare_times_utc(d1, d2)
