@@ -3,6 +3,14 @@ Changes
 
 All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
+1.10.2 (TBD)
+------------
+
+Bug fixes:
+
+- A more information exception is now raised by JSONField.get() when the value
+  cannot be decoded (#).
+
 1.10.1 (2024-09-16)
 -------------------
 

@@ -93,3 +93,7 @@ class FeatureWarning(UserWarning):
 
 class ReduceError(FionaError):
     """"Raised when reduce operation fails."""
+
+
+class FieldError(FionaError):
+    """Raised when a field cannot be accessed."""

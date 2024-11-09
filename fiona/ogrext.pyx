@@ -15,24 +15,44 @@ from uuid import uuid4
 
 from fiona.crs cimport CRS, osr_set_traditional_axis_mapping_strategy
 from fiona._geometry cimport (
-    GeomBuilder, OGRGeomBuilder, geometry_type_code,
-    normalize_geometry_type_code, base_geometry_type_code)
+    GeomBuilder,
+    OGRGeomBuilder,
+    base_geometry_type_code,
+    geometry_type_code,
+    normalize_geometry_type_code,
+)
 from fiona._err cimport exc_wrap_int, exc_wrap_pointer, exc_wrap_vsilfile, get_last_error_msg
 from fiona._err cimport StackChecker
 
 import fiona
 from fiona._env import get_gdal_version_num, calc_gdal_version_num, get_gdal_version_tuple
 from fiona._err import (
-    cpl_errs, stack_errors, FionaNullPointerError, CPLE_BaseError, CPLE_AppDefinedError,
-    CPLE_OpenFailedError)
+    CPLE_AppDefinedError,
+    CPLE_BaseError,
+    CPLE_OpenFailedError,
+    FionaNullPointerError,
+    cpl_errs,
+    stack_errors,
+)
 from fiona._geometry import GEOMETRY_TYPES
 from fiona import compat
 from fiona.compat import strencode
 from fiona.env import Env
 from fiona.errors import (
-    DriverError, DriverIOError, SchemaError, CRSError, FionaValueError,
-    TransactionError, GeometryTypeValidationError, DatasetDeleteError,
-    AttributeFilterError, FeatureWarning, FionaDeprecationWarning, UnsupportedGeometryTypeError)
+    AttributeFilterError,
+    CRSError,
+    DatasetDeleteError,
+    DriverError,
+    DriverIOError,
+    FeatureWarning,
+    FionaDeprecationWarning,
+    FieldError,
+    FionaValueError,
+    GeometryTypeValidationError,
+    SchemaError,
+    TransactionError,
+    UnsupportedGeometryTypeError,
+)
 from fiona.model import decode_object, Feature, Geometry, Properties
 from fiona._path import _vsi_path
 from fiona.rfc3339 import parse_date, parse_datetime, parse_time
@@ -386,8 +406,20 @@ cdef class JSONField(AbstractField):
         return "json"
 
     cdef object get(self, OGRFeatureH feature, int i, object kwds):
+        cdef OGRFieldDefnH fdefn = OGR_F_GetFieldDefnRef(feature, i)
+        cdef char *key_c = OGR_Fld_GetNameRef(fdefn)
+        key_b = key_c
+        key = key_b.decode("utf-8")
         val = OGR_F_GetFieldAsString(feature, i)
-        return json.loads(val)
+
+        # String(JSON) is the fallback for GDAL in the case of
+        # properties that are a mix of strings and numbers. See gh-1451.
+        # In GDAL 3.11, users will be able to override this and declare
+        # a field type.
+        try:
+            return json.loads(val)
+        except json.JSONDecodeError as error:
+            raise FieldError(f"String(JSON) field could not be decoded: {val=}, {error=}")
 
     cdef set(self, OGRFeatureH feature, int i, object value, object kwds):
         value_b = json.dumps(value).encode("utf-8")
@@ -419,7 +451,7 @@ cdef class DateField(AbstractField):
             y, m, d = value.year, value.month, value.day
             hh = mm = ss = ms = 0
         else:
-            raise ValueError()
+            raise ValueError("Field value must be a string or datetime.date.")
 
         tzinfo = 0
         OGR_F_SetFieldDateTimeEx(feature, i, y, m, d, hh, mm, ss, tzinfo)
@@ -467,7 +499,7 @@ cdef class TimeField(AbstractField):
             else:
                 tz = value.utcoffset().total_seconds() / 60
         else:
-            raise ValueError()
+            raise ValueError("Field value must be a string or datetime.time.")
 
         if tz is not None and not self.supports_tz:
             d_tz = datetime.datetime(1900, 1, 1, hh, mm, ss, int(ms), TZ(tz))
@@ -528,7 +560,7 @@ cdef class DateTimeField(AbstractField):
             else:
                 tz = value.utcoffset().total_seconds() / 60
         else:
-            raise ValueError()
+            raise ValueError("Field value must be a string or dateime.")
 
         if tz is not None and not self.supports_tz:
             d_tz = datetime.datetime(y, m, d, hh, mm, ss, int(ms), TZ(tz))
