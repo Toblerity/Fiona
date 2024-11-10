@@ -39,7 +39,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.9', '3.10', '3.11', '3.12']
         gdal-version: ['3.9.3']
         include:
           - python-version: '3.8'
@@ -131,10 +131,9 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: bash -l {0}
         run: |
-          GDAL_VERSION="3.7" micromamba run -n test python setup.py build_ext -I"/c/Users/runneradmin/miniconda3/envs/test/Library/include" -lgdal -L"/c/Users/runneradmin/miniconda3/envs/test/Library/lib" install
+          ls 
+          GDAL_VERSION="3.7" micromamba run -n test python setup.py build_ext -I"$MAMBA_ROOT_PREFIX/envs/test/Library/include" -lgdal -L"$MAMBA_ROOT_PREFIX/envs/test/Library/lib" install
           micromamba run -n test python -m pip install -r requirements-dev.txt
-
-          GDAL_VERSION="3.7" python setup.py build_ext -I"/c/Users/runneradmin/miniconda3/envs/test/Library/include" -lgdal -L"/c/Users/runneradmin/miniconda3/envs/test/Library/lib" install
       - name: Check and Log Environment
         shell: bash -l {0}
         run: |
