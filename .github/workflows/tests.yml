@@ -140,17 +140,20 @@ jobs:
         run: |
           micromamba run -n test python -V
           micromamba info
+          micromamba list -n test
 
       - name: Test with Coverage (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         shell: bash -l {0}
         run: |
           micromamba run -n test python -m pytest -v -m "not wheel" -rxXs --cov fiona --cov-report term-missing
+
       - name: Test with Coverage (Windows)
         if: matrix.os == 'windows-latest'
         shell: bash -l {0}
         run: |
           micromamba run -n test python -m pytest -v -m "not wheel" -rxXs --cov fiona --cov-report term-missing
+
       - name: Test with Coverage (OSX)
         if: "${{matrix.os}} == 'macos-13' || ${{matrix.os}} == 'macos-14'"
         shell: bash -l {0}
