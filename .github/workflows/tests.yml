@@ -105,55 +105,42 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Conda Setup
-        uses: conda-incubator/setup-miniconda@v3
+      - name: Setup Conda
+        uses: mamba-org/setup-micromamba@v2
         with:
-          miniforge-variant: Mambaforge
-          miniforge-version: latest
-          use-mamba: true
-          auto-update-conda: true
-          use-only-tar-bz2: false
-          python-version: ${{ matrix.python-version }}
+          init-shell: bash
+          environment-name: test
+          create-args: >-
+            python=${{ matrix.python-version }}
+            libgdal
+            geos=3.11
+            cython=3
+            numpy
 
-      - name: Install Env (OSX)
-        if: matrix.os == 'macos-13' || matrix.os == 'macos-14'
+      - name: Install Env
         shell: bash -l {0}
         run: |
-          conda config --prepend channels conda-forge
-          conda config --set channel_priority strict
-          conda create -n test python=${{ matrix.python-version }} libgdal geos=3.12 cython=3
-          conda activate test
-          python -m pip install -e . || python -m pip install -e .
-          python -m pip install -r requirements-dev.txt
-
-      - name: Install Env (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: bash -l {0}
-        run: |
-          conda config --prepend channels conda-forge
-          conda config --set channel_priority strict
-          conda create -n test python=${{ matrix.python-version }} libgdal geos=3.12 cython=3
-          conda activate test
-          GDAL_VERSION="3.9" python setup.py build_ext -I"/c/Users/runneradmin/miniconda3/envs/test/Library/include" -lgdal -L"/c/Users/runneradmin/miniconda3/envs/test/Library/lib" install
-          python -m pip install -r requirements-dev.txt
+          micromamba run -n test python -m pip install -e . --no-use-pep517 || micromamba run -n test python -m pip install -e .
+          micromamba run -n test python -m pip install -r requirements-dev.txt
 
       - name: Check and Log Environment
         shell: bash -l {0}
         run: |
-          conda activate test
-          python -V
-          conda info
+          micromamba run -n test python -V
+          micromamba info
 
+      - name: Test with Coverage (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash -l {0}
+        run: |
+          micromamba run python -m pytest -v -m "not wheel" -rxXs --cov fiona --cov-report term-missing
       - name: Test with Coverage (Windows)
         if: matrix.os == 'windows-latest'
         shell: bash -l {0}
         run: |
-          conda activate test
-          pytest -v -m "not wheel" -rxXs --cov fiona --cov-report term-missing
-
+          micromamba run python -m pytest -v -m "not wheel" -rxXs --cov fiona --cov-report term-missing
       - name: Test with Coverage (OSX)
-        if: matrix.os == 'macos-13'
+        if: "${{matrix.os}} == 'macos-13' || ${{matrix.os}} == 'macos-14'"
         shell: bash -l {0}
         run: |
-          conda activate test
-          python -m pytest -v -m "not wheel" -rxXs  --cov fiona --cov-report term-missing
+          micromamba run python -m pytest -v -m "not wheel" -rxXs --cov fiona --cov-report term-missing
