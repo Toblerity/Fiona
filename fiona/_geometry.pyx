@@ -125,12 +125,11 @@ cdef class GeomBuilder:
         # Build a coordinate sequence
         cdef int i
         cdef int npoints
-        cdef list coords
+        cdef list coords = []
 
         if geom == NULL:
             raise ValueError("Null geom")
         npoints = OGR_G_GetPointCount(geom)
-        coords = []
 
         if self.ndims == 2:
             for i in range(npoints):
