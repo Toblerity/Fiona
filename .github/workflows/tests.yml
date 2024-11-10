@@ -106,8 +106,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Conda
-        uses: mamba-org/setup-micromamba@v2.0.0
+        uses: mamba-org/setup-micromamba@v1
         with:
+          micromamba-version: '1.5.10-0'
           init-shell: >-
             bash
             powershell
