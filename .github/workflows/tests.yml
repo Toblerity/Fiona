@@ -131,9 +131,10 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: bash -l {0}
         run: |
-          ls 
-          GDAL_VERSION="3.7" micromamba run -n test python setup.py build_ext -I"$MAMBA_ROOT_PREFIX/envs/test/Library/include" -lgdal -L"$MAMBA_ROOT_PREFIX/envs/test/Library/lib" install
+          GDAL_VERSION="3.9" micromamba run -n test python setup.py build_ext -I"$MAMBA_ROOT_PREFIX/envs/test/Library/include" -lgdal -L"$MAMBA_ROOT_PREFIX/envs/test/Library/lib" install
           micromamba run -n test python -m pip install -r requirements-dev.txt
+          rm -rf fiona
+
       - name: Check and Log Environment
         shell: bash -l {0}
         run: |
