@@ -121,11 +121,20 @@ jobs:
             numpy
 
       - name: Install Env
+        if: matrix.os != 'windows-latest'
         shell: bash -l {0}
         run: |
           micromamba run -n test python -m pip install -e . --no-use-pep517 || micromamba run -n test python -m pip install -e .
           micromamba run -n test python -m pip install -r requirements-dev.txt
 
+      - name: Install Env (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash -l {0}
+        run: |
+          GDAL_VERSION="3.7" micromamba run -n test python setup.py build_ext -I"/c/Users/runneradmin/miniconda3/envs/test/Library/include" -lgdal -L"/c/Users/runneradmin/miniconda3/envs/test/Library/lib" install
+          micromamba run -n test python -m pip install -r requirements-dev.txt
+
+          GDAL_VERSION="3.7" python setup.py build_ext -I"/c/Users/runneradmin/miniconda3/envs/test/Library/include" -lgdal -L"/c/Users/runneradmin/miniconda3/envs/test/Library/lib" install
       - name: Check and Log Environment
         shell: bash -l {0}
         run: |
@@ -136,14 +145,14 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         shell: bash -l {0}
         run: |
-          micromamba run python -m pytest -v -m "not wheel" -rxXs --cov fiona --cov-report term-missing
+          micromamba run -n test python -m pytest -v -m "not wheel" -rxXs --cov fiona --cov-report term-missing
       - name: Test with Coverage (Windows)
         if: matrix.os == 'windows-latest'
         shell: bash -l {0}
         run: |
-          micromamba run python -m pytest -v -m "not wheel" -rxXs --cov fiona --cov-report term-missing
+          micromamba run -n test python -m pytest -v -m "not wheel" -rxXs --cov fiona --cov-report term-missing
       - name: Test with Coverage (OSX)
         if: "${{matrix.os}} == 'macos-13' || ${{matrix.os}} == 'macos-14'"
         shell: bash -l {0}
         run: |
-          micromamba run python -m pytest -v -m "not wheel" -rxXs --cov fiona --cov-report term-missing
+          micromamba run -n test python -m pytest -v -m "not wheel" -rxXs --cov fiona --cov-report term-missing
