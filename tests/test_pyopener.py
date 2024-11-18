@@ -29,6 +29,7 @@ def test_opener_fsspec_zip_fs():
         assert "AGBUR" in colxn.schema["properties"]
 
 
+@pytest.mark.network
 def test_opener_fsspec_zip_http_fs():
     """Use fsspec zip+http filesystem as opener."""
     fs = fsspec.filesystem(
