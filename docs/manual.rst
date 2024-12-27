@@ -862,12 +862,12 @@ Tower using a point geometry with UTM coordinates in zone 31N.
     ...     'type': 'Point',
     ...     'coordinates': (448252, 5411935)
     ...   },
-    ...   'properties': dict([
-    ...     ('name', 'Eiffel Tower'),
-    ...     ('height', 300.01),
-    ...     ('view', 'scenic'),
-    ...     ('year', 1889)
-    ...   ])
+    ...   'properties': {
+    ...     'name': 'Eiffel Tower',
+    ...     'height': 300.01,
+    ...     'view': 'scenic',
+    ...     'year': 1889
+    ...   }
     ... }
 
 A corresponding scheme could be:
@@ -876,12 +876,12 @@ A corresponding scheme could be:
 
     >>> landmarks_schema = {
     ...   'geometry': 'Point',
-    ...   'properties': dict([
-    ...     ('name', 'str'),
-    ...     ('height', 'float'),
-    ...     ('view', 'str'),
-    ...     ('year', 'int')
-    ...   ])
+    ...   'properties': {
+    ...     'name': 'str',
+    ...     'height': 'float',
+    ...     'view': 'str',
+    ...     'year': 'int'
+    ...   }
     ... }
 
 The coordinate reference system of these landmark coordinates is ETRS89 / UTM
