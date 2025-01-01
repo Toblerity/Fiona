@@ -11,6 +11,11 @@ Bug fixes:
 - A more information exception is now raised by JSONField.get() when the value
   cannot be decoded (#1463).
 
+Changes:
+
+- Python coordinate sequence construction has been improved, translating to
+  better performance in reading Fiona Features from datasets (#1462).
+
 1.10.1 (2024-09-16)
 -------------------
 
