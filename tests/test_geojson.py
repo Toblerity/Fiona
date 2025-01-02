@@ -164,3 +164,29 @@ def test_empty_array_property(tmp_path):
         )
     )
     list(fiona.open(tmp_path.joinpath("test.geojson")))
+
+def test_json_field_property_with_mixed_types(tmp_path):
+    """Confirm fix for bug reported in gh-1470."""
+    features = [
+        {
+            "type": "Feature",
+            "properties": {"array_prop": []},
+            "geometry": {"type": "Point", "coordinates": [12, 24]},
+        },
+        {
+            "type": "Feature",
+            "properties": {"array_prop": "a"},
+            "geometry": {"type": "Point", "coordinates": [12, 24]},
+        }
+    ]
+    for idx, f in enumerate([features, list(reversed(features))]):
+        fname = f"test_{idx}.geojson"
+        tmp_path.joinpath(fname).write_text(
+            json.dumps(
+                {
+                    "type": "FeatureCollection",
+                    "features": f,
+                }
+            )
+        )
+        list(fiona.open(tmp_path.joinpath(fname)))
