@@ -160,25 +160,26 @@ def _transform_geom(src_crs, dst_crs, geom, antimeridian_cutting, antimeridian_o
 
     factory = new OGRGeometryFactory()
 
-    if isinstance(geom, Geometry):
-        out_geom = recursive_round(
-            _transform_single_geom(geom, factory, transform, options), precision)
-    else:
-        out_geom = [
-            recursive_round(
-                _transform_single_geom(single_geom, factory, transform, options),
-                precision,
-            )
-            for single_geom in geom
-        ]
+    try:
+        if isinstance(geom, Geometry):
+            out_geom = recursive_round(
+                _transform_single_geom(geom, factory, transform, options), precision)
+        else:
+            out_geom = [
+                recursive_round(
+                    _transform_single_geom(single_geom, factory, transform, options),
+                    precision,
+                )
+                for single_geom in geom
+            ]
 
-    OCTDestroyCoordinateTransformation(transform)
-
-    if options != NULL:
-        _csl.CSLDestroy(options)
-
-    OSRRelease(src)
-    OSRRelease(dst)
+    finally:
+        del factory
+        OCTDestroyCoordinateTransformation(transform)
+        if options != NULL:
+            _csl.CSLDestroy(options)
+        OSRRelease(src)
+        OSRRelease(dst)
 
     return out_geom
 
