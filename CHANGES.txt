@@ -8,6 +8,7 @@ All issue numbers are relative to https://github.com/Toblerity/Fiona/issues.
 
 Bug fixes:
 
+- A potential memory leak in transform_geom() has been fixed (#1477).
 - A more information exception is now raised by JSONField.get() when the value
   cannot be decoded (#1463).
 
