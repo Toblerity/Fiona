@@ -113,7 +113,6 @@ def test_object_eq(other):
     assert obj == other
 
 
-@pytest.mark.xfail(reason="Throws TypeError on comparisons where the comparison object cannot be unpacked")
 @pytest.mark.parametrize(
     "other",
     ("", 1, [1, 2], {"g": 5}, Object(g=10), OrderedDict(a=1)),

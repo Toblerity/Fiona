@@ -1,7 +1,7 @@
 """Fiona data model"""
 
 from binascii import hexlify
-from collections.abc import MutableMapping
+from collections.abc import Mapping, MutableMapping
 from enum import Enum
 import itertools
 from json import JSONEncoder
@@ -187,6 +187,9 @@ class Object(MutableMapping):
             del self._data[key]
 
     def __eq__(self, other):
+        if not isinstance(other, Mapping):
+            return False
+
         return dict(**self) == dict(**other)
 
 
