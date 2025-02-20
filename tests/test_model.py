@@ -1,4 +1,5 @@
 """Test of deprecations following RFC 1"""
+from collections import OrderedDict
 
 import pytest
 
@@ -100,6 +101,27 @@ def test_object_delitem_delegated():
     with pytest.warns(FionaDeprecationWarning, match="immutable"):
         del thing["value"]
     assert thing["value"] is None
+
+
+@pytest.mark.parametrize(
+    "other",
+    ({"g": 1}, Object(g=1), OrderedDict(g=1)),
+)
+def test_object_eq(other):
+    """Object eq identifies a match"""
+    obj = Object(g=1)
+    assert obj == other
+
+
+@pytest.mark.xfail(reason="Throws TypeError on comparisons where the comparison object cannot be unpacked")
+@pytest.mark.parametrize(
+    "other",
+    ("", 1, [1, 2], {"g": 5}, Object(g=10), OrderedDict(a=1)),
+)
+def test_object_eq_not(other):
+    """Object eq identifies not a match"""
+    obj = Object(g=1)
+    assert obj != other
 
 
 def test__geometry_ctor():
