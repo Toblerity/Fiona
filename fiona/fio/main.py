@@ -8,7 +8,6 @@ import logging
 import sys
 
 import click
-from click_plugins import with_plugins
 from cligj import verbose_opt, quiet_opt
 
 if sys.version_info < (3, 10):
@@ -31,6 +30,7 @@ from fiona.fio.insp import insp
 from fiona.fio.load import load
 from fiona.fio.ls import ls
 from fiona.fio.rm import rm
+from fiona._vendor.click_plugins import with_plugins
 
 # The "calc" extras require pyparsing and shapely.
 try:
