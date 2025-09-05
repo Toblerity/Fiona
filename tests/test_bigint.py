@@ -74,3 +74,33 @@ def test_issue691(tmpdir, dtype):
         assert src.schema["properties"]["foo"] == "int:18"
         first = next(iter(src))
         assert first["properties"]["foo"] == 3694063472
+
+def test_mixed_int_widths(tmpdir):
+    """Demonstrate fix for #1501."""
+    schema = {"geometry": "Any", "properties": {"A": 'int32', "B":"int64"}}
+    with fiona.open(
+        str(tmpdir.join("test.shp")),
+        "w",
+        driver="Shapefile",
+        schema=schema,
+        crs="epsg:4326",
+    ) as dst:
+        dst.write(
+            Feature.from_dict(
+                **{
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": (-122.278015, 37.868995),
+                    },
+                    "properties": {"A": 3, "B": 3694063472},
+                }
+            )
+        )
+
+    with fiona.open(str(tmpdir.join("test.shp"))) as src:
+        assert src.schema["properties"]["A"] == "int32:9"
+        assert src.schema["properties"]["B"] == "int:18"
+        first = next(iter(src))
+        assert first["properties"]["A"] == 3
+        assert first["properties"]["B"] == 3694063472
