@@ -262,7 +262,7 @@ def processList(lst):
 
 def handleLine(line):
     try:
-        result = expr.parseString(line)
+        result = expr.parse_string(line)
         return processList(result[0])
     except ParseException as exc:
         text = str(exc)
