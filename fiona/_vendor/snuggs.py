@@ -34,7 +34,7 @@ from typing import Mapping
 
 from pyparsing import (  # type: ignore
     Keyword,
-    oneOf,
+    one_of,
     Literal,
     QuotedString,
     ParseException,
@@ -158,7 +158,7 @@ var = pyparsing_common.identifier.set_parse_action(resolve_var)
 string = QuotedString("'") | QuotedString('"')
 lparen = Literal("(").suppress()
 rparen = Literal(")").suppress()
-op = oneOf(" ".join(op_map.keys())).set_parse_action(
+op = one_of(" ".join(op_map.keys())).set_parse_action(
     lambda source, loc, toks: op_map[toks[0]]
 )
 
@@ -177,7 +177,7 @@ def resolve_func(source, loc, toks):
 # variables.
 func = Regex(r"(?<=\()[{}]+".format(alphanums + "_")).set_parse_action(resolve_func)
 
-higher_func = oneOf(" ".join(higher_func_map.keys())).set_parse_action(
+higher_func = one_of(" ".join(higher_func_map.keys())).set_parse_action(
     lambda source, loc, toks: higher_func_map[toks[0]]
 )
 
@@ -262,7 +262,7 @@ def processList(lst):
 
 def handleLine(line):
     try:
-        result = expr.parseString(line)
+        result = expr.parse_string(line)
         return processList(result[0])
     except ParseException as exc:
         text = str(exc)

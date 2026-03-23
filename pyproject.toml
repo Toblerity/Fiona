@@ -39,7 +39,7 @@ dependencies = [
 
 [project.optional-dependencies]
 all = ["fiona[calc,s3,test]"]
-calc = ["pyparsing", "shapely"]
+calc = ["pyparsing>=3.0", "shapely"]
 s3 = ["boto3>=1.3.1"]
 test = [
     "aiohttp",
