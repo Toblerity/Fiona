@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=67.8", "cython~=3.0.2"]
+requires = ["setuptools>=77", "cython~=3.0.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -13,12 +13,12 @@ maintainers = [
 ]
 description = "Fiona reads and writes spatial data files"
 keywords = ["gis", "vector", "feature", "data"]
-license = {text = "BSD 3-Clause"}
+license = "BSD-3-Clause"
+license-files = ["LICENSE.txt", "CREDITS.txt"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: BSD License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
