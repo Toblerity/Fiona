@@ -12,3 +12,6 @@ python:
   install:
     - method: setuptools
       path: .
+
+sphinx:
+  configuration: docs/conf.py
