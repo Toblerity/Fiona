@@ -160,7 +160,7 @@ def filter_cmd(ctx, pipeline, use_rs, snuggs_only):
 
             if not pipeline.startswith("("):
                 test_string = f"({pipeline})"
-            expr.parseString(test_string)
+            expr.parse_string(test_string)
         except ExpressionError:
             # It's a snuggs expression.
             log.info("Detected a snuggs expression.")
