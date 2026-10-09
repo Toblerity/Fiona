@@ -3,6 +3,7 @@
 from functools import partial
 import json
 import logging
+import sys
 
 import click
 import cligj
@@ -55,7 +56,7 @@ def dump(
     or a sequence of GeoJSON features."""
 
     logger = logging.getLogger(__name__)
-    sink = click.get_text_stream('stdout')
+    sink = sys.stdout
 
     dump_kwds = {'sort_keys': True}
     if indent:

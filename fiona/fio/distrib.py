@@ -1,6 +1,8 @@
 """$ fio distrib"""
 
 import json
+import sys
+import sys
 
 import click
 import cligj
@@ -19,7 +21,7 @@ def distrib(ctx, use_rs):
     Print the features of GeoJSON objects read from stdin.
 
     """
-    stdin = click.get_text_stream('stdin')
+    stdin = sys.stdin
     source = helpers.obj_gen(stdin)
 
     for i, obj in enumerate(source):

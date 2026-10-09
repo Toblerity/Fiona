@@ -1,6 +1,7 @@
-"""$ fio bounds"""
+"""fio bounds"""
 
 import json
+import sys
 
 import click
 from cligj import precision_opt, use_rs_opt
@@ -38,7 +39,7 @@ def bounds(ctx, precision, explode, with_id, with_obj, use_rs):
     input objects with {id: identifier, bbox: bounds}.
 
     """
-    stdin = click.get_text_stream('stdin')
+    stdin = sys.stdin
     source = obj_gen(stdin)
 
     for i, obj in enumerate(source):

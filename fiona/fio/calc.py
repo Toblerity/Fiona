@@ -1,4 +1,7 @@
+"""fio calc"""
+
 import json
+import sys
 
 import click
 from cligj import use_rs_opt
@@ -39,7 +42,7 @@ def calc(ctx, property_name, expression, overwrite, use_rs):
     $ fio cat data.shp | fio calc sumAB  "f.properties.A + f.properties.B"
 
     """
-    stdin = click.get_text_stream('stdin')
+    stdin = sys.stdin
     source = obj_gen(stdin)
 
     for i, obj in enumerate(source):
