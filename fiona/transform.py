@@ -71,7 +71,7 @@ def transform_geom(
         members or an iterable of GeoJSON-like geometry objects.
     antimeridian_cutting: bool, optional
         `True` to cut output geometries in two at the antimeridian,
-        the default is ``False`.
+        the default is `False`.
     antimeridian_offset: float, optional
         A distance in decimal degrees from the antimeridian, outside of
         which geometries will not be cut.
