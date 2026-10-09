@@ -61,7 +61,7 @@ fiona.fio.env module
     :show-inheritance:
 
 fiona.fio.features module
------------------------
+-------------------------
 
 .. automodule:: fiona.fio.features
     :members:
