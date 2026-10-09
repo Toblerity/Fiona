@@ -285,7 +285,7 @@ Closing Files
 A :py:class:`~fiona.collection.Collection` involves external resources. There's
 no guarantee that these will be released unless you explicitly
 :py:meth:`~fiona.collection.Collection.close` the object or use
-a :keyword:`with` statement. When a :py:class:`~fiona.collection.Collection`
+a `with` statement. When a :py:class:`~fiona.collection.Collection`
 is a context guard, it is closed no matter what happens within the block.
 
 .. code-block:: pycon
@@ -304,12 +304,12 @@ is a context guard, it is closed no matter what happens within the block.
       ...
     AssertionError
 
-An exception is raised in the :keyword:`with` block above, but as you can see
-from the print statement in the :keyword:`except` clause :py:meth:`colxn.__exit__`
+An exception is raised in the `with` block above, but as you can see
+from the print statement in the `except` clause :py:meth:`colxn.__exit__`
 (and thereby :py:meth:`colxn.close`) has been called.
 
 .. important:: Always call :py:meth:`~fiona.collection.Collection.close` or
-   use :keyword:`with` and you'll never stumble over tied-up external resources,
+   use `with` and you'll never stumble over tied-up external resources,
    locked files, etc.
 
 Format Drivers, CRS, Bounds, and Schema
@@ -1123,7 +1123,7 @@ indexes.
     3
 
 To filter features by property values, use Python's builtin :py:func:`filter` and
-:keyword:`lambda` or your own filter function that takes a single feature
+`lambda` or your own filter function that takes a single feature
 record and returns ``True`` or ``False``.
 
 .. code-block:: pycon

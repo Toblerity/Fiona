@@ -530,53 +530,53 @@ class GDALVersion:
 def require_gdal_version(
     version, param=None, values=None, is_max_version=False, reason=""
 ):
-    """A decorator that ensures the called function or parameters are supported
-    by the runtime version of GDAL.  Raises GDALVersionError if conditions
-    are not met.
-
-    Examples:
-    \b
-        @require_gdal_version('2.2')
-        def some_func():
-
-    calling `some_func` with a runtime version of GDAL that is < 2.2 raises a
-    GDALVersionError.
-
-    \b
-        @require_gdal_version('2.2', param='foo')
-        def some_func(foo='bar'):
-
-    calling `some_func` with parameter `foo` of any value on GDAL < 2.2 raises
-    a GDALVersionError.
-
-    \b
-        @require_gdal_version('2.2', param='foo', values=('bar',))
-        def some_func(foo=None):
-
-    calling `some_func` with parameter `foo` and value `bar` on GDAL < 2.2
-    raises a GDALVersionError.
-
+    """A decorator that ensures the called function or parameters are
+    supported by the runtime version of GDAL.  Raises GDALVersionError
+    if conditions are not met.
 
     Parameters
     ------------
     version: tuple, string, or GDALVersion
-    param: string (optional, default: None)
-        If `values` are absent, then all use of this parameter with a value
-        other than default value requires at least GDAL `version`.
+    param: string (optional, default: None) If `values` are absent, then
+        all use of this parameter with a value other than default value
+        requires at least GDAL `version`.
     values: tuple, list, or set (optional, default: None)
         contains values that require at least GDAL `version`.  `param`
         is required for `values`.
     is_max_version: bool (optional, default: False)
-        if `True` indicates that the version provided is the maximum version
-        allowed, instead of requiring at least that version.
+        if `True` indicates that the version provided is the maximum
+        version allowed, instead of requiring at least that version.
     reason: string (optional: default: '')
-        custom error message presented to user in addition to message about
-        GDAL version.  Use this to provide an explanation of what changed
-        if necessary context to the user.
+        custom error message presented to user in addition to message
+        about GDAL version.  Use this to provide an explanation of what
+        changed if necessary context to the user.
 
     Returns
     ---------
     wrapped function
+
+    Examples
+    --------
+    >>> @require_gdal_version('2.2')
+    >>> def some_func():
+    ...     pass
+
+    calling `some_func` with a runtime version of GDAL that is < 2.2
+    raises a GDALVersionError.
+
+    >>> @require_gdal_version('2.2', param='foo')
+    >>> def some_func(foo='bar'):
+    ...     pass
+
+    calling `some_func` with parameter `foo` of any value on GDAL < 2.2
+    raises a GDALVersionError.
+
+    >>> @require_gdal_version('2.2', param='foo', values=('bar',))
+    >>> def some_func(foo=None):
+    ...     pass
+
+    calling `some_func` with parameter `foo` and value `bar` on GDAL < 2.2
+    raises a GDALVersionError.
 
     """
     if values is not None:

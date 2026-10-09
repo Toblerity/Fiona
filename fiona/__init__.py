@@ -109,50 +109,31 @@ def open(
 ):
     """Open a collection for read, append, or write
 
-    In write mode, a driver name such as "ESRI Shapefile" or "GPX" (see
-    OGR docs or ``ogr2ogr --help`` on the command line) and a schema
+    In write mode, a driver name such as 'ESRI Shapefile' or 'GPX' (see
+    OGR docs or `ogr2ogr --help` on the command line) and a schema
     mapping such as:
 
-      {'geometry': 'Point',
-       'properties': [('class', 'int'), ('label', 'str'),
-                      ('value', 'float')]}
+    {'geometry': 'Point', 'properties': [('label', 'str'), ('value', 'float')]}
 
-    must be provided. If a particular ordering of properties ("fields"
+    must be provided. If a particular ordering of properties (fields
     in GIS parlance) in the written file is desired, a list of (key,
     value) pairs as above or an ordered dict is required. If no ordering
     is needed, a standard dict will suffice.
 
     A coordinate reference system for collections in write mode can be
-    defined by the ``crs`` parameter. It takes Proj4 style mappings like
-
-      {'proj': 'longlat', 'ellps': 'WGS84', 'datum': 'WGS84',
-       'no_defs': True}
-
-    short hand strings like
-
-      EPSG:4326
-
-    or WKT representations of coordinate reference systems.
+    defined by the `crs` parameter. It takes short hand strings like
+    'EPSG:4326' or WKT representations of coordinate reference systems.
 
     The drivers used by Fiona will try to detect the encoding of data
-    files. If they fail, you may provide the proper ``encoding``, such
+    files. If they fail, you may provide the proper `encoding`, such
     as 'Windows-1252' for the original Natural Earth datasets.
 
     When the provided path is to a file containing multiple named layers
-    of data, a layer can be singled out by ``layer``.
+    of data, a layer can be singled out by `layer`.
 
     The drivers enabled for opening datasets may be restricted to those
-    listed in the ``enabled_drivers`` parameter. This and the ``driver``
+    listed in the `enabled_drivers` parameter. This and the `driver`
     parameter afford much control over opening of files.
-
-      # Trying only the GeoJSON driver when opening to read, the
-      # following raises ``DataIOError``:
-      fiona.open('example.shp', driver='GeoJSON')
-
-      # Trying first the GeoJSON driver, then the Shapefile driver,
-      # the following succeeds:
-      fiona.open(
-          'example.shp', enabled_drivers=['GeoJSON', 'ESRI Shapefile'])
 
     Some format drivers permit low-level filtering of fields. Specific
     fields can be omitted by using the ``ignore_fields`` parameter.
