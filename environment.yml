@@ -7,6 +7,7 @@ dependencies:
 - python=3.12
 - libgdal=3.12
 - cython=3
+- pyparsing
 - shapely
 - sphinx-click
 - sphinx-rtd-theme
