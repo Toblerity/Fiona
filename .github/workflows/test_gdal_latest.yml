@@ -38,9 +38,9 @@ jobs:
       - name: Set up Python
         run: |
           apt-get install -y --no-install-recommends \
-            python3.10 \
-            python3.10-dev \
-            python3.10-venv \
+            python3.13 \
+            python3.13-dev \
+            python3.13-venv \
             python3-pip \
             g++
 
