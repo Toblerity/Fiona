@@ -3,6 +3,7 @@
 from functools import partial
 import json
 import logging
+import sys
 
 import click
 import cligj
@@ -60,8 +61,8 @@ def collect(
     """Make a GeoJSON feature collection from a sequence of GeoJSON
     features and print it."""
     logger = logging.getLogger(__name__)
-    stdin = click.get_text_stream("stdin")
-    sink = click.get_text_stream("stdout")
+    stdin = sys.stdin
+    sink = sys.stdout
 
     dump_kwds = {"sort_keys": True}
     if indent:

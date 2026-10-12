@@ -4,10 +4,13 @@ channels:
 - defaults
 dependencies:
 - pip
-- python=3.9.*
-- libgdal=3.4.*
+- python=3.12
+- libgdal=3.12
 - cython=3
+- pyparsing
+- shapely
 - sphinx-click
 - sphinx-rtd-theme
+- sphinx=8.2.3
 - pip:
   - jinja2==3.0.3

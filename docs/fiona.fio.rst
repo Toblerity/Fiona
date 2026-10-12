@@ -60,10 +60,10 @@ fiona.fio.env module
     :undoc-members:
     :show-inheritance:
 
-fiona.fio.filter module
------------------------
+fiona.fio.features module
+-------------------------
 
-.. automodule:: fiona.fio.filter
+.. automodule:: fiona.fio.features
     :members:
     :undoc-members:
     :show-inheritance:

@@ -6,6 +6,7 @@ import itertools
 import json
 import logging
 import warnings
+import sys
 
 import click
 from cligj import use_rs_opt  # type: ignore
@@ -87,7 +88,7 @@ def map_cmd(pipeline, raw, no_input, dump_parts, use_rs):
     if no_input:
         features = [None]
     else:
-        stdin = click.get_text_stream("stdin")
+        stdin = sys.stdin
         features = obj_gen(stdin)
 
     for feat in features:
@@ -150,7 +151,7 @@ def filter_cmd(ctx, pipeline, use_rs, snuggs_only):
     are deprecated and will not be supported in version 2.0.
 
     """
-    stdin = click.get_text_stream("stdin")
+    stdin = sys.stdin
     features = obj_gen(stdin)
 
     if not snuggs_only:
@@ -160,7 +161,7 @@ def filter_cmd(ctx, pipeline, use_rs, snuggs_only):
 
             if not pipeline.startswith("("):
                 test_string = f"({pipeline})"
-            expr.parseString(test_string)
+            expr.parse_string(test_string)
         except ExpressionError:
             # It's a snuggs expression.
             log.info("Detected a snuggs expression.")
@@ -236,7 +237,7 @@ def reduce_cmd(pipeline, raw, use_rs, zip_properties):
     containing the input values.
 
     """
-    stdin = click.get_text_stream("stdin")
+    stdin = sys.stdin
     features = (feat for feat in obj_gen(stdin))
 
     if zip_properties:

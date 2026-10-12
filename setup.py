@@ -154,15 +154,22 @@ ext_options = dict(
     cython_compile_time_env=compile_time_env,
 )
 
-# Enable coverage for cython pyx files.
-if os.environ.get('CYTHON_COVERAGE'):
-    from Cython.Compiler.Options import get_directive_defaults
-    directive_defaults = get_directive_defaults()
-    directive_defaults['linetrace'] = True
-    directive_defaults['binding'] = True
+# Configure optional Cython coverage.
+cythonize_options = {
+    "language_level": sys.version_info[0],
+    "compiler_directives": {"freethreading_compatible": True},
+}
 
-    ext_options.update(dict(
-        define_macros=[("CYTHON_TRACE_NOGIL", "1")]))
+if os.environ.get("CYTHON_COVERAGE"):
+    cythonize_options["compiler_directives"].update(linetrace=True)
+    cythonize_options["annotate"] = True
+    ext_options["define_macros"].extend(
+        [
+            ("CYTHON_TRACE", "1"),
+            ("CYTHON_TRACE_NOGIL", "1"),
+            ("CYTHON_USE_SYS_MONITORING", "0"),
+        ]
+    )
 
 # GDAL 2.3+ requires C++11
 

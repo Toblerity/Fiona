@@ -40,10 +40,7 @@ def cb_key_val(ctx, param, value):
     in a dictionary like the one below, which is what the CLI function receives.
     If no value or `None` is received then an empty dictionary is returned.
 
-        {
-            'KEY1': 'VAL1',
-            'KEY2': 'VAL2'
-        }
+    {'KEY1': 'VAL1', 'KEY2': 'VAL2'}
 
     Note: `==VAL` breaks this as `str.split('=', 1)` is used.
 

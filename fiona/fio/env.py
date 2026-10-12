@@ -2,6 +2,7 @@
 
 import json
 import os
+import sys
 
 import click
 
@@ -23,7 +24,8 @@ def env(ctx, key):
     """Print information about the Fiona environment: available
     formats, etc.
     """
-    stdout = click.get_text_stream('stdout')
+    stdout = sys.stdout
+
     with ctx.obj['env'] as env:
         if key == 'formats':
             for k, v in sorted(fiona.supported_drivers.items()):

@@ -5,10 +5,14 @@ build:
   tools:
     python: "mambaforge-22.9"
 
+sphinx:
+  configuration: docs/conf.py
+  fail_on_warning: true
+
 conda:
   environment: environment.yml
 
 python:
   install:
-    - method: setuptools
+    - method: pip
       path: .
