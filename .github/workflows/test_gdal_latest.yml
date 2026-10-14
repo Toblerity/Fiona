@@ -71,7 +71,7 @@ jobs:
       - name: Install dependencies
         run: |
           export PATH="${GDAL_DIR}/bin/:${PATH}"
-          python3.10 -m venv testenv
+          python3.13 -m venv testenv
           . testenv/bin/activate
           python -m pip install --upgrade pip
           python -m pip wheel -r requirements-dev.txt
