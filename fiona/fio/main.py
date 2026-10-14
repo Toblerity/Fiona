@@ -8,7 +8,6 @@ import logging
 import sys
 
 import click
-from click_plugins import with_plugins
 from cligj import verbose_opt, quiet_opt
 
 if sys.version_info < (3, 10):
@@ -18,6 +17,7 @@ else:
 
 import fiona
 from fiona import __version__ as fio_version
+from fiona._vendor.click_plugins import with_plugins
 from fiona.session import AWSSession, DummySession
 from fiona.fio.bounds import bounds
 from fiona.fio.calc import calc
