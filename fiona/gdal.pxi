@@ -62,7 +62,7 @@ cdef extern from "cpl_vsi.h" nogil:
     ctypedef struct VSIStatBufL:
         long st_size
         long st_mode
-        int st_mtime
+        long long st_mtime
     ctypedef enum VSIRangeStatus:
         VSI_RANGE_STATUS_UNKNOWN,
         VSI_RANGE_STATUS_DATA,

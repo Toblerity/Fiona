@@ -519,7 +519,7 @@ class FileContainer(ABC):
         pass
 
     @abstractmethod
-    def mtime(self, path: str) -> int:
+    def mtime(self, path: str) -> intmax_t:
         """Get the mtime of a resource..
 
         Parameters
@@ -618,7 +618,7 @@ class _FilesystemContainer(FileContainer):
         return [item if isinstance(item, str) else item["filename"] for item in self._obj.ls(path)]
     def mtime(self, path):
         try:
-            mtime = int(self._obj.modified(path).timestamp())
+            mtime = long(self._obj.modified(path).timestamp())
         except NotImplementedError:
             mtime = 0
         return mtime
