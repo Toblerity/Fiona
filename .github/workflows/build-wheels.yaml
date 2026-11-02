@@ -208,7 +208,7 @@ jobs:
           merge-multiple: true
           path: dist
       - name: Display downloaded wheels
-        run: ls -lR dist
+        run: ls -l dist
 
       - name: Install dependencies and fiona wheel
         shell: bash
