@@ -288,7 +288,7 @@ def reduce_features(expression: str, features: Iterable[Mapping]) -> Generator:
 
     Parameters
     ----------
-    pipeline : str
+    expression : str
         Geometry operation pipeline such as "(unary_union c)".
     features : iterable
         A sequence of Fiona feature objects.
