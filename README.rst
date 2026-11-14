@@ -20,7 +20,6 @@ cloud storage. This project includes Python modules and a command line
 interface (CLI).
 
 Fiona depends on `GDAL <https://gdal.org>`__ but is different from GDAL's own
-`bindings <https://gdal.org/api/python_bindings.html>`__. Fiona is designed to
 be highly productive and to make it easy to write code which is easy to read.
 
 Installation
