@@ -277,6 +277,33 @@ conventions. They can start from 0, 1 (e.g. geopackages), or even other values,
 and have no guarantee of contiguity. Negative indices will only function
 correctly if indices start from 0 and are contiguous.
 
+For example, the feature ids of a GeoPackage start at 1, so index 0 returns
+``None`` and index -1 returns the second to last feature, not the last one.
+
+.. code-block:: pycon
+
+    >>> with fiona.open("example.gpkg") as colxn:
+    ...     print(len(colxn))
+    ...     print(colxn[0])
+    ...     print(colxn[1].id, colxn[67].id, colxn[-1].id)
+    ...
+    67
+    None
+    1 67 66
+
+If you need the first or last feature regardless of the format, iterate over
+the collection instead of using an index.
+
+.. code-block:: pycon
+
+    >>> from collections import deque
+    >>> with fiona.open("example.gpkg") as colxn:
+    ...     first = next(iter(colxn))
+    ...     last = deque(colxn, maxlen=1)[0]
+    ...     print(first.id, last.id)
+    ...
+    1 67
+
 New in version 1.1.6
 
 Closing Files

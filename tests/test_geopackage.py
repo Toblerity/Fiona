@@ -96,3 +96,25 @@ def test_write_multilayer_gpkg(tmpdir):
     with fiona.open(path, layer="layer2") as src:
         assert src.schema["geometry"] == "Point"
         assert len(src) == 1
+
+
+@requires_gpkg
+def test_gpkg_index_starts_at_one(path_coutwildrnp_gpkg):
+    """GeoPackage feature ids start at 1, see issue #1187."""
+    with fiona.open(path_coutwildrnp_gpkg) as src:
+        assert src[0] is None
+        assert src[1].id == "1"
+        assert src[len(src)].id == "67"
+
+
+@requires_gpkg
+def test_gpkg_first_and_last_by_iteration(path_coutwildrnp_gpkg):
+    """Iteration gives the first and last features, as shown in the manual."""
+    from collections import deque
+
+    with fiona.open(path_coutwildrnp_gpkg) as src:
+        first = next(iter(src))
+        last = deque(src, maxlen=1)[0]
+        assert first.id == "1"
+        assert last.id == "67"
+        assert last.properties == src[len(src)].properties
