@@ -854,3 +854,27 @@ def test_property_setter_lookup(tmp_path):
         assert colxn.schema["properties"]["when"] == "date"
         feat = next(colxn)
         assert feat.properties["when"] == "2024-04-15"
+
+
+def test_write_date_and_string(tmp_path):
+    """Demonstrate fix for #1490."""
+
+    feat = Feature.from_dict(
+        {
+            "properties": {"date": "2022-09-01", "text":"n"},
+            "geometry": {"type": "Point", "coordinates": [0, 0]},
+        }
+    )
+    with fiona.open(
+        tmp_path / "test.gpkg",
+        "w",
+        driver="GPKG",
+        crs="EPSG:4326",
+        schema={"geometry": "Point", "properties": {"date": "date", "text": "str"}},
+    ) as colxn:
+        colxn.writerecords([feat])
+
+    with fiona.open(tmp_path / "test.gpkg") as colxn:
+        assert colxn.schema["properties"]["date"] == "date"
+        feat = next(colxn)
+        assert feat.properties["date"] == "2022-09-01"
